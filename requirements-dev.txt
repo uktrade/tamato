@@ -1,0 +1,9 @@
+-r requirements.txt
+
+pytest
+pytest-cov
+pytest-django
+pytest-mock
+factory-boy
+pytest-tldr
+hypothesis
