@@ -1,0 +1,8 @@
+*.sw?
+.git
+.github
+venv
+.projectrc
+.python-version
+requirements-dev.txt
+
