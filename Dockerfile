@@ -1,6 +1,6 @@
 FROM python:3.8-slim-buster
 
-LABEL maintainer="andy.driver@digital.trade.gov.uk"
+LABEL maintainer="webops@digital.trade.gov.uk"
 
 ENV DJANGO_SETTINGS_MODULE "tamato.settings"
 
@@ -12,20 +12,17 @@ USER tamato
 WORKDIR /home/tamato
 
 # install python dependencies
-COPY requirements.txt manage.py ./
-RUN python -mvenv venv && \
-    venv/bin/pip install -U pip && \
-    venv/bin/pip install -r requirements.txt
+COPY requirements.txt ./
+RUN pip install -U pip && \
+    pip install -r requirements.txt
 
-COPY tamato tamato
-COPY docker docker
-COPY static static
+COPY . .
 
 # empty .env file to prevent warning messages
 RUN touch .env
 
 # collect static files for deployment
-RUN venv/bin/python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
-CMD ["venv/bin/gunicorn", "-b", "0.0.0.0:8000", "-w", "4", "tamato.wsgi:application"]
+CMD ["/home/tamato/.local/bin/gunicorn", "-b", "0.0.0.0:8000", "-w", "1", "tamato.wsgi:application"]
