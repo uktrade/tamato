@@ -68,7 +68,7 @@ TEMPLATES = [
         "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
-            "environment": f"{PROJECT_NAME}.frontend.jinja2.environment",
+            "environment": f"{PROJECT_NAME}.jinja2.environment",
         },
     },
     {
