@@ -1,7 +1,7 @@
 django
-psycopg2
-jinja2
 django_extensions
 django-dotenv
 django-health-check
+jinja2
+psycopg2
 sentry-sdk
