@@ -1,7 +1,7 @@
-from tamato.settings.common import *
+from settings.common import *
 
 
-ENV = 'test'
+ENV = "test"
 
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
