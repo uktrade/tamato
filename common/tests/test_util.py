@@ -1,6 +1,6 @@
 import pytest
 
-from tamato import util
+from common import util
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ from tamato import util
         (True, True),
         ("1", True),
         (1, True),
-    ]
+    ],
 )
 def test_is_truthy(value, expected):
     assert util.is_truthy(value) is expected
