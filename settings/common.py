@@ -2,10 +2,10 @@
 Django settings for tamato project.
 """
 import os
+import sys
 from os.path import abspath
 from os.path import dirname
 from os.path import join
-import sys
 
 from common.util import is_truthy
 
@@ -22,18 +22,15 @@ PROJECT_NAME = "tamato"
 # Absolute path of project Django directory
 BASE_DIR = dirname(dirname(abspath(__file__)))
 
-# Absolute path of project directory
-PROJECT_ROOT = dirname(BASE_DIR)
-
 # Directory to collect static files into
-STATIC_ROOT = join(PROJECT_ROOT, "run", "static")
+STATIC_ROOT = join(BASE_DIR, "run", "static")
 
 # Directory for user uploaded files
-MEDIA_ROOT = join(PROJECT_ROOT, "run", "uploads")
+MEDIA_ROOT = join(BASE_DIR, "run", "uploads")
 
 # Django looks in these locatins for additional static assets to collect
 STATICFILES_DIRS = [
-    join(PROJECT_ROOT, "static"),
+    join(BASE_DIR, "static"),
 ]
 
 
@@ -120,7 +117,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # -- Running Django
 
 # Path to WSGI application
-WSGI_APPLICATION = f"{PROJECT_NAME}.wsgi.application"
+WSGI_APPLICATION = "wsgi.application"
 
 # Path to root URL configuration
 ROOT_URLCONF = f"urls"
@@ -187,7 +184,15 @@ LOGGING = {
     },
     "loggers": {
         "": {"handlers": ["console"], "level": "WARNING",},
-        "tamato": {
+        "commodities": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+        },
+        "common": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+        },
+        "measures": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
         },
