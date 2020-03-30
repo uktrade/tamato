@@ -2,6 +2,7 @@ django
 django_extensions
 django-dotenv
 django-health-check
+django-treebeard
 gunicorn
 jinja2
 psycopg2-binary
