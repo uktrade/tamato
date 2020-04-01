@@ -46,10 +46,9 @@ To run with coverage use the following:
 
 ## Environment Variables
 
-|-----|------------|
-|Name |Description |
-|-----|------------|
-| | |
+| Name | Description |
+| ---- | ----------- |
+|      |             |
 
 ## How to deploy
 
