@@ -6,7 +6,7 @@
 
 Run the following command to build the docker image:
 
-    docker built -t tamato .
+    docker build -t tamato .
 
 Then to run the app:
 
