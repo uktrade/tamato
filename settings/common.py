@@ -29,9 +29,7 @@ STATIC_ROOT = join(BASE_DIR, "run", "static")
 MEDIA_ROOT = join(BASE_DIR, "run", "uploads")
 
 # Django looks in these locatins for additional static assets to collect
-STATICFILES_DIRS = [
-    join(BASE_DIR, "static"),
-]
+STATICFILES_DIRS = [join(BASE_DIR, "static")]
 
 
 # -- Application
@@ -67,7 +65,7 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.jinja2.Jinja2",
         "DIRS": [],
         "APP_DIRS": True,
-        "OPTIONS": {"environment": "common.jinja2.environment",},
+        "OPTIONS": {"environment": "common.jinja2.environment"},
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -79,7 +77,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-            ],
+            ]
         },
     },
 ]
@@ -94,7 +92,8 @@ TEMPLATES = [
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 
 # Whitelist values for the HTTP Host header, to prevent certain attacks
-ALLOWED_HOSTS = [host for host in os.environ.get("ALLOWED_HOSTS", "").split() if host]
+# App runs inside GOV.UK PaaS, so we can allow all hosts
+ALLOWED_HOSTS = ["*"]
 
 # Sets the X-XSS-Protection: 1; mode=block header
 SECURE_BROWSER_XSS_FILTER = True
@@ -173,17 +172,17 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
+        "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"}
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "default",
-        },
+        }
     },
     "loggers": {
-        "": {"handlers": ["console"], "level": "WARNING",},
+        "": {"handlers": ["console"], "level": "WARNING"},
         "commodities": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
@@ -214,7 +213,7 @@ if os.environ.get("SENTRY_DSN"):
     if "shell" in sys.argv or "shell_plus" in sys.argv:
         sentry_sdk.init(
             # discard all events
-            before_send=lambda event, hint: None,
+            before_send=lambda event, hint: None
         )
 
 
