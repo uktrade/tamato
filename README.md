@@ -30,7 +30,7 @@ Create a `.env` file containing environment variables:
 
 Run the app:
 
-    gunicorn wsgi:application
+    ./manage.py runserver
 
 Then you can browse to http://localhost:8000/ to view the app
 
