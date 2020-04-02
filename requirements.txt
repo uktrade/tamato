@@ -7,3 +7,5 @@ gunicorn
 jinja2
 psycopg2-binary
 sentry-sdk
+git+https://github.com/alphagov/govuk-frontend-jinja.git
+django-webpack-loader

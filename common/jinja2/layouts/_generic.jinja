@@ -1,0 +1,19 @@
+{% extends "template.njk" %}
+
+{% block head %}
+  <!--[if !IE 8]><!-->
+    {{ render_bundle("main", "css") }}
+  <!--<![endif]-->
+  <!--[if IE 8]>
+    {# render_bundle("ie8", "css") #}
+  <![endif]-->
+  {% block styles %}{% endblock %}
+{% endblock %}
+
+{% set htmlClasses = "" %}
+{% set containerClasses = "" %}
+{% set mainClasses = 'govuk-main-wrapper--auto-spacing' %}
+
+{% block bodyEnd %}
+  {{ render_bundle("main", "js") }}
+{% endblock %}

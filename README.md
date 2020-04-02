@@ -16,7 +16,7 @@ Then you can browse to http://localhost:8000/ to view the app
 
 ### Running locally
 
-This app requires Python 3.8.x
+This app requires Python 3.8.x and Node 12.16.x
 
 Create a Python virtualenv and install the dependencies:
 
@@ -27,6 +27,15 @@ Create a Python virtualenv and install the dependencies:
 Create a `.env` file containing environment variables:
 
     cp sample.env .env
+
+Fetch and compile GOV.UK Frontend dependency:
+
+    npm install
+    npm run build
+
+Collect static assets:
+
+    ./manage.py collectstatic
 
 Run the app:
 
