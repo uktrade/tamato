@@ -28,8 +28,11 @@ STATIC_ROOT = join(BASE_DIR, "run", "static")
 # Directory for user uploaded files
 MEDIA_ROOT = join(BASE_DIR, "run", "uploads")
 
-# Django looks in these locatins for additional static assets to collect
-STATICFILES_DIRS = [join(BASE_DIR, "static")]
+# Django looks in these locations for additional static assets to collect
+STATICFILES_DIRS = [
+    join(BASE_DIR, "static"),
+    join(BASE_DIR, "node_modules", "govuk-frontend", "govuk", "assets"),
+]
 
 
 # -- Application
@@ -46,6 +49,8 @@ INSTALLED_APPS = [
     # "health_check.db",
     # "health_check.cache",
     # "health_check.storage",
+    "webpack_loader",
+    "common",
     "commodities",
     "measures",
 ]
@@ -63,7 +68,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.jinja2.Jinja2",
-        "DIRS": [],
+        "DIRS": ["node_modules/govuk-frontend/govuk",],
         "APP_DIRS": True,
         "OPTIONS": {"environment": "common.jinja2.environment"},
     },
@@ -122,7 +127,7 @@ WSGI_APPLICATION = "wsgi.application"
 ROOT_URLCONF = f"urls"
 
 # URL path where static files are served
-STATIC_URL = "/static/"
+STATIC_URL = "/assets/"
 
 
 # -- Debug

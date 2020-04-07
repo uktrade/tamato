@@ -1,0 +1,27 @@
+{
+  "name": "tamato",
+  "author": "Department for International Trade",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tariff Management Tool",
+  "repository": "https://github.com/uktrade/tamato.git",
+  "licence": "MIT",
+  "dependencies": {
+    "css-loader": "^3.3.0",
+    "extract-loader": "^3.1.0",
+    "file-loader": "^5.0.2",
+    "govuk-frontend": "^3.4.0",
+    "mini-css-extract-plugin": "^0.8.0",
+    "node-sass": "^4.13.0",
+    "sass-loader": "^8.0.0",
+    "webpack": "^4.42.1",
+    "webpack-bundle-tracker": "^0.4.3",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.9.0"
+  },
+  "scripts": {
+    "dev": "webpack --config webpack.config.js --watch",
+    "build": "webpack --config webpack.config.js",
+    "clean": "rm -f ./run/static/webpack_bundles/*"
+  }
+}
