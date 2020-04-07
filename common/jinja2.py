@@ -16,14 +16,14 @@ class GovukFrontendExtension(NunjucksExtension):
         if filename and filename.endswith(".njk"):
             source = super().preprocess(source, name, filename)
 
-        # Additional code needed for looping over dicts in python
-        # Adds in the .items() suffix, but also guards against iterating over empty
-        # dicts which is something that you can "get away with" in JS but not Python
-        source = re.sub(
-            r"\bin (.*).attributes.items\b",
-            r"in \1.get('attributes', {}).items",
-            source,
-        )
+            # Additional code needed for looping over dicts in python Adds in the
+            # .items() suffix, but also guards against iterating over empty dicts which
+            # is something that you can "get away with" in JS but not Python
+            source = re.sub(
+                r"\bin (.*).attributes.items\b",
+                r"in \1.get('attributes', {}).items",
+                source,
+            )
 
         return source
 
