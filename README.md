@@ -10,7 +10,7 @@ Run the following command to build the docker image:
 
 Then to run the app:
 
-    docker run -p 8000:8000 -e ALLOWED_HOSTS='*' tamato
+    docker run -p 8000:8000 tamato
 
 Then you can browse to http://localhost:8000/ to view the app
 
@@ -39,7 +39,7 @@ Collect static assets:
 
 Run the app:
 
-    gunicorn wsgi:application
+    ./manage.py runserver
 
 Then you can browse to http://localhost:8000/ to view the app
 
