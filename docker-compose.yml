@@ -1,0 +1,25 @@
+version: '3'
+services:
+  db:
+    image: "postgres:12.2"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+
+  tamato:
+    build: .
+    image: tamato
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    links:
+      - db
+    env_file: .env
+    environment:
+      DB_HOST: "db"
+      DB_NAME: "postgres"
+      DB_USER: "postgres"
+      DEBUG: "True"
+      PYTHONUNBUFFERED: "1"
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+

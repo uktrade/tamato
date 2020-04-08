@@ -6,11 +6,11 @@
 
 Run the following command to build the docker image:
 
-    docker build -t tamato .
+    docker-compose build
 
 Then to run the app:
 
-    docker run -p 8000:8000 tamato
+    docker-compose up
 
 Then you can browse to http://localhost:8000/ to view the app
 
