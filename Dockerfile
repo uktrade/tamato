@@ -30,7 +30,7 @@ RUN pip install -U pip && \
     pip install -r requirements.txt --no-warn-script-location
 
 COPY --chown=tamato:tamato . .
-COPY --chown=tamato:tamato --from=jsdeps node_modules node_modules
+COPY --chown=tamato:tamato --from=jsdeps node_modules/govuk-frontend/govuk node_modules/govuk-frontend/govuk
 COPY --chown=tamato:tamato --from=jsdeps static/webpack_bundles static/webpack_bundles
 COPY --chown=tamato:tamato --from=jsdeps webpack-stats.json ./
 
