@@ -1,11 +1,12 @@
+black
 django
-django_extensions
 django-dotenv
 django-health-check
 django-treebeard
+django-webpack-loader
+django_extensions
+git+https://github.com/alphagov/govuk-frontend-jinja.git
 gunicorn
 jinja2
 psycopg2-binary
 sentry-sdk
-git+https://github.com/alphagov/govuk-frontend-jinja.git
-django-webpack-loader
