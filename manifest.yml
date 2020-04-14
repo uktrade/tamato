@@ -1,7 +1,8 @@
 ---
 applications:
-- name: tamato
-  memory: 64M
+- name: tamato-dev
+  memory: 128M
+  services:
+    - tamato-db
   buildpacks:
-  - python-buildpack
-  command: gunicorn -b 0.0.0.0:8000 -w 1 wsgi:application
+    - python_buildpack
