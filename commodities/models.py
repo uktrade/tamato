@@ -15,7 +15,7 @@ class Commodity(MP_Node, TimestampedMixin, ValidityMixin):
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        related_name='successor'
+        related_name="successor",
     )
     version = models.PositiveIntegerField()
 
@@ -34,15 +34,19 @@ class Commodity(MP_Node, TimestampedMixin, ValidityMixin):
     def has_measure_in_tree(self):
         ascendant_measures = self.get_ancestors().filter(measures__isnull=False)
         descendant_measures = self.get_descendants().filter(measures__isnull=False)
-        return self.measures.exists() or ascendant_measures.exists() or descendant_measures.exists()
+        return (
+            self.measures.exists()
+            or ascendant_measures.exists()
+            or descendant_measures.exists()
+        )
 
     class Meta:
         constraints = (
             ExclusionConstraint(
                 name="exclude_overlapping_commodities",
                 expressions=[
-                    ('valid_between', RangeOperators.OVERLAPS),
-                    ('code', RangeOperators.EQUAL),
+                    ("valid_between", RangeOperators.OVERLAPS),
+                    ("code", RangeOperators.EQUAL),
                 ],
             ),
         )
