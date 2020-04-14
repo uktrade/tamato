@@ -1,4 +1,5 @@
 black
+dj-database-url
 django
 django-dotenv
 django-health-check
@@ -10,3 +11,5 @@ gunicorn
 jinja2
 psycopg2-binary
 sentry-sdk
+werkzeug
+whitenoise
