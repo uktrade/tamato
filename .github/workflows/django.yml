@@ -28,3 +28,6 @@ jobs:
     - name: Run Tests
       run: |
         python manage.py test
+    - name: Run Linter
+      run: |
+        black --check .

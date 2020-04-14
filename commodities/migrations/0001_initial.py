@@ -11,30 +11,52 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         BtreeGistExtension(),
         migrations.CreateModel(
-            name='Commodity',
+            name="Commodity",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('path', models.CharField(max_length=255, unique=True)),
-                ('depth', models.PositiveIntegerField()),
-                ('numchild', models.PositiveIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('valid_between', django.contrib.postgres.fields.ranges.DateTimeRangeField()),
-                ('live', models.BooleanField(default=False)),
-                ('code', models.CharField(max_length=12)),
-                ('description', models.TextField()),
-                ('version', models.PositiveIntegerField()),
-                ('predecessor', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='successor', to='commodities.Commodity')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("path", models.CharField(max_length=255, unique=True)),
+                ("depth", models.PositiveIntegerField()),
+                ("numchild", models.PositiveIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "valid_between",
+                    django.contrib.postgres.fields.ranges.DateTimeRangeField(),
+                ),
+                ("live", models.BooleanField(default=False)),
+                ("code", models.CharField(max_length=12)),
+                ("description", models.TextField()),
+                ("version", models.PositiveIntegerField()),
+                (
+                    "predecessor",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="successor",
+                        to="commodities.Commodity",
+                    ),
+                ),
             ],
         ),
         migrations.AddConstraint(
-            model_name='commodity',
-            constraint=django.contrib.postgres.constraints.ExclusionConstraint(expressions=[('valid_between', '&&'), ('code', '=')], name='exclude_overlapping_commodities'),
+            model_name="commodity",
+            constraint=django.contrib.postgres.constraints.ExclusionConstraint(
+                expressions=[("valid_between", "&&"), ("code", "=")],
+                name="exclude_overlapping_commodities",
+            ),
         ),
     ]

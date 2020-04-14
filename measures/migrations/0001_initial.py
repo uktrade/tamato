@@ -9,16 +9,31 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('commodities', '0001_initial'),
+        ("commodities", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Measure',
+            name="Measure",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('duty', models.CharField(max_length=512)),
-                ('commodity', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='measures', to='commodities.Commodity')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("duty", models.CharField(max_length=512)),
+                (
+                    "commodity",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="measures",
+                        to="commodities.Commodity",
+                    ),
+                ),
             ],
         ),
     ]
