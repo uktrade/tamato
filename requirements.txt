@@ -10,3 +10,5 @@ gunicorn
 jinja2
 psycopg2-binary
 sentry-sdk
+pytest-bdd
+allure-pytest-bdd

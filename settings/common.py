@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "webpack_loader",
     "common",
     "commodities",
+    "footnotes",
     "measures",
 ]
 

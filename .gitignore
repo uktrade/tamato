@@ -134,4 +134,4 @@ npm-debug.log*
 webpack-stats.json
 
 run/
-static/
+/static
