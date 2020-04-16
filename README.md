@@ -1,5 +1,7 @@
 # Tariff Management Tool (TAMATO)
 
+[![codecov](https://codecov.io/gh/uktrade/tamato/branch/master/graph/badge.svg)](https://codecov.io/gh/uktrade/tamato)
+
 ## Quickstart
 
 ### Using Docker
