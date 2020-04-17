@@ -5,4 +5,5 @@ applications:
   services:
     - tamato-db
   buildpacks:
+    - nodejs_buildpack
     - python_buildpack
