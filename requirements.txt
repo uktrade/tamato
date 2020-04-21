@@ -13,3 +13,5 @@ psycopg2-binary
 sentry-sdk
 werkzeug
 whitenoise
+pytest-bdd
+allure-pytest-bdd
