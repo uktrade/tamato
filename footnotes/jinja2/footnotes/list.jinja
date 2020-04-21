@@ -1,0 +1,7 @@
+{% extends "layouts/layout.jinja" %}
+
+{% block content %}
+  {% for footnote in footnotes %}
+    <p>{{ footnote.description }}</p>
+  {% endfor %}
+{% endblock %}
