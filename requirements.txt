@@ -1,3 +1,4 @@
+allure-pytest-bdd
 black
 dj-database-url
 django
@@ -6,12 +7,16 @@ django-health-check
 django-treebeard
 django-webpack-loader
 django_extensions
+factory-boy
 git+https://github.com/alphagov/govuk-frontend-jinja.git
 gunicorn
 jinja2
 psycopg2-binary
+pytest
+pytest-bdd
+pytest-cov
+pytest-django
+pytest-mock
 sentry-sdk
 werkzeug
 whitenoise
-pytest-bdd
-allure-pytest-bdd

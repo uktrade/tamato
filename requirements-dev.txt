@@ -1,11 +1,4 @@
 -r requirements.txt
 
-black
 django_debug_toolbar
-factory-boy
-hypothesis
-pytest
-pytest-cov
-pytest-django
-pytest-mock
 pytest-tldr
