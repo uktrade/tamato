@@ -7,7 +7,6 @@ from rest_framework import viewsets
 
 from footnotes.models import Footnote
 from footnotes.models import FootnoteType
-from footnotes.renderers import FootnotesAPIRenderer
 from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
 
@@ -22,7 +21,6 @@ class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["id"]
-    renderer_classes = [renderers.BrowsableAPIRenderer, FootnotesAPIRenderer]
 
 
 class FootnoteUIViewSet(FootnoteViewSet):
@@ -45,4 +43,3 @@ class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = FootnoteType.objects.all().order_by("id")
     serializer_class = FootnoteTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
-    renderer_classes = [renderers.BrowsableAPIRenderer, FootnotesAPIRenderer]
