@@ -1,7 +1,68 @@
 {% extends "layouts/layout.jinja" %}
 
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Find and edit footnotes" %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
 {% block content %}
-  {% for footnote in footnotes %}
-    <p>{{ footnote.description }}</p>
-  {% endfor %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    Enter criteria to help find a footnote.
+    Alternatively, <a href="">create a new footnote</a>.
+  </p>
+
+  <div class="filter-layout">
+    <form class="filter-layout__filters" method="get" action="{{ url("footnote-list") }}">
+      {{ govukInput({
+        "id": "search",
+        "name": "search",
+        "label": {
+          "text": "Search",
+          "classes": "govuk-label--m",
+          "attributes": {}
+        },
+        "formGroup": {}
+      }) }}
+
+      {{ govukButton({"text": "Filter"}) }}
+    </form>
+
+    <div class="filter-layout__content">
+      {% set table_rows = [] %}
+      {% for footnote in footnotes %}
+        {{ table_rows.append([
+          {"text": footnote.id},
+          {"text": footnote.footnotedescription_set.first().description},
+          {"text": footnote.footnote_type.description},
+          {"text": ""},
+          {"text": "{:%d %b %Y}".format(footnote.valid_between.lower)},
+          {"text": "{:%d %b %Y}".format(footnote.valid_between.upper) if footnote.valid_between.upper else "-"},
+          {"text": ""},
+        ]) or "" }}
+      {% endfor %}
+      {{ govukTable({
+        "head": [
+          {"text": "ID"},
+          {"text": "Description"},
+          {"text": "Type"},
+          {"text": "Usage"},
+          {"text": "Start date"},
+          {"text": "End date"},
+          {"text": "Status"}
+        ],
+        "rows": table_rows
+      }) }}
+    </div>
+  </div>
 {% endblock %}
