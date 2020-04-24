@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     # "health_check.db",
     # "health_check.cache",
     # "health_check.storage",
+    "rest_framework",
     "webpack_loader",
     "common",
     "commodities",
@@ -185,12 +186,16 @@ LOGGING = {
         }
     },
     "loggers": {
-        "": {"handlers": ["console"], "level": "WARNING"},
+        "root": {"handlers": ["console"], "level": "WARNING"},
         "commodities": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
         },
         "common": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+        },
+        "footnotes": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
         },
@@ -224,3 +229,15 @@ if os.environ.get("SENTRY_DSN"):
 
 # Override default Django test runner
 TEST_RUNNER = "settings.tests.runner.PytestTestRunner"
+
+
+# -- REST Framework
+REST_FRAMEWORK = {
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
+    ],
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.AcceptHeaderVersioning",
+}

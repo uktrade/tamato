@@ -1,0 +1,11 @@
+.filter-layout {
+  @extend .govuk-grid-row;
+}
+
+.filter-layout__filters {
+  @extend .govuk-grid-column-one-quarter;
+}
+
+.filter-layout__content {
+  @extend .govuk-grid-column-three-quarters;
+}
