@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     "django_extensions",
+    "django_filters",
     # "health_check",
     # "health_check.db",
     # "health_check.cache",

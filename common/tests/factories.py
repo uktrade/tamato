@@ -10,7 +10,7 @@ BREXIT_DATE = datetime(2021, 1, 1).replace(tzinfo=timezone.utc)
 
 
 class ValidityFactoryMixin(factory.django.DjangoModelFactory):
-    valid_between = factory.LazyFunction(lambda: DateTimeTZRange(BREXIT_DATE, None))
+    valid_between = DateTimeTZRange(BREXIT_DATE, None)
 
 
 class FootnoteTypeFactory(ValidityFactoryMixin):
@@ -19,9 +19,15 @@ class FootnoteTypeFactory(ValidityFactoryMixin):
     class Meta:
         model = "footnotes.FootnoteType"
 
-    id = factory.Sequence(lambda n: f"{n:02d}")
-    application_code = factory.Faker("random_int")
-    description = factory.Faker("paragraph")
+    footnote_type_id = factory.Faker(
+        "password",
+        length=2,
+        special_chars=False,
+        digits=False,
+        upper_case=True,
+        lower_case=False,
+    )
+    description = factory.Faker("text", max_nb_chars=500)
 
 
 class FootnoteFactory(ValidityFactoryMixin):
@@ -30,7 +36,8 @@ class FootnoteFactory(ValidityFactoryMixin):
     class Meta:
         model = "footnotes.Footnote"
 
-    id = factory.Sequence(lambda n: f"{n:05d}")
+    footnote_id = factory.Sequence(lambda n: f"{n:03d}")
+    description = factory.Faker("text", max_nb_chars=500)
     footnote_type = factory.SubFactory(FootnoteTypeFactory)
 
 

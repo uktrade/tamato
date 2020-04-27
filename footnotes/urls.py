@@ -7,7 +7,6 @@ from footnotes import views
 
 api_router = routers.DefaultRouter()
 api_router.register(r"footnotes", views.FootnoteViewSet)
-api_router.register(r"footnote-types", views.FootnoteTypeViewSet)
 
 ui_router = routers.DefaultRouter()
 ui_router.register(r"footnotes", views.FootnoteUIViewSet, basename="footnote-ui")
