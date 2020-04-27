@@ -1,1 +1,23 @@
-[{"model": "footnotes.footnotetype", "pk": "01", "fields": {"valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}", "live": false, "national": false, "application_code": 1, "description": "Foo"}}, {"model": "footnotes.footnote", "pk": "00000", "fields": {"valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:34:36.161120+00:00\", \"upper\": null}", "live": false, "national": false, "footnote_type": "01"}}, {"model": "footnotes.footnotedescription", "pk": 1, "fields": {"national": false, "footnote": "00000", "footnote_type": "01", "description": "Bar"}}]
+[
+  {
+    "model": "footnotes.footnotetype",
+    "pk": 1,
+    "fields": {
+      "footnote_type_id": "NC",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "live": false,
+      "description": "Foo"
+    }
+  },
+  {
+    "model": "footnotes.footnote",
+    "pk": 1,
+    "fields": {
+      "footnote_id": "000",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:34:36.161120+00:00\", \"upper\": null}",
+      "live": false,
+      "footnote_type_id": 1,
+      "description": "Bar"
+    }
+  }
+]

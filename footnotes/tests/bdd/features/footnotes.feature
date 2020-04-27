@@ -3,8 +3,8 @@ Feature: Footnotes
 
 
 Background:
-    Given some footnotes
-    And a valid user named "Alice"
+    Given a valid user named "Alice"
+    And footnote NC000
 
 
 Scenario: Searching by footnote ID

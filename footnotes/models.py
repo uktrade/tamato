@@ -3,33 +3,15 @@ from django.db import models
 from common.models import ValidityMixin
 
 
-class NationalMixin(models.Model):
-    national = models.BooleanField(default=False)
+class FootnoteType(ValidityMixin):
+    footnote_type_id = models.CharField(unique=True, max_length=2)
+    description = models.CharField(max_length=500)
+
+
+class Footnote(ValidityMixin):
+    footnote_id = models.CharField(unique=True, max_length=5)
+    footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
+    description = models.CharField(max_length=500)
 
     class Meta:
-        abstract = True
-
-
-class FootnoteType(ValidityMixin, NationalMixin):
-    id = models.CharField(primary_key=True, max_length=2, null=False, blank=True)
-    application_code = models.IntegerField()
-    description = models.TextField()
-
-
-class Footnote(ValidityMixin, NationalMixin):
-    id = models.CharField(primary_key=True, max_length=5, null=False, blank=True)
-    footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
-
-
-class FootnoteDescription(NationalMixin):
-    footnote = models.ForeignKey(Footnote, on_delete=models.PROTECT)
-    footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
-    description = models.TextField()
-
-
-class FootnoteDescriptionPeriod(ValidityMixin, NationalMixin):
-    footnote = models.ForeignKey(Footnote, on_delete=models.PROTECT)
-    footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
-    footnote_description = models.ForeignKey(
-        FootnoteDescription, on_delete=models.PROTECT
-    )
+        ordering = ["footnote_type__footnote_type_id", "footnote_id"]

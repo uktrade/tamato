@@ -14,11 +14,6 @@ pytestmark = pytest.mark.django_db
 scenarios("features/footnotes.feature")
 
 
-@given("some footnotes")
-def footnotes():
-    return factories.FootnoteFactory.create_batch(10)
-
-
 @given('a valid user named "Alice"')
 def valid_user():
     return factories.UserFactory.create(username="Alice")
@@ -29,14 +24,21 @@ def valid_user_login(client, valid_user):
     client.force_login(valid_user)
 
 
+@given("footnote NC000")
+def footnote_NC000():
+    footnote_type = factories.FootnoteTypeFactory(footnote_type_id="NC")
+    factories.FootnoteFactory(footnote_id="000", footnote_type=footnote_type)
+
+
 @pytest.fixture
 @when("I search for a footnote using a footnote ID")
 def footnotes_search(client):
-    return client.get(reverse("footnote-list"), {"search": "00000"})
+    return client.get(reverse("footnote-list"), {"search": "NC000"})
 
 
 @then("the search result should contain the footnote searched for")
 def footnotes_list(footnotes_search):
     results = footnotes_search.json()
     assert len(results) == 1
-    assert results[0]["id"] == "00000"
+    result = results[0]
+    assert result["footnote_type"]["id"] == "NC" and result["id"] == "000"

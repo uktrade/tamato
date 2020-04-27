@@ -42,8 +42,8 @@
       {% set table_rows = [] %}
       {% for footnote in footnotes %}
         {{ table_rows.append([
-          {"text": footnote.id},
-          {"text": footnote.footnotedescription_set.first().description},
+          {"text": footnote.footnote_type.footnote_type_id ~ footnote.footnote_id},
+          {"text": footnote.description},
           {"text": footnote.footnote_type.description},
           {"text": ""},
           {"text": "{:%d %b %Y}".format(footnote.valid_between.lower)},
