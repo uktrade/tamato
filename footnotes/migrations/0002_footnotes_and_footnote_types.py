@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(),
                 ),
                 ("live", models.BooleanField(default=False)),
-                ("footnote_type_id", models.CharField(max_length=2, unique=True)),
+                ("footnote_type_id", models.CharField(max_length=3, unique=True)),
                 ("description", models.CharField(max_length=500)),
             ],
             options={"abstract": False,},
