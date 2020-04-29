@@ -6,7 +6,17 @@
       "footnote_type_id": "NC",
       "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
       "live": false,
-      "description": "Foo"
+      "description": "A test footnote type"
+    }
+  },
+  {
+    "model": "footnotes.footnotetype",
+    "pk": 2,
+    "fields": {
+      "footnote_type_id": "01",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-23T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "live": false,
+      "description": "Another test footnote type"
     }
   },
   {
@@ -16,8 +26,19 @@
       "footnote_id": "000",
       "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:34:36.161120+00:00\", \"upper\": null}",
       "live": false,
-      "footnote_type_id": 1,
-      "description": "Bar"
+      "footnote_type": 1,
+      "description": "A test footnote"
+    }
+  },
+  {
+    "model": "footnotes.footnote",
+    "pk": 2,
+    "fields": {
+      "footnote_id": "001",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-23T16:34:36.161120+00:00\", \"upper\": null}",
+      "live": false,
+      "footnote_type": 2,
+      "description": "Another test footnote"
     }
   }
 ]

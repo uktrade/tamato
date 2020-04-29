@@ -16,10 +16,14 @@ services:
       - db
     env_file: .env
     environment:
-      DB_HOST: "db"
-      DB_NAME: "postgres"
-      DB_USER: "postgres"
-      DEBUG: "True"
+      DATABASE_URL: "postgres://postgres@db/postgres"
+      DJANGO_SETTINGS_MODULE: "settings.dev"
+      ENABLE_DJANGO_DEBUG_TOOLBAR: "False"
       PYTHONUNBUFFERED: "1"
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-
+    command:
+      - sh
+      - -c
+      - |
+        python manage.py migrate
+        python manage.py loaddata test-footnotes-fixtures test-user-fixtures
+        python manage.py runserver 0.0.0.0:8000

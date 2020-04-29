@@ -1,0 +1,85 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/tabs/macro.njk" import govukTabs %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set footnote_id = footnote.footnote_type.footnote_type_id ~ footnote.footnote_id %}
+{% set page_title = "Footnote " ~ footnote_id %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Footnotes", "href": url("footnote-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    You are viewing this footnote in read-only mode.
+  </p>
+
+  {% set core_data_html %}
+    <div class="footnote__core-data">
+      <div class="footnote__core-data__content">
+        {{ govukTable({
+          "firstCellIsHeader": true,
+          "rows": [
+            [
+              {"text": "Footnote type"},
+              {"text": footnote.footnote_type.footnote_type_id ~ " - " ~ footnote.footnote_type.description}
+            ],
+            [
+              {"text": "Application code"},
+              {"text": ""},
+            ],
+            [
+              {"text": "Footnote ID"},
+              {"text": footnote_id}
+            ],
+            [
+              {"text": "Current description"},
+              {"text": footnote.description}
+            ],
+            [
+              {"text": "Start date"},
+              {"text": "{:%d %b %Y}".format(footnote.valid_between.lower)}
+            ],
+            [
+              {"text": "End date"},
+              {"text": "{:%d %b %Y}".format(footnote.valid_between.upper) if footnote.valid_between.upper else "-"}
+            ]
+          ]
+        }) }}
+      </div>
+      <div class="footnote__core-data__actions">
+        <h2 class="govuk-heading-s">Actions</h2>
+        <ul class="icon-action-list govuk-list">
+          <li><a href="#" class="govuk-link govuk-!-font-size-16">Edit this footnote</a></li>
+          <li><a href="#" class="govuk-link govuk-!-font-size-16">Delete this footnote</a></li>
+        </ul>
+        <p class="govuk-body-s">
+          Please note that you are unable to modify descriptions on this tab.
+          Please select the "<a href="#descriptions">Descriptions</a>" tab to create and
+          modify descriptions.
+        </p>
+      </div>
+    </div>
+  {% endset %}
+
+  {{ govukTabs({
+    "items": [
+      {
+        "label": "Core footnote data",
+        "id": "core-data",
+        "panel": {
+          "html": core_data_html
+        }
+      }
+    ]
+  }) }}
+{% endblock %}

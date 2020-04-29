@@ -41,8 +41,11 @@
     <div class="filter-layout__content">
       {% set table_rows = [] %}
       {% for footnote in footnotes %}
+        {% set footnote_link -%}
+        <a href="{{ url("footnote-ui-detail", kwargs={"pk": footnote.pk}) }}">{{ footnote.footnote_type.footnote_type_id ~ footnote.footnote_id }}</a>
+        {%- endset %}
         {{ table_rows.append([
-          {"text": footnote.footnote_type.footnote_type_id ~ footnote.footnote_id},
+          {"html": footnote_link},
           {"text": footnote.description},
           {"text": footnote.footnote_type.description},
           {"text": ""},
