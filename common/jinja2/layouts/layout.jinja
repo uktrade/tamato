@@ -15,17 +15,13 @@
 
 {% block header %}
   {{ govukHeader({
-    'serviceName': service_name,
-    'serviceUrl': '#',
-    'navigation': {
-      'label': 'Account navigation',
-      'items': [
-        {
-          'href': url('index'),
-          'text': request.user.name | default(request.user.email),
-          'active': True
-        },
-      ]
-    },
+    "serviceName": service_name,
+    "serviceUrl": "#",
+    "navigation": [
+      {
+        "href": url("logout") if request.user.is_authenticated else url("login"),
+        "text": "Sign out" if request.user.is_authenticated else "Sign In"
+      }
+    ]
   }) }}
 {% endblock %}
