@@ -98,6 +98,7 @@ TEMPLATES = [
 # -- Auth
 
 # TODO - tie in to DIT SSO?
+LOGIN_REDIRECT_URL = "index"
 
 
 # -- Security

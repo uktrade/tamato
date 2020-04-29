@@ -47,15 +47,20 @@ migrate:
 	@echo "> Running database migrations..."
 	@python manage.py migrate --noinput
 
+loaddata:
+	@echo
+	@echo "> Loading dummy data..."
+	@python manage.py loaddata test-footnotes-fixtures test-user-fixtures
+
 ## run: Run webapp
 run: export DJANGO_SETTINGS_MODULE=settings.dev
-run: collectstatic migrate
+run: collectstatic migrate loaddata
 	@echo
 	@echo "> Running webapp..."
 	@python manage.py runserver
 
 run-cf: export DJANGO_SETTINGS_MODULE=settings
-run-cf: collectstatic migrate
+run-cf: collectstatic migrate loaddata
 	@echo
 	@echo "> Running webapp..."
 	@gunicorn -b 0.0.0.0:8080 wsgi:application

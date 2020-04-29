@@ -1,0 +1,36 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Sign In" %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <form method="post" action="{{ url("login") }}">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {{ govukInput({
+      "id": "username",
+      "name": "username",
+      "label": {
+        "text": form.username.label,
+        "attributes": {}
+      },
+      "formGroup": {},
+    }) }}
+    {{ govukInput({
+      "id": "password",
+      "name": "password",
+      "type": "password",
+      "label": {
+        "text": form.password.label,
+        "attributes": {}
+      },
+      "formGroup": {},
+    }) }}
+    {{ govukButton({
+      "text": "Sign In"
+    }) }}
+  </form>
+{% endblock %}
