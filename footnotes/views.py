@@ -34,3 +34,18 @@ class FootnoteUIViewSet(FootnoteViewSet):
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return render(request, "footnotes/list.jinja", context={"footnotes": queryset})
+
+    def retrieve(self, request, *args, **kwargs):
+        return render(
+            request, "footnotes/detail.jinja", context={"footnote": self.get_object()}
+        )
+
+
+class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows footnote types to be viewed or edited.
+    """
+
+    queryset = FootnoteType.objects.all()
+    serializer_class = FootnoteTypeSerializer
+    permission_classes = [permissions.IsAuthenticated]

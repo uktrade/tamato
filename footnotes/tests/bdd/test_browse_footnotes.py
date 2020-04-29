@@ -27,7 +27,7 @@ def valid_user_login(client, valid_user):
 @given("footnote NC000")
 def footnote_NC000():
     footnote_type = factories.FootnoteTypeFactory(footnote_type_id="NC")
-    factories.FootnoteFactory(footnote_id="000", footnote_type=footnote_type)
+    return factories.FootnoteFactory(footnote_id="000", footnote_type=footnote_type)
 
 
 @pytest.fixture
@@ -42,3 +42,17 @@ def footnotes_list(footnotes_search):
     assert len(results) == 1
     result = results[0]
     assert result["footnote_type"]["id"] == "NC" and result["id"] == "000"
+
+
+@pytest.fixture
+@when("I select footnote NC000")
+def footnote_details(client, footnote_NC000):
+    return client.get(reverse("footnote-detail", kwargs={"pk": footnote_NC000.pk}))
+
+
+@then("a summary of the core information should be presented")
+def footnote_core_data(footnote_details):
+    result = footnote_details.json()
+    assert {"description", "id", "valid_between"} <= set(result.keys())
+    assert "footnote_type" in result
+    assert {"description", "id", "valid_between"} <= set(result["footnote_type"].keys())

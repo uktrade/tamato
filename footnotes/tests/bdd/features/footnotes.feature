@@ -11,3 +11,9 @@ Scenario: Searching by footnote ID
     Given I am logged in as Alice
     When I search for a footnote using a footnote ID
     Then the search result should contain the footnote searched for
+
+
+Scenario: View footnote core data
+    Given I am logged in as Alice
+    When I select footnote NC000
+    Then a summary of the core information should be presented

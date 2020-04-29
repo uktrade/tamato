@@ -56,7 +56,16 @@ module.exports = {
             loader: MiniCssExtractPlugin.loader
           },
           'css-loader',
-          'sass-loader'
+          {
+            loader: 'sass-loader',
+            options: {
+              sassOptions: {
+                includePaths: [
+                  'footnotes/static/footnotes/scss',
+                ],
+              },
+            },
+          },
         ]
       }
     ]
