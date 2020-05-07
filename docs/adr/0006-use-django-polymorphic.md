@@ -1,10 +1,10 @@
-# 4. Use Django Polymorphic for Multi-Table Inheritance
+# 6. Use Django Polymorphic for Multi-Table Inheritance
 
 Date: 2020-06-12
 
 ## Status
 
-Proposed
+Approved
 
 ## Context
 
@@ -68,7 +68,7 @@ objects. This is where polymorphism comes in.
 Polymorphism of a database object is described as the ability for that object 
 to take on multiple forms. In this case it is better described as the parent 
 object having a self-awareness of which child object it represents. To achieve 
-this in django the parent table has an additional column holding the content 
+this in Django the parent table has an additional column holding the content 
 type (essentially the table) of the child object. In doing this it is possible 
 to group all parent rows by their child object type. Once grouped a single query 
 can be made for each child object type to add the child columns to the objects.
@@ -108,7 +108,7 @@ N.B. “related record” is used to describe the child model inheriting the
 - `workbasket` - the related `WorkBasket`.
 - `predecessor` - A foreign key to another `TrackedModel` which represents the 
 previous iteration of the related record.
-- `polymorphic_ctype` - A foreign key to Djangos content type system, 
+- `polymorphic_ctype` - A foreign key to Django's content type system, 
 which stores the details of the table being linked to.
 
 ##### ChildModel
@@ -240,7 +240,7 @@ There are numerous benefits of this option in the context of code.
 
 Foremost is that this solution only requires the use of a single extra 
 library which makes use of an MTI mechanism already natively to Django.
-This library is django-polymorphic.
+This library is `django-polymorphic`.
 
 The models classes as a result are quite simple, looking like so:
 
@@ -264,7 +264,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
    description = models.CharField(max_length=500)
 ```
 
-Accessing a child object is also no different than accessing a normal django 
+Accessing a child object is also no different than accessing a normal Django 
 object. On the other hand accessing a `TrackedModel` directly automatically 
 returns you the child instance it represents. As a result getting all 
 `TrackedModel`s connected to a `WorkBasket` automatically returns the relevant 
@@ -281,7 +281,7 @@ w.tracked_models.all()
 # ]>
 ```
 
-This is due to Django-Polymorphic overriding the default queryset class to 
+This is due to Django-Polymorphic overriding the default query set class to 
 fetch the child classes and return those instead. Because of this the code 
 is always dealing with the child model and not directly with the `TrackedModel` 
 unless explicitly stated. The project therefore is allowed to lean into the 
