@@ -1,0 +1,22 @@
+{% extends "layouts/layout.jinja" %}
+
+{% set page_title = "Find and edit workbaskets" %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    Enter criteria to help find a workbasket.
+    Alternatively, <a href="">create a new workbasket</a>.
+  </p>
+
+  {% include "includes/workbasket-list.jinja" %}
+{% endblock %}

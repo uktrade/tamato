@@ -1,5 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 
+{% from "components/inset-text/macro.njk" import govukInsetText %}
+
 {% set page_title = "Main menu" %}
 
 {% block content %}
@@ -16,6 +18,25 @@
         footnotes</a>
     </div>
     <div class="govuk-grid-column-one-third">
+    </div>
+  </div>
+  <p class="govuk-body govuk-!-margin-bottom-9"></p>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-m">Workbaskets</h2>
+      {% set workbaskets_notification %}
+        {% with num_workbaskets = workbaskets|length %}
+          {% if num_workbaskets > 0 %}
+            You have {{ num_workbaskets }} workbasket{{ pluralize(num_workbaskets) }}, listed below.
+          {% else %}
+            You are not working with any workbaskets at the moment.
+          {% endif %}
+        {% endwith %}
+      {% endset %}
+      {{ govukInsetText({
+        "text": workbaskets_notification
+      }) }}
+      {% include "includes/workbasket-list.jinja" %}
     </div>
   </div>
 {% endblock %}

@@ -24,6 +24,7 @@ urlpatterns = [
     path("", include("footnotes.urls")),
     path("measures/", include("measures.urls")),
     path("", include("regulations.urls")),
+    path("", include("workbaskets.urls")),
     path("admin/", admin.site.urls),
 ]
 

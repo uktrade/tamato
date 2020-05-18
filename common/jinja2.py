@@ -2,6 +2,7 @@ import os
 import re
 
 from django.contrib import messages
+from django.template.defaultfilters import pluralize
 from django.templatetags.static import static
 from django.urls import reverse
 from govuk_frontend_jinja.templates import Environment
@@ -41,6 +42,7 @@ def environment(**kwargs):
         {
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
+            "pluralize": pluralize,
             "render_bundle": render_bundle,
             "static": static,
             "url": reverse,

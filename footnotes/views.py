@@ -33,7 +33,9 @@ class FootnoteUIViewSet(FootnoteViewSet):
 
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
-        return render(request, "footnotes/list.jinja", context={"footnotes": queryset})
+        return render(
+            request, "footnotes/list.jinja", context={"object_list": queryset}
+        )
 
     def retrieve(self, request, *args, **kwargs):
         return render(
