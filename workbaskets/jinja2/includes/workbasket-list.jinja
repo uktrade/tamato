@@ -1,0 +1,48 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+<div class="filter-layout">
+  <form class="filter-layout__filters" method="get" action="{{ url("workbasket-ui-list") }}">
+    {{ govukInput({
+      "id": "search",
+      "name": "search",
+      "label": {
+        "text": "Search",
+        "classes": "govuk-label--m",
+        "attributes": {}
+      },
+      "formGroup": {}
+    }) }}
+
+    {{ govukButton({"text": "Filter"}) }}
+  </form>
+
+  <div class="filter-layout__content">
+    {% set table_rows = [] %}
+    {% for workbasket in workbaskets %}
+      {% set workbasket_link -%}
+        <a href="{{ url("workbasket-ui-detail", kwargs={"pk": workbasket.id}) }}">{{ workbasket.pk }}</a>
+      {%- endset -%}
+      {{ table_rows.append([
+        {"html": workbasket_link},
+        {"text": workbasket.title},
+        {"text": ""},
+        {"text": workbasket.status},
+        {"text": "{:%d %b %Y}".format(workbasket.updated_at)},
+        {"text": ""},
+      ]) or "" }}
+    {% endfor %}
+    {{ govukTable({
+      "head": [
+        {"text": "ID"},
+        {"text": "Title"},
+        {"text": "Type"},
+        {"text": "Status"},
+        {"text": "Last update"},
+        {"text": "Next step"},
+      ],
+      "rows": table_rows
+    }) }}
+  </div>
+</div>

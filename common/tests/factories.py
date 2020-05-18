@@ -67,3 +67,8 @@ class RegulationFactory(factory.django.DjangoModelFactory):
 
     regulation_id = factory.Sequence(lambda n: f"R{datetime.now():%y}{n:04d}0")
     approved = True
+
+
+class WorkBasketFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"

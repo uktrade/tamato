@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "footnotes",
     "measures",
     "regulations",
+    "workbaskets",
 ]
 
 MIDDLEWARE = [
