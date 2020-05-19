@@ -1,5 +1,6 @@
 from enum import Enum
 
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
@@ -11,8 +12,7 @@ from common.models import TimestampedMixin
 
 
 class Workflow(models.Model):
-    """
-    Encapsulates the workbasket workflow state machine
+    """Encapsulates the workbasket workflow state machine
 
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
@@ -120,12 +120,11 @@ class Workflow(models.Model):
 
 
 class ApprovalDecision(TimestampedMixin):
-    """
-    ApprovalDecision represents whether a WorkBasket (or WorkBasketItem) has been
+    """ApprovalDecision represents whether a WorkBasket (or WorkBasketItem) has been
     approved or rejected
     """
 
-    approver = models.ForeignKey("auth.user", on_delete=models.PROTECT)
+    approver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     decision = models.CharField(
         max_length=8,
         choices=models.TextChoices(
@@ -135,33 +134,35 @@ class ApprovalDecision(TimestampedMixin):
 
 
 class WorkBasket(TimestampedMixin, Workflow):
-    "A WorkBasket groups tariff edits which will be applied at the same time"
+    """A WorkBasket groups tariff edits which will be applied at the same time"""
+
     title = models.CharField(max_length=255)
     reason = models.TextField(blank=True)
-    author = models.ForeignKey("auth.User", on_delete=models.PROTECT)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     approval = models.ForeignKey(ApprovalDecision, on_delete=models.PROTECT, null=True)
 
 
 class WorkBasketItem(TimestampedMixin):
-    "A WorkBasketItem represents draft changes to records (measures, quotas, etc)"
+    """A WorkBasketItem represents draft changes to records (measures, quotas, etc)"""
+
     workbasket = models.ForeignKey(
         WorkBasket, on_delete=models.CASCADE, related_name="items"
     )
-    author = models.ForeignKey("auth.User", on_delete=models.PROTECT)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     approval = models.ForeignKey(ApprovalDecision, on_delete=models.PROTECT, null=True)
 
     existing_record = GenericForeignKey("content_type", "object_id")
     content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, null=True)
     object_id = models.PositiveIntegerField(null=True)
 
-    "The diff field encodes the changes to be applied to the record, for audit logging"
+    """The diff field encodes the changes to be applied to the record, for audit logging
+    """
     diff = JSONField(default=dict)
 
-    """
-    The draft field encodes the record data with the changes applied, for efficiency
+    """The draft field encodes the record data with the changes applied, for efficiency
     when previewing the changes
     """
     draft = JSONField(default=dict)
 
-    "The errors field encodes the errors returned by QAM and CDS (if there are any)"
+    """The errors field encodes the errors returned by QAM and CDS (if there are any)"""
     errors = JSONField(default=list)
