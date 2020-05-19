@@ -131,13 +131,16 @@ class ApprovalDecision(TimestampedMixin):
             "ApprovalDecision", ["APPROVED", "REJECTED"]
         ).choices,
     )
+    reason = models.TextField(blank=True, help_text="Reason for decision")
 
 
 class WorkBasket(TimestampedMixin, Workflow):
     """A WorkBasket groups tariff edits which will be applied at the same time"""
 
     title = models.CharField(max_length=255)
-    reason = models.TextField(blank=True)
+    reason = models.TextField(
+        blank=True, help_text="Reason for the changes to the tariff"
+    )
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     approval = models.ForeignKey(ApprovalDecision, on_delete=models.PROTECT, null=True)
 
@@ -149,7 +152,6 @@ class WorkBasketItem(TimestampedMixin):
         WorkBasket, on_delete=models.CASCADE, related_name="items"
     )
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    approval = models.ForeignKey(ApprovalDecision, on_delete=models.PROTECT, null=True)
 
     existing_record = GenericForeignKey("content_type", "object_id")
     content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, null=True)
