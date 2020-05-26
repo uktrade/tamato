@@ -27,6 +27,13 @@ class FootnoteTypeFactory(ValidityFactoryMixin):
         upper_case=True,
         lower_case=False,
     )
+    application_code = 2
+
+
+class FootnoteTypeDescriptionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "footnotes.FootnoteTypeDescription"
+
     description = factory.Faker("text", max_nb_chars=500)
 
 
@@ -37,8 +44,14 @@ class FootnoteFactory(ValidityFactoryMixin):
         model = "footnotes.Footnote"
 
     footnote_id = factory.Sequence(lambda n: f"{n:03d}")
-    description = factory.Faker("text", max_nb_chars=500)
     footnote_type = factory.SubFactory(FootnoteTypeFactory)
+
+
+class FootnoteDescriptionFactory(ValidityFactoryMixin):
+    class Meta:
+        model = "footnotes.FootnoteDescription"
+
+    description = factory.Faker("text", max_nb_chars=500)
 
 
 class UserFactory(factory.django.DjangoModelFactory):

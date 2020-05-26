@@ -9,10 +9,12 @@ def check_validator(validate, value, expected_valid):
         validate(value)
     except ValidationError:
         if expected_valid:
-            fail(f'Unexpected validation error for value "{value}"')
+            pytest.fail(f'Unexpected validation error for value "{value}"')
+    except Exception:
+        raise
     else:
         if not expected_valid:
-            fail(f'Expected validation error for value "{value}"')
+            pytest.fail(f'Expected validation error for value "{value}"')
 
 
 @pytest.mark.parametrize(
@@ -31,21 +33,26 @@ def check_validator(validate, value, expected_valid):
     ],
 )
 def test_valid_footnote_id(value, expected_valid):
-    check_validator(validators.valid_footnote_id, value, expected_valid)
+    check_validator(validators.FootnoteIDValidator(), value, expected_valid)
 
 
 @pytest.mark.parametrize(
     "value, expected_valid",
     [
-        ("00", True),
         ("AA", True),
         ("AAA", True),
+        ("AA ", True),
+        ("00", False),
         ("000", False),
+        ("00 ", False),
         ("", False),
         ("AAAA", False),
         ("A", False),
         ("0", False),
+        (" ", False),
+        ("  ", False),
+        ("   ", False),
     ],
 )
 def test_valid_footnote_type_id(value, expected_valid):
-    check_validator(validators.valid_footnote_type_id, value, expected_valid)
+    check_validator(validators.FootnoteTypeIDValidator(), value, expected_valid)
