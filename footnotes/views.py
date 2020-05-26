@@ -17,7 +17,7 @@ class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows footnotes to be viewed.
     """
 
-    queryset = Footnote.objects.all()
+    queryset = Footnote.objects.all().prefetch_related("footnotedescription_set")
     serializer_class = FootnoteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = FootnoteFilter
@@ -46,6 +46,8 @@ class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows footnote types to be viewed or edited.
     """
 
-    queryset = FootnoteType.objects.all()
+    queryset = FootnoteType.objects.all().prefetch_related(
+        "footnotetypedescription_set"
+    )
     serializer_class = FootnoteTypeSerializer
     permission_classes = [permissions.IsAuthenticated]

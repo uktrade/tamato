@@ -41,7 +41,10 @@ def footnotes_list(footnotes_search):
     results = footnotes_search.json()
     assert len(results) == 1
     result = results[0]
-    assert result["footnote_type"]["id"] == "NC" and result["id"] == "000"
+    assert (
+        result["footnote_type"]["footnote_type_id"] == "NC"
+        and result["footnote_id"] == "000"
+    )
 
 
 @pytest.fixture
@@ -53,6 +56,8 @@ def footnote_details(client, footnote_NC000):
 @then("a summary of the core information should be presented")
 def footnote_core_data(footnote_details):
     result = footnote_details.json()
-    assert {"description", "id", "valid_between"} <= set(result.keys())
+    assert {"descriptions", "id", "footnote_id", "valid_between"} <= set(result.keys())
     assert "footnote_type" in result
-    assert {"description", "id", "valid_between"} <= set(result["footnote_type"].keys())
+    assert {"descriptions", "id", "footnote_type_id", "valid_between"} <= set(
+        result["footnote_type"].keys()
+    )
