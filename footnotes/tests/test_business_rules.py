@@ -45,8 +45,9 @@ def test_fot1():
     """The type of the footnote must be unique"""
     factories.FootnoteTypeFactory.create(footnote_type_id="AA")
 
-    with pytest.raises(django.db.utils.IntegrityError):
-        factories.FootnoteTypeFactory.create(footnote_type_id="AA")
+    with pytest.raises(django.core.exceptions.ValidationError):
+        ft = factories.FootnoteTypeFactory.build(footnote_type_id="AA")
+        ft.full_clean()
 
 
 def test_fot2():
