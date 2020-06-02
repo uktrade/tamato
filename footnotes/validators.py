@@ -56,3 +56,20 @@ def valid_footnote_period(footnote):
         raise ValidationError(
             f"The validity period of the footnote type ({footnote.footnote_type.valid_between}) must span the validity period of the footnote ({footnote.valid_between})."
         )
+
+
+def unique_footnote_type(footnote_type):
+    """FOT1
+    The type of the footnote must be unique.
+    """
+
+    FootnoteType = footnote_type.__class__
+    # TODO depends on TrackedModel and WorkBasket implementation
+    # existing = FootnoteType.live_objects.filter(footnote_type_id=footnote_type.footnote_type_id)
+    existing = FootnoteType.objects.filter(
+        footnote_type_id=footnote_type.footnote_type_id
+    )
+    if footnote_type.id:
+        exisiting.exclude(id=footnote_type.id)
+    if len(existing) > 0:
+        raise ValidationError("The type of the footnote must be unique")

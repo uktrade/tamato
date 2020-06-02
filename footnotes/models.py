@@ -29,9 +29,12 @@ ApplicationCode = models.IntegerChoices(
 
 class FootnoteType(ValidityMixin):
     footnote_type_id = models.CharField(
-        unique=True, max_length=3, validators=[validators.FootnoteTypeIDValidator]
+        max_length=3, validators=[validators.FootnoteTypeIDValidator]
     )
     application_code = models.PositiveIntegerField(choices=ApplicationCode.choices)
+
+    def clean(self):
+        validators.unique_footnote_type(self)
 
 
 class FootnoteTypeDescription(models.Model):
