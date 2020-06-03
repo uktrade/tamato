@@ -4,6 +4,10 @@ services:
     image: "postgres:12.2"
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
+    volumes:
+      - tamato-data-volume:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   tamato:
     build: .
@@ -14,16 +18,12 @@ services:
       - db
     links:
       - db
-    env_file: .env
     environment:
       DATABASE_URL: "postgres://postgres@db/postgres"
       DJANGO_SETTINGS_MODULE: "settings.dev"
       ENABLE_DJANGO_DEBUG_TOOLBAR: "False"
       PYTHONUNBUFFERED: "1"
     command:
-      - sh
-      - -c
-      - |
-        python manage.py migrate
-        python manage.py loaddata test-footnotes-fixtures test-user-fixtures
-        python manage.py runserver 0.0.0.0:8000
+      - python manage.py runserver 0.0.0.0:8000
+volumes:
+  tamato-data-volume:

@@ -6,6 +6,7 @@ django-dotenv
 django-extra-fields
 django-filter
 django-health-check
+django-polymorphic
 django-treebeard
 django-webpack-loader
 django_extensions

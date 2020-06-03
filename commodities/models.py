@@ -3,21 +3,21 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db import models
 from treebeard.mp_tree import MP_Node
 
-from common.models import TimestampedMixin, ValidityMixin
+from common.models import (
+    TrackedModel,
+    TimestampedMixin,
+    ValidityMixin,
+    PolymorphicMPTreeManager,
+)
 
 
-class Commodity(MP_Node, TimestampedMixin, ValidityMixin):
+class Commodity(MP_Node, TrackedModel, ValidityMixin, TimestampedMixin):
     code = models.CharField(max_length=12)
 
     description = models.TextField()
-    predecessor = models.OneToOneField(
-        "self",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="successor",
-    )
     version = models.PositiveIntegerField()
+
+    objects = PolymorphicMPTreeManager()
 
     def get_live_children(self, **kwargs):
         return self.get_children().filter(live=True, **kwargs)

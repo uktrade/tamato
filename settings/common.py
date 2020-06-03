@@ -53,12 +53,14 @@ INSTALLED_APPS = [
     # "health_check.db",
     # "health_check.cache",
     # "health_check.storage",
+    "polymorphic",
     "rest_framework",
     "webpack_loader",
     "common",
     "commodities",
     "footnotes",
     "measures",
+    "workbaskets",
 ]
 
 MIDDLEWARE = [
