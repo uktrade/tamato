@@ -70,6 +70,6 @@ def unique_footnote_type(footnote_type):
         footnote_type_id=footnote_type.footnote_type_id
     )
     if footnote_type.id:
-        exisiting.exclude(id=footnote_type.id)
+        existing = existing.exclude(id=footnote_type.id)
     if len(existing) > 0:
         raise ValidationError("The type of the footnote must be unique")

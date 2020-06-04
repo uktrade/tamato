@@ -12,6 +12,7 @@ class FootnoteTypeDescriptionSerializer(serializers.ModelSerializer):
 
 
 class FootnoteTypeSerializer(ValiditySerializerMixin):
+    id = serializers.IntegerField()
     footnote_type_id = serializers.CharField(
         validators=[validators.FootnoteIDValidator]
     )
@@ -31,6 +32,7 @@ class FootnoteDescriptionSerializer(ValiditySerializerMixin):
 
 
 class FootnoteSerializer(ValiditySerializerMixin):
+    id = serializers.IntegerField()
     footnote_id = serializers.CharField(validators=[validators.FootnoteTypeIDValidator])
     footnote_type = FootnoteTypeSerializer()
     descriptions = FootnoteDescriptionSerializer(
