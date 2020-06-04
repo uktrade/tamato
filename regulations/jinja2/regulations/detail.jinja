@@ -1,0 +1,91 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/tabs/macro.njk" import govukTabs %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Regulation " ~ regulation.regulation_id %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Regulations", "href": url("regulation-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    You are viewing this regulation in read-only mode.
+  </p>
+
+  {% set core_data_html %}
+    <div class="regulation__core-data">
+      <div class="regulation__core-data__content">
+        {{ govukTable({
+          "firstCellIsHeader": true,
+          "rows": [
+            [
+              {"text": "Internal identifier", "classes": "govuk-!-width-one-third"},
+              {"text": regulation.regulation_id, "classes": "govuk-!-width-two-thirds"},
+            ],
+            [
+              {"text": "Information text"},
+              {"text": regulation.information_text}
+            ],
+            [
+              {"text": "Public-facing identifier"},
+              {"text": ""},
+            ],
+            [
+              {"text": "URL"},
+              {"text": ""}
+            ],
+            [
+              {"text": "Regulation source"},
+              {"text": ""}
+            ],
+            [
+              {"text": "Trade Remedies case"},
+              {"text": ""}
+            ],
+            [
+              {"text": "Regulation group"},
+              {"text": regulation.regulation_group.description if regulation.regulation_group else ""}
+            ],
+            [
+              {"text": "Start date"},
+              {"text": "{:%d %b %Y}".format(regulation.valid_between.lower) if regulation.valid_between else "-"}
+            ],
+            [
+              {"text": "End date"},
+              {"text": "{:%d %b %Y}".format(regulation.valid_between.upper) if regulation.valid_between.upper else "-"}
+            ]
+          ]
+        }) }}
+      </div>
+      <div class="regulation__core-data__actions">
+        <h2 class="govuk-heading-s">Actions</h2>
+        <ul class="icon-action-list govuk-list">
+          <li><a href="#" class="govuk-link govuk-!-font-size-16">Edit this regulation</a></li>
+          <li><a href="#" class="govuk-link govuk-!-font-size-16">Delete this regulation</a></li>
+        </ul>
+      </div>
+    </div>
+  {% endset %}
+
+  {{ govukTabs({
+    "items": [
+      {
+        "label": "Core regulation data",
+        "id": "core-data",
+        "panel": {
+          "html": core_data_html
+        }
+      }
+    ]
+  }) }}
+{% endblock %}

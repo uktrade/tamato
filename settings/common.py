@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "commodities",
     "footnotes",
     "measures",
+    "regulations",
 ]
 
 MIDDLEWARE = [

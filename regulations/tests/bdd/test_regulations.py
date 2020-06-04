@@ -1,0 +1,62 @@
+"""Tests for browse regulations behaviours."""
+import pytest
+from pytest_bdd import given
+from pytest_bdd import scenarios
+from pytest_bdd import then
+from pytest_bdd import when
+from rest_framework.reverse import reverse
+
+from common.tests import factories
+
+pytestmark = pytest.mark.django_db
+
+
+scenarios("features/regulations.feature")
+
+
+@given('a valid user named "Alice"')
+def valid_user():
+    return factories.UserFactory.create(username="Alice")
+
+
+@given("some regulations")
+def some_regulations():
+    return factories.RegulationFactory.create_batch(10)
+
+
+@given("I am logged in as Alice")
+def valid_user_login(client, valid_user):
+    client.force_login(valid_user)
+
+
+@given("regulation C2000000")
+def regulation_C2000000():
+    return factories.RegulationFactory.create(regulation_id="C2000000")
+
+
+@pytest.fixture
+@when("I search for a regulation using a valid Regulation Number")
+def regulations_search(client):
+    return client.get(reverse("regulation-list"), {"search": "C2000000"})
+
+
+@then("the search result should contain the regulation searched for")
+def regulations_list(regulations_search):
+    results = regulations_search.json()
+    assert len(results) == 1
+    result = results[0]
+    assert result["regulation_id"] == "C2000000"
+
+
+# @pytest.fixture
+# @when("I select footnote NC000")
+# def footnote_details(client, footnote_NC000):
+#     return client.get(reverse("footnote-detail", kwargs={"pk": footnote_NC000.pk}))
+
+
+# @then("a summary of the core information should be presented")
+# def footnote_core_data(footnote_details):
+#     result = footnote_details.json()
+#     assert {"description", "id", "valid_between"} <= set(result.keys())
+#     assert "footnote_type" in result
+#     assert {"description", "id", "valid_between"} <= set(result["footnote_type"].keys())
