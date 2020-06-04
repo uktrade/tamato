@@ -1,0 +1,254 @@
+[
+  {
+    "model": "regulations.group",
+    "pk": 1,
+    "fields": {
+      "group_id": "ACC",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Excises"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 2,
+    "fields": {
+      "group_id": "ADD",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Additional Duties (AGRI)"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 3,
+    "fields": {
+      "group_id": "ADH",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Monetary and accession compensatory amounts"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 4,
+    "fields": {
+      "group_id": "AGR",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Agricultural amounts"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 5,
+    "fields": {
+      "group_id": "APL",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Applicable duty rates, other than from the CN"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 6,
+    "fields": {
+      "group_id": "CIT",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "CITES"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 7,
+    "fields": {
+      "group_id": "CUN",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Customs Union"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 8,
+    "fields": {
+      "group_id": "DIV",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Various"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 9,
+    "fields": {
+      "group_id": "DNC",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Duties coming from the CN"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 10,
+    "fields": {
+      "group_id": "DUM",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Anti-dumping duties, countervailing duties"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 11,
+    "fields": {
+      "group_id": "EPF",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Provisional exclusion"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 12,
+    "fields": {
+      "group_id": "FTA",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Free Trade Agreement"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 13,
+    "fields": {
+      "group_id": "KON",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Non-preferential tariff quotas"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 14,
+    "fields": {
+      "group_id": "MLA",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Entry into free circulation, Export authorization"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 15,
+    "fields": {
+      "group_id": "OPQ",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Outward processing tariff preference"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 16,
+    "fields": {
+      "group_id": "PRF",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Preferential duty"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 17,
+    "fields": {
+      "group_id": "PRS",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Prohibition"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 18,
+    "fields": {
+      "group_id": "RDR",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Reduced duty rates in the framework of the GATT"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 19,
+    "fields": {
+      "group_id": "REX",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Export refund (basic products)"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 20,
+    "fields": {
+      "group_id": "RIX",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Export refund (ingredients)"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 21,
+    "fields": {
+      "group_id": "SPG",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Generalized system of preferences"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 22,
+    "fields": {
+      "group_id": "SUR",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Posterior surveillance"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 23,
+    "fields": {
+      "group_id": "SUS",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Erga Omnes Suspensions"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 24,
+    "fields": {
+      "group_id": "TVA",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "VAT"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 25,
+    "fields": {
+      "group_id": "TXC",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Countervailing charge"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 26,
+    "fields": {
+      "group_id": "UKR",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "UK dummy regulation group for the UK regulations"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 27,
+    "fields": {
+      "group_id": "UTS",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Supplementary unit"
+    }
+  },
+  {
+    "model": "regulations.group",
+    "pk": 28,
+    "fields": {
+      "group_id": "VAU",
+      "valid_between": "{\"bounds\": \"[)\", \"lower\": \"2020-04-22T16:31:01.872514+00:00\", \"upper\": \"9999-12-31T23:59:59.999999+00:00\"}",
+      "description": "Unit price, standard import value"
+    }
+  }
+]

@@ -23,6 +23,7 @@ urlpatterns = [
     path("commodities/", include("commodities.urls")),
     path("", include("footnotes.urls")),
     path("measures/", include("measures.urls")),
+    path("", include("regulations.urls")),
     path("admin/", admin.site.urls),
 ]
 

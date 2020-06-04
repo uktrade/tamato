@@ -59,3 +59,11 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = "auth.User"
+
+
+class RegulationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "regulations.Regulation"
+
+    regulation_id = factory.Sequence(lambda n: f"R{datetime.now():%y}{n:04d}0")
+    approved = True

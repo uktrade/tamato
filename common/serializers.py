@@ -4,7 +4,7 @@ from drf_extra_fields.fields import DateTimeRangeField
 from rest_framework import serializers
 
 
-class ValiditySerializerMixin(serializers.HyperlinkedModelSerializer):
+class ValiditySerializerMixin(serializers.Serializer):
     valid_between = DateTimeRangeField()
 
 

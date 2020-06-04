@@ -1,0 +1,16 @@
+.regulation__core-data {
+  @extend .govuk-grid-row;
+}
+
+.regulation__core-data__content {
+  @extend .govuk-grid-column-three-quarters;
+}
+
+.regulation__core-data__actions {
+  @extend .govuk-grid-column-one-quarter;
+
+  h2 {
+    border-top: 2px solid $govuk-brand-colour;
+    padding-top: govuk-spacing(4);
+  }
+}
