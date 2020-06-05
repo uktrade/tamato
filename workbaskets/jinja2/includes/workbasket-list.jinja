@@ -22,20 +22,18 @@
     {% set table_rows = [] %}
     {% for workbasket in workbaskets %}
       {% set workbasket_link -%}
-        <a href="{{ url("workbasket-ui-detail", kwargs={"pk": workbasket.id}) }}">{{ workbasket.pk }}</a>
+        <a href="{{ url("workbasket-ui-detail", kwargs={"pk": workbasket.id}) }}">{{ workbasket.title }}</a>
       {%- endset -%}
       {{ table_rows.append([
         {"html": workbasket_link},
-        {"text": workbasket.title},
         {"text": ""},
-        {"text": workbasket.status},
+        {"text": workbasket.get_status_display()},
         {"text": "{:%d %b %Y}".format(workbasket.updated_at)},
         {"text": ""},
       ]) or "" }}
     {% endfor %}
     {{ govukTable({
       "head": [
-        {"text": "ID"},
         {"text": "Title"},
         {"text": "Type"},
         {"text": "Status"},

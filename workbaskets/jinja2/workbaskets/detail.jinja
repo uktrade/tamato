@@ -55,11 +55,11 @@
         ],
         [
           {"text": "Workbasket status"},
-          {"text": workbasket.status}
+          {"text": workbasket.get_status_display()}
         ],
         [
           {"text": "Activity summary"},
-          {"html": workbasket.items.all().count() ~ " activities<br>" ~ workbasket.items.filter(approval__isnull=True).count() ~ " in progress"}
+          {"text": ""}
         ]
       ]
     }) }}
@@ -67,7 +67,7 @@
 
   {% set activities_html %}
     <h2 class="govuk-heading-l">Workbasket activities</h2>
-    <p class="govuk-body">This workbasket contains the following {{ workbasket.items.count() }} changes:</p>
+    <p class="govuk-body">This workbasket contains the following {# workbasket.items.count() #} changes:</p>
     {% set activity_groups = [] %}
     {% for group_name, group_items in workbasketitem_groups %}
       {% set table %}
