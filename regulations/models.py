@@ -9,6 +9,7 @@ from common.models import ValidityMixin
 from regulations.validators import REGULATION_ID_PATTERN
 from regulations.validators import unique_regulation_id_for_role_type
 from regulations.validators import validate_approved
+from regulations.validators import validate_information_text
 from regulations.validators import validate_official_journal
 
 
@@ -75,7 +76,7 @@ class Regulation(models.Model):
     """
 
     role_type = models.PositiveIntegerField(
-        choices=RoleType.choices, default=RoleType["Base"],
+        choices=RoleType.choices, default=RoleType["Base"], editable=False,
     )
 
     """The regulation number"""
@@ -85,12 +86,29 @@ class Regulation(models.Model):
         validators=[RegexValidator(REGULATION_ID_PATTERN)],
     )
 
-    official_journal_number = models.CharField(max_length=5, null=True, blank=True)
-    official_journal_page = models.PositiveSmallIntegerField(
-        blank=True, null=True, validators=[MaxValueValidator(9999)]
+    official_journal_number = models.CharField(
+        max_length=5, null=True, blank=True, editable=False, default="1"
     )
-    published_at = models.DateField(blank=True, null=True)
+    official_journal_page = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        validators=[MaxValueValidator(9999)],
+        editable=False,
+        default=1,
+    )
+    published_at = models.DateField(blank=True, null=True, editable=False)
     information_text = models.CharField(max_length=500, blank=True, null=True)
+    public_identifier = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="This is the name of the regulation as it would appear on (for example) legislation.gov.uk",
+    )
+    url = models.URLField(
+        blank=True,
+        null=True,
+        help_text="Please enter the absolute URL of the regulation",
+    )
 
     """Indicates if a (draft) regulation is approved.
     Measures associated with an unapproved draft regulation are only for information and
@@ -108,6 +126,7 @@ class Regulation(models.Model):
     replacement_indicator = models.PositiveIntegerField(
         choices=ReplacementIndicator.choices,
         default=ReplacementIndicator["Not replaced"],
+        editable=False,
     )
 
     # Complete Abrogation, Explicit Abrogation and Prorogation regulations have no
@@ -115,7 +134,7 @@ class Regulation(models.Model):
     valid_between = DateTimeRangeField(blank=True, null=True)
 
     # Base, Modification and FTS regulations have an effective end date
-    effective_end_date = models.DateField(blank=True, null=True)
+    effective_end_date = models.DateField(blank=True, null=True, editable=False)
 
     # XXX do we need to store this? - i think it is already captured by
     #     self.terminations.count() > 0
@@ -164,6 +183,13 @@ class Regulation(models.Model):
         through_fields=("regulation", "replaced"),
     )
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        # store db values to detect changes
+        instance.values_from_db = dict(zip(field_names, values))
+        return instance
+
     @property
     def is_draft_regulation(self):
         return self.regulation_id.startswith("C")
@@ -172,6 +198,8 @@ class Regulation(models.Model):
         unique_regulation_id_for_role_type(self)
         validate_approved(self)
         validate_official_journal(self)
+        validate_information_text(self)
+        validate_approved(self)
 
 
 class Amendment(models.Model):

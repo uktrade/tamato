@@ -53,13 +53,16 @@ def validate_approved(regulation):
         raise ValidationError("Only draft regulations can be 'Not Approved'")
 
 
-def can_change_approved(regulation):
+def validate_approved(regulation):
     """ROIMB44
 
     (A draft regulation's) flag can only change from 0='Not Approved' to 1='Approved'.
     """
 
-    return regulation.is_draft_regulation and not regulation.approved
+    if not regulation.approved and regulation.values_from_db["approved"]:
+        raise ValidationError(
+            {"approved": "Cannot change from Approved to Not Approved",}
+        )
 
 
 def validate_official_journal(regulation):
@@ -67,7 +70,12 @@ def validate_official_journal(regulation):
 
     is_oj_num_set = bool(regulation.official_journal_number)
     is_oj_page_set = regulation.official_journal_page is not None
-    return is_oj_num_set == is_oj_page_set
+    if is_oj_num_set != is_oj_page_set:
+        raise ValidationError(
+            {
+                "official_journal_number": "Both official journal number and page must be set, or both must be unset",
+            }
+        )
 
 
 def unique_regulation_id_for_role_type(regulation):
@@ -88,4 +96,26 @@ def unique_regulation_id_for_role_type(regulation):
     if regulation.id:
         existing = existing.exclude(id=regulation.id)
     if len(existing) > 0:
-        raise ValidationError("The (regulation id + role id) must be unique.")
+        raise ValidationError(
+            {"regulation_id": "The (regulation id + role id) must be unique."}
+        )
+
+
+def validate_information_text(regulation):
+    """Information text has a max length of 500 chars, but public_identifier and URL are
+    passed in the same field in the XML, so the total combined length must be less than
+    or equal to 500 chars.
+    """
+
+    if (
+        len(regulation.public_identifier or "")
+        + len(regulation.url or "")
+        + len(regulation.information_text or "")
+        + 2  # XXX assumes a single character delimiter - needs clarification
+        > 500
+    ):
+        raise ValidationError(
+            {
+                "information_text": "Information text is prepended with the Public Identifier and URL, and the total length must not be more than 500 characters."
+            }
+        )
