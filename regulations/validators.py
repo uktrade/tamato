@@ -9,7 +9,7 @@ from django.core.validators import RegexValidator
 
 class RegulationIDValidator(RegexValidator):
     """The regulation number is composed of four elements, as follows:
-    - the regulation number prefix - one of the following;
+    - the regulation number prefix - one of the following (for EU regulations);
         - 'C' draft regulations, decisions and agreements;
         - 'R' regulations;
         - 'D' decisions;
@@ -17,6 +17,16 @@ class RegulationIDValidator(RegexValidator):
         - 'I' Information. This means that this is not a legal act but it is used for
           information;
         - 'J': Judgement of the European Court of Justice.
+      or for UK regulations:
+        - 'C' Draft regulation
+        - 'P' Preferential Trade Agreement / FTA
+        - 'U' Unilateral preferences (GSP)
+        - 'S' Suspensions and reliefs
+        - 'X' Import and Export control
+        - 'N' Trade remedies
+        - 'M' MFN
+        - 'Q' Quotas
+        - 'A' Agri measures
     - the year of publication (two digits);
     - the regulation number, as published in the Official Journal (four digits); and
     - the regulation number suffix (one alphanumeric character). The suffix is used to
@@ -28,7 +38,7 @@ class RegulationIDValidator(RegexValidator):
     def __init__(self, *args, **kwargs):
         super().__init__(
             r"""(?x)
-            (?P<prefix>C|R|D|A|I|J)
+            (?P<prefix>C|R|D|A|I|J|P|U|S|X|N|M|Q)
             (?P<year>\d{2})
             (?P<number>\d{4})
             (?P<suffix>[0-9A-Z])
