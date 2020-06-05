@@ -6,7 +6,7 @@ from django.utils import timezone
 from psycopg2.extras import DateTimeTZRange
 
 from common.models import ValidityMixin
-from regulations.validators import RegulationIDValidator
+from regulations.validators import REGULATION_ID_PATTERN
 from regulations.validators import unique_regulation_id_for_role_type
 from regulations.validators import validate_approved
 from regulations.validators import validate_official_journal
@@ -80,14 +80,16 @@ class Regulation(models.Model):
 
     """The regulation number"""
     regulation_id = models.CharField(
-        max_length=8, editable=False, validators=[RegulationIDValidator()],
+        max_length=8,
+        editable=False,
+        validators=[RegexValidator(REGULATION_ID_PATTERN)],
     )
 
-    official_journal_number = models.CharField(max_length=5, null=True)
+    official_journal_number = models.CharField(max_length=5, null=True, blank=True)
     official_journal_page = models.PositiveSmallIntegerField(
-        null=True, validators=[MaxValueValidator(9999)]
+        blank=True, null=True, validators=[MaxValueValidator(9999)]
     )
-    published_at = models.DateField(null=True)
+    published_at = models.DateField(blank=True, null=True)
     information_text = models.CharField(max_length=500, blank=True, null=True)
 
     """Indicates if a (draft) regulation is approved.
@@ -108,10 +110,12 @@ class Regulation(models.Model):
         default=ReplacementIndicator["Not replaced"],
     )
 
-    # Base, Modification and FTS regulations have validity periods and effective end
-    # dates
-    valid_between = DateTimeRangeField(null=True)
-    effective_end_date = models.DateField(null=True)
+    # Complete Abrogation, Explicit Abrogation and Prorogation regulations have no
+    # validity period
+    valid_between = DateTimeRangeField(blank=True, null=True)
+
+    # Base, Modification and FTS regulations have an effective end date
+    effective_end_date = models.DateField(blank=True, null=True)
 
     # XXX do we need to store this? - i think it is already captured by
     #     self.terminations.count() > 0
@@ -119,9 +123,11 @@ class Regulation(models.Model):
 
     # Base regulations have community_code and regulation_group
     community_code = models.PositiveIntegerField(
-        choices=CommunityCode.choices, null=True,
+        choices=CommunityCode.choices, blank=True, null=True,
     )
-    regulation_group = models.ForeignKey(Group, on_delete=models.PROTECT, null=True,)
+    regulation_group = models.ForeignKey(
+        Group, on_delete=models.PROTECT, blank=True, null=True,
+    )
 
     amends = models.ManyToManyField(
         "Regulation",
