@@ -1,42 +1,12 @@
-import contextlib
-from datetime import datetime
-
 import django
 import pytest
-from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
+from common.tests.util import raises_if
 from regulations import models
 
 
 pytestmark = pytest.mark.django_db
-
-
-@contextlib.contextmanager
-def raises_if(exception, expected):
-    try:
-        yield
-    except exception:
-        if not expected:
-            raise
-    else:
-        if expected:
-            pytest.fail(f"Did not raise {exception}")
-
-
-@pytest.fixture(
-    params=[
-        ("2020-05-18", "2020-05-17", True),
-        ("2020-05-18", "2020-05-18", False),
-        ("2020-05-18", "2020-05-19", False),
-    ]
-)
-def validity_range(request):
-    start, end, expect_error = request.param
-    return (
-        DateTimeTZRange(datetime.fromisoformat(start), datetime.fromisoformat(end),),
-        expect_error,
-    )
 
 
 def test_ROIMB1():

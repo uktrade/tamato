@@ -117,28 +117,4 @@ class RegulationSerializer(
 
     class Meta:
         model = models.Regulation
-        fields = [
-            "id",
-            "url",
-            "role_type",
-            "regulation_id",
-            "published_at",
-            "information_text",
-            "approved",
-            "replacement_indicator",
-            "stopped",
-            "effective_end_date",
-            "community_code",
-            "regulation_group",
-            "valid_between",
-            "amends",
-            "amendments",
-            "extends",
-            "extensions",
-            "suspends",
-            "suspensions",
-            "terminates",
-            "terminations",
-            "replaces",
-            "replacements",
-        ]
+        fields = "__all__"

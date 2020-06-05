@@ -48,15 +48,38 @@ def regulations_list(regulations_search):
     assert result["regulation_id"] == "C2000000"
 
 
-# @pytest.fixture
-# @when("I select footnote NC000")
-# def footnote_details(client, footnote_NC000):
-#     return client.get(reverse("footnote-detail", kwargs={"pk": footnote_NC000.pk}))
+@pytest.fixture
+@when("I select regulation C2000000")
+def regulation_details(client, regulation_C2000000):
+    return client.get(
+        reverse("regulation-detail", kwargs={"pk": regulation_C2000000.pk})
+    )
 
 
-# @then("a summary of the core information should be presented")
-# def footnote_core_data(footnote_details):
-#     result = footnote_details.json()
-#     assert {"description", "id", "valid_between"} <= set(result.keys())
-#     assert "footnote_type" in result
-#     assert {"description", "id", "valid_between"} <= set(result["footnote_type"].keys())
+@then("a summary of the core information should be presented")
+def regulation_core_data(regulation_details):
+    result = regulation_details.json()
+    assert {
+        "url",
+        "role_type",
+        "regulation_id",
+        "published_at",
+        "information_text",
+        "approved",
+        "replacement_indicator",
+        "stopped",
+        "effective_end_date",
+        "community_code",
+        "regulation_group",
+        "valid_between",
+        "amends",
+        "amendments",
+        "extends",
+        "extensions",
+        "suspends",
+        "suspensions",
+        "terminates",
+        "terminations",
+        "replaces",
+        "replacements",
+    } <= set(result.keys())

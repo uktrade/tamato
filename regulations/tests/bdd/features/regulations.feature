@@ -10,3 +10,8 @@ Scenario: Searching by Regulation Number
     Given I am logged in as Alice
     When I search for a regulation using a valid Regulation Number
     Then the search result should contain the regulation searched for
+
+Scenario: View regulation core data
+    Given I am logged in as Alice
+    When I select regulation C2000000
+    Then a summary of the core information should be presented
