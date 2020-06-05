@@ -1,4 +1,5 @@
 from django.contrib.postgres.fields import DateTimeRangeField
+from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
@@ -83,7 +84,9 @@ class Regulation(models.Model):
     )
 
     official_journal_number = models.CharField(max_length=5, null=True)
-    official_journal_page = models.CharField(max_length=4, null=True)
+    official_journal_page = models.PositiveSmallIntegerField(
+        null=True, validators=[MaxValueValidator(9999)]
+    )
     published_at = models.DateField(null=True)
     information_text = models.CharField(max_length=500, blank=True, null=True)
 
