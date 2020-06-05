@@ -1,14 +1,47 @@
-from enum import Enum
-
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
+
+
+class WorkflowStatus(models.TextChoices):
+    # Newly started, but not yet submitted into workflow
+    NEW_IN_PROGRESS = "NEW_IN_PROGRESS", "New - in progress"
+    # Existing item, already on CDS, being edited but not yet submitted into workflow
+    EDITING = "EDITING", "Editing"
+    # Submitted for approval, pending response from Approver
+    AWAITING_APPROVAL = "AWAITING_APPROVAL", "Awaiting approval"
+    # Was not approved, returned to submitter
+    APPROVAL_REJECTED = "APPROVAL_REJECTED", "Failed approval"
+    # Approved but not yet scheduled for sending to CDS
+    READY_FOR_EXPORT = "READY_FOR_EXPORT", "Ready for export"
+    # New item approved and scheduled for sending to CDS
+    AWAITING_CDS_UPLOAD_CREATE_NEW = (
+        "AWAITING_CDS_UPLOAD_CREATE_NEW",
+        "Awaiting CDS upload - create new",
+    )
+    # Edited item approved and scheduled for sending to CDS, existing version will be end-dated and replaced
+    AWAITING_CDS_UPLOAD_EDIT = "AWAITING_CDS_UPLOAD_EDIT", "Awaiting CDS upload - edit"
+    # Edited item approved and scheduled for sending to CDS, existing version will be updated
+    AWAITING_CDS_UPLOAD_OVERWRITE = (
+        "AWAITING_CDS_UPLOAD_OVERWRITE",
+        "Awaiting CDS upload - overwrite",
+    )
+    # Delete instruction approved and scheduled for sending to CDS
+    AWAITING_CDS_UPLOAD_DELETE = (
+        "AWAITING_CDS_UPLOAD_DELETE",
+        "Awaiting CDS upload - delete",
+    )
+    # Sent to CDS, waiting for response
+    SENT_TO_CDS = "SENT_TO_CDS", "Sent to CDS"
+    # Delete instruction sent to CDS, waiting for response
+    SENT_TO_CDS_DELETE = "SENT_TO_CDS_DELETE", "Sent to CDS - delete"
+    # On CDS, may or may not have taken effect
+    PUBLISHED = "PUBLISHED", "Published"
+    # Sent to CDS, but CDS returned an error
+    CDS_ERROR = "CDS_ERROR", "CDS error"
 
 
 class Workflow(models.Model):
@@ -19,38 +52,6 @@ class Workflow(models.Model):
 
     class Meta:
         abstract = True
-
-    WorkflowStatus = models.TextChoices(
-        "WorkflowStatus",
-        [
-            # Newly started, but not yet submitted into workflow
-            "NEW_IN_PROGRESS",
-            # Existing item, already on CDS, being edited but not yet submitted into workflow
-            "EDITING",
-            # Submitted for approval, pending response from Approver
-            "AWAITING_APPROVAL",
-            # Was not approved, returned to submitter
-            "APPROVAL_REJECTED",
-            # Approved but not yet scheduled for sending to CDS
-            "READY_FOR_EXPORT",
-            # New item approved and scheduled for sending to CDS
-            "AWAITING_CDS_UPLOAD_CREATE_NEW",
-            # Edited item approved and scheduled for sending to CDS, existing version will be end-dated and replaced
-            "AWAITING_CDS_UPLOAD_EDIT",
-            # Edited item approved and scheduled for sending to CDS, existing version will be updated
-            "AWAITING_CDS_UPLOAD_OVERWRITE",
-            # Delete instruction approved and scheduled for sending to CDS
-            "AWAITING_CDS_UPLOAD_DELETE",
-            # Sent to CDS, waiting for response
-            "SENT_TO_CDS",
-            # Delete instruction sent to CDS, waiting for response
-            "SENT_TO_CDS_DELETE",
-            # On CDS, may or may not have taken effect
-            "PUBLISHED",
-            # Sent to CDS, but CDS returned an error
-            "CDS_ERROR",
-        ],
-    )
 
     status = FSMField(
         default=WorkflowStatus.NEW_IN_PROGRESS, choices=WorkflowStatus.choices,
@@ -119,52 +120,28 @@ class Workflow(models.Model):
         pass
 
 
-class ApprovalDecision(TimestampedMixin):
-    """ApprovalDecision represents whether a WorkBasket (or WorkBasketItem) has been
-    approved or rejected
-    """
-
-    approver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    decision = models.CharField(
-        max_length=8,
-        choices=models.TextChoices(
-            "ApprovalDecision", ["APPROVED", "REJECTED"]
-        ).choices,
-    )
-    reason = models.TextField(blank=True, help_text="Reason for decision")
-
-
 class WorkBasket(TimestampedMixin, Workflow):
     """A WorkBasket groups tariff edits which will be applied at the same time"""
 
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, help_text="Short name for this workbasket")
     reason = models.TextField(
         blank=True, help_text="Reason for the changes to the tariff"
     )
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    approval = models.ForeignKey(ApprovalDecision, on_delete=models.PROTECT, null=True)
-
-
-class WorkBasketItem(TimestampedMixin):
-    """A WorkBasketItem represents draft changes to records (measures, quotas, etc)"""
-
-    workbasket = models.ForeignKey(
-        WorkBasket, on_delete=models.CASCADE, related_name="items"
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, editable=False,
     )
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    approver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        null=True,
+        related_name="approved_workbaskets",
+    )
 
-    existing_record = GenericForeignKey("content_type", "object_id")
-    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, null=True)
-    object_id = models.PositiveIntegerField(null=True)
 
-    """The diff field encodes the changes to be applied to the record, for audit logging
-    """
-    diff = JSONField(default=dict)
+class Transaction(TimestampedMixin):
+    """A Transaction is created once the WorkBasket has been sent for approval"""
 
-    """The draft field encodes the record data with the changes applied, for efficiency
-    when previewing the changes
-    """
-    draft = JSONField(default=dict)
-
-    """The errors field encodes the errors returned by QAM and CDS (if there are any)"""
-    errors = JSONField(default=list)
+    workbasket = models.OneToOneField(
+        WorkBasket, on_delete=models.PROTECT, editable=False,
+    )

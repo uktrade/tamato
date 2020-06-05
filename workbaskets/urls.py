@@ -7,7 +7,6 @@ from workbaskets import views
 
 api_router = routers.DefaultRouter()
 api_router.register(r"workbaskets", views.WorkBasketViewSet)
-api_router.register(r"workbasketitems", views.WorkBasketItemViewSet)
 
 ui_router = routers.DefaultRouter()
 ui_router.register(r"workbaskets", views.WorkBasketUIViewSet, basename="workbasket-ui")
