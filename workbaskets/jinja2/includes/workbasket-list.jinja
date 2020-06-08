@@ -26,19 +26,21 @@
       {%- endset -%}
       {{ table_rows.append([
         {"html": workbasket_link},
-        {"text": ""},
+        {"text": workbasket.reason},
+        {"text": workbasket.author.username},
+        {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)},
+        {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)},
         {"text": workbasket.get_status_display()},
-        {"text": "{:%d %b %Y}".format(workbasket.updated_at)},
-        {"text": ""},
       ]) or "" }}
     {% endfor %}
     {{ govukTable({
       "head": [
         {"text": "Title"},
-        {"text": "Type"},
+        {"text": "Reason"},
+        {"text": "Owner"},
+        {"text": "Created"},
+        {"text": "Updated"},
         {"text": "Status"},
-        {"text": "Last update"},
-        {"text": "Next step"},
       ],
       "rows": table_rows
     }) }}
