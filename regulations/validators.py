@@ -1,8 +1,6 @@
 """
 Validators for regulations
 """
-import re
-
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
@@ -33,12 +31,16 @@ from django.core.validators import RegexValidator
     legislation (for instance, for supporting different validity periods within the
     one regulation)
 """
-REGULATION_ID_PATTERN = r"""(?x)
+regulation_id_validator = RegexValidator(
+    r"""(?x)
     (?P<prefix>C|R|D|A|I|J|P|U|S|X|N|M|Q)
     (?P<year>\d{2})
     (?P<number>\d{4})
     (?P<suffix>[0-9A-Z])
 """
+)
+
+no_information_text_delimiters = RegexValidator(r"^[^|]*$", "Must not contain '|'")
 
 
 def validate_approved(regulation):
@@ -111,7 +113,7 @@ def validate_information_text(regulation):
         len(regulation.public_identifier or "")
         + len(regulation.url or "")
         + len(regulation.information_text or "")
-        + 2  # XXX assumes a single character delimiter - needs clarification
+        + 2  # delimiter characters '|'
         > 500
     ):
         raise ValidationError(

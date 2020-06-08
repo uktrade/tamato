@@ -6,7 +6,8 @@ from django.utils import timezone
 from psycopg2.extras import DateTimeTZRange
 
 from common.models import ValidityMixin
-from regulations.validators import REGULATION_ID_PATTERN
+from regulations.validators import no_information_text_delimiters
+from regulations.validators import regulation_id_validator
 from regulations.validators import unique_regulation_id_for_role_type
 from regulations.validators import validate_approved
 from regulations.validators import validate_information_text
@@ -81,9 +82,7 @@ class Regulation(models.Model):
 
     """The regulation number"""
     regulation_id = models.CharField(
-        max_length=8,
-        editable=False,
-        validators=[RegexValidator(REGULATION_ID_PATTERN)],
+        max_length=8, editable=False, validators=[regulation_id_validator],
     )
 
     official_journal_number = models.CharField(
@@ -97,17 +96,24 @@ class Regulation(models.Model):
         default=1,
     )
     published_at = models.DateField(blank=True, null=True, editable=False)
-    information_text = models.CharField(max_length=500, blank=True, null=True)
+    information_text = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        validators=[no_information_text_delimiters],
+    )
     public_identifier = models.CharField(
         max_length=50,
         null=True,
         blank=True,
         help_text="This is the name of the regulation as it would appear on (for example) legislation.gov.uk",
+        validators=[no_information_text_delimiters],
     )
     url = models.URLField(
         blank=True,
         null=True,
         help_text="Please enter the absolute URL of the regulation",
+        validators=[no_information_text_delimiters],
     )
 
     """Indicates if a (draft) regulation is approved.
