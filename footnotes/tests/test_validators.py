@@ -1,20 +1,7 @@
 import pytest
-from django.core.exceptions import ValidationError
 
+from common.tests.util import check_validator
 from footnotes import validators
-
-
-def check_validator(validate, value, expected_valid):
-    try:
-        validate(value)
-    except ValidationError:
-        if expected_valid:
-            pytest.fail(f'Unexpected validation error for value "{value}"')
-    except Exception:
-        raise
-    else:
-        if not expected_valid:
-            pytest.fail(f'Expected validation error for value "{value}"')
 
 
 @pytest.mark.parametrize(
