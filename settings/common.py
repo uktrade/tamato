@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "common",
     "commodities",
     "footnotes",
+    "geo_areas",
     "measures",
     "regulations",
     "workbaskets",

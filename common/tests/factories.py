@@ -1,4 +1,5 @@
 """Factory classes for BDD tests."""
+import random
 from datetime import datetime
 from datetime import timezone
 
@@ -72,3 +73,31 @@ class RegulationFactory(factory.django.DjangoModelFactory):
 class WorkBasketFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
+
+
+class GeographicalAreaFactory(ValidityFactoryMixin):
+    class Meta:
+        model = "geo_areas.GeographicalArea"
+
+    sid = factory.Sequence(lambda n: n)
+    area_id = factory.Sequence(lambda n: f"AB{n}" if n > 10 else f"ABC{n}")
+    area_code = factory.LazyFunction(lambda: random.randint(0, 2))
+
+
+class GeographicalMembershipFactory(ValidityFactoryMixin):
+    class Meta:
+        model = "geo_areas.GeographicalMembership"
+
+    group = factory.SubFactory(GeographicalAreaFactory, area_code=1)
+    member = factory.SubFactory(
+        GeographicalAreaFactory,
+        area_code=factory.LazyFunction(lambda: random.choice([0, 2])),
+    )
+
+
+class GeographicalAreaDescriptionFactory(ValidityFactoryMixin):
+    class Meta:
+        model = "geo_areas.GeographicalAreaDescription"
+
+    area = factory.SubFactory(GeographicalAreaFactory)
+    description = factory.Faker("text", max_nb_chars=500)
