@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from common.serializers import ValiditySerializerMixin
 from regulations import models
-from regulations import validators
 
 
 class GroupSerializer(ValiditySerializerMixin):
@@ -117,4 +116,27 @@ class RegulationSerializer(
 
     class Meta:
         model = models.Regulation
-        fields = "__all__"
+        fields = [
+            "url",
+            "role_type",
+            "regulation_id",
+            "published_at",
+            "information_text",
+            "approved",
+            "replacement_indicator",
+            "stopped",
+            "effective_end_date",
+            "community_code",
+            "regulation_group",
+            "valid_between",
+            "amends",
+            "amendments",
+            "extends",
+            "extensions",
+            "suspends",
+            "suspensions",
+            "terminates",
+            "terminations",
+            "replaces",
+            "replacements",
+        ]

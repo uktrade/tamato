@@ -40,7 +40,7 @@ def valid_footnote_description_period(footnote_description):
 
     if (
         footnote_description.valid_between.lower
-        > footnote_description.footnote.valid_between.upper
+        > footnote_description.described_footnote.valid_between.upper
     ):
         raise ValidationError(
             "The start date must be less than or equal to the end date of the footnote"

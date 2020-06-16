@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 
-from common.models import ValidityMixin
+from common.models import TrackedModel, ValidityMixin
 from footnotes import validators
 
 
@@ -27,7 +27,7 @@ ApplicationCode = models.IntegerChoices(
 )
 
 
-class FootnoteType(ValidityMixin):
+class FootnoteType(TrackedModel, ValidityMixin):
     footnote_type_id = models.CharField(
         max_length=3, validators=[validators.FootnoteTypeIDValidator]
     )
@@ -37,12 +37,12 @@ class FootnoteType(ValidityMixin):
         validators.unique_footnote_type(self)
 
 
-class FootnoteTypeDescription(models.Model):
+class FootnoteTypeDescription(TrackedModel):
     footnote_type = models.ForeignKey(FootnoteType, on_delete=models.CASCADE)
     description = models.CharField(max_length=500)
 
 
-class Footnote(ValidityMixin):
+class Footnote(TrackedModel, ValidityMixin):
     footnote_id = models.CharField(
         max_length=5, validators=[validators.FootnoteIDValidator]
     )
@@ -61,8 +61,8 @@ class Footnote(ValidityMixin):
         validators.valid_footnote_period(self)
 
 
-class FootnoteDescription(ValidityMixin):
-    footnote = models.ForeignKey(Footnote, on_delete=models.CASCADE)
+class FootnoteDescription(TrackedModel, ValidityMixin):
+    described_footnote = models.ForeignKey(Footnote, on_delete=models.CASCADE)
     description = models.TextField()
 
     class Meta:
@@ -71,7 +71,7 @@ class FootnoteDescription(ValidityMixin):
                 name="FO4",
                 expressions=[
                     (Lower("valid_between"), RangeOperators.EQUAL),
-                    ("footnote", RangeOperators.EQUAL),
+                    ("described_footnote", RangeOperators.EQUAL),
                 ],
             ),
         ]
