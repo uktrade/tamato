@@ -3,7 +3,7 @@ applications:
 - name: tamato-dev
   memory: 128M
   services:
-    - tamato-db
+    - tamato-dev-db
   buildpacks:
     - nodejs_buildpack
     - python_buildpack
