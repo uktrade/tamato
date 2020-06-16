@@ -55,10 +55,10 @@ def validate_member_is_country_or_region(area_membership):
 
 
 def validate_group_is_group(area_membership):
-    if area_membership.group.area_code != AreaCode.GROUP.value:
+    if area_membership.geo_group.area_code != AreaCode.GROUP.value:
         raise ValidationError(
             {
-                "area_code": f"Areas must be a member of a group, not a {area_membership.group.get_area_code_display()}"
+                "area_code": f"Areas must be a member of a group, not a {area_membership.geo_group.get_area_code_display()}"
             }
         )
 
@@ -67,7 +67,7 @@ def validate_group_validity_includes_membership_validity(area_membership):
     """
     GA16
     """
-    group_validity = area_membership.group.valid_between
+    group_validity = area_membership.geo_group.valid_between
     membership_validity = area_membership.valid_between
 
     if not validity_range_contains_range(group_validity, membership_validity):
@@ -82,11 +82,11 @@ def validate_members_of_child_group_are_in_parent_group(area_membership):
     """
     GA19
     """
-    if not area_membership.group.parent:
+    if not area_membership.geo_group.parent:
         return
-    parent = area_membership.group.parent
+    parent = area_membership.geo_group.parent
 
-    if not area_membership.member.groups.filter(group=parent).exists():
+    if not area_membership.member.groups.filter(geo_group=parent).exists():
         raise ValidationError(
             {
                 "group": "Members of a Group, where the Group has a parent Group, "

@@ -106,7 +106,7 @@ def test_fo4_first_description_starts_at_same_time(description_starts, expect_er
         start = datetime.fromisoformat(start).replace(tzinfo=timezone.utc)
         end = start + timedelta(days=10)
         factories.FootnoteDescriptionFactory.create(
-            footnote=footnote, valid_between=DateTimeTZRange(start, end),
+            described_footnote=footnote, valid_between=DateTimeTZRange(start, end),
         )
     with raises_if(django.core.exceptions.ValidationError, expect_error):
         footnote.full_clean()
@@ -122,7 +122,7 @@ def test_fo4_descriptions_starts_unique(description_starts, expect_error):
     with raises_if(django.db.utils.IntegrityError, expect_error):
         for start in description_starts:
             factories.FootnoteDescriptionFactory.create(
-                footnote=footnote,
+                described_footnote=footnote,
                 valid_between=DateTimeTZRange(
                     datetime.fromisoformat(start), datetime(2020, 5, 31),
                 ),
@@ -145,7 +145,7 @@ def test_fo4_description_start_before_footnote_end(
     )
     with raises_if(django.core.exceptions.ValidationError, expect_error):
         desc = factories.FootnoteDescriptionFactory.create(
-            footnote=footnote,
+            described_footnote=footnote,
             valid_between=DateTimeTZRange(d_start, d_start + timedelta(days=10)),
         )
         desc.full_clean()
@@ -223,7 +223,9 @@ def test_fo17(start, end, expected):
             datetime.fromisoformat(end).replace(tzinfo=timezone.utc),
         )
         f = factories.FootnoteFactory(footnote_type=t, valid_between=range)
-        fd = factories.FootnoteDescriptionFactory(footnote=f, valid_between=range)
+        fd = factories.FootnoteDescriptionFactory(
+            described_footnote=f, valid_between=range
+        )
         f.full_clean()
 
 

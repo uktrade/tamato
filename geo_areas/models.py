@@ -5,11 +5,11 @@ from django.db import models
 from django.db.models import CheckConstraint, Q, F
 from treebeard.mp_tree import MP_Node
 
-from common.models import ValidityMixin
+from common.models import ValidityMixin, TrackedModel
 from geo_areas import validators
 
 
-class GeographicalArea(ValidityMixin):
+class GeographicalArea(TrackedModel, ValidityMixin):
     """
     A Geographical Area covers three distinct types of object:
 
@@ -61,7 +61,7 @@ class GeographicalArea(ValidityMixin):
         )
 
 
-class GeographicalMembership(ValidityMixin):
+class GeographicalMembership(TrackedModel, ValidityMixin):
     """
     A Geographical Membership describes the membership of a region or country to
     a group.
@@ -72,7 +72,7 @@ class GeographicalMembership(ValidityMixin):
     ranges of the groups.
     """
 
-    group = models.ForeignKey(
+    geo_group = models.ForeignKey(
         GeographicalArea, related_name="members", on_delete=models.PROTECT
     )
     member = models.ForeignKey(
@@ -99,14 +99,14 @@ class GeographicalMembership(ValidityMixin):
                 name="exclude_overlapping_memberships",
                 expressions=[
                     ("valid_between", RangeOperators.OVERLAPS),
-                    (F("group"), RangeOperators.EQUAL),
+                    (F("geo_group"), RangeOperators.EQUAL),
                     (F("member"), RangeOperators.EQUAL),
                 ],
             ),
         )
 
 
-class GeographicalAreaDescription(ValidityMixin):
+class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
     description = models.CharField(max_length=500, null=False, blank=False)
 
