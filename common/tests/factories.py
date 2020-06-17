@@ -118,7 +118,7 @@ class GeographicalMembershipFactory(TrackedModelMixin, ValidityFactoryMixin):
     )
 
 
-class GeographicalAreaDescriptionFactory(TrackedModelMixin):
+class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "geo_areas.GeographicalAreaDescription"
 

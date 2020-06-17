@@ -1,6 +1,5 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 

@@ -37,6 +37,9 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     # This deals with subgroups of other groups
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
 
+    def get_description(self):
+        return self.geographicalareadescription_set.last()
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
@@ -129,4 +132,4 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
         validators.validate_description_is_not_null(self)
 
     def __str__(self):
-        return f'description - "{self.description}" for {self.area}>'
+        return f'description - "{self.description}" for {self.area}'
