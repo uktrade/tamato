@@ -2,6 +2,7 @@
 import random
 from datetime import datetime
 from datetime import timezone
+from itertools import product
 
 import factory
 from psycopg2.extras import DateTimeTZRange
@@ -98,12 +99,16 @@ class RegulationFactory(TrackedModelMixin):
     approved = True
 
 
+area_id_product_generator = product("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", repeat=4)
+
+
 class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "geo_areas.GeographicalArea"
 
     sid = factory.Sequence(lambda n: n)
-    area_id = factory.Sequence(lambda n: f"AB{n}" if n > 10 else f"ABC{n}")
+
+    area_id = factory.Sequence(lambda _: "".join(next(area_id_product_generator)))
     area_code = factory.LazyFunction(lambda: random.randint(0, 2))
 
 

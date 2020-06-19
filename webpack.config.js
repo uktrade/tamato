@@ -62,6 +62,7 @@ module.exports = {
               sassOptions: {
                 includePaths: [
                   'footnotes/static/footnotes/scss',
+                  'geo_areas/static/geo_areas/scss',
                   'regulations/static/regulations/scss',
                 ],
               },

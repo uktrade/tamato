@@ -93,7 +93,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         validators.validate_members_of_child_group_are_in_parent_group(self)
 
     def __str__(self):
-        return f"<{self.member}> -> <{self.group}>"
+        return f"<{self.member}> -> <{self.geo_group}>"
 
     class Meta:
         constraints = (

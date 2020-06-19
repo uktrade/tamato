@@ -3,6 +3,9 @@ from datetime import timezone
 
 import pytest
 from psycopg2.extras import DateTimeTZRange
+from pytest_bdd import given
+
+from common.tests import factories
 
 
 @pytest.fixture(
@@ -67,3 +70,13 @@ def date_ranges():
         )
 
     return Dates
+
+
+@given('a valid user named "Alice"')
+def valid_user():
+    return factories.UserFactory.create(username="Alice")
+
+
+@given("I am logged in as Alice")
+def valid_user_login(client, valid_user):
+    client.force_login(valid_user)
