@@ -54,7 +54,7 @@ def compare_members_to_html(members, html, is_group):
     for member in members:
         obj = member.geo_group if is_group else member.member
         assert "{:%d %b %Y}".format(member.valid_between.lower) in html
-        assert str(obj.sid) in html
+        assert str(obj.area_id) in html
         assert obj.get_description().description in html
 
 

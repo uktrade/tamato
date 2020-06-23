@@ -4,7 +4,7 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = "Geographical area " ~ area.sid %}
+{% set page_title = "Geographical area " ~ area.area_id %}
 
 {% block beforeContent %}
   {{ govukBreadcrumbs({
@@ -116,9 +116,9 @@
                 else "-"
             },
             {
-                "text": membership.member.sid
+                "text": membership.member.area_id
                 if is_group
-                else membership.geo_group.sid
+                else membership.geo_group.area_id
             },
             {
                 "text": membership.member.get_description().description

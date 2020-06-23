@@ -5,7 +5,7 @@
         <a href="{{ url("geoarea-ui-detail", kwargs={"pk": geo_area.pk}) }}">{{ geo_area.sid }}</a>
         {%- endset %}
         {{ table_rows.append([
-          {"text": geo_area.pk},
+          {"text": geo_area.area_id},
           {"html": geo_area_link},
           {"text": geo_area.get_description().description},
           {"text": "{} {}".format(geo_area.area_code, geo_area.get_area_code_display())},
