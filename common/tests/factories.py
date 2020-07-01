@@ -1,7 +1,9 @@
 """Factory classes for BDD tests."""
 import random
+import string
 from datetime import datetime
 from datetime import timezone
+from functools import partial
 from itertools import product
 
 import factory
@@ -10,6 +12,8 @@ from psycopg2.extras import DateTimeTZRange
 from common.tests.models import TestModel1, TestModel2
 
 BREXIT_DATE = datetime(2021, 1, 1).replace(tzinfo=timezone.utc)
+
+alphanumeric_id_generator = partial(product, string.ascii_uppercase + string.digits)
 
 
 class ValidityFactoryMixin(factory.django.DjangoModelFactory):
@@ -22,7 +26,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "auth.User"
 
-    username = factory.Faker("name")
+    username = factory.sequence(lambda n: f"{factory.Faker('name')}{n}")
 
 
 class WorkBasketFactory(factory.django.DjangoModelFactory):
@@ -99,7 +103,7 @@ class RegulationFactory(TrackedModelMixin):
     approved = True
 
 
-area_id_product_generator = product("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", repeat=4)
+area_id_product_generator = alphanumeric_id_generator(repeat=4)
 
 
 class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -128,6 +132,35 @@ class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin
         model = "geo_areas.GeographicalAreaDescription"
 
     area = factory.SubFactory(GeographicalAreaFactory)
+    description = factory.Faker("text", max_nb_chars=500)
+
+
+class CertificateTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "certificates.CertificateType"
+
+    sid = factory.Sequence(lambda n: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[n])
+    description = factory.Faker("text", max_nb_chars=500)
+
+
+certificate_sid_product_generator = alphanumeric_id_generator(repeat=3)
+
+
+class CertificateFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "certificates.Certificate"
+
+    certificate_type = factory.SubFactory(CertificateTypeFactory)
+    sid = factory.Sequence(lambda _: "".join(next(certificate_sid_product_generator)))
+
+
+class CertificateDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "certificates.CertificateDescription"
+
+    sid = factory.sequence(lambda n: n)
+
+    described_certificate = factory.SubFactory(CertificateFactory)
     description = factory.Faker("text", max_nb_chars=500)
 
 
