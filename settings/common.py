@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "polymorphic",
     "rest_framework",
     "webpack_loader",
+    "certificates",
     "common",
     "commodities",
     "footnotes",

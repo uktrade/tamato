@@ -1,8 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from psycopg2._range import DateTimeTZRange
 
+from common.util import validity_range_contains_range
 
 AREA_ID_REGEX = r"^[A-Z0-9]{2}$|^[A-Z0-9]{4}$"
 
@@ -13,27 +13,6 @@ class AreaCode(models.IntegerChoices):
     COUNTRY = 0, "Country"
     GROUP = 1, "Geographical Area Group"
     REGION = 2, "Region"
-
-
-def validity_range_contains_range(
-    overall_range: DateTimeTZRange, contained_range: DateTimeTZRange
-) -> bool:
-    """
-    If the contained_range has both an upper and lower bound, check they are both
-    within the overall_range.
-
-    If either end is unbounded in the contained range,it must also be unbounded in the overall range.
-    """
-    if contained_range.upper and contained_range.lower:
-        return (
-            contained_range.lower in overall_range
-            and contained_range.upper in overall_range
-        )
-
-    return not (
-        (contained_range.upper_inf and overall_range.upper)
-        or (contained_range.lower_inf and contained_range.lower)
-    )
 
 
 def validate_description_is_not_null(area_description):
