@@ -9,7 +9,8 @@ from itertools import product
 import factory
 from psycopg2.extras import DateTimeTZRange
 
-from common.tests.models import TestModel1, TestModel2
+from common.tests.models import TestModel1
+from common.tests.models import TestModel2
 
 BREXIT_DATE = datetime(2021, 1, 1).replace(tzinfo=timezone.utc)
 
@@ -178,3 +179,42 @@ class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
 
     description = factory.Faker("text", max_nb_chars=24)
     custom_sid = factory.Sequence(lambda n: n)
+
+
+alphanumerics = list(string.ascii_uppercase + string.digits)
+
+
+def alphanumeric_strings(length=1):
+    g = product(alphanumerics, repeat=length)
+    return lambda n: "".join(next(g))
+
+
+class AdditionalCodeTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
+    """AdditionalCodeType factory."""
+
+    class Meta:
+        model = "additional_codes.AdditionalCodeType"
+
+    sid = factory.Sequence(alphanumeric_strings(length=1))
+    description = factory.Faker("text", max_nb_chars=500)
+    application_code = 1
+
+
+class AdditionalCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
+    """AdditionalCode factory."""
+
+    class Meta:
+        model = "additional_codes.AdditionalCode"
+
+    sid = factory.Sequence(lambda n: 1 + n)
+    type = factory.SubFactory(AdditionalCodeTypeFactory)
+    code = factory.Sequence(alphanumeric_strings(length=3))
+
+
+class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "additional_codes.AdditionalCodeDescription"
+
+    description_period_sid = factory.Sequence(lambda n: 1 + n)
+    described_additional_code = factory.SubFactory(AdditionalCodeFactory)
+    description = factory.Faker("text", max_nb_chars=500)

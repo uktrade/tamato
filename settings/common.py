@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "webpack_loader",
     "certificates",
     "common",
+    "additional_codes",
     "commodities",
     "footnotes",
     "geo_areas",
