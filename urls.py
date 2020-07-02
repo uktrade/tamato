@@ -20,6 +20,7 @@ from django.urls import path
 
 urlpatterns = [
     path("", include("common.urls")),
+    path("", include("additional_codes.urls")),
     path("commodities/", include("commodities.urls")),
     path("", include("footnotes.urls")),
     path("", include("geo_areas.urls")),

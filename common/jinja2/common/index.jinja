@@ -9,18 +9,29 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-one-third">
       <h2 class="govuk-heading-m">Manage regulations</h2>
-      <a class="govuk-link" href="{{ url('regulation-ui-list') }}">Find and edit
-        regulations</a>
+      <ul class="govuk-list"
+        <li><a class="govuk-link" href="{{ url('regulation-ui-list') }}">Find and edit
+            regulations</a></li>
+      </ul>
     </div>
     <div class="govuk-grid-column-one-third">
+      <h2 class="govuk-heading-m">Manage additional codes</h2>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="{{ url("additional_code-ui-list") }}">Find and edit
+            additional codes</a></li>
+      </ul>
       <h2 class="govuk-heading-m">Manage footnotes</h2>
-      <a class="govuk-link" href="{{ url('footnote-ui-list') }}">Find and edit
-        footnotes</a>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="{{ url('footnote-ui-list') }}">Find and edit
+            footnotes</a></li>
+      </ul>
     </div>
     <div class="govuk-grid-column-one-third">
       <h2 class="govuk-heading-m">Manage geographical areas</h2>
-      <a class="govuk-link" href="{{ url('geoarea-ui-list') }}">Find and edit
-        geographical areas</a>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="{{ url('geoarea-ui-list') }}">Find and edit
+            geographical areas</a></li>
+      </ul>
     </div>
   </div>
   <p class="govuk-body govuk-!-margin-bottom-9"></p>

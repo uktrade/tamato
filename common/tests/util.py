@@ -1,9 +1,23 @@
 import contextlib
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 
 import pytest
 from django.core.exceptions import ValidationError
 from psycopg2._range import DateTimeTZRange
+
+
+MEASURES_IMPLEMENTED = False
+MEURSING_TABLES_IMPLEMENTED = False
+
+requires_measures = pytest.mark.skipif(
+    not MEASURES_IMPLEMENTED, reason="Measures not implemented",
+)
+
+requires_meursing_tables = pytest.mark.skipif(
+    not MEURSING_TABLES_IMPLEMENTED, reason="Meursing tables not implemented",
+)
 
 
 @contextlib.contextmanager
@@ -91,3 +105,7 @@ class Dates:
         datetime.today() + timedelta(weeks=10), datetime.today() + timedelta(weeks=20),
     )
     no_end = DateTimeTZRange(datetime(2021, 1, 1, tzinfo=timezone.utc), None)
+    normal_first_half = DateTimeTZRange(
+        datetime(2021, 1, 1, tzinfo=timezone.utc),
+        datetime(2021, 1, 15, tzinfo=timezone.utc),
+    )

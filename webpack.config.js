@@ -61,6 +61,7 @@ module.exports = {
             options: {
               sassOptions: {
                 includePaths: [
+                  'additional_codes/static/additional_codes/scss',
                   'footnotes/static/footnotes/scss',
                   'geo_areas/static/geo_areas/scss',
                   'regulations/static/regulations/scss',
