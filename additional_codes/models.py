@@ -66,6 +66,9 @@ class AdditionalCode(TrackedModel, ValidityMixin):
             self
         )
 
+    def validate_workbasket(self):
+        validators.validate_at_least_one_description(self)
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)

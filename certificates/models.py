@@ -4,7 +4,8 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 
 from certificates import validators
-from common.models import TrackedModel, ValidityMixin
+from common.models import TrackedModel
+from common.models import ValidityMixin
 
 
 class CertificateType(TrackedModel, ValidityMixin):
@@ -56,6 +57,9 @@ class Certificate(TrackedModel, ValidityMixin):
         validators.validate_certificate_type_validity_includes_certificate_validity(
             self
         )
+
+    def validate_workbasket(self):
+        validators.validate_at_least_one_description(self)
 
     def __str__(self):
         return f"Certificate {self.code}"

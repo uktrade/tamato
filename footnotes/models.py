@@ -3,7 +3,8 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db import models
 from django.db.models.functions import Lower
 
-from common.models import TrackedModel, ValidityMixin
+from common.models import TrackedModel
+from common.models import ValidityMixin
 from footnotes import validators
 
 

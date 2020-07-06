@@ -35,6 +35,7 @@ class WorkBasketFactory(factory.django.DjangoModelFactory):
         model = "workbaskets.WorkBasket"
 
     author = factory.SubFactory(UserFactory)
+    title = factory.Faker("text", max_nb_chars=255)
 
 
 class ApprovedWorkBasketFactory(WorkBasketFactory):

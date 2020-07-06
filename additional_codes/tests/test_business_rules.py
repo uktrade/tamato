@@ -177,11 +177,14 @@ def test_ACN11():
 # Additional Code Description and Description Periods
 
 
-@pytest.mark.skip(reason="WorkBasket validation not implemented")
 def test_ACN5_one_description_mandatory():
     """At least one description is mandatory."""
 
-    # TODO this validation only makes sense when the workbasket is submitted
+    workbasket = factories.WorkBasketFactory()
+    ac = factories.AdditionalCodeFactory(workbasket=workbasket)
+
+    with pytest.raises(ValidationError):
+        workbasket.submit_for_approval()
 
 
 def test_ACN5_first_description_must_have_same_start_date(date_ranges):

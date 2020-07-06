@@ -105,3 +105,8 @@ def validate_previous_certificate_description_is_adjacent(certificate_descriptio
                 "adjacent to the previous descriptions validity"
             }
         )
+
+
+def validate_at_least_one_description(certificate):
+    if certificate.descriptions.count() < 1:
+        raise ValidationError("At least one description record is mandatory.")

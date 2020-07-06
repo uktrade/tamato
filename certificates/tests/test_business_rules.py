@@ -1,11 +1,14 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 
-from django.core.exceptions import ValidationError
-from django.db import DataError, IntegrityError
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import DataError
+from django.db import IntegrityError
 from psycopg2._range import DateTimeTZRange
 
 from common.tests import factories
+from common.tests.util import requires_measures
 
 
 pytestmark = pytest.mark.django_db
@@ -59,7 +62,7 @@ def test_ce3(date_ranges):
         factories.CertificateFactory.create(valid_between=date_ranges.backwards)
 
 
-@pytest.mark.skip(reason="Measures not implemented")
+@requires_measures
 def test_ce4():
     """
     If a certificate is used in a measure condition then the validity period of the certificate
@@ -68,7 +71,7 @@ def test_ce4():
     pass
 
 
-@pytest.mark.skip(reason="Measures not implemented")
+@requires_measures
 def test_ce5():
     """
     When a certificate cannot be deleted if it is used in a measure condition
@@ -76,14 +79,16 @@ def test_ce5():
     pass
 
 
-@pytest.mark.skip(
-    reason="description existence depends on certificate existence - this is a chicken and egg scenario"
-)
 def test_ce6_one_description_mandatory():
     """
     At least one description record is mandatory
     """
-    assert False
+
+    workbasket = factories.WorkBasketFactory()
+    c = factories.CertificateFactory(workbasket=workbasket)
+
+    with pytest.raises(ValidationError):
+        workbasket.submit_for_approval()
 
 
 def test_ce6_first_description_must_have_same_start_date(date_ranges):
