@@ -6,7 +6,8 @@ from django.db.models import QuerySet
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
-from treebeard.mp_tree import MP_Node, MP_NodeQuerySet
+from treebeard.mp_tree import MP_Node
+from treebeard.mp_tree import MP_NodeQuerySet
 
 from common import exceptions
 
@@ -166,3 +167,6 @@ class TrackedModel(PolymorphicModel):
             new_object.save()
 
         return new_object
+
+    def validate_workbasket(self):
+        pass

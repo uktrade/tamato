@@ -123,3 +123,8 @@ def validate_additional_code_description_start_date_before_additional_code_end_d
                 "date of the additional code."
             }
         )
+
+
+def validate_at_least_one_description(additional_code):
+    if additional_code.descriptions.count() < 1:
+        raise ValidationError("At least one description record is mandatory.")

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django_fsm import FSMField
 from django_fsm import transition
@@ -44,18 +45,33 @@ class WorkflowStatus(models.TextChoices):
     CDS_ERROR = "CDS_ERROR", "CDS error"
 
 
-class Workflow(models.Model):
-    """Encapsulates the workbasket workflow state machine
+class WorkBasket(TimestampedMixin):
+    """A WorkBasket groups tariff edits which will be applied at the same time.
 
+    WorkBasket status is controlled by a state machine:
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
 
-    class Meta:
-        abstract = True
-
+    title = models.CharField(max_length=255, help_text="Short name for this workbasket")
+    reason = models.TextField(
+        blank=True, help_text="Reason for the changes to the tariff"
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, editable=False,
+    )
+    approver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        null=True,
+        related_name="approved_workbaskets",
+    )
     status = FSMField(
         default=WorkflowStatus.NEW_IN_PROGRESS, choices=WorkflowStatus.choices,
     )
+
+    def __str__(self):
+        return f"{self.title} ({self.pk})"
 
     @transition(
         field=status,
@@ -63,7 +79,7 @@ class Workflow(models.Model):
         target=WorkflowStatus.AWAITING_APPROVAL,
     )
     def submit_for_approval(self):
-        pass
+        self.full_clean()
 
     @transition(
         field=status,
@@ -119,24 +135,15 @@ class Workflow(models.Model):
     def cds_error(self):
         pass
 
-
-class WorkBasket(TimestampedMixin, Workflow):
-    """A WorkBasket groups tariff edits which will be applied at the same time"""
-
-    title = models.CharField(max_length=255, help_text="Short name for this workbasket")
-    reason = models.TextField(
-        blank=True, help_text="Reason for the changes to the tariff"
-    )
-    author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, editable=False,
-    )
-    approver = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        editable=False,
-        null=True,
-        related_name="approved_workbaskets",
-    )
+    def clean(self):
+        self.errors = []
+        for model in self.trackedmodel_set.all():
+            try:
+                model.validate_workbasket()
+            except ValidationError as error:
+                self.errors.append((model, error))
+        if self.errors:
+            raise ValidationError("There are errors in the workbasket", self.errors)
 
 
 class Transaction(TimestampedMixin):

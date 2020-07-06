@@ -1,12 +1,15 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, DataError
+from django.db import DataError
+from django.db import IntegrityError
 from django.db.models import ProtectedError
 from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
+from common.tests.util import requires_measures
 
 
 pytestmark = pytest.mark.django_db
@@ -96,13 +99,13 @@ def test_ga7(date_ranges):
         )
 
 
-@pytest.mark.skip(reason="Measures not yet implemented")
+@requires_measures
 def test_ga10():
     """ If referenced in a measure the geographical area validity range must span the measured validity range. """
     pass
 
 
-@pytest.mark.skip(reason="Measures not yet implemented")
+@requires_measures
 def test_ga11():
     """ If an area is excluded in a measure then the areas validity must span the measures. """
     pass
@@ -178,7 +181,7 @@ def test_ga19(child, country):
     factories.GeographicalMembershipFactory(geo_group=child, member=member)
 
 
-@pytest.mark.skip(reason="Measures not yet implemented")
+@requires_measures
 def test_ga21():
     """ If a geographical area is referenced in a measure then it may not be deleted1. """
     pass
@@ -190,7 +193,7 @@ def test_ga22(child):
         child.parent.delete()
 
 
-@pytest.mark.skip(reason="Measures not yet implemented")
+@requires_measures
 def test_ga23():
     """ If a geographical area is excluded in a measure, the area cannot be deleted. """
     pass
