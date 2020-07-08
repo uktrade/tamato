@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from additional_codes.filters import AdditionalCodeFilterBackend
 from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeType
 from additional_codes.serializers import AdditionalCodeSerializer
@@ -16,7 +17,14 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AdditionalCode.objects.all().prefetch_related("descriptions")
     serializer_class = AdditionalCodeSerializer
     permission_classes = [permissions.IsAuthenticated]
-    search_fields = ["sid", "code"]
+    filter_backends = [AdditionalCodeFilterBackend]
+    search_fields = [
+        "sid",
+        "code",
+        "descriptions__description",
+        "type__sid",
+        "type__description",
+    ]
 
 
 class AdditionalCodeUIViewSet(AdditionalCodeViewSet):
