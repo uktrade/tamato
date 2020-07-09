@@ -6,7 +6,7 @@ from common.serializers import ValiditySerializerMixin
 
 
 class AdditionalCodeTypeSerializer(ValiditySerializerMixin):
-    sid = serializers.IntegerField(
+    sid = serializers.CharField(
         validators=[validators.additional_code_type_sid_validator]
     )
 
@@ -25,10 +25,8 @@ class AdditionalCodeSerializer(ValiditySerializerMixin):
     id = serializers.IntegerField()
     sid = serializers.CharField(validators=[validators.additional_code_validator])
     type = AdditionalCodeTypeSerializer()
-    descriptions = AdditionalCodeDescriptionSerializer(
-        many=True, source="additionalcodedescription_set"
-    )
+    descriptions = AdditionalCodeDescriptionSerializer(many=True)
 
     class Meta:
         model = models.AdditionalCode
-        fields = ["id", "sid", "type", "descriptions", "valid_between"]
+        fields = ["id", "sid", "type", "code", "descriptions", "valid_between"]
