@@ -1,24 +1,118 @@
-from common.serializers import ValiditySerializerMixin
+from common.serializers import (
+    ValiditySerializerMixin,
+    TrackedModelSerializer,
+    TrackedModelSerializerMixin,
+)
 from geo_areas import models
 
 
-class GeographicalMembershipSerializer(ValiditySerializerMixin):
-    class Meta:
-        model = models.GeographicalMembership
-        fields = "__all__"
-
-
-class GeographicalAreaDescriptionSerializer(ValiditySerializerMixin):
+class GeographicalAreaDescriptionSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
     class Meta:
         model = models.GeographicalAreaDescription
-        fields = ["id", "description", "valid_between"]
+        fields = [
+            "id",
+            "description",
+            "valid_between",
+            "record_code",
+            "period_record_code",
+            "subrecord_code",
+            "period_subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
+        ]
 
 
-class GeographicalAreaSerializer(ValiditySerializerMixin):
+class ParentGeographicalAreaSerializer(ValiditySerializerMixin):
+    class Meta:
+        model = models.GeographicalArea
+        fields = ["sid"]
+
+
+@TrackedModelSerializer.register_polymorphic_model
+class GeographicalAreaSerializer(ValiditySerializerMixin, TrackedModelSerializerMixin):
     descriptions = GeographicalAreaDescriptionSerializer(
         many=True, source="geographicalareadescription_set"
     )
 
     class Meta:
         model = models.GeographicalArea
-        fields = ["id", "sid", "area_code", "descriptions", "valid_between"]
+        fields = [
+            "area_id",
+            "sid",
+            "area_code",
+            "descriptions",
+            "valid_between",
+            "parent",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
+            "update_type",
+        ]
+
+
+class GeographicalAreaBasicSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    class Meta:
+        model = models.GeographicalArea
+        fields = [
+            "area_id",
+            "sid",
+            "area_code",
+            "valid_between",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
+        ]
+
+
+@TrackedModelSerializer.register_polymorphic_model
+class GeographicalAreaDescriptionTaricSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    area = GeographicalAreaBasicSerializer(read_only=True)
+
+    class Meta:
+        model = models.GeographicalAreaDescription
+        fields = [
+            "id",
+            "area",
+            "description",
+            "valid_between",
+            "record_code",
+            "period_record_code",
+            "subrecord_code",
+            "period_subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
+            "update_type",
+        ]
+
+
+@TrackedModelSerializer.register_polymorphic_model
+class GeographicalMembershipSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    geo_group = GeographicalAreaSerializer(read_only=True)
+    member = GeographicalAreaSerializer(read_only=True)
+
+    class Meta:
+        model = models.GeographicalMembership
+        fields = [
+            "geo_group",
+            "member",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
+            "update_type",
+        ]

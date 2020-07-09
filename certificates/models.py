@@ -9,6 +9,12 @@ from common.models import ValidityMixin
 
 
 class CertificateType(TrackedModel, ValidityMixin):
+    record_code = "110"
+    subrecord_code = "00"
+
+    description_record_code = "110"
+    description_subrecord_code = "05"
+
     sid = models.CharField(
         max_length=1, validators=[validators.certificate_type_sid_validator]
     )
@@ -37,6 +43,8 @@ class CertificateType(TrackedModel, ValidityMixin):
 
 
 class Certificate(TrackedModel, ValidityMixin):
+    record_code = "205"
+    subrecord_code = "00"
     sid = models.CharField(
         max_length=3, validators=[validators.certificate_sid_validator]
     )
@@ -77,6 +85,12 @@ class Certificate(TrackedModel, ValidityMixin):
 
 
 class CertificateDescription(TrackedModel, ValidityMixin):
+    record_code = "205"
+    subrecord_code = "10"
+
+    period_record_code = "205"
+    period_subrecord_code = "05"
+
     sid = models.PositiveIntegerField(validators=[MaxValueValidator(99999999)])
 
     description = models.CharField(max_length=500, null=False, blank=False)
@@ -97,7 +111,7 @@ class CertificateDescription(TrackedModel, ValidityMixin):
         validators.validate_previous_certificate_description_is_adjacent(self)
 
     def __str__(self):
-        return f"Certificate Description for {self.certificate}: {self.description}"
+        return f"Certificate Description for {self.described_certificate}: {self.description}"
 
     class Meta:
         constraints = (

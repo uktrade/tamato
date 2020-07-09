@@ -1,0 +1,16 @@
+{% from "macros/record.xml" import standard_record %}
+
+{% call standard_record(message_counter(), sequence(), transaction_id, record) %}
+    <oub:geographical.area>
+        <oub:geographical.area.sid>{{ record.sid }}</oub:geographical.area.sid>
+        <oub:geographical.area.id>{{ record.area_id }}</oub:geographical.area.id>
+        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+        {% if record.end_date %}
+        <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
+        {% endif %}
+        <oub:geographical.code>{{ record.area_code }}</oub:geographical.code>
+        {% if record.parent %}
+        <oub:parent.geographical.area.group.sid>{{ record.parent.sid }}</oub:parent.geographical.area.group.sid>
+        {% endif %}
+    </oub:geographical.area>
+{% endcall %}

@@ -28,6 +28,9 @@ ApplicationCode = models.IntegerChoices(
 
 
 class FootnoteType(TrackedModel, ValidityMixin):
+    record_code = "100"
+    subrecord_code = "00"
+
     footnote_type_id = models.CharField(
         max_length=3, validators=[validators.FootnoteTypeIDValidator]
     )
@@ -38,11 +41,17 @@ class FootnoteType(TrackedModel, ValidityMixin):
 
 
 class FootnoteTypeDescription(TrackedModel):
+    record_code = "100"
+    subrecord_code = "05"
+
     footnote_type = models.ForeignKey(FootnoteType, on_delete=models.CASCADE)
     description = models.CharField(max_length=500)
 
 
 class Footnote(TrackedModel, ValidityMixin):
+    record_code = "200"
+    subrecord_code = "00"
+
     footnote_id = models.CharField(
         max_length=5, validators=[validators.FootnoteIDValidator]
     )
@@ -62,6 +71,12 @@ class Footnote(TrackedModel, ValidityMixin):
 
 
 class FootnoteDescription(TrackedModel, ValidityMixin):
+    record_code = "200"
+    subrecord_code = "10"
+
+    period_record_code = "200"
+    period_subrecord_code = "05"
+
     described_footnote = models.ForeignKey(Footnote, on_delete=models.CASCADE)
     description = models.TextField()
 

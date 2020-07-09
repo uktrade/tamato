@@ -1,11 +1,10 @@
-from rest_framework import serializers
-
 from commodities.models import Commodity
 from commodities.serializers import CommoditySerializer
 from common.serializers import ValiditySerializerMixin
 from measures import models
 
 
+@TrackedModelSerializer.register_polymorphic_model
 class MeasureSerializer(ValiditySerializerMixin):
     commodity_code = CommoditySerializer()
 

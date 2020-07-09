@@ -27,6 +27,9 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     separate foreign key for group to group relations.
     """
 
+    record_code = "250"
+    subrecord_code = "00"
+
     sid = models.PositiveIntegerField(validators=[MaxValueValidator(99999999)])
     area_id = models.CharField(max_length=4, validators=[validators.area_id_validator])
     area_code = models.PositiveSmallIntegerField(choices=validators.AreaCode.choices)
@@ -75,6 +78,9 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     ranges of the groups.
     """
 
+    record_code = "250"
+    subrecord_code = "15"
+
     geo_group = models.ForeignKey(
         GeographicalArea, related_name="members", on_delete=models.PROTECT
     )
@@ -110,6 +116,12 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
 
 
 class GeographicalAreaDescription(TrackedModel, ValidityMixin):
+    record_code = "250"
+    subrecord_code = "10"
+
+    period_record_code = "250"
+    period_subrecord_code = "05"
+
     area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
     description = models.CharField(max_length=500, null=False, blank=False)
 
