@@ -42,8 +42,8 @@ def test_ROIMB4():
         models.Group.objects.get(pk=non_existent).delete()
     except models.Group.DoesNotExist:
         pass
-    with pytest.raises(django.db.utils.IntegrityError):
-        br = factories.RegulationFactory.create(regulation_group_id=non_existent)
+    with pytest.raises(models.Group.DoesNotExist):
+        factories.RegulationFactory.create(regulation_group_id=non_existent)
         django.db.connections["default"].check_constraints()
 
 

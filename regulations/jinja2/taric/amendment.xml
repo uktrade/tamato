@@ -1,0 +1,37 @@
+{% from "macros/record.xml" import standard_record %}
+
+{% call standard_record(message_counter(), sequence(), transaction_id, record) %}
+    <oub:modification.regulation>
+        <oub:modification.regulation.role>{{ record.enacting_regulation.role_type }}</oub:modification.regulation.role>
+        <oub:modification.regulation.id>{{ record.enacting_regulation.regulation_id }}</oub:modification.regulation.id>
+        {% if record.enacting_regulation.published_date %}
+        <oub:published.date>{{ record.enacting_regulation.published_date }}</oub:published.date>
+        {% endif %}
+        {% if record.enacting_regulation.official_journal_number %}
+        <oub:officialjournal.number>{{ record.enacting_regulation.official_journal_number }}</oub:officialjournal.number>
+        {% endif %}
+        {% if record.enacting_regulation.official_journal_page %}
+        <oub:officialjournal.page>{{ record.enacting_regulation.official_journal_page }}</oub:officialjournal.page>
+        {% endif %}
+        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+        {% if record.end_date %}
+        <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
+        {% endif %}
+        {% if record.enacting_regulation.effective_end_date %}
+        <oub:effective.end.date>{{ record.enacting_regulation.effective_end_date }}</oub:effective.end.date>
+        {% endif %}
+        <oub:base.regulation.role>{{ record.target_regulation.role_type }}</oub:base.regulation.role>
+        <oub:base.regulation.id>{{ record.target_regulation.regulation_id }}</oub:base.regulation.id>
+{#      TODO: implement these fields#}
+{#				<xs:element name="complete.abrogation.regulation.role" type="RegulationRoleTypeId" minOccurs="0"/>#}
+{#				<xs:element name="complete.abrogation.regulation.id" type="RegulationId" minOccurs="0"/>#}
+{#				<xs:element name="explicit.abrogation.regulation.role" type="RegulationRoleTypeId" minOccurs="0"/>#}
+{#				<xs:element name="explicit.abrogation.regulation.id" type="RegulationId" minOccurs="0"/>#}
+        <oub:replacement.indicator>{{ record.enacting_regulation.replacement_indicator }}</oub:replacement.indicator>
+        <oub:stopped.flag>{{ record.enacting_regulation.stopped | int }}</oub:stopped.flag>
+        {% if record.enacting_regulation.information_text %}
+        <oub:information.text>{{ record.enacting_regulation.information_text }}</oub:information.text>
+        {% endif %}
+        <oub:approved.flag>{{ record.enacting_regulation.approved | int }}</oub:approved.flag>
+    </oub:modification.regulation>
+{% endcall %}

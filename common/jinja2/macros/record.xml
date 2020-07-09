@@ -1,0 +1,21 @@
+{% macro base_record(message_id, record_code, subrecord_code, sequence_number, transaction_id, update_type) -%}
+<env:app.message id="{{ message_id }}">
+      <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+          <oub:record>
+              <oub:transaction.id>{{ transaction_id }}</oub:transaction.id>
+              <oub:record.code>{{ record_code }}</oub:record.code>
+              <oub:subrecord.code>{{ subrecord_code }}</oub:subrecord.code>
+              <oub:record.sequence.number>{{ sequence_number }}</oub:record.sequence.number>
+              <oub:update.type>{{ update_type }}</oub:update.type>
+                  {{ caller() }}
+        </oub:record>
+      </oub:transmission>
+</env:app.message>
+{% endmacro %}
+
+{% macro standard_record(message_id, sequence_number, transaction_id, record) -%}
+    {% set caller_object = caller() %}
+    {% call base_record(message_id, record.record_code, record.subrecord_code, sequence_number, transaction_id, record.update_type) %}
+        {{ caller_object }}
+    {% endcall %}
+{% endmacro %}

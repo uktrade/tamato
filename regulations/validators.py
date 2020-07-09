@@ -3,6 +3,23 @@ Validators for regulations
 """
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.db import models
+
+"""The code which indicates the role of the regulation."""
+# The integer values are hard-coded into the TARIC3 Schema
+RoleType = models.IntegerChoices(
+    "RoleType",
+    [
+        "Base",
+        "Provisional anti-dumping",
+        "Definitive anti-dumping",
+        "Modification",
+        "Prorogation",
+        "Complete abrogation",
+        "Explicit abrogation",
+        "Full temporary stop",
+    ],
+)
 
 
 """The regulation number is composed of four elements, as follows:
@@ -55,7 +72,7 @@ def validate_approved(regulation):
         raise ValidationError("Only draft regulations can be 'Not Approved'")
 
 
-def validate_approved(regulation):
+def validate_approved_from_not_approved(regulation):
     """ROIMB44
 
     (A draft regulation's) flag can only change from 0='Not Approved' to 1='Approved'.
@@ -118,6 +135,31 @@ def validate_information_text(regulation):
     ):
         raise ValidationError(
             {
-                "information_text": "Information text is prepended with the Public Identifier and URL, and the total length must not be more than 500 characters."
+                "information_text": "Information text is prepended with the Public Identifier and URL, "
+                "and the total length must not be more than 500 characters."
             }
         )
+
+
+def validate_base_regulations_have_start_date(regulation):
+    if regulation.role_type == RoleType.Base.value:
+        if not regulation.valid_between or not regulation.valid_between.lower:
+            raise ValidationError(
+                {"valid_between": "Base regulations must have a start date."}
+            )
+
+
+def validate_base_regulations_have_community_code(regulation):
+    if regulation.role_type == RoleType.Base.value:
+        if not regulation.community_code:
+            raise ValidationError(
+                {"community_code": "Base regulations must have a community code."}
+            )
+
+
+def validate_base_regulations_have_group(regulation):
+    if regulation.role_type == RoleType.Base.value:
+        if not regulation.regulation_group:
+            raise ValidationError(
+                {"regulation_group": "Base regulations must have a group."}
+            )

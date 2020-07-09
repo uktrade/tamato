@@ -1,0 +1,10 @@
+{% from "macros/record.xml" import standard_record %}
+
+{% call standard_record(message_counter(), sequence(), transaction_id, record) %}
+    <oub:fts.regulation.action>
+        <oub:fts.regulation.role>{{ record.enacting_regulation.role_type }}</oub:fts.regulation.role>
+        <oub:fts.regulation.id>{{ record.enacting_regulation.regulation_id }}</oub:fts.regulation.id>
+        <oub:stopped.regulation.role>{{ record.target_regulation.role_type }}</oub:stopped.regulation.role>
+        <oub:stopped.regulation.id>{{ record.target_regulation.regulation_id }}</oub:stopped.regulation.id>
+    </oub:fts.regulation.action>
+{% endcall %}

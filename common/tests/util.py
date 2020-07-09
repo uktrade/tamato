@@ -5,6 +5,8 @@ from datetime import timezone
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+from lxml import etree
 from psycopg2._range import DateTimeTZRange
 
 
@@ -43,6 +45,32 @@ def check_validator(validate, value, expected_valid):
     else:
         if not expected_valid:
             pytest.fail(f'Expected validation error for value "{value}"')
+
+
+def validate_taric_xml(factory):
+    def decorator(func):
+        def wraps(api_client, taric_schema, approved_workbasket, *args, **kwargs):
+            factory.create(workbasket=approved_workbasket)
+            response = api_client.get(
+                reverse("workbasket-detail", kwargs={"pk": approved_workbasket.pk}),
+                {"format": "xml"},
+            )
+
+            assert response.status_code == 200
+
+            xml = etree.XML(response.content)
+
+            taric_schema.validate(xml)
+
+            assert not taric_schema.error_log, f"XML errors: {taric_schema.error_log}"
+
+            func(
+                api_client, taric_schema, approved_workbasket, *args, xml=xml, **kwargs
+            )
+
+        return wraps
+
+    return decorator
 
 
 class Dates:

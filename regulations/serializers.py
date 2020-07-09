@@ -1,7 +1,11 @@
 from rest_framework import serializers
 
-from common.serializers import ValiditySerializerMixin
-from regulations import models
+from common.serializers import (
+    ValiditySerializerMixin,
+    TrackedModelSerializer,
+    TrackedModelSerializerMixin,
+)
+from regulations import models, validators
 
 
 class GroupSerializer(ValiditySerializerMixin):
@@ -19,10 +23,20 @@ class NestedRegulationSerializer(serializers.HyperlinkedModelSerializer):
         fields = ["url", "regulation_id"]
 
 
-class AmendmentSerializer(serializers.HyperlinkedModelSerializer):
+@TrackedModelSerializer.register_polymorphic_model
+class AmendmentSerializer(
+    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+):
     class Meta:
         model = models.Amendment
-        fields = ["regulation", "amended"]
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+        ]
 
 
 class NestedAmendmentSerializer(serializers.HyperlinkedModelSerializer):
@@ -30,13 +44,23 @@ class NestedAmendmentSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Amendment
-        fields = ["regulation"]
+        fields = ["enacting_regulation"]
 
 
-class ReplacementSerializer(serializers.HyperlinkedModelSerializer):
+@TrackedModelSerializer.register_polymorphic_model
+class ReplacementSerializer(
+    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+):
     class Meta:
         model = models.Replacement
-        fields = ["regulation", "replaced"]
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+        ]
 
 
 class NestedReplacementSerializer(serializers.HyperlinkedModelSerializer):
@@ -44,13 +68,24 @@ class NestedReplacementSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Replacement
-        fields = ["regulation"]
+        fields = ["enacting_regulation"]
 
 
-class ExtensionSerializer(serializers.HyperlinkedModelSerializer):
+@TrackedModelSerializer.register_polymorphic_model
+class ExtensionSerializer(
+    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+):
     class Meta:
         model = models.Extension
-        fields = ["regulation", "extended", "effective_end_date"]
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "effective_end_date",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+        ]
 
 
 class NestedExtensionSerializer(serializers.HyperlinkedModelSerializer):
@@ -58,13 +93,24 @@ class NestedExtensionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Extension
-        fields = ["regulation", "effective_end_date"]
+        fields = ["enacting_regulation", "effective_end_date"]
 
 
-class SuspensionSerializer(serializers.HyperlinkedModelSerializer):
+@TrackedModelSerializer.register_polymorphic_model
+class SuspensionSerializer(
+    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+):
     class Meta:
         model = models.Suspension
-        fields = ["regulation", "suspended", "effective_end_date"]
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "effective_end_date",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+        ]
 
 
 class NestedSuspensionSerializer(serializers.HyperlinkedModelSerializer):
@@ -72,13 +118,24 @@ class NestedSuspensionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Suspension
-        fields = ["regulation", "effective_end_date"]
+        fields = ["enacting_regulation", "effective_end_date"]
 
 
-class TerminationSerializer(serializers.HyperlinkedModelSerializer):
+@TrackedModelSerializer.register_polymorphic_model
+class TerminationSerializer(
+    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+):
     class Meta:
         model = models.Termination
-        fields = ["regulation", "terminated", "effective_date"]
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "effective_date",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+        ]
 
 
 class NestedTerminationSerializer(serializers.HyperlinkedModelSerializer):
@@ -86,7 +143,7 @@ class NestedTerminationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Termination
-        fields = ["regulation", "effective_date"]
+        fields = ["enacting_regulation", "effective_date"]
 
 
 class RoleTypeSerializer(serializers.Serializer):
@@ -94,12 +151,15 @@ class RoleTypeSerializer(serializers.Serializer):
         """Convert integer to RoleType"""
         return {
             "value": instance,
-            "label": dict(models.RoleType.choices)[instance],
+            "label": dict(validators.RoleType.choices)[instance],
         }
 
 
+@TrackedModelSerializer.register_polymorphic_model
 class RegulationSerializer(
-    serializers.HyperlinkedModelSerializer, ValiditySerializerMixin
+    serializers.HyperlinkedModelSerializer,
+    ValiditySerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     regulation_group = GroupSerializer()
     role_type = RoleTypeSerializer()
@@ -114,13 +174,26 @@ class RegulationSerializer(
     replaces = NestedRegulationSerializer(many=True)
     replacements = NestedReplacementSerializer(many=True)
 
+    published_date = serializers.SerializerMethodField()
+    effective_end_date = serializers.SerializerMethodField()
+
+    def get_published_date(self, obj):
+        if obj.published_at:
+            return self.date_format_string.format(obj.published_at)
+
+    def get_effective_end_date(self, obj):
+        if obj.effective_end_date:
+            return self.date_format_string.format(obj.published_at)
+
     class Meta:
         model = models.Regulation
         fields = [
             "url",
             "role_type",
             "regulation_id",
-            "published_at",
+            "official_journal_number",
+            "official_journal_page",
+            "published_date",
             "information_text",
             "approved",
             "replacement_indicator",
@@ -129,6 +202,7 @@ class RegulationSerializer(
             "community_code",
             "regulation_group",
             "valid_between",
+            "effective_end_date",
             "amends",
             "amendments",
             "extends",
@@ -139,4 +213,10 @@ class RegulationSerializer(
             "terminations",
             "replaces",
             "replacements",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
         ]

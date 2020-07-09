@@ -181,7 +181,7 @@ def test_ACN5_one_description_mandatory():
     """At least one description is mandatory."""
 
     workbasket = factories.WorkBasketFactory()
-    ac = factories.AdditionalCodeFactory(workbasket=workbasket)
+    factories.AdditionalCodeFactory(workbasket=workbasket)
 
     with pytest.raises(ValidationError):
         workbasket.submit_for_approval()

@@ -9,6 +9,7 @@ from itertools import product
 import factory
 from psycopg2.extras import DateTimeTZRange
 
+from common.models import UpdateType
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 
@@ -54,6 +55,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
 class TrackedModelMixin(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(WorkBasketFactory)
+    update_type = UpdateType.Insert.value
 
 
 class FootnoteTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -78,6 +80,7 @@ class FootnoteTypeDescriptionFactory(TrackedModelMixin):
         model = "footnotes.FootnoteTypeDescription"
 
     description = factory.Faker("text", max_nb_chars=500)
+    footnote_type = factory.SubFactory(FootnoteTypeFactory)
 
 
 class FootnoteFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -95,6 +98,19 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "footnotes.FootnoteDescription"
 
     description = factory.Faker("text", max_nb_chars=500)
+    described_footnote = factory.SubFactory(FootnoteFactory)
+
+
+regulation_group_id_generator = product(string.ascii_uppercase, repeat=3)
+
+
+class RegulationGroupFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Group"
+
+    group_id = factory.Sequence(lambda _: "".join(next(regulation_group_id_generator)))
+    description = factory.Faker("text", max_nb_chars=500)
+    valid_between = DateTimeTZRange(BREXIT_DATE, None)
 
 
 class RegulationFactory(TrackedModelMixin):
@@ -103,6 +119,14 @@ class RegulationFactory(TrackedModelMixin):
 
     regulation_id = factory.Sequence(lambda n: f"R{datetime.now():%y}{n:04d}0")
     approved = True
+    role_type = 1
+    valid_between = factory.LazyAttribute(
+        lambda o: DateTimeTZRange(BREXIT_DATE, None) if o.role_type == 1 else None
+    )
+    community_code = factory.LazyAttribute(lambda o: 1 if o.role_type == 1 else None)
+    regulation_group = factory.LazyAttribute(
+        lambda o: RegulationGroupFactory() if o.role_type == 1 else None
+    )
 
 
 area_id_product_generator = alphanumeric_id_generator(repeat=4)
