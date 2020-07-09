@@ -136,7 +136,7 @@ class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "geo_areas.GeographicalArea"
 
-    sid = factory.Sequence(lambda n: n)
+    sid = factory.Sequence(lambda n: n + 1)
 
     area_id = factory.Sequence(lambda _: "".join(next(area_id_product_generator)))
     area_code = factory.LazyFunction(lambda: random.randint(0, 2))
