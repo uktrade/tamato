@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from rest_framework import permissions
 from rest_framework import renderers
 from rest_framework import viewsets
 
+from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.serializers import WorkBasketSerializer
 
@@ -14,8 +14,18 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
 
     queryset = WorkBasket.objects.all()
     serializer_class = WorkBasketSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [
+        renderers.JSONRenderer,
+        renderers.BrowsableAPIRenderer,
+        TaricXMLRenderer,
+    ]
     search_fields = ["title"]
+    template_name = "workbaskets/taric/transaction_list.xml"
+
+    def get_template_names(self, *args, **kwargs):
+        if self.detail:
+            return ["workbaskets/taric/transaction_detail.xml"]
+        return ["workbaskets/taric/transaction_list.xml"]
 
 
 class WorkBasketUIViewSet(WorkBasketViewSet):

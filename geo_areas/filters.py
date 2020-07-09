@@ -14,7 +14,7 @@ class GeographicalAreaFilter(filters.FilterSet):
 
     class Meta:
         model = GeographicalArea
-        fields = ["id", "sid", "area_code"]
+        fields = ["area_id", "sid", "area_code"]
 
     @property
     def qs(self):

@@ -5,12 +5,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 from common.models import ValidityMixin, TrackedModel
-from regulations.validators import no_information_text_delimiters
-from regulations.validators import regulation_id_validator
-from regulations.validators import unique_regulation_id_for_role_type
-from regulations.validators import validate_approved
-from regulations.validators import validate_information_text
-from regulations.validators import validate_official_journal
+from regulations import validators
 
 
 class Group(TrackedModel, ValidityMixin):
@@ -27,6 +22,9 @@ class Group(TrackedModel, ValidityMixin):
     Regulation groups must not be modified.
     """
 
+    record_code = "150"
+    subrecord_code = "00"
+
     group_id = models.CharField(
         max_length=3, editable=False, validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")],
     )
@@ -36,23 +34,6 @@ class Group(TrackedModel, ValidityMixin):
     def clean(self):
         if self.valid_between.upper is not None:
             raise ValidationError("Regulation groups do not have end dates set")
-
-
-"""The code which indicates the role of the regulation."""
-# The integer values are hard-coded into the TARIC3 Schema
-RoleType = models.IntegerChoices(
-    "RoleType",
-    [
-        "Base",
-        "Provisional anti-dumping",
-        "Definitive anti-dumping",
-        "Modification",
-        "Prorogation",
-        "Complete abrogation",
-        "Explicit abrogation",
-        "Full temporary stop",
-    ],
-)
 
 
 """The code which indicates whether or not a regulation has been replaced."""
@@ -75,13 +56,18 @@ class Regulation(TrackedModel):
     prorogation (extension), Full Temporary Stop (FTS), Partial Temporary Stop (PTS)
     """
 
+    record_code = "285"
+    subrecord_code = "00"
+
     role_type = models.PositiveIntegerField(
-        choices=RoleType.choices, default=RoleType["Base"], editable=False,
+        choices=validators.RoleType.choices,
+        default=validators.RoleType["Base"],
+        editable=False,
     )
 
     """The regulation number"""
     regulation_id = models.CharField(
-        max_length=8, editable=False, validators=[regulation_id_validator],
+        max_length=8, editable=False, validators=[validators.regulation_id_validator],
     )
 
     official_journal_number = models.CharField(
@@ -99,20 +85,20 @@ class Regulation(TrackedModel):
         max_length=500,
         blank=True,
         null=True,
-        validators=[no_information_text_delimiters],
+        validators=[validators.no_information_text_delimiters],
     )
     public_identifier = models.CharField(
         max_length=50,
         null=True,
         blank=True,
         help_text="This is the name of the regulation as it would appear on (for example) legislation.gov.uk",
-        validators=[no_information_text_delimiters],
+        validators=[validators.no_information_text_delimiters],
     )
     url = models.URLField(
         blank=True,
         null=True,
         help_text="Please enter the absolute URL of the regulation",
-        validators=[no_information_text_delimiters],
+        validators=[validators.no_information_text_delimiters],
     )
 
     """Indicates if a (draft) regulation is approved.
@@ -199,12 +185,19 @@ class Regulation(TrackedModel):
     def is_draft_regulation(self):
         return self.regulation_id.startswith("C")
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
     def clean(self):
-        unique_regulation_id_for_role_type(self)
-        validate_approved(self)
-        validate_official_journal(self)
-        validate_information_text(self)
-        validate_approved(self)
+        validators.unique_regulation_id_for_role_type(self)
+        validators.validate_approved(self)
+        validators.validate_official_journal(self)
+        validators.validate_information_text(self)
+        validators.validate_approved(self)
+        validators.validate_base_regulations_have_start_date(self)
+        validators.validate_base_regulations_have_community_code(self)
+        validators.validate_base_regulations_have_group(self)
 
 
 class Amendment(TrackedModel):
@@ -216,6 +209,9 @@ class Amendment(TrackedModel):
     If the modification regulation has no end date of validity, its end date is defined
     by the end date of the regulations it modifies.
     """
+
+    record_code = "290"
+    subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="+"
@@ -239,6 +235,9 @@ class Extension(TrackedModel):
     Prorogation regulations are also called "extension regulations".
     """
 
+    record_code = "295"
+    subrecord_code = "00"
+
     enacting_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="+"
     )
@@ -254,6 +253,9 @@ class Suspension(TrackedModel):
     FTS is valid. Once the FTS is abrogated or reaches its validity end date, all the
     measures of the suspended regulation become applicable again.
     """
+
+    record_code = "300"
+    subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="+"
@@ -278,6 +280,9 @@ class Termination(TrackedModel):
     period of a measure generating regulation or an FTS regulation.
     """
 
+    record_code = "280"
+    subrecord_code = "00"
+
     enacting_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="+"
     )
@@ -293,6 +298,9 @@ class Replacement(TrackedModel):
     (or a combination) of the following three elements: measure type id, geographical
     area id and chapter heading.
     """
+
+    record_code = "305"
+    subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="+"

@@ -29,7 +29,7 @@ def geo_area_group_detail(client):
 def geo_area_core_data(geo_area_detail, geographical_area_1001):
     content = geo_area_detail.content.decode()
 
-    assert str(geographical_area_1001.sid) in content
+    assert str(geographical_area_1001.area_id) in content
     assert geographical_area_1001.get_description().description in content
     assert (
         f"{geographical_area_1001.area_code} - {geographical_area_1001.get_area_code_display()}"

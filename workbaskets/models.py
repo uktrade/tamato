@@ -137,7 +137,7 @@ class WorkBasket(TimestampedMixin):
 
     def clean(self):
         self.errors = []
-        for model in self.trackedmodel_set.all():
+        for model in self.tracked_models.all():
             try:
                 model.validate_workbasket()
             except ValidationError as error:

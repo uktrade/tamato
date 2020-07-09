@@ -19,6 +19,9 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
     record_code = "120"
     subrecord_code = "00"
 
+    description_record_code = "120"
+    description_subrecord_code = "05"
+
     sid = models.CharField(
         max_length=1, validators=[validators.additional_code_type_sid_validator],
     )
@@ -30,6 +33,9 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
     )
 
     # TODO add many-to-many relation to measure types
+
+    def __str__(self):
+        return f"AdditionalcodeType {self.sid}: {self.description}"
 
     class Meta:
         constraints = [
@@ -102,7 +108,9 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
     """
 
     record_code = "245"
-    subrecord_code = "05"  # subrecord code for additional code description period
+    subrecord_code = "10"
+    period_record_code = "245"
+    period_subrecord_code = "05"
 
     # Store the additional code description period sid so that we can send it in TARIC3
     # updates to systems that expect it.

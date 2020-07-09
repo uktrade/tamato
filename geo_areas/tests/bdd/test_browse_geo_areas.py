@@ -22,4 +22,4 @@ def geo_area_list(geo_area_search):
     results = geo_area_search.json()
     assert len(results) == 1
     result = results[0]
-    assert result["id"] == 1001
+    assert result["area_id"] == "1001"

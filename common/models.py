@@ -1,8 +1,10 @@
+import re
 from datetime import datetime
 
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
 from django.db.models import QuerySet
+from django.template import loader
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
@@ -124,8 +126,15 @@ class ValidityMixin(models.Model):
         abstract = True
 
 
+UpdateType = models.IntegerChoices("UpdateType", ["Update", "Delete", "Insert",],)
+
+
 class TrackedModel(PolymorphicModel):
-    workbasket = models.ForeignKey("workbaskets.WorkBasket", on_delete=models.PROTECT)
+    workbasket = models.ForeignKey(
+        "workbaskets.WorkBasket",
+        on_delete=models.PROTECT,
+        related_name="tracked_models",
+    )
     predecessor = models.OneToOneField(
         "self",
         on_delete=models.PROTECT,
@@ -135,9 +144,45 @@ class TrackedModel(PolymorphicModel):
         related_query_name="successor",
     )
 
+    update_type = models.PositiveSmallIntegerField(choices=UpdateType.choices)
+
     objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
 
     identifying_fields = ("sid",)
+
+    taric_template = None
+
+    def get_taric_template(self):
+        """
+        Generate a TARIC XML template name for the given class.
+
+        Any TrackedModel must be representable via a TARIC compatible XML record.
+        To facilitate this
+        """
+
+        if self.taric_template:
+            return self.taric_template
+        class_name = self.__class__.__name__
+
+        # replace namesLikeThis to names_Like_This
+        name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", class_name)
+        # replace names_LIKEthis to names_like_this
+        name = re.sub(r"([A-Z]{2,})([a-z0-9_])", r"\1_\2", name).lower()
+
+        template_name = f"taric/{name}.xml"
+        try:
+            loader.get_template(template_name)
+        except loader.TemplateDoesNotExist as e:
+            raise loader.TemplateDoesNotExist(
+                f"""Taric template does not exist for {class_name}. All classes that \
+inherit TrackedModel must either:
+    1) Have a matching taric template with a snake_case name matching the class at \
+"taric/{{snake_case_class_name}}.xml". In this case it should be: "{template_name}".
+    2) A taric_template attribute, pointing to the correct template.
+    3) Override the get_taric_template method, returning an existing template."""
+            ) from e
+
+        return template_name
 
     def new_draft(self, workbasket, save=True, **kwargs):
         if hasattr(self, "successor"):

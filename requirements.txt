@@ -8,6 +8,7 @@ django-filter
 django-fsm
 django-health-check
 django-polymorphic
+django-rest-polymorphic
 django-treebeard
 django-webpack-loader
 django_extensions
@@ -16,6 +17,7 @@ factory-boy
 git+https://github.com/alphagov/govuk-frontend-jinja.git
 gunicorn
 jinja2
+lxml
 psycopg2-binary
 pytest
 pytest-bdd

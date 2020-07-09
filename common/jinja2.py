@@ -7,7 +7,6 @@ from django.templatetags.static import static
 from django.urls import reverse
 from govuk_frontend_jinja.templates import Environment
 from govuk_frontend_jinja.templates import NunjucksExtension
-from govuk_frontend_jinja.templates import NunjucksUndefined
 from webpack_loader.templatetags.webpack_loader import render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
