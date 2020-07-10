@@ -20,7 +20,7 @@ from footnotes import validators
     ],
 )
 def test_valid_footnote_id(value, expected_valid):
-    check_validator(validators.FootnoteIDValidator(), value, expected_valid)
+    check_validator(validators.footnote_id_validator, value, expected_valid)
 
 
 @pytest.mark.parametrize(
@@ -42,4 +42,4 @@ def test_valid_footnote_id(value, expected_valid):
     ],
 )
 def test_valid_footnote_type_id(value, expected_valid):
-    check_validator(validators.FootnoteTypeIDValidator(), value, expected_valid)
+    check_validator(validators.footnote_type_id_validator, value, expected_valid)

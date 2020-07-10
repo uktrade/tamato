@@ -1,38 +1,16 @@
 from rest_framework import serializers
 
-from common.serializers import (
-    ValiditySerializerMixin,
-    TrackedModelSerializer,
-    TrackedModelSerializerMixin,
-)
+from common.serializers import TrackedModelSerializer
+from common.serializers import TrackedModelSerializerMixin
+from common.serializers import ValiditySerializerMixin
 from footnotes import models
 from footnotes import validators
 
 
-class SimpleFootnoteTypeDescriptionSerializer(
-    TrackedModelSerializerMixin, serializers.ModelSerializer
-):
-    class Meta:
-        model = models.FootnoteTypeDescription
-        fields = [
-            "id",
-            "footnote_type_id",
-            "description",
-            "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
-        ]
-
-
 @TrackedModelSerializer.register_polymorphic_model
 class FootnoteTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
-    id = serializers.IntegerField()
     footnote_type_id = serializers.CharField(
-        validators=[validators.FootnoteIDValidator]
-    )
-    descriptions = SimpleFootnoteTypeDescriptionSerializer(
-        many=True, source="footnotetypedescription_set"
+        validators=[validators.footnote_type_id_validator]
     )
 
     class Meta:
@@ -41,33 +19,16 @@ class FootnoteTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixi
             "id",
             "footnote_type_id",
             "application_code",
-            "descriptions",
+            "description",
             "valid_between",
             "update_type",
             "record_code",
             "subrecord_code",
+            "description_record_code",
+            "description_subrecord_code",
             "taric_template",
             "start_date",
             "end_date",
-        ]
-
-
-@TrackedModelSerializer.register_polymorphic_model
-class FootnoteTypeDescriptionSerializer(
-    TrackedModelSerializerMixin, serializers.ModelSerializer
-):
-    footnote_type = FootnoteTypeSerializer(read_only=True)
-
-    class Meta:
-        model = models.FootnoteTypeDescription
-        fields = [
-            "id",
-            "footnote_type",
-            "description",
-            "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -92,11 +53,9 @@ class SimpleFootnoteDescriptionSerializer(
 @TrackedModelSerializer.register_polymorphic_model
 class FootnoteSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     id = serializers.IntegerField()
-    footnote_id = serializers.CharField(validators=[validators.FootnoteTypeIDValidator])
+    footnote_id = serializers.CharField(validators=[validators.footnote_id_validator])
     footnote_type = FootnoteTypeSerializer()
-    descriptions = SimpleFootnoteDescriptionSerializer(
-        many=True, source="footnotedescription_set"
-    )
+    descriptions = SimpleFootnoteDescriptionSerializer(many=True)
 
     class Meta:
         model = models.Footnote

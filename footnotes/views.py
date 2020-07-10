@@ -1,11 +1,9 @@
 from django.shortcuts import render
-from rest_framework import filters
 from rest_framework import permissions
 from rest_framework import renderers
-from rest_framework import response
 from rest_framework import viewsets
 
-from footnotes.filters import FootnoteFilter
+from footnotes.filters import FootnoteFilterBackend
 from footnotes.models import Footnote
 from footnotes.models import FootnoteType
 from footnotes.serializers import FootnoteSerializer
@@ -17,11 +15,16 @@ class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows footnotes to be viewed.
     """
 
-    queryset = Footnote.objects.all().prefetch_related("footnotedescription_set")
+    queryset = Footnote.objects.all().prefetch_related("descriptions")
     serializer_class = FootnoteSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filterset_class = FootnoteFilter
-    search_fields = ["id"]
+    filter_backends = [FootnoteFilterBackend]
+    search_fields = [
+        "footnote_id",
+        "footnote_type__footnote_type_id",
+        "descriptions__description",
+        "footnote_type__description",
+    ]
 
 
 class FootnoteUIViewSet(FootnoteViewSet):
@@ -39,7 +42,7 @@ class FootnoteUIViewSet(FootnoteViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         return render(
-            request, "footnotes/detail.jinja", context={"footnote": self.get_object()}
+            request, "footnotes/detail.jinja", context={"object": self.get_object()}
         )
 
 

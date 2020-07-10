@@ -73,14 +73,7 @@ class FootnoteTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
         lower_case=False,
     )
     application_code = 2
-
-
-class FootnoteTypeDescriptionFactory(TrackedModelMixin):
-    class Meta:
-        model = "footnotes.FootnoteTypeDescription"
-
     description = factory.Faker("text", max_nb_chars=500)
-    footnote_type = factory.SubFactory(FootnoteTypeFactory)
 
 
 class FootnoteFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -99,6 +92,7 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     description = factory.Faker("text", max_nb_chars=500)
     described_footnote = factory.SubFactory(FootnoteFactory)
+    description_period_sid = factory.Sequence(lambda n: 1 + n)
 
 
 regulation_group_id_generator = product(string.ascii_uppercase, repeat=3)

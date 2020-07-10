@@ -16,8 +16,10 @@ scenarios("features/detail_additional_codes.feature")
 
 @pytest.fixture
 @when("I select the additional code X000")
-def additional_code_detail(client):
-    return client.get(reverse("additional_code-ui-detail", args=(1,)))
+def additional_code_detail(client, additional_code_X000):
+    return client.get(
+        reverse("additional_code-ui-detail", args=(additional_code_X000.pk,))
+    )
 
 
 @then("the core data against the additional code should be presented")
