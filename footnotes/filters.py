@@ -1,38 +1,30 @@
-import logging
 import re
 
-from django_filters import rest_framework as filters
-
+from common.filters import TamatoFilterBackend
 from footnotes.models import Footnote
+from footnotes.validators import FOOTNOTE_ID_PATTERN
+from footnotes.validators import FOOTNOTE_TYPE_ID_PATTERN
 
-
-log = logging.getLogger(__name__)
 
 COMBINED_FOOTNOTE_AND_TYPE_ID = re.compile(
-    r"(?P<footnote_type_id>[A-Z0-9]{2})(?P<footnote_id>[A-Z0-9]{3})"
+    r"^(?P<footnote_type_id>" + FOOTNOTE_TYPE_ID_PATTERN + ")"
+    r"(?P<footnote_id>" + FOOTNOTE_ID_PATTERN + ")$"
 )
 
 
-class FootnoteFilter(filters.FilterSet):
+class FootnoteFilterBackend(TamatoFilterBackend):
     """
     Filter that combines footnote type ID and footnote ID
     """
 
-    class Meta:
-        model = Footnote
-        fields = ["footnote_id", "footnote_type__footnote_type_id"]
+    search_fields = (
+        "footnote_type__footnote_type_id",
+        "footnote_id",
+    )  # XXX order is important
 
-    @property
-    def qs(self):
-        queryset = super().qs
-        search_term = self.request.query_params.get("search", "")
-        log.debug(f"Search term: {search_term}")
-        match = COMBINED_FOOTNOTE_AND_TYPE_ID.match(search_term)
+    def get_search_term(self, request):
+        search_term = super().get_search_term(request)
+        match = COMBINED_FOOTNOTE_AND_TYPE_ID.match(search_term.strip())
         if match:
-            footnote_type_id, footnote_id = match.group(1, 2)
-            log.debug(f"Match: {footnote_type_id}{footnote_id}")
-            queryset = queryset.filter(
-                footnote_id=footnote_id,
-                footnote_type__footnote_type_id=footnote_type_id,
-            )
-        return queryset
+            return " ".join(match.groups())
+        return search_term

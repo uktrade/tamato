@@ -10,8 +10,13 @@ from lxml import etree
 from psycopg2._range import DateTimeTZRange
 
 
+COMMODITIES_IMPLEMENTED = False
 MEASURES_IMPLEMENTED = False
 MEURSING_TABLES_IMPLEMENTED = False
+
+requires_commodities = pytest.mark.skipif(
+    not COMMODITIES_IMPLEMENTED, reason="Commodities not implemented",
+)
 
 requires_measures = pytest.mark.skipif(
     not MEASURES_IMPLEMENTED, reason="Measures not implemented",

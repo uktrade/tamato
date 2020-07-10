@@ -4,7 +4,7 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set footnote_id = footnote.footnote_type.footnote_type_id ~ footnote.footnote_id %}
+{% set footnote_id = footnote|string %}
 {% set page_title = "Footnote " ~ footnote_id %}
 
 {% block beforeContent %}
@@ -31,7 +31,7 @@
           "rows": [
             [
               {"text": "Footnote type"},
-              {"text": footnote.footnote_type.footnote_type_id ~ " - " ~ footnote.footnote_type.description}
+              {"text": object.footnote_type|string}
             ],
             [
               {"text": "Application code"},
@@ -43,15 +43,15 @@
             ],
             [
               {"text": "Current description"},
-              {"text": footnote.description}
+              {"text": object.get_description().description}
             ],
             [
               {"text": "Start date"},
-              {"text": "{:%d %b %Y}".format(footnote.valid_between.lower)}
+              {"text": "{:%d %b %Y}".format(object.valid_between.lower)}
             ],
             [
               {"text": "End date"},
-              {"text": "{:%d %b %Y}".format(footnote.valid_between.upper) if footnote.valid_between.upper else "-"}
+              {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"}
             ]
           ]
         }) }}
@@ -71,6 +71,45 @@
     </div>
   {% endset %}
 
+  {% set description_data_html %}
+    {% set description_rows = [] %}
+    {% for description in object.descriptions.all() %}
+      {{ description_rows.append([
+        {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
+        {"text": description.description},
+        {
+            "html": '<a href="#" class="govuk-link govuk-!-font-size-16">Edit description</a>'
+        }
+      ]) or ""}}
+    {% endfor %}
+    <div class="footnote__description-data">
+      <div class="footnote__description-data__content">
+        {{ govukTable({
+          "firstCellIsHeader": false,
+          "head": [
+            {
+              "text": "Start Date",
+              "classes": "govuk-!-width-one-quarter"
+            },
+            {
+              "text": "Description",
+              "classes": "govuk-!-width-two-thirds"
+            },
+            {
+              "text": "Actions"
+            },
+          ],
+          "rows": description_rows
+        }) }}
+      </div>
+      <div class="footnote__description-data__actions">
+        <ul class="icon-action-list govuk-list">
+          <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new footnote description</a></li>
+        </ul>
+      </div>
+    </div>
+  {% endset %}
+
   {{ govukTabs({
     "items": [
       {
@@ -78,6 +117,13 @@
         "id": "core-data",
         "panel": {
           "html": core_data_html
+        }
+      },
+      {
+        "label": "Descriptions",
+        "id": "descriptions",
+        "panel": {
+          "html": description_data_html
         }
       }
     ]

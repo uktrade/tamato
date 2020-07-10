@@ -1,0 +1,39 @@
+"""Tests for view footnotes behaviours."""
+import pytest
+from pytest_bdd import scenarios
+from pytest_bdd import then
+from pytest_bdd import when
+from rest_framework.reverse import reverse
+
+pytestmark = pytest.mark.django_db
+
+
+scenarios("features/detail-footnotes.feature")
+
+
+@pytest.fixture
+@when("I select footnote NC000")
+def footnote_detail(client, footnote_NC000):
+    return client.get(reverse("footnote-ui-detail", kwargs={"pk": footnote_NC000.pk}))
+
+
+@then("a summary of the core information should be presented")
+def footnote_core_data(footnote_detail, footnote_NC000):
+    content = footnote_detail.content.decode()
+    f = footnote_NC000
+    ft = f.footnote_type
+
+    assert str(f) in content
+    assert f.get_description().description in content
+    assert str(ft) in content
+    assert "{:%d %b %Y}".format(f.valid_between.lower) in content
+
+
+@then("the descriptions against the footnote should be presented")
+def footnote_description_data(footnote_detail, footnote_NC000):
+    content = footnote_detail.content.decode()
+    f = footnote_NC000
+
+    for description in f.descriptions.all():
+        assert description.description in content
+        assert "{:%d %b %Y}".format(description.valid_between.lower) in content
