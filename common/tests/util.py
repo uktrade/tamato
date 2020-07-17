@@ -52,10 +52,21 @@ def check_validator(validate, value, expected_valid):
             pytest.fail(f'Expected validation error for value "{value}"')
 
 
-def validate_taric_xml(factory):
+def validate_taric_xml(factory=None, instance=None, factory_kwargs=None):
     def decorator(func):
         def wraps(api_client, taric_schema, approved_workbasket, *args, **kwargs):
-            factory.create(workbasket=approved_workbasket)
+            if not factory and not instance:
+                raise AssertionError(
+                    "Either a factory or an object instance need to be provided"
+                )
+            if factory and instance:
+                raise AssertionError(
+                    "Either a fatory or an object instance need to be provided - not both."
+                )
+
+            if not instance:
+                factory(workbasket=approved_workbasket, **factory_kwargs or {})
+
             response = api_client.get(
                 reverse("workbasket-detail", kwargs={"pk": approved_workbasket.pk}),
                 {"format": "xml"},

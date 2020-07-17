@@ -22,6 +22,7 @@ urlpatterns = [
     path("", include("common.urls")),
     path("", include("additional_codes.urls")),
     path("", include("certificates.urls")),
+    path("", include("commodities.urls")),
     path("", include("footnotes.urls")),
     path("", include("geo_areas.urls")),
     path("measures/", include("measures.urls")),
