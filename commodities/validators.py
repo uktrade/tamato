@@ -49,7 +49,6 @@ def validate_has_origin(goods_nomenclature):
 
     Therefore check for these two conditions, and if neither are met ensure an origin exists.
     """
-
     lower_bound = datetime(2010, 1, 1).replace(tzinfo=timezone.utc)
 
     if (
