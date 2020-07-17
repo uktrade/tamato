@@ -3,7 +3,6 @@ import random
 import string
 from datetime import datetime
 from datetime import timezone
-from functools import partial
 from itertools import product
 
 import factory
@@ -15,7 +14,10 @@ from common.tests.models import TestModel2
 
 BREXIT_DATE = datetime(2021, 1, 1).replace(tzinfo=timezone.utc)
 
-alphanumeric_id_generator = partial(product, string.ascii_uppercase + string.digits)
+
+def string_generator(length=1, characters=string.ascii_uppercase + string.digits):
+    g = product(characters, repeat=length)
+    return lambda *_: "".join(next(g))
 
 
 class ValidityFactoryMixin(factory.django.DjangoModelFactory):
@@ -102,7 +104,7 @@ class RegulationGroupFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Group"
 
-    group_id = factory.Sequence(lambda _: "".join(next(regulation_group_id_generator)))
+    group_id = factory.Sequence(string_generator(3))
     description = factory.Faker("text", max_nb_chars=500)
     valid_between = DateTimeTZRange(BREXIT_DATE, None)
 
@@ -123,16 +125,13 @@ class RegulationFactory(TrackedModelMixin):
     )
 
 
-area_id_product_generator = alphanumeric_id_generator(repeat=4)
-
-
 class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "geo_areas.GeographicalArea"
 
     sid = factory.Sequence(lambda n: n + 1)
 
-    area_id = factory.Sequence(lambda _: "".join(next(area_id_product_generator)))
+    area_id = factory.Sequence(string_generator(4))
     area_code = factory.LazyFunction(lambda: random.randint(0, 2))
 
 
@@ -159,11 +158,8 @@ class CertificateTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "certificates.CertificateType"
 
-    sid = factory.Sequence(lambda n: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[n])
+    sid = factory.Sequence(string_generator(1))
     description = factory.Faker("text", max_nb_chars=500)
-
-
-certificate_sid_product_generator = alphanumeric_id_generator(repeat=3)
 
 
 class CertificateFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -171,7 +167,7 @@ class CertificateFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "certificates.Certificate"
 
     certificate_type = factory.SubFactory(CertificateTypeFactory)
-    sid = factory.Sequence(lambda _: "".join(next(certificate_sid_product_generator)))
+    sid = factory.Sequence(string_generator(3))
 
 
 class CertificateDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -200,21 +196,13 @@ class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
     custom_sid = factory.Sequence(lambda n: n)
 
 
-alphanumerics = list(string.ascii_uppercase + string.digits)
-
-
-def alphanumeric_strings(length=1):
-    g = product(alphanumerics, repeat=length)
-    return lambda n: "".join(next(g))
-
-
 class AdditionalCodeTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
     """AdditionalCodeType factory."""
 
     class Meta:
         model = "additional_codes.AdditionalCodeType"
 
-    sid = factory.Sequence(alphanumeric_strings(length=1))
+    sid = factory.Sequence(string_generator(length=1))
     description = factory.Faker("text", max_nb_chars=500)
     application_code = 1
 
@@ -227,7 +215,7 @@ class AdditionalCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     sid = factory.Sequence(lambda n: 1 + n)
     type = factory.SubFactory(AdditionalCodeTypeFactory)
-    code = factory.Sequence(alphanumeric_strings(length=3))
+    code = factory.Sequence(string_generator(length=3))
 
 
 class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -237,3 +225,56 @@ class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     description_period_sid = factory.Sequence(lambda n: 1 + n)
     described_additional_code = factory.SubFactory(AdditionalCodeFactory)
     description = factory.Faker("text", max_nb_chars=500)
+
+
+class GoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "commodities.GoodsNomenclature"
+
+    sid = factory.Sequence(lambda n: n + 1)
+    item_id = factory.Sequence(string_generator(10, characters=string.digits))
+    suffix = 80
+    statistical = False
+
+
+indent_path_generator = string_generator(4)
+
+
+def build_indent_path(good):
+    parent = good.parent
+    if parent:
+        return parent.path + indent_path_generator()
+    return indent_path_generator()
+
+
+class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "commodities.GoodsNomenclatureIndent"
+        exclude = ("parent",)
+
+    parent = None
+
+    path = factory.LazyAttribute(build_indent_path)
+    depth = factory.LazyAttribute(lambda o: len(o.path) // 4)
+
+    sid = factory.Sequence(lambda n: n + 1)
+    indented_goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
+
+
+class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "commodities.GoodsNomenclatureDescription"
+
+    sid = factory.Sequence(lambda n: n + 1)
+    described_goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
+    description = factory.Faker("text", max_nb_chars=500)
+
+
+class FootnoteAssociationGoodsNomenclatureFactory(
+    TrackedModelMixin, ValidityFactoryMixin
+):
+    class Meta:
+        model = "commodities.FootnoteAssociationGoodsNomenclature"
+
+    goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
+    associated_footnote = factory.SubFactory(FootnoteFactory)

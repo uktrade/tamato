@@ -85,7 +85,7 @@ def test_ce6_one_description_mandatory():
     """
 
     workbasket = factories.WorkBasketFactory()
-    c = factories.CertificateFactory(workbasket=workbasket)
+    factories.CertificateFactory(workbasket=workbasket)
 
     with pytest.raises(ValidationError):
         workbasket.submit_for_approval()
