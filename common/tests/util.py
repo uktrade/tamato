@@ -100,8 +100,12 @@ class Dates:
         datetime(2020, 12, 31, tzinfo=timezone.utc),
     )
     adjacent_later = DateTimeTZRange(
-        datetime(2022, 2, 1, tzinfo=timezone.utc),
-        datetime(2022, 3, 1, tzinfo=timezone.utc),
+        datetime(2021, 2, 1, tzinfo=timezone.utc),
+        datetime(2021, 3, 1, tzinfo=timezone.utc),
+    )
+    adjacent_later_big = DateTimeTZRange(
+        datetime(2021, 2, 1, tzinfo=timezone.utc),
+        datetime(2023, 3, 1, tzinfo=timezone.utc),
     )
     overlap_normal = DateTimeTZRange(
         datetime(2021, 1, 15, tzinfo=timezone.utc),
