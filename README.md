@@ -18,7 +18,7 @@ Then you can browse to http://localhost:8000/ to view the app
 
 ### Running locally
 
-This app requires Python 3.8.x and Node 12.16.x
+This app requires Python 3.8.x and Node 12.18.x
 
 Create a Python virtualenv and install the dependencies:
 
