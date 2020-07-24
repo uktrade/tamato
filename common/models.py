@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.template import loader
 from polymorphic.managers import PolymorphicManager
@@ -212,6 +213,12 @@ inherit TrackedModel must either:
             new_object.save()
 
         return new_object
+
+    def get_versions(self):
+        query = Q()
+        for field in self.identifying_fields:
+            query &= Q(**{field: getattr(self, field)})
+        return self.__class__.objects.filter(query).order_by("-created_at")
 
     def validate_workbasket(self):
         pass

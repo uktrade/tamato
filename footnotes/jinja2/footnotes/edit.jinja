@@ -1,0 +1,102 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/date_range_limit_input/macro.jinja" import date_range_limit_input %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/select/macro.njk" import govukSelect %}
+
+{% set page_title = "Edit footnote" %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Footnotes", "href": url("footnote-ui-list")},
+      {"text": "Footnote " ~ object|string, "href": object.get_url()},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block form_preamble %}
+  <p class="govuk-body">
+    Use this form to edit an existing footnote.
+  </p>
+  <p>
+  Workbasket:
+  {% if request.session.workbasket -%}
+    <a href="{{ url("workbasket-ui-detail", args=[request.session.workbasket.id]) }}">{{ request.session.workbasket.title }}</a>
+  {%- else -%}
+    No current workbasket
+  {%- endif %}
+  </p>
+{% endblock %}
+
+{% block form %}
+  {% call django_form(action=object.get_url("edit")) %}
+    {% set footnote_type_hint -%}
+      It's important that you select the right <a href="#">footnote type</a>, as this
+      will determine whether it can be associated with measures, commodity codes, or
+      both. The primary key is not editable.
+    {%- endset %}
+    {% set footnote_type_options = [{
+      "text": "- Select a footnote type -",
+      "value": "",
+      "disabled": true,
+      "selected": not object or not object.footnote_type,
+      "attributes": {"hidden": true}
+    }] -%}
+    {% for value, label in form.fields.footnote_type.choices -%}
+      {% if not loop.first -%}
+        {{ footnote_type_options.append({
+          "text": label,
+          "value": value,
+          "selected": value == form.initial.footnote_type
+        }) or "" }}
+      {%- endif %}
+    {%- endfor %}
+    {{ govukSelect({
+      "id": "id_footnote_type",
+      "name": "footnote_type",
+      "items": footnote_type_options,
+      "label": {
+        "html": '<h2 class="govuk-heading-m">What is the type of this footnote?</h2>',
+      },
+      "hint": {
+        "html": footnote_type_hint
+      },
+      "attributes": {"disabled": true}
+    }) }}
+
+    {{ govukInput({
+      "id": "id_footnote_id",
+      "name": "footnote_id",
+      "value": form.initial.footnote_id,
+      "label": {
+        "html": '<h2 class="govuk-heading-m">Footnote ID</h2>',
+      },
+      "hint": {
+        "text": "Enter an ID that will form a unique combination with the selected footnote type ID. Enter 3 or 5 numeric characters. The primary key is not editable."
+      },
+      "classes": "govuk-input--width-5",
+      "attributes": {"pattern": "[0-9]{3}|[0-9]{5}", "disabled": true}
+    }) }}
+
+    {{ date_range_limit_input({
+      "form": form,
+      "limit": "start",
+      "label": "When does this footnote enter into force?",
+    }) }}
+
+    {{ date_range_limit_input({
+      "form": form,
+      "limit": "end",
+      "label": "When does this footnote end?",
+      "hint": {
+        "text": "This is optional and should usually be left unset (open-ended) unless you know the footnote is only needed for a limited time."
+      }
+    }) }}
+
+    <h2 class="govuk-heading-m">Finish now</h2>
+    {{ govukButton({"text": "Add to workbasket"}) }} <span class="govuk-body"><a href="#">Cancel</a></span>
+  {% endcall %}
+{% endblock %}

@@ -1,7 +1,9 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.db import models
+from django.urls import reverse
 
+from common.models import TimestampedMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from common.validators import NumericSIDValidator
@@ -66,7 +68,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
         ]
 
 
-class Footnote(TrackedModel, ValidityMixin):
+class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
     """A footnote relates to a piece of text, and either clarifies it (in the case of
     nomenclature) or limits its application (as in the case of measures).
     """
@@ -79,11 +81,28 @@ class Footnote(TrackedModel, ValidityMixin):
     )
     footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
 
+    identifying_fields = ("footnote_id", "footnote_type")
+
     def __str__(self):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
 
+    def get_url(self, action="detail"):
+        return reverse(
+            f"footnote-ui-{action}",
+            kwargs={
+                "footnote_type_id": self.footnote_type.footnote_type_id,
+                "footnote_id": self.footnote_id,
+            },
+        )
+
+    def get_descriptions(self):
+        return FootnoteDescription.objects.filter(
+            described_footnote__footnote_id=self.footnote_id,
+            described_footnote__footnote_type=self.footnote_type,
+        )
+
     def get_description(self):
-        return self.descriptions.last()
+        return self.get_descriptions().last()
 
     def clean(self):
         validators.validate_footnote_type_validity_includes_footnote_validity(self)
@@ -96,16 +115,6 @@ class Footnote(TrackedModel, ValidityMixin):
         return super().save(*args, **kwargs)
 
     class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_footnotes_FO2",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("footnote_id", RangeOperators.EQUAL),
-                    ("footnote_type", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
 
 
@@ -131,7 +140,7 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
     )
 
     def __str__(self):
-        return f'description - "{self.description}" for {self.described_footnote}'
+        return self.description
 
     def clean(self):
         validators.validate_first_footnote_description_has_footnote_start_date(self)
@@ -144,13 +153,12 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
         self.full_clean()
         return super().save(*args, **kwargs)
 
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_footnote_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("described_footnote", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
+    def get_url(self, action="detail"):
+        return reverse(
+            f"footnote-ui-description-{action}",
+            kwargs={
+                "footnote_type_id": self.described_footnote.footnote_type.footnote_type_id,
+                "footnote_id": self.described_footnote.footnote_id,
+                "period_sid": self.description_period_sid,
+            },
+        )

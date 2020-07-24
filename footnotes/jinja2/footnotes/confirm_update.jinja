@@ -1,0 +1,31 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/panel/macro.njk" import govukPanel %}
+
+{% set page_title = "Edit footnote" %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Footnotes", "href": url("footnote-ui-list")},
+      {"text": "Footnote " ~ object|string, "href": object.get_url()},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  {{ govukPanel({
+    "titleText": "Footnote " ~ object|string ~ " has been updated.",
+    "html": "This change has been added to your workbasket<br>" ~ request.session.workbasket.title
+  }) }}
+
+  <h2 class="govuk-heading-m">Next steps</h2>
+  <ul class="govuk-list">
+    <li><a href="{{ object.get_url() }}">View footnote {{ object|string }}</a></li>
+    <li><a href="{{ url("footnote-ui-list") }}">Manage more footnotes</a></li>
+    <li><a href="{{ url("workbasket-ui-detail", args=[request.session.workbasket.id]) }}">View content of your workbasket</a></li>
+    <li><a href="{{ url("index") }}">Return to main menu</a></li>
+  </ul>
+{% endblock %}
