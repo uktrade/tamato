@@ -27,3 +27,40 @@ class NumericSIDValidator:
         if isinstance(other, NumericSIDValidator):
             return other.max_value == self.max_value
         return False
+
+
+class DatePartValidator:
+    code = "limit_value"
+
+    def __init__(self, message=None):
+        if message:
+            self.message = message
+
+    def __call__(self, value):
+        try:
+            value = int(value)
+        except ValueError:
+            valid = False
+        else:
+            valid = self.min_value <= value <= self.max_value
+
+        if not valid:
+            raise ValidationError(self.message, code=self.code)
+
+
+class DayValidator(DatePartValidator):
+    message = "Enter a valid day of month."
+    min_value = 1
+    max_value = 31
+
+
+class MonthValidator(DatePartValidator):
+    message = "Enter a valid month."
+    min_value = 1
+    max_value = 12
+
+
+class YearValidator(DatePartValidator):
+    message = "Enter a valid year."
+    min_value = -4713  # Postgres date type low value
+    max_value = 5874897  # Postgres date type high value

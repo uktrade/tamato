@@ -10,19 +10,44 @@ from govuk_frontend_jinja.templates import NunjucksExtension
 from webpack_loader.templatetags.webpack_loader import render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
+from workbaskets.views import get_current_workbasket
+
 
 class GovukFrontendExtension(NunjucksExtension):
     def preprocess(self, source, name, filename=None):
         if filename and filename.endswith(".njk"):
             source = super().preprocess(source, name, filename)
 
-            # Additional code needed for looping over dicts in python Adds in the
-            # .items() suffix, but also guards against iterating over empty dicts which
-            # is something that you can "get away with" in JS but not Python
+            # fix iterating objects
+            # govuk_frontend_jinja only catches `params.attributes`
+            iterated_objects = [
+                r"item.attributes",
+            ]
             source = re.sub(
-                r"\bin (.*).attributes.items\b",
-                r"in \1.get('attributes', {}).items",
+                r"(for attribute, value in )(" + r"|".join(iterated_objects) + r")",
+                r"\1(\2|default({})).items()",
                 source,
+            )
+
+            # fix nested attribute access
+            # NunjucksUndefined ought to catch these, but doesn't
+            nested_attrs = [
+                r"item.conditional",
+                r"item.hint",
+                r"item.label",
+                r"params.attributes",
+                r"params.countMessage",
+                r"params.formGroup",
+                r"params.legend",
+            ]
+            source = re.sub(
+                r"(" + r"|".join(nested_attrs) + r")\.", r"(\1|default({})).", source
+            )
+
+            # fix concatenating str and int
+            source = source.replace(
+                "+ (params.maxlength or params.maxwords) +",
+                "~ (params.maxlength or params.maxwords) ~",
             )
 
         return source
@@ -41,6 +66,7 @@ def environment(**kwargs):
         {
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
+            "get_current_workbasket": get_current_workbasket,
             "pluralize": pluralize,
             "render_bundle": render_bundle,
             "static": static,

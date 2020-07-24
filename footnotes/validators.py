@@ -54,9 +54,12 @@ def validate_footnote_description_dont_have_same_start_date(footnote_description
     """FO4"""
     footnote = footnote_description.described_footnote
 
-    if footnote.descriptions.filter(
-        valid_between__startswith=footnote_description.valid_between.lower
-    ).exists():
+    if (
+        type(footnote_description)
+        .objects.active()
+        .filter(valid_between__startswith=footnote_description.valid_between.lower)
+        .exists()
+    ):
         raise ValidationError(
             {
                 "valid_between": f"Footnote {footnote} cannot have two descriptions with the same start date"

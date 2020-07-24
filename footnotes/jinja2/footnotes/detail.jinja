@@ -4,8 +4,7 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set footnote_id = footnote|string %}
-{% set page_title = "Footnote " ~ footnote_id %}
+{% set page_title = "Footnote " ~ object|string %}
 
 {% block beforeContent %}
   {{ govukBreadcrumbs({
@@ -16,6 +15,10 @@
     ]
   }) }}
 {% endblock %}
+
+{% macro status(obj) %}
+  <span class="status {{ obj.status|lower() }}">{{ obj.get_status_display() }}</span>
+{% endmacro %}
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
@@ -39,7 +42,7 @@
             ],
             [
               {"text": "Footnote ID"},
-              {"text": footnote_id}
+              {"text": object|string}
             ],
             [
               {"text": "Current description"},
@@ -59,7 +62,7 @@
       <div class="footnote__core-data__actions">
         <h2 class="govuk-heading-s">Actions</h2>
         <ul class="icon-action-list govuk-list">
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Edit this footnote</a></li>
+          <li><a href="{{ object.get_url("edit") }}" class="govuk-link govuk-!-font-size-16">Edit this footnote</a></li>
           <li><a href="#" class="govuk-link govuk-!-font-size-16">Delete this footnote</a></li>
         </ul>
         <p class="govuk-body-s">
@@ -73,12 +76,12 @@
 
   {% set description_data_html %}
     {% set description_rows = [] %}
-    {% for description in object.descriptions.all() %}
+    {% for description in object.get_descriptions() %}
       {{ description_rows.append([
         {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
         {"text": description.description},
         {
-            "html": '<a href="#" class="govuk-link govuk-!-font-size-16">Edit description</a>'
+        "html": '<a href="' ~ description.get_url("edit") ~ '" class="govuk-link govuk-!-font-size-16">Edit description</a>'
         }
       ]) or ""}}
     {% endfor %}
@@ -110,6 +113,54 @@
     </div>
   {% endset %}
 
+  {% set version_data_html %}
+    {% set version_rows = [] %}
+    {% for version in object.get_versions() %}
+      {{ version_rows.append([
+        {"text": version.get_update_type_display()},
+        {"text": "{:%d %b %Y}".format(version.workbasket.created_at)},
+        {"text": "{:%d %b %Y}".format(version.valid_between.lower)},
+        {"text": "{:%d %b %Y}".format(version.valid_between.upper) if version.valid_between.upper else "-"},
+        {"html": status(version.workbasket)},
+        {"text": version.get_description().description},
+      ]) or ""}}
+    {% endfor %}
+    <div class="footnote__version-data">
+      <div class="footnote__version-data__content">
+        {{ govukTable({
+          "firstCellIsHeader": false,
+          "head": [
+            {
+              "text": "Activity",
+              "classes": "version-activity",
+            },
+            {
+              "text": "Activity date",
+              "classes": "version-activity-date",
+            },
+            {
+              "text": "Start Date",
+              "classes": "version-start-date"
+            },
+            {
+              "text": "End Date",
+              "classes": "version-end-date"
+            },
+            {
+              "text": "Status",
+              "classes": "version-status"
+            },
+            {
+              "text": "Description",
+              "classes": "govuk-!-width-one-quarter"
+            },
+          ],
+          "rows": version_rows
+        }) }}
+      </div>
+    </div>
+  {% endset %}
+
   {{ govukTabs({
     "items": [
       {
@@ -124,6 +175,13 @@
         "id": "descriptions",
         "panel": {
           "html": description_data_html
+        }
+      },
+      {
+        "label": "Version control",
+        "id": "versions",
+        "panel": {
+          "html": version_data_html
         }
       }
     ]

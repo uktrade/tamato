@@ -1,5 +1,9 @@
+import json
+from datetime import datetime
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django_fsm import FSMField
 from django_fsm import transition
@@ -145,6 +149,36 @@ class WorkBasket(TimestampedMixin):
         if self.errors:
             raise ValidationError("There are errors in the workbasket", self.errors)
 
+    def to_json(self):
+        """Used for serializing the workbasket to the session"""
+
+        data = {key: val for key, val in self.__dict__.items() if key != "_state"}
+        if "transaction" in data:
+            data["transaction"] = self.transaction.to_json()
+
+        # return a dict for convenient access to fields
+        return json.loads(json.dumps(data, cls=DjangoJSONEncoder))
+
+    @classmethod
+    def from_json(cls, data):
+        """Restore from session"""
+
+        return WorkBasket(
+            id=int(data["id"]),
+            pk=int(data["id"]),
+            title=data["title"],
+            reason=data["reason"],
+            status=data["status"],
+            created_at=datetime.fromisoformat(
+                data["created_at"].replace("Z", "+00:00")
+            ),
+            updated_at=datetime.fromisoformat(
+                data["updated_at"].replace("Z", "+00:00")
+            ),
+            author_id=int(data["author_id"]),
+            approver_id=int(data["approver_id"]) if data["approver_id"] else None,
+        )
+
 
 class Transaction(TimestampedMixin):
     """A Transaction is created once the WorkBasket has been sent for approval"""
@@ -152,3 +186,9 @@ class Transaction(TimestampedMixin):
     workbasket = models.OneToOneField(
         WorkBasket, on_delete=models.PROTECT, editable=False,
     )
+
+    def to_json(self):
+        """Used for serializing to the session"""
+
+        data = {key: val for key, val in self.__dict__.items() if key != "_state"}
+        return json.dumps(data, cls=DjangoJSONEncoder)

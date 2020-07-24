@@ -1,0 +1,44 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "components/inset-text/macro.njk" import govukInsetText %}
+
+{% block pageTitle %}
+  {% if form.errors %}Error: {% endif %}{{ super() }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  {% with form_preamble = "" -%}
+    {% set form_preamble -%}
+      {% block form_preamble %}{% endblock %}
+    {%- endset -%}
+    {{ govukInsetText({"html": form_preamble}) }}
+  {%- endwith %}
+
+  {% block form %}{% endblock %}
+{% endblock %}
+
+{% macro django_form(action="", method="post") %}
+  <form method="{{ method }}" action="{{ action }}">
+    {% if form.errors -%}
+      {% set error_list = [] %}
+      {% for field, errors in form.errors.items() %}
+        {% for error in errors.data %}
+          {{ error_list.append({
+            "text": error.message,
+            "href": "#id_" ~ field ~ ("_" ~ error.subfield if error.subfield is defined else ""),
+          }) or "" }}
+        {% endfor %}
+      {% endfor %}
+      {{ govukErrorSummary({
+        "titleText": "There is a problem",
+        "errorList": error_list
+      }) }}
+    {%- endif %}
+    {% if method|lower == "post" %}{{ csrf_input }}{% endif %}
+    {{ caller() }}
+  </form>
+{% endmacro %}

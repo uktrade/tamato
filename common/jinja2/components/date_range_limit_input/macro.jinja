@@ -1,0 +1,56 @@
+{% from "components/date-input/macro.njk" import govukDateInput %}
+
+{% macro date_range_limit_input(params) %}
+  {% with field = "", limit = "", subfield = 0, range = None, value = None, error_list = [] -%}
+    {%- set field, limit = params.field.split(".") -%}
+    {%- set range = params.form.initial.get(field) if params.form.initial else None -%}
+    {%- set value = range[limit] if range else None -%}
+    {%- set subfield = 1 if limit == "upper" else 0 -%}
+    {%- set field_name = field ~ "_" ~ subfield -%}
+    {%- for key, errors in (params.form.errors|default({})).items() -%}
+      {%- if key == field -%}
+        {%- for error in errors.data -%}
+          {%- if error.subfield|default(None) == subfield -%}
+            {{ error_list.append(error.message) or "" }}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ govukDateInput({
+        "id": "id_" ~ field_name,
+        "fieldset": {
+          "legend": {
+            "html": '<h2 class="govuk-heading-m">' ~ params.label ~'</h2>',
+          }
+        },
+        "hint": params.hint|default({}),
+        "errorMessage": {
+          "html": error_list|join("<br>"),
+        } if error_list else {},
+        "items": [
+          {
+            "label": "Day",
+            "name": field_name ~ "_0",
+            "id": field_name ~ "_day",
+            "classes": "govuk-input--width-2",
+            "value": "{.day}".format(value) if value else "",
+          },
+          {
+            "label": "Month",
+            "name": field_name ~ "_1",
+            "id": field_name ~ "_month",
+            "classes": "govuk-input--width-2",
+            "value": "{.month}".format(value) if value else "",
+          },
+          {
+            "label": "Year",
+            "name": field_name ~ "_2",
+            "id": field_name ~ "_year",
+            "classes": "govuk-input--width-4",
+            "value": "{.year}".format(value) if value else "",
+          },
+        ]
+      })
+    }}
+  {%- endwith %}
+{% endmacro %}

@@ -1,10 +1,45 @@
+import json
+from functools import wraps
+
+from django.core.serializers.json import DjangoJSONEncoder
+from django.shortcuts import redirect
 from django.shortcuts import render
 from rest_framework import renderers
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.reverse import reverse
 
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.serializers import WorkBasketSerializer
+
+
+def get_current_workbasket(request):
+    workbasket_data = request.session.get("workbasket")
+    if workbasket_data is None:
+        return None
+    return WorkBasket.from_json(workbasket_data)
+
+
+def return_to_current_url(request):
+    request.session["return_to"] = f"{request.path_info}?{request.META['QUERY_STRING']}"
+
+
+def require_current_workbasket(view_func):
+    """
+    View decorator which redirects user to choose or create a workbasket before
+    continuing.
+    """
+
+    @wraps(view_func)
+    def check_for_current_workbasket(request, *args, **kwargs):
+        if get_current_workbasket(request) is None:
+            return_to_current_url(request)
+            return redirect(reverse("workbasket-ui-choose-or-create"))
+
+        return view_func(request, *args, **kwargs)
+
+    return check_for_current_workbasket
 
 
 class WorkBasketViewSet(viewsets.ModelViewSet):
@@ -55,3 +90,24 @@ class WorkBasketUIViewSet(WorkBasketViewSet):
             "workbaskets/detail.jinja",
             context={"workbasket": self.get_object(), "workbasketitem_groups": groups},
         )
+
+    @action(detail=False, methods=["get"])
+    def choose_or_create(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return render(
+            request, "workbaskets/choose-or-create.jinja", context={"objects": queryset}
+        )
+
+    @action(detail=False, methods=["post"])
+    def set_current_workbasket(self, request):
+        if request.data["workbasket"] == "new":
+            workbasket = WorkBasket.objects.create(
+                title=request.data["title"],
+                reason=request.data["reason"],
+                author=request.user,
+            )
+        else:
+            workbasket = WorkBasket.objects.get(pk=int(request.data["workbasket"]))
+
+        request.session["workbasket"] = workbasket.to_json()
+        return redirect(request.session.get("return_to", reverse("index")))

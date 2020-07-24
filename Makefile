@@ -52,7 +52,7 @@ run: export DJANGO_SETTINGS_MODULE=settings.dev
 run: collectstatic migrate
 	@echo
 	@echo "> Running webapp..."
-	@python manage.py runserver
+	@python manage.py runserver_plus 0.0.0.0:8000
 
 run-cf: export DJANGO_SETTINGS_MODULE=settings
 run-cf: collectstatic migrate

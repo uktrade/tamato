@@ -1,0 +1,33 @@
+.version-activity,
+.version-activity-date,
+.version-start-date,
+.version-end-date,
+.version-status {
+  width: 10% !important;
+}
+
+.status::before {
+  content: " ";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+}
+
+.status.editing,
+.status.new_in_progress {
+  &::before {
+    background-image: url("/assets/common/images/in_progress.png");
+  }
+}
+
+.status.awaiting_approval {
+  &::before {
+    background-image: url("/assets/common/images/awaiting_approval.png");
+  }
+}
+
+.status.published {
+  &::before {
+    background-image: url("/assets/common/images/published.png");
+  }
+}
