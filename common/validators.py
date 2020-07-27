@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils.deconstruct import deconstructible
 
 
@@ -64,3 +65,9 @@ class YearValidator(DatePartValidator):
     message = "Enter a valid year."
     min_value = -4713  # Postgres date type low value
     max_value = 5874897  # Postgres date type high value
+
+
+class UpdateType(models.IntegerChoices):
+    UPDATE = 1, "Update"
+    DELETE = 2, "Delete"
+    CREATE = 3, "Create"

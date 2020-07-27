@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timezone
 
 from django.core.exceptions import ImproperlyConfigured
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -13,7 +14,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.reverse import reverse
 
-from common.models import UpdateType
+from common.validators import UpdateType
 from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilterBackend
@@ -65,29 +66,24 @@ class FootnoteList(CurrentWorkBasketMixin, generic.ListView):
 
 
 class FootnoteMixin:
+    required_url_kwargs = ["footnote_type__footnote_type_id", "footnote_id"]
+
     def get_object(self, queryset=None):
         if queryset is None:
             queryset = self.get_queryset()
 
-        type_id = self.kwargs.get("footnote_type_id")
-        id = self.kwargs.get("footnote_id")
-
-        if id is not None:
-            queryset = queryset.filter(footnote_id=id)
-
-        if type_id is not None:
-            queryset = queryset.filter(footnote_type__footnote_type_id=type_id)
-
-        if id is None and type_id is None:
+        if not all(key in self.kwargs for key in self.required_url_kwargs):
             raise AttributeError(
-                "{self.__class__.__name__} must be called with a footnote type id and "
-                "footnote id in the URLconf."
+                f"{self.__class__.__name__} must be called with a footnote type id and "
+                f"footnote id in the URLconf."
             )
+
+        queryset = queryset.filter(**self.kwargs)
 
         try:
             return queryset.get()
         except queryset.model.DoesNotExist:
-            raise Http404(f"No footnote matching the query")
+            raise Http404(f"No footnote matching the query {self.kwargs}")
 
 
 class FootnoteDetail(CurrentWorkBasketMixin, FootnoteMixin, generic.DetailView):
@@ -113,7 +109,7 @@ class FootnoteUpdate(CurrentWorkBasketMixin, FootnoteMixin, generic.UpdateView):
     def form_valid(self, form):
         self.object = self.object.new_draft(
             workbasket=get_current_workbasket(self.request),
-            update_type=UpdateType.Update,
+            update_type=UpdateType.UPDATE,
             valid_between=form.cleaned_data.get("valid_between"),
         )
         return super().form_valid(form)
@@ -124,30 +120,23 @@ class FootnoteConfirmUpdate(FootnoteDetail):
 
 
 class FootnoteDescriptionMixin:
+    required_url_kwargs = [
+        "described_footnote__footnote_type__footnote_type_id",
+        "described_footnote__footnote_id",
+        "description_period_sid",
+    ]
+
     def get_object(self, queryset=None):
         if queryset is None:
             queryset = self.get_queryset()
 
-        type_id = self.kwargs.get("footnote_type_id")
-        id = self.kwargs.get("footnote_id")
-        period_sid = self.kwargs.get("period_sid")
-
-        if id is not None:
-            queryset = queryset.filter(described_footnote__footnote_id=id)
-
-        if type_id is not None:
-            queryset = queryset.filter(
-                described_footnote__footnote_type__footnote_type_id=type_id
-            )
-
-        if period_sid is not None:
-            queryset = queryset.filter(description_period_sid=period_sid)
-
-        if id is None and type_id is None and period_sid is None:
+        if not all(key in self.kwargs for key in self.required_url_kwargs):
             raise AttributeError(
-                "{self.__class__.__name__} must be called with a footnote type id, a "
-                "footnote id, and a period sid in the URLconf."
+                f"{self.__class__.__name__} must be called with a footnote type id, a "
+                f"footnote id, and a period sid in the URLconf."
             )
+
+        queryset = queryset.filter(**self.kwargs)
 
         try:
             return queryset.get()
@@ -172,7 +161,7 @@ class FootnoteDescriptionUpdate(
 
         self.object = self.object.new_draft(
             workbasket=get_current_workbasket(self.request),
-            update_type=UpdateType.Update,
+            update_type=UpdateType.UPDATE,
             valid_between=valid_between,
             description=description,
         )

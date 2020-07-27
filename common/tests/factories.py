@@ -8,9 +8,9 @@ from itertools import product
 import factory
 from psycopg2.extras import DateTimeTZRange
 
-from common.models import UpdateType
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from common.validators import UpdateType
 
 BREXIT_DATE = datetime(2021, 1, 1).replace(tzinfo=timezone.utc)
 
@@ -57,7 +57,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
 class TrackedModelMixin(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(WorkBasketFactory)
-    update_type = UpdateType.Insert.value
+    update_type = UpdateType.CREATE
 
 
 class FootnoteTypeFactory(TrackedModelMixin, ValidityFactoryMixin):

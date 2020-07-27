@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
 from common.util import validity_range_contains_range
+from common.validators import UpdateType
+from workbaskets.models import WorkflowStatus
 
 
 FOOTNOTE_TYPE_ID_PATTERN = r"[A-Z]{2}[A-Z ]?"
@@ -27,7 +29,7 @@ def validate_description_is_not_null(obj):
 def validate_at_least_one_description(footnote):
     """FO4"""
 
-    if footnote.descriptions.count() < 1:
+    if footnote.get_descriptions().count() < 1:
         raise ValidationError("At least one description record is mandatory.")
 
 
@@ -37,7 +39,7 @@ def validate_first_footnote_description_has_footnote_start_date(footnote_descrip
     footnote = footnote_description.described_footnote
 
     if (
-        footnote.descriptions.count() == 0
+        footnote.get_descriptions().count() == 0
         and footnote.valid_between.lower != footnote_description.valid_between.lower
     ):
         raise ValidationError(
@@ -55,8 +57,7 @@ def validate_footnote_description_dont_have_same_start_date(footnote_description
     footnote = footnote_description.described_footnote
 
     if (
-        type(footnote_description)
-        .objects.active()
+        footnote.get_descriptions()
         .filter(valid_between__startswith=footnote_description.valid_between.lower)
         .exists()
     ):
@@ -85,6 +86,26 @@ def validate_footnote_description_start_date_before_footnote_end_date(
                 ),
             },
         )
+
+
+def validate_unique_type_and_id(footnote):
+    """FO2"""
+
+    # check against active footnotes which are published (or sent to cds?)
+    footnotes_with_type_and_id = (
+        type(footnote)
+        .objects.active()
+        .filter(
+            workbasket__status=WorkflowStatus.PUBLISHED,
+            footnote_id=footnote.footnote_id,
+            footnote_type__footnote_type_id=footnote.footnote_type.footnote_type_id,
+        )
+    )
+    if (
+        footnote.update_type == UpdateType.CREATE
+        and footnotes_with_type_and_id.exists()
+    ):
+        raise ValidationError("The combination footnote type and code must be unique.")
 
 
 def validate_footnote_type_validity_includes_footnote_validity(footnote):

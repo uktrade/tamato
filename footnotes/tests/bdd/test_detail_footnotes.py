@@ -14,7 +14,7 @@ scenarios("features/detail-footnotes.feature")
 @pytest.fixture
 @when("I select footnote NC000")
 def footnote_detail(client, footnote_NC000):
-    return client.get(reverse("footnote-ui-detail", kwargs={"pk": footnote_NC000.pk}))
+    return client.get(footnote_NC000.get_url())
 
 
 @then("a summary of the core information should be presented")

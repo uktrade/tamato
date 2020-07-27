@@ -8,11 +8,6 @@
   {{ page_title }} | {{ service_name }}
 {% endblock %}
 
-{% block head %}
-  {{ super() }}
-  <link href="{{ static('common/css/application.css') }}" rel="stylesheet">
-{% endblock %}
-
 {% block header %}
   {{ govukHeader({
     "serviceName": service_name,
