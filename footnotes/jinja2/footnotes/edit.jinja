@@ -83,13 +83,13 @@
 
     {{ date_range_limit_input({
       "form": form,
-      "limit": "start",
+      "field": "valid_between.lower",
       "label": "When does this footnote enter into force?",
     }) }}
 
     {{ date_range_limit_input({
       "form": form,
-      "limit": "end",
+      "field": "valid_between.upper",
       "label": "When does this footnote end?",
       "hint": {
         "text": "This is optional and should usually be left unset (open-ended) unless you know the footnote is only needed for a limited time."

@@ -7,6 +7,7 @@ from common.tests import factories
 from common.tests.util import requires_commodities
 from common.tests.util import requires_measures
 from common.tests.util import requires_meursing_tables
+from workbaskets.models import WorkflowStatus
 
 
 pytestmark = pytest.mark.django_db
@@ -47,11 +48,15 @@ def test_FOT3(date_ranges):
 def test_FO2():
     """The combination footnote type and code must be unique."""
 
-    t = factories.FootnoteTypeFactory()
-    f = factories.FootnoteFactory.create(footnote_type=t)
-
-    with pytest.raises(IntegrityError):
-        factories.FootnoteFactory(footnote_id=f.footnote_id, footnote_type=t)
+    published = factories.WorkBasketFactory(status=WorkflowStatus.PUBLISHED)
+    workbasket = factories.WorkBasketFactory()
+    t = factories.FootnoteTypeFactory(workbasket=published)
+    f = factories.FootnoteFactory(footnote_type=t, workbasket=published)
+    factories.FootnoteFactory(
+        footnote_id=f.footnote_id, footnote_type=t, workbasket=workbasket
+    )
+    with pytest.raises(ValidationError):
+        workbasket.submit_for_approval()
 
 
 def test_FO3(date_ranges):
@@ -84,18 +89,25 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
         )
 
 
-def test_FO4_start_dates_cannot_match(date_ranges):
+def test_FO4_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
-    footnote = factories.FootnoteFactory(valid_between=date_ranges.no_end)
+    published = factories.WorkBasketFactory(status=WorkflowStatus.PUBLISHED)
+    footnote = factories.FootnoteFactory(workbasket=published)
+    description = factories.FootnoteDescriptionFactory(
+        described_footnote=footnote,
+        valid_between=footnote.valid_between,
+        workbasket=published,
+    )
 
-    factories.FootnoteDescriptionFactory(
-        described_footnote=footnote, valid_between=date_ranges.no_end
+    workbasket = factories.WorkBasketFactory()
+    factories.FootnoteDescriptionFactory.create(
+        described_footnote=footnote,
+        valid_between=description.valid_between,
+        workbasket=workbasket,
     )
     with pytest.raises(ValidationError):
-        factories.FootnoteDescriptionFactory.create(
-            described_footnote=footnote, valid_between=date_ranges.no_end
-        )
+        workbasket.submit_for_approval()
 
 
 def test_FO4_description_start_before_footnote_end(date_ranges):

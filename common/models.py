@@ -13,6 +13,7 @@ from treebeard.mp_tree import MP_Node
 from treebeard.mp_tree import MP_NodeQuerySet
 
 from common import exceptions
+from common import validators
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet):
@@ -127,9 +128,6 @@ class ValidityMixin(models.Model):
         abstract = True
 
 
-UpdateType = models.IntegerChoices("UpdateType", ["Update", "Delete", "Insert",],)
-
-
 class TrackedModel(PolymorphicModel):
     workbasket = models.ForeignKey(
         "workbaskets.WorkBasket",
@@ -145,7 +143,9 @@ class TrackedModel(PolymorphicModel):
         related_query_name="successor",
     )
 
-    update_type = models.PositiveSmallIntegerField(choices=UpdateType.choices)
+    update_type = models.PositiveSmallIntegerField(
+        choices=validators.UpdateType.choices
+    )
 
     objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
 

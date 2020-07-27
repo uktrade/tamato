@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 
 from common.models import TimestampedMixin
@@ -8,6 +11,7 @@ from common.models import TrackedModel
 from common.models import ValidityMixin
 from common.validators import NumericSIDValidator
 from footnotes import validators
+from workbaskets.models import WorkflowStatus
 
 
 # Footnote type application codes
@@ -90,16 +94,20 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
         return reverse(
             f"footnote-ui-{action}",
             kwargs={
-                "footnote_type_id": self.footnote_type.footnote_type_id,
+                "footnote_type__footnote_type_id": self.footnote_type.footnote_type_id,
                 "footnote_id": self.footnote_id,
             },
         )
 
-    def get_descriptions(self):
-        return FootnoteDescription.objects.filter(
+    def get_descriptions(self, workbasket=None):
+        descriptions = FootnoteDescription.objects.filter(
             described_footnote__footnote_id=self.footnote_id,
             described_footnote__footnote_type=self.footnote_type,
         )
+        query = Q(workbasket__status=WorkflowStatus.PUBLISHED,)
+        if workbasket is not None:
+            query |= Q(workbasket=workbasket)
+        return descriptions.filter(query)
 
     def get_description(self):
         return self.get_descriptions().last()
@@ -108,6 +116,7 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
         validators.validate_footnote_type_validity_includes_footnote_validity(self)
 
     def validate_workbasket(self):
+        validators.validate_unique_type_and_id(self)
         validators.validate_at_least_one_description(self)
 
     def save(self, *args, **kwargs):
@@ -144,10 +153,12 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
 
     def clean(self):
         validators.validate_first_footnote_description_has_footnote_start_date(self)
-        validators.validate_footnote_description_dont_have_same_start_date(self)
         validators.validate_footnote_description_start_date_before_footnote_end_date(
             self
         )
+
+    def validate_workbasket(self):
+        validators.validate_footnote_description_dont_have_same_start_date(self)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -157,8 +168,8 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
         return reverse(
             f"footnote-ui-description-{action}",
             kwargs={
-                "footnote_type_id": self.described_footnote.footnote_type.footnote_type_id,
-                "footnote_id": self.described_footnote.footnote_id,
-                "period_sid": self.description_period_sid,
+                "described_footnote__footnote_type__footnote_type_id": self.described_footnote.footnote_type.footnote_type_id,
+                "described_footnote__footnote_id": self.described_footnote.footnote_id,
+                "description_period_sid": self.description_period_sid,
             },
         )

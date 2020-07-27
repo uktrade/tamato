@@ -12,7 +12,7 @@ from common.tests import factories
 pytestmark = pytest.mark.django_db
 
 
-scenarios("features/edit-footnote.feature", "features/edit-footnote.feature")
+scenarios("features/edit-footnote.feature")
 
 
 @given("A current workbasket")
@@ -32,15 +32,13 @@ def alice_has_permission_to_update_a_footnote(footnote_nc000):
 @pytest.fixture
 @when("I go to edit footnote NC000")
 def footnote_edit_screen(client, footnote_nc000):
-    return client.get(reverse("footnote-ui-edit", args=[footnote_nc000.pk]))
+    return client.get(footnote_nc000.get_url("edit"))
 
 
 @pytest.fixture
 @when("I submit a <change> to footnote NC000")
-def i_submit_a_change_to_footnote_nc000(change):
-    return client.post(
-        reverse("footnote-ui-submit-edit", args=[footnote_nc000.pk]), change
-    )
+def i_submit_a_change_to_footnote_nc000(footnote_nc000, change):
+    return client.post(footnote_nc000.get_url("edit"), change)
 
 
 @then("I should be presented with a footnote update screen")

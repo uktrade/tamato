@@ -7,29 +7,15 @@ from footnotes import models
 
 
 class FootnoteForm(forms.ModelForm):
-    start_date = GovukDateField()
-    end_date = GovukDateField(required=False)
+    valid_between = GovukDateRangeField()
 
     class Meta:
         model = models.Footnote
-        fields = ("footnote_type", "footnote_id", "start_date", "end_date")
-
-    def __init__(self, initial=None, *args, **kwargs):
-        super().__init__(initial=initial, *args, **kwargs)
-        if self.instance:
-            self.initial["start_date"] = self.instance.valid_between.lower
-            self.initial["end_date"] = self.instance.valid_between.upper
-
-    def clean(self):
-        self.cleaned_data["valid_between"] = DateTimeTZRange(
-            lower=self.cleaned_data.get("start_date", None),
-            upper=self.cleaned_data.get("end_date", None),
-        )
-        return self.cleaned_data
+        fields = ("footnote_type", "footnote_id", "valid_between")
 
 
 class FootnoteDescriptionForm(forms.ModelForm):
-    valid_between = GovukDateRangeField(required=True)
+    valid_between = GovukDateRangeField()
 
     class Meta:
         model = models.FootnoteDescription
