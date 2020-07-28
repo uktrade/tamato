@@ -46,9 +46,10 @@ class CurrentWorkBasketMixin:
         workbasket = get_current_workbasket(self.request)
         if self.queryset is None:
             if self.model:
+                qs = self.model.objects.current()
                 if workbasket:
-                    return self.model._default_manager.current()
-                return self.model._default_manager.active()
+                    qs |= self.model.objects.filter(workbasket=workbasket)
+                return qs
             else:
                 raise ImproperlyConfigured(
                     "%(cls)s is missing a QuerySet. Define "
@@ -56,8 +57,10 @@ class CurrentWorkBasketMixin:
                     "%(cls)s.get_queryset()." % {"cls": self.__class__.__name__}
                 )
         if workbasket:
-            return self.queryset.current()
-        return self.queryset.active()
+            return self.queryset | self.queryset.model.objects.filter(
+                workbasket=workbasket
+            )
+        return self.queryset
 
 
 class FootnoteList(CurrentWorkBasketMixin, generic.ListView):
