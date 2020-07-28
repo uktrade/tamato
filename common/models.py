@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.template import loader
+from django.utils import timezone
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
@@ -61,7 +62,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If done from the TrackedModel this will return all instances of all tracked models
         as represented at the current date.
         """
-        return self.as_at(datetime.now())
+        return self.as_at(timezone.now())
 
     def get_version(self, **kwargs):
         for field in self.model.identifying_fields:
