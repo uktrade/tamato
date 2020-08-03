@@ -27,11 +27,6 @@ def current_workbasket(client):
     return workbasket
 
 
-@given("Alice has permission to update a footnote")
-def alice_has_permission_to_update_a_footnote(valid_user, footnote_NC000):
-    assert True  # TODO implement permissions
-
-
 @pytest.fixture
 @when("I go to edit footnote NC000")
 def footnote_edit_screen(client, footnote_NC000):

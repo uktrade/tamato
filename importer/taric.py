@@ -4,14 +4,13 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 
-from common.models import UpdateType
-from workbaskets import models
-
+from common.validators import UpdateType
 from importer.handlers import ElementHandler
 from importer.handlers import HandlerError
 from importer.handlers import TextElement
 from importer.namespaces import ENVELOPE
 from importer.namespaces import Tag
+from workbaskets import models
 
 
 class Record(ElementHandler):

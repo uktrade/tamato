@@ -2,11 +2,11 @@
       {% set table_rows = [] %}
       {% for footnote in object_list %}
         {% set footnote_link -%}
-        <a href="{{ url("footnote-ui-detail", kwargs={"footnote_type_id": footnote.footnote_type.footnote_type_id, "footnote_id": footnote.footnote_id}) }}">{{ footnote|string }}</a>
+        <a href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
         {%- endset %}
         {{ table_rows.append([
           {"html": footnote_link},
-          {"text": footnote.get_description().description},
+          {"text": footnote.get_description().description|default("")},
           {"text": footnote.footnote_type.description},
           {"text": ""},
           {"text": "{:%d %b %Y}".format(footnote.valid_between.lower)},
