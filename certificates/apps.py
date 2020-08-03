@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from common.app_config import CommonConfig
 
 
-class CertificatesConfig(AppConfig):
+class CertificatesConfig(CommonConfig):
     name = "certificates"

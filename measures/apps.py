@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from common.app_config import CommonConfig
 
 
-class MeasuresConfig(AppConfig):
+class MeasuresConfig(CommonConfig):
     name = "measures"

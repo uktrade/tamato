@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from common.app_config import CommonConfig
 
 
-class AdditionalCodesConfig(AppConfig):
+class AdditionalCodesConfig(CommonConfig):
     name = "additional_codes"
