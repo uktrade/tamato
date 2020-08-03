@@ -202,6 +202,7 @@ inherit TrackedModel must either:
         }
 
         new_object_kwargs["workbasket"] = workbasket
+        new_object_kwargs.setdefault("update_type", validators.UpdateType.UPDATE)
         new_object_kwargs["predecessor"] = self
         new_object_kwargs.pop("polymorphic_ctype")
         new_object_kwargs.pop("trackedmodel_ptr")

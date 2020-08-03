@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 from pytest_bdd import given
 
 from common.tests import factories
@@ -22,3 +23,26 @@ def footnote_NC000():
         described_footnote=f, valid_between=Dates.overlap_normal, workbasket=w
     )
     return f
+
+
+@given('a valid user named "Bob" with permission to edit footnotes')
+def user_bob():
+    bob = factories.UserFactory(username="Bob")
+    bob.user_permissions.add(
+        *list(
+            Permission.objects.filter(
+                content_type__app_label="footnotes",
+                codename__in=[
+                    "change_footnote",
+                    "add_footnotedescription",
+                    "change_footnotedescription",
+                ],
+            )
+        )
+    )
+    return bob
+
+
+@given("I am logged in as Bob")
+def user_bob_login(client, user_bob):
+    client.force_login(user_bob)

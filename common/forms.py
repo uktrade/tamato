@@ -23,7 +23,7 @@ class GovukDateWidget(forms.MultiWidget):
 
     def decompress(self, value):
         if value:
-            return "{0.day} {0.month} {0.year}".format(value).split()
+            return [value.day, value.month, value.year]
         return ["", "", ""]
 
 
@@ -32,25 +32,24 @@ class GovukDateField(forms.MultiValueField):
 
     def __init__(self, **kwargs):
         fields = (
-            forms.CharField(validators=[validators.DayValidator]),
-            forms.CharField(validators=[validators.MonthValidator]),
-            forms.CharField(validators=[validators.YearValidator]),
+            forms.CharField(),
+            forms.CharField(),
+            forms.CharField(),
         )
         super().__init__(fields=fields, require_all_fields=True, **kwargs)
 
     def compress(self, data_list):
         if data_list:
-            valid = all(data_list)
+            if not all(data_list):
+                raise ValidationError("Enter a valid date.", code="invalid_date")
+
             try:
                 day, month, year = data_list
                 result = from_current_timezone(
                     datetime(int(year), int(month), int(day))
                 )
-            except ValueError:
-                valid = False
-
-            if not valid:
-                raise ValidationError("Enter a valid date.", code="invalid_date")
+            except ValueError as e:
+                raise ValidationError("Enter a valid date.", code="invalid_date") from e
 
             return result
 
