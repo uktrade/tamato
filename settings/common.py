@@ -56,14 +56,15 @@ INSTALLED_APPS = [
     "polymorphic",
     "rest_framework",
     "webpack_loader",
-    "certificates",
     "common",
-    "additional_codes",
-    "commodities",
-    "footnotes",
-    "geo_areas",
-    "measures",
-    "regulations",
+    "additional_codes.apps.AdditionalCodesConfig",
+    "certificates.apps.CertificatesConfig",
+    "commodities.apps.CommoditiesConfig",
+    "footnotes.apps.FootnotesConfig",
+    "geo_areas.apps.GeoAreasConfig",
+    "importer",
+    "measures.apps.MeasuresConfig",
+    "regulations.apps.RegulationsConfig",
     "workbaskets",
 ]
 
@@ -255,3 +256,5 @@ REST_FRAMEWORK = {
 }
 
 TARIC_XSD = os.path.join(BASE_DIR, "common", "assets", "taric3.xsd")
+
+DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")

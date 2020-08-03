@@ -58,8 +58,23 @@ To run with coverage use the following:
 ## Environment Variables
 
 | Name | Description |
-| ---- | ----------- |
-|      |             |
+| ---- | ----------- | 
+| DATABASE_URL           | Connection details for the database, formatted per the [dj-database-url schema](https://github.com/jacobian/dj-database-url#url-schema) |
+| LOG_LEVEL              | The level of logging messages. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                                    |
+| TAMATO_IMPORT_USERNAME | The TAMATO username to use for the owner of the workbaskets created.  
+
+
+## Using the importer
+
+The Tariff Managment Tool (TAMATO) needs to import TARIC3 XML data from both the
+EU (for historical data) and from HMRC (for VAT measures).
+
+TaMaTo provides an import which parses TARIC3 XML and inserts the data into the
+TAMATO database.
+
+Run the script to see the command line arguments:
+
+    ./manage.py 
 
 ## How to deploy
 
