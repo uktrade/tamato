@@ -36,7 +36,7 @@
     {% for workbasket in objects -%}
       {{ workbasket_options.append({
         "value": workbasket.pk,
-        "text": workbasket.title,
+        "text": workbasket.title|default("Workbasket " ~ workbasket.pk),
       }) or "" }}
     {%- endfor -%}
     {{ workbasket_options.append({

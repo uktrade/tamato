@@ -20,6 +20,7 @@ from footnotes import models
 from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
+from workbaskets.views import CurrentWorkBasketMixin
 from workbaskets.views import get_current_workbasket
 from workbaskets.views import require_current_workbasket
 
@@ -41,34 +42,16 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
-class CurrentWorkBasketMixin:
-    def get_queryset(self):
-        workbasket = get_current_workbasket(self.request)
-        if self.queryset is None:
-            if self.model:
-                qs = self.model.objects.current()
-                if workbasket:
-                    qs |= self.model.objects.filter(workbasket=workbasket)
-                return qs
-            else:
-                raise ImproperlyConfigured(
-                    "%(cls)s is missing a QuerySet. Define "
-                    "%(cls)s.model, %(cls)s.queryset, or override "
-                    "%(cls)s.get_queryset()." % {"cls": self.__class__.__name__}
-                )
-        if workbasket:
-            return self.queryset | self.queryset.model.objects.filter(
-                workbasket=workbasket
-            )
-        return self.queryset
-
-
 class FootnoteList(CurrentWorkBasketMixin, generic.ListView):
-    model = models.Footnote
+    queryset = models.Footnote.objects.active()
     template_name = "footnotes/list.jinja"
 
 
 class FootnoteMixin:
+    """
+    Allows footnote detail URLs to use <footnote_type><footnote_id> instead of <pk>
+    """
+
     required_url_kwargs = ["footnote_type__footnote_type_id", "footnote_id"]
 
     def get_object(self, queryset=None):
@@ -90,8 +73,12 @@ class FootnoteMixin:
 
 
 class FootnoteDetail(CurrentWorkBasketMixin, FootnoteMixin, generic.DetailView):
-    model = models.Footnote
     template_name = "footnotes/detail.jinja"
+
+    @property
+    def queryset(self):
+        # laxy evaluation to allow freezegun to work
+        return models.Footnote.objects.active()
 
 
 @method_decorator(require_current_workbasket, name="dispatch")

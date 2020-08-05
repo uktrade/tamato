@@ -11,6 +11,7 @@ from rest_framework.reverse import reverse
 
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkflowStatus
 from workbaskets.serializers import WorkBasketSerializer
 
 
@@ -40,6 +41,21 @@ def require_current_workbasket(view_func):
         return view_func(request, *args, **kwargs)
 
     return check_for_current_workbasket
+
+
+class CurrentWorkBasketMixin:
+    """
+    Add models in the current workbasket to the modelview queryset
+    """
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        workbasket = get_current_workbasket(self.request)
+        if workbasket:
+            qs = qs.with_workbasket(workbasket)
+
+        return qs
 
 
 class WorkBasketViewSet(viewsets.ModelViewSet):
@@ -93,7 +109,9 @@ class WorkBasketUIViewSet(WorkBasketViewSet):
 
     @action(detail=False, methods=["get"])
     def choose_or_create(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset()).filter(
+            status__in=[WorkflowStatus.NEW_IN_PROGRESS, WorkflowStatus.EDITING,],
+        )
         return render(
             request, "workbaskets/choose-or-create.jinja", context={"objects": queryset}
         )
