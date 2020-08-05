@@ -90,6 +90,27 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.get_version(predecessor__isnull=True, **kwargs)
 
+    def with_workbasket(self, workbasket):
+        """
+        Add the latest versions of objects from the specified workbasket.
+        """
+        query = Q()
+
+        # get models in the workbasket
+        in_workbasket = self.model.objects.filter(workbasket=workbasket)
+
+        # remove matching models from the queryset
+        for instance in in_workbasket:
+            query &= ~Q(
+                **{
+                    field: getattr(instance, field)
+                    for field in self.model.identifying_fields
+                }
+            )
+
+        # add latest version of models from the current workbasket
+        return self.filter(query) | in_workbasket.filter(successor__isnull=True)
+
 
 class PolymorphicMPTreeQuerySet(TrackedModelQuerySet, MP_NodeQuerySet):
     """
