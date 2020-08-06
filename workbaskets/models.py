@@ -179,6 +179,13 @@ class WorkBasket(TimestampedMixin):
             approver_id=int(data["approver_id"]) if data["approver_id"] else None,
         )
 
+    @classmethod
+    def current(cls, request):
+        """Get the current workbasket in the session"""
+
+        if "workbasket" in request.session:
+            return cls.from_json(request.session["workbasket"])
+
 
 class Transaction(TimestampedMixin):
     """A Transaction is created once the WorkBasket has been sent for approval"""

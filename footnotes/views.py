@@ -6,7 +6,6 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.views import generic
 from rest_framework import permissions
 from rest_framework import renderers
@@ -20,9 +19,8 @@ from footnotes import models
 from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
-from workbaskets.views import CurrentWorkBasketMixin
-from workbaskets.views import get_current_workbasket
-from workbaskets.views import require_current_workbasket
+from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class FootnoteViewSet(viewsets.ModelViewSet):
@@ -42,8 +40,8 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
-class FootnoteList(CurrentWorkBasketMixin, generic.ListView):
-    queryset = models.Footnote.objects.active()
+class FootnoteList(WithCurrentWorkBasket, generic.ListView):
+    queryset = models.Footnote.objects.current()
     template_name = "footnotes/list.jinja"
 
 
@@ -72,20 +70,20 @@ class FootnoteMixin:
             raise Http404(f"No footnote matching the query {self.kwargs}")
 
 
-class FootnoteDetail(CurrentWorkBasketMixin, FootnoteMixin, generic.DetailView):
+class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, generic.DetailView):
     template_name = "footnotes/detail.jinja"
 
     @property
     def queryset(self):
         # laxy evaluation to allow freezegun to work
-        return models.Footnote.objects.active()
+        return models.Footnote.objects.current()
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
-class FootnoteUpdate(CurrentWorkBasketMixin, FootnoteMixin, generic.UpdateView):
+class FootnoteUpdate(FootnoteMixin, DraftUpdateView):
     form_class = forms.FootnoteForm
     queryset = models.Footnote.objects.current()
     template_name = "footnotes/edit.jinja"
+    update_fields = ["valid_between"]
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -95,14 +93,6 @@ class FootnoteUpdate(CurrentWorkBasketMixin, FootnoteMixin, generic.UpdateView):
 
     def get_success_url(self):
         return reverse("footnote-ui-confirm-update", kwargs=self.kwargs)
-
-    def form_valid(self, form):
-        self.object = self.object.new_draft(
-            workbasket=get_current_workbasket(self.request),
-            update_type=UpdateType.UPDATE,
-            valid_between=form.cleaned_data.get("valid_between"),
-        )
-        return super().form_valid(form)
 
 
 class FootnoteConfirmUpdate(FootnoteDetail):
@@ -134,32 +124,18 @@ class FootnoteDescriptionMixin:
             raise Http404(f"No footnote description matching the query")
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
-class FootnoteDescriptionUpdate(
-    CurrentWorkBasketMixin, FootnoteDescriptionMixin, generic.UpdateView
-):
+class FootnoteDescriptionUpdate(FootnoteDescriptionMixin, DraftUpdateView):
     form_class = forms.FootnoteDescriptionForm
     queryset = models.FootnoteDescription.objects.current()
     template_name = "footnotes/edit_description.jinja"
+    update_fields = ["valid_between", "description"]
 
     def get_success_url(self):
         return self.object.get_url("confirm-update")
 
-    def form_valid(self, form):
-        valid_between = form.cleaned_data.get("valid_between")
-        description = form.cleaned_data.get("description")
-
-        self.object = self.object.new_draft(
-            workbasket=get_current_workbasket(self.request),
-            update_type=UpdateType.UPDATE,
-            valid_between=valid_between,
-            description=description,
-        )
-        return super().form_valid(form)
-
 
 class FootnoteDescriptionConfirmUpdate(
-    CurrentWorkBasketMixin, FootnoteDescriptionMixin, generic.DetailView
+    WithCurrentWorkBasket, FootnoteDescriptionMixin, generic.DetailView
 ):
     queryset = models.FootnoteDescription.objects.current()
     template_name = "footnotes/confirm_update_description.jinja"

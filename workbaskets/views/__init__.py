@@ -1,7 +1,3 @@
-import json
-from functools import wraps
-
-from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import redirect
 from django.shortcuts import render
 from rest_framework import renderers
@@ -13,49 +9,6 @@ from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 from workbaskets.serializers import WorkBasketSerializer
-
-
-def get_current_workbasket(request):
-    workbasket_data = request.session.get("workbasket")
-    if workbasket_data is None:
-        return None
-    return WorkBasket.from_json(workbasket_data)
-
-
-def return_to_current_url(request):
-    request.session["return_to"] = f"{request.path_info}?{request.META['QUERY_STRING']}"
-
-
-def require_current_workbasket(view_func):
-    """
-    View decorator which redirects user to choose or create a workbasket before
-    continuing.
-    """
-
-    @wraps(view_func)
-    def check_for_current_workbasket(request, *args, **kwargs):
-        if get_current_workbasket(request) is None:
-            return_to_current_url(request)
-            return redirect(reverse("workbasket-ui-choose-or-create"))
-
-        return view_func(request, *args, **kwargs)
-
-    return check_for_current_workbasket
-
-
-class CurrentWorkBasketMixin:
-    """
-    Add models in the current workbasket to the modelview queryset
-    """
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-
-        workbasket = get_current_workbasket(self.request)
-        if workbasket:
-            qs = qs.with_workbasket(workbasket)
-
-        return qs
 
 
 class WorkBasketViewSet(viewsets.ModelViewSet):
