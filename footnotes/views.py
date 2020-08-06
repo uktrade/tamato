@@ -75,7 +75,7 @@ class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, generic.DetailView):
 
     @property
     def queryset(self):
-        # laxy evaluation to allow freezegun to work
+        # lazy evaluation to allow freezegun to work
         return models.Footnote.objects.current()
 
 
@@ -83,7 +83,6 @@ class FootnoteUpdate(FootnoteMixin, DraftUpdateView):
     form_class = forms.FootnoteForm
     queryset = models.Footnote.objects.current()
     template_name = "footnotes/edit.jinja"
-    update_fields = ["valid_between"]
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -128,7 +127,6 @@ class FootnoteDescriptionUpdate(FootnoteDescriptionMixin, DraftUpdateView):
     form_class = forms.FootnoteDescriptionForm
     queryset = models.FootnoteDescription.objects.current()
     template_name = "footnotes/edit_description.jinja"
-    update_fields = ["valid_between", "description"]
 
     def get_success_url(self):
         return self.object.get_url("confirm-update")
