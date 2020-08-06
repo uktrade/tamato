@@ -4,7 +4,7 @@ Date: 2020-06-02
 
 ## Status
 
-Approved
+Approved, partially superseded by [ADR-0008](./0008-simplify-workflow-states).
 
 ## Context
 
