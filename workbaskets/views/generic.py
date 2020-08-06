@@ -12,29 +12,9 @@ from workbaskets.views.mixins import WithCurrentWorkBasket
 class DraftUpdateView(WithCurrentWorkBasket, UpdateView):
     """
     UpdateView which creates or modifies drafts of a model in the current workbasket.
-
-    Set `update_fields` to a list of field names to update on form submission.
     """
 
     def form_valid(self, form):
-        workbasket = WorkBasket.current(self.request)
-
-        # if there is already a draft in the workbasket, update it
-        if self.object.workbasket == workbasket:
-            self.object.update_type = UpdateType.UPDATE
-            for field_name in self.update_fields:
-                setattr(self.object, field_name, form.cleaned_data.get(field_name))
-            self.object.save(update_fields=self.update_fields)
-
-        # otherwise, create a new draft
-        else:
-            self.object = self.object.new_draft(
-                workbasket=workbasket,
-                update_type=UpdateType.UPDATE,
-                **{
-                    field_name: form.cleaned_data.get(field_name)
-                    for field_name in self.update_fields
-                },
-            )
-
+        self.object = form.save(commit=False)
+        self.object.add_to_workbasket(WorkBasket.current(self.request))
         return HttpResponseRedirect(self.get_success_url())

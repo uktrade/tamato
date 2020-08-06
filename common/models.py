@@ -101,7 +101,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         query = Q()
 
         # get models in the workbasket
-        in_workbasket = self.model.objects.filter(workbasket=workbasket)
+        in_workbasket = self.filter(workbasket=workbasket)
 
         # remove matching models from the queryset
         for instance in in_workbasket:
@@ -249,3 +249,10 @@ inherit TrackedModel must either:
 
     def validate_workbasket(self):
         pass
+
+    def add_to_workbasket(self, workbasket):
+        if workbasket == self.workbasket:
+            self.save()
+            return self
+
+        return self.new_draft(workbasket=workbasket)
