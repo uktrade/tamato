@@ -8,7 +8,8 @@ Date: 2020-05-07
 Status
 ------
 
-Approved
+Approved, partially superseded by `ADR-0009
+<./0009-record-generated-envelopes>`__.
 
 Context
 -------
