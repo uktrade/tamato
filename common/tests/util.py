@@ -2,17 +2,21 @@ import contextlib
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from io import StringIO
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
 from django.urls import reverse
 from lxml import etree
 from psycopg2._range import DateTimeTZRange
 
+from common.renderers import counter_generator
 
 COMMODITIES_IMPLEMENTED = False
 MEASURES_IMPLEMENTED = False
 MEURSING_TABLES_IMPLEMENTED = False
+INTERDEPENDENT_EXPORT_IMPLEMENTED = False
 
 requires_commodities = pytest.mark.skipif(
     not COMMODITIES_IMPLEMENTED, reason="Commodities not implemented",
@@ -24,6 +28,11 @@ requires_measures = pytest.mark.skipif(
 
 requires_meursing_tables = pytest.mark.skipif(
     not MEURSING_TABLES_IMPLEMENTED, reason="Meursing tables not implemented",
+)
+
+requires_interdependent_export = pytest.mark.skipif(
+    not INTERDEPENDENT_EXPORT_IMPLEMENTED,
+    reason="Interdependent exports not implemented",
 )
 
 
@@ -157,3 +166,17 @@ class Dates:
         datetime(2021, 1, 1, tzinfo=timezone.utc),
         datetime(2021, 1, 15, tzinfo=timezone.utc),
     )
+
+
+def generate_test_import_xml(obj: dict) -> StringIO:
+    xml = render_to_string(
+        template_name="workbaskets/taric/transaction_detail.xml",
+        context={
+            "tracked_models": [obj],
+            "transaction_id": 1,
+            "message_counter": counter_generator(),
+            "counter_generator": counter_generator,
+        },
+    )
+
+    return StringIO(xml)

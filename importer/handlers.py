@@ -1,7 +1,12 @@
+import logging
 import xml.etree.ElementTree as etree
 from typing import Optional
 
+from common.validators import UpdateType
 from importer.namespaces import Tag
+
+
+logger = logging.getLogger(__name__)
 
 
 class HandlerError(Exception):
@@ -53,7 +58,6 @@ class ElementHandler:
 
     def __init__(self, tag: Tag = None, many: bool = False):
         self.child = None
-        self._field_lookup = {}
         self.data = {}
         self.text = None
         self.many = many
@@ -61,11 +65,16 @@ class ElementHandler:
         if tag:
             self.tag = tag
 
-        for field, handler in self.__class__.__dict__.items():
-            if isinstance(handler, ElementHandler):
-                self._field_lookup[handler] = field
+    @property
+    def _field_lookup(self) -> dict:
+        field_lookup = {
+            handler: field
+            for field, handler in self.__class__.__dict__.items()
+            if isinstance(handler, ElementHandler)
+        }
 
-        self._field_lookup.update(getattr(self, "_additional_components", {}))
+        field_lookup.update(getattr(self, "_additional_components", {}))
+        return field_lookup
 
     def get_handler(self, element: etree.Element) -> Optional["ElementHandler"]:
         for handler in self._field_lookup.keys():
@@ -116,12 +125,12 @@ class ElementHandler:
         pass
 
     @classmethod
-    def register_child(cls, name):
+    def register_child(cls, name, *args, **kwargs):
         if not hasattr(cls, "_additional_components"):
             cls._additional_components = {}
 
         def wraps(handler):
-            cls._additional_components[handler] = name
+            cls._additional_components[handler(*args, **kwargs)] = name
             return handler
 
         return wraps
@@ -145,12 +154,23 @@ class TextElement(ElementHandler):
 class ValidityMixin:
     """Handle validity start and end dates"""
 
+    _additional_components = {
+        TextElement(Tag("validity.start.date")): "valid_between_lower",
+        TextElement(Tag("validity.end.date")): "valid_between_upper",
+    }
+
     def clean(self):
         super().clean()
-        self.data["valid_between"] = {
-            "lower": self.data.pop("valid_between_lower", None),
-            "upper": self.data.pop("valid_between_upper", None),
-        }
+        valid_between = {}
+
+        if "valid_between_lower" in self.data:
+            valid_between["lower"] = self.data.pop("valid_between_lower")
+
+        if "valid_between_upper" in self.data:
+            valid_between["upper"] = self.data.pop("valid_between_upper")
+
+        if valid_between:
+            self.data["valid_between"] = valid_between
 
 
 class Writable:
@@ -161,11 +181,21 @@ class Writable:
     elements, but also envelopes and app.messages).
     """
 
+    serializer_class = None
+
     def create(self, data, workbasket_id):
         """Create a DB record with provided data"""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must implement `create` method"
-        )
+        if self.serializer_class is None:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} must have a `serializer_class` attribute"
+            )
+        data["update_type"] = UpdateType.CREATE.value
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        data.update(workbasket_id=workbasket_id)
+        logger.debug(f"Creating {self.__class__.__name__}: {data}")
+        serializer.create(data)
 
     def update(self, data, workbasket_id):
         """Update a DB record with provided data"""

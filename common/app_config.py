@@ -1,6 +1,10 @@
+import logging
 from importlib import import_module
 
 from django.apps import AppConfig
+
+
+logger = logging.getLogger(__file__)
 
 
 IMPORTER_NAME = "import_handlers"
@@ -12,4 +16,4 @@ class CommonConfig(AppConfig):
         try:
             import_module(importer_module_name)
         except ModuleNotFoundError:
-            pass
+            logger.debug(f"Failed to import {importer_module_name}")

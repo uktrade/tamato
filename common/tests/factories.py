@@ -233,7 +233,7 @@ class GoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     sid = factory.Sequence(lambda n: n + 1)
     item_id = factory.Sequence(string_generator(10, characters=string.digits))
-    suffix = 80
+    suffix = "80"
     statistical = False
 
 

@@ -44,6 +44,8 @@ class FootnoteType(TrackedModel, ValidityMixin):
     description_record_code = "100"
     description_subrecord_code = "05"
 
+    identifying_fields = ("footnote_type_id",)
+
     footnote_type_id = models.CharField(
         max_length=3, validators=[validators.footnote_type_id_validator]
     )

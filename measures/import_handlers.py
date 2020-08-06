@@ -1,7 +1,7 @@
 import logging
 
 from importer.taric import Record
-from measures.serializers import MeasureSerializer
+from measures import serializers
 
 from importer.handlers import ElementHandler
 from importer.handlers import TextElement
@@ -12,6 +12,8 @@ from importer.namespaces import Tag
 
 @Record.register_child("measure")
 class Measure(Writable, ValidityMixin, ElementHandler):
+    serializer_class = serializers.MeasureSerializer
+
     tag = Tag("measure")
     sid = TextElement(Tag("measure.sid"))
     measure_type = TextElement(Tag("measure.type"))
@@ -31,7 +33,7 @@ class Measure(Writable, ValidityMixin, ElementHandler):
             }
 
     def create(self, data, workbasket_id):
-        serializer = MeasureSerializer(data=data)
+        serializer = serializers.MeasureSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         data.update(workbasket_id=workbasket_id)
