@@ -10,7 +10,7 @@ from govuk_frontend_jinja.templates import NunjucksExtension
 from webpack_loader.templatetags.webpack_loader import render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
-from workbaskets.views import get_current_workbasket
+from workbaskets.models import WorkBasket
 
 
 class GovukFrontendExtension(NunjucksExtension):
@@ -66,7 +66,7 @@ def environment(**kwargs):
         {
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
-            "get_current_workbasket": get_current_workbasket,
+            "get_current_workbasket": WorkBasket.current,
             "pluralize": pluralize,
             "render_bundle": render_bundle,
             "static": static,

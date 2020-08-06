@@ -94,6 +94,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         Add the latest versions of objects from the specified workbasket.
         """
+
+        if workbasket is None:
+            return self
+
         query = Q()
 
         # get models in the workbasket

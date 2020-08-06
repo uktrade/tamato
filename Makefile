@@ -40,7 +40,7 @@ compilescss:
 node_modules:
 	@echo
 	@echo "> Installing Javascript dependencies..."
-	@npm ci
+	@npm install
 
 migrate:
 	@echo

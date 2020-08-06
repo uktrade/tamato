@@ -23,11 +23,13 @@
   </p>
   <p>
   Workbasket:
-  {% if request.session.workbasket -%}
-    <a href="{{ url("workbasket-ui-detail", args=[request.session.workbasket.id]) }}">{{ request.session.workbasket.title }}</a>
-  {%- else -%}
-    No current workbasket
-  {%- endif %}
+  {% with current_workbasket = get_current_workbasket(request) -%}
+    {% if current_workbasket -%}
+      <a href="{{ url("workbasket-ui-detail", args=[current_workbasket.id]) }}">{{ current_workbasket.title }}</a>
+    {%- else -%}
+      No current workbasket
+    {%- endif %}
+  {%- endwith %}
   </p>
 {% endblock %}
 
