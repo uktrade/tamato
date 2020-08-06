@@ -48,6 +48,7 @@ class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerialize
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
         ]
 
 
@@ -117,4 +118,5 @@ class FootnoteAssociationGoodsNomenclatureSerializer(
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
         ]

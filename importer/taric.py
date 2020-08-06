@@ -23,9 +23,9 @@ class Record(ElementHandler):
 
     def save(self, data, workbasket_id):
         method_name = {
-            str(UpdateType.Update.value): "update",
-            str(UpdateType.Delete.value): "delete",
-            str(UpdateType.Insert.value): "create",
+            str(UpdateType.UPDATE.value): "update",
+            str(UpdateType.DELETE.value): "delete",
+            str(UpdateType.CREATE.value): "create",
         }[data["update_type"]]
 
         for handler, field_name in self._field_lookup.items():

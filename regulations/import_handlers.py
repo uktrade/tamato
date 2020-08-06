@@ -4,6 +4,7 @@ from importer.handlers import ValidityMixin
 from importer.handlers import Writable
 from importer.namespaces import Tag
 from importer.taric import Record
+from regulations import serializers
 
 
 class RegulationGroup(Writable, ElementHandler):
@@ -12,6 +13,8 @@ class RegulationGroup(Writable, ElementHandler):
 
 @Record.register_child("base_regulation")
 class BaseRegulation(ValidityMixin, Writable, ElementHandler):
+    serializer_class = serializers.RegulationSerializer
+
     tag = Tag("base.regulation")
     role_type = TextElement(Tag("base.regulation.role"))
     regulation_id = TextElement(Tag("base.regulation.id"))

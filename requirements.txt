@@ -1,7 +1,7 @@
 allure-pytest-bdd
 black
 dj-database-url
-django
+django>=3.0,<3.1
 django-dotenv
 django-extra-fields
 django-filter

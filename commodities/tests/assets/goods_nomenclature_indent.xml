@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope
+    xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+    xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" id="19139">
+    <env:transaction id="16906613">
+        <env:app.message id="31">
+            <oub:transmission
+                xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>16906613</oub:transaction.id>
+                    <oub:record.code>400</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>17</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:goods.nomenclature>
+                        <oub:goods.nomenclature.sid>104783</oub:goods.nomenclature.sid>
+                        <oub:goods.nomenclature.item.id>2005998093</oub:goods.nomenclature.item.id>
+                        <oub:producline.suffix>10</oub:producline.suffix>
+                        <oub:validity.start.date>2019-07-26</oub:validity.start.date>
+                        <oub:statistical.indicator>0</oub:statistical.indicator>
+                    </oub:goods.nomenclature>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>
+
+        <env:app.message id="33">
+            <oub:transmission
+                xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>16906613</oub:transaction.id>
+                    <oub:record.code>400</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>18</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:goods.nomenclature.indents>
+                        <oub:goods.nomenclature.indent.sid>105300</oub:goods.nomenclature.indent.sid>
+                        <oub:goods.nomenclature.sid>104783</oub:goods.nomenclature.sid>
+                        <oub:validity.start.date>2019-07-26</oub:validity.start.date>
+                        <oub:number.indents>05</oub:number.indents>
+                        <oub:goods.nomenclature.item.id>2005998093</oub:goods.nomenclature.item.id>
+                        <oub:productline.suffix>10</oub:productline.suffix>
+                    </oub:goods.nomenclature.indents>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="35">
+            <oub:transmission
+                xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>16906613</oub:transaction.id>
+                    <oub:record.code>400</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>19</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:goods.nomenclature.description.period>
+                        <oub:goods.nomenclature.description.period.sid>148746</oub:goods.nomenclature.description.period.sid>
+                        <oub:goods.nomenclature.sid>104783</oub:goods.nomenclature.sid>
+                        <oub:validity.start.date>2019-07-26</oub:validity.start.date>
+                        <oub:goods.nomenclature.item.id>2005998093</oub:goods.nomenclature.item.id>
+                        <oub:productline.suffix>10</oub:productline.suffix>
+                    </oub:goods.nomenclature.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="53">
+            <oub:transmission
+                xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>16906613</oub:transaction.id>
+                    <oub:record.code>400</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>20</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:goods.nomenclature.description>
+                        <oub:goods.nomenclature.description.period.sid>148746</oub:goods.nomenclature.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:goods.nomenclature.sid>104783</oub:goods.nomenclature.sid>
+                        <oub:goods.nomenclature.item.id>2005998093</oub:goods.nomenclature.item.id>
+                        <oub:productline.suffix>10</oub:productline.suffix>
+                        <oub:description>Other</oub:description>
+                    </oub:goods.nomenclature.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="60">
+            <oub:transmission
+                xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>16906613</oub:transaction.id>
+                    <oub:record.code>400</oub:record.code>
+                    <oub:subrecord.code>35</oub:subrecord.code>
+                    <oub:record.sequence.number>21</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:goods.nomenclature.origin>
+                        <oub:goods.nomenclature.sid>104783</oub:goods.nomenclature.sid>
+                        <oub:derived.goods.nomenclature.item.id>2005998099</oub:derived.goods.nomenclature.item.id>
+                        <oub:derived.productline.suffix>80</oub:derived.productline.suffix>
+                        <oub:goods.nomenclature.item.id>2005998093</oub:goods.nomenclature.item.id>
+                        <oub:productline.suffix>10</oub:productline.suffix>
+                    </oub:goods.nomenclature.origin>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>

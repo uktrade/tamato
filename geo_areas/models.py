@@ -3,7 +3,6 @@ from django.contrib.postgres.fields import RangeOperators
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.db.models import CheckConstraint, Q, F
-from treebeard.mp_tree import MP_Node
 
 from common.models import ValidityMixin, TrackedModel
 from geo_areas import validators

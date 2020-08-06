@@ -9,7 +9,7 @@ from importer.namespaces import nsmap
 XML_CHUNK_SIZE = 4096
 
 
-def main(taric3_file, username, status):
+def import_taric(taric3_file, username, status):
     xmlparser = etree.XMLPullParser(["start", "end", "start-ns"])
     handler = Envelope(workbasket_status=status, tamato_username=username,)
 
@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with open(options["taric3_file"]) as taric3_file:
-            main(
+            import_taric(
                 taric3_file=taric3_file,
                 username=options["username"],
                 status=options["status"],
