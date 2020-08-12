@@ -102,14 +102,14 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
         )
 
     def get_descriptions(self, workbasket=None):
-        descriptions = FootnoteDescription.objects.filter(
-            described_footnote__footnote_id=self.footnote_id,
-            described_footnote__footnote_type=self.footnote_type,
+        return (
+            FootnoteDescription.objects.current()
+            .filter(
+                described_footnote__footnote_id=self.footnote_id,
+                described_footnote__footnote_type=self.footnote_type,
+            )
+            .with_workbasket(workbasket)
         )
-        query = Q(workbasket__status=WorkflowStatus.PUBLISHED,)
-        if workbasket is not None:
-            query |= Q(workbasket=workbasket)
-        return descriptions.filter(query)
 
     def get_description(self):
         return self.get_descriptions().last()
@@ -130,10 +130,13 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
 
 
 class FootnoteDescription(TrackedModel, ValidityMixin):
-    """The footnote type description contains the text associated with a footnote type,
-    for a given language and for a particular period. There can only be one description
-    of each footnote type. The same description may appear for several footnote types,
-    for example "footnotes for measures".
+    """
+    The footnote description contains the text associated with a footnote, for a given
+    language and for a particular period.
+
+    Description period(s) associated with footnote text. The description of a footnote
+    may change independently of the footnote id. The footnote description period
+    contains the validity start date of the footnote description.
     """
 
     record_code = "200"
@@ -149,6 +152,8 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
     description_period_sid = models.PositiveIntegerField(
         validators=[NumericSIDValidator()]
     )
+
+    identifying_fields = ("description_period_sid",)
 
     def __str__(self):
         return self.description
