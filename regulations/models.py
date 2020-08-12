@@ -4,7 +4,9 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
-from common.models import ValidityMixin, TrackedModel
+from common.models import ShortDescription
+from common.models import TrackedModel
+from common.models import ValidityMixin
 from regulations import validators
 
 
@@ -29,7 +31,7 @@ class Group(TrackedModel, ValidityMixin):
         max_length=3, editable=False, validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")],
     )
     # no need for a separate model as we don't support multiple languages
-    description = models.CharField(max_length=500, editable=False)
+    description = ShortDescription()
 
     def clean(self):
         if self.valid_between.upper is not None:
@@ -81,11 +83,8 @@ class Regulation(TrackedModel):
         default=1,
     )
     published_at = models.DateField(blank=True, null=True, editable=False)
-    information_text = models.CharField(
-        max_length=500,
-        blank=True,
-        null=True,
-        validators=[validators.no_information_text_delimiters],
+    information_text = ShortDescription(
+        validators=[validators.no_information_text_delimiters]
     )
     public_identifier = models.CharField(
         max_length=50,

@@ -9,6 +9,7 @@ from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 from workbaskets.serializers import WorkBasketSerializer
+from workbaskets.validators import WorkflowStatus
 
 
 class WorkBasketViewSet(viewsets.ModelViewSet):

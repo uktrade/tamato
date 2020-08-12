@@ -1,10 +1,14 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
-from django.core.validators import MaxValueValidator
 from django.db import models
-from django.db.models import CheckConstraint, Q, F
+from django.db.models import CheckConstraint
+from django.db.models import F
+from django.db.models import Q
 
-from common.models import ValidityMixin, TrackedModel
+from common.models import NumericSID
+from common.models import ShortDescription
+from common.models import TrackedModel
+from common.models import ValidityMixin
 from geo_areas import validators
 
 
@@ -29,7 +33,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     record_code = "250"
     subrecord_code = "00"
 
-    sid = models.PositiveIntegerField(validators=[MaxValueValidator(99999999)])
+    sid = NumericSID()
     area_id = models.CharField(max_length=4, validators=[validators.area_id_validator])
     area_code = models.PositiveSmallIntegerField(choices=validators.AreaCode.choices)
 
@@ -122,7 +126,7 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     period_subrecord_code = "05"
 
     area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
-    description = models.CharField(max_length=500, null=False, blank=False)
+    description = ShortDescription()
 
     class Meta:
         constraints = [

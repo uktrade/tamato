@@ -17,6 +17,7 @@ COMMODITIES_IMPLEMENTED = False
 MEASURES_IMPLEMENTED = False
 MEURSING_TABLES_IMPLEMENTED = False
 INTERDEPENDENT_EXPORT_IMPLEMENTED = False
+UTC = timezone.utc
 
 requires_commodities = pytest.mark.skipif(
     not COMMODITIES_IMPLEMENTED, reason="Commodities not implemented",
@@ -100,71 +101,57 @@ def validate_taric_xml(factory=None, instance=None, factory_kwargs=None):
 
 class Dates:
     normal = DateTimeTZRange(
-        datetime(2021, 1, 1, tzinfo=timezone.utc),
-        datetime(2021, 2, 1, tzinfo=timezone.utc),
+        datetime(2021, 1, 1, tzinfo=UTC), datetime(2021, 2, 1, tzinfo=UTC),
     )
     earlier = DateTimeTZRange(
-        datetime(2020, 1, 1, tzinfo=timezone.utc),
-        datetime(2020, 2, 1, tzinfo=timezone.utc),
+        datetime(2020, 1, 1, tzinfo=UTC), datetime(2020, 2, 1, tzinfo=UTC),
     )
     later = DateTimeTZRange(
-        datetime(2022, 2, 2, tzinfo=timezone.utc),
-        datetime(2022, 3, 1, tzinfo=timezone.utc),
+        datetime(2022, 2, 2, tzinfo=UTC), datetime(2022, 3, 1, tzinfo=UTC),
     )
     big = DateTimeTZRange(
-        datetime(2019, 1, 1, tzinfo=timezone.utc),
-        datetime(2023, 1, 2, tzinfo=timezone.utc),
+        datetime(2019, 1, 1, tzinfo=UTC), datetime(2023, 1, 2, tzinfo=UTC),
     )
     adjacent_earlier = DateTimeTZRange(
-        datetime(2020, 12, 1, tzinfo=timezone.utc),
-        datetime(2020, 12, 31, tzinfo=timezone.utc),
+        datetime(2020, 12, 1, tzinfo=UTC), datetime(2020, 12, 31, tzinfo=UTC),
     )
     adjacent_later = DateTimeTZRange(
-        datetime(2021, 2, 1, tzinfo=timezone.utc),
-        datetime(2021, 3, 1, tzinfo=timezone.utc),
+        datetime(2021, 2, 1, tzinfo=UTC), datetime(2021, 3, 1, tzinfo=UTC),
     )
     adjacent_later_big = DateTimeTZRange(
-        datetime(2021, 2, 1, tzinfo=timezone.utc),
-        datetime(2023, 3, 1, tzinfo=timezone.utc),
+        datetime(2021, 2, 1, tzinfo=UTC), datetime(2023, 3, 1, tzinfo=UTC),
     )
     overlap_normal = DateTimeTZRange(
-        datetime(2021, 1, 15, tzinfo=timezone.utc),
-        datetime(2022, 2, 15, tzinfo=timezone.utc),
+        datetime(2021, 1, 15, tzinfo=UTC), datetime(2022, 2, 15, tzinfo=UTC),
     )
     overlap_normal_earlier = DateTimeTZRange(
-        datetime(2020, 12, 15, tzinfo=timezone.utc),
-        datetime(2021, 1, 15, tzinfo=timezone.utc),
+        datetime(2020, 12, 15, tzinfo=UTC), datetime(2021, 1, 15, tzinfo=UTC),
     )
     overlap_big = DateTimeTZRange(
-        datetime(2022, 1, 1, tzinfo=timezone.utc),
-        datetime(2024, 1, 3, tzinfo=timezone.utc),
+        datetime(2022, 1, 1, tzinfo=UTC), datetime(2024, 1, 3, tzinfo=UTC),
     )
     after_big = DateTimeTZRange(
-        datetime(2024, 2, 1, tzinfo=timezone.utc),
-        datetime(2024, 3, 1, tzinfo=timezone.utc),
+        datetime(2024, 2, 1, tzinfo=UTC), datetime(2024, 3, 1, tzinfo=UTC),
     )
     backwards = DateTimeTZRange(
-        datetime(2021, 2, 1, tzinfo=timezone.utc),
-        datetime(2021, 1, 2, tzinfo=timezone.utc),
+        datetime(2021, 2, 1, tzinfo=UTC), datetime(2021, 1, 2, tzinfo=UTC),
     )
     starts_with_normal = DateTimeTZRange(
-        datetime(2021, 1, 1, tzinfo=timezone.utc),
-        datetime(2021, 1, 15, tzinfo=timezone.utc),
+        datetime(2021, 1, 1, tzinfo=UTC), datetime(2021, 1, 15, tzinfo=UTC),
     )
     ends_with_normal = DateTimeTZRange(
-        datetime(2021, 1, 15, tzinfo=timezone.utc),
-        datetime(2021, 2, 1, tzinfo=timezone.utc),
+        datetime(2021, 1, 15, tzinfo=UTC), datetime(2021, 2, 1, tzinfo=UTC),
     )
     current = DateTimeTZRange(
-        datetime.today() - timedelta(weeks=4), datetime.today() + timedelta(weeks=4)
+        datetime.now(UTC) - timedelta(weeks=4), datetime.now(UTC) + timedelta(weeks=4),
     )
     future = DateTimeTZRange(
-        datetime.today() + timedelta(weeks=10), datetime.today() + timedelta(weeks=20),
+        datetime.now(UTC) + timedelta(weeks=10),
+        datetime.now(UTC) + timedelta(weeks=20),
     )
-    no_end = DateTimeTZRange(datetime(2021, 1, 1, tzinfo=timezone.utc), None)
+    no_end = DateTimeTZRange(datetime(2021, 1, 1, tzinfo=UTC), None)
     normal_first_half = DateTimeTZRange(
-        datetime(2021, 1, 1, tzinfo=timezone.utc),
-        datetime(2021, 1, 15, tzinfo=timezone.utc),
+        datetime(2021, 1, 1, tzinfo=UTC), datetime(2021, 1, 15, tzinfo=UTC),
     )
 
 

@@ -3,7 +3,7 @@ from pytest_bdd import given
 
 from common.tests import factories
 from common.tests.util import Dates
-from workbaskets.models import WorkflowStatus
+from workbaskets.validators import WorkflowStatus
 
 
 @given("footnote NC000")

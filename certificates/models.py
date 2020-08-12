@@ -4,6 +4,8 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 
 from certificates import validators
+from common.models import NumericSID
+from common.models import ShortDescription
 from common.models import TrackedModel
 from common.models import ValidityMixin
 
@@ -18,7 +20,7 @@ class CertificateType(TrackedModel, ValidityMixin):
     sid = models.CharField(
         max_length=1, validators=[validators.certificate_type_sid_validator]
     )
-    description = models.CharField(max_length=500, null=False, blank=False)
+    description = ShortDescription()
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -91,9 +93,9 @@ class CertificateDescription(TrackedModel, ValidityMixin):
     period_record_code = "205"
     period_subrecord_code = "05"
 
-    sid = models.PositiveIntegerField(validators=[MaxValueValidator(99999999)])
+    sid = NumericSID()
 
-    description = models.CharField(max_length=500, null=False, blank=False)
+    description = ShortDescription()
     described_certificate = models.ForeignKey(
         Certificate, related_name="descriptions", on_delete=models.PROTECT
     )

@@ -6,7 +6,7 @@ from django.core.validators import RegexValidator
 
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
-from workbaskets.models import WorkflowStatus
+from workbaskets.validators import WorkflowStatus
 
 
 FOOTNOTE_TYPE_ID_PATTERN = r"[A-Z]{2}[A-Z ]?"

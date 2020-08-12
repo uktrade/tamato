@@ -6,12 +6,13 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 
+from common.models import NumericSID
+from common.models import ShortDescription
 from common.models import TimestampedMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
-from common.validators import NumericSIDValidator
 from footnotes import validators
-from workbaskets.models import WorkflowStatus
+from workbaskets.validators import WorkflowStatus
 
 
 # Footnote type application codes
@@ -50,7 +51,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
         max_length=3, validators=[validators.footnote_type_id_validator]
     )
     application_code = models.PositiveIntegerField(choices=ApplicationCode.choices)
-    description = models.CharField(max_length=500)
+    description = ShortDescription()
 
     def __str__(self):
         return f"{self.footnote_type_id} - {self.description}"
@@ -149,9 +150,7 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
         Footnote, on_delete=models.CASCADE, related_name="descriptions"
     )
     description = models.TextField()
-    description_period_sid = models.PositiveIntegerField(
-        validators=[NumericSIDValidator()]
-    )
+    description_period_sid = NumericSID()
 
     identifying_fields = ("description_period_sid",)
 
