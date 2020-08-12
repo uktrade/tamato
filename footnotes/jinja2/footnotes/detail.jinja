@@ -118,7 +118,7 @@
     {% for version in object.get_versions() %}
       {{ version_rows.append([
         {"text": version.get_update_type_display()},
-        {"text": "{:%d %b %Y}".format(version.workbasket.created_at)},
+        {"text": "{:%d %b %Y}".format(version.updated_at)},
         {"text": "{:%d %b %Y}".format(version.valid_between.lower)},
         {"text": "{:%d %b %Y}".format(version.valid_between.upper) if version.valid_between.upper else "-"},
         {"html": status(version.workbasket)},
