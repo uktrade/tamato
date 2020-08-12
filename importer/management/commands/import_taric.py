@@ -1,9 +1,10 @@
-from django.core.management import BaseCommand
 import xml.etree.ElementTree as etree
 
-from workbaskets.models import WorkflowStatus
-from importer.taric import Envelope
+from django.core.management import BaseCommand
+
 from importer.namespaces import nsmap
+from importer.taric import Envelope
+from workbaskets.validators import WorkflowStatus
 
 
 XML_CHUNK_SIZE = 4096

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "geo_areas.apps.GeoAreasConfig",
     "importer",
     "measures.apps.MeasuresConfig",
+    "quotas.apps.QuotasConfig",
     "regulations.apps.RegulationsConfig",
     "workbaskets",
 ]

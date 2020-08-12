@@ -7,7 +7,7 @@ from common.tests import factories
 from common.tests.util import requires_commodities
 from common.tests.util import requires_measures
 from common.tests.util import requires_meursing_tables
-from workbaskets.models import WorkflowStatus
+from workbaskets.validators import WorkflowStatus
 
 
 pytestmark = pytest.mark.django_db

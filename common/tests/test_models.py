@@ -5,7 +5,8 @@ import pytest
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.tests import factories
-from common.tests.models import TestModel1, TestModel2
+from common.tests.models import TestModel1
+from common.tests.models import TestModel2
 
 pytestmark = pytest.mark.django_db
 

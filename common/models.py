@@ -15,6 +15,7 @@ from treebeard.mp_tree import MP_NodeQuerySet
 
 from common import exceptions
 from common import validators
+from workbaskets.validators import WorkflowStatus
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet):
@@ -114,6 +115,24 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
         # add latest version of models from the current workbasket
         return self.filter(query) | in_workbasket.filter(successor__isnull=True)
+
+    def approved(self):
+        """
+        Get objects which have been approved/sent-to-cds/published
+        """
+        return self.filter(
+            workbasket__status__in=(
+                WorkflowStatus.READY_FOR_EXPORT,
+                WorkflowStatus.AWAITING_CDS_UPLOAD_CREATE_NEW,
+                WorkflowStatus.AWAITING_CDS_UPLOAD_EDIT,
+                WorkflowStatus.AWAITING_CDS_UPLOAD_OVERWRITE,
+                WorkflowStatus.AWAITING_CDS_UPLOAD_DELETE,
+                WorkflowStatus.SENT_TO_CDS,
+                WorkflowStatus.SENT_TO_CDS_DELETE,
+                WorkflowStatus.PUBLISHED,
+                WorkflowStatus.CDS_ERROR,
+            )
+        )
 
 
 class PolymorphicMPTreeQuerySet(TrackedModelQuerySet, MP_NodeQuerySet):
@@ -256,3 +275,24 @@ inherit TrackedModel must either:
             return self
 
         return self.new_draft(workbasket=workbasket)
+
+
+class NumericSID(models.PositiveIntegerField):
+    def __init__(self, *args, **kwargs):
+        kwargs["editable"] = False
+        kwargs["validators"] = [validators.NumericSIDValidator()]
+        super().__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        del kwargs["editable"]
+        del kwargs["validators"]
+        return name, path, args, kwargs
+
+
+class ShortDescription(models.CharField):
+    def __init__(self, *args, **kwargs):
+        kwargs["max_length"] = 500
+        kwargs["blank"] = True
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)

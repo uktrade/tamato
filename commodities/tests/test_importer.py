@@ -1,12 +1,14 @@
 import pytest
 
-from commodities import models, serializers
+from commodities import models
+from commodities import serializers
 from common.tests import factories
 from common.tests.factories import FootnoteAssociationGoodsNomenclatureFactory
-from common.tests.util import generate_test_import_xml, requires_interdependent_export
+from common.tests.util import generate_test_import_xml
+from common.tests.util import requires_interdependent_export
 from common.validators import UpdateType
 from importer.management.commands.import_taric import import_taric
-from workbaskets.models import WorkflowStatus
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
