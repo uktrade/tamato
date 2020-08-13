@@ -84,6 +84,7 @@ class FootnoteDescriptionSerializer(
         model = models.FootnoteDescription
         fields = [
             "id",
+            "description_period_sid",
             "described_footnote",
             "description",
             "valid_between",
