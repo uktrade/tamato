@@ -12,6 +12,7 @@ from lxml import etree
 from psycopg2._range import DateTimeTZRange
 
 from common.renderers import counter_generator
+from common.serializers import TrackedModelSerializer
 
 COMMODITIES_IMPLEMENTED = False
 MEASURES_IMPLEMENTED = False
@@ -143,11 +144,12 @@ class Dates:
         datetime(2021, 1, 15, tzinfo=UTC), datetime(2021, 2, 1, tzinfo=UTC),
     )
     current = DateTimeTZRange(
-        datetime.now(UTC) - timedelta(weeks=4), datetime.now(UTC) + timedelta(weeks=4),
+        datetime(2020, 8, 1, tzinfo=UTC) - timedelta(weeks=4),
+        datetime(2020, 8, 1, tzinfo=UTC) + timedelta(weeks=4),
     )
     future = DateTimeTZRange(
-        datetime.now(UTC) + timedelta(weeks=10),
-        datetime.now(UTC) + timedelta(weeks=20),
+        datetime(2020, 8, 1, tzinfo=UTC) + timedelta(weeks=10),
+        datetime(2020, 8, 1, tzinfo=UTC) + timedelta(weeks=20),
     )
     no_end = DateTimeTZRange(datetime(2021, 1, 1, tzinfo=UTC), None)
     normal_first_half = DateTimeTZRange(

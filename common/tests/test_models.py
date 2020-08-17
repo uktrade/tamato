@@ -67,6 +67,7 @@ def model2_with_history(date_ranges):
     return model_with_history(factories.TestModel2Factory, date_ranges, custom_sid=1)
 
 
+@pytest.mark.freeze_time("2020-08-01")
 def test_get_current(model1_with_history, model2_with_history):
     """
     Ensure only the most recent records are fetched.
@@ -118,6 +119,7 @@ def test_as_at(model1_with_history, date_ranges):
     assert set(queryset.values_list("pk", flat=True)) == pks
 
 
+@pytest.mark.freeze_time("2020-08-01")
 def test_active(model1_with_history, date_ranges):
     """
     Ensure only the currently active records are fetched.
@@ -140,6 +142,7 @@ def test_get_version_raises_error():
         TestModel2.objects.get_version(sid=1)
 
 
+@pytest.mark.freeze_time("2020-08-01")
 def test_get_current_version(date_ranges, model1_with_history):
     """
     Ensure getting the current version works with a standard sid identifier.
@@ -149,6 +152,7 @@ def test_get_current_version(date_ranges, model1_with_history):
     assert TestModel1.objects.get_current_version(sid=model.sid) == model
 
 
+@pytest.mark.freeze_time("2020-08-01")
 def test_get_current_version_custom_identifier(date_ranges, model2_with_history):
     """
     Ensure getting the current version works with a custom identifier.

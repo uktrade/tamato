@@ -1,0 +1,6 @@
+{% macro validity_period(record) -%}
+    <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+    {% if record.end_date -%}
+    <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
+    {%- endif %}
+{%- endmacro %}
