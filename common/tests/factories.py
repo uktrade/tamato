@@ -6,7 +6,7 @@ from datetime import timezone
 from decimal import Decimal
 from itertools import product
 
-import factory
+import factory.fuzzy
 from psycopg2.extras import DateTimeTZRange
 
 from common.tests.models import TestModel1
@@ -33,10 +33,6 @@ def numeric_sid():
     seq = string_sequence(length=8, characters=string.digits)
     seq.function(0)  # discard 0 as SIDs start from 1
     return seq
-
-
-def random_choice(choices):
-    return factory.LazyFunction(lambda: random.choice(choices))
 
 
 class ValidityFactoryMixin(factory.django.DjangoModelFactory):
@@ -151,7 +147,7 @@ class GeographicalMembershipFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     geo_group = factory.SubFactory(GeographicalAreaFactory, area_code=1)
     member = factory.SubFactory(
-        GeographicalAreaFactory, area_code=random_choice([0, 2]),
+        GeographicalAreaFactory, area_code=factory.fuzzy.FuzzyChoice([0, 2]),
     )
 
 
@@ -325,6 +321,7 @@ class QuotaDefinitionFactory(TrackedModelMixin, ValidityFactoryMixin):
     volume = 0
     initial_volume = 0
     maximum_precision = 0
+    quota_critical = False
     quota_critical_threshold = 80
     description = short_description()
 
@@ -335,7 +332,7 @@ class QuotaAssociationFactory(TrackedModelMixin):
 
     main_quota = factory.SubFactory(QuotaDefinitionFactory)
     sub_quota = factory.SubFactory(QuotaDefinitionFactory)
-    sub_quota_relation_type = random.choice(["EQ", "NM"])
+    sub_quota_relation_type = factory.fuzzy.FuzzyChoice(["EQ", "NM"])
     coefficient = Decimal("1.00000")
 
 
@@ -346,6 +343,7 @@ class QuotaSuspensionFactory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
     description = short_description()
+    valid_between = DateTimeTZRange(datetime(2020, 1, 1), datetime(2021, 1, 1))
 
 
 class QuotaBlockingFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -354,4 +352,55 @@ class QuotaBlockingFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     sid = numeric_sid()
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
-    blocking_period_type = random.choice(range(1, 9))
+    blocking_period_type = factory.fuzzy.FuzzyChoice(range(1, 9))
+    valid_between = DateTimeTZRange(datetime(2020, 1, 1), datetime(2021, 1, 1))
+
+
+class QuotaEventFactory(TrackedModelMixin):
+    class Meta:
+        model = "quotas.QuotaEvent"
+
+    subrecord_code = factory.fuzzy.FuzzyChoice(
+        ["00", "05", "10", "15", "20", "25", "30"]
+    )
+    quota_definition = factory.SubFactory(QuotaDefinitionFactory)
+    occurrence_timestamp = datetime.now(tz=timezone.utc)
+
+    @factory.lazy_attribute
+    def data(self):
+        now = "{:%Y-%m-%d}".format(datetime.now(tz=timezone.utc))
+        if self.subrecord_code == "00":
+            return {
+                "old.balance": 0.0,
+                "new.balance": 0.0,
+                "imported.amount": 0.0,
+                "last.import.date.in.allocation": now,
+            }
+        if self.subrecord_code == "05":
+            return {
+                "unblocking.date": now,
+            }
+        if self.subrecord_code == "10":
+            return {
+                "critical.state": "Y",
+                "critical.state.change.date": now,
+            }
+        if self.subrecord_code == "15":
+            return {
+                "exhaustion.date": now,
+            }
+        if self.subrecord_code == "20":
+            return {
+                "reopening.date": now,
+            }
+        if self.subrecord_code == "25":
+            return {
+                "unsuspension.date": now,
+            }
+        if self.subrecord_code == "30":
+            return {
+                "transfer.date": now,
+                "quota.closed": "Y",
+                "transferred.amount": 0.0,
+                "target.quota.definition.sid": 1,
+            }

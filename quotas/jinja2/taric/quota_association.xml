@@ -1,0 +1,12 @@
+{% from "macros/record.xml" import standard_record %}
+
+{% call standard_record(message_counter(), sequence(), transaction_id, record) %}
+    <oub:quota.association>
+        <oub:main.quota.definition.sid>{{ record.main_quota.sid }}</oub:main.quota.definition.sid>
+        <oub:sub.quota.definition.sid>{{ record.sub_quota.sid }}</oub:sub.quota.definition.sid>
+        <oub:relation.type>{{ record.sub_quota_relation_type }}</oub:relation.type>
+        {% if record.coefficient -%}
+        <oub:coefficient>{{ record.coefficient }}</oub:coefficient>
+        {%- endif %}
+    </oub:quota.association>
+{% endcall %}

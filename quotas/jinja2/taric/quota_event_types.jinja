@@ -1,0 +1,70 @@
+{% macro common_event_fields(record) %}
+    <oub:quota.definition.sid>{{ record.quota_definition.sid }}</oub:quota.definition.sid>
+    <oub:occurrence.timestamp>{{ record.occurrence_timestamp }}</oub:occurrence.timestamp>
+{% endmacro %}
+
+
+{% macro quota_event(record, tag, fields) %}
+  <oub:{{ tag }}>
+    {{ common_event_fields(record) }}
+    {% for field in fields -%}
+      {% if field is string -%}
+        <oub:{{ field }}>{{ record.data[field] }}</oub:{{ field }}>
+      {%- else -%}
+        {% if record.data[field[0]] -%}
+          <oub:{{ field[0] }}>{{ record.data[field[0]] }}</oub:{{ field[0] }}>
+        {%- endif %}
+      {%- endif %}
+    {%- endfor %}
+  </oub:{{ tag }}>
+{% endmacro %}
+
+
+{% macro event_type_00(record) %}
+  {{ quota_event(record, "quota.balance.event", [
+    "old.balance",
+    "new.balance",
+    "imported.amount",
+    ["last.import.date.in.allocation"],
+  ]) }}
+{% endmacro %}
+
+{% macro event_type_05(record) %}
+  {{ quota_event(record, "quota.unblocking.event", [
+    "unblocking.date",
+  ]) }}
+{% endmacro %}
+
+{% macro event_type_10(record) %}
+  {{ quota_event(record, "quota.critical.event", [
+    "critical.state",
+    ["critical.state.change.date"],
+  ]) }}
+{% endmacro %}
+
+{% macro event_type_15(record) %}
+  {{ quota_event(record, "quota.exhaustion.event", [
+    "exhaustion.date",
+  ]) }}
+{% endmacro %}
+
+{% macro event_type_20(record) %}
+  {{ quota_event(record, "quota.reopening.event", [
+    "reopening.date",
+  ]) }}
+{% endmacro %}
+
+{% macro event_type_25(record) %}
+  {{ quota_event(record, "quota.unsuspension.event", [
+    "unsuspension.date",
+  ]) }}
+{% endmacro %}
+
+{% macro event_type_30(record) %}
+  {{ quota_event(record, "quota.closed.and.transferred.event", [
+    "transfer.date",
+    "quota.closed",
+    "transferred.amount",
+    "target.quota.definition.sid",
+  ]) }}
+{% endmacro %}
