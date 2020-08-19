@@ -110,11 +110,11 @@ def test_as_at(model1_with_history, date_ranges):
     """
 
     pks = {
-        factories.TestModel1Factory(valid_between=date_ranges.normal).pk,
-        factories.TestModel1Factory(valid_between=date_ranges.normal).pk,
+        factories.TestModel1Factory(valid_between=date_ranges.later).pk,
+        factories.TestModel1Factory(valid_between=date_ranges.later).pk,
     }
 
-    queryset = TestModel1.objects.as_at(date_ranges.normal.lower)
+    queryset = TestModel1.objects.as_at(date_ranges.later.lower)
 
     assert set(queryset.values_list("pk", flat=True)) == pks
 

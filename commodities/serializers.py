@@ -1,10 +1,9 @@
 from rest_framework import serializers
 
+from commodities import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
-
-from commodities import models
 from footnotes.serializers import FootnoteSerializer
 
 

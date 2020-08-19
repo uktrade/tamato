@@ -1,7 +1,8 @@
 from django.db import models
 
 from commodities.models import GoodsNomenclature
-from common.models import TrackedModel, ValidityMixin
+from common.models import TrackedModel
+from common.models import ValidityMixin
 
 
 class Measure(TrackedModel, ValidityMixin):

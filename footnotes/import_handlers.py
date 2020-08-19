@@ -1,11 +1,15 @@
-from importer.handlers import ElementHandler
-from importer.handlers import TextElement
-from importer.handlers import Writable
-from importer.namespaces import Tag
+from footnotes import import_parsers as parsers
+from footnotes import serializers
+from importer.handlers import BaseHandler
 
 
-class FootnoteAssociationMeasure(Writable, ElementHandler):
-    tag = Tag("footnote.association.measure")
-    measure_sid = TextElement(Tag("measure.sid"))
-    footnote_type_id = TextElement(Tag("footnote.type.id"))
-    footnote_id = TextElement(Tag("footnote.id"))
+class FootnoteTypeHandler(BaseHandler):
+    serializer_class = serializers.FootnoteTypeSerializer
+    tag = parsers.FootnoteTypeParser.tag.name
+
+
+@FootnoteTypeHandler.register_dependant
+class FootnoteTypeDescriptionHandler(BaseHandler):
+    dependencies = [FootnoteTypeHandler]
+    serializer_class = serializers.FootnoteTypeSerializer
+    tag = parsers.FootnoteTypeDescriptionParser.tag.name

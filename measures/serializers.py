@@ -1,6 +1,7 @@
 from commodities.models import GoodsNomenclature
 from commodities.serializers import GoodsNomenclatureSerializer
-from common.serializers import ValiditySerializerMixin, TrackedModelSerializer
+from common.serializers import TrackedModelSerializer
+from common.serializers import ValiditySerializerMixin
 from measures import models
 
 

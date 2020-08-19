@@ -1,18 +1,18 @@
-from importer.handlers import ElementHandler
-from importer.handlers import TextElement
-from importer.handlers import ValidityMixin
-from importer.handlers import Writable
 from importer.namespaces import Tag
+from importer.parsers import ElementParser
+from importer.parsers import TextElement
+from importer.parsers import ValidityMixin
+from importer.parsers import Writable
 from importer.taric import Record
 from regulations import serializers
 
 
-class RegulationGroup(Writable, ElementHandler):
+class RegulationGroup(Writable, ElementParser):
     tag = Tag("regulation.group.id")
 
 
 @Record.register_child("base_regulation")
-class BaseRegulation(ValidityMixin, Writable, ElementHandler):
+class BaseRegulation(ValidityMixin, Writable, ElementParser):
     serializer_class = serializers.RegulationSerializer
 
     tag = Tag("base.regulation")
