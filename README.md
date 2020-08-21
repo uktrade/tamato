@@ -13,6 +13,10 @@ Run the following command to build the docker image:
 Then to run the app:
 
     docker-compose up
+    
+On your first run, you will need to run database migrations (in another terminal):
+
+    docker-compose run tamato ./manage.py migrate
 
 Then you can browse to http://localhost:8000/ to view the app
 
@@ -88,7 +92,7 @@ Please submit a Pull Request
 
 ### Formatting.
 
-This project uses black as an autoformatter.
+This project uses the [pre-commit](https://pre-commit.com/) tool to run [black](https://github.com/psf/black) as an autoformatter and [reorder-python-imports](https://github.com/asottile/reorder_python_imports) to format imports.
 
 ## How to change application dependencies (libraries)
 
