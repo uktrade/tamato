@@ -12,10 +12,11 @@ from quotas import validators
 
 @TrackedModelSerializer.register_polymorphic_model
 class QuotaOrderNumberSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
+    sid = serializers.IntegerField(min_value=1, max_value=99999999)
+
     class Meta:
         model = models.QuotaOrderNumber
         fields = [
-            "id",
             "sid",
             "order_number",
             "mechanism",
@@ -40,7 +41,6 @@ class QuotaOrderNumberOriginSerializer(
     class Meta:
         model = models.QuotaOrderNumberOrigin
         fields = [
-            "id",
             "sid",
             "order_number",
             "geographical_area",
@@ -64,7 +64,6 @@ class QuotaOrderNumberOriginExclusionSerializer(
     class Meta:
         model = models.QuotaOrderNumberOriginExclusion
         fields = [
-            "id",
             "origin",
             "excluded_geographical_area",
             "update_type",
@@ -93,7 +92,6 @@ class QuotaDefinitionSerializer(TrackedModelSerializerMixin, ValiditySerializerM
     class Meta:
         model = models.QuotaDefinition
         fields = [
-            "id",
             "sid",
             "order_number",
             "volume",
@@ -121,7 +119,6 @@ class QuotaAssociationSerializer(TrackedModelSerializerMixin):
     class Meta:
         model = models.QuotaAssociation
         fields = [
-            "id",
             "main_quota",
             "sub_quota",
             "sub_quota_relation_type",
@@ -140,7 +137,6 @@ class QuotaSuspensionSerializer(TrackedModelSerializerMixin, ValiditySerializerM
     class Meta:
         model = models.QuotaSuspension
         fields = [
-            "id",
             "sid",
             "quota_definition",
             "description",
@@ -161,7 +157,6 @@ class QuotaBlockingSerializer(TrackedModelSerializerMixin, ValiditySerializerMix
     class Meta:
         model = models.QuotaBlocking
         fields = [
-            "id",
             "sid",
             "quota_definition",
             "blocking_period_type",
@@ -189,7 +184,6 @@ class QuotaEventSerializer(TrackedModelSerializerMixin):
     class Meta:
         model = models.QuotaEvent
         fields = [
-            "id",
             "quota_definition",
             "occurrence_timestamp",
             "data",
