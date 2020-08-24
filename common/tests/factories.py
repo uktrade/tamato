@@ -190,7 +190,7 @@ class TestModel1Factory(TrackedModelMixin, ValidityFactoryMixin):
         model = TestModel1
 
     name = factory.Faker("text", max_nb_chars=24)
-    sid = numeric_sid()
+    sid = factory.Sequence(lambda x: x + 1)
 
 
 class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
@@ -198,7 +198,7 @@ class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
         model = TestModel2
 
     description = factory.Faker("text", max_nb_chars=24)
-    custom_sid = numeric_sid()
+    custom_sid = factory.Sequence(lambda x: x + 1)
 
 
 class AdditionalCodeTypeFactory(TrackedModelMixin, ValidityFactoryMixin):

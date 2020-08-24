@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from typing import Iterable
 from typing import List
 from typing import Set
@@ -202,11 +203,11 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     All of the above examples can be used together, e.g. a handler can have both dependencies and links.
     """
 
-    dependencies: List[BaseHandler] = None
+    dependencies: List[Type[BaseHandler]] = None
     identifying_fields: List[str] = None
     links: Iterable[LinksType] = None
-    tag: str = None
     serializer_class: Type[ModelSerializer] = None
+    tag: str = None
 
     def __init__(
         self, dispatched_object: DispatchedObjectType, nursery: TariffObjectNursery
@@ -304,6 +305,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
                 "identifying_fields", model.identifying_fields
             )
             try:
+                print(self.data)
+                print(link_name)
+                print(identifying_fields)
                 linked_object_identifiers = {
                     key: self.data.get(f"{link_name}__{key}")
                     for key in identifying_fields
@@ -317,7 +321,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
                 self.resolved_links[link["name"]] = linked_object
             except model.DoesNotExist:
-                if not link["optional"]:
+                if not link.get("optional", False):
                     return False
         return True
 
@@ -338,6 +342,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         Return the final dataset to be used when saving to the database.
         """
+        data = deepcopy(data)
         data.update(**links)
         return data
 

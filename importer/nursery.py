@@ -4,8 +4,8 @@ import logging
 from typing import Dict
 from typing import Type
 
+from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
-from importer.utils import ObjectCacheFacade
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class TariffObjectNursery:
         return handler(match, self)
 
 
-def get_nursery(cache=None):
+def get_nursery(cache=None) -> TariffObjectNursery:
     """
     Convenience function for building a nursery object.
     """
