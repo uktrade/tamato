@@ -26,5 +26,6 @@ pytest-django
 pytest-freezegun
 pytest-mock
 sentry-sdk
+sphinx
 werkzeug
 whitenoise
