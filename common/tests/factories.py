@@ -147,7 +147,8 @@ class GeographicalMembershipFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     geo_group = factory.SubFactory(GeographicalAreaFactory, area_code=1)
     member = factory.SubFactory(
-        GeographicalAreaFactory, area_code=factory.fuzzy.FuzzyChoice([0, 2]),
+        GeographicalAreaFactory,
+        area_code=factory.fuzzy.FuzzyChoice([0, 2]),
     )
 
 

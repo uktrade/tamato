@@ -36,17 +36,61 @@ def test_is_truthy(value, expected):
 @pytest.mark.parametrize(
     "overall,contained,expected",
     [
-        (Dates.big, Dates.normal, True,),
-        (Dates.normal, Dates.starts_with_normal, True,),
-        (Dates.normal, Dates.ends_with_normal, False,),
-        (Dates.normal, Dates.overlap_normal, False,),
-        (Dates.normal, Dates.overlap_normal_earlier, False,),
-        (Dates.normal, Dates.adjacent_earlier, False,),
-        (Dates.normal, Dates.adjacent_later, False,),
-        (Dates.normal, Dates.big, False,),
-        (Dates.normal, Dates.earlier, False,),
-        (Dates.normal, Dates.later, False,),
-        (Dates.normal, Dates.normal, False,),
+        (
+            Dates.big,
+            Dates.normal,
+            True,
+        ),
+        (
+            Dates.normal,
+            Dates.starts_with_normal,
+            True,
+        ),
+        (
+            Dates.normal,
+            Dates.ends_with_normal,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.overlap_normal,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.overlap_normal_earlier,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.adjacent_earlier,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.adjacent_later,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.big,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.earlier,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.later,
+            False,
+        ),
+        (
+            Dates.normal,
+            Dates.normal,
+            False,
+        ),
     ],
 )
 def test_validity_range_contains_range(overall, contained, expected):

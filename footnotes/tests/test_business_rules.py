@@ -111,8 +111,7 @@ def test_FO4_start_dates_cannot_match():
 
 
 def test_FO4_description_start_before_footnote_end(date_ranges):
-    """The start date must be less than or equal to the end date of the footnote.
-    """
+    """The start date must be less than or equal to the end date of the footnote."""
 
     footnote = factories.FootnoteFactory(
         valid_between=date_ranges.normal,

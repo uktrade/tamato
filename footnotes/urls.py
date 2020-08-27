@@ -14,7 +14,11 @@ footnote_detail = r"^footnotes/(?P<footnote_type__footnote_type_id>[A-Z]{2,3})(?
 footnote_description_detail = r"^footnotes/(?P<described_footnote__footnote_type__footnote_type_id>[A-Z]{2,3})(?P<described_footnote__footnote_id>[0-9]{3}|[0-9]{5})/"
 
 urlpatterns = [
-    path("footnotes/", views.FootnoteList.as_view(), name="footnote-ui-list",),
+    path(
+        "footnotes/",
+        views.FootnoteList.as_view(),
+        name="footnote-ui-list",
+    ),
     re_path(
         (footnote_detail + r"$"),
         views.FootnoteDetail.as_view(),

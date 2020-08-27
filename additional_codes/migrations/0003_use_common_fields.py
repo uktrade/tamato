@@ -12,7 +12,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name="additionalcode", name="sid", field=common.models.NumericSID(),
+            model_name="additionalcode",
+            name="sid",
+            field=common.models.NumericSID(),
         ),
         migrations.AlterField(
             model_name="additionalcodedescription",

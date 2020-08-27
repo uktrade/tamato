@@ -43,7 +43,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["footnote_type__footnote_type_id", "footnote_id"],},
+            options={
+                "ordering": ["footnote_type__footnote_type_id", "footnote_id"],
+            },
             bases=("common.trackedmodel", models.Model),
         ),
         migrations.CreateModel(
@@ -88,7 +90,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel", models.Model),
         ),
         migrations.CreateModel(
@@ -114,7 +119,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel",),
         ),
         migrations.CreateModel(

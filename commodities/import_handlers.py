@@ -112,7 +112,8 @@ class FootnoteAssociationGoodsNomenclature(ValidityMixin, Writable, ElementHandl
             footnote_type_id=self.data.pop("footnote_type_id")
         )
         footnote = Footnote.objects.get_latest_version(
-            footnote_id=self.data.pop("footnote_id"), footnote_type=footnote_type,
+            footnote_id=self.data.pop("footnote_id"),
+            footnote_type=footnote_type,
         )
 
         data.update(

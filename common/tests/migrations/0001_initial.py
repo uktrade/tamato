@@ -35,7 +35,10 @@ class Migration(migrations.Migration):
                 ("sid", models.PositiveIntegerField()),
                 ("name", models.CharField(max_length=24, null=True)),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel", models.Model),
         ),
         migrations.CreateModel(
@@ -59,7 +62,10 @@ class Migration(migrations.Migration):
                 ("custom_sid", models.PositiveIntegerField()),
                 ("description", models.CharField(max_length=24, null=True)),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel", models.Model),
         ),
     ]

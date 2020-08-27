@@ -83,7 +83,9 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.jinja2.Jinja2",
-        "DIRS": ["node_modules/govuk-frontend/govuk",],
+        "DIRS": [
+            "node_modules/govuk-frontend/govuk",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {"environment": "common.jinja2.environment"},
     },

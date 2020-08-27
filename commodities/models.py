@@ -187,7 +187,9 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
         validators=[MinValueValidator(1), MaxValueValidator(99999999)]
     )
     described_goods_nomenclature = models.ForeignKey(
-        GoodsNomenclature, on_delete=models.PROTECT, related_name="descriptions",
+        GoodsNomenclature,
+        on_delete=models.PROTECT,
+        related_name="descriptions",
     )
     description = models.TextField()
 

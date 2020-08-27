@@ -12,7 +12,10 @@ XML_CHUNK_SIZE = 4096
 
 def import_taric(taric3_file, username, status):
     xmlparser = etree.XMLPullParser(["start", "end", "start-ns"])
-    handler = Envelope(workbasket_status=status, tamato_username=username,)
+    handler = Envelope(
+        workbasket_status=status,
+        tamato_username=username,
+    )
 
     while True:
         buffer = taric3_file.read(XML_CHUNK_SIZE)
@@ -35,7 +38,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "taric3_file", help="The TARIC3 file to be parsed.", type=str,
+            "taric3_file",
+            help="The TARIC3 file to be parsed.",
+            type=str,
         )
         parser.add_argument(
             "-u",

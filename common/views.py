@@ -8,7 +8,13 @@ def index(request):
     workbaskets = []
     if request.user.is_authenticated:
         workbaskets = WorkBasket.objects.filter(author=request.user)
-    return render(request, "common/index.jinja", context={"workbaskets": workbaskets,})
+    return render(
+        request,
+        "common/index.jinja",
+        context={
+            "workbaskets": workbaskets,
+        },
+    )
 
 
 class LoginView(django.contrib.auth.views.LoginView):

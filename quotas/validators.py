@@ -234,7 +234,8 @@ def validate_sub_quota_validity_enclosed_by_main_quota_validity(association):
     """QA2"""
 
     if not validity_range_contains_range(
-        association.main_quota.valid_between, association.sub_quota.valid_between,
+        association.main_quota.valid_between,
+        association.sub_quota.valid_between,
     ):
         raise ValidationError(
             "The sub-quota's validity period must be entirely enclosed within the "

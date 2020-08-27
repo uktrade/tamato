@@ -12,10 +12,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name="footnotedescription", options={"base_manager_name": "objects"},
+            name="footnotedescription",
+            options={"base_manager_name": "objects"},
         ),
         migrations.RemoveConstraint(
-            model_name="footnote", name="exclude_overlapping_footnotes_FO2",
+            model_name="footnote",
+            name="exclude_overlapping_footnotes_FO2",
         ),
         migrations.RemoveConstraint(
             model_name="footnotedescription",

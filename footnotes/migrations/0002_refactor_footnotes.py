@@ -16,14 +16,25 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RemoveField(
-            model_name="footnotetypedescription", name="footnote_type",
+            model_name="footnotetypedescription",
+            name="footnote_type",
         ),
         migrations.RemoveField(
-            model_name="footnotetypedescription", name="trackedmodel_ptr",
+            model_name="footnotetypedescription",
+            name="trackedmodel_ptr",
         ),
-        migrations.AlterModelOptions(name="footnotetype", options={},),
-        migrations.RemoveConstraint(model_name="footnote", name="FO2",),
-        migrations.RemoveConstraint(model_name="footnotedescription", name="FO4",),
+        migrations.AlterModelOptions(
+            name="footnotetype",
+            options={},
+        ),
+        migrations.RemoveConstraint(
+            model_name="footnote",
+            name="FO2",
+        ),
+        migrations.RemoveConstraint(
+            model_name="footnotedescription",
+            name="FO4",
+        ),
         migrations.AddField(
             model_name="footnotedescription",
             name="description_period_sid",
@@ -90,5 +101,7 @@ class Migration(migrations.Migration):
                 name="exclude_overlapping_footnote_types",
             ),
         ),
-        migrations.DeleteModel(name="FootnoteTypeDescription",),
+        migrations.DeleteModel(
+            name="FootnoteTypeDescription",
+        ),
     ]

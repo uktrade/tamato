@@ -94,7 +94,8 @@ def test_footnote_association_goods_nomenclature_importer_create(valid_user):
     import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
     db_association = models.FootnoteAssociationGoodsNomenclature.objects.get(
-        goods_nomenclature=good, associated_footnote=footnote,
+        goods_nomenclature=good,
+        associated_footnote=footnote,
     )
 
     assert db_association.valid_between.lower == association.valid_between.lower

@@ -1,5 +1,5 @@
 allure-pytest-bdd
-black
+black>=20.8b1
 dj-database-url
 django>=3.0,<3.1
 django-dotenv

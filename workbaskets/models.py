@@ -24,7 +24,9 @@ class WorkBasket(TimestampedMixin):
         blank=True, help_text="Reason for the changes to the tariff"
     )
     author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, editable=False,
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
     )
     approver = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -34,7 +36,8 @@ class WorkBasket(TimestampedMixin):
         related_name="approved_workbaskets",
     )
     status = FSMField(
-        default=WorkflowStatus.NEW_IN_PROGRESS, choices=WorkflowStatus.choices,
+        default=WorkflowStatus.NEW_IN_PROGRESS,
+        choices=WorkflowStatus.choices,
     )
 
     def __str__(self):
@@ -42,7 +45,10 @@ class WorkBasket(TimestampedMixin):
 
     @transition(
         field=status,
-        source=[WorkflowStatus.NEW_IN_PROGRESS, WorkflowStatus.EDITING,],
+        source=[
+            WorkflowStatus.NEW_IN_PROGRESS,
+            WorkflowStatus.EDITING,
+        ],
         target=WorkflowStatus.AWAITING_APPROVAL,
     )
     def submit_for_approval(self):
@@ -154,7 +160,9 @@ class Transaction(TimestampedMixin):
     """A Transaction is created once the WorkBasket has been sent for approval"""
 
     workbasket = models.OneToOneField(
-        WorkBasket, on_delete=models.PROTECT, editable=False,
+        WorkBasket,
+        on_delete=models.PROTECT,
+        editable=False,
     )
 
     def to_json(self):
