@@ -28,7 +28,9 @@ class Group(TrackedModel, ValidityMixin):
     subrecord_code = "00"
 
     group_id = models.CharField(
-        max_length=3, editable=False, validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")],
+        max_length=3,
+        editable=False,
+        validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")],
     )
     # no need for a separate model as we don't support multiple languages
     description = ShortDescription()
@@ -41,7 +43,11 @@ class Group(TrackedModel, ValidityMixin):
 """The code which indicates whether or not a regulation has been replaced."""
 ReplacementIndicator = models.IntegerChoices(
     "ReplacementIndicator",
-    ["Not replaced", "Replaced", "Partially replaced",],
+    [
+        "Not replaced",
+        "Replaced",
+        "Partially replaced",
+    ],
     start=0,
 )
 
@@ -69,7 +75,9 @@ class Regulation(TrackedModel):
 
     """The regulation number"""
     regulation_id = models.CharField(
-        max_length=8, editable=False, validators=[validators.regulation_id_validator],
+        max_length=8,
+        editable=False,
+        validators=[validators.regulation_id_validator],
     )
 
     official_journal_number = models.CharField(
@@ -132,10 +140,15 @@ class Regulation(TrackedModel):
 
     # Base regulations have community_code and regulation_group
     community_code = models.PositiveIntegerField(
-        choices=CommunityCode.choices, blank=True, null=True,
+        choices=CommunityCode.choices,
+        blank=True,
+        null=True,
     )
     regulation_group = models.ForeignKey(
-        Group, on_delete=models.PROTECT, blank=True, null=True,
+        Group,
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
     )
 
     amends = models.ManyToManyField(

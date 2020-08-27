@@ -29,7 +29,8 @@ def test_NIG2(date_ranges, normal_good):
     """
     parent = factories.GoodsNomenclatureIndentFactory(valid_between=date_ranges.big)
     generate_good(
-        origin=normal_good, valid_between=date_ranges.adjacent_later,
+        origin=normal_good,
+        valid_between=date_ranges.adjacent_later,
     )
     with pytest.raises(ValidationError):
         generate_good(

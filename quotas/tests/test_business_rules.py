@@ -48,7 +48,8 @@ def test_ON2(date_ranges, published):
     )
 
     order_number = factories.QuotaOrderNumberFactory(
-        order_number=existing.order_number, valid_between=date_ranges.overlap_normal,
+        order_number=existing.order_number,
+        valid_between=date_ranges.overlap_normal,
     )
 
     with pytest.raises(ValidationError):
@@ -170,7 +171,11 @@ def test_ON12():
 
 @pytest.mark.parametrize(
     "area_code, expect_error",
-    [(AreaCode.COUNTRY, True), (AreaCode.GROUP, False), (AreaCode.REGION, True),],
+    [
+        (AreaCode.COUNTRY, True),
+        (AreaCode.GROUP, False),
+        (AreaCode.REGION, True),
+    ],
 )
 def test_ON13(date_ranges, published, area_code, expect_error):
     """An exclusion can only be entered if the order number origin is a geographical
@@ -181,14 +186,17 @@ def test_ON13(date_ranges, published, area_code, expect_error):
         area_code=area_code, workbasket=published
     )
     member_area = factories.GeographicalAreaFactory(
-        area_code=AreaCode.COUNTRY, workbasket=published,
+        area_code=AreaCode.COUNTRY,
+        workbasket=published,
     )
     if area_code == AreaCode.GROUP:
         factories.GeographicalMembershipFactory(
-            geo_group=geo_area, member=member_area,
+            geo_group=geo_area,
+            member=member_area,
         )
     origin = factories.QuotaOrderNumberOriginFactory(
-        geographical_area=geo_area, workbasket=published,
+        geographical_area=geo_area,
+        workbasket=published,
     )
     exclusion = factories.QuotaOrderNumberOriginExclusionFactory(
         origin=origin, excluded_geographical_area=member_area
@@ -255,7 +263,8 @@ def test_QD7(date_ranges, published):
         valid_between=date_ranges.normal, workbasket=published
     )
     definition = factories.QuotaDefinitionFactory(
-        order_number=order_number, valid_between=date_ranges.overlap_normal,
+        order_number=order_number,
+        valid_between=date_ranges.overlap_normal,
     )
 
     with pytest.raises(ValidationError):
@@ -359,7 +368,13 @@ def test_QA3():
 
 @pytest.mark.parametrize(
     "coefficient, expect_error",
-    [(None, False), (1.0, False), (2.0, False), (0.0, True), (-1.0, True),],
+    [
+        (None, False),
+        (1.0, False),
+        (2.0, False),
+        (0.0, True),
+        (-1.0, True),
+    ],
 )
 def test_QA4(coefficient, expect_error):
     """Whenever a sub-quota receives a coefficient, this has to be a strictly positive
@@ -414,7 +429,8 @@ def test_QA5_pt2(published):
     """
 
     assoc = factories.QuotaAssociationFactory(
-        coefficient=Decimal("1.00000"), sub_quota_relation_type=SubQuotaType.EQUIVALENT,
+        coefficient=Decimal("1.00000"),
+        sub_quota_relation_type=SubQuotaType.EQUIVALENT,
     )
 
     with pytest.raises(ValidationError):
@@ -425,7 +441,8 @@ def test_QA5_pt3(published):
     """A sub-quota defined with the 'normal' type must have a coefficient of 1"""
 
     assoc = factories.QuotaAssociationFactory(
-        coefficient=Decimal("1.20000"), sub_quota_relation_type=SubQuotaType.NORMAL,
+        coefficient=Decimal("1.20000"),
+        sub_quota_relation_type=SubQuotaType.NORMAL,
     )
 
     with pytest.raises(ValidationError):
@@ -455,9 +472,12 @@ def test_blocking_of_fcfs_quotas_only(published):
         mechanism=AdministrationMechanism.LICENSED, workbasket=published
     )
     definition = factories.QuotaDefinitionFactory(
-        workbasket=published, order_number=order_number,
+        workbasket=published,
+        order_number=order_number,
     )
-    blocking = factories.QuotaBlockingFactory(quota_definition=definition,)
+    blocking = factories.QuotaBlockingFactory(
+        quota_definition=definition,
+    )
 
     with pytest.raises(ValidationError):
         blocking.workbasket.submit_for_approval()
@@ -495,9 +515,12 @@ def test_suspension_of_fcfs_quotas_only(published):
         mechanism=AdministrationMechanism.LICENSED, workbasket=published
     )
     definition = factories.QuotaDefinitionFactory(
-        workbasket=published, order_number=order_number,
+        workbasket=published,
+        order_number=order_number,
     )
-    suspension = factories.QuotaSuspensionFactory(quota_definition=definition,)
+    suspension = factories.QuotaSuspensionFactory(
+        quota_definition=definition,
+    )
 
     with pytest.raises(ValidationError):
         suspension.workbasket.submit_for_approval()

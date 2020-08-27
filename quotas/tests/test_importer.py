@@ -110,7 +110,8 @@ def test_quota_association_importer_create(valid_user):
     import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED)
 
     db_association = models.QuotaAssociation.objects.get(
-        main_quota=association.main_quota, sub_quota=association.sub_quota,
+        main_quota=association.main_quota,
+        sub_quota=association.sub_quota,
     )
 
     assert db_association.sub_quota_relation_type == association.sub_quota_relation_type

@@ -64,7 +64,10 @@ class WorkBasketUIViewSet(WorkBasketViewSet):
     @action(detail=False, methods=["get"])
     def choose_or_create(self, request):
         queryset = self.filter_queryset(self.get_queryset()).filter(
-            status__in=[WorkflowStatus.NEW_IN_PROGRESS, WorkflowStatus.EDITING,],
+            status__in=[
+                WorkflowStatus.NEW_IN_PROGRESS,
+                WorkflowStatus.EDITING,
+            ],
         )
         return render(
             request, "workbaskets/choose-or-create.jinja", context={"objects": queryset}

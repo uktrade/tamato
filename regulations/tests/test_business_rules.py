@@ -16,12 +16,14 @@ def test_ROIMB1():
     regulation_id = "C2000000"
     role_type = 1
     factories.RegulationFactory.create(
-        regulation_id=regulation_id, role_type=role_type,
+        regulation_id=regulation_id,
+        role_type=role_type,
     )
 
     with pytest.raises(django.core.exceptions.ValidationError):
         r = factories.RegulationFactory.build(
-            regulation_id=regulation_id, role_type=role_type,
+            regulation_id=regulation_id,
+            role_type=role_type,
         )
         r.full_clean()
 

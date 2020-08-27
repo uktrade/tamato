@@ -33,7 +33,10 @@ class Migration(migrations.Migration):
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel", models.Model),
         ),
         migrations.CreateModel(
@@ -145,5 +148,8 @@ class Migration(migrations.Migration):
             ],
             bases=("common.trackedmodel", models.Model),
         ),
-        migrations.RemoveField(model_name="commodity", name="trackedmodel_ptr",),
+        migrations.RemoveField(
+            model_name="commodity",
+            name="trackedmodel_ptr",
+        ),
     ]

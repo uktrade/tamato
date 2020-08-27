@@ -7,7 +7,10 @@ from rest_polymorphic.serializers import PolymorphicSerializer
 
 class TARIC3DateTimeRangeField(DateTimeRangeField):
     child = serializers.DateTimeField(
-        input_formats=["iso-8601", "%Y-%m-%d",]  # default  # TARIC3 date format
+        input_formats=[
+            "iso-8601",
+            "%Y-%m-%d",
+        ]  # default  # TARIC3 date format
     )
 
 

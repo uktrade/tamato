@@ -24,7 +24,8 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
     description_subrecord_code = "05"
 
     sid = models.CharField(
-        max_length=1, validators=[validators.additional_code_type_sid_validator],
+        max_length=1,
+        validators=[validators.additional_code_type_sid_validator],
     )
     description = ShortDescription()
 

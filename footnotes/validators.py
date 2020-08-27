@@ -33,7 +33,9 @@ def validate_at_least_one_description(footnote):
         raise ValidationError("At least one description record is mandatory.")
 
 
-def validate_first_footnote_description_has_footnote_start_date(footnote_description,):
+def validate_first_footnote_description_has_footnote_start_date(
+    footnote_description,
+):
     """FO4"""
 
     footnote = footnote_description.described_footnote

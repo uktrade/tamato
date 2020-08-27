@@ -69,7 +69,11 @@ def test_element_handler_with_repeated_children():
     handler.end(el)
 
     assert handler.data == {
-        "foo": [{"id": 0}, {"id": 1}, {"id": 2},],
+        "foo": [
+            {"id": 0},
+            {"id": 1},
+            {"id": 2},
+        ],
     }
 
 
@@ -95,5 +99,8 @@ def test_validity_mixin():
     handler.end(el)
 
     assert handler.data == {
-        "valid_between": {"lower": "2020-01-01", "upper": "2020-01-02",},
+        "valid_between": {
+            "lower": "2020-01-01",
+            "upper": "2020-01-02",
+        },
     }

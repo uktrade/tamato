@@ -80,7 +80,9 @@ def validate_approved_from_not_approved(regulation):
 
     if not regulation.approved and regulation.values_from_db["approved"]:
         raise ValidationError(
-            {"approved": "Cannot change from Approved to Not Approved",}
+            {
+                "approved": "Cannot change from Approved to Not Approved",
+            }
         )
 
 

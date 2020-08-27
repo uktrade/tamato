@@ -82,7 +82,8 @@ class GovukDateRangeField(DateTimeRangeField):
                 limit == "lower" or self.require_all_fields
             ):
                 error = ValidationError(
-                    self.error_messages[f"{limit}_required"], code=f"{limit}_required",
+                    self.error_messages[f"{limit}_required"],
+                    code=f"{limit}_required",
                 )
                 error.subfield = i
                 raise error

@@ -15,7 +15,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(name="Commodity",),
+        migrations.DeleteModel(
+            name="Commodity",
+        ),
         migrations.AddField(
             model_name="goodsnomenclatureindent",
             name="indented_goods_nomenclature",

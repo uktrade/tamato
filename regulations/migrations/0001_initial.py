@@ -30,7 +30,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel",),
         ),
         migrations.CreateModel(
@@ -49,7 +52,10 @@ class Migration(migrations.Migration):
                 ),
                 ("effective_end_date", models.DateField(null=True)),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel",),
         ),
         migrations.CreateModel(
@@ -82,7 +88,10 @@ class Migration(migrations.Migration):
                 ),
                 ("description", models.CharField(editable=False, max_length=500)),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel", models.Model),
         ),
         migrations.CreateModel(
@@ -251,7 +260,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel",),
         ),
         migrations.CreateModel(
@@ -286,7 +298,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel",),
         ),
         migrations.CreateModel(
@@ -321,7 +336,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel",),
         ),
         migrations.CreateModel(
@@ -358,7 +376,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"abstract": False, "base_manager_name": "objects",},
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
             bases=("common.trackedmodel",),
         ),
         migrations.AddField(
