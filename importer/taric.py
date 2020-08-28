@@ -5,15 +5,15 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from common.validators import UpdateType
-from importer.handlers import ElementHandler
-from importer.handlers import HandlerError
-from importer.handlers import TextElement
 from importer.namespaces import ENVELOPE
 from importer.namespaces import Tag
+from importer.parsers import ElementParser
+from importer.parsers import ParserError
+from importer.parsers import TextElement
 from workbaskets import models
 
 
-class Record(ElementHandler):
+class Record(ElementParser):
     tag = Tag("record")
     transaction_id = TextElement(Tag("transaction.id"))
     record_code = TextElement(Tag("record.code"))
@@ -28,13 +28,13 @@ class Record(ElementHandler):
             str(UpdateType.CREATE.value): "create",
         }[data["update_type"]]
 
-        for handler, field_name in self._field_lookup.items():
+        for parser, field_name in self._field_lookup.items():
             record_data = data.get(field_name)
-            if record_data and hasattr(handler, method_name):
-                getattr(handler, method_name)(record_data, workbasket_id)
+            if record_data and hasattr(parser, method_name):
+                getattr(parser, method_name)(record_data, workbasket_id)
 
 
-class Message(ElementHandler):
+class Message(ElementParser):
     tag = Tag("app.message", prefix=ENVELOPE)
     record = Record(many=True)
 
@@ -43,7 +43,7 @@ class Message(ElementHandler):
             self.record.save(record_data, workbasket_id)
 
 
-class Transaction(ElementHandler):
+class Transaction(ElementParser):
     tag = Tag("transaction", prefix=ENVELOPE)
     message = Message(many=True)
 
@@ -69,11 +69,11 @@ class Transaction(ElementHandler):
             self.message.save(message_data, workbasket.pk)
 
 
-class EnvelopeError(HandlerError):
+class EnvelopeError(ParserError):
     pass
 
 
-class Envelope(ElementHandler):
+class Envelope(ElementParser):
     tag = Tag("envelope", prefix=ENVELOPE)
     transaction = Transaction(many=True)
 

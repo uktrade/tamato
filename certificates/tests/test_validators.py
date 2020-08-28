@@ -1,7 +1,7 @@
 import pytest
 
-from common.tests.util import check_validator
 from certificates import validators
+from common.tests.util import check_validator
 
 
 @pytest.mark.parametrize(

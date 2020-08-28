@@ -1,11 +1,10 @@
 from rest_framework import serializers
 
-from common.serializers import (
-    ValiditySerializerMixin,
-    TrackedModelSerializer,
-    TrackedModelSerializerMixin,
-)
-from regulations import models, validators
+from common.serializers import TrackedModelSerializer
+from common.serializers import TrackedModelSerializerMixin
+from common.serializers import ValiditySerializerMixin
+from regulations import models
+from regulations import validators
 
 
 class GroupSerializer(ValiditySerializerMixin):

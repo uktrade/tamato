@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from common.serializers import UserSerializer, TrackedModelSerializer
+from common.serializers import TrackedModelSerializer
+from common.serializers import UserSerializer
 from workbaskets import models
 
 

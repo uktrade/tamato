@@ -1,16 +1,15 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 from treebeard.mp_tree import MP_Node
 
 from commodities import validators
-from common.models import (
-    TrackedModel,
-    ValidityMixin,
-    PolymorphicMPTreeManager,
-    PolymorphicMPTreeQuerySet,
-)
+from common.models import PolymorphicMPTreeManager
+from common.models import PolymorphicMPTreeQuerySet
+from common.models import TrackedModel
+from common.models import ValidityMixin
 
 
 class GoodsNomenclature(TrackedModel, ValidityMixin):
