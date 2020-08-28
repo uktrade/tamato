@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 import xml.etree.ElementTree as etree
+from typing import Dict
 from typing import Optional
 
 from common.validators import UpdateType
@@ -56,18 +59,19 @@ class ElementParser:
 
     tag: Tag = None
 
-    def __init__(self, tag: Tag = None, many: bool = False):
+    def __init__(self, tag: Tag = None, many: bool = False, depth: int = 1):
         self.child = None
-        self.parent = None
         self.data = {}
-        self.text = None
+        self.depth = depth
         self.many = many
+        self.parent = None
+        self.text = None
 
         if tag:
             self.tag = tag
 
     @property
-    def _field_lookup(self) -> dict:
+    def _field_lookup(self) -> Dict[ElementParser, str]:
         field_lookup = {
             parser: field
             for field, parser in self.__class__.__dict__.items()
@@ -77,15 +81,41 @@ class ElementParser:
         field_lookup.update(getattr(self, "_additional_components", {}))
         return field_lookup
 
-    def get_parser(self, element: etree.Element) -> Optional["ElementParser"]:
+    def is_parser_for_element(self, parser: ElementParser, element: etree.Element):
+        """
+        Check if the parser matches the element.
+
+        This requires the tag to match, but also the parser and elements to both either be
+        leaf nodes or parents.
+
+        This is because we have a few cases where there are tags nested within a tag of the same name.
+
+        Example:
+
+                <oub:additional.code>
+                    <oub:additional.code.sid>00000001</oub:additional.code.sid>
+                    <oub:additional.code.type.id>A</oub:additional.code.type.id>
+                    <oub:additional.code>AAA</oub:additional.code>
+                    <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                </oub:additional.code>
+
+        In this case matching on tags is not enough and so checking for leaf nodes is also important.
+
+        In the case where a tag is nested multiple times where more than 1 of those occassions is not
+        a leaf node, a bug will occur. This case is not currently likely and so has not been handled.
+        """
+        return parser.tag == element.tag and bool(parser._field_lookup) == bool(
+            len(element)
+        )
+
+    def get_parser(self, element: etree.Element) -> Optional[ElementParser]:
         for parser in self._field_lookup.keys():
-            if parser.tag == element.tag:
+            if self.is_parser_for_element(parser, element):
                 return parser
 
-    def start(self, element: etree.Element, parent=None):
-        self.parent = parent
+    def start(self, element: etree.Element):
 
-        if element.tag == self.tag:
+        if self.is_parser_for_element(self, element):
             self.data = {}
 
         # if the tag matches one of the child elements of this element, get the
@@ -95,7 +125,7 @@ class ElementParser:
 
         # if currently in a child element, delegate to the child parser
         if self.child:
-            self.child.start(element, parent=self)
+            self.child.start(element)
 
     def end(self, element: etree.Element):
         # if currently in a child element, delegate to the child parser
@@ -103,7 +133,7 @@ class ElementParser:
             self.child.end(element)
 
             # leaving the child element, so stop delegating
-            if element.tag == self.child.tag:
+            if self.is_parser_for_element(self.child, element):
                 field_name = self._field_lookup[self.child]
                 if self.child.many:
                     self.data.setdefault(field_name, []).append(self.child.data)
@@ -112,7 +142,7 @@ class ElementParser:
                 self.child = None
 
         # leaving this element, so marshal the data
-        if element.tag == self.tag:
+        if self.is_parser_for_element(self, element):
             if element.text:
                 self.text = element.text.strip()
             self.data.update(element.attrib.items())
@@ -197,6 +227,7 @@ class Writable:
             "tag": self.tag.name,
             "workbasket_id": workbasket_id,
         }
+
         self.nursery.submit(dispatch_object)
 
     def update(self, data, workbasket_id):
