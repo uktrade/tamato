@@ -1,106 +1,181 @@
-import xml.etree.ElementTree as etree
+import pytest
+from rest_framework.exceptions import ValidationError
 
-from importer.handlers import ElementHandler
-from importer.handlers import TextElement
-from importer.handlers import ValidityMixin
-from importer.namespaces import Tag
+from common.tests import factories
+from common.tests.models import TestModel1
+from importer import handlers
+from importer.handlers import BaseHandler
 
-
-def test_element_handler_empty_element():
-    handler = ElementHandler(Tag("test"))
-    handler.end(etree.Element(str(Tag("test")), {"value": "foo"}))
-    assert handler.data == {"value": "foo"}
+pytestmark = pytest.mark.django_db
 
 
-def test_element_handler_text_element():
-    handler = ElementHandler(Tag("test"))
-    el = etree.Element(str(Tag("test")))
-    el.text = "foo"
-    handler.end(el)
-    assert handler.text == "foo"
+def test_handler_registers_on_definition(object_nursery, mock_serializer):
+    assert "test_handler_registers_on_definition" not in object_nursery.handlers
+
+    class TestHandler(handlers.BaseHandler):
+        serializer_class = mock_serializer
+        tag = "test_handler_registers_on_definition"
+
+    assert "test_handler_registers_on_definition" in object_nursery.handlers
+
+    assert (
+        object_nursery.get_handler("test_handler_registers_on_definition")
+        is TestHandler
+    )
 
 
-def test_text_element_class():
-    handler = TextElement(Tag("test"))
-    el = etree.Element(str(Tag("test")))
-    el.text = "foo"
-    handler.end(el)
-    assert handler.data == "foo"
+def test_handler_validates_clean_data(prepped_handler):
+    prepped_handler.clean(prepped_handler.data)
 
 
-def test_element_handler_with_child():
-    class TestElement(ElementHandler):
-        tag = Tag("test")
-        foo = TextElement(Tag("foo"))
+def test_handler_raises_error_validating_dirty_data(prepped_handler):
+    data = prepped_handler.data
+    data.pop("update_type")
 
-    handler = TestElement()
-
-    el = etree.Element(str(Tag("test")))
-    child = etree.Element(str(Tag("foo")))
-    child.text = "bar"
-    el.append(child)
-
-    handler.start(el)
-    handler.start(child)
-    handler.end(child)
-    handler.end(el)
-
-    assert handler.data == {"foo": "bar"}
+    with pytest.raises(ValidationError):
+        prepped_handler.clean(data)
 
 
-def test_element_handler_with_repeated_children():
-    class Foo(ElementHandler):
-        tag = Tag("foo")
+def test_handler_pre_save(prepped_handler):
+    data = {"a": 1, "b": 2}
+    links = {"c": 3, "d": 4}
 
-    class TestElement(ElementHandler):
-        tag = Tag("test")
-        foo = Foo(many=True)
+    merged_data = prepped_handler.pre_save(data, links)
 
-    handler = TestElement()
+    assert merged_data == {"a": 1, "b": 2, "c": 3, "d": 4}
 
-    el = etree.Element(str(Tag("test")))
-    children = [etree.Element(str(Tag("foo")), {"id": i}) for i in range(3)]
-    el.extend(children)
 
-    handler.start(el)
-    for child in children:
-        handler.start(child)
-        handler.end(child)
-    handler.end(el)
+def test_handler_custom_pre_save(mock_serializer, handler_test_data, object_nursery):
+    class TestCustomPreSaveError(Exception):
+        pass
 
-    assert handler.data == {
-        "foo": [
-            {"id": 0},
-            {"id": 1},
-            {"id": 2},
-        ],
+    class TestHandler(BaseHandler):
+        links = [
+            {
+                "model": TestModel1,
+                "name": "test_model_1",
+            }
+        ]
+        serializer_class = mock_serializer
+        tag = "test_handler"
+
+        def pre_save(self, data, links):
+            raise TestCustomPreSaveError
+
+    handler = TestHandler(handler_test_data, object_nursery)
+
+    with pytest.raises(TestCustomPreSaveError):
+        handler.dispatch()
+
+
+def test_handler_custom_post_save(mock_serializer, handler_test_data, object_nursery):
+    class TestCustomPostSaveError(Exception):
+        pass
+
+    class TestHandler(BaseHandler):
+        links = [
+            {
+                "model": TestModel1,
+                "name": "test_model_1",
+            }
+        ]
+        serializer_class = mock_serializer
+        tag = "test_handler"
+
+        def post_save(self, obj):
+            raise TestCustomPostSaveError
+
+    handler = TestHandler(handler_test_data, object_nursery)
+
+    with pytest.raises(TestCustomPostSaveError):
+        handler.dispatch()
+
+
+def test_generate_dependency_keys(
+    prepped_handler_with_dependencies1, prepped_handler_with_dependencies2
+):
+    assert prepped_handler_with_dependencies1.dependency_keys == {
+        prepped_handler_with_dependencies2.key
+    }
+    assert prepped_handler_with_dependencies2.dependency_keys == {
+        prepped_handler_with_dependencies1.key
     }
 
 
-def test_validity_mixin():
-    class TestElement(ValidityMixin, ElementHandler):
-        tag = Tag("test")
-        valid_between_lower = TextElement(Tag("validity.start.date"))
-        valid_between_upper = TextElement(Tag("validity.end.date"))
+def test_failed_resolve_dependencies_returns_false(prepped_handler_with_dependencies1):
+    assert not prepped_handler_with_dependencies1.resolve_dependencies()
 
-    handler = TestElement()
 
-    el = etree.Element(str(Tag("test")))
-    start_date = etree.Element(str(Tag("validity.start.date")))
-    start_date.text = "2020-01-01"
-    end_date = etree.Element(str(Tag("validity.end.date")))
-    end_date.text = "2020-01-02"
-    el.extend([start_date, end_date])
+def test_resolve_dependencies_returns_true(
+    prepped_handler_with_dependencies1, prepped_handler_with_dependencies2
+):
+    nursery = prepped_handler_with_dependencies1.nursery
+    nursery._cache_object(prepped_handler_with_dependencies2)
 
-    handler.start(el)
-    for child in el:
-        handler.start(child)
-        handler.end(child)
-    handler.end(el)
+    assert prepped_handler_with_dependencies1.resolve_dependencies()
 
-    assert handler.data == {
-        "valid_between": {
-            "lower": "2020-01-01",
-            "upper": "2020-01-02",
-        },
+
+def test_get_generic_link(prepped_handler):
+    test_instance = factories.TestModel1Factory()
+    obj_instance = prepped_handler.get_generic_link(
+        TestModel1, {"sid": test_instance.sid}
+    )
+
+    assert test_instance == obj_instance
+
+
+def test_get_custom_link(mock_serializer, handler_test_data, object_nursery):
+    class TestGetCustomLinkError(Exception):
+        pass
+
+    class TestHandler(BaseHandler):
+        links = [
+            {
+                "model": TestModel1,
+                "name": "test_model_1",
+            }
+        ]
+        serializer_class = mock_serializer
+        tag = "test_handler"
+
+        def get_test_model_1_link(self, model, kwargs):
+            raise TestGetCustomLinkError
+
+    handler = TestHandler(handler_test_data, object_nursery)
+    handler.data["test_model_1__sid"] = 1
+
+    with pytest.raises(TestGetCustomLinkError):
+        handler.resolve_links()
+
+
+def test_resolve_links_returns_true(prepped_handler_with_link):
+    assert prepped_handler_with_link.resolve_links()
+
+
+def test_failed_resolve_links_returns_false(prepped_handler_with_link):
+    prepped_handler_with_link.data["test_model_1__sid"] += 1
+    assert not prepped_handler_with_link.resolve_links()
+
+
+def test_failed_optional_resolve_links_returns_true(prepped_handler_with_link):
+    prepped_handler_with_link.data["test_model_1__sid"] += 1
+    prepped_handler_with_link.links[0]["optional"] = True
+    assert prepped_handler_with_link.resolve_links()
+
+
+def test_dispatch(prepped_handler):
+    assert not TestModel1.objects.filter(
+        sid=prepped_handler.data["sid"], name=prepped_handler.data["name"]
+    ).exists()
+    prepped_handler.dispatch()
+    assert TestModel1.objects.filter(
+        sid=prepped_handler.data["sid"], name=prepped_handler.data["name"]
+    ).exists()
+
+
+def test_serialize(prepped_handler):
+    assert prepped_handler.serialize() == {
+        "data": prepped_handler.data,
+        "tag": prepped_handler.tag,
+        "workbasket_id": prepped_handler.workbasket_id,
     }

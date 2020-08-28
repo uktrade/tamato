@@ -78,7 +78,7 @@ TAMATO database.
 
 Run the script to see the command line arguments:
 
-    ./manage.py 
+    ./manage.py import_taric --help
 
 ## How to deploy
 

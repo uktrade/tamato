@@ -1,8 +1,6 @@
-from common.serializers import (
-    ValiditySerializerMixin,
-    TrackedModelSerializer,
-    TrackedModelSerializerMixin,
-)
+from common.serializers import TrackedModelSerializer
+from common.serializers import TrackedModelSerializerMixin
+from common.serializers import ValiditySerializerMixin
 from geo_areas import models
 
 

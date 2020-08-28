@@ -1,8 +1,7 @@
+from certificates import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
-
-from certificates import models
 
 
 @TrackedModelSerializer.register_polymorphic_model
