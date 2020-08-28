@@ -5,6 +5,7 @@ from additional_codes import validators
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.validators import NumericSIDValidator
 
 
 @TrackedModelSerializer.register_polymorphic_model
@@ -48,7 +49,6 @@ class SimpleAdditionalCodeDescriptionSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class AdditionalCodeSerializer(ValiditySerializerMixin, TrackedModelSerializerMixin):
-    id = serializers.IntegerField()
     sid = serializers.CharField(validators=[validators.additional_code_validator])
     type = AdditionalCodeTypeSerializer()
     descriptions = SimpleAdditionalCodeDescriptionSerializer(many=True)
@@ -56,10 +56,8 @@ class AdditionalCodeSerializer(ValiditySerializerMixin, TrackedModelSerializerMi
     class Meta:
         model = models.AdditionalCode
         fields = [
-            "id",
             "sid",
             "type",
-            "code",
             "code",
             "descriptions",
             "valid_between",
@@ -67,6 +65,25 @@ class AdditionalCodeSerializer(ValiditySerializerMixin, TrackedModelSerializerMi
             "record_code",
             "subrecord_code",
             "taric_template",
+            "start_date",
+            "end_date",
+        ]
+
+
+class AdditionalCodeImporterSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+    type = AdditionalCodeTypeSerializer(required=False)
+
+    class Meta:
+        model = models.AdditionalCode
+        fields = [
+            "sid",
+            "type",
+            "code",
+            "valid_between",
+            "update_type",
             "start_date",
             "end_date",
         ]
@@ -81,7 +98,6 @@ class AdditionalCodeDescriptionSerializer(
     class Meta:
         model = models.AdditionalCodeDescription
         fields = [
-            "id",
             "described_additional_code",
             "description",
             "description_period_sid",
@@ -92,6 +108,27 @@ class AdditionalCodeDescriptionSerializer(
             "period_record_code",
             "period_subrecord_code",
             "taric_template",
+            "start_date",
+            "end_date",
+        ]
+
+
+class AdditionalCodeDescriptionImporterSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    described_additional_code = AdditionalCodeSerializer(required=False)
+    description_period_sid = serializers.IntegerField(
+        validators=[NumericSIDValidator()]
+    )
+
+    class Meta:
+        model = models.AdditionalCodeDescription
+        fields = [
+            "described_additional_code",
+            "description",
+            "description_period_sid",
+            "valid_between",
+            "update_type",
             "start_date",
             "end_date",
         ]

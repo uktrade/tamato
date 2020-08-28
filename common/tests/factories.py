@@ -228,7 +228,7 @@ class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "additional_codes.AdditionalCodeDescription"
 
-    description_period_sid = numeric_sid()
+    description_period_sid = factory.Sequence(lambda x: x + 1)
     described_additional_code = factory.SubFactory(AdditionalCodeFactory)
     description = short_description()
 

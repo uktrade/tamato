@@ -123,6 +123,8 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
     )
     description = models.TextField()
 
+    identifying_fields = ("description_period_sid",)
+
     class Meta:
         constraints = [
             ExclusionConstraint(
