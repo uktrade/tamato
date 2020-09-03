@@ -175,13 +175,29 @@ class TextElement(ElementParser):
     This class provides a convenient way to define a parser for elements that contain
     only a text value and have no attributes or children, eg:
 
-        <msg:record.code>430</msg:record.code>
+        <msg:record.code>Example Text</msg:record.code>
 
     """
 
     def clean(self):
         super().clean()
         self.data = self.text
+
+
+class IntElement(ElementParser):
+    """
+    Parse elements which contain an integer value.
+
+    This class provides a convenient way to define a parser for elements that contain
+    only an integer value and have no attributes or children, eg:
+
+        <msg:record.code>430</msg:record.code>
+
+    """
+
+    def clean(self):
+        super().clean()
+        self.data = int(self.text)
 
 
 class ValidityMixin:

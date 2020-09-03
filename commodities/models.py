@@ -221,6 +221,8 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
         "footnotes.Footnote", on_delete=models.PROTECT
     )
 
+    identifying_fields = "goods_nomenclature", "associated_footnote"
+
     def clean(self):
         validators.validate_goods_validity_includes_footnote_association(self)
         validators.validate_footnote_validity_includes_footnote_association(self)

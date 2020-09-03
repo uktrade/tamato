@@ -267,7 +267,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         a dependency is not found the method returns False - to signify the object cannot be resolved.
         If all dependencies are found the method returns True.
         """
-        dependencies = self.dependency_keys
+        dependencies = self.dependency_keys.copy()
         resolved_dependencies = {self.key}
 
         while dependencies:
@@ -361,6 +361,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         if not self.dependency_keys and not self.links:
             self.dispatch()
             return {self.key}
+
         if not self.resolve_dependencies() or not self.resolve_links():
             return set()
 
@@ -379,6 +380,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         data.update(workbasket_id=self.workbasket_id)
         logger.debug(f"Creating {self.serializer_class.Meta.model}: {data}")
         data = self.pre_save(data, self.resolved_links)
+        print(data)
         obj = self.serializer_class().create(data)
         self.post_save(obj)
         return obj

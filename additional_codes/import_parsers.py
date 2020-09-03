@@ -1,5 +1,6 @@
 from importer.namespaces import Tag
 from importer.parsers import ElementParser
+from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
@@ -24,15 +25,11 @@ class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
 
     tag = Tag("additional.code")
 
-    sid = TextElement(Tag("additional.code.sid"))
+    sid = IntElement(Tag("additional.code.sid"))
     type__sid = TextElement(Tag("additional.code.type.id"))
     code = TextElement(Tag("additional.code"))
     valid_between_lower = TextElement(Tag("validity.start.date"))
     valid_between_upper = TextElement(Tag("validity.end.date"))
-
-    def clean(self):
-        self.data["sid"] = int(self.data["sid"])
-        return super().clean()
 
 
 @Record.register_child("additional_code_description_period")

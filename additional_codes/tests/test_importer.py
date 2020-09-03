@@ -1,90 +1,45 @@
 import pytest
 
-from additional_codes import models
 from additional_codes import serializers
 from common.tests import factories
-from common.tests.util import generate_test_import_xml
-from common.validators import UpdateType
-from importer.management.commands.import_taric import import_taric
-from workbaskets.models import WorkflowStatus
+from common.tests.util import validate_taric_import
 
 pytestmark = pytest.mark.django_db
 
 
-def test_additional_code_type_importer_create(valid_user):
-    additional_code_type = factories.AdditionalCodeTypeFactory.build(
-        update_type=UpdateType.CREATE.value
-    )
-    xml = generate_test_import_xml(
-        serializers.AdditionalCodeTypeSerializer(
-            additional_code_type, context={"format": "xml"}
-        ).data
-    )
+@validate_taric_import(
+    serializers.AdditionalCodeTypeSerializer, factories.AdditionalCodeTypeFactory
+)
+def test_additional_code_type_importer_create(valid_user, test_object, db_object):
 
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
-
-    db_additional_code_type = models.AdditionalCodeType.objects.get(
-        sid=additional_code_type.sid
-    )
-
-    assert db_additional_code_type.sid == additional_code_type.sid
-    assert (
-        db_additional_code_type.application_code
-        == additional_code_type.application_code
-    )
-    assert db_additional_code_type.description == additional_code_type.description
-    assert (
-        db_additional_code_type.valid_between.lower
-        == additional_code_type.valid_between.lower
-    )
-    assert (
-        db_additional_code_type.valid_between.upper
-        == additional_code_type.valid_between.upper
-    )
+    assert db_object.sid == test_object.sid
+    assert db_object.application_code == test_object.application_code
+    assert db_object.description == test_object.description
+    assert db_object.valid_between.lower == test_object.valid_between.lower
+    assert db_object.valid_between.upper == test_object.valid_between.upper
 
 
-def test_additional_code_importer_create(valid_user):
-    additional_code_type = factories.AdditionalCodeTypeFactory()
-    additional_code = factories.AdditionalCodeFactory.build(
-        update_type=UpdateType.CREATE.value, type=additional_code_type
-    )
-    xml = generate_test_import_xml(
-        serializers.AdditionalCodeSerializer(
-            additional_code, context={"format": "xml"}
-        ).data
-    )
-
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
-
-    db_additional_code = models.AdditionalCode.objects.get(sid=additional_code.sid)
-
-    assert db_additional_code.sid == int(additional_code.sid)
-    assert db_additional_code.type == additional_code_type
-    assert db_additional_code.code == additional_code.code
-    assert db_additional_code.valid_between.lower == additional_code.valid_between.lower
-    assert db_additional_code.valid_between.upper == additional_code.valid_between.upper
+@validate_taric_import(
+    serializers.AdditionalCodeSerializer,
+    factories.AdditionalCodeFactory,
+    dependencies={"type": factories.AdditionalCodeTypeFactory},
+)
+def test_additional_code_importer_create(valid_user, test_object, db_object):
+    assert db_object.sid == int(test_object.sid)
+    assert db_object.code == test_object.code
+    assert db_object.valid_between.lower == test_object.valid_between.lower
+    assert db_object.valid_between.upper == test_object.valid_between.upper
 
 
-def test_additional_code_description_importer_create(valid_user):
-    additional_code = factories.AdditionalCodeFactory()
-    description = factories.AdditionalCodeDescriptionFactory.build(
-        update_type=UpdateType.CREATE.value,
-        described_additional_code=additional_code,
-    )
-    xml = generate_test_import_xml(
-        serializers.AdditionalCodeDescriptionSerializer(
-            description, context={"format": "xml"}
-        ).data
-    )
-
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
-
-    db_description = models.AdditionalCodeDescription.objects.get(
-        description_period_sid=description.description_period_sid
-    )
-
-    assert db_description.description_period_sid == description.description_period_sid
-    assert db_description.description == description.description
-    assert db_description.described_additional_code == additional_code
-    assert db_description.valid_between.lower == description.valid_between.lower
-    assert db_description.valid_between.upper == description.valid_between.upper
+@validate_taric_import(
+    serializers.AdditionalCodeDescriptionSerializer,
+    factories.AdditionalCodeDescriptionFactory,
+    dependencies={"described_additional_code": factories.AdditionalCodeFactory},
+)
+def test_additional_code_description_importer_create(
+    valid_user, db_object, test_object
+):
+    assert db_object.description_period_sid == test_object.description_period_sid
+    assert db_object.description == test_object.description
+    assert db_object.valid_between.lower == test_object.valid_between.lower
+    assert db_object.valid_between.upper == test_object.valid_between.upper
