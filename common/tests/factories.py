@@ -180,7 +180,7 @@ class CertificateDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "certificates.CertificateDescription"
 
-    sid = numeric_sid()
+    sid = factory.Sequence(lambda x: x + 1)
 
     described_certificate = factory.SubFactory(CertificateFactory)
     description = short_description()
@@ -219,7 +219,7 @@ class AdditionalCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "additional_codes.AdditionalCode"
 
-    sid = numeric_sid()
+    sid = factory.Sequence(lambda x: x + 1)
     type = factory.SubFactory(AdditionalCodeTypeFactory)
     code = string_sequence(3)
 

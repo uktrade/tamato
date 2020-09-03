@@ -3,9 +3,9 @@ import pytest
 from commodities import models
 from commodities import serializers
 from common.tests import factories
-from common.tests.factories import FootnoteAssociationGoodsNomenclatureFactory
 from common.tests.util import generate_test_import_xml
 from common.tests.util import requires_interdependent_export
+from common.tests.util import validate_taric_import
 from common.validators import UpdateType
 from importer.management.commands.import_taric import import_taric
 from workbaskets.validators import WorkflowStatus
@@ -13,21 +13,15 @@ from workbaskets.validators import WorkflowStatus
 pytestmark = pytest.mark.django_db
 
 
-def test_goods_nomenclature_importer_create(valid_user):
-    good = factories.GoodsNomenclatureFactory.build(update_type=UpdateType.CREATE.value)
-    xml = generate_test_import_xml(
-        serializers.GoodsNomenclatureSerializer(good, context={"format": "xml"}).data
-    )
-
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
-
-    db_good = models.GoodsNomenclature.objects.get(sid=good.sid)
-
-    assert db_good.item_id == good.item_id
-    assert db_good.suffix == good.suffix
-    assert db_good.statistical == good.statistical
-    assert db_good.valid_between.lower == good.valid_between.lower
-    assert db_good.valid_between.upper == good.valid_between.upper
+@validate_taric_import(
+    serializers.GoodsNomenclatureSerializer, factories.GoodsNomenclatureFactory
+)
+def test_goods_nomenclature_importer_create(valid_user, test_object, db_object):
+    assert db_object.item_id == test_object.item_id
+    assert db_object.suffix == test_object.suffix
+    assert db_object.statistical == test_object.statistical
+    assert db_object.valid_between.lower == test_object.valid_between.lower
+    assert db_object.valid_between.upper == test_object.valid_between.upper
 
 
 @requires_interdependent_export
@@ -75,30 +69,18 @@ def test_goods_nomenclature_indent_importer_create(valid_user):
     assert db_indent.valid_between.lower == indent.valid_between.lower
 
 
-def test_footnote_association_goods_nomenclature_importer_create(valid_user):
-    good = factories.GoodsNomenclatureFactory()
-    footnote = factories.FootnoteFactory()
-
-    association = FootnoteAssociationGoodsNomenclatureFactory.build(
-        update_type=UpdateType.CREATE.value,
-        goods_nomenclature=good,
-        associated_footnote=footnote,
-    )
-
-    xml = generate_test_import_xml(
-        serializers.FootnoteAssociationGoodsNomenclatureSerializer(
-            association, context={"format": "xml"}
-        ).data
-    )
-
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
-
-    db_association = models.FootnoteAssociationGoodsNomenclature.objects.get(
-        goods_nomenclature=good,
-        associated_footnote=footnote,
-    )
-
-    assert db_association.valid_between.lower == association.valid_between.lower
-    assert db_association.valid_between.upper == association.valid_between.upper
-    assert db_association.goods_nomenclature == good
-    assert db_association.associated_footnote == footnote
+@validate_taric_import(
+    serializers.FootnoteAssociationGoodsNomenclatureSerializer,
+    factories.FootnoteAssociationGoodsNomenclatureFactory,
+    dependencies={
+        "goods_nomenclature": factories.GoodsNomenclatureFactory,
+        "associated_footnote": factories.FootnoteFactory,
+    },
+)
+def test_footnote_association_goods_nomenclature_importer_create(
+    valid_user, test_object, db_object
+):
+    assert test_object.valid_between.lower == db_object.valid_between.lower
+    assert test_object.valid_between.upper == db_object.valid_between.upper
+    assert test_object.goods_nomenclature == db_object.goods_nomenclature
+    assert test_object.associated_footnote == db_object.associated_footnote

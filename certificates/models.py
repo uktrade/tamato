@@ -1,6 +1,5 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
-from django.core.validators import MaxValueValidator
 from django.db import models
 
 from certificates import validators

@@ -1,7 +1,10 @@
+from rest_framework import serializers
+
 from certificates import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.validators import NumericSIDValidator
 
 
 @TrackedModelSerializer.register_polymorphic_model
@@ -19,6 +22,7 @@ class CertificateTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerM
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
         ]
 
 
@@ -37,6 +41,7 @@ class CertificateSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
         ]
 
 
@@ -45,6 +50,7 @@ class CertificateDescriptionSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
     described_certificate = CertificateSerializer(read_only=True)
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
 
     class Meta:
         model = models.CertificateDescription
@@ -60,4 +66,5 @@ class CertificateDescriptionSerializer(
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
         ]
