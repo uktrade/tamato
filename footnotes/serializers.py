@@ -3,6 +3,7 @@ from rest_framework import serializers
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.validators import NumericSIDValidator
 from footnotes import models
 from footnotes import validators
 
@@ -52,15 +53,13 @@ class SimpleFootnoteDescriptionSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class FootnoteSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
-    id = serializers.IntegerField()
     footnote_id = serializers.CharField(validators=[validators.footnote_id_validator])
-    footnote_type = FootnoteTypeSerializer()
-    descriptions = SimpleFootnoteDescriptionSerializer(many=True)
+    footnote_type = FootnoteTypeSerializer(required=False)
+    descriptions = SimpleFootnoteDescriptionSerializer(many=True, required=False)
 
     class Meta:
         model = models.Footnote
         fields = [
-            "id",
             "footnote_id",
             "footnote_type",
             "descriptions",
@@ -79,11 +78,13 @@ class FootnoteDescriptionSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
     described_footnote = FootnoteSerializer(read_only=True)
+    description_period_sid = serializers.IntegerField(
+        validators=[NumericSIDValidator()]
+    )
 
     class Meta:
         model = models.FootnoteDescription
         fields = [
-            "id",
             "description_period_sid",
             "described_footnote",
             "description",
