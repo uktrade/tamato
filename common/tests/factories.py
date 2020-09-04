@@ -102,7 +102,7 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     description = short_description()
     described_footnote = factory.SubFactory(FootnoteFactory)
-    description_period_sid = numeric_sid()
+    description_period_sid = factory.Sequence(lambda x: x + 1)
 
 
 class RegulationGroupFactory(TrackedModelMixin):
