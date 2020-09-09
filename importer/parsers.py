@@ -16,6 +16,10 @@ class ParserError(Exception):
     pass
 
 
+class InvalidDataError(Exception):
+    pass
+
+
 class ElementParser:
     """Base class for element specific parsers.
 
@@ -61,6 +65,7 @@ class ElementParser:
 
     def __init__(self, tag: Tag = None, many: bool = False, depth: int = 1):
         self.child = None
+        self.parent: Optional[ElementParser] = None
         self.data = {}
         self.depth = depth
         self.many = many
@@ -113,7 +118,8 @@ class ElementParser:
             if self.is_parser_for_element(parser, element):
                 return parser
 
-    def start(self, element: etree.Element):
+    def start(self, element: etree.Element, parent: ElementParser = None):
+        self.parent = parent
 
         if self.is_parser_for_element(self, element):
             self.data = {}
@@ -125,7 +131,7 @@ class ElementParser:
 
         # if currently in a child element, delegate to the child parser
         if self.child:
-            self.child.start(element)
+            self.child.start(element, self)
 
     def end(self, element: etree.Element):
         # if currently in a child element, delegate to the child parser

@@ -13,19 +13,9 @@ pytestmark = pytest.mark.django_db
 scenarios("features/workbaskets.feature")
 
 
-@given('a valid user named "Alice"')
-def valid_user():
-    return factories.UserFactory.create(username="Alice")
-
-
-@given("I am logged in as Alice")
-def valid_user_login(client, valid_user):
-    client.force_login(valid_user)
-
-
-@given("I have a current workbasket")
-def current_workbasket(valid_user):
-    return factories.WorkBasketFactory.create(author=valid_user)
+@given("I have a current workbasket", target_fixture="current_workbasket")
+def current_workbasket(a_valid_user_called_alice):
+    return factories.WorkBasketFactory.create(author=a_valid_user_called_alice)
 
 
 @pytest.fixture

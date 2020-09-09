@@ -10,6 +10,7 @@ from common.validators import UpdateType
 from importer.management.commands.import_taric import import_taric
 from workbaskets.validators import WorkflowStatus
 
+
 pytestmark = pytest.mark.django_db
 
 

@@ -5,8 +5,6 @@ from pytest_bdd import then
 from pytest_bdd import when
 from rest_framework.reverse import reverse
 
-from additional_codes import models
-
 
 pytestmark = pytest.mark.django_db
 
