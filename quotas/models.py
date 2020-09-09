@@ -94,6 +94,8 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
         "geo_areas.GeographicalArea", on_delete=models.PROTECT
     )
 
+    identifying_fields = "origin", "excluded_geographical_area"
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
@@ -181,6 +183,7 @@ class QuotaAssociation(TrackedModel):
         default=Decimal("1.00000"),
         validators=[validators.validate_coefficient],
     )
+    identifying_fields = ("main_quota", "sub_quota")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -250,6 +253,8 @@ class QuotaEvent(TrackedModel):
     occurrence_timestamp = models.DateTimeField()
     # store the event-type specific data in a JSON object
     data = JSONField(default=dict, encoder=DjangoJSONEncoder)
+
+    identifying_fields = ("subrecord_code", "quota_definition")
 
     def save(self, *args, **kwargs):
         self.full_clean()

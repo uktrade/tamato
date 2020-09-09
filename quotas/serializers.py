@@ -5,9 +5,9 @@ from rest_framework import serializers
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.validators import NumericSIDValidator
 from geo_areas.serializers import GeographicalAreaSerializer
 from quotas import models
-from quotas import validators
 
 
 @TrackedModelSerializer.register_polymorphic_model
@@ -35,6 +35,7 @@ class QuotaOrderNumberSerializer(TrackedModelSerializerMixin, ValiditySerializer
 class QuotaOrderNumberOriginSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
     order_number = QuotaOrderNumberSerializer(read_only=True)
     geographical_area = GeographicalAreaSerializer(read_only=True)
 
@@ -84,10 +85,38 @@ class SimpleQuotaDefinitionSerializer(
         ]
 
 
+class QuotaDefinitionImporterSerializer(
+    TrackedModelSerializerMixin, ValiditySerializerMixin
+):
+    order_number = QuotaOrderNumberSerializer(required=False)
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+
+    class Meta:
+        model = models.QuotaDefinition
+        fields = [
+            "sid",
+            "order_number",
+            "volume",
+            "initial_volume",
+            "maximum_precision",
+            "quota_critical",
+            "quota_critical_threshold",
+            "description",
+            "update_type",
+            "valid_between",
+            "taric_template",
+            "start_date",
+            "end_date",
+        ]
+
+
 @TrackedModelSerializer.register_polymorphic_model
 class QuotaDefinitionSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     order_number = QuotaOrderNumberSerializer(read_only=True)
-    sub_quotas = SimpleQuotaDefinitionSerializer(many=True, read_only=True)
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+    sub_quotas = SimpleQuotaDefinitionSerializer(
+        many=True, read_only=True, required=False
+    )
 
     class Meta:
         model = models.QuotaDefinition
@@ -133,6 +162,7 @@ class QuotaAssociationSerializer(TrackedModelSerializerMixin):
 @TrackedModelSerializer.register_polymorphic_model
 class QuotaSuspensionSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     quota_definition = SimpleQuotaDefinitionSerializer(read_only=True)
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
 
     class Meta:
         model = models.QuotaSuspension
@@ -152,7 +182,9 @@ class QuotaSuspensionSerializer(TrackedModelSerializerMixin, ValiditySerializerM
 
 @TrackedModelSerializer.register_polymorphic_model
 class QuotaBlockingSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
+    blocking_period_type = serializers.IntegerField()
     quota_definition = SimpleQuotaDefinitionSerializer(read_only=True)
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
 
     class Meta:
         model = models.QuotaBlocking
@@ -168,6 +200,23 @@ class QuotaBlockingSerializer(TrackedModelSerializerMixin, ValiditySerializerMix
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
+        ]
+
+
+class QuotaEventImporterSerializer(TrackedModelSerializerMixin):
+    quota_definition = SimpleQuotaDefinitionSerializer(required=False)
+
+    class Meta:
+        model = models.QuotaEvent
+        fields = [
+            "quota_definition",
+            "occurrence_timestamp",
+            "data",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
         ]
 
 

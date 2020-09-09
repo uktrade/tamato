@@ -39,14 +39,24 @@ def api_client() -> APIClient:
     return APIClient()
 
 
-@given('a valid user named "Alice"')
-def valid_user():
+@pytest.fixture
+def valid_user(db):
+    return factories.UserFactory.create()
+
+
+@given('a valid user named "Alice"', target_fixture="a_valid_user_called_alice")
+def a_valid_user_called_alice():
     return factories.UserFactory.create(username="Alice")
 
 
-@given("I am logged in as Alice")
+@pytest.fixture
 def valid_user_login(client, valid_user):
     client.force_login(valid_user)
+
+
+@given("I am logged in as Alice", target_fixture="alice_login")
+def alice_login(client, a_valid_user_called_alice):
+    client.force_login(a_valid_user_called_alice)
 
 
 @pytest.fixture

@@ -30,9 +30,7 @@ def string_sequence(length=1, characters=string.ascii_uppercase + string.digits)
 
 
 def numeric_sid():
-    seq = string_sequence(length=8, characters=string.digits)
-    seq.function(0)  # discard 0 as SIDs start from 1
-    return seq
+    return factory.Sequence(lambda x: x + 1)
 
 
 class ValidityFactoryMixin(factory.django.DjangoModelFactory):
@@ -102,7 +100,7 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     description = short_description()
     described_footnote = factory.SubFactory(FootnoteFactory)
-    description_period_sid = factory.Sequence(lambda x: x + 1)
+    description_period_sid = numeric_sid()
 
 
 class RegulationGroupFactory(TrackedModelMixin):
@@ -180,7 +178,7 @@ class CertificateDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "certificates.CertificateDescription"
 
-    sid = factory.Sequence(lambda x: x + 1)
+    sid = numeric_sid()
 
     described_certificate = factory.SubFactory(CertificateFactory)
     description = short_description()
@@ -191,7 +189,7 @@ class TestModel1Factory(TrackedModelMixin, ValidityFactoryMixin):
         model = TestModel1
 
     name = factory.Faker("text", max_nb_chars=24)
-    sid = factory.Sequence(lambda x: x + 1)
+    sid = numeric_sid()
 
 
 class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
@@ -199,7 +197,7 @@ class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
         model = TestModel2
 
     description = factory.Faker("text", max_nb_chars=24)
-    custom_sid = factory.Sequence(lambda x: x + 1)
+    custom_sid = numeric_sid()
 
 
 class AdditionalCodeTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -219,7 +217,7 @@ class AdditionalCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "additional_codes.AdditionalCode"
 
-    sid = factory.Sequence(lambda x: x + 1)
+    sid = numeric_sid()
     type = factory.SubFactory(AdditionalCodeTypeFactory)
     code = string_sequence(3)
 
@@ -228,7 +226,7 @@ class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "additional_codes.AdditionalCodeDescription"
 
-    description_period_sid = factory.Sequence(lambda x: x + 1)
+    description_period_sid = numeric_sid()
     described_additional_code = factory.SubFactory(AdditionalCodeFactory)
     description = short_description()
 

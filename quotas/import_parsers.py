@@ -1,7 +1,8 @@
-import re
-
+from importer.namespaces import RegexTag
 from importer.namespaces import Tag
 from importer.parsers import ElementParser
+from importer.parsers import IntElement
+from importer.parsers import InvalidDataError
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
@@ -10,6 +11,19 @@ from importer.taric import Record
 
 @Record.register_child("quota_order_number")
 class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
+    """
+    <xs:element name="quota.order.number" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.order.number.sid" type="SID"/>
+                <xs:element name="quota.order.number.id" type="OrderNumber"/>
+                <xs:element name="validity.start.date" type="Date"/>
+                <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
     tag = Tag("quota.order.number")
     sid = TextElement(Tag("quota.order.number.sid"))
     order_number = TextElement(Tag("quota.order.number.id"))
@@ -23,26 +37,78 @@ class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
 
 @Record.register_child("quota_order_number_origin")
 class QuotaOrderNumberOriginParser(ValidityMixin, Writable, ElementParser):
+    """
+    <xs:element name="quota.order.number.origin" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.order.number.origin.sid" type="SID"/>
+                <xs:element name="quota.order.number.sid" type="SID"/>
+                <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
+                <xs:element name="validity.start.date" type="Date"/>
+                <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                <xs:element name="geographical.area.sid" type="SID"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
     tag = Tag("quota.order.number.origin")
+
     sid = TextElement(Tag("quota.order.number.origin.sid"))
-    order_number_sid = TextElement(Tag("quota.order.number.sid"))
-    geographical_area_id = TextElement(Tag("geographical.area.id"))
-    geographical_area_sid = TextElement(Tag("geographical.area.sid"))
+    order_number__sid = TextElement(Tag("quota.order.number.sid"))
+    geographical_area__area_id = TextElement(Tag("geographical.area.id"))
+    geographical_area__sid = TextElement(Tag("geographical.area.sid"))
 
 
 @Record.register_child("quota_order_number_origin_exclusion")
 class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
+    """
+    <xs:element name="quota.order.number.origin.exclusions" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.order.number.origin.sid" type="SID"/>
+                <xs:element name="excluded.geographical.area.sid" type="SID"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
     tag = Tag("quota.order.number.origin.exclusions")
-    origin_sid = TextElement(Tag("quota.order.number.origin.sid"))
-    excluded_geographical_area_sid = TextElement(Tag("excluded.geographical.area.sid"))
+
+    origin__sid = TextElement(Tag("quota.order.number.origin.sid"))
+    excluded_geographical_area__sid = TextElement(Tag("excluded.geographical.area.sid"))
 
 
 @Record.register_child("quota_definition")
-class QuotaDefinitionParser(Writable, ValidityMixin, ElementParser):
+class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
+    """
+    <xs:element name="quota.definition" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="quota.order.number.id" type="OrderNumber"/>
+                <xs:element name="validity.start.date" type="Date"/>
+                <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                <xs:element name="quota.order.number.sid" type="SID"/>
+                <xs:element name="volume" type="QuotaAmount"/>
+                <xs:element name="initial.volume" type="QuotaAmount"/>
+                <xs:element name="monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                <xs:element name="measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
+                <xs:element name="maximum.precision" type="QuotaPrecision"/>
+                <xs:element name="critical.state" type="QuotaCriticalStateCode"/>
+                <xs:element name="critical.threshold" type="QuotaCriticalTreshold"/>
+                <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
     tag = Tag("quota.definition")
+
     sid = TextElement(Tag("quota.definition.sid"))
-    order_number = TextElement(Tag("quota.order.number.id"))
-    order_number_sid = TextElement(Tag("quota.order.number.sid"))
+    order_number__order_number = TextElement(Tag("quota.order.number.id"))
+    order_number__sid = TextElement(Tag("quota.order.number.sid"))
     volume = TextElement(Tag("volume"))
     initial_volume = TextElement(Tag("initial.volume"))
     monetary_unit_code = TextElement(Tag("monetary.unit.code"))
@@ -51,56 +117,177 @@ class QuotaDefinitionParser(Writable, ValidityMixin, ElementParser):
         Tag("measurement.unit.qualifier.code")
     )
     maximum_precision = TextElement(Tag("maximum.precision"))
-    critical_state = TextElement(Tag("critical.state"))
-    critical_threshold = TextElement(Tag("critical.threshold"))
+    quota_critical = TextElement(Tag("critical.state"))
+    quota_critical_threshold = TextElement(Tag("critical.threshold"))
     description = TextElement(Tag("description"))
+
+    def clean(self):
+        super().clean()
+        quota_critical = self.data.get("quota_critical")
+        if quota_critical not in {"Y", "N"}:
+            raise InvalidDataError(
+                '"critical.state" tag must contain either "Y" or "N"'
+            )
+        self.data["quota_critical"] = quota_critical == "Y"
 
 
 @Record.register_child("quota_association")
 class QuotaAssociationParser(Writable, ElementParser):
+    """
+    <xs:element name="quota.association" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="main.quota.definition.sid" type="SID"/>
+                <xs:element name="sub.quota.definition.sid" type="SID"/>
+                <xs:element name="relation.type" type="RelationType"/>
+                <xs:element name="coefficient" type="QuotaCoefficient" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
     tag = Tag("quota.association")
-    main_quota_sid = TextElement(Tag("main.quota.definition.sid"))
-    sub_quota_sid = TextElement(Tag("sub.quota.definition.sid"))
-    relation_type = TextElement(Tag("relation.type"))
+
+    main_quota__sid = TextElement(Tag("main.quota.definition.sid"))
+    sub_quota__sid = TextElement(Tag("sub.quota.definition.sid"))
+    sub_quota_relation_type = TextElement(Tag("relation.type"))
     coefficient = TextElement(Tag("coefficient"))
 
 
 @Record.register_child("quota_blocking_period")
-class QuotaBlockingPeriodParser(Writable, ElementParser):
+class QuotaBlockingPeriodParser(ValidityMixin, Writable, ElementParser):
+    """
+    <xs:element name="quota.blocking.period" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.blocking.period.sid" type="SID"/>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="blocking.start.date" type="Date"/>
+                <xs:element name="blocking.end.date" type="Date"/>
+                <xs:element name="blocking.period.type" type="QuotaBlockingPeriodType"/>
+                <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
     tag = Tag("quota.blocking.period")
-    sid = TextElement(Tag("quota.blocking.period.sid"))
-    quota_definition_sid = TextElement(Tag("quota.definition.sid"))
-    start_date = TextElement(Tag("blocking.start.date"))
-    end_date = TextElement(Tag("blocking.end.date"))
+
+    sid = IntElement(Tag("quota.blocking.period.sid"))
+    quota_definition__sid = IntElement(Tag("quota.definition.sid"))
+    valid_between_lower = TextElement(Tag("blocking.start.date"))
+    valid_between_upper = TextElement(Tag("blocking.end.date"))
     description = TextElement(Tag("description"))
+    blocking_period_type = IntElement(Tag("blocking.period.type"))
 
 
 @Record.register_child("quota_suspension_period")
-class QuotaSuspensionPeriodParser(Writable, ElementParser):
+class QuotaSuspensionPeriodParser(ValidityMixin, Writable, ElementParser):
+    """
+    <xs:element name="quota.suspension.period" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.suspension.period.sid" type="SID"/>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="suspension.start.date" type="Date"/>
+                <xs:element name="suspension.end.date" type="Date"/>
+                <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
     tag = Tag("quota.suspension.period")
-    sid = TextElement(Tag("quota.suspension.period.sid"))
-    quota_definition_sid = TextElement(Tag("quota.definition.sid"))
-    start_date = TextElement(Tag("suspension.start.date"))
-    end_date = TextElement(Tag("suspension.end.date"))
+
+    sid = IntElement(Tag("quota.suspension.period.sid"))
+    quota_definition__sid = IntElement(Tag("quota.definition.sid"))
+    valid_between_lower = TextElement(Tag("suspension.start.date"))
+    valid_between_upper = TextElement(Tag("suspension.end.date"))
     description = TextElement(Tag("description"))
 
 
-class RegexTag(Tag):
-    def __init__(self, pattern):
-        super().__init__(pattern)
-        self.pattern = re.compile(pattern)
+@Record.register_child("quota_event")
+class QuotaEventParser(Writable, ElementParser):
+    """
+    Could be one of any of the below:
+    <xs:element name="quota.balance.event" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="occurrence.timestamp" type="Timestamp"/>
+                <xs:element name="old.balance" type="QuotaAmount"/>
+                <xs:element name="new.balance" type="QuotaAmount"/>
+                <xs:element name="imported.amount" type="QuotaAmount"/>
+                <xs:element name="last.import.date.in.allocation" type="Date" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="quota.unblocking.event" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="occurrence.timestamp" type="Timestamp"/>
+                <xs:element name="unblocking.date" type="Date"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="quota.critical.event" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="occurrence.timestamp" type="Timestamp"/>
+                <xs:element name="critical.state" type="QuotaCriticalStateCode"/>
+                <xs:element name="critical.state.change.date" type="Date" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="quota.exhaustion.event" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="occurrence.timestamp" type="Timestamp"/>
+                <xs:element name="exhaustion.date" type="Date"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="quota.reopening.event" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="occurrence.timestamp" type="Timestamp"/>
+                <xs:element name="reopening.date" type="Date"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="quota.unsuspension.event" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="occurrence.timestamp" type="Timestamp"/>
+                <xs:element name="unsuspension.date" type="Date"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="quota.closed.and.transferred.event" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="quota.definition.sid" type="SID"/>
+                <xs:element name="occurrence.timestamp" type="Timestamp"/>
+                <!-- QTM148 CUSTD00029679 03/08/2013 CUST-DEV2  -->
+                <!--    <xs:element name="closing.date" type="Date"/> -->
+                <xs:element name="transfer.date" type="Date"/>
+                <xs:element name="quota.closed" type="QuotaClosedCode"/>
+                <!-- CUSTD00029679 - end -->
+                <xs:element name="transferred.amount" type="QuotaAmount"/>
+                <xs:element name="target.quota.definition.sid" type="SID"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
 
-    def __eq__(self, other):
-        if isinstance(other, Tag):
-            return self.pattern.match(str(other))
-
-        return self.pattern.match(other)
-
-
-@Record.register_child("quota_balance_event")
-class QuotaBalanceEventParser(Writable, ElementParser):
     tag = RegexTag(r"quota.([a-z.]+).event")
-    quota_definition_sid = TextElement(Tag("quota.definition.sid"))
+
+    quota_definition__sid = TextElement(Tag("quota.definition.sid"))
     occurrence_timestamp = TextElement(Tag("occurrence.timestamp"))
 
     _additional_components = {
@@ -126,9 +313,7 @@ class QuotaBalanceEventParser(Writable, ElementParser):
         TextElement(Tag("transfer.date")): "transfer.date",
         TextElement(Tag("quota.closed")): "quota.closed",
         TextElement(Tag("transferred.amount")): "transferred.amount",
-        TextElement(
-            Tag("target.quota.definintion.sid")
-        ): "target.quota.definintion.sid",
+        TextElement(Tag("target.quota.definition.sid")): "target.quota.definition.sid",
     }
 
     def clean(self):
@@ -138,3 +323,4 @@ class QuotaBalanceEventParser(Writable, ElementParser):
         if "occurrence_timestamp" in json_data:
             del json_data["occurrence_timestamp"]
         self.data["data"] = json_data
+        self.data["subrecord_code"] = self.parent.subrecord_code.data

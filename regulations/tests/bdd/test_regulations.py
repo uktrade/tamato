@@ -14,22 +14,12 @@ pytestmark = pytest.mark.django_db
 scenarios("features/regulations.feature")
 
 
-@given('a valid user named "Alice"')
-def valid_user():
-    return factories.UserFactory.create(username="Alice")
-
-
-@given("some regulations")
+@given("some regulations", target_fixture="some_regulations")
 def some_regulations():
     return factories.RegulationFactory.create_batch(10)
 
 
-@given("I am logged in as Alice")
-def valid_user_login(client, valid_user):
-    client.force_login(valid_user)
-
-
-@given("regulation C2000000")
+@given("regulation C2000000", target_fixture="regulation_C2000000")
 def regulation_C2000000():
     return factories.RegulationFactory.create(regulation_id="C2000000")
 

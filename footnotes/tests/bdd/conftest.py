@@ -6,7 +6,7 @@ from common.tests.util import Dates
 from workbaskets.validators import WorkflowStatus
 
 
-@given("footnote NC000")
+@given("footnote NC000", target_fixture="footnote_NC000")
 def footnote_NC000():
     w = factories.WorkBasketFactory(status=WorkflowStatus.PUBLISHED)
     t = factories.FootnoteTypeFactory(footnote_type_id="NC", workbasket=w)
@@ -25,7 +25,10 @@ def footnote_NC000():
     return f
 
 
-@given('a valid user named "Bob" with permission to edit footnotes')
+@given(
+    'a valid user named "Bob" with permission to edit footnotes',
+    target_fixture="user_bob",
+)
 def user_bob():
     bob = factories.UserFactory(username="Bob")
     bob.user_permissions.add(
@@ -43,6 +46,6 @@ def user_bob():
     return bob
 
 
-@given("I am logged in as Bob")
+@given("I am logged in as Bob", target_fixture="user_bob_login")
 def user_bob_login(client, user_bob):
     client.force_login(user_bob)
