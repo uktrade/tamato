@@ -1,0 +1,19 @@
+{% from "macros/record.xml" import standard_record %}
+{% from "macros/record.xml" import base_record %}
+
+{% call standard_record(message_counter(), sequence(), transaction_id, record) %}
+    <oub:regulation.group>
+        <oub:regulation.group.id>{{ record.group_id }}</oub:regulation.group.id>
+        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+        {% if record.end_date %}
+        <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
+        {% endif %}
+    </oub:regulation.group>
+{% endcall %}
+{% call base_record(message_counter(), record.record_code, record.description_subrecord_code, sequence(), transaction_id, record.update_type) %}
+    <oub:regulation.group.description>
+        <oub:regulation.group.id>{{ record.group_id }}</oub:regulation.group.id>
+        <oub:language.id>EN</oub:language.id>
+        <oub:description>{{ record.description }}</oub:description>
+    </oub:regulation.group.description>
+{% endcall %}

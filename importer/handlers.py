@@ -342,6 +342,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         data.update(**links)
         return data
 
+    def save(self, data: dict):
+        return self.serializer_class().create(data)
+
     def post_save(self, obj):
         """
         Post-processing after the object has been saved to the database.
@@ -378,10 +381,12 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         data = self.clean(self.data)
         data.update(workbasket_id=self.workbasket_id)
+
         logger.debug(f"Creating {self.serializer_class.Meta.model}: {data}")
         data = self.pre_save(data, self.resolved_links)
-        obj = self.serializer_class().create(data)
+        obj = self.save(data)
         self.post_save(obj)
+
         return obj
 
     def serialize(self) -> DispatchedObjectType:

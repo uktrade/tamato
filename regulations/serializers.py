@@ -1,5 +1,7 @@
+from django.core.validators import RegexValidator
 from rest_framework import serializers
 
+from common.serializers import TARIC3DateTimeRangeField
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
@@ -7,12 +9,24 @@ from regulations import models
 from regulations import validators
 
 
-class GroupSerializer(ValiditySerializerMixin):
+class GroupSerializer(ValiditySerializerMixin, TrackedModelSerializerMixin):
+    group_id = serializers.CharField(
+        max_length=3, validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")]
+    )
+
     class Meta:
         model = models.Group
         fields = [
             "group_id",
             "description",
+            "update_type",
+            "valid_between",
+            "record_code",
+            "subrecord_code",
+            "description_subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
         ]
 
 
@@ -55,6 +69,9 @@ class ReplacementSerializer(
         fields = [
             "enacting_regulation",
             "target_regulation",
+            "measure_type_id",
+            "geographical_area_id",
+            "chapter_heading",
             "update_type",
             "record_code",
             "subrecord_code",
@@ -145,13 +162,43 @@ class NestedTerminationSerializer(serializers.HyperlinkedModelSerializer):
         fields = ["enacting_regulation", "effective_date"]
 
 
-class RoleTypeSerializer(serializers.Serializer):
-    def to_representation(self, instance):
-        """Convert integer to RoleType"""
-        return {
-            "value": instance,
-            "label": dict(validators.RoleType.choices)[instance],
-        }
+class RegulationImporterSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    role_type = serializers.IntegerField(read_only=False)
+    regulation_group = GroupSerializer(required=False)
+    regulation_id = serializers.CharField(
+        max_length=8,
+        validators=[validators.regulation_id_validator],
+    )
+
+    official_journal_number = serializers.CharField(read_only=False, required=False)
+    official_journal_page = serializers.IntegerField(read_only=False, required=False)
+    published_at = serializers.DateTimeField(read_only=False, required=False)
+    replacement_indicator = serializers.IntegerField(read_only=False)
+    valid_between = TARIC3DateTimeRangeField(required=False)
+
+    class Meta:
+        model = models.Regulation
+        fields = [
+            "url",
+            "role_type",
+            "regulation_id",
+            "regulation_group",
+            "official_journal_number",
+            "official_journal_page",
+            "published_at",
+            "information_text",
+            "approved",
+            "replacement_indicator",
+            "stopped",
+            "effective_end_date",
+            "community_code",
+            "valid_between",
+            "effective_end_date",
+            "update_type",
+            "taric_template",
+        ]
 
 
 @TrackedModelSerializer.register_polymorphic_model
@@ -161,7 +208,6 @@ class RegulationSerializer(
     TrackedModelSerializerMixin,
 ):
     regulation_group = GroupSerializer()
-    role_type = RoleTypeSerializer()
     amends = NestedRegulationSerializer(many=True)
     amendments = NestedAmendmentSerializer(many=True)
     extends = NestedRegulationSerializer(many=True)
@@ -218,4 +264,25 @@ class RegulationSerializer(
             "taric_template",
             "start_date",
             "end_date",
+        ]
+
+
+class ReplacementImporterSerializer(
+    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+):
+    enacting_regulation = RegulationSerializer(required=False)
+    target_regulation = RegulationSerializer(required=False)
+
+    class Meta:
+        model = models.Replacement
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "measure_type_id",
+            "geographical_area_id",
+            "chapter_heading",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
         ]

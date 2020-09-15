@@ -27,6 +27,8 @@ class Group(TrackedModel, ValidityMixin):
     record_code = "150"
     subrecord_code = "00"
 
+    description_subrecord_code = "05"
+
     group_id = models.CharField(
         max_length=3,
         editable=False,
@@ -35,9 +37,14 @@ class Group(TrackedModel, ValidityMixin):
     # no need for a separate model as we don't support multiple languages
     description = ShortDescription()
 
+    identifying_fields = ("group_id",)
+
     def clean(self):
         if self.valid_between.upper is not None:
             raise ValidationError("Regulation groups do not have end dates set")
+
+    def __str__(self):
+        return f'Regulation Group "{self.group_id}"'
 
 
 """The code which indicates whether or not a regulation has been replaced."""
@@ -63,6 +70,8 @@ class Regulation(TrackedModel):
     or definitive antidumping, modification, complete abrogation, explicit abrogation,
     prorogation (extension), Full Temporary Stop (FTS), Partial Temporary Stop (PTS)
     """
+
+    identifying_fields = ("regulation_id",)
 
     record_code = "285"
     subrecord_code = "00"
@@ -211,6 +220,9 @@ class Regulation(TrackedModel):
         validators.validate_base_regulations_have_community_code(self)
         validators.validate_base_regulations_have_group(self)
 
+    def __str__(self):
+        return self.regulation_id
+
 
 class Amendment(TrackedModel):
     """This regulation amends a base regulation or an antidumping regulation.
@@ -268,6 +280,8 @@ class Suspension(TrackedModel):
 
     record_code = "300"
     subrecord_code = "00"
+    action_record_code = "305"
+    action_subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="+"

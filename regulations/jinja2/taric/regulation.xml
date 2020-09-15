@@ -2,7 +2,7 @@
 
 {% call standard_record(message_counter(), sequence(), transaction_id, record) %}
     <oub:base.regulation>
-        <oub:base.regulation.role>{{ record.role_type.value }}</oub:base.regulation.role>
+        <oub:base.regulation.role>{{ record.role_type }}</oub:base.regulation.role>
         <oub:base.regulation.id>{{ record.regulation_id }}</oub:base.regulation.id>
         {% if record.published_date %}
         <oub:published.date>{{ record.published_date }}</oub:published.date>
