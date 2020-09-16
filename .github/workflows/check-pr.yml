@@ -73,3 +73,9 @@ jobs:
       with:
         name: test-results-report
         path: allure-report
+
+    - name: Build documentation
+      uses: ammaraskar/sphinx-action@0.4
+      with:
+        docs-folder: "docs/"
+        build-command: "sphinx-build -b html . _build"

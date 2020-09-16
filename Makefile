@@ -4,8 +4,18 @@ DEV=true
 -include .env
 export
 
-.PHONY: clean clean-bytecode clean-static collectstatic compilescss dependencies docker-image docker-test help node_modules run test
+SPHINXOPTS    ?=
 
+.PHONY: help clean clean-bytecode clean-static collectstatic compilescss dependencies docker-image docker-test node_modules run test build-docs
+
+
+
+help: Makefile
+	@echo
+	@echo " Commands in "$(PROJECT)":"
+	@echo
+	@sed -n 's/^##//p' $< | column -t -s ':' | sed -e 's/^/ /'
+	@echo
 
 clean-static:
 	@echo
@@ -87,9 +97,6 @@ docker-test:
 		-e DJANGO_SETTINGS_MODULE=settings.test \
 		${PROJECT} sh -c "docker/wait_for_db && python manage.py test -- --cov"
 
-help: Makefile
-	@echo
-	@echo " Commands in "$(PROJECT)":"
-	@echo
-	@sed -n 's/^##//p' $< | column -t -s ':' | sed -e 's/^/ /'
-	@echo
+## build-docs: Build the project documentation
+build-docs:
+	@sphinx-build . docs/_build -c docs/ -b html
