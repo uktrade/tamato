@@ -1,10 +1,11 @@
 Code Documentation
 ==================
 
-This section of the documentation covers code documentation.
+This includes code specific documentation.
 
 
-Contents
---------
+.. toctree::
+   :maxdepth: 5
+   :caption: Code Documentation:
 
-.. automodule:: additional_codes.models
+   ./importer/index
