@@ -103,7 +103,7 @@ jobs:
         deployment_id: ${{steps.deployment.outputs.deployment_id}}
         env: ${{steps.deployment.outputs.env}}
         env_url: https://tamato-dev.london.cloudapps.digital
-    
+
     - name: Build documentation
       uses: ammaraskar/sphinx-action@0.4
       with:
@@ -111,7 +111,7 @@ jobs:
         build-command: "sphinx-build -b html . _build"
 
     - name: Publish documentation to Github Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/_build/html
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs/_build/html

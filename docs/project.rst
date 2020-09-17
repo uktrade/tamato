@@ -18,6 +18,6 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 5
 
    adr/index
