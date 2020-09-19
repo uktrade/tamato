@@ -1,0 +1,28 @@
+{%- from "macros/record.xml" import base_record -%}
+{%- from "macros/record.xml" import standard_record -%}
+
+{%- call standard_record(message_counter(), sequence(), transaction_id, record) %}
+    <oub:measure.type>
+      <oub:measure.type.id>{{ record.sid }}</oub:measure.type.id>
+      <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+      {%- if record.end_date -%}
+      <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
+      {%- endif %}
+      <oub:trade.movement.code>{{ record.trade_movement_code }}</oub:trade.movement.code>
+      <oub:priority.code>{{ record.priority_code }}</oub:priority.code>
+      <oub:measure.component.applicable.code>{{ record.measurement_unit_applicability_code }}</oub:measure.component.applicable.code>
+      <oub:origin.dest.code>{{ record.origin_destination_code }}</oub:origin.dest.code>
+      <oub:order.number.capture.code>{{ record.order_number_capture_code }}</oub:order.number.capture.code>
+      <oub:measure.explosion.level>{{ record.explosion_level }}</oub:measure.explosion.level>
+      <oub:measure.type.series.id>{{ record.measure_type_series.sid }}</oub:measure.type.series.id>
+    </oub:measure.type>
+{%- endcall -%}
+{-% call base_record(message_counter(), record.description_record_code, record.description_subrecord_code, sequence(), transaction_id, record.update_type) -%}
+    <oub:measure.type.description>
+        <oub:measure.type.id>{{ record.sid }}</oub:measure.type.id>
+        <oub:language.id>EN</oub:language.id>
+        {-% if record.description -%}
+        <oub:description>{{ record.description}}</oub:description>
+        {-% endif %}
+    </oub:measures.type.description>
+{-% endcall -%}

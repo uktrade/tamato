@@ -1,0 +1,21 @@
+{%- from "macros/record.xml" import base_record -%}
+{%- from "macros/record.xml" import standard_record -%}
+
+{%- call standard_record(message_counter(), sequence(), transaction_id, record) -%}
+    <oub:monetary.unit>
+        <oub:monetary.unit.code>{{ record.code }}</oub:monetary.unit.code>
+        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+        {%- if record.end_date -%}
+        <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
+        {%- endif %}
+    </oub:monetary.unit>
+{%- endcall -%}
+{%- call base_record(message_counter(), record.description_record_code, record.description_subrecord_code, sequence(), transaction_id, record.update_type) -%}
+    <oub:monetary.unit.description>
+        <oub:monetary.unit.code>{{ record.code }}</oub:monetary.unit.code>
+        <oub:language.id>EN</oub:language.id>
+        {%- if record.description -%}
+        <oub:description>{{ record.description }}</oub:description>
+        {%- endif %}
+    </oub:monetary.unit.description>
+{%- endcall -%}
