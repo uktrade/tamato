@@ -602,7 +602,7 @@ def validate_measurement_unit_qualifier_validity_spans_measure_validity(
 ):
     """ME52 + ME64"""
 
-    if measurement is None:
+    if measurement is None or measurement.measurement_unit_qualifier is None:
         return
 
     if not validity_range_contains_range(

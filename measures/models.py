@@ -81,7 +81,9 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
 class Measurement(TrackedModel, ValidityMixin):
     """The measurement defines the relationship between a measurement unit and a
     measurement unit qualifier. This avoids meaningless combinations of the measurement
-    unit and the measurement unit qualifier.
+    unit and the measurement unit qualifier. Unlike in the TARIC model, we put all combinations
+    of measurement in this table including ones where the qualifier is null.
+    These do not appear in output XML.
     """
 
     record_code = "220"
@@ -89,7 +91,10 @@ class Measurement(TrackedModel, ValidityMixin):
 
     measurement_unit = models.ForeignKey("MeasurementUnit", on_delete=models.PROTECT)
     measurement_unit_qualifier = models.ForeignKey(
-        "MeasurementUnitQualifier", on_delete=models.PROTECT
+        "MeasurementUnitQualifier",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
     )
 
     identifying_fields = ("measurement_unit", "measurement_unit_qualifier")

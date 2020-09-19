@@ -836,6 +836,12 @@ def test_ME64(date_ranges):
         )
 
 
+def test_measurement_unit_qualifier_is_optional():
+    """In TARIC measurement unit qualifiers do not have to be used on every
+    measure."""
+    factories.MeasurementFactory(measurement_unit_qualifier=None)
+
+
 def test_ME65():
     """An exclusion can only be entered if the measure is applicable to a geographical
     area group (area code = 1)."""
