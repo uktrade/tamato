@@ -1,0 +1,20 @@
+{%- from "macros/record.xml" import standard_record -%}
+
+{%- call standard_record(message_counter(), sequence(), transaction_id, record) -%}
+    <oub:measure.component>
+      <oub:measure.sid>{{ record.component_measure.sid }}</oub:measure.sid>
+      <oub:duty.expression.id>{{ "%02d" | format(record.duty_expression.sid) }}</oub:duty.expression.id>
+      {%- if record.duty_amount %}
+      <oub:duty.amount>{{ record.duty_amount }}</oub:duty.amount>
+      {%- endif -%}
+      {%- if record.monetary_unit %}
+      <oub:monetary.unit.code>{{ record.monetary_unit.code }}</oub:monetary.unit.code>
+      {%- endif -%}
+      {%- if record.component_measurement %}
+      <oub:measurement.unit.code>{{ record.component_measurement.measurement_unit.code }}</oub:measurement.unit.code>
+      {%- endif -%}
+      {%- if record.component_measurement and record.component_measurement.measurement_unit_qualifier %}
+      <oub:measurement.unit.qualifier.code>{{ record.component_measurement.measurement_unit_qualifier.code }}</oub:measurement.unit.qualifier.code>
+      {%- endif -%}
+    </oub:measure.component>
+{%- endcall -%}
