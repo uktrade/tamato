@@ -49,11 +49,12 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
         max_length=3, validators=[validators.measurement_unit_code_validator]
     )
     description = ShortDescription()
+    abbreviation = models.CharField(max_length=32, blank=True)
 
     identifying_fields = ("code",)
 
     def __str__(self):
-        return f"{self.code} - {self.description}"
+        return f"{self.code} - {self.description} ({self.abbreviation})"
 
 
 class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
@@ -71,11 +72,12 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
         max_length=1, validators=[validators.measurement_unit_qualifier_code_validator]
     )
     description = ShortDescription()
+    abbreviation = models.CharField(max_length=32, blank=True)
 
     identifying_fields = ("code",)
 
     def __str__(self):
-        return f"{self.code} - {self.description}"
+        return f"{self.code} - {self.description} ({self.abbreviation})"
 
 
 class Measurement(TrackedModel, ValidityMixin):
@@ -136,6 +138,7 @@ class DutyExpression(TrackedModel, ValidityMixin):
     description_subrecord_code = "05"
 
     sid = models.CharField(max_length=2, choices=validators.DutyExpressionId.choices)
+    prefix = models.CharField(max_length=14, blank=True)
     duty_amount_applicability_code = ApplicabilityCode()
     measurement_unit_applicability_code = ApplicabilityCode()
     monetary_unit_applicability_code = ApplicabilityCode()
