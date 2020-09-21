@@ -34,6 +34,7 @@ def create_and_test_m2m_regulation(
             "official_journal_page": test_regulation.official_journal_page,
             "effective_end_date": test_regulation.effective_end_date,
             "replacement_indicator": test_regulation.replacement_indicator,
+            "community_code": test_regulation.community_code,
             "stopped": test_regulation.stopped,
             "information_text": test_regulation.information_text,
             "approved": test_regulation.approved,
