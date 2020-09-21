@@ -19,6 +19,7 @@ git+https://github.com/alphagov/govuk-frontend-jinja.git
 gunicorn
 jinja2
 lxml
+parsec
 psycopg2-binary
 pytest
 pytest-bdd
