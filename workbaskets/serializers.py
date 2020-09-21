@@ -10,6 +10,7 @@ class WorkBasketSerializer(serializers.ModelSerializer):
     approver = UserSerializer(read_only=True)
     author = UserSerializer(read_only=True)
     transaction_id = serializers.SerializerMethodField(read_only=True)
+    envelope_id = serializers.SerializerMethodField(read_only=True)
 
     tracked_models = TrackedModelSerializer(many=True)
 
@@ -17,6 +18,9 @@ class WorkBasketSerializer(serializers.ModelSerializer):
         if hasattr(object, "transaction"):
             return object.transaction.id
         return None
+
+    def get_envelope_id(self, object: models.WorkBasket):
+        return object.pk
 
     class Meta:
         model = models.WorkBasket
@@ -30,6 +34,7 @@ class WorkBasketSerializer(serializers.ModelSerializer):
             "status",
             "tracked_models",
             "transaction_id",
+            "envelope_id",
             "created_at",
             "updated_at",
         ]
