@@ -8,6 +8,7 @@ from common.models import ShortDescription
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from regulations import validators
+from regulations.validators import CommunityCode
 
 
 class Group(TrackedModel, ValidityMixin):
@@ -125,6 +126,7 @@ class Regulation(TrackedModel):
         choices=validators.CommunityCode.choices,
         blank=True,
         null=True,
+        default=CommunityCode.ECONOMIC,
     )
     regulation_group = models.ForeignKey(
         Group,
