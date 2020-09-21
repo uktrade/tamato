@@ -58,10 +58,14 @@ ReplacementIndicator = models.IntegerChoices(
     start=0,
 )
 
-"""Code which specifies whether the treaty origin is ECONOMIC, ATOMIC or COAL."""
-CommunityCode = models.IntegerChoices(
-    "CommunityCode", ["Economic", "Atomic", "Coal", "Economic/Coal"]
-)
+
+class CommunityCode(models.IntegerChoices):
+    """Code which specifies whether the treaty origin is ECONOMIC, ATOMIC or COAL."""
+
+    ECONOMIC = 1, "Economic"
+    ATOMIC = 2, "Atomic"
+    COAL = 3, "Coal"
+    ECONOMIC_COAL = 4, "Economic/Coal"
 
 
 class Regulation(TrackedModel):
@@ -152,6 +156,7 @@ class Regulation(TrackedModel):
         choices=CommunityCode.choices,
         blank=True,
         null=True,
+        default=CommunityCode.ECONOMIC,
     )
     regulation_group = models.ForeignKey(
         Group,

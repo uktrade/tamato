@@ -127,7 +127,7 @@ class RegulationFactory(TrackedModelMixin):
     valid_between = factory.LazyAttribute(
         lambda o: Dates.no_end if o.role_type == 1 else None
     )
-    community_code = factory.LazyAttribute(lambda o: 1 if o.role_type == 1 else None)
+    community_code = 1
     regulation_group = factory.LazyAttribute(
         lambda o: RegulationGroupFactory() if o.role_type == 1 else None
     )
