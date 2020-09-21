@@ -138,7 +138,7 @@ class DutyExpression(TrackedModel, ValidityMixin):
     description_record_code = "230"
     description_subrecord_code = "05"
 
-    sid = models.CharField(max_length=2, choices=validators.DutyExpressionId.choices)
+    sid = models.IntegerField(choices=validators.DutyExpressionId.choices)
     prefix = models.CharField(max_length=14, blank=True)
     duty_amount_applicability_code = ApplicabilityCode()
     measurement_unit_applicability_code = ApplicabilityCode()
