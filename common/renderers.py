@@ -3,8 +3,8 @@ import itertools
 from rest_framework.renderers import TemplateHTMLRenderer
 
 
-def counter_generator():
-    counter = itertools.count(start=1)
+def counter_generator(start=1):
+    counter = itertools.count(start=start)
     return lambda: next(counter)
 
 
