@@ -23,6 +23,7 @@ gunicorn
 jinja2
 lxml
 moto
+parsec
 psycopg2-binary
 pytest
 pytest-bdd
