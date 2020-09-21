@@ -21,7 +21,7 @@ from workbaskets.validators import WorkflowStatus
 
 
 measure_type_series_id_validator = RegexValidator(r"^[A-Z][A-Z ]?$")
-measurement_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
+measurement_unit_code_validator = RegexValidator(r"^[A-Z0-9]{3}$")
 measurement_unit_qualifier_code_validator = RegexValidator(r"^[A-Z]$")
 monetary_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
 measure_type_id_validator = RegexValidator(r"^[0-9]{3}|[0-9]{6}|[A-Z]{3}$")
