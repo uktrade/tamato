@@ -13,23 +13,6 @@ from footnotes import validators
 from workbaskets.validators import WorkflowStatus
 
 
-# Footnote type application codes
-ApplicationCode = models.IntegerChoices(
-    "ApplicationCode",
-    [
-        "CN nomenclature",
-        "TARIC nomenclature",
-        "Export refund nomenclature",
-        "Wine reference nomenclature",
-        "Additional codes",
-        "CN measures",
-        "Other measures",
-        "Meursing Heading",
-        "Dynamic footnote",
-    ],
-)
-
-
 class FootnoteType(TrackedModel, ValidityMixin):
     """The footnote type record allows all footnotes to be classified according to type.
     It will be used to check if a given footnote can be associated with a specific
@@ -48,7 +31,9 @@ class FootnoteType(TrackedModel, ValidityMixin):
     footnote_type_id = models.CharField(
         max_length=3, validators=[validators.footnote_type_id_validator]
     )
-    application_code = models.PositiveIntegerField(choices=ApplicationCode.choices)
+    application_code = models.PositiveIntegerField(
+        choices=validators.ApplicationCode.choices
+    )
     description = ShortDescription()
 
     def __str__(self):

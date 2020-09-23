@@ -10,7 +10,14 @@ from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.util import Dates
 from common.tests.util import NOW
+from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from measures.validators import DutyExpressionId
+from measures.validators import ImportExportCode
+from measures.validators import MeasureTypeCombination
+from measures.validators import OrderNumberCaptureCode
+from quotas.validators import QuotaEventType
+from workbaskets.validators import WorkflowStatus
 
 
 def short_description():
@@ -56,6 +63,7 @@ class ApprovedWorkBasketFactory(WorkBasketFactory):
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
+    status = WorkflowStatus.READY_FOR_EXPORT
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
@@ -104,7 +112,7 @@ class RegulationGroupFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Group"
 
-    group_id = string_sequence(3)
+    group_id = string_sequence(3, characters=string.ascii_uppercase)
     description = short_description()
     valid_between = Dates.no_end
 
@@ -236,6 +244,20 @@ class GoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
     suffix = "80"
     statistical = False
 
+    indent = factory.RelatedFactory(
+        "common.tests.factories.GoodsNomenclatureIndentFactory",
+        factory_related_name="indented_goods_nomenclature",
+        workbasket=factory.SelfAttribute("..workbasket"),
+        valid_between=factory.SelfAttribute("..valid_between"),
+    )
+
+    description = factory.RelatedFactory(
+        "common.tests.factories.GoodsNomenclatureDescriptionFactory",
+        factory_related_name="described_goods_nomenclature",
+        workbasket=factory.SelfAttribute("..workbasket"),
+        valid_between=factory.SelfAttribute("..valid_between"),
+    )
+
 
 indent_path_generator = string_generator(4)
 
@@ -288,6 +310,13 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     order_number = string_sequence(6, characters=string.digits)
     mechanism = 0
     category = 0
+
+    origin = factory.RelatedFactory(
+        "common.tests.factories.QuotaOrderNumberOriginFactory",
+        factory_related_name="order_number",
+        valid_between=factory.SelfAttribute("..valid_between"),
+        workbasket=factory.SelfAttribute("..workbasket"),
+    )
 
 
 class QuotaOrderNumberOriginFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -355,9 +384,7 @@ class QuotaEventFactory(TrackedModelMixin):
     class Meta:
         model = "quotas.QuotaEvent"
 
-    subrecord_code = factory.fuzzy.FuzzyChoice(
-        ["00", "05", "10", "15", "20", "25", "30"]
-    )
+    subrecord_code = factory.fuzzy.FuzzyChoice(QuotaEventType.values)
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
     occurrence_timestamp = NOW
 
@@ -399,3 +426,173 @@ class QuotaEventFactory(TrackedModelMixin):
                 "transferred.amount": 0.0,
                 "target.quota.definition.sid": 1,
             }
+
+
+class MeasureTypeSeriesFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasureTypeSeries"
+
+    sid = string_sequence(2, characters=string.ascii_uppercase)
+    measure_type_combination = factory.fuzzy.FuzzyChoice(MeasureTypeCombination.values)
+    description = short_description()
+
+
+class MeasurementUnitFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasurementUnit"
+
+    code = string_sequence(3, characters=string.ascii_uppercase)
+    description = short_description()
+
+
+class MeasurementUnitQualifierFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasurementUnitQualifier"
+
+    code = string_sequence(1, characters=string.ascii_uppercase)
+    description = short_description()
+
+
+class MeasurementFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.Measurement"
+
+    measurement_unit = factory.SubFactory(MeasurementUnitFactory)
+    measurement_unit_qualifier = factory.SubFactory(MeasurementUnitQualifierFactory)
+
+
+class MonetaryUnitFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MonetaryUnit"
+
+    code = string_sequence(3, characters=string.ascii_uppercase)
+    description = short_description()
+
+
+class DutyExpressionFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.DutyExpression"
+
+    sid = factory.fuzzy.FuzzyChoice(DutyExpressionId.values)
+    duty_amount_applicability_code = ApplicabilityCode.PERMITTED
+    measurement_unit_applicability_code = ApplicabilityCode.PERMITTED
+    monetary_unit_applicability_code = ApplicabilityCode.PERMITTED
+    description = short_description()
+
+
+class MeasureTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasureType"
+
+    sid = string_sequence(3, characters=string.ascii_uppercase)
+    trade_movement_code = factory.fuzzy.FuzzyChoice(ImportExportCode.values)
+    priority_code = factory.fuzzy.FuzzyChoice(range(1, 10))
+    measure_component_applicability_code = factory.fuzzy.FuzzyChoice(
+        ApplicabilityCode.values
+    )
+    order_number_capture_code = OrderNumberCaptureCode.NOT_PERMITTED
+    measure_explosion_level = factory.fuzzy.FuzzyChoice(range(2, 11, 2))
+    description = short_description()
+    measure_type_series = factory.SubFactory(MeasureTypeSeriesFactory)
+
+
+class AdditionalCodeTypeMeasureTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.AdditionalCodeTypeMeasureType"
+
+    measure_type = factory.SubFactory(MeasureTypeFactory)
+    additional_code_type = factory.SubFactory(AdditionalCodeTypeFactory)
+
+
+class MeasureConditionCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasureConditionCode"
+
+    code = string_sequence(2, characters=string.ascii_uppercase)
+    description = short_description()
+
+
+class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasureAction"
+
+    code = factory.Faker("random_int", min=1, max=999)
+    description = short_description()
+
+
+class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.Measure"
+
+    sid = numeric_sid()
+    measure_type = factory.SubFactory(MeasureTypeFactory)
+    geographical_area = factory.SubFactory(GeographicalAreaFactory)
+    goods_nomenclature = factory.SubFactory(
+        GoodsNomenclatureFactory,
+        workbasket=factory.SelfAttribute("..workbasket"),
+    )
+    additional_code = None
+    order_number = None
+    reduction = factory.Faker("random_int", min=1, max=3)
+    generating_regulation = factory.SubFactory(RegulationFactory)
+    stopped = False
+    export_refund_nomenclature_sid = None
+
+    @factory.lazy_attribute
+    def terminating_regulation(self):
+        if self.valid_between.upper is None:
+            return None
+        return self.generating_regulation
+
+
+class MeasureComponentFactory(TrackedModelMixin):
+    class Meta:
+        model = "measures.MeasureComponent"
+
+    component_measure = factory.SubFactory(MeasureFactory)
+    duty_expression = factory.SubFactory(DutyExpressionFactory)
+    duty_amount = None
+    monetary_unit = None
+    component_measurement = None
+
+
+class MeasureConditionFactory(TrackedModelMixin):
+    class Meta:
+        model = "measures.MeasureCondition"
+
+    sid = numeric_sid()
+    dependent_measure = factory.SubFactory(MeasureFactory)
+    condition_code = factory.SubFactory(MeasureConditionCodeFactory)
+    component_sequence_number = factory.Faker("random_int", min=1, max=999)
+    duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
+    monetary_unit = factory.SubFactory(MonetaryUnitFactory)
+    condition_measurement = None
+    action = factory.SubFactory(MeasureActionFactory)
+    required_certificate = None
+
+
+class MeasureConditionComponentFactory(TrackedModelMixin):
+    class Meta:
+        model = "measures.MeasureConditionComponent"
+
+    condition = factory.SubFactory(MeasureConditionFactory)
+    duty_expression = factory.SubFactory(DutyExpressionFactory)
+    duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
+    monetary_unit = factory.SubFactory(MonetaryUnitFactory)
+    condition_component_measurement = None
+
+
+class MeasureExcludedGeographicalAreaFactory(TrackedModelMixin):
+    class Meta:
+        model = "measures.MeasureExcludedGeographicalArea"
+
+    modified_measure = factory.SubFactory(MeasureFactory)
+    excluded_geographical_area = factory.SubFactory(GeographicalAreaFactory)
+
+
+class FootnoteAssociationMeasureFactory(TrackedModelMixin):
+    class Meta:
+        model = "measures.FootnoteAssociationMeasure"
+
+    footnoted_measure = factory.SubFactory(MeasureFactory)
+    associated_footnote = factory.SubFactory(FootnoteFactory)

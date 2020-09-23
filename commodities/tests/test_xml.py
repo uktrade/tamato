@@ -1,6 +1,5 @@
 import pytest
 
-from commodities.tests.conftest import generate_good
 from common.tests import factories
 from common.tests.util import validate_taric_xml
 
@@ -27,16 +26,16 @@ def goods_nomenclature_relation_test(
     parent = factories.GoodsNomenclatureIndentFactory(
         valid_between=date_ranges.big, workbasket=approved_workbasket
     )
-    origin = generate_good(
+    origin = factories.GoodsNomenclatureFactory(
         workbasket=approved_workbasket,
         valid_between=date_ranges.normal,
-        indent_kwargs={"parent": parent},
+        indent__parent=parent,
     )
 
     @validate_taric_xml(
-        generate_good,
+        factories.GoodsNomenclatureFactory,
         factory_kwargs={
-            "indent_kwargs": {"parent": parent},
+            "indent__parent": parent,
             "origin": origin,
             "valid_between": date_ranges.adjacent_later,
         },

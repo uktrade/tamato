@@ -121,16 +121,20 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         Get objects which have been approved/sent-to-cds/published
         """
         return self.filter(
-            workbasket__status__in=(
-                WorkflowStatus.READY_FOR_EXPORT,
-                WorkflowStatus.AWAITING_CDS_UPLOAD_CREATE_NEW,
-                WorkflowStatus.AWAITING_CDS_UPLOAD_EDIT,
-                WorkflowStatus.AWAITING_CDS_UPLOAD_OVERWRITE,
-                WorkflowStatus.AWAITING_CDS_UPLOAD_DELETE,
-                WorkflowStatus.SENT_TO_CDS,
-                WorkflowStatus.SENT_TO_CDS_DELETE,
-                WorkflowStatus.PUBLISHED,
-                WorkflowStatus.CDS_ERROR,
+            workbasket__status__in=WorkflowStatus.approved_statuses(),
+            workbasket__approver__isnull=False,
+        )
+
+    def approved_or_in_workbasket(self, workbasket):
+        """
+        Get objects which have been approved or are in the specified workbasket.
+        """
+
+        return self.filter(
+            Q(workbasket=workbasket)
+            | Q(
+                workbasket__status__in=WorkflowStatus.approved_statuses(),
+                workbasket__approver__isnull=False,
             )
         )
 
@@ -276,6 +280,15 @@ inherit TrackedModel must either:
 
         return self.new_draft(workbasket=workbasket)
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return ", ".join(
+            f"{field}={getattr(self, field, None)}" for field in self.identifying_fields
+        )
+
 
 class NumericSID(models.PositiveIntegerField):
     def __init__(self, *args, **kwargs):
@@ -296,3 +309,21 @@ class ShortDescription(models.CharField):
         kwargs["blank"] = True
         kwargs["null"] = True
         super().__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        del kwargs["max_length"]
+        del kwargs["blank"]
+        del kwargs["null"]
+        return name, path, args, kwargs
+
+
+class ApplicabilityCode(models.PositiveSmallIntegerField):
+    def __init__(self, *args, **kwargs):
+        kwargs["choices"] = validators.ApplicabilityCode.choices
+        super().__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        del kwargs["choices"]
+        return name, path, args, kwargs

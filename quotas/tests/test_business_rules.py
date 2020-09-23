@@ -16,16 +16,11 @@ from workbaskets.validators import WorkflowStatus
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def published():
-    return factories.WorkBasketFactory(status=WorkflowStatus.PUBLISHED)
-
-
-def test_ON1(published):
+def test_ON1(approved_workbasket):
     """Quota order number id + start date must be unique"""
 
     existing = factories.QuotaOrderNumberFactory(
-        workbasket=published, update_type=UpdateType.CREATE
+        workbasket=approved_workbasket, update_type=UpdateType.CREATE
     )
 
     order_number = factories.QuotaOrderNumberFactory(
@@ -38,13 +33,13 @@ def test_ON1(published):
         order_number.workbasket.submit_for_approval()
 
 
-def test_ON2(date_ranges, published):
+def test_ON2(date_ranges, approved_workbasket):
     """There may be no overlap in time of two quota order numbers with the same quota
     order number id.
     """
 
     existing = factories.QuotaOrderNumberFactory(
-        valid_between=date_ranges.normal, workbasket=published
+        valid_between=date_ranges.normal, workbasket=approved_workbasket
     )
 
     order_number = factories.QuotaOrderNumberFactory(
@@ -56,18 +51,18 @@ def test_ON2(date_ranges, published):
         order_number.workbasket.submit_for_approval()
 
 
-def test_ON5(date_ranges, published):
+def test_ON5(date_ranges, approved_workbasket):
     """There may be no overlap in time of two quota order number origins with the same
     quota order number SID and geographical area id.
     """
 
     order_number = factories.QuotaOrderNumberFactory(
-        valid_between=date_ranges.normal, workbasket=published
+        valid_between=date_ranges.normal, workbasket=approved_workbasket
     )
     existing = factories.QuotaOrderNumberOriginFactory(
         order_number=order_number,
         valid_between=date_ranges.starts_with_normal,
-        workbasket=published,
+        workbasket=approved_workbasket,
     )
 
     origin = factories.QuotaOrderNumberOriginFactory(
@@ -81,13 +76,13 @@ def test_ON5(date_ranges, published):
         origin.workbasket.submit_for_approval()
 
 
-def test_ON6(date_ranges, published):
+def test_ON6(date_ranges, approved_workbasket):
     """The validity period of the geographical area must span the validity period of the
     quota order number origin.
     """
 
     geo_area = factories.GeographicalAreaFactory(
-        workbasket=published, valid_between=date_ranges.starts_with_normal
+        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
     )
     origin = factories.QuotaOrderNumberOriginFactory(
         geographical_area=geo_area,
@@ -99,13 +94,13 @@ def test_ON6(date_ranges, published):
         origin.workbasket.submit_for_approval()
 
 
-def test_ON7(date_ranges, published):
+def test_ON7(date_ranges, approved_workbasket):
     """The validity period of the quota order number must span the validity period of
     the quota order number origin.
     """
 
     order_number = factories.QuotaOrderNumberFactory(
-        workbasket=published, valid_between=date_ranges.starts_with_normal
+        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
     )
     origin = factories.QuotaOrderNumberOriginFactory(
         order_number=order_number,
@@ -117,13 +112,13 @@ def test_ON7(date_ranges, published):
         origin.workbasket.submit_for_approval()
 
 
-def test_ON8(date_ranges, published):
+def test_ON8(date_ranges, approved_workbasket):
     """The validity period of the quota order number must span the validity period of
     the referencing quota definition.
     """
 
     order_number = factories.QuotaOrderNumberFactory(
-        workbasket=published, valid_between=date_ranges.starts_with_normal
+        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
     )
     quota_def = factories.QuotaDefinitionFactory(
         order_number=order_number,
@@ -136,7 +131,7 @@ def test_ON8(date_ranges, published):
 
 
 @requires_measures
-def test_ON9(date_ranges, published):
+def test_ON9(date_ranges, approved_workbasket):
     """When a quota order number is used in a measure then the validity period of the
     quota order number must span the validity period of the measure.
 
@@ -145,7 +140,7 @@ def test_ON9(date_ranges, published):
 
 
 @requires_measures
-def test_ON10(date_ranges, published):
+def test_ON10(date_ranges, approved_workbasket):
     """When a quota order number is used in a measure then the validity period of the
     quota order number origin must span the validity period of the measure.
 
@@ -177,17 +172,17 @@ def test_ON12():
         (AreaCode.REGION, True),
     ],
 )
-def test_ON13(date_ranges, published, area_code, expect_error):
+def test_ON13(date_ranges, approved_workbasket, area_code, expect_error):
     """An exclusion can only be entered if the order number origin is a geographical
     area group (area code = 1).
     """
 
     geo_area = factories.GeographicalAreaFactory(
-        area_code=area_code, workbasket=published
+        area_code=area_code, workbasket=approved_workbasket
     )
     member_area = factories.GeographicalAreaFactory(
         area_code=AreaCode.COUNTRY,
-        workbasket=published,
+        workbasket=approved_workbasket,
     )
     if area_code == AreaCode.GROUP:
         factories.GeographicalMembershipFactory(
@@ -196,7 +191,7 @@ def test_ON13(date_ranges, published, area_code, expect_error):
         )
     origin = factories.QuotaOrderNumberOriginFactory(
         geographical_area=geo_area,
-        workbasket=published,
+        workbasket=approved_workbasket,
     )
     exclusion = factories.QuotaOrderNumberOriginExclusionFactory(
         origin=origin, excluded_geographical_area=member_area
@@ -212,14 +207,14 @@ def test_ON13(date_ranges, published, area_code, expect_error):
             pytest.fail("Did not raise ValidationError")
 
 
-def test_ON14(published):
+def test_ON14(approved_workbasket):
     """The excluded geographical area must be a member of the geographical area group."""
 
     origin = factories.QuotaOrderNumberOriginFactory(
         geographical_area=factories.GeographicalAreaFactory(
-            area_code=AreaCode.GROUP, workbasket=published
+            area_code=AreaCode.GROUP, workbasket=approved_workbasket
         ),
-        workbasket=published,
+        workbasket=approved_workbasket,
     )
     exclusion = factories.QuotaOrderNumberOriginExclusionFactory(origin=origin)
 
@@ -227,11 +222,11 @@ def test_ON14(published):
         exclusion.workbasket.submit_for_approval()
 
 
-def test_QD1(published):
+def test_QD1(approved_workbasket):
     """Quota order number id + start date must be unique"""
 
     existing = factories.QuotaDefinitionFactory(
-        workbasket=published, update_type=UpdateType.CREATE
+        workbasket=approved_workbasket, update_type=UpdateType.CREATE
     )
 
     definition = factories.QuotaDefinitionFactory(
@@ -251,7 +246,7 @@ def test_QD2(date_ranges):
         factories.QuotaDefinitionFactory(valid_between=date_ranges.backwards)
 
 
-def test_QD7(date_ranges, published):
+def test_QD7(date_ranges, approved_workbasket):
     """The validity period of the quota definition must be spanned by one of the
     validity periods of the referenced quota order number.
     """
@@ -260,7 +255,7 @@ def test_QD7(date_ranges, published):
     # constraint whether adding a quota definition or an order number.
 
     order_number = factories.QuotaOrderNumberFactory(
-        valid_between=date_ranges.normal, workbasket=published
+        valid_between=date_ranges.normal, workbasket=approved_workbasket
     )
     definition = factories.QuotaDefinitionFactory(
         order_number=order_number,
@@ -327,10 +322,10 @@ def test_QD15():
     """
 
 
-def test_QA1(published):
+def test_QA1(approved_workbasket):
     """The association between two quota definitions must be unique."""
 
-    existing = factories.QuotaAssociationFactory(workbasket=published)
+    existing = factories.QuotaAssociationFactory(workbasket=approved_workbasket)
 
     assoc = factories.QuotaAssociationFactory(
         main_quota=existing.main_quota,
@@ -342,16 +337,16 @@ def test_QA1(published):
         assoc.workbasket.submit_for_approval()
 
 
-def test_QA2(date_ranges, published):
+def test_QA2(date_ranges, approved_workbasket):
     """The sub-quota’s validity period must be entirely enclosed within the validity
     period of the main quota
     """
 
     main = factories.QuotaDefinitionFactory(
-        valid_between=date_ranges.normal, workbasket=published
+        valid_between=date_ranges.normal, workbasket=approved_workbasket
     )
     sub = factories.QuotaDefinitionFactory(
-        valid_between=date_ranges.overlap_normal, workbasket=published
+        valid_between=date_ranges.overlap_normal, workbasket=approved_workbasket
     )
     assoc = factories.QuotaAssociationFactory(main_quota=main, sub_quota=sub)
 
@@ -397,19 +392,23 @@ def test_QA4(coefficient, expect_error):
             pytest.fail("Did not raise ValidationError")
 
 
-def test_QA5(published):
+def test_QA5(approved_workbasket):
     """Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the same
     volume as the ones associated with the parent quota. Moreover it must be defined
     with a coefficient not equal to 1
     """
 
-    sub1 = factories.QuotaDefinitionFactory(volume=23000, workbasket=published)
-    sub2 = factories.QuotaDefinitionFactory(volume=10000, workbasket=published)
+    sub1 = factories.QuotaDefinitionFactory(
+        volume=23000, workbasket=approved_workbasket
+    )
+    sub2 = factories.QuotaDefinitionFactory(
+        volume=10000, workbasket=approved_workbasket
+    )
     existing = factories.QuotaAssociationFactory(
         coefficient=Decimal("1.20000"),
         sub_quota=sub1,
         sub_quota_relation_type=SubQuotaType.EQUIVALENT,
-        workbasket=published,
+        workbasket=approved_workbasket,
     )
     assoc = factories.QuotaAssociationFactory(
         coefficient=Decimal("1.20000"),
@@ -422,7 +421,7 @@ def test_QA5(published):
         assoc.workbasket.submit_for_approval()
 
 
-def test_QA5_pt2(published):
+def test_QA5_pt2(approved_workbasket):
     """Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the same
     volume as the ones associated with the parent quota. Moreover it must be defined
     with a coefficient not equal to 1
@@ -437,7 +436,7 @@ def test_QA5_pt2(published):
         assoc.workbasket.submit_for_approval()
 
 
-def test_QA5_pt3(published):
+def test_QA5_pt3(approved_workbasket):
     """A sub-quota defined with the 'normal' type must have a coefficient of 1"""
 
     assoc = factories.QuotaAssociationFactory(
@@ -449,11 +448,11 @@ def test_QA5_pt3(published):
         assoc.workbasket.submit_for_approval()
 
 
-def test_QA6(published):
+def test_QA6(approved_workbasket):
     """Sub-quotas associated with the same main quota must have the same relation type"""
 
     existing = factories.QuotaAssociationFactory(
-        sub_quota_relation_type=SubQuotaType.NORMAL, workbasket=published
+        sub_quota_relation_type=SubQuotaType.NORMAL, workbasket=approved_workbasket
     )
     assoc = factories.QuotaAssociationFactory(
         coefficient=Decimal("1.20000"),
@@ -465,14 +464,14 @@ def test_QA6(published):
         assoc.workbasket.submit_for_approval()
 
 
-def test_blocking_of_fcfs_quotas_only(published):
+def test_blocking_of_fcfs_quotas_only(approved_workbasket):
     """Blocking periods are only applicable to FCFS quotas."""
 
     order_number = factories.QuotaOrderNumberFactory(
-        mechanism=AdministrationMechanism.LICENSED, workbasket=published
+        mechanism=AdministrationMechanism.LICENSED, workbasket=approved_workbasket
     )
     definition = factories.QuotaDefinitionFactory(
-        workbasket=published,
+        workbasket=approved_workbasket,
         order_number=order_number,
     )
     blocking = factories.QuotaBlockingFactory(
@@ -483,13 +482,13 @@ def test_blocking_of_fcfs_quotas_only(published):
         blocking.workbasket.submit_for_approval()
 
 
-def test_QBP2(date_ranges, published):
+def test_QBP2(date_ranges, approved_workbasket):
     """The start date of the quota blocking period must be later than or equal to the
     start date of the quota validity period.
     """
 
     definition = factories.QuotaDefinitionFactory(
-        valid_between=date_ranges.normal, workbasket=published
+        valid_between=date_ranges.normal, workbasket=approved_workbasket
     )
     block = factories.QuotaBlockingFactory(
         quota_definition=definition, valid_between=date_ranges.overlap_normal_earlier
@@ -499,7 +498,7 @@ def test_QBP2(date_ranges, published):
         block.workbasket.submit_for_approval()
 
 
-def test_QBP3(date_ranges, published):
+def test_QBP3(date_ranges, approved_workbasket):
     """The end date of the quota blocking period must be later than the start date of
     the quota blocking period.
     """
@@ -508,14 +507,14 @@ def test_QBP3(date_ranges, published):
         factories.QuotaBlockingFactory(valid_between=date_ranges.backwards)
 
 
-def test_suspension_of_fcfs_quotas_only(published):
+def test_suspension_of_fcfs_quotas_only(approved_workbasket):
     """Quota suspensions are only applicable to First Come First Served quotas"""
 
     order_number = factories.QuotaOrderNumberFactory(
-        mechanism=AdministrationMechanism.LICENSED, workbasket=published
+        mechanism=AdministrationMechanism.LICENSED, workbasket=approved_workbasket
     )
     definition = factories.QuotaDefinitionFactory(
-        workbasket=published,
+        workbasket=approved_workbasket,
         order_number=order_number,
     )
     suspension = factories.QuotaSuspensionFactory(
@@ -526,11 +525,11 @@ def test_suspension_of_fcfs_quotas_only(published):
         suspension.workbasket.submit_for_approval()
 
 
-def test_QSP2(date_ranges, published):
+def test_QSP2(date_ranges, approved_workbasket):
     """The validity period of the quota must span the quota suspension period."""
 
     definition = factories.QuotaDefinitionFactory(
-        workbasket=published, valid_between=date_ranges.starts_with_normal
+        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
     )
     suspension = factories.QuotaSuspensionFactory(
         quota_definition=definition,
