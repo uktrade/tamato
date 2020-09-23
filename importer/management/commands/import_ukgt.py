@@ -85,6 +85,18 @@ class Command(BaseCommand):
             default=0,
         )
         parser.add_argument(
+            "--measure-sid",
+            help="The SID value to use for the first new measure",
+            type=int,
+            default=200000000
+        )
+        parser.add_argument(
+            "--transaction-id",
+            help="The ID value to use for the first transaction",
+            type=int,
+            default=140
+        )
+        parser.add_argument(
             "--output", help="The filename to output to.", type=str, default="out.xml"
         )
 
@@ -94,6 +106,8 @@ class Command(BaseCommand):
         self.erga_omnes = GeographicalArea.objects.as_at(BREXIT).get(area_id="1011")
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
         self.mfn_regulation_group = Group.objects.get(group_id="DNC")
+        self.measure_sid_counter = counter_generator(options["measure_sid"])
+        self.transaction_counter = counter_generator(options["transaction_id"])
 
         self.ukgt_si, _ = Regulation.objects.get_or_create(
             regulation_id="C2100001",
@@ -248,7 +262,7 @@ class Command(BaseCommand):
             ukgt = self.clean_duty_sentence(new_row[13])  # [4])
             for rate, start, end in self.detect_seasonal_rates(ukgt):
                 new_measure = Measure(
-                    sid=123456,
+                    sid=self.measure_sid_counter(),
                     measure_type=new_measure_type,
                     geographical_area=self.erga_omnes,
                     goods_nomenclature=goods_nomenclature,
@@ -397,14 +411,11 @@ class Command(BaseCommand):
     def render_transaction(
         self, workbasket: WorkBasket, models: List[TrackedModel]
     ) -> str:
-        transaction, _ = Transaction.objects.get_or_create(workbasket=workbasket)
-        transaction.save()
-
         return render_to_string(
             template_name="workbaskets/taric/transaction.xml",
             context={
                 "tracked_models": map(self.serializer.to_representation, models),
-                "transaction_id": transaction.id,
+                "transaction_id": self.transaction_counter(),
                 "counter_generator": counter_generator,
                 "message_counter": self.message_counter,
             },
