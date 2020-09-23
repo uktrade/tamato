@@ -3,7 +3,6 @@ from django.core.exceptions import ValidationError
 from django.db import DataError
 from django.db import IntegrityError
 
-from commodities.tests.conftest import generate_good
 from common.tests import factories
 from common.tests.util import requires_measures
 
@@ -16,8 +15,12 @@ def test_NIG1(date_ranges, normal_good):
     The validity period of the goods nomenclature must not overlap any other goods nomenclature with the
     same SID.
     """
+
+    good = factories.GoodsNomenclatureFactory()
     with pytest.raises(IntegrityError):
-        generate_good(sid=normal_good.sid, valid_between=date_ranges.overlap_normal)
+        factories.GoodsNomenclatureFactory(
+            sid=good.sid, valid_between=good.valid_between
+        )
 
 
 def test_NIG2(date_ranges, normal_good):
@@ -28,15 +31,15 @@ def test_NIG2(date_ranges, normal_good):
     Also covers NIG3
     """
     parent = factories.GoodsNomenclatureIndentFactory(valid_between=date_ranges.big)
-    generate_good(
+    factories.GoodsNomenclatureFactory(
         origin=normal_good,
         valid_between=date_ranges.adjacent_later,
     )
     with pytest.raises(ValidationError):
-        generate_good(
+        factories.GoodsNomenclatureFactory(
             valid_between=date_ranges.adjacent_later_big,
             origin=normal_good,
-            indent_kwargs={"parent": parent},
+            indent__parent=parent,
         )
 
 
@@ -45,26 +48,29 @@ def test_NIG4(date_ranges):
     The start date of the goods nomenclature must be less than or equal to the end date.
     """
     with pytest.raises(DataError):
-        generate_good(valid_between=date_ranges.backwards)
+        factories.GoodsNomenclatureFactory(valid_between=date_ranges.backwards)
 
 
 def test_NIG5(date_ranges):
     """
     When creating a goods nomenclature code, an origin must exist. This rule is only applicable to update extractions.
     """
-    origin = generate_good(valid_between=date_ranges.normal)
+    origin = factories.GoodsNomenclatureFactory(
+        valid_between=date_ranges.normal,
+    )
     parent = factories.GoodsNomenclatureIndentFactory(valid_between=date_ranges.big)
 
     with pytest.raises(ValidationError):
-        good = generate_good(
-            valid_between=date_ranges.adjacent_later, indent_kwargs={"parent": parent}
+        good = factories.GoodsNomenclatureFactory(
+            valid_between=date_ranges.adjacent_later,
+            indent__parent=parent,
         )
         good.workbasket.submit_for_approval()
 
-    good = generate_good(
+    good = factories.GoodsNomenclatureFactory(
         origin=origin,
         valid_between=date_ranges.adjacent_later,
-        indent_kwargs={"parent": parent},
+        indent__parent=parent,
     )
     good.workbasket.submit_for_approval()
 
@@ -76,17 +82,27 @@ def test_NIG7(date_ranges):
     This covers NIG10 as well
     """
 
-    origin = generate_good(valid_between=date_ranges.normal)
+    origin = factories.GoodsNomenclatureFactory(valid_between=date_ranges.normal)
     with pytest.raises(ValidationError):
-        generate_good(origin=origin, valid_between=date_ranges.later)
+        factories.GoodsNomenclatureFactory(
+            origin=origin, valid_between=date_ranges.later
+        )
     with pytest.raises(ValidationError):
-        generate_good(origin=origin, valid_between=date_ranges.earlier)
+        factories.GoodsNomenclatureFactory(
+            origin=origin, valid_between=date_ranges.earlier
+        )
     with pytest.raises(ValidationError):
-        generate_good(origin=origin, valid_between=date_ranges.adjacent_earlier)
+        factories.GoodsNomenclatureFactory(
+            origin=origin, valid_between=date_ranges.adjacent_earlier
+        )
     with pytest.raises(ValidationError):
-        generate_good(origin=origin, valid_between=date_ranges.overlap_normal)
+        factories.GoodsNomenclatureFactory(
+            origin=origin, valid_between=date_ranges.overlap_normal
+        )
 
-    generate_good(origin=origin, valid_between=date_ranges.adjacent_later)
+    factories.GoodsNomenclatureFactory(
+        origin=origin, valid_between=date_ranges.adjacent_later
+    )
 
 
 def test_NIG11_one_indent_mandatory(date_ranges):
@@ -96,7 +112,10 @@ def test_NIG11_one_indent_mandatory(date_ranges):
     """
     workbasket = factories.WorkBasketFactory()
     good = factories.GoodsNomenclatureDescriptionFactory(
-        workbasket=workbasket, described_goods_nomenclature__workbasket=workbasket
+        workbasket=workbasket,
+        described_goods_nomenclature__workbasket=workbasket,
+        described_goods_nomenclature__indent=None,
+        described_goods_nomenclature__description=None,
     ).described_goods_nomenclature
 
     with pytest.raises(ValidationError):
@@ -137,7 +156,10 @@ def test_NIG12(date_ranges):
     At least one description is mandatory. The start date of the first description period
     must be equal to the start date of the nomenclature.
     """
-    good = generate_good(valid_between=date_ranges.normal, with_description=False)
+    good = factories.GoodsNomenclatureFactory(
+        valid_between=date_ranges.normal,
+        description=None,
+    )
 
     with pytest.raises(ValidationError):
         good.workbasket.submit_for_approval()

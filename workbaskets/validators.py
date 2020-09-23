@@ -37,3 +37,17 @@ class WorkflowStatus(models.TextChoices):
     PUBLISHED = "PUBLISHED", "Published"
     # Sent to CDS, but CDS returned an error
     CDS_ERROR = "CDS_ERROR", "CDS error"
+
+    @classmethod
+    def approved_statuses(cls):
+        return (
+            cls.READY_FOR_EXPORT,
+            cls.AWAITING_CDS_UPLOAD_CREATE_NEW,
+            cls.AWAITING_CDS_UPLOAD_EDIT,
+            cls.AWAITING_CDS_UPLOAD_OVERWRITE,
+            cls.AWAITING_CDS_UPLOAD_DELETE,
+            cls.SENT_TO_CDS,
+            cls.SENT_TO_CDS_DELETE,
+            cls.PUBLISHED,
+            cls.CDS_ERROR,
+        )

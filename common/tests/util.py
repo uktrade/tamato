@@ -24,14 +24,21 @@ from importer.management.commands.import_taric import import_taric
 from workbaskets.validators import WorkflowStatus
 
 COMMODITIES_IMPLEMENTED = False
-MEASURES_IMPLEMENTED = False
-MEURSING_TABLES_IMPLEMENTED = False
+EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED = False
 INTERDEPENDENT_EXPORT_IMPLEMENTED = False
+MEASURES_IMPLEMENTED = True
+MEURSING_TABLES_IMPLEMENTED = False
+PARTIAL_TEMPORARY_STOP_IMPLEMENTED = False
 UTC = timezone.utc
 
 requires_commodities = pytest.mark.skipif(
     not COMMODITIES_IMPLEMENTED,
     reason="Commodities not implemented",
+)
+
+requires_export_refund_nomenclature = pytest.mark.skipif(
+    not EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED,
+    reason="Export refund nomenclature not implemented",
 )
 
 requires_measures = pytest.mark.skipif(
@@ -42,6 +49,11 @@ requires_measures = pytest.mark.skipif(
 requires_meursing_tables = pytest.mark.skipif(
     not MEURSING_TABLES_IMPLEMENTED,
     reason="Meursing tables not implemented",
+)
+
+requires_partial_temporary_stop = pytest.mark.skipif(
+    not PARTIAL_TEMPORARY_STOP_IMPLEMENTED,
+    reason="Partial temporary stop not implemented",
 )
 
 requires_interdependent_export = pytest.mark.skipif(
@@ -209,7 +221,7 @@ class Dates:
     )
     adjacent_earlier = DateTimeTZRange(
         NOW + relativedelta(months=-1),
-        NOW + relativedelta(days=-1),
+        NOW,
     )
     adjacent_later = DateTimeTZRange(
         NOW + relativedelta(months=+1),

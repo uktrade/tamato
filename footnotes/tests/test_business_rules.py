@@ -45,13 +45,12 @@ def test_FOT3(date_ranges):
 # Footnote
 
 
-def test_FO2():
+def test_FO2(approved_workbasket):
     """The combination footnote type and code must be unique."""
 
-    published = factories.WorkBasketFactory(status=WorkflowStatus.PUBLISHED)
     workbasket = factories.WorkBasketFactory()
-    t = factories.FootnoteTypeFactory(workbasket=published)
-    f = factories.FootnoteFactory(footnote_type=t, workbasket=published)
+    t = factories.FootnoteTypeFactory(workbasket=approved_workbasket)
+    f = factories.FootnoteFactory(footnote_type=t, workbasket=approved_workbasket)
     factories.FootnoteFactory(
         footnote_id=f.footnote_id, footnote_type=t, workbasket=workbasket
     )
@@ -89,15 +88,14 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
         )
 
 
-def test_FO4_start_dates_cannot_match():
+def test_FO4_start_dates_cannot_match(approved_workbasket):
     """No two associated description periods may have the same start date."""
 
-    published = factories.WorkBasketFactory(status=WorkflowStatus.PUBLISHED)
-    footnote = factories.FootnoteFactory(workbasket=published)
+    footnote = factories.FootnoteFactory(workbasket=approved_workbasket)
     description = factories.FootnoteDescriptionFactory(
         described_footnote=footnote,
         valid_between=footnote.valid_between,
-        workbasket=published,
+        workbasket=approved_workbasket,
     )
 
     workbasket = factories.WorkBasketFactory()
