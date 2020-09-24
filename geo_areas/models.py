@@ -91,6 +91,8 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         GeographicalArea, related_name="groups", on_delete=models.PROTECT
     )
 
+    identifying_fields = ("geo_group", "member")
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
@@ -127,6 +129,7 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
 
     area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
     description = ShortDescription()
+    sid = NumericSID()
 
     class Meta:
         constraints = [
@@ -147,4 +150,4 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
         validators.validate_description_is_not_null(self)
 
     def __str__(self):
-        return f'description - "{self.description}" for {self.area}'
+        return f'description ({self.sid}) - "{self.description}" for {self.area}'
