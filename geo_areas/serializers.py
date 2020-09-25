@@ -1,6 +1,9 @@
+from rest_framework import serializers
+
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.validators import NumericSIDValidator
 from geo_areas import models
 
 
@@ -10,7 +13,7 @@ class GeographicalAreaDescriptionSerializer(
     class Meta:
         model = models.GeographicalAreaDescription
         fields = [
-            "id",
+            "sid",
             "description",
             "valid_between",
             "record_code",
@@ -34,6 +37,7 @@ class GeographicalAreaSerializer(ValiditySerializerMixin, TrackedModelSerializer
     descriptions = GeographicalAreaDescriptionSerializer(
         many=True, source="geographicalareadescription_set"
     )
+    parent = ParentGeographicalAreaSerializer(read_only=True)
 
     class Meta:
         model = models.GeographicalArea
@@ -42,6 +46,29 @@ class GeographicalAreaSerializer(ValiditySerializerMixin, TrackedModelSerializer
             "sid",
             "area_code",
             "descriptions",
+            "valid_between",
+            "parent",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
+            "update_type",
+        ]
+
+
+class GeographicalAreaImporterSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+    parent = ParentGeographicalAreaSerializer(read_only=True)
+
+    class Meta:
+        model = models.GeographicalArea
+        fields = [
+            "area_id",
+            "sid",
+            "area_code",
             "valid_between",
             "parent",
             "record_code",
@@ -80,9 +107,33 @@ class GeographicalAreaDescriptionTaricSerializer(
     class Meta:
         model = models.GeographicalAreaDescription
         fields = [
-            "id",
+            "sid",
             "area",
             "description",
+            "valid_between",
+            "record_code",
+            "period_record_code",
+            "subrecord_code",
+            "period_subrecord_code",
+            "taric_template",
+            "start_date",
+            "end_date",
+            "update_type",
+        ]
+
+
+class GeographicalAreaDescriptionImporterSerializer(
+    ValiditySerializerMixin, TrackedModelSerializerMixin
+):
+    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+    area = GeographicalAreaBasicSerializer(read_only=True)
+
+    class Meta:
+        model = models.GeographicalAreaDescription
+        fields = [
+            "sid",
+            "description",
+            "area",
             "valid_between",
             "record_code",
             "period_record_code",
@@ -113,4 +164,5 @@ class GeographicalMembershipSerializer(
             "start_date",
             "end_date",
             "update_type",
+            "valid_between",
         ]

@@ -154,6 +154,7 @@ class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin
     class Meta:
         model = "geo_areas.GeographicalAreaDescription"
 
+    sid = numeric_sid()
     area = factory.SubFactory(GeographicalAreaFactory)
     description = short_description()
 
