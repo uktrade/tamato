@@ -17,6 +17,8 @@ from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
 import settings
+from certificates.models import Certificate
+from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
@@ -26,6 +28,9 @@ from geo_areas.models import GeographicalArea
 from importer.duty_sentence_parser import DutySentenceParser
 from measures.models import DutyExpression
 from measures.models import Measure
+from measures.models import MeasureAction
+from measures.models import MeasureCondition
+from measures.models import MeasureConditionCode
 from measures.models import Measurement
 from measures.models import MeasureType
 from measures.models import MonetaryUnit
@@ -88,13 +93,13 @@ class Command(BaseCommand):
             "--measure-sid",
             help="The SID value to use for the first new measure",
             type=int,
-            default=200000000
+            default=200000000,
         )
         parser.add_argument(
             "--transaction-id",
             help="The ID value to use for the first transaction",
             type=int,
-            default=140
+            default=140,
         )
         parser.add_argument(
             "--output", help="The filename to output to.", type=str, default="out.xml"
@@ -107,6 +112,7 @@ class Command(BaseCommand):
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
         self.mfn_regulation_group = Group.objects.get(group_id="DNC")
         self.measure_sid_counter = counter_generator(options["measure_sid"])
+        self.measure_condition_sid_counter = counter_generator(options["measure_sid"])
         self.transaction_counter = counter_generator(options["transaction_id"])
 
         self.ukgt_si, _ = Regulation.objects.get_or_create(
@@ -119,6 +125,23 @@ class Command(BaseCommand):
             update_type=UpdateType.CREATE,
         )
         yield self.ukgt_si
+
+        self.n990 = Certificate.objects.get(
+            sid="990",
+            certificate_type=CertificateType.objects.get(sid="N"),
+        )
+
+        self.presentation_of_certificate = MeasureConditionCode.objects.get(
+            code="B",
+        )
+
+        self.apply_mentioned_duty = MeasureAction.objects.get(
+            code="27",
+        )
+
+        self.subheading_not_allowed = MeasureAction.objects.get(
+            code="08",
+        )
 
     def clean_duty_sentence(self, cell: Cell) -> str:
         if cell.ctype == xlrd.XL_CELL_NUMBER:
@@ -272,6 +295,25 @@ class Command(BaseCommand):
                     workbasket=workbasket,
                 )
                 yield new_measure
+
+                # If this is a measure under authorised use, we need to add
+                # some measure conditions with the N990 certificate.
+                if new_measure_type == self.non_pref_under_end_use:
+                    yield MeasureCondition(
+                        sid=self.measure_condition_sid_counter(),
+                        dependent_measure=new_measure,
+                        condition_code=self.presentation_of_certificate,
+                        component_sequence_number=1,
+                        action=self.apply_mentioned_duty,
+                        required_certificate=self.n990,
+                    )
+                    yield MeasureCondition(
+                        sid=self.measure_condition_sid_counter(),
+                        dependent_measure=new_measure,
+                        condition_code=self.presentation_of_certificate,
+                        component_sequence_number=2,
+                        action=self.subheading_not_allowed,
+                    )
 
                 try:
                     components = self.duty_sentence_parser.parse(rate)
