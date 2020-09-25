@@ -25,7 +25,7 @@ class GovukFrontendExtension(NunjucksExtension):
             ]
             source = re.sub(
                 r"(for attribute, value in )(" + r"|".join(iterated_objects) + r")",
-                r"\1(\2|default({})).items()",
+                r"\1(\2|default({}))",
                 source,
             )
 
