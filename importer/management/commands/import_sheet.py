@@ -1,118 +1,92 @@
 import logging
+import re
 from datetime import datetime
-from typing import Union
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Optional
 
 import django.db
 import pytz
+import settings
 import xlrd
+from common.models import ShortDescription
+from common.validators import UpdateType
 from django.apps import apps
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields.ranges import DateTimeRangeField
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
-from xlrd.sheet import Cell
-
-import settings
-from common.validators import UpdateType
-from measures.models import MeasurementUnit
-from measures.models import MeasurementUnitQualifier
-from measures.models import MeasureTypeSeries
+from django.db.models.fields import CharField
+from django.db.models.fields import Field
+from django.db.models.fields import IntegerField
+from django.db.models.fields.related import ForeignKey
 from workbaskets.models import Transaction
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
+COLUMN_NAME = re.compile(r"(\w+)(?:\[(\d+)\])?")
 
-def start_date(value: str) -> datetime:
+
+Transformer = Callable[[Any], Any]
+Setter = Callable[[Dict, Any], None]
+
+
+def date(value: str) -> datetime:
     return pytz.utc.localize(datetime.strptime(value, "%Y-%m-%d %H:%M:%S"))
 
 
-def end_date(value: str) -> Union[datetime, None]:
-    if value == "":
-        return None
+def blank(blank: bool, transformer: Transformer) -> Transformer:
+    def transform(value: Any) -> Any:
+        if blank and value == "":
+            return None
+        else:
+            return transformer(value)
+
+    return transform
+
+
+def get_type_transformer(field: Field) -> Transformer:
+    if type(field) is CharField or type(field) is ShortDescription:
+        return blank(field.blank, str)
+    if type(field) is IntegerField:
+        return blank(field.blank, int)
+    if type(field) is DateTimeRangeField:
+        return blank(True, date)
+    if type(field) is ForeignKey:
+        related_model = field.related_model
+        id_field_name = related_model.identifying_fields[0]
+        id_field = related_model._meta.get_field(id_field_name)
+        transformer = get_type_transformer(id_field)
+
+        def transform(value: Any) -> Any:
+            return related_model.objects.get(**{id_field_name: transformer(value)})
+
+        return blank(field.blank, transform)
+
+    raise CommandError(f"Don't know how to transform {field} of type {type(field)}")
+
+
+def get_type_setter(field: Field, index: Optional[int]) -> Setter:
+    if type(field) is DateTimeRangeField:
+        assert index is not None
+        assert int(index) < 2 and int(index) >= 0
+
+        def setter(data: Dict, value: Any):
+            if field.name not in data:
+                data[field.name] = [None, None]
+            data[field.name][index] = value
+
+        return setter
     else:
-        return start_date(value)
 
+        def setter(data: Dict, value: Any):
+            data[field.name] = value
 
-PROFILES = {
-    ("measures", "DutyExpression"): {
-        "sid": int,
-        "prefix": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-        "duty_amount_applicability_code": int,
-        "measurement_unit_applicability_code": int,
-        "monetary_unit_applicability_code": int,
-    },
-    ("measures", "MonetaryUnit"): {
-        "code": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-    },
-    ("measures", "MeasurementUnit"): {
-        "code": str,
-        "abbreviation": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-    },
-    ("measures", "MeasurementUnitQualifier"): {
-        "code": str,
-        "abbreviation": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-    },
-    ("measures", "Measurement"): {
-        "measurement_unit": lambda v: MeasurementUnit.objects.get(code=v),
-        "measurement_unit_qualifier": lambda v: MeasurementUnitQualifier.objects.get(
-            code=v
-        )
-        if v != ""
-        else None,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-    },
-    ("regulations", "Group"): {
-        "group_id": str,
-        "description": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": lambda v: None,
-    },
-    ("geo_areas", "GeographicalArea"): {
-        "sid": int,
-        "area_id": str,
-        "area_code": int,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-    },
-    ("measures", "MeasureTypeSeries"): {
-        "sid": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-        "measure_type_combination": int,
-    },
-    ("measures", "MeasureType"): {
-        "sid": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-        "trade_movement_code": int,
-        "priority_code": int,
-        "measurement_unit_applicability_code": int,
-        "origin_destination_code": int,
-        "order_number_capture_code": int,
-        "measure_explosion_level": int,
-        "description": str,
-        "measure_type_series": lambda v: MeasureTypeSeries.objects.get(sid=v),
-    },
-    ("commodities", "GoodsNomenclature"): {
-        "sid": int,
-        "item_id": str,
-        "suffix": str,
-        "valid_between_lower": start_date,
-        "valid_between_upper": end_date,
-        "statistical": bool,
-    },
-}
+        return setter
 
 
 class Command(BaseCommand):
@@ -153,13 +127,6 @@ class Command(BaseCommand):
             default=0,
         )
         parser.add_argument(
-            "--tuples",
-            metavar="PREFIX",
-            help="The prefix of column names to turn into a tuple. Specify column names using prefix[0], prefix[1]...",
-            type=str,
-            nargs="+",
-        )
-        parser.add_argument(
             "--dry-run",
             help="Don't commit the import run",
             action="store_const",
@@ -173,7 +140,6 @@ class Command(BaseCommand):
 
         config = apps.get_app_config(options["app"])
         ModelClass = config.get_model(options["model"])
-        profile = PROFILES[(options["app"], options["model"])]
         logger.info(
             "Importing into model %s from sheet %s", ModelClass.__name__, worksheet
         )
@@ -186,18 +152,21 @@ class Command(BaseCommand):
         # Pull out all of the tupes and put them into a dict
         # In alphanumeric order, so that columns will be combined correctly
         keys = options["columns"]
-        tuples = {}
-        for prefix in options["tuples"]:
-            tuples[prefix] = []
-            for key in keys:
-                if key.startswith(prefix):
-                    tuples[prefix].append(key)
-            tuples[prefix].sort()
+        matches = [COLUMN_NAME.search(name).groups() for name in keys]
+        names = [match[0] for match in matches]
+        indexes = [
+            (int(match[1]) if match[1] is not None else None) for match in matches
+        ]
+        fields = [ModelClass._meta.get_field(name) for name in names]
+        transformers = [get_type_transformer(field) for field in fields]
+        setters = [
+            get_type_setter(field, index) for field, index in zip(fields, indexes)
+        ]
 
         num_rows = 0
         with django.db.transaction.atomic():
             workbasket, _ = WorkBasket.objects.get_or_create(
-                title=f"Data import from spreadsheet",
+                title=f"Data import from spreadsheet of {ModelClass.__name__}",
                 author=author,
                 status=workbasket_status,
             )
@@ -211,21 +180,12 @@ class Command(BaseCommand):
                 if num_rows < options["skip_rows"]:
                     continue
 
-                def cell_to_native(column: str, cell: Cell):
-                    return profile[column](cell.value)
+                values = list(map(lambda c: c.value, row))
+                assert len(values) >= len(setters)
 
-                values = map(cell_to_native, keys, row)
-                data = dict(zip(keys, values))
-                if len(data) < len(keys):
-                    raise CommandError(
-                        f"Row {num_rows} did not contain enough columns: expected {len(keys)} but got {len(data)}"
-                    )
-
-                for prefix, tuplekeys in tuples.items():
-                    value = tuple([data[k] for k in tuplekeys])
-                    data[prefix] = value
-                    for key in tuplekeys:
-                        del data[key]
+                data = dict()
+                for transformer, setter, value in zip(transformers, setters, values):
+                    setter(data, transformer(value))
 
                 data["workbasket"] = workbasket
                 data["update_type"] = update_type
