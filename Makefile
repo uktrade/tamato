@@ -98,5 +98,5 @@ docker-test:
 		${PROJECT} sh -c "docker/wait_for_db && python manage.py test -- --cov"
 
 ## build-docs: Build the project documentation
-build-docs:
+build-docs html:
 	@sphinx-build . docs/_build -c docs/ -b html

@@ -108,8 +108,8 @@ jobs:
       uses: ammaraskar/sphinx-action@0.4
       with:
         pre-build-command: "apt-get update -y && apt-get install -y git-core"
-        docs-folder: "docs/"
-        build-command: "sphinx-build -b html . _build"
+        docs-folder: "."
+        build-command: "sphinx-build -b html -c docs/ . _build"
 
     - name: Publish documentation to Github Pages
       uses: peaceiris/actions-gh-pages@v3
