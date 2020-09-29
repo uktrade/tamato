@@ -49,6 +49,7 @@ def test_ce2():
     """
     t = factories.CertificateTypeFactory.create()
     certificate = factories.CertificateFactory.create(certificate_type=t)
+    factories.CertificateFactory.create(sid=certificate.sid)
 
     with pytest.raises(IntegrityError):
         factories.CertificateFactory.create(sid=certificate.sid, certificate_type=t)
