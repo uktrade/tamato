@@ -55,8 +55,8 @@ initial importer:
 
 ::
 
-   1) All records come complete and ready to insert into the database.
-   2) All records come in the correct order.
+1) All records come complete and ready to insert into the database.
+2) All records come in the correct order.
 
 The current importer was designed as a sequential XML parser. It
 extracts each record individually and immediately tries to dispatch it
@@ -72,9 +72,9 @@ pipeline. The three components are as follows:
 
 ::
 
-   1) XML Parser - parses XML data into a python dict.
-   2) Object Nursery - Collects python dicts and stores them until a complete object can be made.
-   3) Object Handler - Fetches python dicts from the nursery and turns them into database objects.
+1) XML Parser - parses XML data into a python dict.
+2) Object Nursery - Collects python dicts and stores them until a complete object can be made.
+3) Object Handler - Fetches python dicts from the nursery and turns them into database objects.
 
 A cache has also been introduced to store the python dicts whilst a
 handler waits for further data.
@@ -164,11 +164,11 @@ The Nursery has 4 core functions:
 
 ::
 
-   1) To receive a python dictionary with a workbasket ID and a unique identifier for the record type (in the case 
-      of the XML parser the unique identifier is the tag name).
-   2) To match these python dictionaries against the handlers responsible for building them into database records.
-   3) To store any records that cannot yet be processed by a handler.
-   4) To fetch a record when it is ready to be processed by a handler.
+1) To receive a python dictionary with a workbasket ID and a unique identifier for the record type (in the case
+  of the XML parser the unique identifier is the tag name).
+2) To match these python dictionaries against the handlers responsible for building them into database records.
+3) To store any records that cannot yet be processed by a handler.
+4) To fetch a record when it is ready to be processed by a handler.
 
 It is important to note that the Nursery does not know when a record is
 ready to be processed or when it needs to be stored. Instead it takes
@@ -300,9 +300,9 @@ solution:
 
 ::
 
-   1) There is no guarantee the dependent data is found within the same XML file being parsed.
-   2) The system is tightly coupled, it would be far harder to adapt to varying model needs.
-   3) The storage is tied to the system memory which may present problems for big inputs.  
+1) There is no guarantee the dependent data is found within the same XML file being parsed.
+2) The system is tightly coupled, it would be far harder to adapt to varying model needs.
+3) The storage is tied to the system memory which may present problems for big inputs.
 
 Sorting the records within the XML
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
