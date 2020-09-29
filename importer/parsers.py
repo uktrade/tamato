@@ -30,6 +30,8 @@ class ElementParser:
 
     Option 1:
 
+    .. code:: python
+
         class ChildElement(ElementParser):
             tag = Tag("child", prefix="ns")
             field = TextElement("field")
@@ -39,6 +41,8 @@ class ElementParser:
             child = ChildElement()
 
     Option 2:
+
+    .. code:: python
 
         class ParentElement(ElementParser):
             tag = Tag("parent", prefix="ns")
@@ -52,10 +56,18 @@ class ElementParser:
 
     When handling XML such as:
 
-        <ns:parent><ns:child id="2"><ns:field>Text</ns:field></ns:child></ns:parent>
+    .. code:: xml
+
+        <ns:parent>
+            <ns:child id="2">
+                <ns:field>Text</ns:field>
+            </ns:child>
+        </ns:parent>
 
     This class will build a JSON object in `self.data` with
     the following structure:
+
+    .. code:: json
 
         {"child": {"id": 2, "field": "Text"}}
 
@@ -86,7 +98,9 @@ class ElementParser:
         field_lookup.update(getattr(self, "_additional_components", {}))
         return field_lookup
 
-    def is_parser_for_element(self, parser: ElementParser, element: etree.Element):
+    def is_parser_for_element(
+        self, parser: ElementParser, element: etree.Element
+    ) -> bool:
         """
         Check if the parser matches the element.
 
@@ -97,12 +111,14 @@ class ElementParser:
 
         Example:
 
-                <oub:additional.code>
-                    <oub:additional.code.sid>00000001</oub:additional.code.sid>
-                    <oub:additional.code.type.id>A</oub:additional.code.type.id>
-                    <oub:additional.code>AAA</oub:additional.code>
-                    <oub:validity.start.date>2021-01-01</oub:validity.start.date>
-                </oub:additional.code>
+        .. code:: xml
+
+            <oub:additional.code>
+                <oub:additional.code.sid>00000001</oub:additional.code.sid>
+                <oub:additional.code.type.id>A</oub:additional.code.type.id>
+                <oub:additional.code>AAA</oub:additional.code>
+                <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+            </oub:additional.code>
 
         In this case matching on tags is not enough and so checking for leaf nodes is also important.
 

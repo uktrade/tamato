@@ -1,6 +1,6 @@
-.. _4-use-django-polymorphic-for-multi-table-inheritance:
+.. _6-use-django-polymorphic-for-multi-table-inheritance:
 
-4. Use Django Polymorphic for Multi-Table Inheritance
+6. Use Django Polymorphic for Multi-Table Inheritance
 =====================================================
 
 Date: 2020-06-12
