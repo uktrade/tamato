@@ -80,6 +80,7 @@ class Certificate(TrackedModel, ValidityMixin):
                 expressions=[
                     ("valid_between", RangeOperators.OVERLAPS),
                     ("sid", RangeOperators.EQUAL),
+                    ("certificate_type", RangeOperators.EQUAL),
                 ],
             ),
         )
