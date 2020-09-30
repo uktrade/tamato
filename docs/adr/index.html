@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architectural Decision Records &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="1. Record architecture decisions" href="0001-record-architecture-decisions.html" />
+    <link rel="prev" title="Project Documentation" href="../project.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="0001-record-architecture-decisions.html" title="1. Record architecture decisions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../project.html" title="Project Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" accesskey="U">Project Documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="architectural-decision-records">
+<h1>Architectural Decision Records<a class="headerlink" href="#architectural-decision-records" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Architectural Decision Records:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html">2. Use pytest-bdd for BDD testing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0003-use-django-rest-framework.html">3. Use Django REST Framework</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0004-xml-export-and-import.html">4. XML Import and Export</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html">5. Use tracked models and workbaskets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html#reasoning">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0006-use-django-polymorphic.html">6. Use Django Polymorphic for Multi-Table Inheritance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html">7. Changes go through a stateful workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0008-simplify-workflow-states.html">8. Simplify workflow states</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html">10. Convert the XML importer to a pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html#status">Status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html#context">Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html#decision">Decision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html#consequences">Consequences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html#alternatives-considered">Alternatives Considered</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html#future-suggestions">Future suggestions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../project.html"
+                        title="previous chapter">Project Documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="0001-record-architecture-decisions.html"
+                        title="next chapter">1. Record architecture decisions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/adr/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="0001-record-architecture-decisions.html" title="1. Record architecture decisions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../project.html" title="Project Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,334 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>The Importer - Handlers &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="The Importer - Taric" href="taric.html" />
+    <link rel="prev" title="The Importer - The Nursery" href="nursery.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="taric.html" title="The Importer - Taric"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="nursery.html" title="The Importer - The Nursery"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">The Importer</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-importer.handlers">
+<span id="the-importer-handlers"></span><h1>The Importer - Handlers<a class="headerlink" href="#module-importer.handlers" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="importer.handlers.BaseHandler">
+<em class="property">class </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">BaseHandler</code><span class="sig-paren">(</span><em class="sig-param">dispatched_object: importer.utils.DispatchedObjectType</em>, <em class="sig-param">nursery: importer.nursery.TariffObjectNursery</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Base class for import handlers.</p>
+<p>Handlers are designed to build objects which are then ready to be entered into the database.
+This effectively takes place in 8 stages:</p>
+<p>Init:
+1) The handler is initialised with the initial data.</p>
+<p>Build:
+2) The handler checks for dependencies and links. If there are none it goes to step 5.
+3) The handler searches for dependencies which may contain extra required data. If any can’t be found it</p>
+<blockquote>
+<div><p>asks to be cached and resolved later, the process stops. If they are found it unifies the data.</p>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>The handler searches for any links (foreign keys) that it needs. If any can’t be found it asks to be
+cached and resolved later, the process stops. If they are found it stores them.</p></li>
+</ol>
+<p>Dispatch:
+5) The handler validates the complete data against the serializer.
+6) The handler runs any pre-save processing, including adding the foreign keys to the validated data.
+7) The handler saves the object to the database.
+8) The handler runs any post-save processing.</p>
+<p>Many models are likely to have some specific requirements and so customisation is a focus within this system.
+But many use cases should also be workable with just the base.
+Most steps within this process can be customised and overridden - every model is likely to have some
+specific custom demands.</p>
+<p>A few examples of different scenarios follow below.</p>
+<p>Simple object, no dependencies or links.</p>
+<p>For very simple objects there should be almost no work to do, assuming the data comes in clean without
+any need for editing. In this case it should be enough to simply define a handler like so:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SimpleObjectHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">SimpleObjectSerializer</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">parsers</span><span class="o">.</span><span class="n">SimpleObjectParser</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span>
+</pre></div>
+</div>
+<p>Any object like this would be immediately processed when run through the nursery as, without any dependencies
+or links, there should be nothing it needs to wait on.</p>
+<p>An object with dependencies:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">DependentModelAHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">DependentModelSerializer</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">DependentModelAParser</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span>
+
+
+<span class="nd">@DependentModelAHandler</span><span class="o">.</span><span class="n">register_dependant</span>
+<span class="k">class</span> <span class="nc">DependentModelBHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+    <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">DependentModelAHandler</span><span class="p">]</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">DependentModelSerializer</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">DependentModelBParser</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span>
+</pre></div>
+</div>
+<p>Dependencies in this case means two pre-existing models have been merged into one. Sadly the data import
+doesn’t account for this and therefore it is expected to receive the complete set of data for this object
+over several records. A handler must therefore be created for each expected record type. All records will
+then be stored in the nursery cache until they can be collected together for processing.</p>
+<p>As dependencies are supposed to all relate to the same model, they must all share the same serializer.</p>
+<p>Dependencies cascade. Consequentially if object A depends on object B, but object B depends on object C,
+then object A will also depend on object C. However, given the nature of the dependencies, it is more
+desirable to have all handlers be explicit about all dependencies they may rely on.</p>
+<p>Dependencies are assigned at class level. Due to the way compilation works this creates issues with
+forward-referencing. To handle this there are two mechanisms for registering dependencies. The first
+is simply a class level dependency list with the dependent classes within them. The latter is with a
+decorator which allows a class to decorate itself - therefore inserting itself into the aforementioned
+dependency list of a pre-existing class.</p>
+<p>With this defined the nursery will collect the data for each dependency. The dependencies can then query
+the nursery to collect all the data. If all the data is found the object is dispatched to the database
+and the nursery removes the relevant data from the cache.</p>
+<p>An object with Foreign Key links.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">LinkedObjectHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+    <span class="n">links</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">LinkToModelA</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;link_to_model_a&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;optional&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">LinkToModelB</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;link_to_model_b&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;optional&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;identifying_fields&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;some_field&quot;</span><span class="p">,</span> <span class="s2">&quot;some_other_model_id&quot;</span><span class="p">)</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_link_to_model_b_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">other_model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SomeOtherModel</span><span class="p">(</span><span class="n">field2</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">some_other_model_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_latest_version</span><span class="p">(</span><span class="n">other_model</span><span class="o">=</span><span class="n">other_model</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Foreign key links are more flexible than dependencies. Whilst dependencies denote records which hold
+part of the data for an object, links denote pre-existing objects which the current object needs to link
+to. The difficulty here is there is no guarantee that the pre-existing object has actually been created
+yet, nor that the object necessarily _needs_ to exist (the foreign key could be nullable).</p>
+<p>Therefore Handlers have the option of adding a <cite>links</cite> attribute, which should be an iterable of <cite>LinksType</cite>
+style dictionaries. This must define two keys:</p>
+<ol class="arabic simple">
+<li><p>model - which is expected to be a <cite>TrackedModel</cite> instance</p></li>
+<li><p>name - a string, which is how the link data will be differentiated from the object data, as well as
+how it will be named in the data when saved to the database. More specifically incoming data for the
+linked field (specifically the models identifying fields) is expected to be prefixed with this name.
+So the parser must define fields with this prefix.</p></li>
+</ol>
+<p>Two other optional keys exist:</p>
+<ol class="arabic simple" start="3">
+<li><p>optional - defines whether a link is optional. If it is optional the object will be saved even if the
+link can’t be found. If it is not optional then the object will be cached until the link can be found.</p></li>
+<li><p>identifying_fields - On occasion the identifying fields from model.identifying_fields may not be
+appropriate, in this case they can be overridden here.</p></li>
+</ol>
+<p>With just these the Handler will automatically try to fetch the linked model with the identifying fields of
+the model (or those given in the link dictionary). Once fetched it will store the data with the given name.
+Once ready to save the links will be added to the object data with the given name and the object will be saved.</p>
+<p>In some cases this is not enough and further customisation is needed when fetching links. An example is a link
+where one of the identifying fields is a foreign key on that linked field (i.e. the linked field itself has
+another link). To allow for this a method can be added to fetch the link appropriately. This method must be named
+<cite>get_{link_name}_link</cite> and accept the arguments <cite>model</cite> and <cite>kwargs</cite>. This must then return whatever object is
+intended to go into the data with the same name as that given to the link.</p>
+<p>All of the above examples can be used together, e.g. a handler can have both dependencies and links.</p>
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.build">
+<code class="sig-name descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Set[bytes]<a class="headerlink" href="#importer.handlers.BaseHandler.build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build up all the data for the object.</p>
+<p>This method co-ordinates the attempts to fetch the dependent data as well as the linked
+data. If at any point one of these steps fails an empty set returns (signifying failure).</p>
+<p>if all steps are deemed successful the object is dispatched to the database automatically.
+On success a set of all the keys for any objects used which may be in the cache is returned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.clean">
+<code class="sig-name descname">clean</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#importer.handlers.BaseHandler.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate the data against the serializer and return the validated data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.dispatch">
+<code class="sig-name descname">dispatch</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; common.models.TrackedModel<a class="headerlink" href="#importer.handlers.BaseHandler.dispatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the data into the database.</p>
+<p>This method initially validates all collected data. If valid it then runs
+some pre-processing before saving. Once saved an opportunity is given for post-processing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.get_generic_link">
+<code class="sig-name descname">get_generic_link</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.get_generic_link" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fallback method if no specific method is found for fetching a link.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.post_save">
+<code class="sig-name descname">post_save</code><span class="sig-paren">(</span><em class="sig-param">obj</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.post_save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Post-processing after the object has been saved to the database.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.pre_save">
+<code class="sig-name descname">pre_save</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em>, <em class="sig-param">links: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#importer.handlers.BaseHandler.pre_save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pre-processing before the object is saved to the database.</p>
+<p>Generally this is used for adding the links to the object (as these cannot
+be easily validated against the serializer).</p>
+<p>Return the final dataset to be used when saving to the database.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.register_dependant">
+<em class="property">classmethod </em><code class="sig-name descname">register_dependant</code><span class="sig-paren">(</span><em class="sig-param">dependant: Type[importer.handlers.BaseHandler]</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.register_dependant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allow a handler to retrospectively assign itself to another handlers list of dependencies.</p>
+<p>This solves the issue of forward referencing - where a class cannot reference another class
+before that class has been defined.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.resolve_dependencies">
+<code class="sig-name descname">resolve_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#importer.handlers.BaseHandler.resolve_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search the cache for all object dependencies and attempt to resolve them.</p>
+<p>Previously found objects, which are dependent on the current object, should be
+stored in the cache. This method loops over the current objects dependencies and
+attempts to extract them from the cache. It then also searches for the dependencies
+of the extracted objects.</p>
+<p>All found dependencies are then merged into the current objects data. If at any point
+a dependency is not found the method returns False - to signify the object cannot be resolved.
+If all dependencies are found the method returns True.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.resolve_links">
+<code class="sig-name descname">resolve_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#importer.handlers.BaseHandler.resolve_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract data specific to links and use this to search the database for the relevant objects.</p>
+<p>Once found attach the object to the <cite>resolved_links</cite> dictionary.</p>
+<p>If a non-optional object can’t be found return False. This signifies the links cannot be resolved.
+If all non-optional objects are found then return True.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.serialize">
+<code class="sig-name descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; importer.utils.DispatchedObjectType<a class="headerlink" href="#importer.handlers.BaseHandler.serialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a serializable dict of the object to be stored in the cache. Should hold all the
+necessary data required to rebuild the object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="importer.handlers.BaseHandlerMeta">
+<em class="property">class </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">BaseHandlerMeta</code><a class="headerlink" href="#importer.handlers.BaseHandlerMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>BaseHandler Metaclass to add validation and registration of each new Handler class.</p>
+<p>Handlers have relatively strict requirements for them to function.</p>
+<p>Firstly there are two required attributes:</p>
+<ol class="arabic simple">
+<li><p>“tag” - a string which is what matches the handler against the incoming data.</p></li>
+<li><p>“serializer_class” - a ModelSerializer which is used to validate and create the database object.</p></li>
+</ol>
+<p>Without these attributes the class cannot function properly. To ensure these are defined the metaclass
+checks for their existence and type. If they aren’t properly defined then an error is raised at compile
+time (i.e. on import).</p>
+<p>The second requirement is that handlers need to be attached to the nursery. This is so that the nursery
+can match them against the incoming data. To accommodate this all handlers are automatically registered
+with the nursery class once validated. This reduces boilerplate code.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="importer.handlers.MismatchedSerializerError">
+<em class="property">exception </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">MismatchedSerializerError</code><a class="headerlink" href="#importer.handlers.MismatchedSerializerError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="nursery.html"
+                        title="previous chapter">The Importer - The Nursery</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="taric.html"
+                        title="next chapter">The Importer - Taric</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/importer/handlers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="taric.html" title="The Importer - Taric"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="nursery.html" title="The Importer - The Nursery"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >The Importer</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

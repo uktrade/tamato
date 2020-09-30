@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>The Importer - The Nursery &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="The Importer - Handlers" href="handlers.html" />
+    <link rel="prev" title="The Importer - Parsers and Namespaces" href="parsers_and_namespaces.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="handlers.html" title="The Importer - Handlers"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="parsers_and_namespaces.html" title="The Importer - Parsers and Namespaces"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">The Importer</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-importer.nursery">
+<span id="the-importer-the-nursery"></span><h1>The Importer - The Nursery<a class="headerlink" href="#module-importer.nursery" title="Permalink to this headline">¶</a></h1>
+<dl class="exception">
+<dt id="importer.nursery.HandlerDoesNotExistError">
+<em class="property">exception </em><code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">HandlerDoesNotExistError</code><a class="headerlink" href="#importer.nursery.HandlerDoesNotExistError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="importer.nursery.TariffObjectNursery">
+<em class="property">class </em><code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">TariffObjectNursery</code><span class="sig-paren">(</span><em class="sig-param">cache: importer.cache.ObjectCacheFacade</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides an interface between raw data and the Django modelling system for the tariff.</p>
+<p>The primary function is to take a raw python object (generally a dictionary) and convert
+it into a row in the database via the Django models.</p>
+<p>This layer of separation comes from the fact that often, when receiving data, the system
+will receive incomplete data objects which depend on data received later. As a result
+this “Nursery” is designed to store and look after incomplete data objects until it can
+be matched with the rest of the data and then dispatched to the database.</p>
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.get_handler">
+<code class="sig-name descname">get_handler</code><span class="sig-paren">(</span><em class="sig-param">tag: str</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find a handler which matches the given tag. If one is not found throw an error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.register_handler">
+<em class="property">classmethod </em><code class="sig-name descname">register_handler</code><span class="sig-paren">(</span><em class="sig-param">handler: Type[BaseHandler]</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.register_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a handler to the TariffObjectNursery class.</p>
+<p>The nursery needs to be able to map all handlers against incoming data. To do this the
+nursery needs a map of handlers. This method allows handlers to register themselves so
+that they can be added to the internal nursery map - to be used when processing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.submit">
+<code class="sig-name descname">submit</code><span class="sig-paren">(</span><em class="sig-param">obj: importer.utils.DispatchedObjectType</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.submit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entrypoint for the nursery.</p>
+<p>Handles whether an object can be dispatched to the database or, if some pieces of data
+are missing, cached to await new data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="importer.nursery.get_nursery">
+<code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">get_nursery</code><span class="sig-paren">(</span><em class="sig-param">cache=None</em><span class="sig-paren">)</span> &#x2192; importer.nursery.TariffObjectNursery<a class="headerlink" href="#importer.nursery.get_nursery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience function for building a nursery object.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parsers_and_namespaces.html"
+                        title="previous chapter">The Importer - Parsers and Namespaces</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="handlers.html"
+                        title="next chapter">The Importer - Handlers</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/importer/nursery.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="handlers.html" title="The Importer - Handlers"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="parsers_and_namespaces.html" title="The Importer - Parsers and Namespaces"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >The Importer</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

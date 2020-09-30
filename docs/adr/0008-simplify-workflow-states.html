@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>8. Simplify workflow states &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="10. Convert the XML importer to a pipeline" href="0010-convert-the-importer-to-a-pipeline.html" />
+    <link rel="prev" title="7. Changes go through a stateful workflow" href="0007-changes-go-through-a-stateful-workflow.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="0010-convert-the-importer-to-a-pipeline.html" title="10. Convert the XML importer to a pipeline"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="0007-changes-go-through-a-stateful-workflow.html" title="7. Changes go through a stateful workflow"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Architectural Decision Records</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="simplify-workflow-states">
+<span id="id1"></span><h1>8. Simplify workflow states<a class="headerlink" href="#simplify-workflow-states" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2020-08-05</p>
+<div class="section" id="status">
+<h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
+<p>Approved</p>
+</div>
+<div class="section" id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>In <a class="reference external" href="./0007-changes-go-through-a-stateful-workflow">a previous ADR</a>
+the concept of a stateful workflow and defined associated workbasket
+states that described it was introduced. There was not yet have a full
+understanding of the purpose of many of the states or the exact
+interaction model with CDS.</p>
+<p>Learning more about the two systems has shown that there are many states
+present in the original Trade Tariff Management (TTM) system that are
+not used or do not appear to have a behavioural impact on the system.
+TTM also represents workbaskets at a variety of now-redundant states,
+including “creating” and “editing” as well as both “approved” and
+“uploaded” states. These have no impact on the final outputs. There are
+also cases where manual steps have been introduced between states which
+only serve to slow down the process.</p>
+<p>There is a continuing motivation to simplify the tariff for ease of use
+and understanding. To that end much work has been carried out to merge,
+adapt or even remove models and systems which are ill designed or serve
+no purpose (e.g. moving <code class="docutils literal notranslate"><span class="pre">GoodsNomenclature</span></code> to be represented in a
+true hierarchical tree). It therefore stands to reason that the
+workbasket states, which form a key part of the user experience, should
+be reduced to only those necessary for the product to function.</p>
+</div>
+<div class="section" id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
+<p>The following states for workbaskets will be adopted:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 87%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>State</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>EDITING</p></td>
+<td><p>Workbasket can still be edited.</p></td>
+</tr>
+<tr class="row-odd"><td><p>PROPOSED</p></td>
+<td><p>Submitted for approval, pending response from an approver.</p></td>
+</tr>
+<tr class="row-even"><td><p>APPROVED</p></td>
+<td><p>Approved and scheduled for sending to CDS.</p></td>
+</tr>
+<tr class="row-odd"><td><p>SENT</p></td>
+<td><p>Sent to CDS and waiting for response.</p></td>
+</tr>
+<tr class="row-even"><td><p>PUBLISHED</p></td>
+<td><p>Received a validation receipt from CDS systems.</p></td>
+</tr>
+<tr class="row-odd"><td><p>ERRORED</p></td>
+<td><p>Sent to CDS, but CDS returned an invalid data receipt.</p></td>
+</tr>
+</tbody>
+</table>
+<p>The interactions between these states are simpler – once approved there
+is a single happy path with branches to a single final state for the
+various unhappy paths. This is represented in the directed graph:</p>
+<div class="highlight-dot notranslate"><div class="highlight"><pre><span></span>digraph WorkflowStates {
+  editing [group=happy]
+  editing -&gt; proposed;
+  editing -&gt; archived;
+  archived -&gt; editing;
+
+  proposed [group=happy]
+  proposed -&gt; approved;
+  proposed -&gt; editing;
+
+  approved [group=happy]
+  approved -&gt; sent;
+
+  sent [group=happy]
+  sent -&gt; published;
+  sent -&gt; errored;
+
+  published [group=happy]
+}
+</pre></div>
+</div>
+<p><img alt="Simplified States" src="../../_images/simplified-states.png" /></p>
+</div>
+<div class="section" id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
+<p>As before, workbaskets that end up in a final state on the unhappy path
+will need to be cloned before they can be submitted again. This should
+not have major consequence as most data will be decided in advance and
+is unlikely to be rejected by an approver. Validation routines should
+also catch most errors that would cause CDS to reject the transaction.</p>
+<p>There is no need for a rejected state and the data can go straight back
+to be edited if not approved because it has not been given a transaction
+ID yet. If there needs to be a more powerful editing experience (where
+past proposed changes can be viewed) a rejected state as another final
+state from the proposed state can be added.</p>
+<p>There is still not a complete understanding of the requirements of the
+CDS modules if data has errored. If in some cases transactions must be
+submitted with the same ID there may have to be additional complexity to
+handle this. It is worth noting that this is <strong>not</strong> supported by TTM,
+which always numbers transactions sequentially in an envelope starting
+from 1.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">8. Simplify workflow states</a><ul>
+<li><a class="reference internal" href="#status">Status</a></li>
+<li><a class="reference internal" href="#context">Context</a></li>
+<li><a class="reference internal" href="#decision">Decision</a></li>
+<li><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="0007-changes-go-through-a-stateful-workflow.html"
+                        title="previous chapter">7. Changes go through a stateful workflow</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="0010-convert-the-importer-to-a-pipeline.html"
+                        title="next chapter">10. Convert the XML importer to a pipeline</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/adr/0008-simplify-workflow-states.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="0010-convert-the-importer-to-a-pipeline.html" title="10. Convert the XML importer to a pipeline"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="0007-changes-go-through-a-stateful-workflow.html" title="7. Changes go through a stateful workflow"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Architectural Decision Records</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

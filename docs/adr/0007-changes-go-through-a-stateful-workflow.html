@@ -1,0 +1,286 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>7. Changes go through a stateful workflow &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="8. Simplify workflow states" href="0008-simplify-workflow-states.html" />
+    <link rel="prev" title="6. Use Django Polymorphic for Multi-Table Inheritance" href="0006-use-django-polymorphic.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="0008-simplify-workflow-states.html" title="8. Simplify workflow states"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="0006-use-django-polymorphic.html" title="6. Use Django Polymorphic for Multi-Table Inheritance"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Architectural Decision Records</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="changes-go-through-a-stateful-workflow">
+<span id="id1"></span><h1>7. Changes go through a stateful workflow<a class="headerlink" href="#changes-go-through-a-stateful-workflow" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2020-06-02</p>
+<div class="section" id="status">
+<h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
+<p>Approved, partially superseded by
+<a class="reference external" href="./0008-simplify-workflow-states">ADR-0008</a>.</p>
+</div>
+<div class="section" id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>When a change is made to data in the Tariff Management Tool there are
+various actions that must take place before it becomes live in border
+systems. E.g.</p>
+<ol class="arabic simple">
+<li><p>A user makes changes.</p></li>
+<li><p>The change must be approved by an authorised user.</p></li>
+<li><p>The change must be exported as XML and sent to CDS.</p></li>
+<li><p>CDS systems must approve the change and return a receipt of validity.</p></li>
+<li><p>The changes are published.</p></li>
+</ol>
+<p>We must keep track of the position of a change in this workflow.
+Previous ADRs have introduced <a class="reference external" href="./0004-use-model-tracking-and-workbaskets">a Finite State Machine style
+system</a> for workbaskets
+and a <a class="reference external" href="./0005-use-django-polymorphic">live/draft flags style system</a>
+for tracked models.</p>
+<p>We have realised that there are two concepts of “liveness” that arise
+because we must keep track of changes to a TARIC-style database, which
+itself is also a versioning system:</p>
+<ul class="simple">
+<li><p><strong>Database liveness</strong> which is where a row is the most current
+version of a certain domain object.</p></li>
+<li><p><strong>Operational liveness</strong> which is where a domain object is actually
+being applied at the border.</p></li>
+</ul>
+<p>Database liveness is dependent on context. Sometimes we will need to see
+the latest version of something based on a workbasket, or we will need
+to take into account what has been approved and sent to CDS, or only
+what has been published. So the mechanism which selects which are the
+“most current” rows must vary based on the state of the workbasket, and
+not just a single flag.</p>
+<p>Once exposed transactions must be immutable so as to power a
+change-based API. This means that once a user can download a transaction
+it cannot be changed, thus the user never has to download it again. We
+need to take into account that workbaskets will not be approved in
+order, and CDS may error some transactions and not others, again not in
+order.</p>
+<p>We should also retain the history of all approved transactions which
+have been sent to CDS as a minimum. This is for both audit and debugging
+purposes.</p>
+</div>
+<div class="section" id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
+<p><img alt="Schema of TrackedModels and Workbaskets" src="../../_images/tracked_model_workbasket_schema_updated.png" /></p>
+<p>We will adopt the terms “database-live” and “operationally-live” as per
+the definitions above in future documentation.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">TrackedModel</span></code> will no longer have a <code class="docutils literal notranslate"><span class="pre">live</span></code> or <code class="docutils literal notranslate"><span class="pre">draft</span></code> flag –
+instead for this we use the state of the workbasket.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">predecessor</span></code> column on the TrackedModel will be nullable and this
+is (along with the <code class="docutils literal notranslate"><span class="pre">update_type</span></code>) is how we know if a record is
+created or updated.</p>
+<p>To get the database-live rows, we can perform a query that selects only
+the model without a <code class="docutils literal notranslate"><span class="pre">predecessor</span></code> for a given <code class="docutils literal notranslate"><span class="pre">sid</span></code>. With suitable
+indexes this has been shown to be fast. We can control the context of
+the query by joining to the <code class="docutils literal notranslate"><span class="pre">WorkBasket</span></code> model and filtering based on
+the <code class="docutils literal notranslate"><span class="pre">state</span></code>.</p>
+<p>We will adopt the states as found in the <a class="reference external" href="https://github.com/uktrade/trade-tariff-management/blob/master/app/models/workbaskets/workbasket.rb#L31">existing management
+software</a>
+because we don’t yet know enough to remove states that we don’t think
+are needed.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 47%" />
+<col style="width: 53%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>State</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NEW_IN_PROGRESS</p></td>
+<td><p>Newly started, but not yet
+submitted into workflow</p></td>
+</tr>
+<tr class="row-odd"><td><p>EDITING</p></td>
+<td><p>Existing item, already on CDS,
+being edited but not yet submitted
+into workflow</p></td>
+</tr>
+<tr class="row-even"><td><p>AWAITING_APPROVAL</p></td>
+<td><p>Submitted for approval, pending
+response from Approver</p></td>
+</tr>
+<tr class="row-odd"><td><p>APPROVAL_REJECTED</p></td>
+<td><p>Was not approved, returned to
+submitter</p></td>
+</tr>
+<tr class="row-even"><td><p>READY_FOR_EXPORT</p></td>
+<td><p>Approved but not yet scheduled for
+sending to CDS</p></td>
+</tr>
+<tr class="row-odd"><td><p>AWAITING_CDS_UPLOAD_CREATE_NEW</p></td>
+<td><p>New item approved and scheduled
+for sending to CDS</p></td>
+</tr>
+<tr class="row-even"><td><p>AWAITING_CDS_UPLOAD_EDIT</p></td>
+<td><p>Edited item approved and scheduled
+for sending to CDS, existing
+version will be end-dated and
+replaced</p></td>
+</tr>
+<tr class="row-odd"><td><p>AWAITING_CDS_UPLOAD_OVERWRITE</p></td>
+<td><p>Edited item approved and scheduled
+for sending to CDS, existing
+version will be updated</p></td>
+</tr>
+<tr class="row-even"><td><p>AWAITING_CDS_UPLOAD_DELETE</p></td>
+<td><p>Delete instruction approved and
+scheduled for sending to CDS</p></td>
+</tr>
+<tr class="row-odd"><td><p>SENT_TO_CDS</p></td>
+<td><p>Sent to CDS, waiting for response</p></td>
+</tr>
+<tr class="row-even"><td><p>SENT_TO_CDS_DELETE</p></td>
+<td><p>Delete instruction sent to CDS,
+waiting for response</p></td>
+</tr>
+<tr class="row-odd"><td><p>PUBLISHED</p></td>
+<td><p>On CDS, may or may not have taken
+effect</p></td>
+</tr>
+<tr class="row-even"><td><p>CDS_ERROR</p></td>
+<td><p>Sent to CDS, but CDS returned an
+error</p></td>
+</tr>
+</tbody>
+</table>
+<p>The workbasket contains a <code class="docutils literal notranslate"><span class="pre">transaction_id</span></code> that is set when the state
+changes from <code class="docutils literal notranslate"><span class="pre">EDITING</span></code> to <code class="docutils literal notranslate"><span class="pre">AWAITING_APPROVAL</span></code>, and the states
+<code class="docutils literal notranslate"><span class="pre">APPROVAL_REJECTED</span></code>, <code class="docutils literal notranslate"><span class="pre">CDS_ERROR</span></code> and <code class="docutils literal notranslate"><span class="pre">PUBLISHED</span></code> are all final.
+Sending a workbasket back to the editing stage is done by cloning the
+workbasket and its data.</p>
+</div>
+<div class="section" id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
+<p>Workbaskets are only given a <code class="docutils literal notranslate"><span class="pre">transaction_id</span></code> when they are approved
+and start on their journey to being published. This means transactions
+will always have an increasing ID, allowing external users to remember a
+single transaction ID to request more data next time.</p>
+<p>Transactions on the external interfaces will be immutable and sequential
+but discontinuous – there will be some blank transactions representing
+transactions that were rejected or errored.</p>
+<p>This assumes that HMRC don’t require resubmission of failed transactions
+and that CDS will process all of the things we send it in a single
+envelope (so that it’s not possible to get transaction 2 in the
+<code class="docutils literal notranslate"><span class="pre">PUBLISHED</span></code> state and an earlier transaction 1 in the <code class="docutils literal notranslate"><span class="pre">SENT_TO_CDS</span></code>
+state – but CDS <em>can</em> still safely error transactions out of order).</p>
+<p>If either of these assumptions is false, we can re-use transaction IDs
+internally if required and/or have separate IDs for published
+transactions on the external interfaces.</p>
+<p>This does mean it will be hard to implement database constraints looking
+at a single table because there’s no mechanism in the object table to
+detect which row is current, so we will implement these in software.
+This is for good reason as there are going to have to be some in
+software anyway and it also means that we can run them across different
+contexts e.g. the database-live rows + a certain workbasket.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">7. Changes go through a stateful workflow</a><ul>
+<li><a class="reference internal" href="#status">Status</a></li>
+<li><a class="reference internal" href="#context">Context</a></li>
+<li><a class="reference internal" href="#decision">Decision</a></li>
+<li><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="0006-use-django-polymorphic.html"
+                        title="previous chapter">6. Use Django Polymorphic for Multi-Table Inheritance</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="0008-simplify-workflow-states.html"
+                        title="next chapter">8. Simplify workflow states</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/adr/0007-changes-go-through-a-stateful-workflow.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="0008-simplify-workflow-states.html" title="8. Simplify workflow states"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="0006-use-django-polymorphic.html" title="6. Use Django Polymorphic for Multi-Table Inheritance"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Architectural Decision Records</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>
