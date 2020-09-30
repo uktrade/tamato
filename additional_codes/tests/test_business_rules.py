@@ -225,7 +225,7 @@ def test_ACN5_(date_ranges):
         type=factories.AdditionalCodeTypeFactory(valid_between=date_ranges.big),
     )
     factories.AdditionalCodeDescriptionFactory(
-        described_additional_code=ac, valid_between=date_ranges.normal_first_half
+        described_additional_code=ac, valid_between=date_ranges.starts_with_normal
     )
 
     with pytest.raises(ValidationError):

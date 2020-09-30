@@ -13,8 +13,7 @@ scenarios("features/detail-footnotes.feature")
 
 @pytest.fixture
 @when("I select footnote NC000")
-def footnote_detail(client, footnote_NC000, freezer):
-    freezer.move_to("2021-01-01")
+def footnote_detail(client, footnote_NC000):
     return client.get(footnote_NC000.get_url())
 
 

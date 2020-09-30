@@ -8,6 +8,7 @@ from typing import Dict
 from typing import Type
 
 import pytest
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -186,73 +187,101 @@ def validate_taric_import(
     return decorator
 
 
+NOW = datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
 class Dates:
     normal = DateTimeTZRange(
-        datetime(2021, 1, 1, tzinfo=UTC),
-        datetime(2021, 2, 1, tzinfo=UTC),
+        NOW,
+        NOW + relativedelta(months=+1),
     )
     earlier = DateTimeTZRange(
-        datetime(2020, 1, 1, tzinfo=UTC),
-        datetime(2020, 2, 1, tzinfo=UTC),
+        NOW + relativedelta(years=-1),
+        NOW + relativedelta(years=-1, months=+1),
     )
     later = DateTimeTZRange(
-        datetime(2022, 2, 2, tzinfo=UTC),
-        datetime(2022, 3, 1, tzinfo=UTC),
+        NOW + relativedelta(years=+1, months=+1, days=+1),
+        NOW + relativedelta(years=+1, months=+2),
     )
     big = DateTimeTZRange(
-        datetime(2019, 1, 1, tzinfo=UTC),
-        datetime(2023, 1, 2, tzinfo=UTC),
+        NOW + relativedelta(years=-2),
+        NOW + relativedelta(years=+2, days=+1),
     )
     adjacent_earlier = DateTimeTZRange(
-        datetime(2020, 12, 1, tzinfo=UTC),
-        datetime(2020, 12, 31, tzinfo=UTC),
+        NOW + relativedelta(months=-1),
+        NOW + relativedelta(days=-1),
     )
     adjacent_later = DateTimeTZRange(
-        datetime(2021, 2, 1, tzinfo=UTC),
-        datetime(2021, 3, 1, tzinfo=UTC),
+        NOW + relativedelta(months=+1),
+        NOW + relativedelta(months=+2),
+    )
+    adjacent_even_later = DateTimeTZRange(
+        NOW + relativedelta(months=+2, days=+1),
+        NOW + relativedelta(months=+3),
     )
     adjacent_later_big = DateTimeTZRange(
-        datetime(2021, 2, 1, tzinfo=UTC),
-        datetime(2023, 3, 1, tzinfo=UTC),
+        NOW + relativedelta(months=+1),
+        NOW + relativedelta(years=+2, months=+2),
     )
     overlap_normal = DateTimeTZRange(
-        datetime(2021, 1, 15, tzinfo=UTC),
-        datetime(2022, 2, 15, tzinfo=UTC),
+        NOW + relativedelta(days=+14),
+        NOW + relativedelta(days=+14, months=+1, years=+1),
     )
     overlap_normal_earlier = DateTimeTZRange(
-        datetime(2020, 12, 15, tzinfo=UTC),
-        datetime(2021, 1, 15, tzinfo=UTC),
+        NOW + relativedelta(months=-1, days=+14),
+        NOW + relativedelta(days=+14),
     )
     overlap_big = DateTimeTZRange(
-        datetime(2022, 1, 1, tzinfo=UTC),
-        datetime(2024, 1, 3, tzinfo=UTC),
+        NOW + relativedelta(years=+1),
+        NOW + relativedelta(years=+3, days=+2),
     )
     after_big = DateTimeTZRange(
-        datetime(2024, 2, 1, tzinfo=UTC),
-        datetime(2024, 3, 1, tzinfo=UTC),
+        NOW + relativedelta(years=+3, months=+1),
+        NOW + relativedelta(years=+3, months=+2),
     )
     backwards = DateTimeTZRange(
-        datetime(2021, 2, 1, tzinfo=UTC),
-        datetime(2021, 1, 2, tzinfo=UTC),
+        NOW + relativedelta(months=+1),
+        NOW + relativedelta(days=+1),
     )
     starts_with_normal = DateTimeTZRange(
-        datetime(2021, 1, 1, tzinfo=UTC),
-        datetime(2021, 1, 15, tzinfo=UTC),
+        NOW,
+        NOW + relativedelta(days=+14),
     )
     ends_with_normal = DateTimeTZRange(
-        datetime(2021, 1, 15, tzinfo=UTC),
-        datetime(2021, 2, 1, tzinfo=UTC),
+        NOW + relativedelta(days=+14),
+        NOW + relativedelta(months=+1),
     )
     current = DateTimeTZRange(
-        datetime(2020, 8, 1, tzinfo=UTC) - timedelta(weeks=4),
-        datetime(2020, 8, 1, tzinfo=UTC) + timedelta(weeks=4),
+        NOW + relativedelta(weeks=-4),
+        NOW + relativedelta(weeks=+4),
     )
     future = DateTimeTZRange(
-        datetime(2020, 8, 1, tzinfo=UTC) + timedelta(weeks=10),
-        datetime(2020, 8, 1, tzinfo=UTC) + timedelta(weeks=20),
+        NOW + relativedelta(weeks=+10),
+        NOW + relativedelta(weeks=+20),
     )
-    no_end = DateTimeTZRange(datetime(2021, 1, 1, tzinfo=UTC), None)
+    no_end = DateTimeTZRange(NOW, None)
     normal_first_half = DateTimeTZRange(
-        datetime(2021, 1, 1, tzinfo=UTC),
-        datetime(2021, 1, 15, tzinfo=UTC),
+        NOW,
+        NOW + relativedelta(days=+14),
     )
+
+    @classmethod
+    def short_before(cls, dt):
+        return DateTimeTZRange(
+            dt + relativedelta(months=-1),
+            dt + relativedelta(days=-14),
+        )
+
+    @classmethod
+    def medium_before(cls, dt):
+        return DateTimeTZRange(
+            dt + relativedelta(months=-1),
+            dt + relativedelta(days=-1),
+        )
+
+    @classmethod
+    def no_end_before(cls, dt):
+        return DateTimeTZRange(
+            dt + relativedelta(months=-1),
+            None,
+        )

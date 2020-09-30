@@ -169,18 +169,12 @@ def test_certificate_description_period_must_be_adjacent_to_predecessor(date_ran
         sid=predecessor.sid,
         predecessor=predecessor,
         described_certificate=predecessor.described_certificate,
-        valid_between=DateTimeTZRange(
-            datetime(2021, 2, 1, tzinfo=timezone.utc),
-            datetime(2021, 3, 1, tzinfo=timezone.utc),
-        ),
+        valid_between=date_ranges.adjacent_later,
     )
     with pytest.raises(ValidationError):
         factories.CertificateDescriptionFactory(
             sid=predecessor.sid,
             predecessor=predecessor,
             described_certificate=predecessor.described_certificate,
-            valid_between=DateTimeTZRange(
-                datetime(2021, 3, 2, tzinfo=timezone.utc),
-                datetime(2021, 4, 1, tzinfo=timezone.utc),
-            ),
+            valid_between=date_ranges.adjacent_even_later,
         )
