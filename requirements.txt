@@ -23,7 +23,6 @@ pytest
 pytest-bdd
 pytest-cov
 pytest-django
-pytest-freezegun
 pytest-mock
 sentry-sdk
 sphinx

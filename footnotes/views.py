@@ -72,11 +72,7 @@ class FootnoteMixin:
 
 class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, generic.DetailView):
     template_name = "footnotes/detail.jinja"
-
-    @property
-    def queryset(self):
-        # lazy evaluation to allow freezegun to work
-        return models.Footnote.objects.current()
+    queryset = models.Footnote.objects.current()
 
 
 class FootnoteUpdate(FootnoteMixin, DraftUpdateView):

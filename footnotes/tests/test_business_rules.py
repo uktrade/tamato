@@ -118,7 +118,7 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
         footnote_type=factories.FootnoteTypeFactory(valid_between=date_ranges.big),
     )
     factories.FootnoteDescriptionFactory(
-        described_footnote=footnote, valid_between=date_ranges.normal_first_half
+        described_footnote=footnote, valid_between=date_ranges.starts_with_normal
     )
 
     with pytest.raises(ValidationError):
