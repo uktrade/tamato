@@ -8,20 +8,25 @@ from typing import Optional
 
 import django.db
 import pytz
-import settings
 import xlrd
-from common.models import ShortDescription
-from common.validators import UpdateType
 from django.apps import apps
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields.ranges import DateTimeRangeField
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
+from django.db.models.fields import BooleanField
 from django.db.models.fields import CharField
 from django.db.models.fields import Field
 from django.db.models.fields import IntegerField
+from django.db.models.fields import PositiveIntegerField
+from django.db.models.fields import PositiveSmallIntegerField
 from django.db.models.fields.related import ForeignKey
+
+import settings
+from common.models import NumericSID
+from common.models import ShortDescription
+from common.validators import UpdateType
 from workbaskets.models import Transaction
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
@@ -50,10 +55,12 @@ def blank(blank: bool, transformer: Transformer) -> Transformer:
 
 
 def get_type_transformer(field: Field) -> Transformer:
-    if type(field) is CharField or type(field) is ShortDescription:
+    if type(field) in [CharField, ShortDescription]:
         return blank(field.blank, str)
-    if type(field) is IntegerField:
+    if type(field) in [IntegerField, PositiveIntegerField, PositiveSmallIntegerField, NumericSID]:
         return blank(field.blank, int)
+    if type(field) is BooleanField:
+        return blank(field.blank, bool)
     if type(field) is DateTimeRangeField:
         return blank(True, date)
     if type(field) is ForeignKey:
@@ -141,7 +148,7 @@ class Command(BaseCommand):
         config = apps.get_app_config(options["app"])
         ModelClass = config.get_model(options["model"])
         logger.info(
-            "Importing into model %s from sheet %s", ModelClass.__name__, worksheet
+            "Importing into model %s from sheet %s", ModelClass.__name__, worksheet.name
         )
 
         workbasket_status = WorkflowStatus.PUBLISHED
