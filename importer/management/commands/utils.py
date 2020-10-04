@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from datetime import timedelta
 from itertools import combinations
+from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -38,6 +39,10 @@ def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return min(present)
     else:
         return None
+
+
+def blank(value: Any, convert: Callable[[Any], TypeVar("T")]) -> Optional[TypeVar("T")]:
+    return None if value == "" else convert(value)
 
 
 class NomenclatureTreeCollector(Generic[Row]):
