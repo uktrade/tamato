@@ -109,7 +109,7 @@ jobs:
       with:
         pre-build-command: |
           apt-get update -y &&
-          apt-get install -y git-core libxml2-dev libxslt1-dev
+          apt-get install -y git-core python3-lxml
         docs-folder: "."
         build-command: "sphinx-build -b html -c docs/ . _build"
 
