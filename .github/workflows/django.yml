@@ -107,7 +107,7 @@ jobs:
     - name: Build documentation
       uses: ammaraskar/sphinx-action@0.4
       with:
-        pre-build-command: "apt-get update -y && apt-get install -y git-core python3-lxml"
+        pre-build-command: "apt-get update -y && apt-get install -y git-core python-dev build-essential libxml2-dev libxslt1-dev"
         docs-folder: "."
         build-command: "sphinx-build -b html -c docs/ . _build"
 
