@@ -224,14 +224,17 @@ class EnvelopeSerializer:
         )
 
     def render_transaction(self, models: List[TrackedModel]) -> None:
-        self.output.write(
-            render_to_string(
-                template_name="workbaskets/taric/transaction.xml",
-                context={
-                    "tracked_models": map(self.serializer.to_representation, models),
-                    "transaction_id": self.transaction_counter(),
-                    "counter_generator": counter_generator,
-                    "message_counter": self.message_counter,
-                },
+        if any(models):
+            self.output.write(
+                render_to_string(
+                    template_name="workbaskets/taric/transaction.xml",
+                    context={
+                        "tracked_models": map(
+                            self.serializer.to_representation, models
+                        ),
+                        "transaction_id": self.transaction_counter(),
+                        "counter_generator": counter_generator,
+                        "message_counter": self.message_counter,
+                    },
+                )
             )
-        )
