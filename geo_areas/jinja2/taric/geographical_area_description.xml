@@ -1,6 +1,14 @@
 {% from "macros/record.xml" import standard_record %}
 {% from "macros/record.xml" import base_record %}
 
+{% call base_record(message_counter(), record.period_record_code, record.period_subrecord_code, sequence(), transaction_id, record.update_type) %}
+    <oub:geographical.area.description.period>
+        <oub:geographical.area.description.period.sid>{{ record.sid }}</oub:geographical.area.description.period.sid>
+        <oub:geographical.area.sid>{{ record.area.sid }}</oub:geographical.area.sid>
+        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+        <oub:geographical.area.id>{{ record.area.area_id }}</oub:geographical.area.id>
+    </oub:geographical.area.description.period>
+{% endcall %}
 {% call standard_record(message_counter(), sequence(), transaction_id, record) %}
     <oub:geographical.area.description>
         <oub:geographical.area.description.period.sid>{{ record.sid }}</oub:geographical.area.description.period.sid>
@@ -11,12 +19,4 @@
         <oub:description>{{ record.description}}</oub:description>
         {% endif %}
     </oub:geographical.area.description>
-{% endcall %}
-{% call base_record(message_counter(), record.period_record_code, record.period_subrecord_code, sequence(), transaction_id, record.update_type) %}
-    <oub:geographical.area.description.period>
-        <oub:geographical.area.description.period.sid>{{ record.sid }}</oub:geographical.area.description.period.sid>
-        <oub:geographical.area.sid>{{ record.area.sid }}</oub:geographical.area.sid>
-        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
-        <oub:geographical.area.id>{{ record.area.area_id }}</oub:geographical.area.id>
-    </oub:geographical.area.description.period>
 {% endcall %}

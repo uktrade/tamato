@@ -39,6 +39,7 @@ def goods_nomenclature_relation_test(
             "origin": origin,
             "valid_between": date_ranges.adjacent_later,
         },
+        check_order=False,
     )
     def run_test(*_args, xml=None):
         element = xml.find(relation_name, xml.nsmap)

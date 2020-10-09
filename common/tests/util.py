@@ -109,7 +109,9 @@ def generate_test_import_xml(obj: dict) -> StringIO:
     return StringIO(xml)
 
 
-def validate_taric_xml(factory=None, instance=None, factory_kwargs=None):
+def validate_taric_xml(
+    factory=None, instance=None, factory_kwargs=None, check_order=True
+):
     def decorator(func):
         def wraps(api_client, taric_schema, approved_workbasket, *args, **kwargs):
             if not factory and not instance:
@@ -136,6 +138,19 @@ def validate_taric_xml(factory=None, instance=None, factory_kwargs=None):
             taric_schema.validate(xml)
 
             assert not taric_schema.error_log, f"XML errors: {taric_schema.error_log}"
+
+            if check_order:
+                last_code = "00000"
+                for record in xml.findall(".//record", namespaces=xml.nsmap):
+                    record_code = record.findtext(
+                        ".//record.code", namespaces=xml.nsmap
+                    )
+                    subrecord_code = record.findtext(
+                        ".//subrecord.code", namespaces=xml.nsmap
+                    )
+                    full_code = record_code + subrecord_code
+                    assert full_code > last_code, "Elements out of order in XML"
+                    last_code = full_code
 
             func(
                 api_client, taric_schema, approved_workbasket, *args, xml=xml, **kwargs
