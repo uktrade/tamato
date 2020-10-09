@@ -6,10 +6,11 @@ from typing import Optional
 from typing import TypeVar
 
 import django.db
-import pytz
 
 from common.models import TrackedModel
 from importer.duty_sentence_parser import DutySentenceParser
+from importer.management.commands.patterns import BREXIT
+from importer.management.commands.patterns import LONDON
 from importer.management.commands.utils import EnvelopeSerializer
 from measures.models import DutyExpression
 from measures.models import Measurement
@@ -17,9 +18,6 @@ from measures.models import MonetaryUnit
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
-
-LONDON = pytz.timezone("Europe/London")
-BREXIT = LONDON.localize(datetime(2021, 1, 1))
 
 OldRow = TypeVar("OldRow")
 NewRow = TypeVar("NewRow")

@@ -24,7 +24,7 @@ from geo_areas.models import GeographicalArea
 from importer.management.commands.doc_importer import BREXIT
 from importer.management.commands.doc_importer import LONDON
 from importer.management.commands.doc_importer import RowsImporter
-from importer.management.commands.utils import blank
+from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import maybe_min
@@ -72,34 +72,6 @@ class NewRow:
             self.goods_nomenclature = None
 
 
-class OldRow:
-    def __init__(self, old_row: List[Cell]) -> None:
-        assert old_row is not None
-        self.goods_nomenclature_sid = int(old_row[0].value)
-        self.item_id = str(old_row[1].value)
-        self.inherited_measure = bool(old_row[6].value)
-        self.measure_sid = int(old_row[7].value)
-        self.measure_type = int(old_row[8].value)
-        self.geo_sid = int(old_row[13].value)
-        self.measure_start_date = self.parse_date(old_row[16].value)
-        self.measure_end_date = blank(old_row[17].value, self.parse_date)
-        self.regulation_role = int(old_row[18].value)
-        self.regulation_id = str(old_row[19].value)
-        self.order_number = blank(old_row[15].value, int)
-        self.justification_regulation_role = blank(old_row[20].value, int)
-        self.justification_regulation_id = blank(old_row[21].value, str)
-        self.stopped = bool(old_row[24].value)
-        self.additional_code_sid = blank(old_row[23].value, str)
-        self.export_refund_sid = blank(old_row[25].value, str)
-        self.reduction = blank(old_row[26].value, str)
-        self.goods_nomenclature = GoodsNomenclature.objects.as_at(BREXIT).get(
-            sid=self.goods_nomenclature_sid
-        )
-
-    def parse_date(self, value: str) -> datetime:
-        return LONDON.localize(datetime.strptime(value, r"%Y-%m-%d"))
-
-
 class UKGTImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
         third_country_duty = cast(MeasureType, MeasureType.objects.get(sid="103"))
@@ -107,13 +79,14 @@ class UKGTImporter(RowsImporter):
         self.measure_types = {
             int(m.sid): m for m in [third_country_duty, self.mfn_authorised_use]
         }
-        self.measure_slicer = MeasureTypeSlicer[OldRow, NewRow](
+        self.measure_slicer = MeasureTypeSlicer[OldMeasureRow, NewRow](
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],
             get_goods_nomenclature=lambda r: r.goods_nomenclature,
         )
         self.seasonal_rate_parser = SeasonalRateParser(BREXIT, LONDON)
+        self.measure_ending = MeasureEndingPattern(self.workbasket, self.measure_types)
 
-        self.old_rows = NomenclatureTreeCollector[OldRow](
+        self.old_rows = NomenclatureTreeCollector[OldMeasureRow](
             lambda r: r.goods_nomenclature, BREXIT
         )
         self.new_rows = NomenclatureTreeCollector[NewRow](
@@ -183,8 +156,8 @@ class UKGTImporter(RowsImporter):
     def handle_row(
         self,
         new_row: Optional[NewRow],
-        old_row: Optional[OldRow],
-    ) -> Iterator[TrackedModel]:
+        old_row: Optional[OldMeasureRow],
+    ) -> Iterator[List[TrackedModel]]:
         logger.debug(
             "Have old row: %s. Have new row: %s",
             old_row is not None,
@@ -192,7 +165,7 @@ class UKGTImporter(RowsImporter):
         )
         new_waiting = (
             new_row is not None
-            and new_row.goods_nomenclature
+            and new_row.goods_nomenclature is not None
             and not self.new_rows.maybe_push(new_row)
         )
         if self.old_rows.subtree is None:
@@ -200,7 +173,7 @@ class UKGTImporter(RowsImporter):
             self.old_rows.subtree = self.new_rows.subtree
         old_waiting = (
             old_row is not None
-            and old_row.goods_nomenclature
+            and old_row.goods_nomenclature is not None
             and not self.old_rows.maybe_push(old_row)
         )
         if self.new_rows.subtree is None:
@@ -479,5 +452,5 @@ class Command(BaseCommand):
 
                 importer.import_sheets(
                     (NewRow(row) for row in new_rows),
-                    (OldRow(row) for row in old_rows),
+                    (OldMeasureRow(row) for row in old_rows),
                 )
