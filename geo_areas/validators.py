@@ -1,3 +1,6 @@
+from datetime import datetime
+from datetime import timezone
+
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -19,6 +22,9 @@ def validate_description_is_not_null(area_description):
     """
     GA3
     """
+    if area_description.valid_between.lower < datetime(1998, 2, 1, tzinfo=timezone.utc):
+        return
+
     if not area_description.description:
         raise ValidationError({"description": "A description cannot be blank"})
 
@@ -52,7 +58,8 @@ def validate_group_validity_includes_membership_validity(area_membership):
     if not validity_range_contains_range(group_validity, membership_validity):
         raise ValidationError(
             {
-                "valid_between": "Group validity period must encompass the entire member validity period"
+                "valid_between": "Group validity period must encompass the entire member validity period: "
+                f"{group_validity} does not encompass {membership_validity}"
             }
         )
 
