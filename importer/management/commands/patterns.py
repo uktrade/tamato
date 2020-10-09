@@ -1,12 +1,24 @@
 from datetime import datetime
 from datetime import timedelta
+from typing import cast
+from typing import Dict
+from typing import Iterator
 from typing import List
 
 import pytz
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
+from additional_codes.models import AdditionalCode
 from commodities.models import GoodsNomenclature
+from common.models import TrackedModel
+from common.validators import UpdateType
+from geo_areas.models import GeographicalArea
+from importer.management.commands.utils import blank
+from measures.models import Measure
+from measures.models import MeasureType
+from regulations.models import Regulation
+from workbaskets.models import WorkBasket
 
 # The timezone of GB.
 LONDON = pytz.timezone("Europe/London")
@@ -42,3 +54,96 @@ class OldMeasureRow:
 
     def parse_date(self, value: str) -> datetime:
         return LONDON.localize(datetime.strptime(value, r"%Y-%m-%d"))
+
+
+class MeasureEndingPattern:
+    """A pattern used for end-dating measures. This pattern will accept an old
+    measure and will decide whether it needs to be end-dated (it starts before the
+    specified date) or deleted (it starts after the specified date)."""
+
+    def __init__(
+        self,
+        workbasket: WorkBasket,
+        measure_types: Dict[int, MeasureType] = {},
+        geo_areas: Dict[int, GeographicalArea] = {},
+    ) -> None:
+        self.workbasket = workbasket
+        self.measure_types = measure_types
+        self.geo_areas = geo_areas
+
+    def end_date_measure(
+        self,
+        old_row: OldMeasureRow,
+        terminating_regulation: Regulation,
+        new_start_date: datetime = BREXIT,
+    ) -> Iterator[TrackedModel]:
+        if not old_row.inherited_measure:
+            # Make sure we have loaded the types and areas we need
+            if old_row.measure_type not in self.measure_types:
+                self.measure_types[old_row.measure_type] = MeasureType.objects.get(
+                    sid=old_row.measure_type
+                )
+            if old_row.geo_sid not in self.geo_areas:
+                self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.get(
+                    sid=old_row.geo_sid
+                )
+
+            # If the old measure starts after Brexit, we instead
+            # need to delete it and it will never come into force
+            # If it ends before Brexit, we don't need to do anything!
+            starts_after_brexit = old_row.measure_start_date >= new_start_date
+            ends_before_brexit = (
+                old_row.measure_end_date and old_row.measure_end_date < new_start_date
+            )
+
+            generating_regulation = Regulation.objects.get(
+                role_type=old_row.regulation_role,
+                regulation_id=old_row.regulation_id,
+            )
+
+            if old_row.justification_regulation_id and starts_after_brexit:
+                # We are going to delete the measure, but we still need the
+                # regulation to be correct if it has already been end-dated
+                assert old_row.measure_end_date
+                justification_regulation = Regulation.objects.get(
+                    role_type=old_row.regulation_role,
+                    regulation_id=old_row.regulation_id,
+                )
+            elif not starts_after_brexit:
+                # We are going to end-date the measure, and terminate it with
+                # the UKGT SI.
+                justification_regulation = terminating_regulation
+            else:
+                # We are going to delete the measure but it has not been end-dated.
+                assert old_row.measure_end_date is None
+                justification_regulation = None
+
+            if not ends_before_brexit:
+                yield Measure(
+                    sid=old_row.measure_sid,
+                    measure_type=self.measure_types[old_row.measure_type],
+                    geographical_area=self.geo_areas[old_row.geo_sid],
+                    goods_nomenclature=old_row.goods_nomenclature,
+                    additional_code=(
+                        AdditionalCode.objects.get(sid=old_row.additional_code_sid)
+                        if old_row.additional_code_sid
+                        else None
+                    ),
+                    valid_between=DateTimeTZRange(
+                        old_row.measure_start_date,
+                        (
+                            old_row.measure_end_date
+                            if starts_after_brexit
+                            else new_start_date - timedelta(days=1)
+                        ),
+                    ),
+                    generating_regulation=generating_regulation,
+                    terminating_regulation=justification_regulation,
+                    stopped=old_row.stopped,
+                    reduction=old_row.reduction,
+                    export_refund_nomenclature_sid=old_row.export_refund_sid,
+                    update_type=(
+                        UpdateType.DELETE if starts_after_brexit else UpdateType.UPDATE
+                    ),
+                    workbasket=self.workbasket,
+                )
