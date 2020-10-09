@@ -25,6 +25,7 @@ from importer.management.commands.doc_importer import BREXIT
 from importer.management.commands.doc_importer import LONDON
 from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.utils import blank
+from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import maybe_min
 from importer.management.commands.utils import MeasureTypeSlicer
@@ -47,15 +48,15 @@ class NewRow:
     def __init__(self, new_row: List[Cell]) -> None:
         assert new_row is not None
         self.additional_code = (
-            str(int(new_row[2].value)) if new_row[2].value != "" else None
+            str(int(new_row[col("C")].value)) if new_row[col("C")].value != "" else None
         )
-        self.commodity_code = str(new_row[3].value)
-        self.cet_expression = new_row[4]
-        self.duty_expression = new_row[5]
-        self.ttr_expression = str(new_row[6].value)
-        self.ttr_less_than_ukgt = bool(new_row[7].value)
-        self.retained_trade_remedy = bool(new_row[8].value)
-        self.injury_margin = bool(new_row[9].value)
+        self.commodity_code = str(new_row[col("D")].value)
+        self.cet_expression = new_row[col("G")]
+        self.duty_expression = new_row[col("H")]
+        self.ttr_expression = str(new_row[col("I")].value)
+        self.ttr_less_than_ukgt = bool(new_row[col("J")].value)
+        self.retained_trade_remedy = bool(new_row[col("K")].value)
+        self.injury_margin = bool(new_row[col("L")].value)
 
         if len(self.commodity_code) == 8:
             self.item_id = self.commodity_code + "00"
