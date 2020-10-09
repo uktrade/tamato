@@ -193,23 +193,21 @@ class UKGTImporter(RowsImporter):
             # End date all the old rows in either case
             # We must do this first to maintain ME32
             for row in self.old_rows.buffer:
-                for model in self.end_date_old_measure(row):
-                    yield model
+                yield list(self.end_date_old_measure(row))
 
             # Create measures either for the single measure type or a mix
             for measure_type, row, gn in self.measure_slicer.sliced_new_rows(
                 self.old_rows.buffer, self.new_rows.buffer
             ):
-                for model in self.make_new_measure(row, measure_type, gn):
-                    yield model
+                yield list(self.make_new_measure(row, measure_type, gn))
 
             self.old_rows.reset()
             self.new_rows.reset()
-            for model in self.handle_row(
+            for transaction in self.handle_row(
                 new_row if new_waiting else None,
                 old_row if old_waiting else None,
             ):
-                yield model
+                yield transaction
 
         else:
             return iter([])
