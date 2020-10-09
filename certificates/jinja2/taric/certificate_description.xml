@@ -1,6 +1,14 @@
 {% from "macros/record.xml" import standard_record %}
 {% from "macros/record.xml" import base_record %}
 
+{% call base_record(message_counter(), record.period_record_code, record.period_subrecord_code, sequence(), transaction_id, record.update_type) %}
+    <oub:certificate.description.period>
+        <oub:certificate.description.period.sid>{{ record.sid }}</oub:certificate.description.period.sid>
+        <oub:certificate.type.code>{{ record.described_certificate.certificate_type.sid }}</oub:certificate.type.code>
+        <oub:certificate.code>{{ record.described_certificate.sid }}</oub:certificate.code>
+        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
+    </oub:certificate.description.period>
+{% endcall %}
 {% call standard_record(message_counter(), sequence(), transaction_id, record) %}
     <oub:certificate.description>
         <oub:certificate.description.period.sid>{{ record.sid }}</oub:certificate.description.period.sid>
@@ -11,12 +19,4 @@
         <oub:description>{{ record.description}}</oub:description>
         {% endif %}
     </oub:certificate.description>
-{% endcall %}
-{% call base_record(message_counter(), record.period_record_code, record.period_subrecord_code, sequence(), transaction_id, record.update_type) %}
-    <oub:certificate.description.period>
-        <oub:certificate.description.period.sid>{{ record.sid }}</oub:certificate.description.period.sid>
-        <oub:certificate.type.code>{{ record.described_certificate.certificate_type.sid }}</oub:certificate.type.code>
-        <oub:certificate.code>{{ record.described_certificate.sid }}</oub:certificate.code>
-        <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
-    </oub:certificate.description.period>
 {% endcall %}
