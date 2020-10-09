@@ -1,6 +1,4 @@
 import logging
-from datetime import datetime
-from datetime import timedelta
 from typing import cast
 from typing import Iterator
 from typing import List
@@ -24,6 +22,7 @@ from geo_areas.models import GeographicalArea
 from importer.management.commands.doc_importer import BREXIT
 from importer.management.commands.doc_importer import LONDON
 from importer.management.commands.doc_importer import RowsImporter
+from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
@@ -193,7 +192,9 @@ class UKGTImporter(RowsImporter):
             # End date all the old rows in either case
             # We must do this first to maintain ME32
             for row in self.old_rows.buffer:
-                yield list(self.end_date_old_measure(row))
+                assert row.geo_sid == self.erga_omnes.sid
+                assert row.order_number is None
+                yield list(self.measure_ending.end_date_measure(row, self.ukgt_si))
 
             # Create measures either for the single measure type or a mix
             for measure_type, row, gn in self.measure_slicer.sliced_new_rows(
@@ -211,77 +212,6 @@ class UKGTImporter(RowsImporter):
 
         else:
             return iter([])
-
-    def end_date_old_measure(self, old_row: OldRow) -> Iterator[TrackedModel]:
-        if not old_row.inherited_measure:
-            old_measure_type = self.measure_types[old_row.measure_type]
-            assert old_row.geo_sid == self.erga_omnes.sid
-            assert old_row.order_number is None
-
-            # If the old measure starts after Brexit, we instead
-            # need to delete it and it will never come into force
-            # If it ends before Brexit, we don't need to do anything!
-            starts_after_brexit = old_row.measure_start_date >= BREXIT
-            ends_before_brexit = (
-                old_row.measure_end_date and old_row.measure_end_date < BREXIT
-            )
-
-            regulation = Regulation.objects.get(
-                role_type=old_row.regulation_role,
-                regulation_id=old_row.regulation_id,
-                regulation_group=self.mfn_regulation_group,
-                valid_between=self.brexit_to_infinity,  # doesn't matter
-                approved=True,
-                update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
-            )
-
-            if old_row.justification_regulation_id and starts_after_brexit:
-                # We are going to delete the measure, but we still need the
-                # regulation to be correct if it has already been end-dated
-                assert old_row.measure_end_date
-                justification_regulation = Regulation.objects.get(
-                    role_type=old_row.regulation_role,
-                    regulation_id=old_row.regulation_id,
-                )
-            elif not starts_after_brexit:
-                # We are going to end-date the measure, and terminate it with
-                # the UKGT SI.
-                justification_regulation = self.ukgt_si
-            else:
-                # We are going to delete the measure but it has not been end-dated.
-                assert old_row.measure_end_date is None
-                justification_regulation = None
-
-            if not ends_before_brexit:
-                yield Measure(
-                    sid=old_row.measure_sid,
-                    measure_type=old_measure_type,
-                    geographical_area=self.erga_omnes,
-                    goods_nomenclature=old_row.goods_nomenclature,
-                    additional_code=(
-                        AdditionalCode.objects.get(sid=old_row.additional_code_sid)
-                        if old_row.additional_code_sid
-                        else None
-                    ),
-                    valid_between=DateTimeTZRange(
-                        old_row.measure_start_date,
-                        (
-                            old_row.measure_end_date
-                            if starts_after_brexit
-                            else BREXIT - timedelta(days=1)
-                        ),
-                    ),
-                    generating_regulation=regulation,
-                    terminating_regulation=justification_regulation,
-                    stopped=old_row.stopped,
-                    reduction=old_row.reduction,
-                    export_refund_nomenclature_sid=old_row.export_refund_sid,
-                    update_type=(
-                        UpdateType.DELETE if starts_after_brexit else UpdateType.UPDATE
-                    ),
-                    workbasket=self.workbasket,
-                )
 
     def make_new_measure(
         self,
