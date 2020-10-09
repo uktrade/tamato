@@ -10,8 +10,8 @@ api_router = routers.DefaultRouter()
 api_router.register(r"footnotes", views.FootnoteViewSet)
 api_router.register(r"footnote_types", views.FootnoteTypeViewSet)
 
-footnote_detail = r"^footnotes/(?P<footnote_type__footnote_type_id>[A-Z]{2,3})(?P<footnote_id>[0-9]{3}|[0-9]{5})/"
-footnote_description_detail = r"^footnotes/(?P<described_footnote__footnote_type__footnote_type_id>[A-Z]{2,3})(?P<described_footnote__footnote_id>[0-9]{3}|[0-9]{5})/"
+footnote_detail = r"^footnotes/(?P<footnote_type__footnote_type_id>[A-Z0-9]{2,3})(?P<footnote_id>[0-9]{3}|[0-9]{5})/"
+footnote_description_detail = r"^footnotes/(?P<described_footnote__footnote_type__footnote_type_id>[A-Z0-9]{2,3})(?P<described_footnote__footnote_id>[0-9]{3}|[0-9]{5})/"
 
 urlpatterns = [
     path(

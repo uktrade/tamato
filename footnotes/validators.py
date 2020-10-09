@@ -23,7 +23,7 @@ class ApplicationCode(models.IntegerChoices):
     DYNAMIC_FOOTNOTE = 9, "Dynamic footnote"
 
 
-FOOTNOTE_TYPE_ID_PATTERN = r"[A-Z]{2}[A-Z ]?"
+FOOTNOTE_TYPE_ID_PATTERN = r"[A-Z0-9]{2}[A-Z0-9 ]?"
 footnote_type_id_validator = RegexValidator(r"^" + FOOTNOTE_TYPE_ID_PATTERN + "$")
 
 FOOTNOTE_ID_PATTERN = r"([0-9]{3}|[0-9]{5})"
