@@ -147,7 +147,7 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
 
 
 class SeasonalRateParser:
-    SEASONAL_RATE = re.compile(r"([\d\.]+%) \((\d\d [A-Z]{3}) - (\d\d [A-Z]{3})\)")
+    SEASONAL_RATE = re.compile(r"([\d\.]+%) *\((\d\d [A-Z]{3}) *- *(\d\d [A-Z]{3})\)")
 
     def __init__(self, base_date: datetime, timezone) -> None:
         assert base_date.day == 1
