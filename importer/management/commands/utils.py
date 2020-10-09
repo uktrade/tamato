@@ -72,16 +72,7 @@ class NomenclatureTreeCollector(Generic[Row]):
         row_key = self.key(row)
 
         if self.prefix is None:
-            # descendants = row_key.indents.as_at(self.date).get().get_descendants()
-            # TODO: Big hack, we just get all descendants regardless of child time point
-            # This is because I stuffed up the indent import code and will need to revisit
-            descendants = (
-                item
-                for sublist in (
-                    map(lambda i: i.get_descendants().all(), row_key.indents.all())
-                )
-                for item in sublist
-            )
+            descendants = row_key.indents.as_at(self.date).get().get_descendants()
             self.prefix = row_key
             self.subtree = list(
                 map(lambda r: r.indented_goods_nomenclature, descendants)
