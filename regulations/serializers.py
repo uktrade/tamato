@@ -229,7 +229,7 @@ class RegulationSerializer(
 
     def get_effective_end_date(self, obj):
         if obj.effective_end_date:
-            return self.date_format_string.format(obj.published_at)
+            return self.date_format_string.format(obj.effective_end_date)
 
     class Meta:
         model = models.Regulation
