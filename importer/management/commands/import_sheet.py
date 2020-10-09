@@ -1,6 +1,8 @@
 import logging
 import re
+from datetime import date
 from datetime import datetime
+from datetime import timedelta
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -12,18 +14,22 @@ import xlrd
 from django.apps import apps
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields.ranges import DateTimeRangeField
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 from django.db.models.fields import BooleanField
 from django.db.models.fields import CharField
+from django.db.models.fields import DateField
 from django.db.models.fields import Field
 from django.db.models.fields import IntegerField
 from django.db.models.fields import PositiveIntegerField
 from django.db.models.fields import PositiveSmallIntegerField
+from django.db.models.fields import TextField
 from django.db.models.fields.related import ForeignKey
 
 import settings
+from common.models import ApplicabilityCode
 from common.models import NumericSID
 from common.models import ShortDescription
 from common.validators import UpdateType
@@ -40,8 +46,12 @@ Transformer = Callable[[Any], Any]
 Setter = Callable[[Dict, Any], None]
 
 
-def date(value: str) -> datetime:
+def to_datetime(value: str) -> datetime:
     return pytz.utc.localize(datetime.strptime(value, "%Y-%m-%d %H:%M:%S"))
+
+
+def to_date(value: str) -> date:
+    return pytz.utc.localize(datetime.strptime(value, "%Y-%m-%d")).date()
 
 
 def blank(blank: bool, transformer: Transformer) -> Transformer:
@@ -54,30 +64,47 @@ def blank(blank: bool, transformer: Transformer) -> Transformer:
     return transform
 
 
-def get_type_transformer(field: Field) -> Transformer:
-    if type(field) in [CharField, ShortDescription]:
+def get_type_transformer(field: Field, index: Optional[int] = None) -> Transformer:
+    if type(field) in [CharField, TextField]:
         return blank(field.blank, str)
-    if type(field) in [IntegerField, PositiveIntegerField, PositiveSmallIntegerField, NumericSID]:
+    if type(field) in [ShortDescription]:
+        return str
+    if type(field) in [
+        IntegerField,
+        PositiveIntegerField,
+        PositiveSmallIntegerField,
+        NumericSID,
+        ApplicabilityCode,
+    ]:
         return blank(field.blank, int)
     if type(field) is BooleanField:
         return blank(field.blank, bool)
     if type(field) is DateTimeRangeField:
-        return blank(True, date)
+        return blank(True, to_datetime)
+    if type(field) is DateField:
+        return blank(field.blank, to_date)
     if type(field) is ForeignKey:
         related_model = field.related_model
-        id_field_name = related_model.identifying_fields[0]
+        id_field_name = related_model.identifying_fields[index or 0]
         id_field = related_model._meta.get_field(id_field_name)
+        num_values = len(related_model.identifying_fields)
         transformer = get_type_transformer(id_field)
+        if num_values == 1:
 
-        def transform(value: Any) -> Any:
-            return related_model.objects.get(**{id_field_name: transformer(value)})
+            def transform(value: Any) -> Any:
+                return related_model.objects.get(**{id_field_name: transformer(value)})
 
-        return blank(field.blank, transform)
+            return blank(field.blank, transform)
+        else:
+            return blank(field.blank, transformer)
 
     raise CommandError(f"Don't know how to transform {field} of type {type(field)}")
 
 
 def get_type_setter(field: Field, index: Optional[int]) -> Setter:
+    def default_setter(data: Dict, value: Any):
+        data[field.name] = value
+
     if type(field) is DateTimeRangeField:
         assert index is not None
         assert int(index) < 2 and int(index) >= 0
@@ -85,15 +112,31 @@ def get_type_setter(field: Field, index: Optional[int]) -> Setter:
         def setter(data: Dict, value: Any):
             if field.name not in data:
                 data[field.name] = [None, None]
+            if index == 1 and value:
+                value += timedelta(days=1)
             data[field.name][index] = value
 
         return setter
+    elif type(field) is ForeignKey:
+        related_model = field.related_model
+        id_field_name = related_model.identifying_fields[index or 0]
+        num_values = len(related_model.identifying_fields)
+
+        if num_values <= 1:
+            return default_setter
+        else:
+
+            def setter(data: Dict, value: Any):
+                if field.name not in data:
+                    data[field.name] = {}
+                data[field.name][id_field_name] = value
+                assert len(data[field.name].keys()) <= num_values
+                if len(data[field.name].keys()) == num_values:
+                    data[field.name] = related_model.objects.get(**data[field.name])
+
+            return setter
     else:
-
-        def setter(data: Dict, value: Any):
-            data[field.name] = value
-
-        return setter
+        return default_setter
 
 
 class Command(BaseCommand):
@@ -165,7 +208,9 @@ class Command(BaseCommand):
             (int(match[1]) if match[1] is not None else None) for match in matches
         ]
         fields = [ModelClass._meta.get_field(name) for name in names]
-        transformers = [get_type_transformer(field) for field in fields]
+        transformers = [
+            get_type_transformer(field, index) for field, index in zip(fields, indexes)
+        ]
         setters = [
             get_type_setter(field, index) for field, index in zip(fields, indexes)
         ]
@@ -199,8 +244,12 @@ class Command(BaseCommand):
 
                 instance = ModelClass(**data)
                 logger.debug("Create instance %s", instance.__dict__)
-                instance.full_clean()
-                instance.save()
+                try:
+                    instance.full_clean()
+                    instance.save()
+                except ValidationError as ex:
+                    logger.error("Validation error creating %s", instance.__dict__)
+                    raise ex
 
             if options["dry_run"]:
                 raise CommandError("Import aborted before completion.")
