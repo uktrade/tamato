@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import Generic
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import TypeVar
 
@@ -10,7 +11,6 @@ import django.db
 from common.models import TrackedModel
 from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.patterns import BREXIT
-from importer.management.commands.patterns import LONDON
 from importer.management.commands.utils import EnvelopeSerializer
 from measures.models import DutyExpression
 from measures.models import Measurement
@@ -88,7 +88,7 @@ class RowsImporter(Generic[OldRow, NewRow]):
         self,
         new_row: Optional[NewRow],
         old_row: Optional[OldRow],
-    ):
+    ) -> Iterator[List[TrackedModel]]:
         raise NotImplementedError("Override this")
 
     def import_sheets(
@@ -140,14 +140,13 @@ class RowsImporter(Generic[OldRow, NewRow]):
                             handle_args = (new_row, old_row)
 
                         tracked_models = []
-                        for model in self.handle_row(*handle_args):
+                        for transaction in self.handle_row(*handle_args):
                             # model.clean_fields()
                             # model.save()
-                            logger.debug("%s: %s", type(model), model.__dict__)
-                            tracked_models.append(model)
-
-                        if any(tracked_models):
-                            self.serializer.render_transaction(tracked_models)
+                            for model in transaction:
+                                logger.debug("%s: %s", type(model), model.__dict__)
+                            if any(transaction):
+                                self.serializer.render_transaction(transaction)
 
                         if new_row_number % 500 == 0:
                             logger.info("Progress: at row %d", new_row_number)
@@ -169,4 +168,6 @@ class RowsImporter(Generic[OldRow, NewRow]):
                 except StopIteration:
                     new_row = None
 
+            for name, counter in self.counters.items():
+                logger.info("Next %s: %s", name, counter())
             logger.info("Import complete")
