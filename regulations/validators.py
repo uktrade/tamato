@@ -1,6 +1,9 @@
 """
 Validators for regulations
 """
+from datetime import datetime
+from datetime import timezone
+
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -50,10 +53,15 @@ RoleType = models.IntegerChoices(
 """
 regulation_id_validator = RegexValidator(
     r"""(?x)
-    (?P<prefix>C|R|D|A|I|J|P|U|S|X|N|M|Q)
+    ((?P<prefix>C|R|D|A|I|J|P|U|S|X|N|M|Q|0)
     (?P<year>\d{2})
     (?P<number>\d{4})
-    (?P<suffix>[0-9A-Z])
+    (?P<suffix>[0-9A-Z]))|
+    ((?P<national_prefix>Z|V)
+    (?P<national_year>\d{4})
+    (?P<national_suffix>[A-Z]{3}))|
+    ((?P<dummy_prefix>IYY)
+    (?P<dummy_suffix>\d{5}))
 """
 )
 
@@ -88,6 +96,10 @@ def validate_approved_from_not_approved(regulation):
 
 def validate_official_journal(regulation):
     """Official Journal number and page must both be set, or must both be NULL"""
+    if regulation.valid_between.lower and regulation.valid_between.lower < datetime(
+        2021, 1, 1, tzinfo=timezone.utc
+    ):
+        return
 
     is_oj_num_set = bool(regulation.official_journal_number)
     is_oj_page_set = regulation.official_journal_page is not None
