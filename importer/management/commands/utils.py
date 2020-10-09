@@ -45,6 +45,12 @@ def blank(value: Any, convert: Callable[[Any], TypeVar("T")]) -> Optional[TypeVa
     return None if value == "" else convert(value)
 
 
+def col(label: str) -> int:
+    """Return the correct index given an Excel column letter."""
+    assert len(label) == 1
+    return ord(label) - ord("A")
+
+
 class NomenclatureTreeCollector(Generic[Row]):
     """Consumes rows until the passed row no longer
     links to a child commodity code of the first row."""
