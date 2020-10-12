@@ -1,5 +1,6 @@
 import logging
 import re
+import sys
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
@@ -196,7 +197,11 @@ class Command(BaseCommand):
 
         workbasket_status = WorkflowStatus.PUBLISHED
         username = settings.DATA_IMPORT_USERNAME
-        author = User.objects.get(username=username)
+        try:
+            author = User.objects.get(username=username)
+        except User.DoesNotExist:
+            sys.exit(f"Author does not exist, create user '{username}'"
+                     " or edit settings.DATA_IMPORT_USERNAME")
         update_type = UpdateType.CREATE
 
         # Pull out all of the tupes and put them into a dict

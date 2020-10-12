@@ -1,4 +1,5 @@
 import logging
+import sys
 from datetime import datetime
 from typing import cast
 from typing import Iterator
@@ -151,7 +152,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         username = settings.DATA_IMPORT_USERNAME
-        author = User.objects.get(username=username)
+        try:
+            author = User.objects.get(username=username)
+        except User.DoesNotExist:
+            sys.exit(f"Author does not exist, create user '{username}'"
+                     " or edit settings.DATA_IMPORT_USERNAME")
 
         new_workbook = xlrd.open_workbook(options["spreadsheet"])
         schedule_sheet = new_workbook.sheet_by_name(options["sheet_name"])
