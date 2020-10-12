@@ -1,4 +1,5 @@
 import logging
+import sys
 from typing import cast
 from typing import Iterator
 from typing import List
@@ -342,7 +343,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         username = settings.DATA_IMPORT_USERNAME
-        author = User.objects.get(username=username)
+        try:
+            author = User.objects.get(username=username)
+        except User.DoesNotExist:
+            sys.exit(f"Author does not exist, create user '{username}'"
+                     " or edit settings.DATA_IMPORT_USERNAME")
 
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
         new_worksheet = new_workbook.sheet_by_name(options["new_sheet"])
