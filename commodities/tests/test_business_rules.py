@@ -30,13 +30,16 @@ def test_NIG2(date_ranges, normal_good):
 
     Also covers NIG3
     """
-    parent = factories.GoodsNomenclatureIndentFactory(valid_between=date_ranges.big)
-    factories.GoodsNomenclatureFactory(
+    parent = factories.GoodsNomenclatureIndentFactory.create(
+        valid_between=date_ranges.big,
+        indented_goods_nomenclature__valid_between=date_ranges.big,
+    )
+    factories.GoodsNomenclatureFactory.create(
         origin=normal_good,
         valid_between=date_ranges.adjacent_later,
     )
     with pytest.raises(ValidationError):
-        factories.GoodsNomenclatureFactory(
+        factories.GoodsNomenclatureFactory.create(
             valid_between=date_ranges.adjacent_later_big,
             origin=normal_good,
             indent__parent=parent,

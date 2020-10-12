@@ -235,6 +235,16 @@ class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     description = short_description()
 
 
+class SimpleGoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "commodities.GoodsNomenclature"
+
+    sid = numeric_sid()
+    item_id = string_sequence(10, characters=string.digits)
+    suffix = "80"
+    statistical = False
+
+
 class GoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "commodities.GoodsNomenclature"
@@ -280,7 +290,7 @@ class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
     depth = factory.LazyAttribute(lambda o: len(o.path) // 4)
 
     sid = numeric_sid()
-    indented_goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
+    indented_goods_nomenclature = factory.SubFactory(SimpleGoodsNomenclatureFactory)
 
 
 class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
