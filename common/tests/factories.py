@@ -8,6 +8,7 @@ import factory.fuzzy
 
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from common.tests.models import TestModel3
 from common.tests.util import Dates
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
@@ -78,6 +79,11 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
 class TrackedModelMixin(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(WorkBasketFactory)
+    update_type = UpdateType.UPDATE.value
+
+
+class ApprovedTrackedModelMixin(factory.django.DjangoModelFactory):
+    workbasket = factory.SubFactory(ApprovedWorkBasketFactory)
     update_type = UpdateType.UPDATE.value
 
 
@@ -203,7 +209,7 @@ class CertificateDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     description = short_description()
 
 
-class TestModel1Factory(TrackedModelMixin, ValidityFactoryMixin):
+class TestModel1Factory(ApprovedTrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = TestModel1
 
@@ -211,12 +217,20 @@ class TestModel1Factory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
 
 
-class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
+class TestModel2Factory(ApprovedTrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = TestModel2
 
     description = factory.Faker("text", max_nb_chars=24)
     custom_sid = numeric_sid()
+
+
+class TestModel3Factory(ApprovedTrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = TestModel3
+
+    linked_model = factory.SubFactory(TestModel1Factory)
+    sid = numeric_sid()
 
 
 class AdditionalCodeTypeFactory(TrackedModelMixin, ValidityFactoryMixin):

@@ -1,10 +1,19 @@
+from __future__ import annotations
+
 import re
 from datetime import datetime
+from typing import List
+from typing import Tuple
+from typing import Type
 
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
+from django.db.models import Field
+from django.db.models import Func
+from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import QuerySet
+from django.db.models import Subquery
 from django.template import loader
 from django.utils import timezone
 from polymorphic.managers import PolymorphicManager
@@ -17,8 +26,61 @@ from common import validators
 from workbaskets.validators import WorkflowStatus
 
 
+class InvalidQueryError(Exception):
+    pass
+
+
+class RowToJsonSubquery(Subquery):
+    def as_sql(self, compiler, connection, template=None, **extra_context):
+        """
+        Django Subquery Expressions can't be compiled down the chain as they are
+        unaware of their parents. This presents a problem when a child expression
+        needs information from its parent.
+
+        In this case the row_to_json postgres function needs to know the table
+        alias (or table name) being used. Django always uses aliases in subqueries.
+
+        To remedy this the subquery itself resolves the initial row_to_json
+        expression without the table name. Then, with some regex, it finds the
+        table name and retroactively fills it in as an argument for the row_to_json
+        function.
+
+        The majority of this function is a direct copy from django at version 3.1.
+        """
+        connection.ops.check_expression_support(self)
+        template_params = {**self.extra, **extra_context}
+        subquery_sql, sql_params = self.query.as_sql(compiler, connection)
+        subquery = subquery_sql[1:-1]
+        template = template or template_params.get("template", self.template)
+
+        match = re.search(r".*FROM\s\".*\"\s(\w*\d*)\s((WHERE)|(INNER)).*", subquery)
+        if not match:
+            raise InvalidQueryError("This subquery doesn't have any table aliases")
+        template_params["subquery"] = subquery.replace(
+            "row_to_json()", f"row_to_json({match.group(1)})"
+        )
+
+        sql = template % template_params
+        return sql, sql_params
+
+
+class RowToJson(Func):
+    """
+    Uses the `row_to_json` postgres function in a query.
+
+    Must be used in conjunction with `RowToJsonSubquery` so as to add
+    the proper arguments to the function.
+
+    The `row_to_json` function requires the table alias as an argument.
+    This is currently inacessible from django's `Func` implementation.
+    """
+
+    function = "row_to_json"
+    output_field = models.CharField()
+
+
 class TrackedModelQuerySet(PolymorphicQuerySet):
-    def current(self) -> QuerySet:
+    def current(self) -> TrackedModelQuerySet:
         """
         Get all the current versions of the model being queried.
 
@@ -46,7 +108,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.filter(workbasket__transaction__id__gt=transaction_id)
 
-    def as_at(self, date: datetime) -> QuerySet:
+    def as_at(self, date: datetime) -> TrackedModelQuerySet:
         """
         Return the instances of the model that were represented at a particular date.
 
@@ -55,7 +117,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.filter(valid_between__contains=date)
 
-    def active(self) -> QuerySet:
+    def active(self) -> TrackedModelQuerySet:
         """
         Return the instances of the model that are represented at the current date.
 
@@ -64,7 +126,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.as_at(timezone.now())
 
-    def get_version(self, **kwargs):
+    def get_version(self, **kwargs) -> TrackedModel:
         for field in self.model.identifying_fields:
             if field not in kwargs:
                 raise exceptions.NoIdentifyingValuesGivenError(
@@ -72,25 +134,25 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 )
         return self.get(**kwargs)
 
-    def get_latest_version(self, **kwargs):
+    def get_latest_version(self, **kwargs) -> TrackedModel:
         """
         Gets the latest version of a specific object.
         """
         return self.get_version(successor__isnull=True, **kwargs)
 
-    def get_current_version(self, **kwargs):
+    def get_current_version(self, **kwargs) -> TrackedModel:
         """
         Gets the current version of a specific object.
         """
         return self.active().get_version(**kwargs)
 
-    def get_first_version(self, **kwargs):
+    def get_first_version(self, **kwargs) -> TrackedModel:
         """
         Get the original version of a specific object.
         """
         return self.get_version(predecessor__isnull=True, **kwargs)
 
-    def with_workbasket(self, workbasket):
+    def with_workbasket(self, workbasket) -> TrackedModelQuerySet:
         """
         Add the latest versions of objects from the specified workbasket.
         """
@@ -115,7 +177,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         # add latest version of models from the current workbasket
         return self.filter(query) | in_workbasket.filter(successor__isnull=True)
 
-    def approved(self):
+    def approved(self) -> TrackedModelQuerySet:
         """
         Get objects which have been approved/sent-to-cds/published
         """
@@ -136,6 +198,52 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 workbasket__approver__isnull=False,
             )
         )
+
+    def with_latest_links(self, *lookups) -> TrackedModelQuerySet:
+        """
+        Annotate each object with the latest data for each related TrackedModel.
+
+        This effectively attaches a dictionary to each model with the data for the
+        latest version of any FKs to TrackedModels under the attribute
+        _{relation_name}_latest.
+
+        For each FK or 1-2-1 relation found on a TrackedModel the following subquery
+        is added as a column to the main query:
+
+        .. code:: SQL
+
+            SELECT Row_to_json({relation_table}) AS "json_data"
+              FROM  {relation_table}
+             INNER JOIN "common_trackedmodel" U1
+                ON {relation_table}."trackedmodel_ptr_id" = U1."id"
+             INNER JOIN "workbaskets_workbasket" U2
+                ON U1."workbasket_id" = U2."id"
+             WHERE {relation_table}.{identifying_field} = {outer_relation_join}.{identifying_field}
+               AND U2."status" IN ({approved_statuses})
+             ORDER BY {relation_table}."trackedmodel_ptr_id" DESC
+             LIMIT 1
+        """
+        queryset = self.select_related()
+        for field, model in self.model.get_relations():
+            if lookups and field not in lookups:
+                continue
+            kwargs = {
+                identifying_field: OuterRef(f"{field.name}__{identifying_field}")
+                for identifying_field in model.identifying_fields
+            }
+
+            latest = (
+                model.objects.filter(**kwargs)
+                .approved()
+                .order_by("-trackedmodel_ptr")
+                .annotate(json_data=RowToJson())
+                .values("json_data")[:1]
+            )
+
+            annotations = {f"_{field.name}_latest": RowToJsonSubquery(latest)}
+
+            queryset = queryset.annotate(**annotations)
+        return queryset
 
 
 class PolymorphicMPTreeQuerySet(TrackedModelQuerySet, MP_NodeQuerySet):
@@ -201,7 +309,7 @@ class TrackedModel(PolymorphicModel):
 
     taric_template = None
 
-    def get_taric_template(self):
+    def get_taric_template(self) -> str:
         """
         Generate a TARIC XML template name for the given class.
 
@@ -233,7 +341,7 @@ inherit TrackedModel must either:
 
         return template_name
 
-    def new_draft(self, workbasket, save=True, **kwargs):
+    def new_draft(self, workbasket, save: bool = True, **kwargs) -> TrackedModel:
         if hasattr(self, "successor"):
             raise exceptions.AlreadyHasSuccessorError(
                 f"Object with PK: {self.pk} already has a successor, can't have multiple successors. "
@@ -263,7 +371,7 @@ inherit TrackedModel must either:
 
         return new_object
 
-    def get_versions(self):
+    def get_versions(self) -> TrackedModelQuerySet:
         query = Q()
         for field in self.identifying_fields:
             query &= Q(**{field: getattr(self, field)})
@@ -277,7 +385,7 @@ inherit TrackedModel must either:
     def validate_workbasket(self):
         pass
 
-    def add_to_workbasket(self, workbasket):
+    def add_to_workbasket(self, workbasket) -> TrackedModel:
         if workbasket == self.workbasket:
             self.save()
             return self
@@ -287,6 +395,105 @@ inherit TrackedModel must either:
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+    def find_latest_relation(
+        self, relation_name: str, model: Type[TrackedModel]
+    ) -> TrackedModel:
+        """
+        Fetch the latest version of an object from the database.
+
+        Objects are often given an FK to a related object at a specific point in time. However
+        a new version of the related object may be made at a future date, rendering the current
+        key stale (in some cases).
+
+        This method provides a way to fetch the latest version of a related object using just
+        the name of the relation and the model type.
+        """
+        current_instance = getattr(self, relation_name)
+
+        if current_instance is None:
+            raise AttributeError(
+                f"{relation_name} does not exist on {self.__class__.__name__}"
+            )
+
+        kwargs = {
+            field: getattr(current_instance, field)
+            for field in current_instance.identifying_fields
+        }
+
+        return model.objects.approved().get_latest_version(**kwargs)
+
+    def get_latest_relation(
+        self, name: str, model: Type[TrackedModel] = None
+    ) -> TrackedModel:
+        """
+        Get the latest version of a related object.
+
+        Similar to find_latest_relation, however checks to see if the data is already cached
+        on the instance. This is the case if the instance is built using
+        TrackedModelQuerySet.with_current_links.
+
+        If the data is cached then the object is built using this data instead of an extra
+        database query.
+        """
+        relation_data = getattr(self, f"_{name}", None)
+
+        if relation_data is None:
+            current_relation = name[:-7]
+            return self.find_latest_relation(current_relation, model)
+
+        if "id" not in relation_data:
+            relation_data["id"] = relation_data.get("trackedmodel_ptr")
+
+        return model(**relation_data)
+
+    @classmethod
+    def get_relations(cls) -> List[Tuple[Field, Type[TrackedModel]]]:
+        """
+        Find all foreign key and one-to-one relations on an object and return a list containing
+        tuples of the field instance and the related model it links to.
+        """
+        return [
+            (f, f.related_model)
+            for f in cls._meta.get_fields()
+            if (f.many_to_one or f.one_to_one)
+            and not f.auto_created
+            and f.concrete
+            and f.model == cls
+            and issubclass(f.related_model, TrackedModel)
+        ]
+
+    def __getattr__(self, item: str):
+        """
+        Add the ability to get the latest instance of a related object through an attribute.
+
+        For example if a model is like so:
+
+        .. code:: python
+
+            class ExampleModel(TrackedModel):
+                # must be a TrackedModel
+                other_model = models.ForeignKey(OtherModel, on_delete=models.PROTECT)
+
+
+        The latest version of the relation can be accessed via:
+
+        .. code:: python
+
+            example_model = ExampleModel.objects.first()
+            example_model.other_model_latest  # Gets the latest version
+        """
+        relations = {
+            f"{relation.name}_latest": model for relation, model in self.get_relations()
+        }
+        if item not in relations:
+            try:
+                return super().__getattr__(item)
+            except AttributeError as e:
+                raise AttributeError(
+                    f"{item} does not exist on {self.__class__.__name__}"
+                ) from e
+        return self.get_latest_relation(item, model=relations[item])
 
     def __str__(self):
         return ", ".join(
