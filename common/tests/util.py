@@ -23,10 +23,11 @@ from common.validators import UpdateType
 from importer.management.commands.import_taric import import_taric
 from workbaskets.validators import WorkflowStatus
 
-COMMODITIES_IMPLEMENTED = False
+INTERDEPENDENT_IMPORT_IMPLEMENTED = True
+UPDATE_IMPORTER_IMPLEMENTED = False
 EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED = False
-INTERDEPENDENT_EXPORT_IMPLEMENTED = False
 MEASURES_IMPLEMENTED = True
+COMMODITIES_IMPLEMENTED = True
 MEURSING_TABLES_IMPLEMENTED = False
 PARTIAL_TEMPORARY_STOP_IMPLEMENTED = False
 UTC = timezone.utc
@@ -56,9 +57,14 @@ requires_partial_temporary_stop = pytest.mark.skipif(
     reason="Partial temporary stop not implemented",
 )
 
-requires_interdependent_export = pytest.mark.skipif(
-    not INTERDEPENDENT_EXPORT_IMPLEMENTED,
-    reason="Interdependent exports not implemented",
+requires_interdependent_import = pytest.mark.skipif(
+    not INTERDEPENDENT_IMPORT_IMPLEMENTED,
+    reason="Interdependent imports not implemented",
+)
+
+requires_update_importer = pytest.mark.skipif(
+    not UPDATE_IMPORTER_IMPLEMENTED,
+    reason="Requires Updating importers to be implemented",
 )
 
 

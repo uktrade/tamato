@@ -59,7 +59,8 @@ class GoodsNomenclatureIndentSerializer(
     indented_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
 
     def get_indent(self, object: models.GoodsNomenclature):
-        return str(object.depth).zfill(2)
+        indent = 0 if object.depth < 3 else object.depth - 2
+        return str(indent).zfill(2)
 
     class Meta:
         model = models.GoodsNomenclatureIndent
@@ -73,6 +74,7 @@ class GoodsNomenclatureIndentSerializer(
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
         ]
 
 
@@ -96,6 +98,7 @@ class GoodsNomenclatureDescriptionSerializer(
             "taric_template",
             "start_date",
             "end_date",
+            "valid_between",
         ]
 
 

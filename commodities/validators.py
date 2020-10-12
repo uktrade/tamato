@@ -27,7 +27,7 @@ def validate_goods_parent_validity_includes_good(goods_nomenclature_indent):
 
     if not parent:
         return
-    parent_validity = parent.valid_between
+    parent_validity = parent.indented_goods_nomenclature.valid_between
 
     if not validity_range_contains_range(parent_validity, goods_validity):
         raise ValidationError(
