@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from datetime import datetime
 from datetime import timedelta
 from typing import Iterator
@@ -212,7 +213,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         username = settings.DATA_IMPORT_USERNAME
-        author = User.objects.get(username=username)
+        try:
+            author = User.objects.get(username=username)
+        except User.DoesNotExist:
+            sys.exit(f"Author does not exist, create user '{username}'"
+                     " or edit settings.DATA_IMPORT_USERNAME")
 
         workbasket, _ = WorkBasket.objects.get_or_create(
             title=f"Importing indents",
