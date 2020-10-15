@@ -35,7 +35,6 @@ class Group(TrackedModel, ValidityMixin):
         editable=False,
         validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")],
     )
-    # no need for a separate model as we don't support multiple languages
     description = ShortDescription()
 
     identifying_fields = ("group_id",)
@@ -180,10 +179,6 @@ class Regulation(TrackedModel):
     @property
     def is_draft_regulation(self):
         return self.regulation_id.startswith("C")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def clean(self):
         validators.unique_regulation_id_for_role_type(self)

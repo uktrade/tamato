@@ -21,10 +21,6 @@ class CertificateType(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     def clean(self):
         validators.validate_description_is_not_null(self)
 
@@ -57,10 +53,6 @@ class Certificate(TrackedModel, ValidityMixin):
     @property
     def code(self):
         return self.certificate_type.sid + self.sid
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def clean(self):
         validators.validate_certificate_type_validity_includes_certificate_validity(
@@ -99,10 +91,6 @@ class CertificateDescription(TrackedModel, ValidityMixin):
     described_certificate = models.ForeignKey(
         Certificate, related_name="descriptions", on_delete=models.PROTECT
     )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def clean(self):
         validators.validate_description_is_not_null(self)

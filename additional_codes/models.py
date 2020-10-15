@@ -34,8 +34,6 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         choices=validators.ApplicationCode.choices,
     )
 
-    # TODO add many-to-many relation to measure types
-
     def __str__(self):
         return f"AdditionalcodeType {self.sid}: {self.description}"
 
@@ -76,10 +74,6 @@ class AdditionalCode(TrackedModel, ValidityMixin):
 
     def validate_workbasket(self):
         validators.validate_at_least_one_description(self)
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     class Meta:
         constraints = [
@@ -135,10 +129,6 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
                 ],
             ),
         ]
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def clean(self):
         validators.validate_description_is_not_null(self)
