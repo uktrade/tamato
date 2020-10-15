@@ -46,10 +46,6 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     def get_description(self):
         return self.geographicalareadescription_set.last()
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     def __str__(self):
         return f'"{self.get_area_code_display()}" SID:{self.sid}'
 
@@ -92,10 +88,6 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     )
 
     identifying_fields = ("geo_group", "member")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def clean(self):
         validators.validate_group_is_group(self)
@@ -141,10 +133,6 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
                 ],
             ),
         ]
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def clean(self):
         validators.validate_description_is_not_null(self)

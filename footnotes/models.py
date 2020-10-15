@@ -42,10 +42,6 @@ class FootnoteType(TrackedModel, ValidityMixin):
     def clean(self):
         validators.validate_description_is_not_null(self)
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     class Meta:
         constraints = [
             ExclusionConstraint(
@@ -105,10 +101,6 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
         validators.validate_unique_type_and_id(self)
         validators.validate_at_least_one_description(self)
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     class Meta:
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
 
@@ -148,10 +140,6 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
 
     def validate_workbasket(self):
         validators.validate_footnote_description_dont_have_same_start_date(self)
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def get_url(self, action="detail"):
         return reverse(

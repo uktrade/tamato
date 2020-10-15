@@ -42,10 +42,6 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     def __str__(self):
         return self.order_number
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     def clean(self):
         validators.validate_unique_id_and_start_date(self)
 
@@ -73,10 +69,6 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         related_name="+",
     )
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     def clean(self):
         validators.validate_geo_area_validity_spans_origin_validity(self)
 
@@ -99,10 +91,6 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
     )
 
     identifying_fields = "origin", "excluded_geographical_area"
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def validate_workbasket(self):
         validators.validate_exclusion_only_from_group_origin(self)
@@ -152,10 +140,6 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         "self", through="QuotaAssociation", through_fields=("main_quota", "sub_quota")
     )
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     def __str__(self):
         return self.description
 
@@ -189,10 +173,6 @@ class QuotaAssociation(TrackedModel):
     )
     identifying_fields = ("main_quota", "sub_quota")
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     def validate_workbasket(self):
         validators.validate_unique_quota_association(self)
         validators.validate_sub_quota_validity_enclosed_by_main_quota_validity(self)
@@ -210,10 +190,6 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     sid = NumericSID()
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.description
@@ -236,10 +212,6 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     def validate_workbasket(self):
         validators.validate_blocking_only_on_fcfs_quotas(self)
         validators.validate_blocking_period_start_date(self)
@@ -259,7 +231,3 @@ class QuotaEvent(TrackedModel):
     data = JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     identifying_fields = ("subrecord_code", "quota_definition")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
