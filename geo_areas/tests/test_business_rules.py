@@ -9,7 +9,6 @@ from django.db.models import ProtectedError
 from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
-from common.tests.util import requires_measures
 
 
 pytestmark = pytest.mark.django_db
@@ -99,16 +98,35 @@ def test_ga7(date_ranges):
         )
 
 
-@requires_measures
-def test_ga10():
-    """ If referenced in a measure the geographical area validity range must span the measured validity range. """
-    pass
+def test_ga10(date_ranges):
+    """If referenced in a measure the geographical area validity range must span the
+    measure validity range.
+    """
+
+    with pytest.raises(ValidationError):
+        factories.MeasureFactory(
+            geographical_area=factories.GeographicalAreaFactory(
+                valid_between=date_ranges.starts_with_normal
+            ),
+            valid_between=date_ranges.normal,
+        )
 
 
-@requires_measures
-def test_ga11():
-    """ If an area is excluded in a measure then the areas validity must span the measures. """
-    pass
+def test_ga11(date_ranges):
+    """If an area is excluded in a measure then the areas validity must span the
+    measure.
+    """
+
+    membership = factories.GeographicalMembershipFactory(
+        member__valid_between=date_ranges.starts_with_normal,
+    )
+
+    with pytest.raises(ValidationError):
+        factories.MeasureExcludedGeographicalAreaFactory(
+            excluded_geographical_area=membership.member,
+            modified_measure__geographical_area=membership.geo_group,
+            modified_measure__valid_between=date_ranges.normal,
+        )
 
 
 def test_ga13(group, region, country):
@@ -181,10 +199,16 @@ def test_ga19(child, country):
     factories.GeographicalMembershipFactory(geo_group=child, member=member)
 
 
-@requires_measures
-def test_ga21():
-    """ If a geographical area is referenced in a measure then it may not be deleted1. """
-    pass
+def test_ga21(approved_workbasket):
+    """If a geographical area is referenced in a measure then it may not be deleted."""
+
+    measure = factories.MeasureFactory(
+        geographical_area=factories.GeographicalAreaFactory(),
+        workbasket=approved_workbasket,
+    )
+
+    with pytest.raises(IntegrityError):
+        measure.geographical_area.delete()
 
 
 def test_ga22(child):
@@ -193,7 +217,15 @@ def test_ga22(child):
         child.parent.delete()
 
 
-@requires_measures
-def test_ga23():
+def test_ga23(approved_workbasket):
     """ If a geographical area is excluded in a measure, the area cannot be deleted. """
-    pass
+
+    membership = factories.GeographicalMembershipFactory()
+    exclusion = factories.MeasureExcludedGeographicalAreaFactory(
+        excluded_geographical_area=membership.member,
+        modified_measure__geographical_area=membership.geo_group,
+        workbasket=approved_workbasket,
+    )
+
+    with pytest.raises(IntegrityError):
+        exclusion.excluded_geographical_area.delete()

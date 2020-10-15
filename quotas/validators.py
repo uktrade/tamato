@@ -8,6 +8,7 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
+from psycopg2.extras import DateTimeTZRange
 
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
@@ -183,6 +184,66 @@ def validate_order_number_validity_spans_quota_definition_validity(definition):
         )
 
 
+def validate_origin_validity_spans_measure_validity(origin):
+    """ON10
+
+    This rule is only applicable for measures with start date after 31/12/2007."""
+
+    if (
+        origin.order_number.measure_set.exclude(
+            valid_between__overlap=DateTimeTZRange(
+                None,
+                datetime(2008, 1, 1, tzinfo=timezone.utc),
+            )
+        )
+        .exclude(valid_between__contained_by=origin.valid_between)
+        .approved()
+        .exists()
+    ):
+        raise ValidationError(
+            "When a quota order number is used in a measure then the validity period "
+            "of the quota order number origin must span the validity period of the "
+            "measure."
+        )
+
+
+def validate_order_number_used_in_measure_cannot_be_deleted(order_number):
+    """ON11
+
+    This rule is only applicable for measures with start date after 31/12/2007."""
+
+    if order_number.measure_set.exclude(
+        valid_between__overlap=DateTimeTZRange(
+            None,
+            datetime(2008, 1, 1, tzinfo=timezone.utc),
+        )
+    ).exists():
+        raise ValidationError(
+            "The quota order number cannot be deleted if it is used in a measure."
+        )
+
+
+def validate_origin_used_in_measure_cannot_be_deleted(origin):
+    """ON12
+
+    This rule is only applicable for measures with start date after 31/12/2007."""
+
+    if (
+        origin.order_number.measure_set.active()
+        .exclude(
+            valid_between__overlap=DateTimeTZRange(
+                None,
+                datetime(2008, 1, 1, tzinfo=timezone.utc),
+            )
+        )
+        .exists()
+    ):
+        raise ValidationError(
+            "The quota order number origin cannot be deleted if it is used in a "
+            "measure."
+        )
+
+
 def validate_exclusion_only_from_group_origin(exclusion):
     """ON13"""
 
@@ -218,6 +279,54 @@ def validate_unique_order_number_and_start_date(definition):
     )
     if definitions_with_order_number_and_start_date.exists():
         raise ValidationError("Quota order number id + start date must be unique.")
+
+
+def validate_monetary_unit_validity_spans_definition_validity(definition):
+    """QD8"""
+
+    if definition.monetary_unit is None:
+        return
+
+    if not validity_range_contains_range(
+        definition.monetary_unit.valid_between,
+        definition.valid_between,
+    ):
+        raise ValidationError(
+            "The validity period of the monetary unit code must span the validity "
+            "period of the quota definition."
+        )
+
+
+def validate_measurement_unit_validity_spans_definition_validity(definition):
+    """QD10"""
+
+    if definition.measurement_unit is None:
+        return
+
+    if not validity_range_contains_range(
+        definition.measurement_unit.valid_between,
+        definition.valid_between,
+    ):
+        raise ValidationError(
+            "The validity period of the measurement unit code must span the validity "
+            "period of the quota definition."
+        )
+
+
+def validate_measurement_unit_qualifier_validity_spans_definition_validity(definition):
+    """QD11"""
+
+    if definition.measurement_unit_qualifier is None:
+        return
+
+    if not validity_range_contains_range(
+        definition.measurement_unit_qualifier.valid_between,
+        definition.valid_between,
+    ):
+        raise ValidationError(
+            "The validity period of the measurement unit qualifier code must span the "
+            "validity period of the quota definition."
+        )
 
 
 def validate_unique_quota_association(association):

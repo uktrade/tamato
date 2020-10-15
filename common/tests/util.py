@@ -28,7 +28,6 @@ from workbaskets.validators import WorkflowStatus
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
 UPDATE_IMPORTER_IMPLEMENTED = False
 EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED = False
-MEASURES_IMPLEMENTED = True
 COMMODITIES_IMPLEMENTED = True
 MEURSING_TABLES_IMPLEMENTED = False
 PARTIAL_TEMPORARY_STOP_IMPLEMENTED = False
@@ -42,11 +41,6 @@ requires_commodities = pytest.mark.skipif(
 requires_export_refund_nomenclature = pytest.mark.skipif(
     not EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED,
     reason="Export refund nomenclature not implemented",
-)
-
-requires_measures = pytest.mark.skipif(
-    not MEASURES_IMPLEMENTED,
-    reason="Measures not implemented",
 )
 
 requires_meursing_tables = pytest.mark.skipif(

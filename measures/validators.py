@@ -745,6 +745,19 @@ def validate_excluded_geo_area_only_once(exclusion):
         )
 
 
+def validate_excluded_geo_area_validity_spans_measure_validity(exclusion):
+    """GA11"""
+
+    if not validity_range_contains_range(
+        exclusion.excluded_geographical_area.valid_between,
+        exclusion.modified_measure.valid_between,
+    ):
+        raise ValidationError(
+            "The validity period of the excluded geographical area must span the "
+            "validity period of the measure."
+        )
+
+
 def validate_footnote_only_associated_with_measure_once(
     association,
 ):

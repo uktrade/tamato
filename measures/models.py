@@ -591,6 +591,7 @@ class MeasureExcludedGeographicalArea(TrackedModel):
             self
         )
         validators.validate_excluded_geo_area_only_once(self)
+        validators.validate_excluded_geo_area_validity_spans_measure_validity(self)
 
 
 class FootnoteAssociationMeasure(TrackedModel):

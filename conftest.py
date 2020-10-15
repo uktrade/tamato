@@ -145,10 +145,22 @@ def validity_period_contained(date_ranges, approved_workbasket):
             workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
         )
 
-        with pytest.raises(ValidationError):
+        try:
             dependent = dependent_factory.create(
                 valid_between=date_ranges.normal,
                 **{dependency_name: dependency},
+            )
+
+        except ValidationError:
+            pass
+
+        except Exception as exc:
+            raise
+
+        else:
+            pytest.fail(
+                f"{dependency_factory._meta.get_model_class().__name__} validity must "
+                f"span {dependent_factory._meta.get_model_class().__name__} validity."
             )
 
         return True
