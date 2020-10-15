@@ -5,7 +5,6 @@ from django.db import IntegrityError
 
 from common.tests import factories
 from common.tests.util import requires_commodities
-from common.tests.util import requires_measures
 from common.tests.util import requires_meursing_tables
 from workbaskets.validators import WorkflowStatus
 
@@ -111,11 +110,20 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
         )
 
 
-@requires_measures
-def test_FO5():
+def test_FO5(date_ranges):
     """When a footnote is used in a measure the validity period of the footnote must
     span the validity period of the measure.
     """
+
+    measure = factories.MeasureFactory(
+        valid_between=date_ranges.normal,
+    )
+
+    with pytest.raises(ValidationError):
+        factories.FootnoteAssociationMeasureFactory(
+            footnoted_measure=measure,
+            associated_footnote__valid_between=date_ranges.starts_with_normal,
+        )
 
 
 @requires_commodities
@@ -161,9 +169,13 @@ def test_FO17(date_ranges):
         )
 
 
-@requires_measures
-def test_FO11():
+def test_FO11(approved_workbasket):
     """When a footnote is used in a measure then the footnote may not be deleted."""
+
+    assoc = factories.FootnoteAssociationMeasureFactory(workbasket=approved_workbasket)
+
+    with pytest.raises(IntegrityError):
+        assoc.associated_footnote.delete()
 
 
 @requires_commodities

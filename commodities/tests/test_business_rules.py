@@ -4,7 +4,6 @@ from django.db import DataError
 from django.db import IntegrityError
 
 from common.tests import factories
-from common.tests.util import requires_measures
 
 
 pytestmark = pytest.mark.django_db
@@ -247,44 +246,56 @@ def test_NIG24(date_ranges):
     )
 
 
-@requires_measures
-def test_NIG30():
+def test_NIG30(validity_period_contained):
     """
     When a goods nomenclature is used in a goods measure then the validity period of the goods
     nomenclature must span the validity period of the goods measure.
     """
-    pass
+
+    assert validity_period_contained(
+        "goods_nomenclature",
+        factories.GoodsNomenclatureFactory,
+        factories.MeasureFactory,
+    )
 
 
-@requires_measures
+@pytest.mark.skip(reason="Needs clarification")
 def test_NIG31():
     """
     When a goods nomenclature is used in an additional nomenclature measure then the validity
     period of the goods nomenclature must span the validity period of the additional
     nomenclature measure.
     """
-    pass
+    assert False
 
 
-@requires_measures
-def test_NIG34():
+def test_NIG34(approved_workbasket):
     """
     A goods nomenclature cannot be deleted if it is used in a goods measure.
     """
-    pass
+
+    measure = factories.MeasureFactory(
+        goods_nomenclature=factories.GoodsNomenclatureFactory(
+            workbasket=approved_workbasket,
+        ),
+        workbasket=approved_workbasket,
+    )
+
+    with pytest.raises(IntegrityError):
+        measure.goods_nomenclature.delete()
 
 
-@requires_measures
+@pytest.mark.skip(reason="Needs clarification")
 def test_NIG35():
     """
     A goods nomenclature cannot be deleted if it is used in an additional nomenclature measure.
     """
-    pass
+    assert False
 
 
-@requires_measures
+@pytest.mark.skip(reason="Not using export refunds")
 def test_NIG36():
     """
     A goods nomenclature cannot be deleted if it is used in an Export refund nomenclature.
     """
-    pass
+    assert False

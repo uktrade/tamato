@@ -5,7 +5,6 @@ from django.db import DataError
 from django.db import IntegrityError
 
 from common.tests import factories
-from common.tests.util import requires_measures
 from common.tests.util import requires_meursing_tables
 
 
@@ -102,12 +101,16 @@ def text_ACN12():
     """
 
 
-@requires_measures
-def test_ACN13():
+def test_ACN13(validity_period_contained):
     """
     When an additional code is used in an additional code nomenclature measure then the
     validity period of the additional code must span the validity period of the measure.
     """
+    # covered by ME115
+
+    assert validity_period_contained(
+        "additional_code", factories.AdditionalCodeFactory, factories.MeasureFactory
+    )
 
 
 def test_ACN17(date_ranges):
@@ -235,14 +238,20 @@ def test_ACN5_(date_ranges):
 
 
 # Delete an additional code
-
-
-@requires_measures
 def test_ACN14():
     """
     An additional code cannot be deleted if it is used in an additional code
     nomenclature measure.
     """
+
+    assoc = factories.AdditionalCodeTypeMeasureTypeFactory()
+    additional_code = factories.AdditionalCodeFactory(type=assoc.additional_code_type)
+    measure = factories.MeasureFactory(
+        measure_type=assoc.measure_type, additional_code=additional_code
+    )
+
+    with pytest.raises(IntegrityError):
+        additional_code.delete()
 
 
 @requires_meursing_tables

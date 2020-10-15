@@ -5,12 +5,13 @@ from decimal import Decimal
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
+from django.db import IntegrityError
 
 from common.tests import factories
 from common.tests.util import only_applicable_after
-from common.tests.util import requires_measures
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
+from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
 from quotas.validators import SubQuotaType
 
@@ -141,21 +142,64 @@ def test_ON10(date_ranges, approved_workbasket):
     This rule is only applicable for measures with start date after 31/12/2007.
     """
 
+    origin = factories.QuotaOrderNumberOriginFactory(
+        order_number__mechanism=AdministrationMechanism.FCFS,
+        valid_between=date_ranges.normal,
+        workbasket=approved_workbasket,
+    )
 
-@requires_measures
-def test_ON11():
+    factories.MeasureFactory(
+        geographical_area=origin.geographical_area,
+        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+        order_number=origin.order_number,
+    )
+
+
+@only_applicable_after("31/12/2007")
+def test_ON11(approved_workbasket):
     """The quota order number cannot be deleted if it is used in a measure.
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
 
+    origin = factories.QuotaOrderNumberOriginFactory(
+        order_number__mechanism=AdministrationMechanism.FCFS,
+        workbasket=approved_workbasket,
+    )
+    measure = factories.MeasureFactory(
+        geographical_area=origin.geographical_area,
+        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+        order_number=origin.order_number,
+    )
 
-@requires_measures
-def test_ON12():
+    with pytest.raises(ValidationError):
+        try:
+            measure.order_number.delete()
+        except IntegrityError:
+            # XXX can't delete from database due to on_delete=models.PROTECT
+            # we need to revisit this validation for TARIC deletions
+            pass
+
+
+@only_applicable_after("31/12/2007")
+def test_ON12(approved_workbasket):
     """The quota order number origin cannot be deleted if it is used in a measure.
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
+
+    origin = factories.QuotaOrderNumberOriginFactory(
+        order_number__mechanism=AdministrationMechanism.FCFS,
+        workbasket=approved_workbasket,
+    )
+    measure = factories.MeasureFactory(
+        geographical_area=origin.geographical_area,
+        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+        order_number=origin.order_number,
+    )
+
+    with pytest.raises(ValidationError):
+        origin.delete()
 
 
 @pytest.mark.parametrize(
@@ -260,32 +304,49 @@ def test_QD7(date_ranges, approved_workbasket):
         definition.workbasket.submit_for_approval()
 
 
-@requires_measures
-def test_QD8():
+def test_QD8(validity_period_contained):
     """The validity period of the monetary unit code must span the validity period of
     the quota definition.
     """
 
+    assert validity_period_contained(
+        "monetary_unit",
+        factories.MonetaryUnitFactory,
+        factories.QuotaDefinitionFactory,
+    )
 
-@requires_measures
+
+@pytest.mark.skip(reason="Using GBP, not EUR")
 def test_QD9():
     """The monetary unit code must always be the Euro ISO code (or Ecu for quota defined
     prior to the Euro Definition).
     """
 
+    assert False
 
-@requires_measures
-def test_QD10():
+
+def test_QD10(validity_period_contained):
     """The validity period of the measurement unit code must span the validity period of
     the quota definition.
     """
 
+    assert validity_period_contained(
+        "measurement_unit",
+        factories.MeasurementUnitFactory,
+        factories.QuotaDefinitionFactory,
+    )
 
-@requires_measures
-def test_QD11():
+
+def test_QD11(validity_period_contained):
     """The validity period of the measurement unit qualifier code must span the validity
     period of the quota definition.
     """
+
+    assert validity_period_contained(
+        "measurement_unit_qualifier",
+        factories.MeasurementUnitQualifierFactory,
+        factories.QuotaDefinitionFactory,
+    )
 
 
 @pytest.mark.skip("Quota events are not supported")
@@ -348,11 +409,13 @@ def test_QA2(date_ranges, approved_workbasket):
         assoc.workbasket.submit_for_approval()
 
 
-@requires_measures
+@pytest.mark.skip(reason="Needs clarification")
 def test_QA3():
     """When converted to the measurement unit of the main quota, the volume of a
     sub-quota must always be lower than or equal to the volume of the main quota.
     """
+
+    assert False
 
 
 @pytest.mark.parametrize(

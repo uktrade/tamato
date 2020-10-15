@@ -48,6 +48,10 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     def validate_workbasket(self):
         validators.validate_no_overlapping_quota_order_numbers(self)
 
+    def delete(self):
+        validators.validate_order_number_used_in_measure_cannot_be_deleted(self)
+        super().delete()
+
 
 class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to imports from a
@@ -75,6 +79,11 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     def validate_workbasket(self):
         validators.validate_no_overlapping_quota_order_number_origins(self)
         validators.validate_order_number_validity_spans_origin_validity(self)
+        validators.validate_origin_validity_spans_measure_validity(self)
+
+    def delete(self):
+        validators.validate_origin_used_in_measure_cannot_be_deleted(self)
+        super().delete()
 
 
 class QuotaOrderNumberOriginExclusion(TrackedModel):
@@ -113,19 +122,24 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     volume = models.DecimalField(max_digits=14, decimal_places=3)
     initial_volume = models.DecimalField(max_digits=14, decimal_places=3)
-    # The ISO (4217) code for monetary units.
-    # monetary_unit = models.ForeignKey(
-    #     "measures.MonetaryUnit", on_delete=models.PROTECT, null=True, blank=True,
-    # )
-    # measurement_unit = models.ForeignKey(
-    #     "measures.MeasurementUnit", on_delete=models.PROTECT, null=True, blank=True,
-    # )
-    # measurement_unit_qualifier = models.ForeignKey(
-    #     "measures.MeasurementUnitQualifier",
-    #     on_delete=models.PROTECT,
-    #     null=True,
-    #     blank=True,
-    # )
+    monetary_unit = models.ForeignKey(
+        "measures.MonetaryUnit",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    measurement_unit = models.ForeignKey(
+        "measures.MeasurementUnit",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    measurement_unit_qualifier = models.ForeignKey(
+        "measures.MeasurementUnitQualifier",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
     maximum_precision = models.PositiveSmallIntegerField(
         validators=[validators.validate_max_precision]
     )
@@ -142,6 +156,13 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return self.description
+
+    def clean(self):
+        validators.validate_monetary_unit_validity_spans_definition_validity(self)
+        validators.validate_measurement_unit_validity_spans_definition_validity(self)
+        validators.validate_measurement_unit_qualifier_validity_spans_definition_validity(
+            self
+        )
 
     def validate_workbasket(self):
         validators.validate_unique_order_number_and_start_date(self)

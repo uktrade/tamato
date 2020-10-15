@@ -7,6 +7,8 @@ from django.db import models
 from common.models import ShortDescription
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from geo_areas.validators import area_id_validator
+from measures.validators import measure_type_id_validator
 from regulations import validators
 from regulations.validators import CommunityCode
 
@@ -307,6 +309,10 @@ class Replacement(TrackedModel):
         Regulation, on_delete=models.PROTECT, related_name="replacements"
     )
 
-    measure_type_id = models.CharField(max_length=6, null=True)
-    geographical_area_id = models.CharField(max_length=4, null=True)
+    measure_type_id = models.CharField(
+        max_length=6, validators=[measure_type_id_validator], null=True
+    )
+    geographical_area_id = models.CharField(
+        max_length=4, validators=[area_id_validator], null=True
+    )
     chapter_heading = models.CharField(max_length=2, null=True)

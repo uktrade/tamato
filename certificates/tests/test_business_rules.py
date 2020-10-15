@@ -8,7 +8,6 @@ from django.db import IntegrityError
 from psycopg2._range import DateTimeTZRange
 
 from common.tests import factories
-from common.tests.util import requires_measures
 
 
 pytestmark = pytest.mark.django_db
@@ -63,21 +62,33 @@ def test_ce3(date_ranges):
         factories.CertificateFactory.create(valid_between=date_ranges.backwards)
 
 
-@requires_measures
-def test_ce4():
+def test_ce4(date_ranges):
     """
     If a certificate is used in a measure condition then the validity period of the certificate
     must span the validity period of the measure
     """
-    pass
+
+    with pytest.raises(ValidationError):
+        factories.MeasureConditionFactory(
+            required_certificate=factories.CertificateFactory(
+                valid_between=date_ranges.starts_with_normal,
+            ),
+            dependent_measure__valid_between=date_ranges.normal,
+        )
 
 
-@requires_measures
-def test_ce5():
+def test_ce5(approved_workbasket):
     """
     When a certificate cannot be deleted if it is used in a measure condition
     """
-    pass
+
+    condition = factories.MeasureConditionFactory(
+        required_certificate=factories.CertificateFactory(),
+        workbasket=approved_workbasket,
+    )
+
+    with pytest.raises(IntegrityError):
+        condition.required_certificate.delete()
 
 
 def test_ce6_one_description_mandatory():
