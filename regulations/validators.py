@@ -5,21 +5,37 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
-"""The code which indicates the role of the regulation."""
-# The integer values are hard-coded into the TARIC3 Schema
-RoleType = models.IntegerChoices(
-    "RoleType",
-    [
-        "Base",
-        "Provisional anti-dumping",
-        "Definitive anti-dumping",
-        "Modification",
-        "Prorogation",
-        "Complete abrogation",
-        "Explicit abrogation",
-        "Full temporary stop",
-    ],
-)
+
+class RoleType(models.IntegerChoices):
+    """The code which indicates the role of the regulation."""
+
+    # The integer values are hard-coded into the TARIC3 Schema
+
+    BASE = 1, "Base"
+    PROVISIONAL_ANTIDUMPING = 2, "Provisional anti-dumping"
+    DEFINITIVE_ANTIDUMPING = 3, "Definitive anti-dumping"
+    MODIFICATION = 4, "Modification"
+    PROROGATION = 5, "Prorogation"
+    COMPLETE_ABROGATION = 6, "Complete abrogation"
+    EXPLICIT_ABROGATION = 7, "Explicit abrogation"
+    FULL_TEMPORARY_STOP = 8, "Full temporary stop"
+
+
+class ReplacementIndicator(models.IntegerChoices):
+    """The code which indicates whether or not a regulation has been replaced."""
+
+    NOT_REPLACED = 0, "Not replaced"
+    REPLACED = 1, "Replaced"
+    PARIIALLY_REPLACED = 2, "Partially replaced"
+
+
+class CommunityCode(models.IntegerChoices):
+    """Code which specifies whether the treaty origin is ECONOMIC, ATOMIC or COAL."""
+
+    ECONOMIC = 1, "Economic"
+    ATOMIC = 2, "Atomic"
+    COAL = 3, "Coal"
+    ECONOMIC_COAL = 4, "Economic/Coal"
 
 
 """The regulation number is composed of four elements, as follows:
@@ -144,7 +160,7 @@ def validate_information_text(regulation):
 
 
 def validate_base_regulations_have_start_date(regulation):
-    if regulation.role_type == RoleType.Base.value:
+    if regulation.role_type == RoleType.BASE:
         if not regulation.valid_between or not regulation.valid_between.lower:
             raise ValidationError(
                 {"valid_between": "Base regulations must have a start date."}
@@ -152,7 +168,7 @@ def validate_base_regulations_have_start_date(regulation):
 
 
 def validate_base_regulations_have_community_code(regulation):
-    if regulation.role_type == RoleType.Base.value:
+    if regulation.role_type == RoleType.BASE:
         if not regulation.community_code:
             raise ValidationError(
                 {"community_code": "Base regulations must have a community code."}
@@ -160,7 +176,7 @@ def validate_base_regulations_have_community_code(regulation):
 
 
 def validate_base_regulations_have_group(regulation):
-    if regulation.role_type == RoleType.Base.value:
+    if regulation.role_type == RoleType.BASE:
         if not regulation.regulation_group:
             raise ValidationError(
                 {"regulation_group": "Base regulations must have a group."}

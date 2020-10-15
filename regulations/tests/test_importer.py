@@ -119,14 +119,14 @@ def test_regulation_importer_create(valid_user, test_object, db_object):
 
 def test_amendment_importer_create(valid_user):
     create_and_test_m2m_regulation(
-        RoleType.Modification.value, "taric/amendment.xml", models.Amendment, valid_user
+        RoleType.MODIFICATION, "taric/amendment.xml", models.Amendment, valid_user
     )
 
 
 def test_suspension_importer_create(valid_user):
     effective_end_date = date(2021, 2, 1)
     suspension = create_and_test_m2m_regulation(
-        RoleType["Full temporary stop"],
+        RoleType.FULL_TEMPORARY_STOP,
         "taric/suspension.xml",
         models.Suspension,
         valid_user,

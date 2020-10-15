@@ -47,23 +47,6 @@ class Group(TrackedModel, ValidityMixin):
         return f'Regulation Group "{self.group_id}"'
 
 
-"""The code which indicates whether or not a regulation has been replaced."""
-ReplacementIndicator = models.IntegerChoices(
-    "ReplacementIndicator",
-    [
-        "Not replaced",
-        "Replaced",
-        "Partially replaced",
-    ],
-    start=0,
-)
-
-"""Code which specifies whether the treaty origin is ECONOMIC, ATOMIC or COAL."""
-CommunityCode = models.IntegerChoices(
-    "CommunityCode", ["Economic", "Atomic", "Coal", "Economic/Coal"]
-)
-
-
 class Regulation(TrackedModel):
     """The main legal acts at the basis of the Union tariff and commercial legislation
     are regulations and decisions. They can have one or several roles: base, provisional
@@ -78,7 +61,7 @@ class Regulation(TrackedModel):
 
     role_type = models.PositiveIntegerField(
         choices=validators.RoleType.choices,
-        default=validators.RoleType["Base"],
+        default=validators.RoleType.BASE,
         editable=False,
     )
 
@@ -131,8 +114,8 @@ class Regulation(TrackedModel):
 
     """The code which indicates whether or not a regulation has been replaced."""
     replacement_indicator = models.PositiveIntegerField(
-        choices=ReplacementIndicator.choices,
-        default=ReplacementIndicator["Not replaced"],
+        choices=validators.ReplacementIndicator.choices,
+        default=validators.ReplacementIndicator.NOT_REPLACED,
         editable=False,
     )
 
@@ -149,7 +132,7 @@ class Regulation(TrackedModel):
 
     # Base regulations have community_code and regulation_group
     community_code = models.PositiveIntegerField(
-        choices=CommunityCode.choices,
+        choices=validators.CommunityCode.choices,
         blank=True,
         null=True,
     )
