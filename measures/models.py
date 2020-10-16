@@ -30,7 +30,7 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     description = ShortDescription()
 
     def __str__(self):
-        return f"{self.measure_type_series_id} - {self.description}"
+        return f"{self.sid} - {self.description}"
 
     def clean(self):
         validators.validate_unique_measure_type_series(self)
@@ -577,7 +577,7 @@ class MeasureExcludedGeographicalArea(TrackedModel):
     record_code = "430"
     subrecord_code = "15"
 
-    identifying_fields = ("measure", "excluded_geographical_area")
+    identifying_fields = ("modified_measure", "excluded_geographical_area")
 
     modified_measure = models.ForeignKey(Measure, on_delete=models.PROTECT)
     excluded_geographical_area = models.ForeignKey(

@@ -269,6 +269,11 @@ inherit TrackedModel must either:
             query &= Q(**{field: getattr(self, field)})
         return self.__class__.objects.filter(query).order_by("-created_at")
 
+    def get_latest_version(self):
+        return self.__class__.objects.get_latest_version(
+            **{field: getattr(self, field) for field in self.identifying_fields}
+        )
+
     def validate_workbasket(self):
         pass
 

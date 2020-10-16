@@ -571,7 +571,7 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "measures.MeasureAction"
 
-    code = factory.Faker("random_int", min=1, max=999)
+    code = factory.Sequence(lambda x: "{0:02d}".format(x + 1))
     description = short_description()
 
 
