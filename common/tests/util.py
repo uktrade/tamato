@@ -2,17 +2,20 @@ import contextlib
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from functools import wraps
 from io import StringIO
 from typing import Any
 from typing import Dict
 from typing import Type
 
 import pytest
+from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse
 from factory.django import DjangoModelFactory
+from freezegun import freeze_time
 from lxml import etree
 from psycopg2._range import DateTimeTZRange
 
@@ -205,83 +208,143 @@ def validate_taric_import(
     return decorator
 
 
-NOW = datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-
-
 class Dates:
-    normal = DateTimeTZRange(
-        NOW,
-        NOW + relativedelta(months=+1),
-    )
-    earlier = DateTimeTZRange(
-        NOW + relativedelta(years=-1),
-        NOW + relativedelta(years=-1, months=+1),
-    )
-    later = DateTimeTZRange(
-        NOW + relativedelta(years=+1, months=+1, days=+1),
-        NOW + relativedelta(years=+1, months=+2),
-    )
-    big = DateTimeTZRange(
-        NOW + relativedelta(years=-2),
-        NOW + relativedelta(years=+2, days=+1),
-    )
-    adjacent_earlier = DateTimeTZRange(
-        NOW + relativedelta(months=-1),
-        NOW,
-    )
-    adjacent_later = DateTimeTZRange(
-        NOW + relativedelta(months=+1),
-        NOW + relativedelta(months=+2),
-    )
-    adjacent_even_later = DateTimeTZRange(
-        NOW + relativedelta(months=+2, days=+1),
-        NOW + relativedelta(months=+3),
-    )
-    adjacent_later_big = DateTimeTZRange(
-        NOW + relativedelta(months=+1),
-        NOW + relativedelta(years=+2, months=+2),
-    )
-    overlap_normal = DateTimeTZRange(
-        NOW + relativedelta(days=+14),
-        NOW + relativedelta(days=+14, months=+1, years=+1),
-    )
-    overlap_normal_earlier = DateTimeTZRange(
-        NOW + relativedelta(months=-1, days=+14),
-        NOW + relativedelta(days=+14),
-    )
-    overlap_big = DateTimeTZRange(
-        NOW + relativedelta(years=+1),
-        NOW + relativedelta(years=+3, days=+2),
-    )
-    after_big = DateTimeTZRange(
-        NOW + relativedelta(years=+3, months=+1),
-        NOW + relativedelta(years=+3, months=+2),
-    )
-    backwards = DateTimeTZRange(
-        NOW + relativedelta(months=+1),
-        NOW + relativedelta(days=+1),
-    )
-    starts_with_normal = DateTimeTZRange(
-        NOW,
-        NOW + relativedelta(days=+14),
-    )
-    ends_with_normal = DateTimeTZRange(
-        NOW + relativedelta(days=+14),
-        NOW + relativedelta(months=+1),
-    )
-    current = DateTimeTZRange(
-        NOW + relativedelta(weeks=-4),
-        NOW + relativedelta(weeks=+4),
-    )
-    future = DateTimeTZRange(
-        NOW + relativedelta(weeks=+10),
-        NOW + relativedelta(weeks=+20),
-    )
-    no_end = DateTimeTZRange(NOW, None)
-    normal_first_half = DateTimeTZRange(
-        NOW,
-        NOW + relativedelta(days=+14),
-    )
+    @property
+    def now(self):
+        return datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    @property
+    def normal(self):
+        return DateTimeTZRange(
+            self.now,
+            self.now + relativedelta(months=+1),
+        )
+
+    @property
+    def earlier(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(years=-1),
+            self.now + relativedelta(years=-1, months=+1),
+        )
+
+    @property
+    def later(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(years=+1, months=+1, days=+1),
+            self.now + relativedelta(years=+1, months=+2),
+        )
+
+    @property
+    def big(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(years=-2),
+            self.now + relativedelta(years=+2, days=+1),
+        )
+
+    @property
+    def adjacent_earlier(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(months=-1),
+            self.now,
+        )
+
+    @property
+    def adjacent_later(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(months=+1),
+            self.now + relativedelta(months=+2),
+        )
+
+    @property
+    def adjacent_even_later(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(months=+2, days=+1),
+            self.now + relativedelta(months=+3),
+        )
+
+    @property
+    def adjacent_later_big(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(months=+1),
+            self.now + relativedelta(years=+2, months=+2),
+        )
+
+    @property
+    def overlap_normal(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(days=+14),
+            self.now + relativedelta(days=+14, months=+1, years=+1),
+        )
+
+    @property
+    def overlap_normal_earlier(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(months=-1, days=+14),
+            self.now + relativedelta(days=+14),
+        )
+
+    @property
+    def overlap_big(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(years=+1),
+            self.now + relativedelta(years=+3, days=+2),
+        )
+
+    @property
+    def after_big(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(years=+3, months=+1),
+            self.now + relativedelta(years=+3, months=+2),
+        )
+
+    @property
+    def backwards(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(months=+1),
+            self.now + relativedelta(days=+1),
+        )
+
+    @property
+    def starts_with_normal(self):
+        return DateTimeTZRange(
+            self.now,
+            self.now + relativedelta(days=+14),
+        )
+
+    @property
+    def ends_with_normal(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(days=+14),
+            self.now + relativedelta(months=+1),
+        )
+
+    @property
+    def current(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(weeks=-4),
+            self.now + relativedelta(weeks=+4),
+        )
+
+    @property
+    def future(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(weeks=+10),
+            self.now + relativedelta(weeks=+20),
+        )
+
+    @property
+    def no_end(self):
+        return DateTimeTZRange(
+            self.now,
+            None,
+        )
+
+    @property
+    def normal_first_half(self):
+        return DateTimeTZRange(
+            self.now,
+            self.now + relativedelta(days=+14),
+        )
 
     @classmethod
     def short_before(cls, dt):
@@ -303,3 +366,38 @@ class Dates:
             dt + relativedelta(months=-1),
             None,
         )
+
+
+def only_applicable_after(cutoff):
+    """Decorator which asserts that a test fails after a specified cutoff date.
+
+    :param cutoff: A date string, or datetime object before which the test should fail.
+    """
+
+    cutoff = parse_date(cutoff)
+
+    def decorator(fn):
+        @wraps(fn)
+        def do_test(*args, **kwargs):
+            # test should pass normally
+            fn(*args, **kwargs)
+
+            # test should fail before cutoff
+            with freeze_time(cutoff + relativedelta(days=-1)):
+                try:
+                    fn(*args, **kwargs)
+
+                except pytest.fail.Exception:
+                    pass
+
+                except Exception:
+                    raise
+
+                else:
+                    pytest.fail(f"Rule applied before {cutoff:%d/%m/%Y}")
+
+            return True
+
+        return do_test
+
+    return decorator

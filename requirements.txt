@@ -14,6 +14,7 @@ django-webpack-loader
 django_extensions
 djangorestframework
 factory-boy
+freezegun
 git+https://github.com/alphagov/govuk-frontend-jinja.git
 gunicorn
 jinja2

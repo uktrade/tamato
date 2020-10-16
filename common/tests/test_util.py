@@ -38,61 +38,64 @@ def test_is_truthy(value, expected):
     "overall,contained,expected",
     [
         (
-            Dates.big,
-            Dates.normal,
+            "big",
+            "normal",
             True,
         ),
         (
-            Dates.normal,
-            Dates.starts_with_normal,
+            "normal",
+            "starts_with_normal",
             True,
         ),
         (
-            Dates.normal,
-            Dates.ends_with_normal,
+            "normal",
+            "ends_with_normal",
             True,
         ),
         (
-            Dates.normal,
-            Dates.overlap_normal,
+            "normal",
+            "overlap_normal",
             False,
         ),
         (
-            Dates.normal,
-            Dates.overlap_normal_earlier,
+            "normal",
+            "overlap_normal_earlier",
             False,
         ),
         (
-            Dates.normal,
-            Dates.adjacent_earlier,
+            "normal",
+            "adjacent_earlier",
             False,
         ),
         (
-            Dates.normal,
-            Dates.adjacent_later,
+            "normal",
+            "adjacent_later",
             False,
         ),
         (
-            Dates.normal,
-            Dates.big,
+            "normal",
+            "big",
             False,
         ),
         (
-            Dates.normal,
-            Dates.earlier,
+            "normal",
+            "earlier",
             False,
         ),
         (
-            Dates.normal,
-            Dates.later,
+            "normal",
+            "later",
             False,
         ),
         (
-            Dates.normal,
-            Dates.normal,
+            "normal",
+            "normal",
             True,
         ),
     ],
 )
 def test_validity_range_contains_range(overall, contained, expected):
+    dates = Dates()
+    overall = getattr(dates, overall)
+    contained = getattr(dates, contained)
     assert util.validity_range_contains_range(overall, contained) == expected

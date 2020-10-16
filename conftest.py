@@ -31,7 +31,7 @@ def validity_range(request):
 
 @pytest.fixture
 def date_ranges() -> Dates:
-    return Dates
+    return Dates()
 
 
 @pytest.fixture
