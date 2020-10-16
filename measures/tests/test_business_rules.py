@@ -1234,6 +1234,9 @@ def test_ME116(date_ranges):
         goods_nomenclature__valid_between=date_ranges.no_end_before(cutoff),
         measure_type__valid_between=date_ranges.no_end_before(cutoff),
         measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+        measure_type__measure_type_series__valid_between=date_ranges.no_end_before(
+            cutoff
+        ),
     )
 
 
@@ -1305,4 +1308,7 @@ def test_ME119(approved_workbasket, date_ranges):
         geographical_area__valid_between=date_ranges.no_end_before(cutoff),
         goods_nomenclature__valid_between=date_ranges.no_end_before(cutoff),
         measure_type__valid_between=date_ranges.no_end_before(cutoff),
+        measure_type__measure_type_series__valid_between=date_ranges.no_end_before(
+            cutoff
+        ),
     )

@@ -2,6 +2,7 @@
 import re
 
 import pytest
+from dateutil.relativedelta import relativedelta
 from pytest_bdd import given
 from pytest_bdd import parsers
 from pytest_bdd import scenarios
@@ -36,24 +37,39 @@ def footnote_edit_screen(client, footnote_NC000):
 @pytest.fixture
 @when("I submit a <change> to footnote NC000")
 def submit_footnote_NC000(client, footnote_NC000, change):
+    existing = footnote_NC000.valid_between
+
+    def make_payload(lower=None, upper=None):
+        payload = {}
+        if lower:
+            payload.update(
+                valid_between_0_0=lower.day,
+                valid_between_0_1=lower.month,
+                valid_between_0_2=lower.year,
+            )
+        if upper:
+            payload.update(
+                valid_between_1_0=upper.day,
+                valid_between_1_1=upper.month,
+                valid_between_1_2=upper.year,
+            )
+        return payload
+
     change_payload = {
-        "start date": {
-            "valid_between_0_0": "1",
-            "valid_between_0_1": "1",
-            "valid_between_0_2": "2023",
-        },
-        "end date": {
-            "valid_between_1_0": "1",
-            "valid_between_1_1": "2",
-            "valid_between_1_2": "2023",
-        },
+        "start date": make_payload(existing.lower + relativedelta(days=+1)),
+        "end date": make_payload(
+            existing.lower, existing.upper + relativedelta(months=+1)
+        ),
     }
     return client.post(footnote_NC000.get_url("edit"), change_payload[change])
 
 
 @then("I should be presented with a footnote update screen")
-def i_should_be_presented_with_a_footnote_update_screen(submit_footnote_NC000):
+def i_should_be_presented_with_a_footnote_update_screen(
+    submit_footnote_NC000, footnote_NC000
+):
     """I should be presented with a footnote update screen."""
+    assert submit_footnote_NC000.status_code == 302
     assert submit_footnote_NC000.url.endswith("/confirm-update/")
 
 
