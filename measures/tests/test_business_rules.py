@@ -10,6 +10,7 @@ from django.db import IntegrityError
 from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
+from common.tests.util import only_applicable_after
 from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
@@ -1209,10 +1210,12 @@ def test_ME115(validity_period_contained):
     )
 
 
+@only_applicable_after("31/12/2007")
 def test_ME116(date_ranges):
     """When a quota order number is used in a measure then the validity period of the
-    quota order number must span the validity period of the measure. This rule is only
-    applicable for measures with start date after 31/12/2007.
+    quota order number must span the validity period of the measure.
+
+    This rule is only applicable for measures with start date after 31/12/2007.
     """
 
     with pytest.raises(ValidationError):
@@ -1224,28 +1227,13 @@ def test_ME116(date_ranges):
             measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
         )
 
-    cutoff = datetime(2008, 1, 1, tzinfo=timezone.utc)
 
-    factories.MeasureFactory(
-        order_number=factories.QuotaOrderNumberFactory(
-            valid_between=date_ranges.short_before(cutoff),
-        ),
-        valid_between=date_ranges.medium_before(cutoff),
-        geographical_area__valid_between=date_ranges.no_end_before(cutoff),
-        generating_regulation__valid_between=date_ranges.no_end_before(cutoff),
-        goods_nomenclature__valid_between=date_ranges.no_end_before(cutoff),
-        measure_type__valid_between=date_ranges.no_end_before(cutoff),
-        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
-        measure_type__measure_type_series__valid_between=date_ranges.no_end_before(
-            cutoff
-        ),
-    )
-
-
+@only_applicable_after("31/12/2007")
 def test_ME117(approved_workbasket):
     """When a measure has a quota measure type then the origin must exist as a quota
-    order number origin. This rule is only applicable for measures with start date after
-    31/12/2007.
+    order number origin.
+
+    This rule is only applicable for measures with start date after 31/12/2007.
 
     Only origins for quota order numbers managed by the first come first served
     principle are in scope
@@ -1273,15 +1261,18 @@ def test_ME117(approved_workbasket):
 @pytest.mark.skip(reason="Duplicate of ME116")
 def test_ME118():
     """When a quota order number is used in a measure then the validity period of the
-    quota order number must span the validity period of the measure. This rule is only
-    applicable for measures with start date after 31/12/2007.
+    quota order number must span the validity period of the measure.
+
+    This rule is only applicable for measures with start date after 31/12/2007.
     """
 
 
+@only_applicable_after("31/12/2007")
 def test_ME119(approved_workbasket, date_ranges):
     """When a quota order number is used in a measure then the validity period of the
-    quota order number origin must span the validity period of the measure. This rule is
-    only applicable for measures with start date after 31/12/2007.
+    quota order number origin must span the validity period of the measure.
+
+    This rule is only applicable for measures with start date after 31/12/2007.
     """
 
     with pytest.raises(ValidationError):
@@ -1294,23 +1285,3 @@ def test_ME119(approved_workbasket, date_ranges):
             ).order_number,
             valid_between=date_ranges.normal,
         )
-
-    cutoff = datetime(2007, 12, 31, tzinfo=timezone.utc)
-
-    factories.MeasureFactory(
-        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
-        order_number=factories.QuotaOrderNumberOriginFactory(
-            valid_between=date_ranges.short_before(cutoff),
-            order_number__origin=None,
-            order_number__valid_between=date_ranges.no_end_before(cutoff),
-            workbasket=approved_workbasket,
-        ).order_number,
-        valid_between=date_ranges.medium_before(cutoff),
-        generating_regulation__valid_between=date_ranges.no_end_before(cutoff),
-        geographical_area__valid_between=date_ranges.no_end_before(cutoff),
-        goods_nomenclature__valid_between=date_ranges.no_end_before(cutoff),
-        measure_type__valid_between=date_ranges.no_end_before(cutoff),
-        measure_type__measure_type_series__valid_between=date_ranges.no_end_before(
-            cutoff
-        ),
-    )

@@ -809,7 +809,7 @@ def validate_regulation_validity_spans_measure_validity(measure):
 
     if not validity_range_contains_range(
         measure.generating_regulation.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the measure (implicit or explicit) must reside "

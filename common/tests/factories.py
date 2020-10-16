@@ -101,6 +101,13 @@ class FootnoteFactory(TrackedModelMixin, ValidityFactoryMixin):
     footnote_id = string_sequence(length=3, characters=string.digits)
     footnote_type = factory.SubFactory(FootnoteTypeFactory)
 
+    description = factory.RelatedFactory(
+        "common.tests.factories.FootnoteDescriptionFactory",
+        factory_related_name="described_footnote",
+        workbasket=factory.SelfAttribute("..workbasket"),
+        valid_between=factory.SelfAttribute("..valid_between"),
+    )
+
 
 class FootnoteDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
@@ -132,7 +139,12 @@ class RegulationFactory(TrackedModelMixin):
     )
     community_code = factory.LazyAttribute(lambda o: 1 if o.role_type == 1 else None)
     regulation_group = factory.LazyAttribute(
-        lambda o: RegulationGroupFactory() if o.role_type == 1 else None
+        lambda o: RegulationGroupFactory(
+            valid_between=o.valid_between,
+            workbasket=o.workbasket,
+        )
+        if o.role_type == 1
+        else None
     )
 
 
@@ -361,7 +373,10 @@ class QuotaOrderNumberOriginFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     sid = numeric_sid()
     order_number = factory.SubFactory(QuotaOrderNumberFactory)
-    geographical_area = factory.SubFactory(GeographicalAreaFactory)
+    geographical_area = factory.SubFactory(
+        GeographicalAreaFactory,
+        valid_between=factory.SelfAttribute("..valid_between"),
+    )
 
 
 class QuotaOrderNumberOriginExclusionFactory(TrackedModelMixin):

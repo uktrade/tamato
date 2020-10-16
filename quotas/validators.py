@@ -1,4 +1,6 @@
 """Validators for quotas"""
+from datetime import datetime
+from datetime import timezone
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -88,16 +90,16 @@ class QuotaEventType(models.TextChoices):
 def validate_unique_id_and_start_date(order_number):
     """ON1"""
 
-    order_numbers_with_id_and_start_date = (
+    if (
         type(order_number)
         .objects.approved()
+        .exclude(sid=order_number.sid)
         .filter(
-            sid=order_number.sid,
+            order_number=order_number.order_number,
             valid_between__startswith=order_number.valid_between.lower,
         )
-        .exclude(sid=order_number.sid)
-    )
-    if order_numbers_with_id_and_start_date.exists():
+        .exists()
+    ):
         raise ValidationError("Quota order number id + start date must be unique.")
 
 
@@ -141,7 +143,12 @@ def validate_no_overlapping_quota_order_number_origins(origin):
 
 
 def validate_geo_area_validity_spans_origin_validity(origin):
-    """ON6"""
+    """ON6
+
+    Only applies to quota order numbers with a validity start date after 2006-12-31."""
+
+    if origin.valid_between.lower < datetime(2007, 1, 1, tzinfo=timezone.utc):
+        return
 
     if not validity_range_contains_range(
         origin.geographical_area.valid_between, origin.valid_between
@@ -165,7 +172,7 @@ def validate_order_number_validity_spans_origin_validity(origin):
 
 
 def validate_order_number_validity_spans_quota_definition_validity(definition):
-    """ON7"""
+    """ON8"""
 
     if not validity_range_contains_range(
         definition.order_number.valid_between, definition.valid_between

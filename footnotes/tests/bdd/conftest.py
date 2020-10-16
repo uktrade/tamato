@@ -2,29 +2,28 @@ from django.contrib.auth.models import Permission
 from pytest_bdd import given
 
 from common.tests import factories
-from workbaskets.validators import WorkflowStatus
 
 
 @given("footnote NC000", target_fixture="footnote_NC000")
-def footnote_NC000(date_ranges):
-    w = factories.WorkBasketFactory(status=WorkflowStatus.PUBLISHED)
-    t = factories.FootnoteTypeFactory(footnote_type_id="NC", workbasket=w)
-    f = factories.FootnoteFactory(
+def footnote_NC000(approved_workbasket, date_ranges):
+    footnote = factories.FootnoteFactory(
         footnote_id="000",
-        footnote_type=t,
+        footnote_type=factories.FootnoteTypeFactory(
+            footnote_type_id="NC",
+            valid_between=date_ranges.no_end,
+            workbasket=approved_workbasket,
+        ),
         valid_between=date_ranges.normal,
-        workbasket=w,
+        workbasket=approved_workbasket,
+        description__description="This is NC000",
+        description__valid_between=date_ranges.starts_with_normal,
     )
     factories.FootnoteDescriptionFactory(
-        described_footnote=f,
-        description="This is NC000",
-        valid_between=date_ranges.starts_with_normal,
-        workbasket=w,
+        described_footnote=footnote,
+        valid_between=date_ranges.ends_with_normal,
+        workbasket=approved_workbasket,
     )
-    factories.FootnoteDescriptionFactory(
-        described_footnote=f, valid_between=date_ranges.overlap_normal, workbasket=w
-    )
-    return f
+    return footnote
 
 
 @given(

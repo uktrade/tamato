@@ -9,6 +9,7 @@ from regulations import models
 from regulations import validators
 
 
+@TrackedModelSerializer.register_polymorphic_model
 class GroupSerializer(ValiditySerializerMixin, TrackedModelSerializerMixin):
     group_id = serializers.CharField(
         max_length=3, validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")]

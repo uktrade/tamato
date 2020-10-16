@@ -1,52 +1,43 @@
+from datetime import datetime
+from datetime import timezone
+
 import django
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import DataError
 
 from common.tests import factories
-from common.tests.util import raises_if
+from common.tests.util import only_applicable_after
 from regulations import models
 
 
 pytestmark = pytest.mark.django_db
 
 
-def test_ROIMB1():
+def test_ROIMB1(unique_identifying_fields):
     """The (regulation id + role id) must be unique."""
     # Effectively this means that the regulation ID needs to be unique as we are always
     # going to be using role ID 1.
-    regulation_id = "C2000000"
-    role_type = 1
-    factories.RegulationFactory.create(
-        regulation_id=regulation_id,
-        role_type=role_type,
-    )
 
-    with pytest.raises(django.core.exceptions.ValidationError):
-        r = factories.RegulationFactory.build(
-            regulation_id=regulation_id,
-            role_type=role_type,
-        )
-        r.full_clean()
+    assert unique_identifying_fields(factories.RegulationFactory)
 
 
-def test_ROIMB3(validity_range):
+def test_ROIMB3(date_ranges):
     """The start date must be less than or equal to the end date."""
     # In the UK, legislation will be rarely end-dated.
-    range, expected = validity_range
-    with raises_if(django.db.utils.DataError, expected):
-        factories.RegulationFactory.create(valid_between=range)
+
+    with pytest.raises(DataError):
+        factories.RegulationFactory(valid_between=date_ranges.backwards)
 
 
-def test_ROIMB4():
+def test_ROIMB4(must_exist):
     """The referenced regulation group must exist."""
-    # Mandatory selection in the interface
-    non_existent = 999
-    try:
-        models.Group.objects.get(pk=non_existent).delete()
-    except models.Group.DoesNotExist:
-        pass
-    with pytest.raises(models.Group.DoesNotExist):
-        factories.RegulationFactory.create(regulation_group_id=non_existent)
-        django.db.connections["default"].check_constraints()
+
+    assert must_exist(
+        "regulation_group",
+        factories.RegulationGroupFactory,
+        factories.RegulationFactory,
+    )
 
 
 @pytest.mark.skip(reason="Not using regulation replacement functionality")
@@ -74,6 +65,35 @@ def test_ROIMB7():
     "Regulation Group Id".
     """
     pass
+
+
+def test_ROIMB8(date_ranges):
+    """Explicit dates of related measures must be within the validity period of the base
+    regulation.
+
+    Only applicable for measures with start date after 31/12/2003."""
+
+    with pytest.raises(ValidationError):
+        factories.MeasureFactory(
+            generating_regulation__valid_between=date_ranges.starts_with_normal,
+            valid_between=date_ranges.normal,
+        )
+
+
+@pytest.mark.xfail(reason="ME87 catches this currently")
+def test_ROIMB8_before_cutoff(date_ranges):
+    cutoff = datetime(2003, 12, 31, tzinfo=timezone.utc)
+
+    factories.MeasureFactory(
+        generating_regulation__valid_between=date_ranges.short_before(cutoff),
+        valid_between=date_ranges.medium_before(cutoff),
+        geographical_area__valid_between=date_ranges.medium_before(cutoff),
+        goods_nomenclature__valid_between=date_ranges.medium_before(cutoff),
+        measure_type__valid_between=date_ranges.medium_before(cutoff),
+        measure_type__measure_type_series__valid_between=date_ranges.medium_before(
+            cutoff
+        ),
+    )
 
 
 @pytest.mark.skip(reason="Not using effective end date")
@@ -104,9 +124,9 @@ def test_ROIMB44(id, approved, expect_error, cannot_change):
     Flag" set to 1='Approved'."""
     # We need to work on the draft –> live status however, as we have not yet worked
     # this through
-    with raises_if(django.core.exceptions.ValidationError, expect_error):
+    with raises_if(ValidationError, expect_error):
         r = factories.RegulationFactory.create(regulation_id=id, approved=approved)
-        with raises_if(django.core.exceptions.ValidationError, cannot_change):
+        with raises_if(ValidationError, cannot_change):
             r.approved = not r.approved
             r.save()
 
@@ -122,10 +142,14 @@ def test_ROIMB46():
     pass
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_ROIMB47():
+def test_ROIMB47(validity_period_contained):
     """The validity period of the regulation group id must span the validity period of
     the base regulation."""
     # But we will be ensuring that the regulation groups are not end dated, therefore we
     # will not get hit by this
-    pass
+
+    assert validity_period_contained(
+        "regulation_group",
+        factories.RegulationGroupFactory,
+        factories.RegulationFactory,
+    )
