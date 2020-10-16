@@ -50,7 +50,7 @@ def test_is_truthy(value, expected):
         (
             Dates.normal,
             Dates.ends_with_normal,
-            False,
+            True,
         ),
         (
             Dates.normal,
@@ -90,7 +90,7 @@ def test_is_truthy(value, expected):
         (
             Dates.normal,
             Dates.normal,
-            False,
+            True,
         ),
     ],
 )

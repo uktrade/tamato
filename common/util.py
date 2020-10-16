@@ -17,13 +17,34 @@ def validity_range_contains_range(
 
     If either end is unbounded in the contained range,it must also be unbounded in the overall range.
     """
-    if contained_range.upper and contained_range.lower:
-        return (
-            contained_range.lower in overall_range
-            and contained_range.upper in overall_range
-        )
+    # XXX assumes both ranges are [) (inclusive-lower, exclusive-upper)
 
-    return not (
-        (contained_range.upper_inf and overall_range.upper)
-        or (contained_range.lower_inf and contained_range.lower)
-    )
+    if overall_range.lower_inf and overall_range.upper_inf:
+        return True
+
+    if (contained_range.lower_inf and not overall_range.lower_inf) or (
+        contained_range.upper_inf and not overall_range.upper_inf
+    ):
+        return False
+
+    if not overall_range.lower_inf:
+        if (
+            not contained_range.upper_inf
+            and contained_range.upper <= overall_range.lower
+        ):
+            return False
+
+        if contained_range.lower < overall_range.lower:
+            return False
+
+    if not overall_range.upper_inf:
+        if (
+            not contained_range.lower_inf
+            and contained_range.lower >= overall_range.upper
+        ):
+            return False
+
+        if contained_range.upper > overall_range.upper:
+            return False
+
+    return True
