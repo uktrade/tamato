@@ -341,14 +341,19 @@ def validate_additional_code_associated_with_measure_type(measure):
 def validate_measure_unique_except_additional_code(measure):
     """ME16"""
 
-    query = {
-        field: getattr(measure, field)
-        for field in measure.identifying_fields
-        if field != "additional_code"
-    }
     if (
         type(measure)
-        .objects.filter(**query)
+        .objects.filter(
+            measure_type__sid=measure.measure_type.sid,
+            geographical_area__sid=measure.geographical_area.sid,
+            goods_nomenclature__sid=measure.goods_nomenclature.sid
+            if measure.goods_nomenclature
+            else None,
+            order_number__order_number=measure.order_number.order_number
+            if measure.order_number
+            else None,
+            reduction=measure.reduction,
+        )
         .exclude(pk=measure.pk if measure.pk else None)
         .exists()
     ):
