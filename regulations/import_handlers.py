@@ -37,6 +37,7 @@ class BaseRegulationThroughTableHandler(BaseHandler):
 
 
 class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
+    identifying_fields = ("role_type", "regulation_id")
     serializer_class = serializers.RegulationImporterSerializer
     tag = parsers.ModificationRegulationParser.tag.name
 

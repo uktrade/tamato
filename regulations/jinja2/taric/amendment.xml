@@ -4,8 +4,8 @@
     <oub:modification.regulation>
         <oub:modification.regulation.role>{{ record.enacting_regulation.role_type }}</oub:modification.regulation.role>
         <oub:modification.regulation.id>{{ record.enacting_regulation.regulation_id }}</oub:modification.regulation.id>
-        {% if record.enacting_regulation.published_date %}
-        <oub:published.date>{{ record.enacting_regulation.published_date }}</oub:published.date>
+        {% if record.enacting_regulation.published_at %}
+        <oub:published.date>{{ record.enacting_regulation.published_at }}</oub:published.date>
         {% endif %}
         {% if record.enacting_regulation.official_journal_number %}
         <oub:officialjournal.number>{{ record.enacting_regulation.official_journal_number }}</oub:officialjournal.number>

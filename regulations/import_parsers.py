@@ -129,7 +129,7 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     official_journal_number = TextElement(Tag("officialjournal.number"))
     official_journal_page = IntElement(Tag("officialjournal.page"))
     effective_end_date = TextElement(Tag("effective.end.date"))
-    target_regulation__regulation_role = TextElement(Tag("base.regulation.role"))
+    target_regulation__role_type = TextElement(Tag("base.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag("base.regulation.id"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
     stopped = TextElement(Tag("stopped.flag"))

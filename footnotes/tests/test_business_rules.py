@@ -68,11 +68,10 @@ def test_FO3(date_ranges):
 def test_FO4_one_description_mandatory():
     """At least one description record is mandatory."""
 
-    workbasket = factories.WorkBasketFactory()
-    f = factories.FootnoteFactory.create(workbasket=workbasket)
+    footnote = factories.FootnoteFactory(description=None)
 
     with pytest.raises(ValidationError):
-        workbasket.submit_for_approval()
+        footnote.workbasket.submit_for_approval()
 
 
 def test_FO4_first_description_must_have_same_start_date(date_ranges):
@@ -80,32 +79,21 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
     the footnote.
     """
 
-    footnote = factories.FootnoteFactory(valid_between=date_ranges.no_end)
-
     with pytest.raises(ValidationError):
-        factories.FootnoteDescriptionFactory(
-            described_footnote=footnote, valid_between=date_ranges.later
-        )
+        factories.FootnoteFactory(description__valid_between=date_ranges.later)
 
 
 def test_FO4_start_dates_cannot_match(approved_workbasket):
     """No two associated description periods may have the same start date."""
 
     footnote = factories.FootnoteFactory(workbasket=approved_workbasket)
+
     description = factories.FootnoteDescriptionFactory(
         described_footnote=footnote,
         valid_between=footnote.valid_between,
-        workbasket=approved_workbasket,
-    )
-
-    workbasket = factories.WorkBasketFactory()
-    factories.FootnoteDescriptionFactory.create(
-        described_footnote=footnote,
-        valid_between=description.valid_between,
-        workbasket=workbasket,
     )
     with pytest.raises(ValidationError):
-        workbasket.submit_for_approval()
+        description.workbasket.submit_for_approval()
 
 
 def test_FO4_description_start_before_footnote_end(date_ranges):
@@ -113,10 +101,8 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
 
     footnote = factories.FootnoteFactory(
         valid_between=date_ranges.normal,
-        footnote_type=factories.FootnoteTypeFactory(valid_between=date_ranges.big),
-    )
-    factories.FootnoteDescriptionFactory(
-        described_footnote=footnote, valid_between=date_ranges.starts_with_normal
+        footnote_type__valid_between=date_ranges.big,
+        description__valid_between=date_ranges.starts_with_normal,
     )
 
     with pytest.raises(ValidationError):

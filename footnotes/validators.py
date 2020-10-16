@@ -127,10 +127,10 @@ def validate_unique_type_and_id(footnote):
 def validate_footnote_type_validity_includes_footnote_validity(footnote):
     """FO17"""
 
-    type_validity = footnote.footnote_type.valid_between
-    footnote_validity = footnote.valid_between
-
-    if not validity_range_contains_range(type_validity, footnote_validity):
+    if not validity_range_contains_range(
+        footnote.footnote_type.valid_between,
+        footnote.valid_between,
+    ):
         raise ValidationError(
             {
                 "valid_between": (

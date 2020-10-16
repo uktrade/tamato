@@ -39,13 +39,6 @@ class Group(TrackedModel, ValidityMixin):
 
     identifying_fields = ("group_id",)
 
-    def clean(self):
-        if self.valid_between.upper is not None:
-            raise ValidationError("Regulation groups do not have end dates set")
-
-    def __str__(self):
-        return f'Regulation Group "{self.group_id}"'
-
 
 class Regulation(TrackedModel):
     """The main legal acts at the basis of the Union tariff and commercial legislation
@@ -54,7 +47,7 @@ class Regulation(TrackedModel):
     prorogation (extension), Full Temporary Stop (FTS), Partial Temporary Stop (PTS)
     """
 
-    identifying_fields = ("regulation_id",)
+    identifying_fields = ("role_type", "regulation_id")
 
     record_code = "285"
     subrecord_code = "00"
@@ -64,14 +57,12 @@ class Regulation(TrackedModel):
         default=validators.RoleType.BASE,
         editable=False,
     )
-
-    """The regulation number"""
     regulation_id = models.CharField(
         max_length=8,
         editable=False,
         validators=[validators.regulation_id_validator],
+        help_text="The regulation number",
     )
-
     official_journal_number = models.CharField(
         max_length=5, null=True, blank=True, editable=False, default="1"
     )
@@ -100,16 +91,15 @@ class Regulation(TrackedModel):
         validators=[validators.no_information_text_delimiters],
     )
 
-    """Indicates if a (draft) regulation is approved.
-    Measures associated with an unapproved draft regulation are only for information and
-    do not apply.
-    If the draft regulation is rejected, all associated measures are deleted.
-    If approved, all measures apply.
-    Once the actual regulation is known, it replaces the draft regulation and all
-    measures are moved from the draft to the actual regulation.
-    It is possible for a draft regulation to be replaced by multiple actual regulations,
-    each one partially replacing the draft.
-    """
+    # Indicates if a (draft) regulation is approved.
+    # Measures associated with an unapproved draft regulation are only for information and
+    # do not apply.
+    # If the draft regulation is rejected, all associated measures are deleted.
+    # If approved, all measures apply.
+    # Once the actual regulation is known, it replaces the draft regulation and all
+    # measures are moved from the draft to the actual regulation.
+    # It is possible for a draft regulation to be replaced by multiple actual regulations,
+    # each one partially replacing the draft.
     approved = models.BooleanField(default=False)
 
     """The code which indicates whether or not a regulation has been replaced."""
@@ -195,6 +185,8 @@ class Regulation(TrackedModel):
 
     def clean(self):
         validators.unique_regulation_id_for_role_type(self)
+        validators.validate_regulation_group_exists(self)
+        validators.validate_group_validity_spans_regulation_validity(self)
         validators.validate_approved(self)
         validators.validate_official_journal(self)
         validators.validate_information_text(self)
@@ -204,7 +196,7 @@ class Regulation(TrackedModel):
         validators.validate_base_regulations_have_group(self)
 
     def __str__(self):
-        return self.regulation_id
+        return f"{self.regulation_id} ({self.get_role_type_display()})"
 
 
 class Amendment(TrackedModel):

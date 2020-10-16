@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timezone
 from decimal import Decimal
 
 import pytest
@@ -5,12 +7,12 @@ from django.core.exceptions import ValidationError
 from django.db import DataError
 
 from common.tests import factories
+from common.tests.util import only_applicable_after
 from common.tests.util import requires_measures
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
 from quotas.validators import SubQuotaType
-from workbaskets.validators import WorkflowStatus
 
 
 pytestmark = pytest.mark.django_db
@@ -19,18 +21,13 @@ pytestmark = pytest.mark.django_db
 def test_ON1(approved_workbasket):
     """Quota order number id + start date must be unique"""
 
-    existing = factories.QuotaOrderNumberFactory(
-        workbasket=approved_workbasket, update_type=UpdateType.CREATE
-    )
-
-    order_number = factories.QuotaOrderNumberFactory(
-        order_number=existing.order_number,
-        valid_between=existing.valid_between,
-        update_type=UpdateType.CREATE,
-    )
+    existing = factories.QuotaOrderNumberFactory(workbasket=approved_workbasket)
 
     with pytest.raises(ValidationError):
-        order_number.workbasket.submit_for_approval()
+        factories.QuotaOrderNumberFactory(
+            order_number=existing.order_number,
+            valid_between=existing.valid_between,
+        )
 
 
 def test_ON2(date_ranges, approved_workbasket):
@@ -76,22 +73,19 @@ def test_ON5(date_ranges, approved_workbasket):
         origin.workbasket.submit_for_approval()
 
 
+@only_applicable_after("31/12/2006")
 def test_ON6(date_ranges, approved_workbasket):
     """The validity period of the geographical area must span the validity period of the
     quota order number origin.
+
+    Only applies to quota order numbers with a validity start date after 2006-12-31.
     """
 
-    geo_area = factories.GeographicalAreaFactory(
-        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
-    )
-    origin = factories.QuotaOrderNumberOriginFactory(
-        geographical_area=geo_area,
-        update_type=UpdateType.CREATE,
-        valid_between=date_ranges.normal,
-    )
-
     with pytest.raises(ValidationError):
-        origin.workbasket.submit_for_approval()
+        factories.QuotaOrderNumberOriginFactory(
+            geographical_area__valid_between=date_ranges.starts_with_normal,
+            valid_between=date_ranges.normal,
+        )
 
 
 def test_ON7(date_ranges, approved_workbasket):
@@ -130,7 +124,7 @@ def test_ON8(date_ranges, approved_workbasket):
         quota_def.workbasket.submit_for_approval()
 
 
-@requires_measures
+@pytest.mark.skip(reason="Duplicates ME116")
 def test_ON9(date_ranges, approved_workbasket):
     """When a quota order number is used in a measure then the validity period of the
     quota order number must span the validity period of the measure.
@@ -139,7 +133,7 @@ def test_ON9(date_ranges, approved_workbasket):
     """
 
 
-@requires_measures
+@pytest.mark.skip(reason="Duplicates ME119")
 def test_ON10(date_ranges, approved_workbasket):
     """When a quota order number is used in a measure then the validity period of the
     quota order number origin must span the validity period of the measure.

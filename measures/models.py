@@ -1,6 +1,7 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.db import models
+from psycopg2.extras import DateTimeTZRange
 
 from common.models import ApplicabilityCode
 from common.models import NumericSID
@@ -334,6 +335,33 @@ class Measure(TrackedModel, ValidityMixin):
         "order_number",
         "reduction",
     )
+
+    @property
+    def effective_end_date(self):
+        """Measure end dates may be overridden by regulations"""
+
+        # UK measures will have explicit end dates only
+        # if self.national:
+        #     return self.valid_between.upper
+
+        reg = self.generating_regulation
+
+        if self.valid_between.upper and reg and reg.effective_end_date:
+            if self.valid_between.upper > reg.effective_end_date:
+                return reg.effective_end_date
+            return self.valid_between.upper
+
+        if self.valid_between.upper and self.terminating_regulation:
+            return self.valid_between.upper
+
+        if reg:
+            return reg.effective_end_date
+
+        return self.valid_between.upper
+
+    @property
+    def effective_valid_between(self):
+        return DateTimeTZRange(self.valid_between.lower, self.effective_end_date)
 
     def clean(self):
         validators.must_exist(self, "additional_code")

@@ -46,8 +46,10 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         self.full_clean()
         return super().save(*args, **kwargs)
 
-    def validate_workbasket(self):
+    def clean(self):
         validators.validate_unique_id_and_start_date(self)
+
+    def validate_workbasket(self):
         validators.validate_no_overlapping_quota_order_numbers(self)
 
 
@@ -75,9 +77,11 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         self.full_clean()
         return super().save(*args, **kwargs)
 
+    def clean(self):
+        validators.validate_geo_area_validity_spans_origin_validity(self)
+
     def validate_workbasket(self):
         validators.validate_no_overlapping_quota_order_number_origins(self)
-        validators.validate_geo_area_validity_spans_origin_validity(self)
         validators.validate_order_number_validity_spans_origin_validity(self)
 
 
