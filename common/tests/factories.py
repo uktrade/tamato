@@ -9,7 +9,6 @@ import factory.fuzzy
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.util import Dates
-from common.tests.util import NOW
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from measures.validators import DutyExpressionId
@@ -37,8 +36,12 @@ def numeric_sid():
     return factory.Sequence(lambda x: x + 1)
 
 
+def date_ranges(name):
+    return factory.LazyFunction(lambda: getattr(Dates(), name))
+
+
 class ValidityFactoryMixin(factory.django.DjangoModelFactory):
-    valid_between = Dates.no_end
+    valid_between = date_ranges("no_end")
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -114,18 +117,18 @@ class RegulationGroupFactory(TrackedModelMixin):
 
     group_id = string_sequence(3, characters=string.ascii_uppercase)
     description = short_description()
-    valid_between = Dates.no_end
+    valid_between = date_ranges("no_end")
 
 
 class RegulationFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Regulation"
 
-    regulation_id = factory.Sequence(lambda n: f"R{NOW:%y}{n:04d}0")
+    regulation_id = factory.Sequence(lambda n: f"R{Dates().now:%y}{n:04d}0")
     approved = True
     role_type = 1
     valid_between = factory.LazyAttribute(
-        lambda o: Dates.no_end if o.role_type == 1 else None
+        lambda o: Dates().no_end if o.role_type == 1 else None
     )
     community_code = factory.LazyAttribute(lambda o: 1 if o.role_type == 1 else None)
     regulation_group = factory.LazyAttribute(
@@ -400,7 +403,7 @@ class QuotaSuspensionFactory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
     description = short_description()
-    valid_between = Dates.normal
+    valid_between = date_ranges("normal")
 
 
 class QuotaBlockingFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -410,7 +413,7 @@ class QuotaBlockingFactory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
     blocking_period_type = factory.fuzzy.FuzzyChoice(range(1, 9))
-    valid_between = Dates.normal
+    valid_between = date_ranges("normal")
 
 
 class QuotaEventFactory(TrackedModelMixin):
@@ -419,11 +422,11 @@ class QuotaEventFactory(TrackedModelMixin):
 
     subrecord_code = factory.fuzzy.FuzzyChoice(QuotaEventType.values)
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
-    occurrence_timestamp = NOW
+    occurrence_timestamp = factory.LazyFunction(lambda: Dates().now)
 
     @factory.lazy_attribute
     def data(self):
-        now = "{:%Y-%m-%d}".format(NOW)
+        now = "{:%Y-%m-%d}".format(Dates().now)
         if self.subrecord_code == "00":
             return {
                 "old.balance": 0.0,
