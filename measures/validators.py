@@ -4,20 +4,17 @@ from datetime import timezone
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator
-from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q
 
+from commodities.models import GoodsNomenclatureIndentNode
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from common.validators import NumberRangeValidator
-from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
-from workbaskets.validators import WorkflowStatus
 
 
 measure_type_series_id_validator = RegexValidator(r"^[A-Z][A-Z ]?$")
@@ -391,8 +388,9 @@ def validate_no_overlapping_measures_in_same_goods_hierarchy(measure):
 
     # for each goods nomenclature version, get all indents
     for good in goods:
-        indents = good.indents.filter(
+        indents = GoodsNomenclatureIndentNode.objects.filter(
             valid_between__overlap=measure.valid_between,
+            indent__indented_goods_nomenclature=good,
         )
 
         # for each indent, get the goods tree
@@ -403,17 +401,9 @@ def validate_no_overlapping_measures_in_same_goods_hierarchy(measure):
 
             # check for any measures associated to commodity codes in the tree which
             # clash with the specified measure
-            nodes = tree.prefetch_related(
-                models.Prefetch(
-                    "indented_goods_nomenclature__measures",
-                    queryset=matching_measures,
-                    to_attr="matching_measures",
-                )
-            )
-
-            if any(
-                node.indented_goods_nomenclature.matching_measures for node in nodes
-            ):
+            if matching_measures.filter(
+                goods_nomenclature__indents__nodes__in=tree.values_list("pk", flat=True)
+            ).exists():
                 raise ValidationError(
                     "There may be no overlap in time with other measure occurrences "
                     "with a goods code in the same nomenclature hierarchy which "
@@ -839,9 +829,11 @@ def validate_goods_code_level_within_measure_type_explosion_level(measure):
     )
 
     for good in goods:
-        depths = good.indents.filter(
+        indents = good.indents.filter(
             valid_between__overlap=measure.valid_between,
-        ).values_list("depth", flat=True)
+        ).prefetch_related()
+
+        depths = [indent.nodes.first().depth for indent in indents]
 
         # one level of tree depth corresponds to an increment of 2 in explosion level
         if any(

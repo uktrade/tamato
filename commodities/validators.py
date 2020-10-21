@@ -23,19 +23,23 @@ def validate_goods_parent_validity_includes_good(goods_nomenclature_indent):
     NIG2
     """
     goods_validity = goods_nomenclature_indent.indented_goods_nomenclature.valid_between
-    parent = goods_nomenclature_indent.get_parent()
+    nodes = goods_nomenclature_indent.nodes.all()
 
-    if not parent:
-        return
-    parent_validity = parent.indented_goods_nomenclature.valid_between
+    for node in nodes:
+        parent = node.get_parent()
 
-    if not validity_range_contains_range(parent_validity, goods_validity):
-        raise ValidationError(
-            {
-                "valid_between": "Parent Goods Nomenclature validity period must encompass "
-                "the entire validity period of the Goods Nomenclature"
-            }
-        )
+        if not parent:
+            continue
+
+        parent_validity = parent.indent.indented_goods_nomenclature.valid_between
+
+        if not validity_range_contains_range(parent_validity, goods_validity):
+            raise ValidationError(
+                {
+                    "valid_between": "Parent Goods Nomenclature validity period must encompass "
+                    "the entire validity period of the Goods Nomenclature"
+                }
+            )
 
 
 def validate_has_origin(goods_nomenclature):
@@ -52,7 +56,7 @@ def validate_has_origin(goods_nomenclature):
     lower_bound = datetime(2010, 1, 1).replace(tzinfo=timezone.utc)
 
     if (
-        goods_nomenclature.indents.filter(depth=1).exists()
+        goods_nomenclature.indents.filter(nodes__depth=1).exists()
         or goods_nomenclature.valid_between.lower <= lower_bound
     ):
         return
