@@ -302,7 +302,6 @@ class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
     node = factory.RelatedFactory(
         "common.tests.factories.GoodsNomenclatureIndentNodeFactory",
         factory_related_name="indent",
-        workbasket=factory.SelfAttribute("..workbasket"),
         valid_between=factory.SelfAttribute("..valid_between"),
     )
 
@@ -317,7 +316,7 @@ def build_indent_path(good):
     return indent_path_generator()
 
 
-class GoodsNomenclatureIndentNodeFactory(TrackedModelMixin, ValidityFactoryMixin):
+class GoodsNomenclatureIndentNodeFactory(ValidityFactoryMixin):
     class Meta:
         model = "commodities.GoodsNomenclatureIndentNode"
         exclude = ("parent",)
@@ -327,7 +326,6 @@ class GoodsNomenclatureIndentNodeFactory(TrackedModelMixin, ValidityFactoryMixin
     path = factory.LazyAttribute(build_indent_path)
     depth = factory.LazyAttribute(lambda o: len(o.path) // 4)
 
-    sid = numeric_sid()
     indent = factory.SubFactory(SimpleGoodsNomenclatureIndentFactory)
 
 

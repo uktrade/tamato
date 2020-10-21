@@ -6,14 +6,12 @@ from common.tests.util import validate_taric_xml
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.xfail
 @validate_taric_xml(factories.GoodsNomenclatureFactory)
 def test_goods_nomenclature_xml(api_client, taric_schema, approved_workbasket, xml):
     element = xml.find(".//goods.nomenclature", xml.nsmap)
     assert element is not None
 
 
-@pytest.mark.xfail
 @validate_taric_xml(factories.GoodsNomenclatureIndentFactory)
 def test_goods_nomenclature_indent_xml(
     api_client, taric_schema, approved_workbasket, xml
@@ -49,7 +47,6 @@ def goods_nomenclature_relation_test(
     run_test(api_client, taric_schema, approved_workbasket)
 
 
-@pytest.mark.xfail
 def test_goods_nomenclature_origin_xml(
     api_client, taric_schema, approved_workbasket, date_ranges
 ):
@@ -62,7 +59,6 @@ def test_goods_nomenclature_origin_xml(
     )
 
 
-@pytest.mark.xfail
 def test_goods_nomenclature_successor_xml(
     api_client, taric_schema, approved_workbasket, date_ranges
 ):

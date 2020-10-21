@@ -101,8 +101,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
         )
 
 
-class GoodsNomenclatureIndentNode(MP_Node, TrackedModel, ValidityMixin):
-    # TODO: Remove TrackedModel after merging with master
+class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
     """
     Goods Nomenclature naturally falls into the structure of a hierarchical tree.
     As there is a root good e.g. "Live Animals; Animal Products" which then has branch nodes
@@ -155,17 +154,9 @@ class GoodsNomenclatureIndentNode(MP_Node, TrackedModel, ValidityMixin):
     an entire description of the tree and its related commodities on its own, over time.
     """
 
-    sid = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99999999)]
-    )  # TODO: Remove from code after master migration
-
-    indented_goods_nomenclature = models.ForeignKey(
-        GoodsNomenclature,
-        on_delete=models.PROTECT,
-        related_name="+",
-        null=True,
-        blank=True,
-    )  # TODO: Remove from code after master migration
+    # Coming from the legacy tracked model this model needs a new primary key.
+    # Given paths are always unique in MP trees this is the best candidate for the PK.
+    path = models.CharField(max_length=255, unique=True, primary_key=True)
 
     indent = models.ForeignKey(
         GoodsNomenclatureIndent, on_delete=models.PROTECT, related_name="nodes"
