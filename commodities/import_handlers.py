@@ -90,18 +90,13 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         node_data = {
             "indent": indent,
-            "sid": data["sid"],
-            "update_type": data["update_type"],
             "valid_between": data["valid_between"],
-            "workbasket_id": data["workbasket_id"],
         }
 
         if depth == 0 and item_id[2:] == "00000000":
             # This is a root indent (i.e. a chapter heading)
             models.GoodsNomenclatureIndentNode.add_root(**node_data)
             return indent
-
-        node_data["depth"] = depth
 
         chapter_heading = item_id[:2]
 
