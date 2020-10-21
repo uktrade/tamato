@@ -73,7 +73,7 @@ def test_MT7(date_ranges):
     """A measure type can not be deleted if it is used in a measure."""
 
     with pytest.raises(IntegrityError):
-        factories.MeasureFactory().measure_type.delete()
+        factories.MeasureFactory.create().measure_type.delete()
 
 
 def test_MT10(validity_period_contained):
@@ -134,14 +134,14 @@ def test_MA2():
     """
 
     with pytest.raises(IntegrityError):
-        factories.MeasureConditionComponentFactory().condition.action.delete()
+        factories.MeasureConditionComponentFactory.create().condition.action.delete()
 
 
 def test_MA3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.MeasureActionFactory(valid_between=date_ranges.backwards)
+        factories.MeasureActionFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_MA4(date_ranges):
@@ -446,7 +446,7 @@ def test_ME32(approved_workbasket, date_ranges):
     upward hierarchy and all commodity codes in the downward hierarchy.
     """
 
-    existing = factories.MeasureFactory(
+    existing = factories.MeasureFactory.create(
         goods_nomenclature__indent__workbasket=approved_workbasket,
         goods_nomenclature__workbasket=approved_workbasket,
         measure_type__measure_explosion_level=10,
@@ -454,11 +454,11 @@ def test_ME32(approved_workbasket, date_ranges):
         workbasket=approved_workbasket,
     )
 
-    measure = factories.MeasureFactory(
-        goods_nomenclature__origin=factories.GoodsNomenclatureFactory(
+    measure = factories.MeasureFactory.create(
+        goods_nomenclature__origin=factories.GoodsNomenclatureFactory.create(
             valid_between=date_ranges.adjacent_earlier,
         ),
-        goods_nomenclature__indent__parent=existing.goods_nomenclature.indents.first(),
+        goods_nomenclature__indent__node__parent=existing.goods_nomenclature.indents.first().nodes.first(),
         measure_type=existing.measure_type,
         geographical_area=existing.geographical_area,
         order_number=existing.order_number,
@@ -482,9 +482,9 @@ def test_ME33(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             valid_between=date_ranges.no_end,
-            terminating_regulation=factories.RegulationFactory(),
+            terminating_regulation=factories.RegulationFactory.create(),
         )
 
 
@@ -1051,13 +1051,15 @@ def test_ME88(date_ranges, approved_workbasket):
     measure type.
     """
 
-    mt = factories.MeasureTypeFactory(measure_explosion_level=2)
+    mt = factories.MeasureTypeFactory.create(measure_explosion_level=2)
     good = factories.GoodsNomenclatureFactory.build(workbasket=approved_workbasket)
     good.save()
-    factories.GoodsNomenclatureIndentFactory(indented_goods_nomenclature=good, depth=2)
+    factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good, node__depth=2
+    )
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type=mt,
             goods_nomenclature=good,
             valid_between=date_ranges.normal,

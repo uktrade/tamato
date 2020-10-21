@@ -23,19 +23,19 @@ def test_goods_nomenclature_indent_xml(
 def goods_nomenclature_relation_test(
     relation_name, api_client, taric_schema, approved_workbasket, date_ranges
 ):
-    parent = factories.GoodsNomenclatureIndentFactory(
+    parent = factories.GoodsNomenclatureIndentFactory.create(
         valid_between=date_ranges.big, workbasket=approved_workbasket
-    )
-    origin = factories.GoodsNomenclatureFactory(
+    ).nodes.first()
+    origin = factories.GoodsNomenclatureFactory.create(
         workbasket=approved_workbasket,
         valid_between=date_ranges.normal,
-        indent__parent=parent,
+        indent__node__parent=parent,
     )
 
     @validate_taric_xml(
         factories.GoodsNomenclatureFactory,
         factory_kwargs={
-            "indent__parent": parent,
+            "indent__node__parent": parent,
             "origin": origin,
             "valid_between": date_ranges.adjacent_later,
         },

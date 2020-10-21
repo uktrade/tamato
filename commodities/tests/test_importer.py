@@ -1,4 +1,5 @@
 import pytest
+from psycopg2._range import DateTimeTZRange
 
 from commodities import models
 from commodities import serializers
@@ -13,6 +14,28 @@ from workbaskets.validators import WorkflowStatus
 
 
 pytestmark = pytest.mark.django_db
+
+
+def make_and_get_indent(indent, valid_user, depth):
+    data = {
+        "indented_goods_nomenclature": {
+            "sid": indent.indented_goods_nomenclature.sid,
+            "item_id": indent.indented_goods_nomenclature.item_id,
+            "suffix": indent.indented_goods_nomenclature.suffix,
+        },
+        "taric_template": "taric/goods_nomenclature_indent.xml",
+        "update_type": UpdateType.CREATE.value,
+        "sid": indent.sid,
+        "start_date": "{:%Y-%m-%d}".format(indent.valid_between.lower),
+        "indent": depth,
+    }
+
+    xml = generate_test_import_xml(data)
+    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+
+    return models.GoodsNomenclatureIndent.objects.get(
+        sid=indent.sid,
+    )
 
 
 @validate_taric_import(
@@ -63,89 +86,127 @@ def test_goods_nomenclature_importer_create_with_origin(valid_user):
 
 
 def test_goods_nomenclature_indent_importer_create(valid_user):
-    test_object = factories.GoodsNomenclatureIndentFactory.build(
+    indent = factories.GoodsNomenclatureIndentFactory.build(
         update_type=UpdateType.CREATE.value,
-        indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
+        indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
             item_id="1100000000"
         ),
     )
 
-    @validate_taric_import(
-        serializers.GoodsNomenclatureIndentSerializer, instance=test_object
-    )
-    def assert_func(valid_user, test_object, db_object):
-        assert db_object.sid == test_object.sid
-        assert db_object.depth == test_object.depth
-        assert (
-            db_object.indented_goods_nomenclature.sid
-            == test_object.indented_goods_nomenclature.sid
-        )
-        assert db_object.valid_between.lower == test_object.valid_between.lower
+    db_indent = make_and_get_indent(indent, valid_user, depth="00")
 
-    assert_func(valid_user)
+    assert db_indent.sid == indent.sid
+    assert db_indent.nodes.count() == 1
+    assert db_indent.nodes.first().depth == 1
+    assert (
+        db_indent.indented_goods_nomenclature.sid
+        == indent.indented_goods_nomenclature.sid
+    )
+    assert db_indent.valid_between.lower == indent.valid_between.lower
 
 
 def test_goods_nomenclature_indent_importer_create_with_parent_low_indent(valid_user):
     parent_indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__item_id="1200000000"
-    )
+    ).nodes.first()
 
-    test_object = factories.GoodsNomenclatureIndentFactory.build(
+    indent = factories.GoodsNomenclatureIndentFactory.build(
         update_type=UpdateType.CREATE.value,
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
             item_id="1201000000"
         ),
-        parent=parent_indent,
     )
 
-    @validate_taric_import(
-        serializers.GoodsNomenclatureIndentSerializer, instance=test_object
-    )
-    def assert_func(valid_user, test_object, db_object):
-        assert db_object.sid == test_object.sid
-        assert db_object.depth == test_object.depth
-        assert db_object.depth == 2
-        assert (
-            db_object.indented_goods_nomenclature.sid
-            == test_object.indented_goods_nomenclature.sid
-        )
-        assert db_object.get_parent() == parent_indent
-        assert db_object.valid_between.lower == test_object.valid_between.lower
+    db_indent = make_and_get_indent(indent, valid_user, depth="00")
 
-    assert_func(valid_user)
+    db_indent_node = db_indent.nodes.first()
+    assert db_indent.sid == indent.sid
+    assert db_indent.nodes.count() == 1
+    assert db_indent_node.depth == 2
+    assert (
+        db_indent.indented_goods_nomenclature.sid
+        == indent.indented_goods_nomenclature.sid
+    )
+    assert db_indent_node.get_parent() == parent_indent
+    assert db_indent.valid_between.lower == indent.valid_between.lower
 
 
 def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid_user):
     parent_indent = None
     for idx in range(1, 6):
-        parent_indent = factories.GoodsNomenclatureIndentFactory.create(
-            indented_goods_nomenclature__item_id=("12" * idx).ljust(10, "0"),
+        parent_indent = factories.GoodsNomenclatureIndentNodeFactory.create(
+            indent__indented_goods_nomenclature__item_id=("12" * idx).ljust(10, "0"),
             parent=parent_indent,
         )
 
-    test_object = factories.GoodsNomenclatureIndentFactory.build(
+    indent = factories.GoodsNomenclatureIndentFactory.build(
         update_type=UpdateType.CREATE.value,
         indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
             item_id="1212121215"
         ),
-        parent=parent_indent,
     )
 
-    @validate_taric_import(
-        serializers.GoodsNomenclatureIndentSerializer, instance=test_object
-    )
-    def assert_func(valid_user, test_object, db_object):
-        assert db_object.sid == test_object.sid
-        assert db_object.depth == test_object.depth
-        assert db_object.depth == 6
-        assert (
-            db_object.indented_goods_nomenclature.sid
-            == test_object.indented_goods_nomenclature.sid
-        )
-        assert db_object.get_parent() == parent_indent
-        assert db_object.valid_between.lower == test_object.valid_between.lower
+    db_indent = make_and_get_indent(indent, valid_user, depth="04")
 
-    assert_func(valid_user)
+    db_indent_node = db_indent.nodes.first()
+
+    assert db_indent.sid == indent.sid
+    assert db_indent.nodes.count() == 1
+    assert db_indent_node.depth == 6
+    assert (
+        db_indent.indented_goods_nomenclature.sid
+        == indent.indented_goods_nomenclature.sid
+    )
+    assert db_indent_node.get_parent() == parent_indent
+    assert db_indent.valid_between.lower == indent.valid_between.lower
+
+
+def test_goods_nomenclature_indent_importer_multiple_parents(valid_user, date_ranges):
+    """
+    In some cases there is an indent which is created which already expects to have multiple parents
+    over its lifetime. Assert multiple indent nodes are generated in this scenario.
+    """
+
+    indent_validity = DateTimeTZRange(
+        date_ranges.adjacent_earlier.lower, date_ranges.adjacent_later.upper
+    )
+    parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
+        valid_between=indent_validity,
+        indented_goods_nomenclature__valid_between=indent_validity,
+        indented_goods_nomenclature__item_id="1300000000",
+    )
+    parent_nodes = {
+        factories.GoodsNomenclatureIndentNodeFactory.create(
+            valid_between=date_ranges.adjacent_earlier,
+            indent=parent_indent,
+        ),
+        factories.GoodsNomenclatureIndentNodeFactory.create(
+            valid_between=date_ranges.normal, indent=parent_indent
+        ),
+        factories.GoodsNomenclatureIndentNodeFactory.create(
+            valid_between=date_ranges.adjacent_later, indent=parent_indent
+        ),
+    }
+
+    indent = factories.GoodsNomenclatureIndentFactory.build(
+        update_type=UpdateType.CREATE.value,
+        indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
+            item_id="1301000000",
+            valid_between=indent_validity,
+        ),
+        valid_between=indent_validity,
+    )
+
+    db_indent = make_and_get_indent(indent, valid_user, depth="00")
+
+    assert db_indent.sid == indent.sid
+    assert db_indent.nodes.count() == 3
+    assert all(node.get_parent() in parent_nodes for node in db_indent.nodes.all())
+    assert (
+        db_indent.indented_goods_nomenclature.sid
+        == indent.indented_goods_nomenclature.sid
+    )
+    assert db_indent.valid_between.lower == indent.valid_between.lower
 
 
 @requires_update_importer

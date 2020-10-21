@@ -1,5 +1,3 @@
-from django.contrib.postgres.constraints import ExclusionConstraint
-from django.contrib.postgres.fields import RangeOperators
 from django.db import models
 
 from common.models import ApplicabilityCode

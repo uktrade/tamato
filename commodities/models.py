@@ -6,8 +6,6 @@ from django.db import models
 from treebeard.mp_tree import MP_Node
 
 from commodities import validators
-from common.models import PolymorphicMPTreeManager
-from common.models import PolymorphicMPTreeQuerySet
 from common.models import TrackedModel
 from common.models import ValidityMixin
 
@@ -69,7 +67,42 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         )
 
 
-class GoodsNomenclatureIndent(MP_Node, TrackedModel, ValidityMixin):
+class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
+    record_code = "400"
+    subrecord_code = "05"
+
+    sid = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(99999999)]
+    )
+    indented_goods_nomenclature = models.ForeignKey(
+        GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
+    )
+
+    def clean(self):
+        validators.validate_indent_start_date_less_than_goods_end_date(self)
+        validators.validate_goods_parent_validity_includes_good(self)
+        return super().clean()
+
+    def __str__(self):
+        depth = self.nodes.first().depth
+        return (
+            f"Goods Nomenclature Indent: {depth} - {self.indented_goods_nomenclature}"
+        )
+
+    class Meta:
+        constraints = (
+            ExclusionConstraint(
+                name="exclude_overlapping_goods_indents",
+                expressions=[
+                    ("valid_between", RangeOperators.OVERLAPS),
+                    ("sid", RangeOperators.EQUAL),
+                ],
+            ),
+        )
+
+
+class GoodsNomenclatureIndentNode(MP_Node, TrackedModel, ValidityMixin):
+    # TODO: Remove TrackedModel after merging with master
     """
     Goods Nomenclature naturally falls into the structure of a hierarchical tree.
     As there is a root good e.g. "Live Animals; Animal Products" which then has branch nodes
@@ -86,11 +119,15 @@ class GoodsNomenclatureIndent(MP_Node, TrackedModel, ValidityMixin):
 
     This way queries for all child nodes are as simple as:
 
+    .. code:: SQL
+
         SELECT *
           FROM table
          WHERE path LIKE "{parent_path}%";
 
     and a parent node query would be:
+
+    .. code:: SQL
 
         SELECT *
           FROM table
@@ -105,34 +142,40 @@ class GoodsNomenclatureIndent(MP_Node, TrackedModel, ValidityMixin):
     to represent the tree depth. This, combined with suffixes and some ordering within the item
     ID gave the actual location.
 
-    This implementation keeps the separate indent table, but places allows that indent to be
-    represented by a real tree using the Materialized Path. The indent then has a Foreign Key
-    to the relevant Goods Nomenclature so they can be edited separately. This does away with
-    the need to analyse the item id and suffix as well as the indent - as the indent gives us
-    an entire description of the tree and its related commodities on its own.
-    """
+    The indent table initially looks like a good candidate. However, due to how the legacy
+    system was implemented (i.e., without a tree), the legacy indents would move fluidly
+    between parents without the need for an update - a feature that would be incompatible with
+    an implemented tree system at this table.
 
-    record_code = "400"
-    subrecord_code = "05"
+    This implementation keeps a separate untracked table for tree nodes, keeping the tree entirely
+    separate from the main implementation of the data system. The node holds a Foreign Key to the
+    indent table, allowing the tree to be accessed through the indent. The indent then has a Foreign Key
+    to the relevant Goods Nomenclature so they can be edited separately. This does away with
+    the need to analyse the item id and suffix as well as the indent - as the node gives us
+    an entire description of the tree and its related commodities on its own, over time.
+    """
 
     sid = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(99999999)]
-    )
+    )  # TODO: Remove from code after master migration
 
     indented_goods_nomenclature = models.ForeignKey(
-        GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
+        GoodsNomenclature,
+        on_delete=models.PROTECT,
+        related_name="+",
+        null=True,
+        blank=True,
+    )  # TODO: Remove from code after master migration
+
+    indent = models.ForeignKey(
+        GoodsNomenclatureIndent, on_delete=models.PROTECT, related_name="nodes"
     )
 
-    objects = PolymorphicMPTreeManager.from_queryset(PolymorphicMPTreeQuerySet)()
-
-    def get_active_children(self, **kwargs):
-        return self.get_children().active().filter(**kwargs)
-
     def get_measures(self, **kwargs):
-        if self.measures.exists():
-            return self.measures.all()
+        if self.indent.measures.exists():
+            return self.indent.measures.all()
         query = self.get_ancestors().filter(
-            indented_goods_nomenclature__measures__isnull=False, **kwargs
+            indent__indented_goods_nomenclature__measures__isnull=False, **kwargs
         )
         if query.exists():
             return query.first().measures.all()
@@ -141,38 +184,15 @@ class GoodsNomenclatureIndent(MP_Node, TrackedModel, ValidityMixin):
 
     def has_measure_in_tree(self):
         ascendant_measures = self.get_ancestors().filter(
-            indented_goods_nomenclature__measures__isnull=False
+            indent__indented_goods_nomenclature__measures__isnull=False
         )
         descendant_measures = self.get_descendants().filter(
-            indented_goods_nomenclature__measures__isnull=False
+            indent__indented_goods_nomenclature__measures__isnull=False
         )
         return (
-            self.measures.exists()
+            self.indent.measures.exists()
             or ascendant_measures.exists()
             or descendant_measures.exists()
-        )
-
-    def clean(self):
-        validators.validate_indent_start_date_less_than_goods_end_date(self)
-        validators.validate_goods_parent_validity_includes_good(self)
-        return super().clean()
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Goods Nomenclature Indent: {self.depth} - {self.indented_goods_nomenclature}"
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_goods_indents",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
         )
 
 
