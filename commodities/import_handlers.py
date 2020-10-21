@@ -1,4 +1,9 @@
 import logging
+from typing import Any
+from typing import Optional
+from typing import TypeVar
+
+from django.db import transaction
 
 from commodities import import_parsers as parsers
 from commodities import models
@@ -6,13 +11,21 @@ from commodities import serializers
 from footnotes.models import Footnote
 from footnotes.models import FootnoteType
 from importer.handlers import BaseHandler
-
+from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
 
 
 class InvalidIndentError(Exception):
     pass
+
+
+def maybe_min(*objs: Optional[Any]) -> Optional[Any]:
+    present = [d for d in objs if d is not None]
+    if any(present):
+        return min(present)
+    else:
+        return None
 
 
 class GoodsNomenclatureHandler(BaseHandler):
@@ -66,35 +79,74 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         self.extra_data["indent"] = int(data["indent"])
         return super(GoodsNomenclatureIndentHandler, self).clean(data)
 
+    @transaction.atomic
     def save(self, data: dict):
-        indent = self.extra_data.pop("indent")
+        depth = self.extra_data.pop("indent")
         data.update(**self.extra_data)
 
         item_id = data["indented_goods_nomenclature"].item_id
 
-        if (
-            indent == 0 and item_id[2:] == "00000000"
-        ):  # This is a root indent (i.e. a chapter heading)
-            return models.GoodsNomenclatureIndent.add_root(**data)
+        indent = super(GoodsNomenclatureIndentHandler, self).save(data)
+
+        node_data = {
+            "indent": indent,
+            "sid": data["sid"],
+            "update_type": data["update_type"],
+            "valid_between": data["valid_between"],
+            "workbasket_id": data["workbasket_id"],
+        }
+
+        if depth == 0 and item_id[2:] == "00000000":
+            # This is a root indent (i.e. a chapter heading)
+            models.GoodsNomenclatureIndentNode.add_root(**node_data)
+            return indent
+
+        node_data["depth"] = depth
 
         chapter_heading = item_id[:2]
 
-        parent_indent = indent + 1
+        parent_depth = depth + 1
 
-        # TODO: Parents may change over an indents lifetime, need to check for all parents over the lifetime of
-        # an indent and create a series of updates to match them all.
-        # Updates aren't setup yet, do once they are.
-        parent = max(
-            models.GoodsNomenclatureIndent.objects.filter(
-                indented_goods_nomenclature__item_id__startswith=chapter_heading,
-                indented_goods_nomenclature__item_id__lte=item_id,
-                depth=parent_indent,
-                valid_between__contains=data["valid_between"],
-            ).current(),
-            key=lambda x: x.indented_goods_nomenclature.item_id,
+        start_date = data["valid_between"].lower
+        end_date = maybe_min(
+            data["valid_between"].upper,
+            data["indented_goods_nomenclature"].valid_between.upper,
         )
 
-        return parent.add_child(**data)
+        while start_date and ((start_date < end_date) if end_date else True):
+            next_parent = (
+                models.GoodsNomenclatureIndentNode.objects.filter(
+                    indent__indented_goods_nomenclature__item_id__lte=item_id,
+                    indent__indented_goods_nomenclature__item_id__startswith=chapter_heading,
+                    indent__indented_goods_nomenclature__valid_between__contains=start_date,
+                    indent__valid_between__contains=start_date,
+                    valid_between__contains=start_date,
+                    depth=parent_depth,
+                )
+                .order_by("-indent__indented_goods_nomenclature__item_id")
+                .first()
+            )
+
+            if not next_parent:
+                raise InvalidIndentError(
+                    f"Parent indent not found for {item_id} for date {start_date}"
+                )
+
+            indent_start = start_date
+            indent_end = maybe_min(
+                next_parent.valid_between.upper,
+                next_parent.indent.valid_between.upper,
+                next_parent.indent.indented_goods_nomenclature.valid_between.upper,
+                end_date,
+            )
+
+            node_data["valid_between"] = (indent_start, indent_end)
+
+            next_parent.add_child(**node_data)
+
+            start_date = indent_end
+
+        return indent
 
     def post_save(self, obj):
         """
