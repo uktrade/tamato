@@ -3,7 +3,7 @@
 
 {%- call standard_record(message_counter(), sequence(), transaction_id, record) -%}
     <oub:duty.expression>
-        <oub:duty.expression.id>{{ record.sid }}</oub:duty.expression.id>
+        <oub:duty.expression.id>{{ "%02d" | format(record.sid) }}</oub:duty.expression.id>
         <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
         {%- if record.end_date -%}
         <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
@@ -15,7 +15,7 @@
 {%- endcall -%}
 {%- call base_record(message_counter(), record.description_record_code, record.description_subrecord_code, sequence(), transaction_id, record.update_type) -%}
     <oub:duty.expression.description>
-        <oub:duty.expression.id>{{ record.sid }}</oub:duty.expression.id>
+        <oub:duty.expression.id>{{ "%02d" | format(record.sid) }}</oub:duty.expression.id>
         <oub:language.id>EN</oub:language.id>
         {%- if record.description -%}
         <oub:description>{{ record.description }}</oub:description>

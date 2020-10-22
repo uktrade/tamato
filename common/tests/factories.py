@@ -538,7 +538,7 @@ class MeasureTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "measures.MeasureType"
 
-    sid = string_sequence(3, characters=string.ascii_uppercase)
+    sid = string_sequence(3, characters=string.digits)
     trade_movement_code = factory.fuzzy.FuzzyChoice(ImportExportCode.values)
     priority_code = factory.fuzzy.FuzzyChoice(range(1, 10))
     measure_component_applicability_code = factory.fuzzy.FuzzyChoice(
@@ -640,8 +640,27 @@ class MeasureExcludedGeographicalAreaFactory(TrackedModelMixin):
     class Meta:
         model = "measures.MeasureExcludedGeographicalArea"
 
-    modified_measure = factory.SubFactory(MeasureFactory)
-    excluded_geographical_area = factory.SubFactory(GeographicalAreaFactory)
+    modified_measure = factory.SubFactory(
+        MeasureFactory,
+        geographical_area__area_code=1,
+    )
+    excluded_geographical_area = factory.SubFactory(
+        GeographicalAreaFactory,
+        area_code=0,
+    )
+
+
+class MeasureExcludedGeographicalMembershipFactory(
+    MeasureExcludedGeographicalAreaFactory
+):
+    class Meta:
+        exclude = ["membership"]
+
+    membership = factory.SubFactory(
+        GeographicalMembershipFactory,
+        geo_group=factory.SelfAttribute("..modified_measure.geographical_area"),
+        member=factory.SelfAttribute("..excluded_geographical_area"),
+    )
 
 
 class FootnoteAssociationMeasureFactory(TrackedModelMixin):
