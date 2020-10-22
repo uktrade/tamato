@@ -55,6 +55,7 @@ class OldMeasureRow:
         self.goods_nomenclature_sid = int(old_row[0].value)
         self.item_id = str(old_row[1].value)
         self.inherited_measure = bool(old_row[6].value)
+        assert not self.inherited_measure, "Old row should not be an inherited measure"
         self.measure_sid = int(old_row[7].value)
         self.measure_type = int(old_row[8].value)
         self.geo_sid = int(old_row[13].value)
@@ -69,12 +70,17 @@ class OldMeasureRow:
         self.additional_code_sid = blank(old_row[23].value, int)
         self.export_refund_sid = blank(old_row[25].value, int)
         self.reduction = blank(old_row[26].value, int)
+        self.footnotes = self.parse_list(old_row[27].value)
         self.goods_nomenclature = GoodsNomenclature.objects.as_at(BREXIT).get(
             sid=self.goods_nomenclature_sid
         )
 
     def parse_date(self, value: str) -> datetime:
         return LONDON.localize(datetime.strptime(value, r"%Y-%m-%d"))
+
+    def parse_list(self, value: str) -> List[str]:
+        return list(filter(lambda s: s != "", map(str.strip, value.split(","))))
+
 
 class MeasureCreatingPattern:
     """A pattern used for creating measures. This pattern will create a new
@@ -312,6 +318,10 @@ class MeasureEndingPattern:
                         UpdateType.DELETE if starts_after_brexit else UpdateType.UPDATE
                     ),
                     workbasket=self.workbasket,
+                )
+            else:
+                logger.debug(
+                    "Ignoring old measure %s as ends before Brexit", old_row.measure_sid
                 )
 
 
