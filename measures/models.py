@@ -165,6 +165,9 @@ class MeasureType(TrackedModel, ValidityMixin):
         validators=[validators.validate_priority_code]
     )
     measure_component_applicability_code = ApplicabilityCode()
+    origin_destination_code = models.PositiveSmallIntegerField(
+        choices=validators.ImportExportCode.choices
+    )
     order_number_capture_code = models.PositiveSmallIntegerField(
         choices=validators.OrderNumberCaptureCode.choices
     )

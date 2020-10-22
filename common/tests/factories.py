@@ -544,6 +544,7 @@ class MeasureTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
     measure_component_applicability_code = factory.fuzzy.FuzzyChoice(
         ApplicabilityCode.values
     )
+    origin_destination_code = factory.fuzzy.FuzzyChoice(ImportExportCode.values)
     order_number_capture_code = OrderNumberCaptureCode.NOT_PERMITTED
     measure_explosion_level = factory.fuzzy.FuzzyChoice(range(2, 11, 2))
     description = short_description()
