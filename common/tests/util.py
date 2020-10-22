@@ -1,6 +1,5 @@
 import contextlib
 from datetime import datetime
-from datetime import timedelta
 from datetime import timezone
 from functools import wraps
 from io import StringIO
