@@ -102,6 +102,26 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         parent_depth = depth + 1
 
+        # In some cases, where there are phantom headers at the 4 digit level
+        # in a chapter, the depth is shifted by + 1.
+        # A phantom header is any good with a suffix != "80". In the real world
+        # this represents a good that does not appear in any legislature and is
+        # non-declarable. i.e. it does not exist outside of the database and is
+        # purely for "convenience".
+        extra_headings = (
+            models.GoodsNomenclature.objects.filter(
+                item_id__startswith=item_id[0:2],
+                item_id__endswith="000000",
+            )
+            .exclude(suffix="80")
+            .exists()
+        )
+        if extra_headings and (
+            item_id[-6:] != "000000"
+            or data["indented_goods_nomenclature"].suffix == "80"
+        ):
+            parent_depth += 1
+
         start_date = data["valid_between"].lower
         end_date = maybe_min(
             data["valid_between"].upper,

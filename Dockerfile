@@ -1,5 +1,8 @@
 FROM node:13.12-buster-slim AS jsdeps
 
+RUN apt update -y
+RUN apt install  -y g++ build-essential python3
+
 COPY . .
 
 RUN npm install && npm run build

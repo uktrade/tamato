@@ -1,6 +1,7 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.core.validators import MaxValueValidator
+from django.core.validators import MinLengthValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 from treebeard.mp_tree import MP_Node
@@ -19,12 +20,16 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     successor_subrecord_code = "40"
 
     sid = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99999999)]
+        validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
     )
 
     # These are character fields as they often has leading 0s
-    item_id = models.CharField(max_length=10, validators=[validators.item_id_validator])
-    suffix = models.CharField(max_length=2, validators=[validators.suffix_validator])
+    item_id = models.CharField(
+        max_length=10, validators=[validators.item_id_validator], db_index=True
+    )
+    suffix = models.CharField(
+        max_length=2, validators=[validators.suffix_validator], db_index=True
+    )
 
     statistical = models.BooleanField()
 
@@ -72,8 +77,11 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
     subrecord_code = "05"
 
     sid = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99999999)]
+        validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
     )
+
+    indent = models.CharField(max_length=2, validators=[MinLengthValidator(2)])
+
     indented_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
     )

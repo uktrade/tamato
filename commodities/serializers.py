@@ -55,13 +55,7 @@ class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerialize
 class GoodsNomenclatureIndentSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
-    indent = serializers.SerializerMethodField()
     indented_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
-
-    def get_indent(self, obj: models.GoodsNomenclatureIndent):
-        depth = obj.nodes.first().depth
-        indent = 0 if depth < 3 else depth - 2
-        return str(indent).zfill(2)
 
     class Meta:
         model = models.GoodsNomenclatureIndent

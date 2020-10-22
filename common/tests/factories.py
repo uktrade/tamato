@@ -290,6 +290,7 @@ class SimpleGoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMix
 
     sid = numeric_sid()
     indented_goods_nomenclature = factory.SubFactory(SimpleGoodsNomenclatureFactory)
+    indent = "00"
 
 
 class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -305,13 +306,17 @@ class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
         valid_between=factory.SelfAttribute("..valid_between"),
     )
 
+    indent = "00"
+
 
 indent_path_generator = string_generator(4)
 
 
-def build_indent_path(good):
-    parent = good.parent
+def build_indent_path(good_indent_node):
+    parent = good_indent_node.parent
     if parent:
+        parent.numchild += 1
+        parent.save()
         return parent.path + indent_path_generator()
     return indent_path_generator()
 

@@ -96,6 +96,7 @@ def test_goods_nomenclature_indent_importer_create(valid_user):
     db_indent = make_and_get_indent(indent, valid_user, depth="00")
 
     assert db_indent.sid == indent.sid
+    assert db_indent.indent == "00"
     assert db_indent.nodes.count() == 1
     assert db_indent.nodes.first().depth == 1
     assert (
@@ -121,6 +122,7 @@ def test_goods_nomenclature_indent_importer_create_with_parent_low_indent(valid_
 
     db_indent_node = db_indent.nodes.first()
     assert db_indent.sid == indent.sid
+    assert db_indent.indent == "00"
     assert db_indent.nodes.count() == 1
     assert db_indent_node.depth == 2
     assert (
@@ -151,6 +153,7 @@ def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid
     db_indent_node = db_indent.nodes.first()
 
     assert db_indent.sid == indent.sid
+    assert db_indent.indent == "04"
     assert db_indent.nodes.count() == 1
     assert db_indent_node.depth == 6
     assert (
@@ -200,12 +203,55 @@ def test_goods_nomenclature_indent_importer_multiple_parents(valid_user, date_ra
     db_indent = make_and_get_indent(indent, valid_user, depth="00")
 
     assert db_indent.sid == indent.sid
+    assert db_indent.indent == "00"
     assert db_indent.nodes.count() == 3
     assert all(node.get_parent() in parent_nodes for node in db_indent.nodes.all())
     assert (
         db_indent.indented_goods_nomenclature.sid
         == indent.indented_goods_nomenclature.sid
     )
+    assert db_indent.valid_between.lower == indent.valid_between.lower
+
+
+@pytest.mark.parametrize("item_id,suffix", [("1402000000", "80"), ("1401010000", "20")])
+def test_goods_nomenclature_indent_importer_create_with_triple_00_indent(
+    valid_user, item_id, suffix
+):
+    """
+    In cases where there are phantom headers right below a chapter (regardless
+    of whether the good is directly within its lineage) some goods are still
+    given a "00" indent, despite being 3 levels into the hierarchy.
+
+    Assert that this edgecase is handled.
+    """
+    parent_indent = factories.GoodsNomenclatureIndentFactory.create(
+        update_type=UpdateType.CREATE.value,
+        indented_goods_nomenclature__item_id="1401000000",
+        indented_goods_nomenclature__suffix="20",
+        node__parent=factories.GoodsNomenclatureIndentFactory.create(
+            indented_goods_nomenclature__item_id="1400000000"
+        ).nodes.first(),
+    ).nodes.first()
+
+    indent = factories.GoodsNomenclatureIndentFactory.build(
+        update_type=UpdateType.CREATE.value,
+        indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
+            item_id=item_id, suffix=suffix
+        ),
+    )
+
+    db_indent = make_and_get_indent(indent, valid_user, depth="00")
+
+    db_indent_node = db_indent.nodes.first()
+    assert db_indent.sid == indent.sid
+    assert db_indent.indent == "00"
+    assert db_indent.nodes.count() == 1
+    assert db_indent_node.depth == 3
+    assert (
+        db_indent.indented_goods_nomenclature.sid
+        == indent.indented_goods_nomenclature.sid
+    )
+    assert db_indent_node.get_parent() == parent_indent
     assert db_indent.valid_between.lower == indent.valid_between.lower
 
 
