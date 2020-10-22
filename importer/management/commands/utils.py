@@ -10,6 +10,7 @@ from typing import Dict
 from typing import Generic
 from typing import IO
 from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
@@ -41,6 +42,14 @@ def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return None
 
 
+def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
+    present = [d for d in objs if d is not None]
+    if any(present):
+        return max(present)
+    else:
+        return None
+
+
 def blank(value: Any, convert: Callable[[Any], TypeVar("T")]) -> Optional[TypeVar("T")]:
     return None if value == "" else convert(value)
 
@@ -51,39 +60,149 @@ def col(label: str) -> int:
     return ord(label) - ord("A")
 
 
-class NomenclatureTreeCollector(Generic[Row]):
-    """Consumes rows until the passed row no longer
-    links to a child commodity code of the first row."""
+WorkingSetItem = Tuple[GoodsNomenclature, Row, Set[int], bool]
 
-    def __init__(self, key: ItemIdGetter, date: datetime) -> None:
+
+class NomenclatureTreeCollector(Generic[Row]):
+    """A working tree is a subtree of the Goods Nomenclature hierarchy
+    specified at a certain depth. The first node to be added to the
+    Working Set defines the root of the subtree along with some item of
+    context. If a child node is added to the Working Set, the root
+    is split into smaller subtrees that ensure a complete coverage of
+    the original subtree with no overlaps.
+
+    The item of context is normally a row specifying how to subsequently
+    create a measure. When the subtree is split, the new child that caused
+    the split retains its item of context whereas all of the new children
+    inherit their parents context. This ensures that the newly split
+    children will have the same measure information as their parent was
+    specified with."""
+
+    def __init__(self, date: datetime) -> None:
         self.reset()
-        self.key = key
         self.date = date
 
     def reset(self) -> None:
-        self.buffer = cast(List[Row], [])
-        self.subtree = None
-        self.prefix = None
+        self.root = cast(WorkingSetItem, None)
+        self.roots = cast(List[WorkingSetItem], [])
 
-    def maybe_push(self, row: Row) -> bool:
+    def __contains__(self, cc: GoodsNomenclature) -> bool:
+        for root in self.roots:
+            if root[0] == cc:
+                return True
+        return False
+
+    def add(self, cc: GoodsNomenclature, context: Optional[Row] = None) -> bool:
         """Works out whether the passed row links to a commodity code
         that is within the current tree of the others. Returns a bool
         to represent this. Only pushes the row to the buffer if True."""
-        row_key = self.key(row)
 
-        if self.prefix is None:
-            descendants = row_key.indents.as_at(self.date).get().get_descendants()
-            self.prefix = row_key
-            self.subtree = list(
-                map(lambda r: r.indented_goods_nomenclature, descendants)
-            )
+        # If we have not specified a root yet, (this is the first item),
+        # then set the root up. All future stored children will be
+        # descendants of this root.
+        if self.root is None:
+            assert context is not None
+            item = self.make_item(cc, context, True)
+            self.root = item
 
-        if row_key == self.prefix or row_key in self.subtree:
-            self.buffer.append(row)
-            return True
         else:
+            # Is the given CC a descendant of the root? If not, we ignore it.
+            if not self.within_subtree(cc):
+                return False
+
+            # If the context is None, we are adding a child to the tree and
+            # specifying that it should take the context from it's parent. So go and
+            # discover that parent to work out the right context.
+            if context is None:
+                parent = [root for root in self.roots if self.within_subtree(cc, root)]
+                assert len(parent) == 1, f"{len(parent)} parents for {cc}"
+                context = parent[0][1]
+
+            item = self.make_item(cc, context, True)
+
+        # We will add the CC to the tree. We need to split the tree so that
+        # there are no overlaps. We keep the roots sorted so that we can call
+        # combinations below and process less pairs.
+        self.roots.append(item)
+        self.roots.sort(key=lambda r: r[0].item_id + r[0].suffix + str(int(r[3])))
+
+        while True:
+            # Find all the CCs that overlap with the passed child
+            # and break them down until there are no overlaps anymore.
+            # Make sure all codes are actually declarable (suffix 80)
+            # otherwise we break ME7.
+            to_be_split = set(
+                parent[0].sid
+                for parent, child in combinations(self.roots, 2)
+                if self.within_subtree(child[0], parent)
+            ) | set(root[0].sid for root in self.roots if root[0].suffix != "80")
+            if not any(to_be_split):
+                return True
+
+            for parent in (root for root in self.roots if root[0].sid in to_be_split):
+                self.roots.remove(parent)
+                if parent[0] == cc:
+                    # We are adding a child that is already present
+                    # We have removed the old already and added the new already
+                    pass
+                else:
+                    logger.debug(
+                        f"Should split parent {parent[0].item_id}/{parent[0].suffix}"
+                    )
+                    for child in (
+                        parent[0]
+                        .indents.as_at(self.date)
+                        .get()
+                        .get_children()
+                        .as_at(self.date)
+                    ):
+                        child_cc = child.indented_goods_nomenclature
+                        if cc != child_cc:
+                            self.roots.append(
+                                self.make_item(child_cc, parent[1], False)
+                            )
+                self.roots.sort(
+                    key=lambda r: r[0].item_id + r[0].suffix + str(int(r[3]))
+                )
+
+    def within_subtree(
+        self, cc: GoodsNomenclature, root: WorkingSetItem = None
+    ) -> bool:
+        """Returns True if the child is a descendant of the passed root, or the
+        whole tree if no root is passed."""
+        if root is None:
+            root = self.root
+        return cc == root[0] or cc.sid in root[2]
+
+    def is_split_beyond(self, cc: GoodsNomenclature) -> bool:
+        """Returns True if the subtree has already been split to a depth beyond
+        the passed commodity code."""
+        if not self.within_subtree(cc):
             return False
 
+        # We know the cc is contained in this tree. We check to see if the cc is
+        # contained with anybody's descendants list. If so, we are not yet
+        # sufficiently split. If not, we must have already split the roots.
+        return not any(cc.sid in root[2] for root in self.roots)
+
+    def buffer(self) -> Iterator[Tuple[GoodsNomenclature, Row]]:
+        return ((root[0], root[1]) for root in self.roots)
+
+    def make_item(
+        self, cc: GoodsNomenclature, context: Row, explicit: bool
+    ) -> WorkingSetItem:
+        return (
+            cc,
+            context,
+            set(
+                indent.indented_goods_nomenclature.sid
+                for indent in cc.indents.as_at(self.date)
+                .get()
+                .get_descendants()
+                .as_at(self.date)
+            ),
+            explicit,
+        )
 
 class MeasureTypeSlicer(Generic[OldRow, NewRow]):
     """Detect which measure types are in the old rows and if many
