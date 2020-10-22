@@ -82,6 +82,7 @@ class IndentImporter(RowsImporter):
         indent = new_row.indent
         child = GoodsNomenclature.objects.get(sid=new_row.sid)
         item_id = child.item_id
+        suffix = child.suffix
 
         if (
             indent == -1 and item_id[2:] == "00000000"
@@ -103,6 +104,26 @@ class IndentImporter(RowsImporter):
             #   - Has a code that is greater than or equal to the current path
             #      - Some child codes have the same code as their parents.
             parent_indent = indent + 1
+
+            # Very high up in places like chapter 29 we get another
+            # level of headings that also have indent zero, so the
+            # relationship between depth and indent is actually -3
+            # We can detect this by looking for phantom lines at the
+            # four digit level:
+            extra_headings = any(
+                GoodsNomenclature.objects.filter(
+                    item_id__startswith=item_id[0:2],
+                    item_id__endswith="000000",
+                ).exclude(suffix="80")
+            )
+
+            # So we need to add extra depth if we are now below an extra heading
+            # which will be true if our last 6 digits are not zero or if we are
+            # on a real heading (last 6 digits zero and suffix 80)
+            if extra_headings and (
+                item_id[4:] != "000000" or (item_id[4:] == "000000" and suffix == "80")
+            ):
+                parent_indent += 1
 
             # This is the time range that needs to be covered by
             # the indents that we create. We will subtract from
@@ -216,8 +237,10 @@ class Command(BaseCommand):
         try:
             author = User.objects.get(username=username)
         except User.DoesNotExist:
-            sys.exit(f"Author does not exist, create user '{username}'"
-                     " or edit settings.DATA_IMPORT_USERNAME")
+            sys.exit(
+                f"Author does not exist, create user '{username}'"
+                " or edit settings.DATA_IMPORT_USERNAME"
+            )
 
         workbasket, _ = WorkBasket.objects.get_or_create(
             title=f"Importing indents",
