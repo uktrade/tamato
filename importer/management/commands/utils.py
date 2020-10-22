@@ -18,7 +18,9 @@ from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
+import xlrd
 from django.template.loader import render_to_string
+from xlrd.sheet import Cell
 
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
@@ -58,6 +60,42 @@ def col(label: str) -> int:
     """Return the correct index given an Excel column letter."""
     assert len(label) == 1
     return ord(label) - ord("A")
+
+
+def clean_item_id(cell: Cell) -> str:
+    """Given an Excel cell, return a string representing the 10-digit item id
+    of a goods nomenclature item taking into account that the cell may
+    be storing the item as a number and that trailing zeroes may be missing."""
+    if cell.ctype == xlrd.XL_CELL_NUMBER:
+        item_id = str(int(cell.value))
+    else:
+        item_id = str(cell.value)
+
+    if len(item_id) % 2 == 1:
+        # If we have an odd number of digits its because
+        # we lost a leading zero due to the numeric storage
+        item_id = "0" + item_id
+
+    # We need a full 10 digit code so padd with trailing zeroes
+    assert len(item_id) % 2 == 0
+    if len(item_id) == 8:
+        item_id += "00"
+
+    assert len(item_id) == 10
+    return item_id
+
+
+def clean_duty_sentence(cell: Cell) -> str:
+    """Given an Excel cell, return a string representing a duty sentence
+    taking into account that the cell may be storing simple percentages
+    as a number value."""
+    if cell.ctype == xlrd.XL_CELL_NUMBER:
+        # This is a percentage value that Excel has
+        # represented as a number.
+        return f"{cell.value * 100}%"
+    else:
+        # All other values will apear as text.
+        return cell.value
 
 
 WorkingSetItem = Tuple[GoodsNomenclature, Row, Set[int], bool]
@@ -204,6 +242,10 @@ class NomenclatureTreeCollector(Generic[Row]):
             explicit,
         )
 
+
+MeasureDefn = Tuple[List[OldRow], NewRow, GoodsNomenclature]
+
+
 class MeasureTypeSlicer(Generic[OldRow, NewRow]):
     """Detect which measure types are in the old rows and if many
     measure types are present, generate new measures for each old row.
@@ -215,54 +257,85 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
         self,
         get_old_measure_type: Callable[[OldRow], MeasureType],
         get_goods_nomenclature: Callable[[Union[OldRow, NewRow]], GoodsNomenclature],
+        default_measure_type: MeasureType = None,
     ) -> None:
         self.get_old_measure_type = get_old_measure_type
         self.get_goods_nomenclature = get_goods_nomenclature
+        self.default_measure_type = default_measure_type
 
     def sliced_new_rows(
-        self, old_rows: List[OldRow], new_rows: List[NewRow]
-    ) -> Iterable[Tuple[MeasureType, NewRow, GoodsNomenclature]]:
-        measure_types = set(self.get_old_measure_type(row) for row in old_rows)
-        item_ids = cast(Dict[MeasureType, Set[GoodsNomenclature]], {})
-        for measure_type in measure_types:
-            item_ids[measure_type] = set(
-                self.get_goods_nomenclature(r)
-                for r in old_rows
-                if self.get_old_measure_type(r) == measure_type
-            )
+        self,
+        old_rows: NomenclatureTreeCollector[List[OldRow]],
+        new_rows: NomenclatureTreeCollector[NewRow],
+    ) -> Iterable[MeasureDefn]:
+        # First we need to work out if there is any measure type split
+        # in the old row subtree. If not, we can just apply the same measure
+        # type to all of the new rows.
+        item_ids = cast(Dict[GoodsNomenclature, List[OldRow]], {})
+        for cc, rows in old_rows.buffer():
+            # We should not have the same item ID appearing in two sets
+            assert cc not in item_ids
+            item_ids[cc] = rows
 
-        # We should not have the same item ID appearing in two sets
-        for a, b in combinations(item_ids.values(), 2):
-            assert a.isdisjoint(b), f"Repeated comm code: {a} and {b}"
-
-        num_ids = sum(len(item_ids[measure_type]) for measure_type in measure_types)
-        single_type = max(item_ids.keys(), key=lambda k: len(item_ids[k]))
-        if len(item_ids[single_type]) == num_ids:
-            # All the old rows are of a single measure type
-            # Just create the new rows as desired
-            for measure_type in (t for t in measure_types if t != single_type):
-                assert len(item_ids[measure_type]) == 0
-
-            for row in new_rows:
-                yield single_type, row, self.get_goods_nomenclature(row)
+        measure_types = set(
+            self.get_old_measure_type(o) for rows in item_ids.values() for o in rows
+        )
+        if len(measure_types) < 1 and self.default_measure_type:
+            single_type = self.default_measure_type
+        elif len(measure_types) < 1 and not self.default_measure_type:
+            raise Exception("No measure types found and no default set")
+        elif len(measure_types) == 1:
+            single_type = measure_types.pop()
         else:
+            # There is more than one type
+            single_type = None
+
+        if not single_type:
             # There is a split of measure types across the old rows
-            # Mirror the split in the new measures by using the old item ids
-            parent_new = new_rows[0]
-            if parent_new is not None:
-                for measure_type in measure_types:
-                    for old_gn in item_ids[measure_type]:
-                        matching_new = next(
-                            (
-                                r
-                                for r in new_rows
-                                if self.get_goods_nomenclature(r) == old_gn
-                            ),
-                            parent_new,
-                        )
-                        yield measure_type, matching_new, old_gn
+            # First we will push old rows into the new tree to make sure the
+            # tree is sufficiently split, and then we will look up the measure
+            # type in the dictionary for each new row. The new rows might be
+            # descendants of the old rows so we check for that too.
+            for cc, many_old_row in old_rows.buffer():
+                if not new_rows.is_split_beyond(cc):
+                    new_rows.add(cc)
+
+        # Now create the new rows as desired
+        for cc, new_row in new_rows.buffer():
+            if cc in item_ids:
+                matched_old_rows = item_ids[cc]
             else:
-                assert len(new_rows) == 0
+                ancestor_cc = [
+                    root[0]
+                    for root in old_rows.roots
+                    if old_rows.within_subtree(cc, root)
+                ]
+                assert (
+                    len(ancestor_cc) <= 1
+                ), f"Looking for: {cc.item_id}[{cc.sid}], found {len(ancestor_cc)}"
+                if len(ancestor_cc) == 1:
+                    matched_old_rows = item_ids[ancestor_cc[0]]
+                else:
+                    matched_old_rows = []
+
+            yield matched_old_rows, new_row, cc
+
+    def get_measure_type(
+        self, old_rows: List[OldRow], cc: Optional[GoodsNomenclature] = None
+    ) -> MeasureType:
+        measure_types = set(self.get_old_measure_type(r) for r in old_rows)
+        assert len(measure_types) <= 1, f"{len(measure_types)} for rows {old_rows}"
+        if len(measure_types) == 1:
+            return measure_types.pop()
+        elif self.default_measure_type:
+            logger.warning(
+                "No old rows found for CC '%s' so using type %s",
+                cc,
+                self.default_measure_type,
+            )
+            return self.default_measure_type
+        else:
+            raise Exception("No measure types found and no default set")
 
 
 class SeasonalRateParser:
