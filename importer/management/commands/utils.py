@@ -179,7 +179,7 @@ class NomenclatureTreeCollector(Generic[Row]):
 
             for parent in (root for root in self.roots if root[0].sid in to_be_split):
                 self.roots.remove(parent)
-                if parent[0] == cc:
+                if parent[0] == cc and cc.suffix == "80":
                     # We are adding a child that is already present
                     # We have removed the old already and added the new already
                     pass
