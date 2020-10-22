@@ -146,6 +146,7 @@ class MeasureTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin
             "trade_movement_code",
             "priority_code",
             "measure_component_applicability_code",
+            "origin_destination_code",
             "order_number_capture_code",
             "measure_explosion_level",
             "description",
