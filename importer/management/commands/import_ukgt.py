@@ -1,9 +1,10 @@
 import logging
 import sys
-from typing import cast
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Set
+from typing import cast
 
 import xlrd
 from django.contrib.auth.models import User
@@ -13,28 +14,21 @@ from xlrd.sheet import Cell
 
 import settings
 from additional_codes.models import AdditionalCode
-from certificates.models import Certificate
-from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
-from importer.management.commands.doc_importer import BREXIT
-from importer.management.commands.doc_importer import LONDON
 from importer.management.commands.doc_importer import RowsImporter
+from importer.management.commands.patterns import BREXIT
+from importer.management.commands.patterns import DualRowRunner
+from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
-from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
-from importer.management.commands.utils import maybe_min
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
-from importer.management.commands.utils import SeasonalRateParser
-from measures.models import Measure
-from measures.models import MeasureAction
-from measures.models import MeasureCondition
-from measures.models import MeasureConditionCode
+from importer.management.commands.utils import col
 from measures.models import MeasureType
 from regulations.models import Group
 from regulations.models import Regulation
@@ -83,15 +77,11 @@ class UKGTImporter(RowsImporter):
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],
             get_goods_nomenclature=lambda r: r.goods_nomenclature,
         )
-        self.seasonal_rate_parser = SeasonalRateParser(BREXIT, LONDON)
-        self.measure_ending = MeasureEndingPattern(self.workbasket, self.measure_types)
+        self.measure_ender = MeasureEndingPattern(self.workbasket, self.measure_types)
 
-        self.old_rows = NomenclatureTreeCollector[OldMeasureRow](
-            lambda r: r.goods_nomenclature, BREXIT
-        )
-        self.new_rows = NomenclatureTreeCollector[NewRow](
-            lambda r: r.goods_nomenclature, BREXIT
-        )
+        self.old_rows = NomenclatureTreeCollector[List[OldMeasureRow]](BREXIT)
+        self.new_rows = NomenclatureTreeCollector[NewRow](BREXIT)
+        self.row_runner = DualRowRunner(self.old_rows, self.new_rows)
 
         pharma_additional_code = cast(
             AdditionalCode, AdditionalCode.objects.get(type__sid="2", code="500")
@@ -119,21 +109,14 @@ class UKGTImporter(RowsImporter):
         )
         yield self.ukgt_si
 
-        self.n990 = Certificate.objects.get(
-            sid="990",
-            certificate_type=CertificateType.objects.get(sid="N"),
-        )
-
-        self.presentation_of_certificate = MeasureConditionCode.objects.get(
-            code="B",
-        )
-
-        self.apply_mentioned_duty = MeasureAction.objects.get(
-            code="27",
-        )
-
-        self.subheading_not_allowed = MeasureAction.objects.get(
-            code="08",
+        self.measure_creator = MeasureCreatingPattern(
+            generating_regulation=self.ukgt_si,
+            workbasket=self.workbasket,
+            duty_sentence_parser=self.duty_sentence_parser,
+            measure_sid_counter=self.counters["measure_sid_counter"],
+            measure_condition_sid_counter=self.counters[
+                "measure_condition_sid_counter"
+            ],
         )
 
     def clean_duty_sentence(self, cell: Cell) -> str:
@@ -158,133 +141,52 @@ class UKGTImporter(RowsImporter):
         new_row: Optional[NewRow],
         old_row: Optional[OldMeasureRow],
     ) -> Iterator[List[TrackedModel]]:
-        logger.debug(
-            "Have old row: %s. Have new row: %s",
-            old_row is not None,
-            new_row is not None,
-        )
-        new_waiting = (
-            new_row is not None
-            and new_row.goods_nomenclature is not None
-            and not self.new_rows.maybe_push(new_row)
-        )
-        if self.old_rows.subtree is None:
-            self.old_rows.prefix = self.new_rows.prefix
-            self.old_rows.subtree = self.new_rows.subtree
-        old_waiting = (
-            old_row is not None
-            and old_row.goods_nomenclature is not None
-            and not self.old_rows.maybe_push(old_row)
-        )
-        if self.new_rows.subtree is None:
-            self.new_rows.prefix = self.old_rows.prefix
-            self.new_rows.subtree = self.old_rows.subtree
-
-        if old_waiting or new_waiting:
-            # A row was rejected by the collector
-            # The collector is full and we should process it
-            logger.debug(
-                f"Collector full with {len(self.old_rows.buffer)} old"
-                f" and {len(self.new_rows.buffer)} new"
-            )
-            # We must always have an old row to detect the measure type
-            assert len(self.old_rows.buffer) > 0
-
-            # End date all the old rows in either case
-            # We must do this first to maintain ME32
-            for row in self.old_rows.buffer:
-                assert row.geo_sid == self.erga_omnes.sid
-                assert row.order_number is None
-                yield list(self.measure_ending.end_date_measure(row, self.ukgt_si))
-
-            # Create measures either for the single measure type or a mix
-            for measure_type, row, gn in self.measure_slicer.sliced_new_rows(
-                self.old_rows.buffer, self.new_rows.buffer
-            ):
-                yield list(self.make_new_measure(row, measure_type, gn))
-
-            self.old_rows.reset()
-            self.new_rows.reset()
-            for transaction in self.handle_row(
-                new_row if new_waiting else None,
-                old_row if old_waiting else None,
-            ):
+        for _ in self.row_runner.handle_rows(old_row, new_row):
+            for transaction in self.flush():
                 yield transaction
 
-        else:
-            return iter([])
+    def flush(self) -> Iterator[List[TrackedModel]]:
+        # Send the old row to be end dated or removed
+        old_sids = cast(Set[int], set())
+        for cc, rows in self.old_rows.buffer():
+            assert len(rows) >= 1
+            # End date all the old rows in either case
+            # We must do this first to maintain ME32
+            for row in rows:
+                assert (
+                    row.measure_sid not in old_sids
+                ), f"Measure appears more than once: {row.measure_sid}"
+                old_sids.add(row.measure_sid)
 
-    def make_new_measure(
-        self,
-        new_row: NewRow,
-        new_measure_type: MeasureType,
-        goods_nomenclature: GoodsNomenclature,
-    ) -> Iterator[TrackedModel]:
-        assert new_row is not None
+                assert row.geo_sid == self.erga_omnes.sid
+                assert row.order_number is None
+                yield list(self.measure_ender.end_date_measure(row, self.ukgt_si))
 
-        duty_exp = self.clean_duty_sentence(self.select_rate_on_trade_remedy(new_row))
-        for rate, start, end in self.seasonal_rate_parser.detect_seasonal_rates(
-            duty_exp
-        ):
-            actual_end = maybe_min(end, goods_nomenclature.valid_between.upper)
-            new_measure = Measure(
-                sid=self.counters["measure_sid_counter"](),
-                measure_type=new_measure_type,
-                geographical_area=self.erga_omnes,
-                goods_nomenclature=goods_nomenclature,
-                valid_between=DateTimeTZRange(start, actual_end),
-                generating_regulation=self.ukgt_si,
-                terminating_regulation=(
-                    self.ukgt_si if actual_end is not None else None
-                ),
-                additional_code=self.additional_codes[new_row.additional_code]
-                if new_row.additional_code
-                else None,
-                update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+        # Create measures either for the single measure type or a mix
+        for (
+            matched_old_rows,
+            row,
+            goods_nomenclature,
+        ) in self.measure_slicer.sliced_new_rows(self.old_rows, self.new_rows):
+            new_measure_type = self.measure_slicer.get_measure_type(
+                matched_old_rows, goods_nomenclature
             )
-            yield new_measure
-
-            if end != actual_end:
-                logger.warning(
-                    "Measure {} end date capped by {} end date: {:%Y-%m-%d}".format(
-                        new_measure.sid, goods_nomenclature.item_id, actual_end
-                    )
-                )
-
-            # If this is a measure under authorised use, we need to add
-            # some measure conditions with the N990 certificate.
-            if new_measure_type == self.mfn_authorised_use:
-                yield MeasureCondition(
-                    sid=self.counters["measure_condition_sid_counter"](),
-                    dependent_measure=new_measure,
-                    component_sequence_number=1,
-                    condition_code=self.presentation_of_certificate,
-                    required_certificate=self.n990,
-                    action=self.apply_mentioned_duty,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
-                yield MeasureCondition(
-                    sid=self.counters["measure_condition_sid_counter"](),
-                    dependent_measure=new_measure,
-                    component_sequence_number=2,
-                    condition_code=self.presentation_of_certificate,
-                    action=self.subheading_not_allowed,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
-
-            try:
-                components = self.duty_sentence_parser.parse(rate)
-                for component in components:
-                    component.component_measure = new_measure
-                    component.update_type = UpdateType.CREATE
-                    component.workbasket = self.workbasket
-                    yield component
-            except RuntimeError as ex:
-                logger.error(f"Explosion parsing {rate}")
-                raise ex
+            for transaction in self.measure_creator.create(
+                duty_sentence=self.clean_duty_sentence(
+                    self.select_rate_on_trade_remedy(row)
+                ),
+                goods_nomenclature=goods_nomenclature,
+                geography=self.erga_omnes,
+                new_measure_type=new_measure_type,
+                authorised_use=(new_measure_type == self.mfn_authorised_use),
+                validity_start=BREXIT,
+                additional_code=(
+                    self.additional_codes[row.additional_code]
+                    if row.additional_code
+                    else None
+                ),
+            ):
+                yield transaction
 
 
 class Command(BaseCommand):
@@ -346,8 +248,10 @@ class Command(BaseCommand):
         try:
             author = User.objects.get(username=username)
         except User.DoesNotExist:
-            sys.exit(f"Author does not exist, create user '{username}'"
-                     " or edit settings.DATA_IMPORT_USERNAME")
+            sys.exit(
+                f"Author does not exist, create user '{username}'"
+                " or edit settings.DATA_IMPORT_USERNAME"
+            )
 
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
         new_worksheet = new_workbook.sheet_by_name(options["new_sheet"])

@@ -1,10 +1,8 @@
 import logging
 import sys
-from datetime import datetime
 from datetime import timedelta
 from enum import Enum
 from typing import cast
-from typing import IO
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -17,10 +15,7 @@ from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 from xlrd.sheet import Sheet
 
-import geo_areas
 import settings
-from certificates.models import Certificate
-from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
@@ -34,21 +29,17 @@ from geo_areas.validators import AreaCode
 from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import LONDON
+from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.utils import blank
 from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import maybe_min
+from importer.management.commands.utils import MeasureDefn
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import SeasonalRateParser
-from measures.models import FootnoteAssociationMeasure
-from measures.models import Measure
-from measures.models import MeasureAction
-from measures.models import MeasureCondition
-from measures.models import MeasureConditionCode
-from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
 from regulations.models import Group
 from regulations.models import Regulation
@@ -141,12 +132,8 @@ class GSPImporter(RowsImporter):
         )
         self.seasonal_rate_parser = SeasonalRateParser(BREXIT, LONDON)
 
-        self.old_rows = NomenclatureTreeCollector[OldMeasureRow](
-            lambda r: r.goods_nomenclature, BREXIT
-        )
-        self.new_rows = NomenclatureTreeCollector[NewRow](
-            lambda r: r.goods_nomenclature, BREXIT
-        )
+        self.old_rows = NomenclatureTreeCollector[List[OldMeasureRow]](BREXIT)
+        self.new_rows = NomenclatureTreeCollector[NewRow](BREXIT)
 
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
         self.gsp_regulation_group = Group.objects.get(group_id="SPG")
@@ -164,17 +151,39 @@ class GSPImporter(RowsImporter):
             ]
         }
 
-        self.measure_ending = MeasureEndingPattern(
-            workbasket=self.workbasket,
-            measure_types=self.measure_types,
-            geo_areas=self.geo_areas,
-        )
-
         self.exclusion_areas = {
             "India": GeographicalArea.objects.get(area_id="IN"),
             "Indonesia": GeographicalArea.objects.get(area_id="ID"),
             "Kenya": GeographicalArea.objects.get(area_id="KE"),
         }
+
+        self.gsp_si, _ = Regulation.objects.get_or_create(
+            regulation_id="C2100002",
+            regulation_group=self.gsp_regulation_group,
+            published_at=BREXIT,
+            approved=False,
+            valid_between=self.brexit_to_infinity,
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+        yield self.gsp_si
+
+        self.measure_ender = MeasureEndingPattern(
+            workbasket=self.workbasket,
+            measure_types=self.measure_types,
+            geo_areas=self.geo_areas,
+        )
+
+        self.measure_creator = MeasureCreatingPattern(
+            generating_regulation=self.gsp_si,
+            workbasket=self.workbasket,
+            duty_sentence_parser=self.duty_sentence_parser,
+            exclusion_areas=self.exclusion_areas,
+            measure_sid_counter=self.counters["measure_sid_counter"],
+            measure_condition_sid_counter=self.counters[
+                "measure_condition_sid_counter"
+            ],
+        )
 
         self.gf4_footnote = Footnote.objects.get(
             footnote_id="547",
@@ -207,34 +216,6 @@ class GSPImporter(RowsImporter):
             update_type=UpdateType.CREATE,
         )
 
-        self.gsp_si, _ = Regulation.objects.get_or_create(
-            regulation_id="C2100002",
-            regulation_group=self.gsp_regulation_group,
-            published_at=BREXIT,
-            approved=False,
-            valid_between=self.brexit_to_infinity,
-            workbasket=self.workbasket,
-            update_type=UpdateType.CREATE,
-        )
-        yield self.gsp_si
-
-        self.n990 = Certificate.objects.get(
-            sid="990",
-            certificate_type=CertificateType.objects.get(sid="N"),
-        )
-
-        self.presentation_of_certificate = MeasureConditionCode.objects.get(
-            code="B",
-        )
-
-        self.apply_mentioned_duty = MeasureAction.objects.get(
-            code="27",
-        )
-
-        self.subheading_not_allowed = MeasureAction.objects.get(
-            code="08",
-        )
-
     def clean_duty_sentence(self, cell: Cell) -> str:
         if cell.ctype == xlrd.XL_CELL_NUMBER:
             # This is a percentage value that Excel has
@@ -250,49 +231,66 @@ class GSPImporter(RowsImporter):
         old_row: Optional[OldMeasureRow],
     ) -> Iterator[List[TrackedModel]]:
         logger.debug(
-            "Have old row: %s. Have new row: %s",
-            old_row is not None,
-            new_row is not None,
+            "Have old row for GN: %s. Have new row for GN: %s",
+            old_row.goods_nomenclature.sid
+            if old_row is not None and old_row.goods_nomenclature is not None
+            else None,
+            new_row.goods_nomenclature.sid
+            if new_row is not None and new_row.goods_nomenclature is not None
+            else None,
         )
-        new_waiting = new_row is not None and not self.new_rows.maybe_push(new_row)
-        if self.old_rows.subtree is None:
-            self.old_rows.prefix = self.new_rows.prefix
-            self.old_rows.subtree = self.new_rows.subtree
-        old_waiting = old_row is not None and not self.old_rows.maybe_push(old_row)
-        if self.new_rows.subtree is None:
-            self.new_rows.prefix = self.old_rows.prefix
-            self.new_rows.subtree = self.old_rows.subtree
+
+        # Push the new row into the tree, but only if we found a CC for it
+        # Initialize the old row tree with the same subtree if it is not yet set
+        new_waiting = (
+            new_row is not None
+            and new_row.goods_nomenclature is not None
+            and not self.new_rows.add(new_row.goods_nomenclature, new_row)
+        )
+        if self.old_rows.root is None:
+            self.old_rows.root = self.new_rows.root
+
+        # Push the old row into the tree, adding to any rows already for this CC
+        # Initialize the new row tree with the same subtree if it is not yet set
+        if old_row is not None and old_row.goods_nomenclature is not None:
+            if old_row.goods_nomenclature in self.old_rows:
+                roots = [
+                    root
+                    for root in self.old_rows.buffer()
+                    if root[0] == old_row.goods_nomenclature
+                ]
+                assert len(roots) == 1
+                logger.debug(
+                    "Adding to old context (len %s) when adding cc %s [%s]",
+                    len(roots[0][1]),
+                    old_row.goods_nomenclature.item_id,
+                    old_row.goods_nomenclature_sid,
+                )
+                rows = [*roots[0][1], old_row]
+            else:
+                logger.debug(
+                    "Ignoring old context when adding cc %s [%s]",
+                    old_row.goods_nomenclature.item_id,
+                    old_row.goods_nomenclature_sid,
+                )
+                rows = [old_row]
+
+            old_waiting = not self.old_rows.add(old_row.goods_nomenclature, rows)
+        else:
+            old_waiting = False
+
+        if self.new_rows.root is None:
+            self.new_rows.root = self.old_rows.root
 
         if old_waiting or new_waiting:
             # A row was rejected by the collector
             # The collector is full and we should process it
             logger.debug(
-                f"Collector full with {len(self.old_rows.buffer)} old"
-                f" and {len(self.new_rows.buffer)} new"
+                f"Collector full with {len(self.old_rows.roots)} old (waiting {old_waiting})"
+                f" and {len(self.new_rows.roots)} new (waiting {new_waiting})"
             )
-            # We must always have an old row to detect the measure type
-            if len(self.old_rows.buffer) == 0:
-                logger.warning(
-                    "No old rows for %s, assuming measure type 142",
-                    self.new_rows.prefix.item_id,
-                )
-
-            # End date all the old rows in either case
-            for row in self.old_rows.buffer:
-                assert (
-                    row.measure_type in self.measure_types
-                ), f"{row.measure_type} not in {self.measure_types}"
-                assert (
-                    row.geo_sid in self.geo_areas
-                ), f"{row.geo_sid} not in {self.geo_areas}"
-                assert row.order_number is None
-                yield list(self.measure_ending.end_date_measure(row, self.gsp_si))
-
-            # Create measures either for the single measure type or a mix
-            for measure_type, row, gn in self.measure_slicer.sliced_new_rows(
-                self.old_rows.buffer, self.new_rows.buffer
-            ):
-                yield list(self.make_new_measure(row, measure_type, gn))
+            for transaction in self.flush():
+                yield transaction
 
             self.old_rows.reset()
             self.new_rows.reset()
@@ -305,12 +303,41 @@ class GSPImporter(RowsImporter):
         else:
             return iter([])
 
+    def flush(self) -> Iterator[List[TrackedModel]]:
+        # Send the old row to be end dated or removed
+        old_sids = cast(Set[int], set())
+        for cc, rows in self.old_rows.buffer():
+            for row in rows:
+                if row.measure_sid in old_sids:
+                    continue
+                old_sids.add(row.measure_sid)
+
+                assert (
+                    row.measure_type in self.measure_types
+                ), f"{row.measure_type} not in {self.measure_types}"
+                assert (
+                    row.geo_sid in self.geo_areas
+                ), f"{row.geo_sid} not in {self.geo_areas}"
+                assert row.order_number is None
+                yield list(self.measure_ender.end_date_measure(row, self.gsp_si))
+
+        # Create measures either for the single measure type or a mix
+        for (
+            measure_type,
+            row,
+            goods_nomenclature,
+        ) in self.measure_slicer.sliced_new_rows(self.old_rows, self.new_rows):
+            for transaction in self.make_new_measure(
+                row, measure_type, goods_nomenclature
+            ):
+                yield transaction
+
     def make_new_measure(
         self,
         new_row: NewRow,
         new_measure_type: MeasureType,
         goods_nomenclature: GoodsNomenclature,
-    ) -> Iterator[TrackedModel]:
+    ) -> Iterator[List[TrackedModel]]:
         assert new_row is not None
 
         # General framework
@@ -324,26 +351,30 @@ class GSPImporter(RowsImporter):
             if new_row.gf4_footnote:
                 footnotes.append(self.gf4_footnote)
 
-            for model in self.make_gsp_measure(
-                new_row.gf_tariff,
-                self.gf_geography,
-                new_row.gf_exclusion,
-                goods_nomenclature,
-                new_measure_type,
-                footnotes,
-            ):
-                yield model
+            yield list(
+                self.measure_creator.create(
+                    duty_sentence=self.clean_duty_sentence(new_row.gf_tariff),
+                    geography=self.gf_geography,
+                    geo_exclusion=new_row.gf_exclusion,
+                    goods_nomenclature=goods_nomenclature,
+                    new_measure_type=new_measure_type,
+                    authorised_use=(new_measure_type == self.measure_types[145]),
+                    footnotes=footnotes,
+                )
+            )
 
         # LDC framework
         if new_row.ldc_regime not in [LeastDevelopedCountryRegime.NONE]:
-            for model in self.make_gsp_measure(
-                new_row.ldc_tariff,
-                self.ldc_geography,
-                new_row.ldc_exclusion,
-                goods_nomenclature,
-                new_measure_type,
-            ):
-                yield model
+            yield list(
+                self.measure_creator.create(
+                    duty_sentence=self.clean_duty_sentence(new_row.ldc_tariff),
+                    geography=self.ldc_geography,
+                    geo_exclusion=new_row.ldc_exclusion,
+                    goods_nomenclature=goods_nomenclature,
+                    new_measure_type=new_measure_type,
+                    authorised_use=(new_measure_type == self.measure_types[145]),
+                )
+            )
 
         # EF framework
         if new_row.ef_regime not in [
@@ -354,104 +385,17 @@ class GSPImporter(RowsImporter):
             if new_row.ef_seasonal:
                 footnotes.append(self.seasonal_footnote)
 
-            for model in self.make_gsp_measure(
-                new_row.ef_tariff,
-                self.ef_geography,
-                "",
-                goods_nomenclature,
-                new_measure_type,
-                footnotes,
-            ):
-                yield model
-
-    def make_gsp_measure(
-        self,
-        tariff_cell: Cell,
-        geography: GeographicalArea,
-        geo_exclusion: Optional[str],
-        goods_nomenclature: GoodsNomenclature,
-        new_measure_type: MeasureType,
-        footnotes: List[Footnote] = [],
-    ):
-        duty_exp = self.clean_duty_sentence(tariff_cell)
-        exclusion = (
-            self.exclusion_areas[geo_exclusion.strip()] if geo_exclusion else None
-        )
-        for rate, start, end in self.seasonal_rate_parser.detect_seasonal_rates(
-            duty_exp
-        ):
-            actual_end = maybe_min(end, goods_nomenclature.valid_between.upper)
-            new_measure = Measure(
-                sid=self.counters["measure_sid_counter"](),
-                measure_type=new_measure_type,
-                geographical_area=geography,
-                goods_nomenclature=goods_nomenclature,
-                valid_between=DateTimeTZRange(start, actual_end),
-                generating_regulation=self.gsp_si,
-                terminating_regulation=(
-                    self.gsp_si if actual_end is not None else None
-                ),
-                update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+            yield list(
+                self.measure_creator.create(
+                    duty_sentence=self.clean_duty_sentence(new_row.ef_tariff),
+                    geography=self.ef_geography,
+                    geo_exclusion=None,
+                    goods_nomenclature=goods_nomenclature,
+                    new_measure_type=new_measure_type,
+                    authorised_use=(new_measure_type == self.measure_types[145]),
+                    footnotes=footnotes,
+                )
             )
-            yield new_measure
-
-            if exclusion:
-                yield MeasureExcludedGeographicalArea(
-                    modified_measure=new_measure,
-                    excluded_geographical_area=exclusion,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
-
-            for footnote in footnotes:
-                yield FootnoteAssociationMeasure(
-                    footnoted_measure=new_measure,
-                    associated_footnote=footnote,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
-
-            if end != actual_end:
-                logger.warning(
-                    "Measure {} end date capped by {} end date: {:%Y-%m-%d}".format(
-                        new_measure.sid, goods_nomenclature.item_id, actual_end
-                    )
-                )
-
-            # If this is a measure under authorised use, we need to add
-            # some measure conditions with the N990 certificate.
-            if new_measure_type == self.measure_types[145]:
-                yield MeasureCondition(
-                    sid=self.counters["measure_condition_sid_counter"](),
-                    dependent_measure=new_measure,
-                    component_sequence_number=1,
-                    condition_code=self.presentation_of_certificate,
-                    required_certificate=self.n990,
-                    action=self.apply_mentioned_duty,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
-                yield MeasureCondition(
-                    sid=self.counters["measure_condition_sid_counter"](),
-                    dependent_measure=new_measure,
-                    component_sequence_number=2,
-                    condition_code=self.presentation_of_certificate,
-                    action=self.subheading_not_allowed,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
-
-            try:
-                components = self.duty_sentence_parser.parse(rate)
-                for component in components:
-                    component.component_measure = new_measure
-                    component.update_type = UpdateType.CREATE
-                    component.workbasket = self.workbasket
-                    yield component
-            except RuntimeError as ex:
-                logger.error(f"Explosion parsing {rate}")
-                raise ex
 
 
 class GSPGeographicAreaImporter:
@@ -603,8 +547,10 @@ class Command(BaseCommand):
         try:
             author = User.objects.get(username=username)
         except User.DoesNotExist:
-            sys.exit(f"Author does not exist, create user '{username}'"
-                     " or edit settings.DATA_IMPORT_USERNAME")
+            sys.exit(
+                f"Author does not exist, create user '{username}'"
+                " or edit settings.DATA_IMPORT_USERNAME"
+            )
 
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
         schedule_sheet = new_workbook.sheet_by_name("GSP 'continuity' tariffs ")
