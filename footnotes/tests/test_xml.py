@@ -22,5 +22,7 @@ def test_footnote_xml(api_client, taric_schema, approved_workbasket, xml):
 
 @validate_taric_xml(factories.FootnoteDescriptionFactory)
 def test_footnote_description_xml(api_client, taric_schema, approved_workbasket, xml):
+    element = xml.find(".//footnote.description.period", xml.nsmap)
+    assert element is not None
     element = xml.find(".//footnote.description", xml.nsmap)
     assert element is not None

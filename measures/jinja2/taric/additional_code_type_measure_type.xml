@@ -3,7 +3,7 @@
 {%- call standard_record(message_counter(), sequence(), transaction_id, record) %}
     <oub:additional.code.type.measure.type>
       <oub:measure.type.id>{{ record.measure_type.sid }}</oub:measure.type.id>
-      <oub:additional.code.type.id>{{ record.additional_code.type.sid }}</oub:additional.code.type.id>
+      <oub:additional.code.type.id>{{ record.additional_code_type.sid }}</oub:additional.code.type.id>
       <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
       {%- if record.end_date -%}
       <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>

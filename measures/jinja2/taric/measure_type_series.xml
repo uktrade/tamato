@@ -11,12 +11,12 @@
       <oub:measure.type.combination>{{ record.measure_type_combination }}</oub:measure.type.combination>
     </oub:measure.type.series>
 {%- endcall -%}
-{-% call base_record(message_counter(), record.description_record_code, record.description_subrecord_code, sequence(), transaction_id, record.update_type) -%}
+{%- call base_record(message_counter(), record.description_record_code, record.description_subrecord_code, sequence(), transaction_id, record.update_type) -%}
     <oub:measure.type.series.description>
         <oub:measure.type.series.id>{{ record.sid }}</oub:measure.type.series.id>
         <oub:language.id>EN</oub:language.id>
-        {-% if record.description -%}
+        {%- if record.description -%}
         <oub:description>{{ record.description}}</oub:description>
-        {-% endif %}
-    </oub:measures.type.series.description>
-{-% endcall -%}
+        {%- endif %}
+    </oub:measure.type.series.description>
+{%- endcall -%}
