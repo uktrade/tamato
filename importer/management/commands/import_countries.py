@@ -179,7 +179,5 @@ class Command(BaseCommand):
                     next(new_rows)
 
                 geog_importer = GeoAreaImporter(workbasket)
-                models = list(
-                    geog_importer.import_rows([NewRow(row) for row in new_rows])
-                )
-                env.render_transaction(models)
+                for model in geog_importer.import_rows([NewRow(row) for row in new_rows]):
+                    env.render_transaction([model])
