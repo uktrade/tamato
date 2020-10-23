@@ -1,7 +1,6 @@
 import logging
 from typing import Any
 from typing import Optional
-from typing import TypeVar
 
 from django.db import transaction
 
@@ -11,7 +10,6 @@ from commodities import serializers
 from footnotes.models import Footnote
 from footnotes.models import FootnoteType
 from importer.handlers import BaseHandler
-from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +69,21 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
     serializer_class = serializers.GoodsNomenclatureIndentSerializer
     tag = parsers.GoodsNomenclatureIndentsParser.tag.name
 
+    # It is sadly necessary to correct some mistakes in the TARIC data.
+    # These codes all do not meet the assumption that the child indent
+    # is 1 more than their parent indent. These are assumed to be errors.
+    # Here indent sid + start date is mapped to correct parent indent sid.
+    overrides = {
+        # 2106909921/80
+        (35191, 1972, 1, 1): 35189,
+        # 2106909929/80
+        (35198, 1972, 1, 1): 35189,
+        # 1901100035/80
+        (33760, 1980, 1, 1): 33746,
+        (33760, 1990, 3, 1): 33743,
+        (33760, 1992, 1, 1): 33755,
+    }
+
     def __init__(self, *args, **kwargs):
         super(GoodsNomenclatureIndentHandler, self).__init__(*args, **kwargs)
         self.extra_data = {}
@@ -107,15 +120,16 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         # A phantom header is any good with a suffix != "80". In the real world
         # this represents a good that does not appear in any legislature and is
         # non-declarable. i.e. it does not exist outside of the database and is
-        # purely for "convenience".
+        # purely for "convenience". This algorithm doesn't apply to chapter 99.
         extra_headings = (
             models.GoodsNomenclature.objects.filter(
-                item_id__startswith=item_id[0:2],
+                item_id__startswith=chapter_heading,
                 item_id__endswith="000000",
             )
             .exclude(suffix="80")
             .exists()
-        )
+        ) and chapter_heading != "99"
+
         if extra_headings and (
             item_id[-6:] != "000000"
             or data["indented_goods_nomenclature"].suffix == "80"
@@ -129,18 +143,28 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         )
 
         while start_date and ((start_date < end_date) if end_date else True):
-            next_parent = (
-                models.GoodsNomenclatureIndentNode.objects.filter(
-                    indent__indented_goods_nomenclature__item_id__lte=item_id,
-                    indent__indented_goods_nomenclature__item_id__startswith=chapter_heading,
-                    indent__indented_goods_nomenclature__valid_between__contains=start_date,
-                    indent__valid_between__contains=start_date,
-                    valid_between__contains=start_date,
-                    depth=parent_depth,
+            defn = (indent.sid, start_date.year, start_date.month, start_date.day)
+            if defn in self.overrides:
+                next_indent = models.GoodsNomenclatureIndent.objects.get(
+                    sid=self.overrides[defn]
                 )
-                .order_by("-indent__indented_goods_nomenclature__item_id")
-                .first()
-            )
+                next_parent = next_indent.nodes.filter(
+                    valid_between__contains=start_date
+                ).get()
+                logger.info("Using manual override for indent %s", defn)
+            else:
+                next_parent = (
+                    models.GoodsNomenclatureIndentNode.objects.filter(
+                        indent__indented_goods_nomenclature__item_id__lte=item_id,
+                        indent__indented_goods_nomenclature__item_id__startswith=chapter_heading,
+                        indent__indented_goods_nomenclature__valid_between__contains=start_date,
+                        indent__valid_between__contains=start_date,
+                        valid_between__contains=start_date,
+                        depth=parent_depth,
+                    )
+                    .order_by("-indent__indented_goods_nomenclature__item_id")
+                    .first()
+                )
 
             if not next_parent:
                 raise InvalidIndentError(
