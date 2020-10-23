@@ -5,7 +5,7 @@
         <oub:goods.nomenclature.indent.sid>{{ record.sid }}</oub:goods.nomenclature.indent.sid>
         <oub:goods.nomenclature.sid>{{ record.indented_goods_nomenclature.sid }}</oub:goods.nomenclature.sid>
         <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
-        <oub:number.indents>{{ record.indent }}</oub:number.indents>
+        <oub:number.indents>{{ "%02d" | format(record.indent) }}</oub:number.indents>
         <oub:goods.nomenclature.item.id>{{ record.indented_goods_nomenclature.item_id }}</oub:goods.nomenclature.item.id>
         <oub:productline.suffix>{{ record.indented_goods_nomenclature.suffix }}</oub:productline.suffix>
     </oub:goods.nomenclature.indents>

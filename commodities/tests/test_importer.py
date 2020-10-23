@@ -3,7 +3,6 @@ from psycopg2._range import DateTimeTZRange
 
 from commodities import models
 from commodities import serializers
-from commodities.import_handlers import InvalidIndentError
 from common.tests import factories
 from common.tests.util import generate_test_import_xml
 from common.tests.util import requires_update_importer
@@ -93,10 +92,10 @@ def test_goods_nomenclature_indent_importer_create(valid_user):
         ),
     )
 
-    db_indent = make_and_get_indent(indent, valid_user, depth="00")
+    db_indent = make_and_get_indent(indent, valid_user, depth=0)
 
     assert db_indent.sid == indent.sid
-    assert db_indent.indent == "00"
+    assert db_indent.indent == 0
     assert db_indent.nodes.count() == 1
     assert db_indent.nodes.first().depth == 1
     assert (
@@ -118,11 +117,11 @@ def test_goods_nomenclature_indent_importer_create_with_parent_low_indent(valid_
         ),
     )
 
-    db_indent = make_and_get_indent(indent, valid_user, depth="00")
+    db_indent = make_and_get_indent(indent, valid_user, depth=0)
 
     db_indent_node = db_indent.nodes.first()
     assert db_indent.sid == indent.sid
-    assert db_indent.indent == "00"
+    assert db_indent.indent == 0
     assert db_indent.nodes.count() == 1
     assert db_indent_node.depth == 2
     assert (
@@ -148,12 +147,12 @@ def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid
         ),
     )
 
-    db_indent = make_and_get_indent(indent, valid_user, depth="04")
+    db_indent = make_and_get_indent(indent, valid_user, depth=4)
 
     db_indent_node = db_indent.nodes.first()
 
     assert db_indent.sid == indent.sid
-    assert db_indent.indent == "04"
+    assert db_indent.indent == 4
     assert db_indent.nodes.count() == 1
     assert db_indent_node.depth == 6
     assert (
@@ -200,10 +199,10 @@ def test_goods_nomenclature_indent_importer_multiple_parents(valid_user, date_ra
         valid_between=indent_validity,
     )
 
-    db_indent = make_and_get_indent(indent, valid_user, depth="00")
+    db_indent = make_and_get_indent(indent, valid_user, depth=0)
 
     assert db_indent.sid == indent.sid
-    assert db_indent.indent == "00"
+    assert db_indent.indent == 0
     assert db_indent.nodes.count() == 3
     assert all(node.get_parent() in parent_nodes for node in db_indent.nodes.all())
     assert (
@@ -240,11 +239,11 @@ def test_goods_nomenclature_indent_importer_create_with_triple_00_indent(
         ),
     )
 
-    db_indent = make_and_get_indent(indent, valid_user, depth="00")
+    db_indent = make_and_get_indent(indent, valid_user, depth=0)
 
     db_indent_node = db_indent.nodes.first()
     assert db_indent.sid == indent.sid
-    assert db_indent.indent == "00"
+    assert db_indent.indent == 0
     assert db_indent.nodes.count() == 1
     assert db_indent_node.depth == 3
     assert (

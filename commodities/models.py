@@ -80,7 +80,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
         validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
     )
 
-    indent = models.CharField(max_length=2, validators=[MinLengthValidator(2)])
+    indent = models.PositiveIntegerField(validators=[MinValueValidator(0)])
 
     indented_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
