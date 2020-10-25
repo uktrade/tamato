@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 from datetime import datetime
-from datetime import timedelta
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -15,8 +14,10 @@ from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
 import settings
+from commodities.import_handlers import GoodsNomenclatureIndentHandler
 from commodities.models import GoodsNomenclature
 from commodities.models import GoodsNomenclatureIndent
+from commodities.models import GoodsNomenclatureIndentNode
 from common.models import TrackedModel
 from common.validators import UpdateType
 from importer.management.commands.doc_importer import RowsImporter
@@ -84,18 +85,24 @@ class IndentImporter(RowsImporter):
         item_id = child.item_id
         suffix = child.suffix
 
+        indent_model = GoodsNomenclatureIndent(
+            sid=new_row.indent_sid,
+            indented_goods_nomenclature=child,
+            indent=max(indent, 0),
+            valid_between=DateTimeTZRange(new_row.start_date, new_row.end_date),
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+        indent_model.save()
+        yield [indent_model]
+
         if (
             indent == -1 and item_id[2:] == "00000000"
         ):  # This is a root indent (i.e. a chapter heading)
-            yield [
-                GoodsNomenclatureIndent.add_root(
-                    sid=new_row.indent_sid,
-                    indented_goods_nomenclature=child,
-                    valid_between=(new_row.start_date, new_row.end_date),
-                    workbasket=self.workbasket,
-                    update_type=UpdateType.CREATE,
-                )
-            ]
+            GoodsNomenclatureIndentNode.add_root(
+                indent=indent_model,
+                valid_between=DateTimeTZRange(new_row.start_date, new_row.end_date),
+            )
         else:
             # The indent is now too deep to use the item ID directly. Instead the code that is:
             #   - indent + 1
@@ -103,18 +110,24 @@ class IndentImporter(RowsImporter):
             #   - Has a code that starts with the current path, omitting the last step.
             #   - Has a code that is greater than or equal to the current path
             #      - Some child codes have the same code as their parents.
-            parent_indent = indent + 1
+            parent_depth = indent + 1
 
             # Very high up in places like chapter 29 we get another
             # level of headings that also have indent zero, so the
             # relationship between depth and indent is actually -3
+            # Except, for whatever reason, in frankenchapter 99 where
+            # there is an extra heading but the indents are correct
             # We can detect this by looking for phantom lines at the
             # four digit level:
-            extra_headings = any(
-                GoodsNomenclature.objects.filter(
-                    item_id__startswith=item_id[0:2],
-                    item_id__endswith="000000",
-                ).exclude(suffix="80")
+            chapter_heading = item_id[:2]
+            extra_headings = (
+                any(
+                    GoodsNomenclature.objects.filter(
+                        item_id__startswith=chapter_heading,
+                        item_id__endswith="000000",
+                    ).exclude(suffix="80")
+                )
+                and chapter_heading != "99"
             )
 
             # So we need to add extra depth if we are now below an extra heading
@@ -123,91 +136,89 @@ class IndentImporter(RowsImporter):
             if extra_headings and (
                 item_id[4:] != "000000" or (item_id[4:] == "000000" and suffix == "80")
             ):
-                parent_indent += 1
+                parent_depth += 1
 
             # This is the time range that needs to be covered by
             # the indents that we create. We will subtract from
             # this range as we discover the correct parents.
-            remaining_range = [
-                new_row.start_date,
-                maybe_min(
-                    new_row.end_date,
-                    child.valid_between.upper,
-                ),
-            ]
+            start_date = new_row.start_date
+            end_date = maybe_min(
+                new_row.end_date,
+                child.valid_between.upper,
+            )
 
             # Keep looking for parents whilst we have remaining time.
             # The end condition is that the start date is now equal to the end date,
             # or the end date of the indented code, or there is no end date so both are None.
-            while remaining_range[0] and (
-                (remaining_range[0] < remaining_range[1])
-                if remaining_range[1]
-                else True
-            ):
+            while start_date and ((start_date < end_date) if end_date else True):
                 logger.debug(
                     "Looking for parent for %s(%s) between time %s and %s",
                     child.item_id,
                     child.suffix,
-                    *remaining_range,
+                    start_date,
+                    end_date,
                 )
 
-                try:
-                    next_parent = (
-                        GoodsNomenclatureIndent.objects.filter(
-                            indented_goods_nomenclature__item_id__lte=item_id,
-                            # TODO: this timedelta thing is obviously hacky,
-                            # how do we get it to just search for a single time?
-                            indented_goods_nomenclature__valid_between__contains=DateTimeTZRange(
-                                remaining_range[0],
-                                remaining_range[0] + timedelta(hours=1),
-                            ),
-                            valid_between__contains=DateTimeTZRange(
-                                remaining_range[0],
-                                remaining_range[0] + timedelta(hours=1),
-                            ),
-                            depth=parent_indent,
-                        )
-                        .order_by("indented_goods_nomenclature__item_id")
-                        .reverse()[0]
-                    )
-                except IndexError as e:
-                    logger.error(
-                        "Failed to find parent for %s between time %s and %s",
-                        child.item_id,
-                        *remaining_range,
-                    )
-                    raise e
+                defn = (
+                    new_row.indent_sid,
+                    start_date.year,
+                    start_date.month,
+                    start_date.day,
+                )
 
-                indent_start = remaining_range[0]
+                if defn in GoodsNomenclatureIndentHandler.overrides:
+                    next_indent = GoodsNomenclatureIndent.objects.get(
+                        sid=GoodsNomenclatureIndentHandler.overrides[defn]
+                    )
+                    next_parent = next_indent.nodes.filter(
+                        valid_between__contains=start_date
+                    ).get()
+                    logger.info("Using manual override for indent %s", defn)
+                else:
+                    next_parent = (
+                        GoodsNomenclatureIndentNode.objects.filter(
+                            indent__indented_goods_nomenclature__item_id__lte=item_id,
+                            indent__indented_goods_nomenclature__item_id__startswith=chapter_heading,
+                            indent__indented_goods_nomenclature__valid_between__contains=start_date,
+                            indent__valid_between__contains=start_date,
+                            valid_between__contains=start_date,
+                            depth=parent_depth,
+                        )
+                        .order_by("-indent__indented_goods_nomenclature__item_id")
+                        .first()
+                    )
+
+                if not next_parent:
+                    raise Exception(
+                        f"Parent at depth {parent_depth} not found for {item_id} (sid {child.sid}) for date {start_date}"
+                    )
+
+                indent_start = start_date
                 indent_end = maybe_min(
                     next_parent.valid_between.upper,
-                    next_parent.indented_goods_nomenclature.valid_between.upper,
-                    remaining_range[1],
+                    next_parent.indent.valid_between.upper,
+                    next_parent.indent.indented_goods_nomenclature.valid_between.upper,
+                    end_date,
                 )
 
                 assert indent_end is None or indent_start <= indent_end
 
                 logger.debug(
                     "%s(%s) is parent of %s(%s) between %s and %s",
-                    next_parent.indented_goods_nomenclature.item_id,
-                    next_parent.indented_goods_nomenclature.suffix,
+                    next_parent.indent.indented_goods_nomenclature.item_id,
+                    next_parent.indent.indented_goods_nomenclature.suffix,
                     child.item_id,
                     child.suffix,
                     indent_start,
                     indent_end,
                 )
 
-                yield [
-                    next_parent.add_child(
-                        sid=new_row.indent_sid,
-                        indented_goods_nomenclature=child,
-                        valid_between=(indent_start, indent_end),
-                        workbasket=self.workbasket,
-                        update_type=UpdateType.CREATE,
-                    )
-                ]
+                next_parent.add_child(
+                    indent=indent_model,
+                    valid_between=DateTimeTZRange(indent_start, indent_end),
+                )
 
-                remaining_range[0] = indent_end
+                start_date = indent_end
 
 
 class Command(BaseCommand):

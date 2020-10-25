@@ -2,20 +2,19 @@ import pytest
 
 from commodities.models import GoodsNomenclature
 from common.tests.factories import GoodsNomenclatureFactory
-from common.tests.factories import GoodsNomenclatureIndentFactory
-from common.tests.util import NOW
+from common.tests.factories import GoodsNomenclatureIndentNodeFactory
+from common.tests.util import Dates
 from importer.management.commands.utils import NomenclatureTreeCollector
 
 pytestmark = pytest.mark.django_db
 
 
 def make_child(parent: GoodsNomenclature, **kwargs) -> GoodsNomenclature:
-    g = GoodsNomenclatureFactory(indent=None, **kwargs)
-    data = GoodsNomenclatureIndentFactory.stub(
-        indented_goods_nomenclature=g,
-        workbasket=g.workbasket,
+    g = GoodsNomenclatureFactory(indent__node=None, **kwargs)
+    data = GoodsNomenclatureIndentNodeFactory.stub(
+        indent=g.indents.get(),
     ).__dict__
-    parent.indents.get().add_child(**data)
+    parent.indents.get().nodes.get().add_child(**data)
     return g
 
 
@@ -55,8 +54,8 @@ def child_of_phantom_cc(phantom_root_cc: GoodsNomenclature) -> GoodsNomenclature
 
 
 @pytest.fixture
-def working_set() -> NomenclatureTreeCollector[int]:
-    return NomenclatureTreeCollector[int](date=NOW)
+def working_set(date_ranges: Dates) -> NomenclatureTreeCollector[int]:
+    return NomenclatureTreeCollector[int](date=date_ranges.now)
 
 
 def test_single_root(
