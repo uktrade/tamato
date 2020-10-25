@@ -187,14 +187,16 @@ class NomenclatureTreeCollector(Generic[Row]):
                     logger.debug(
                         f"Should split parent {parent[0].item_id}/{parent[0].suffix}"
                     )
-                    for child in (
+                    for child_node in (
                         parent[0]
                         .indents.as_at(self.date)
                         .get()
+                        .nodes.filter(valid_between__contains=self.date)
+                        .get()
                         .get_children()
-                        .as_at(self.date)
+                        .filter(valid_between__contains=self.date)
                     ):
-                        child_cc = child.indented_goods_nomenclature
+                        child_cc = child_node.indent.indented_goods_nomenclature
                         if cc != child_cc:
                             self.roots.append(
                                 self.make_item(child_cc, parent[1], False)
@@ -233,11 +235,13 @@ class NomenclatureTreeCollector(Generic[Row]):
             cc,
             context,
             set(
-                indent.indented_goods_nomenclature.sid
-                for indent in cc.indents.as_at(self.date)
+                node.indent.indented_goods_nomenclature.sid
+                for node in cc.indents.as_at(self.date)
+                .get()
+                .nodes.filter(valid_between__contains=self.date)
                 .get()
                 .get_descendants()
-                .as_at(self.date)
+                .filter(valid_between__contains=self.date)
             ),
             explicit,
         )
