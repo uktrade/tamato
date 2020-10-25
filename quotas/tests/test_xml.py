@@ -8,7 +8,7 @@ from quotas.validators import QuotaEventType
 pytestmark = pytest.mark.django_db
 
 
-@validate_taric_xml(factories.QuotaOrderNumberFactory)
+@validate_taric_xml(factories.QuotaOrderNumberFactory, factory_kwargs={"origin": None})
 def test_quota_order_number_xml(api_client, taric_schema, approved_workbasket, xml):
     element = xml.find(".//quota.order.number", xml.nsmap)
     assert element is not None

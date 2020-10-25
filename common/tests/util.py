@@ -149,7 +149,9 @@ def validate_taric_xml(
                         ".//subrecord.code", namespaces=xml.nsmap
                     )
                     full_code = record_code + subrecord_code
-                    assert full_code > last_code, "Elements out of order in XML"
+                    assert (
+                        full_code > last_code
+                    ), f"Elements out of order in XML: {full_code} came after {last_code}"
                     last_code = full_code
 
             func(
