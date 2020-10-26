@@ -1,5 +1,6 @@
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django_filters import rest_framework as filters
 from rest_framework import renderers
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -18,6 +19,8 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
     """
 
     queryset = WorkBasket.objects.all()
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ("status",)
     serializer_class = WorkBasketSerializer
     renderer_classes = [
         renderers.JSONRenderer,
