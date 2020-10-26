@@ -1,3 +1,4 @@
 -r requirements.txt
 
 django_debug_toolbar
+xmldiff

@@ -6,12 +6,12 @@ from typing import Iterator
 from typing import List
 
 import xlrd
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
-import settings
 from common.models import TrackedModel
 from common.renderers import counter_generator
 from common.validators import UpdateType
@@ -62,7 +62,9 @@ class GeoAreaImporter:
         }
 
         for key, value in overrides.items():
-            new_areas[key] = [new_areas[s][0] for s in value]
+            existing_data = [new_areas[s][0] for s in value if s in new_areas]
+            if existing_data:
+                new_areas[key] = existing_data
 
         for area in (
             GeographicalArea.objects.filter(
@@ -172,6 +174,7 @@ class Command(BaseCommand):
                 output,
                 200003,
                 counter_generator(options["transaction_id"]),
+                counter_generator(start=1),
             ) as env:
                 logger.info(f"Importing from %s", schedule_sheet.name)
                 new_rows = schedule_sheet.get_rows()
