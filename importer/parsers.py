@@ -83,6 +83,7 @@ class ElementParser:
         self.many = many
         self.parent = None
         self.text = None
+        self.started = False
 
         if tag:
             self.tag = tag
@@ -101,13 +102,20 @@ class ElementParser:
     def is_parser_for_element(
         self, parser: ElementParser, element: etree.Element
     ) -> bool:
+        """Check if the parser matches the element."""
+        return parser.tag == element.tag
+
+    def get_parser(self, element: etree.Element) -> Optional[ElementParser]:
+        for parser in self._field_lookup.keys():
+            if self.is_parser_for_element(parser, element):
+                return parser
+
+    def start(self, element: etree.Element, parent: ElementParser = None):
         """
-        Check if the parser matches the element.
+        Handle the start of an XML tag. The tag may be not yet have all of its
+        children.
 
-        This requires the tag to match, but also the parser and elements to both either be
-        leaf nodes or parents.
-
-        This is because we have a few cases where there are tags nested within a tag of the same name.
+        We have a few cases where there are tags nested within a tag of the same name.
 
         Example:
 
@@ -120,30 +128,21 @@ class ElementParser:
                 <oub:validity.start.date>2021-01-01</oub:validity.start.date>
             </oub:additional.code>
 
-        In this case matching on tags is not enough and so checking for leaf nodes is also important.
-
-        In the case where a tag is nested multiple times where more than 1 of those occassions is not
-        a leaf node, a bug will occur. This case is not currently likely and so has not been handled.
+        In this case matching on tags is not enough and so we also need to keep
+        track of whether this parser is already parsing an element. If it is, we
+        don't want to select any child parsers. If it is not, we know that this
+        is an element that this parser should be parsing.
         """
-        return parser.tag == element.tag and bool(parser._field_lookup) == bool(
-            len(element)
-        )
 
-    def get_parser(self, element: etree.Element) -> Optional[ElementParser]:
-        for parser in self._field_lookup.keys():
-            if self.is_parser_for_element(parser, element):
-                return parser
-
-    def start(self, element: etree.Element, parent: ElementParser = None):
         self.parent = parent
-
-        if self.is_parser_for_element(self, element):
+        if not self.started:
             self.data = {}
-
-        # if the tag matches one of the child elements of this element, get the
-        # parser for that element
-        if not self.child:
-            self.child = self.get_parser(element)
+            self.started = True
+        else:
+            # if the tag matches one of the child elements of this element, get the
+            # parser for that element
+            if not self.child:
+                self.child = self.get_parser(element)
 
         # if currently in a child element, delegate to the child parser
         if self.child:
@@ -155,7 +154,9 @@ class ElementParser:
             self.child.end(element)
 
             # leaving the child element, so stop delegating
-            if self.is_parser_for_element(self.child, element):
+            if not self.child.started and self.is_parser_for_element(
+                self.child, element
+            ):
                 field_name = self._field_lookup[self.child]
                 if self.child.many:
                     self.data.setdefault(field_name, []).append(self.child.data)
@@ -164,10 +165,11 @@ class ElementParser:
                 self.child = None
 
         # leaving this element, so marshal the data
-        if self.is_parser_for_element(self, element):
+        elif self.is_parser_for_element(self, element):
             if element.text:
                 self.text = element.text.strip()
             self.data.update(element.attrib.items())
+            self.started = False
             self.clean()
             self.validate()
 
