@@ -9,6 +9,7 @@ from typing import Optional
 from typing import TypeVar
 
 import pytz
+import xlrd
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
@@ -22,7 +23,7 @@ from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.duty_sentence_parser import DutySentenceParser
-from importer.management.commands.utils import blank
+from importer.management.commands.utils import blank, clean_item_id
 from importer.management.commands.utils import Counter
 from importer.management.commands.utils import maybe_max
 from importer.management.commands.utils import maybe_min
@@ -53,7 +54,7 @@ class OldMeasureRow:
     def __init__(self, old_row: List[Cell]) -> None:
         assert old_row is not None
         self.goods_nomenclature_sid = int(old_row[0].value)
-        self.item_id = str(old_row[1].value)
+        self.item_id = clean_item_id(old_row[1])
         self.inherited_measure = bool(old_row[6].value)
         assert not self.inherited_measure, "Old row should not be an inherited measure"
         self.measure_sid = int(old_row[7].value)
@@ -76,7 +77,7 @@ class OldMeasureRow:
         )
 
     def parse_date(self, value: str) -> datetime:
-        return LONDON.localize(datetime.strptime(value, r"%Y-%m-%d"))
+        return LONDON.localize(xlrd.xldate.xldate_as_datetime(value, datemode=0))
 
     def parse_list(self, value: str) -> List[str]:
         return list(filter(lambda s: s != "", map(str.strip, value.split(","))))
