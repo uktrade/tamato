@@ -9,6 +9,16 @@ services:
     ports:
       - "5432:5432"
 
+  s3:
+    image: minio/minio
+    restart: always
+    ports:
+      - "9003:9003"
+    volumes:
+      - tamato-s3-volume:/data
+    env_file: .env
+    command: server --address 0.0.0.0:9003 /data
+
   tamato:
     build: .
     image: tamato
@@ -16,8 +26,10 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - s3
     links:
       - db
+      - s3
     environment:
       DATABASE_URL: "postgres://postgres@db/postgres"
       DJANGO_SETTINGS_MODULE: "settings.dev"
@@ -28,5 +40,7 @@ services:
       - manage.py
       - runserver
       - 0.0.0.0:8000
+
 volumes:
   tamato-data-volume:
+  tamato-s3-volume:
