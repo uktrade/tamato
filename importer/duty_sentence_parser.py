@@ -94,7 +94,7 @@ class DutySentenceParser:
         # Specific duty amounts reference various types of unit.
         # For monetary units, the expression just contains the same code as is
         # present in the sentence. Percentage values correspond to no unit.
-        self._monetary_unit = reduce(choice, map(code, monetary_units))
+        self._monetary_unit = reduce(choice, map(code, monetary_units)) if monetary_units else empty
         percentage_unit = token("%").result(None)
 
         # For measurement units and qualifiers, we match a human-readable version
@@ -120,7 +120,7 @@ class DutySentenceParser:
             m for m in permitted_measurements if m.measurement_unit_qualifier is None
         ]
         measurements = list(map(measurement, [*some_qualifier, *none_qualifier]))
-        self._measurement = reduce(try_choice, measurements)
+        self._measurement = reduce(try_choice, measurements) if measurements else empty
 
         # Each measure component can have an amount, monetary unit and measurement.
         # Which expression elements are allowed in a component is controlled by

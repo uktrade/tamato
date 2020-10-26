@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+              id="200003">
+    <env:transaction id="1">
+        <env:app.message id="1">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description.period>
+                        <oub:geographical.area.description.period.sid>2</oub:geographical.area.description.period.sid>
+                        <oub:geographical.area.sid>1</oub:geographical.area.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.area.id>AD</oub:geographical.area.id>
+                    </oub:geographical.area.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="2">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description>
+                        <oub:geographical.area.description.period.sid>2</oub:geographical.area.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:geographical.area.sid>1</oub:geographical.area.sid>
+                        <oub:geographical.area.id>AD</oub:geographical.area.id>
+                        <oub:description>Andorra</oub:description>
+                    </oub:geographical.area.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>
