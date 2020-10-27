@@ -9,13 +9,13 @@ from typing import Optional
 from typing import Set
 
 import xlrd
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 from xlrd.sheet import Sheet
 
-import settings
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator

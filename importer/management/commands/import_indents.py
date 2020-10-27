@@ -8,12 +8,12 @@ from typing import Optional
 
 import pytz
 import xlrd
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
-import settings
 from commodities.import_handlers import GoodsNomenclatureIndentHandler
 from commodities.models import GoodsNomenclature
 from commodities.models import GoodsNomenclatureIndent
