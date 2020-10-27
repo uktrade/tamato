@@ -7,8 +7,6 @@ import django.db.models.functions.text
 from django.db import migrations
 from django.db import models
 
-import common.validators
-
 
 class Migration(migrations.Migration):
 
@@ -40,9 +38,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "sid",
-                    models.PositiveIntegerField(
-                        validators=[common.validators.NumericSIDValidator()]
-                    ),
+                    models.PositiveIntegerField(),
                 ),
                 (
                     "code",
@@ -78,9 +74,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "description_period_sid",
-                    models.PositiveIntegerField(
-                        validators=[common.validators.NumericSIDValidator()]
-                    ),
+                    models.PositiveIntegerField(),
                 ),
                 ("description", models.TextField()),
             ],

@@ -4,8 +4,8 @@ from django.db import models
 from django.db.models.functions import Lower
 
 from additional_codes import validators
-from common.models import NumericSID
 from common.models import ShortDescription
+from common.models import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 
@@ -57,7 +57,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
     record_code = "245"
     subrecord_code = "00"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     type = models.ForeignKey(AdditionalCodeType, on_delete=models.PROTECT)
     code = models.CharField(
         max_length=3, validators=[validators.additional_code_validator]
@@ -110,7 +110,7 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
 
     # Store the additional code description period sid so that we can send it in TARIC3
     # updates to systems that expect it.
-    description_period_sid = NumericSID()
+    description_period_sid = SignedIntSID()
 
     described_additional_code = models.ForeignKey(
         AdditionalCode, on_delete=models.PROTECT, related_name="descriptions"

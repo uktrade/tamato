@@ -10,7 +10,6 @@ from django.utils import timezone
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
-from treebeard.mp_tree import MP_Node
 from treebeard.mp_tree import MP_NodeQuerySet
 
 from common import exceptions
@@ -300,6 +299,17 @@ class NumericSID(models.PositiveIntegerField):
         name, path, args, kwargs = super().deconstruct()
         del kwargs["editable"]
         del kwargs["validators"]
+        return name, path, args, kwargs
+
+
+class SignedIntSID(models.IntegerField):
+    def __init__(self, *args, **kwargs):
+        kwargs["editable"] = False
+        super().__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        del kwargs["editable"]
         return name, path, args, kwargs
 
 

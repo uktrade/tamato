@@ -4,7 +4,6 @@ from certificates import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
-from common.validators import NumericSIDValidator
 
 
 @TrackedModelSerializer.register_polymorphic_model
@@ -50,7 +49,7 @@ class CertificateDescriptionSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
     described_certificate = CertificateSerializer(read_only=True)
-    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+    sid = serializers.IntegerField()
 
     class Meta:
         model = models.CertificateDescription
