@@ -98,9 +98,14 @@ the following structure:</p>
 <dt id="importer.parsers.ElementParser.is_parser_for_element">
 <code class="sig-name descname">is_parser_for_element</code><span class="sig-paren">(</span><em class="sig-param">parser: importer.parsers.ElementParser</em>, <em class="sig-param">element: xml.etree.ElementTree.Element</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#importer.parsers.ElementParser.is_parser_for_element" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if the parser matches the element.</p>
-<p>This requires the tag to match, but also the parser and elements to both either be
-leaf nodes or parents.</p>
-<p>This is because we have a few cases where there are tags nested within a tag of the same name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.parsers.ElementParser.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param">element: xml.etree.ElementTree.Element</em>, <em class="sig-param">parent: Optional[importer.parsers.ElementParser] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.ElementParser.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle the start of an XML tag. The tag may be not yet have all of its
+children.</p>
+<p>We have a few cases where there are tags nested within a tag of the same name.</p>
 <p>Example:</p>
 <div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;oub:additional.code&gt;</span>
     <span class="nt">&lt;oub:additional.code.sid&gt;</span>00000001<span class="nt">&lt;/oub:additional.code.sid&gt;</span>
@@ -110,9 +115,10 @@ leaf nodes or parents.</p>
 <span class="nt">&lt;/oub:additional.code&gt;</span>
 </pre></div>
 </div>
-<p>In this case matching on tags is not enough and so checking for leaf nodes is also important.</p>
-<p>In the case where a tag is nested multiple times where more than 1 of those occassions is not
-a leaf node, a bug will occur. This case is not currently likely and so has not been handled.</p>
+<p>In this case matching on tags is not enough and so we also need to keep
+track of whether this parser is already parsing an element. If it is, we
+don’t want to select any child parsers. If it is not, we know that this
+is an element that this parser should be parsing.</p>
 </dd></dl>
 
 <dl class="method">
