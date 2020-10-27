@@ -3,7 +3,6 @@ from rest_framework import serializers
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
-from common.validators import NumericSIDValidator
 from footnotes import models
 from footnotes import validators
 
@@ -78,9 +77,7 @@ class FootnoteDescriptionSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
     described_footnote = FootnoteSerializer(read_only=True)
-    description_period_sid = serializers.IntegerField(
-        validators=[NumericSIDValidator()]
-    )
+    description_period_sid = serializers.IntegerField()
 
     class Meta:
         model = models.FootnoteDescription

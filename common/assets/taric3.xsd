@@ -589,8 +589,8 @@
     </xs:simpleType>
     <xs:simpleType name="SID">
         <xs:restriction base="xs:int">
-            <xs:minInclusive value="1"/>
-            <xs:maxInclusive value="99999999"/>
+            <xs:minInclusive value="-2147483648"/>
+            <xs:maxInclusive value="2147483647"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="StatisticalIndicator">

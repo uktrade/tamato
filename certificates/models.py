@@ -3,8 +3,8 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db import models
 
 from certificates import validators
-from common.models import NumericSID
 from common.models import ShortDescription
+from common.models import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 
@@ -85,7 +85,7 @@ class CertificateDescription(TrackedModel, ValidityMixin):
     period_record_code = "205"
     period_subrecord_code = "05"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
 
     description = ShortDescription()
     described_certificate = models.ForeignKey(

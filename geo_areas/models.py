@@ -5,8 +5,8 @@ from django.db.models import CheckConstraint
 from django.db.models import F
 from django.db.models import Q
 
-from common.models import NumericSID
 from common.models import ShortDescription
+from common.models import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas import validators
@@ -33,7 +33,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     record_code = "250"
     subrecord_code = "00"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     area_id = models.CharField(max_length=4, validators=[validators.area_id_validator])
     area_code = models.PositiveSmallIntegerField(choices=validators.AreaCode.choices)
 
@@ -121,7 +121,7 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
 
     area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
     description = ShortDescription()
-    sid = NumericSID()
+    sid = SignedIntSID()
 
     class Meta:
         constraints = [

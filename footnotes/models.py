@@ -1,16 +1,14 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.db import models
-from django.db.models import Q
 from django.urls import reverse
 
-from common.models import NumericSID
 from common.models import ShortDescription
+from common.models import SignedIntSID
 from common.models import TimestampedMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from footnotes import validators
-from workbaskets.validators import WorkflowStatus
 
 
 class FootnoteType(TrackedModel, ValidityMixin):
@@ -125,7 +123,7 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
         Footnote, on_delete=models.CASCADE, related_name="descriptions"
     )
     description = models.TextField()
-    description_period_sid = NumericSID()
+    description_period_sid = SignedIntSID()
 
     identifying_fields = ("description_period_sid",)
 

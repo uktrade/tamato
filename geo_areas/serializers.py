@@ -3,7 +3,6 @@ from rest_framework import serializers
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
-from common.validators import NumericSIDValidator
 from geo_areas import models
 
 
@@ -60,7 +59,7 @@ class GeographicalAreaSerializer(ValiditySerializerMixin, TrackedModelSerializer
 class GeographicalAreaImporterSerializer(
     ValiditySerializerMixin, TrackedModelSerializerMixin
 ):
-    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+    sid = serializers.IntegerField()
     parent = ParentGeographicalAreaSerializer(read_only=True)
 
     class Meta:
@@ -125,7 +124,7 @@ class GeographicalAreaDescriptionTaricSerializer(
 class GeographicalAreaDescriptionImporterSerializer(
     ValiditySerializerMixin, TrackedModelSerializerMixin
 ):
-    sid = serializers.IntegerField(validators=[NumericSIDValidator()])
+    sid = serializers.IntegerField()
     area = GeographicalAreaBasicSerializer(read_only=True)
 
     class Meta:

@@ -2,8 +2,8 @@ from django.db import models
 from psycopg2.extras import DateTimeTZRange
 
 from common.models import ApplicabilityCode
-from common.models import NumericSID
 from common.models import ShortDescription
+from common.models import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from measures import validators
@@ -299,7 +299,7 @@ class Measure(TrackedModel, ValidityMixin):
     record_code = "430"
     subrecord_code = "00"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     measure_type = models.ForeignKey(MeasureType, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea", on_delete=models.PROTECT
@@ -334,7 +334,7 @@ class Measure(TrackedModel, ValidityMixin):
         blank=True,
     )
     stopped = models.BooleanField(default=False)
-    export_refund_nomenclature_sid = NumericSID(null=True, blank=True, default=None)
+    export_refund_nomenclature_sid = SignedIntSID(null=True, blank=True, default=None)
 
     identifying_fields = (
         "measure_type",
@@ -477,7 +477,7 @@ class MeasureCondition(TrackedModel):
     record_code = "430"
     subrecord_code = "10"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     dependent_measure = models.ForeignKey(Measure, on_delete=models.PROTECT)
     condition_code = models.ForeignKey(MeasureConditionCode, on_delete=models.PROTECT)
     component_sequence_number = models.PositiveSmallIntegerField(

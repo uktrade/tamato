@@ -4,8 +4,8 @@ from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
-from common.models import NumericSID
 from common.models import ShortDescription
+from common.models import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from quotas import validators
@@ -22,7 +22,7 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     record_code = "360"
     subrecord_code = "00"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     order_number = models.CharField(
         max_length=6, validators=[validators.quota_order_number_validator]
     )
@@ -61,7 +61,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     record_code = "360"
     subrecord_code = "10"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea", on_delete=models.PROTECT
@@ -118,7 +118,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "00"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     volume = models.DecimalField(max_digits=14, decimal_places=3)
     initial_volume = models.DecimalField(max_digits=14, decimal_places=3)
@@ -208,7 +208,7 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "15"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
 
@@ -226,7 +226,7 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "10"
 
-    sid = NumericSID()
+    sid = SignedIntSID()
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     blocking_period_type = models.PositiveSmallIntegerField(
         choices=validators.BlockingPeriodType.choices

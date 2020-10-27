@@ -39,9 +39,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="footnotedescription",
             name="description_period_sid",
-            field=models.PositiveIntegerField(
-                default=1, validators=[common.validators.NumericSIDValidator()]
-            ),
+            field=models.PositiveIntegerField(default=1),
             preserve_default=False,
         ),
         migrations.AddField(
