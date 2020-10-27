@@ -4,8 +4,6 @@ from datetime import timedelta
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import Set
-from typing import cast
 
 import xlrd
 from django.conf import settings
@@ -45,7 +43,6 @@ logger = logging.getLogger(__name__)
 
 class NewRow:
     def __init__(self, new_row: List[Cell]) -> None:
-        assert new_row is not None
         self.item_id = clean_item_id(new_row[col("B")])
         self.duty_rate = new_row[col("D")]
 
@@ -62,12 +59,7 @@ class NewRow:
 
 class TradeDisputesImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
-        self.measure_types = {
-            int(m.sid): m
-            for m in [
-                MeasureType.objects.get(sid="695"),
-            ]
-        }
+        self.measure_types = {695: MeasureType.objects.get(sid="695")}
         self.measure_slicer = MeasureTypeSlicer[OldMeasureRow, NewRow](
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],
             get_goods_nomenclature=lambda r: r.goods_nomenclature,
@@ -78,9 +70,9 @@ class TradeDisputesImporter(RowsImporter):
         self.new_rows = NomenclatureTreeCollector[NewRow](BREXIT)
         self.row_runner = DualRowRunner(self.old_rows, self.new_rows)
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
-        self.geo_area = GeographicalArea.objects.as_at(BREXIT).get(sid=140)
+        self.geo_area = GeographicalArea.objects.as_at(BREXIT).get(sid=103)
         self.generating_regulation, _ = Regulation.objects.get_or_create(
-            regulation_id="C2100003",
+            regulation_id="C2100004",
             regulation_group=Group.objects.get(group_id="ADD"),
             published_at=BREXIT,
             approved=False,
@@ -114,7 +106,7 @@ class TradeDisputesImporter(RowsImporter):
 
     def flush(self) -> Iterator[List[TrackedModel]]:
         # Send the old row to be end dated or removed
-        old_sids = cast(Set[int], set())
+        old_sids = set()
         for cc, rows in self.old_rows.buffer():
             assert len(rows) >= 1
             for row in rows:
@@ -170,9 +162,8 @@ class TradeDisputesImporter(RowsImporter):
                 geography=self.geo_area,
                 goods_nomenclature=goods_nomenclature,
                 new_measure_type=new_measure_type,
-                authorised_use=(new_measure_type == self.measure_types[695]),
+                authorised_use=False,
                 validity_start=BREXIT,
-                validity_end=BREXIT.replace(year=2022) - timedelta(days=1),
                 footnotes=footnotes,
             )
         )
