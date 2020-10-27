@@ -13,6 +13,7 @@ import django.db
 import pytz
 import xlrd
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields.ranges import DateTimeRangeField
 from django.core.exceptions import ValidationError
@@ -29,7 +30,6 @@ from django.db.models.fields import PositiveSmallIntegerField
 from django.db.models.fields import TextField
 from django.db.models.fields.related import ForeignKey
 
-import settings
 from common.models import ApplicabilityCode
 from common.models import NumericSID
 from common.models import ShortDescription

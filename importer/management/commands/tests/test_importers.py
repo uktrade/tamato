@@ -85,13 +85,13 @@ class TestImportTradeDisputes:
 
         # Setup geographical area's
         area = factories.GeographicalAreaFactory.create(
-            sid=140,
-            area_id='AD',
+            sid=103,
+            area_id='US',
             area_code=0
         )
         factories.GeographicalAreaDescriptionFactory.create(
             area=area,
-            description='Andorra'
+            description='United States of America'
         )
 
         # Footnotes
@@ -110,7 +110,7 @@ class TestImportTradeDisputes:
         - both files have like for like measures regarding same country etc?
 
         Expected output:
-        - add regulation C2100003 for "ADD" (Additional duties) group from 01/01/21
+        - add regulation C2100004 for "ADD" (Additional duties) group from 01/01/21
         - ending of measure 2 for CC 1100000000 on 31/12/20
         - ending of measure 1 for CC 1000000000 on 31/12/20
         - ending of measure 3 for CC 1200000000 on 31/12/20

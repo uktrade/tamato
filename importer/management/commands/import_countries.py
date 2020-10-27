@@ -1,7 +1,6 @@
 import logging
 import sys
 from datetime import datetime
-from typing import cast
 from typing import Iterator
 from typing import List
 
@@ -71,9 +70,7 @@ class GeoAreaImporter:
                 area_code__in=[AreaCode.COUNTRY, AreaCode.REGION]
             )
             .order_by("area_id")
-            .all()
         ):
-            area = cast(GeographicalArea, area)
             if area.area_id not in new_areas:
                 logger.info("No information for area %s – skipped", area.area_id)
                 continue

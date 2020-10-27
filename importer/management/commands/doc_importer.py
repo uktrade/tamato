@@ -1,12 +1,12 @@
 import logging
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
-from typing import Generic
 from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import TypeVar
 
-import django.db
+from django.db import transaction
 
 from common.models import TrackedModel
 from importer.duty_sentence_parser import DutySentenceParser
@@ -23,7 +23,7 @@ OldRow = TypeVar("OldRow")
 NewRow = TypeVar("NewRow")
 
 
-class RowsImporter(Generic[OldRow, NewRow]):
+class RowsImporter(metaclass=ABCMeta):
     def __init__(
         self,
         workbasket: WorkBasket,
@@ -61,6 +61,14 @@ class RowsImporter(Generic[OldRow, NewRow]):
     def flush(self) -> Iterator[List[TrackedModel]]:
         return iter([])
 
+    @abstractmethod
+    def handle_row(
+        self,
+        new_row: Optional[NewRow],
+        old_row: Optional[OldRow],
+    ) -> Iterator[List[TrackedModel]]:
+        ...
+
     def compare_rows(self, new_row: Optional[NewRow], old_row: Optional[OldRow]) -> int:
         if new_row is None:
             return -1
@@ -91,101 +99,71 @@ class RowsImporter(Generic[OldRow, NewRow]):
             return -1
         elif old_row.item_id > new_row.item_id:
             return 1
-        else:
-            return 0
+        return 0
 
-    def handle_row(
-        self,
-        new_row: Optional[NewRow],
-        old_row: Optional[OldRow],
-    ) -> Iterator[List[TrackedModel]]:
-        raise NotImplementedError("Override this")
-
+    @transaction.atomic
     def import_sheets(
         self,
         new_rows: Iterator[NewRow],
         old_rows: Iterator[OldRow],
-        skip_new_rows: int = 0,
-        skip_old_rows: int = 0,
     ) -> None:
-        with django.db.transaction.atomic():
-            setup_models = []
-            for model in self.setup():
-                model.full_clean()
-                model.save()
-                setup_models.append(model)
-            self.serializer.render_transaction(setup_models)
+        setup_models = []
+        for model in self.setup():
+            model.save()
+            setup_models.append(model)
+        self.serializer.render_transaction(setup_models)
 
-            new_row_generator = enumerate(new_rows)
-            old_row_generator = enumerate(old_rows)
-            new_row_number, new_row = next(new_row_generator)
-            old_row_number, old_row = next(old_row_generator)
+        new_row_generator = iter(new_rows)
+        old_row_generator = iter(old_rows)
+        new_row = next(new_row_generator, None)
+        old_row = next(old_row_generator, None)
+        old_row_count = 0
+        while new_row or old_row:
+            try:
+                compare = self.compare_rows(new_row, old_row)
+                if compare < 0:
+                    # Old row comes before new row
+                    # Hence it is a row we are not replacing
+                    handle_args = (None, old_row)
+                elif compare > 0:
+                    # Old row comes after new row
+                    # Hence new row is completely new
+                    handle_args = (new_row, None)
+                else:  # compare == 0
+                    # Rows compared equal
+                    # Hence new row is replacing the old row
+                    handle_args = (new_row, old_row)
 
-            while new_row or old_row:
-                new_consume = False
-                old_consume = False
-                if old_row_number < skip_old_rows:
-                    old_consume = True
-                if new_row_number < skip_new_rows:
-                    new_consume = True
+                for transaction in self.handle_row(*handle_args):
+                    self._save_and_render_transaction(transaction)
 
-                if not old_consume and not new_consume:
-                    try:
-                        compare = self.compare_rows(new_row, old_row)
-                        if compare < 0:
-                            # Old row comes before new row
-                            # Hence it is a row we are not replacing
-                            old_consume = old_row is not None
-                            handle_args = (None, old_row)
-                        elif compare > 0:
-                            # Old row comes after new row
-                            # Hence new row is completely new
-                            new_consume = new_row is not None
-                            handle_args = (new_row, None)
-                        else:  # compare == 0
-                            # Rows compared equal
-                            # Hence new row is replacing the old row
-                            old_consume = old_row is not None
-                            new_consume = new_row is not None
-                            handle_args = (new_row, old_row)
+            except Exception as ex:
+                logger.error(
+                    f"Explosion whilst handling {new_row.__dict__ if new_row else None} "
+                    f"or {old_row.__dict__ if old_row else None}"
+                )
+                raise ex
 
-                        for transaction in self.handle_row(*handle_args):
-                            for model in transaction:
-                                #model.clean_fields()
-                                #model.save()
-                                logger.debug("%s: %s", type(model), model.__dict__)
-                            if any(transaction):
-                                self.serializer.render_transaction(transaction)
+            if compare <= 0:
+                if old_row_count % 500 == 0:
+                    logger.info("Progress: at row %d", old_row_count)
+                old_row = next(old_row_generator, None)
+                old_row_count += 1
+            if compare >= 0:
+                new_row = next(new_row_generator, None)
 
-                        if new_row_number % 500 == 0:
-                            logger.info("Progress: at row %d", new_row_number)
-                    except Exception as ex:
-                        logger.error(
-                            f"Explosion whilst handling {new_row.__dict__ if new_row else None} or {old_row.__dict__ if old_row else None}"
-                        )
-                        raise ex
+        # Final chance to flush any remaining rows
+        for transaction in self.flush():
+            self._save_and_render_transaction(transaction)
 
-                try:
-                    if old_consume:
-                        old_row_number, old_row = next(old_row_generator)
-                except StopIteration:
-                    old_row = None
+        for name, counter in self.counters.items():
+            logger.info("Next %s: %s", name, counter())
+        logger.info("Import complete")
 
-                try:
-                    if new_consume:
-                        new_row_number, new_row = next(new_row_generator)
-                except StopIteration:
-                    new_row = None
-
-            # Final chance to flush any remaining rows
-            for transaction in self.flush():
-                for model in transaction:
-                    #model.clean_fields()
-                    #model.save()
-                    logger.debug("%s: %s", type(model), model.__dict__)
-                if any(transaction):
-                    self.serializer.render_transaction(transaction)
-
-            for name, counter in self.counters.items():
-                logger.info("Next %s: %s", name, counter())
-            logger.info("Import complete")
+    def _save_and_render_transaction(self, transaction: List[TrackedModel]) -> None:
+        for model in transaction:
+            #model.clean_fields()
+            #model.save()
+            logger.debug("%s: %s", type(model), model.__dict__)
+        if any(transaction):
+            self.serializer.render_transaction(transaction)
