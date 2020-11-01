@@ -62,8 +62,10 @@ def blank(value: Any, convert: Callable[[Any], TypeVar("T")]) -> Optional[TypeVa
 
 def col(label: str) -> int:
     """Return the correct index given an Excel column letter."""
-    assert len(label) == 1
-    return ord(label) - ord("A")
+    assert len(label) in [1, 2]
+    multiple = ord(label[0]) - ord("A") + 1 if len(label) > 1 else 0
+    index = (ord(label[1]) if len(label) > 1 else ord(label[0])) - ord("A")
+    return multiple * 26 + index
 
 
 def clean_regulation(cell: Cell) -> str:
