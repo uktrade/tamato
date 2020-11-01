@@ -76,6 +76,7 @@ class UKGTImporter(RowsImporter):
         self.measure_slicer = MeasureTypeSlicer[OldMeasureRow, NewRow](
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],
             get_goods_nomenclature=lambda r: r.goods_nomenclature,
+            default_measure_type=third_country_duty,
         )
         self.measure_ender = MeasureEndingPattern(self.workbasket, self.measure_types)
 
@@ -98,16 +99,19 @@ class UKGTImporter(RowsImporter):
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
         self.mfn_regulation_group = Group.objects.get(group_id="DNC")
 
-        self.ukgt_si, _ = Regulation.objects.get_or_create(
+        self.ukgt_si, created = Regulation.objects.get_or_create(
             regulation_id="C2100001",
-            regulation_group=self.mfn_regulation_group,
-            published_at=BREXIT,
-            approved=False,
-            valid_between=self.brexit_to_infinity,
-            workbasket=self.workbasket,
-            update_type=UpdateType.CREATE,
+            defaults={
+                "regulation_group": self.mfn_regulation_group,
+                "published_at": BREXIT,
+                "approved": False,
+                "valid_between": self.brexit_to_infinity,
+                "workbasket": self.workbasket,
+                "update_type": UpdateType.CREATE
+            }
         )
-        yield self.ukgt_si
+        if created:
+            yield self.ukgt_si
 
         self.measure_creator = MeasureCreatingPattern(
             generating_regulation=self.ukgt_si,
@@ -171,7 +175,7 @@ class UKGTImporter(RowsImporter):
             new_measure_type = self.measure_slicer.get_measure_type(
                 matched_old_rows, goods_nomenclature
             )
-            for transaction in self.measure_creator.create(
+            yield list(self.measure_creator.create(
                 duty_sentence=self.clean_duty_sentence(
                     self.select_rate_on_trade_remedy(row)
                 ),
@@ -185,8 +189,7 @@ class UKGTImporter(RowsImporter):
                     if row.additional_code
                     else None
                 ),
-            ):
-                yield transaction
+            ))
 
 
 class Command(BaseCommand):
@@ -213,6 +216,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "old-spreadsheet",
             help="The XLSX file containing existing measures to be parsed.",
+            nargs="?",
             type=str,
         )
         parser.add_argument(
@@ -234,10 +238,22 @@ class Command(BaseCommand):
             default=200000000,
         )
         parser.add_argument(
+            "--measure-condition-sid",
+            help="The SID value to use for the first new measure",
+            type=int,
+            default=200000000,
+        )
+        parser.add_argument(
             "--transaction-id",
             help="The ID value to use for the first transaction",
             type=int,
             default=140,
+        )
+        parser.add_argument(
+            "--envelope-id",
+            help="The ID value to use for the envelope.",
+            type=int,
+            default=200001,
         )
         parser.add_argument(
             "--output", help="The filename to output to.", type=str, default="out.xml"
@@ -255,8 +271,8 @@ class Command(BaseCommand):
 
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
         new_worksheet = new_workbook.sheet_by_name(options["new_sheet"])
-        old_workbook = xlrd.open_workbook(options["old-spreadsheet"])
-        old_worksheet = old_workbook.sheet_by_name(options["old_sheet"])
+        old_workbook = xlrd.open_workbook(options["old-spreadsheet"]) if options["old-spreadsheet"] else None
+        old_worksheet = old_workbook.sheet_by_name(options["old_sheet"]) if old_workbook else None
 
         workbasket, _ = WorkBasket.objects.get_or_create(
             title=f"UK Global Tariff",
@@ -267,27 +283,28 @@ class Command(BaseCommand):
         with open(options["output"], mode="w", encoding="UTF8") as output:
             with EnvelopeSerializer(
                 output,
-                200001,
+                options["envelope_id"],
                 counter_generator(options["transaction_id"]),
             ) as env:
 
                 logger.info(f"Importing from %s", new_worksheet.name)
                 new_rows = new_worksheet.get_rows()
-                old_rows = old_worksheet.get_rows()
+                old_rows = old_worksheet.get_rows() if old_worksheet else None
                 for _ in range(options["new_skip_rows"]):
                     next(new_rows)
-                for _ in range(options["old_skip_rows"]):
-                    next(old_rows)
+                if old_rows:
+                    for _ in range(options["old_skip_rows"]):
+                        next(old_rows)
 
                 importer = UKGTImporter(workbasket, env)
                 importer.counters["measure_sid_counter"] = counter_generator(
                     options["measure_sid"]
                 )
                 importer.counters["measure_condition_sid_counter"] = counter_generator(
-                    options["measure_sid"]
+                    options["measure_condition_sid"]
                 )
 
                 importer.import_sheets(
                     (NewRow(row) for row in new_rows),
-                    (OldMeasureRow(row) for row in old_rows),
+                    (OldMeasureRow(row) for row in old_rows) if old_rows else iter([None]),
                 )

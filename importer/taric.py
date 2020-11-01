@@ -77,11 +77,12 @@ class Envelope(ElementParser):
     tag = Tag("envelope", prefix=ENVELOPE)
     transaction = Transaction(many=True)
 
-    def __init__(self, workbasket_status=None, tamato_username=None):
-        super().__init__()
+    def __init__(self, workbasket_status=None, tamato_username=None, save: bool = True, **kwargs):
+        super().__init__(**kwargs)
         self.last_transaction_id = -1
         self.workbasket_status = workbasket_status
         self.tamato_username = tamato_username
+        self.save = save
 
     def end(self, element):
         super().end(element)
@@ -92,7 +93,7 @@ class Envelope(ElementParser):
                 raise EnvelopeError(f"Transaction ID {tx_id} is out of order")
             self.last_transaction_id = tx_id
 
-        if element.tag == self.tag:
+        if element.tag == self.tag and self.save:
             logging.debug(f"Saving import {self.data['id']}")
             with transaction.atomic():
                 for transaction_data in self.data["transaction"]:

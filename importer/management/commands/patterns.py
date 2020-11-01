@@ -6,6 +6,7 @@ from typing import Generic
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import TypeVar
 
 import pytz
@@ -62,7 +63,7 @@ class OldMeasureRow:
         self.inherited_measure = bool(old_row[6].value)
         assert not self.inherited_measure, "Old row should not be an inherited measure"
         self.measure_sid = int(old_row[7].value)
-        self.measure_type = int(old_row[8].value)
+        self.measure_type = str(old_row[8].value)
         self.geo_sid = int(old_row[13].value)
         self.measure_start_date = self.parse_date(old_row[16].value)
         self.measure_end_date = blank(old_row[17].value, self.parse_date)
@@ -77,7 +78,7 @@ class OldMeasureRow:
         self.export_refund_sid = blank(old_row[25].value, int)
         self.reduction = blank(old_row[26].value, int)
         self.footnotes = self.parse_list(old_row[27].value)
-        self.goods_nomenclature = GoodsNomenclature.objects.as_at(BREXIT).get(
+        self.goods_nomenclature = GoodsNomenclature.objects.get(
             sid=self.goods_nomenclature_sid
         )
 
@@ -272,10 +273,13 @@ class MeasureEndingPattern:
         workbasket: WorkBasket,
         measure_types: Dict[int, MeasureType] = {},
         geo_areas: Dict[int, GeographicalArea] = {},
+        ensure_unique: bool = True,
     ) -> None:
         self.workbasket = workbasket
         self.measure_types = measure_types
         self.geo_areas = geo_areas
+        self.ensure_unique = ensure_unique
+        self.old_sids: Set[int] = set()
 
     def end_date_measure(
         self,
@@ -284,6 +288,12 @@ class MeasureEndingPattern:
         new_start_date: datetime = BREXIT,
     ) -> Iterator[TrackedModel]:
         if not old_row.inherited_measure:
+            if old_row.measure_sid in self.old_sids and self.ensure_unique:
+                raise Exception(
+                    f"Measure appears more than once: {old_row.measure_sid}"
+                )
+            self.old_sids.add(old_row.measure_sid)
+
             # Make sure we have loaded the types and areas we need
             if old_row.measure_type not in self.measure_types:
                 self.measure_types[old_row.measure_type] = MeasureType.objects.get(
@@ -294,11 +304,11 @@ class MeasureEndingPattern:
                     sid=old_row.geo_sid
                 )
 
-            # If the old measure starts after Brexit, we instead
+            # If the old measure starts after the start date, we instead
             # need to delete it and it will never come into force
-            # If it ends before Brexit, we don't need to do anything!
-            starts_after_brexit = old_row.measure_start_date >= new_start_date
-            ends_before_brexit = (
+            # If it ends before the start date, we don't need to do anything!
+            starts_after_date = old_row.measure_start_date >= new_start_date
+            ends_before_date = (
                 old_row.measure_end_date and old_row.measure_end_date < new_start_date
             )
 
@@ -307,7 +317,7 @@ class MeasureEndingPattern:
                 regulation_id=old_row.regulation_id,
             )
 
-            if old_row.justification_regulation_id and starts_after_brexit:
+            if old_row.justification_regulation_id and starts_after_date:
                 # We are going to delete the measure, but we still need the
                 # regulation to be correct if it has already been end-dated
                 assert old_row.measure_end_date
@@ -315,7 +325,7 @@ class MeasureEndingPattern:
                     role_type=old_row.regulation_role,
                     regulation_id=old_row.regulation_id,
                 )
-            elif not starts_after_brexit:
+            elif not starts_after_date:
                 # We are going to end-date the measure, and terminate it with
                 # the UKGT SI.
                 justification_regulation = terminating_regulation
@@ -324,7 +334,7 @@ class MeasureEndingPattern:
                 assert old_row.measure_end_date is None
                 justification_regulation = None
 
-            if not ends_before_brexit:
+            if not ends_before_date:
                 yield Measure(
                     sid=old_row.measure_sid,
                     measure_type=self.measure_types[old_row.measure_type],
@@ -339,7 +349,7 @@ class MeasureEndingPattern:
                         old_row.measure_start_date,
                         (
                             old_row.measure_end_date
-                            if starts_after_brexit
+                            if starts_after_date
                             else new_start_date - timedelta(days=1)
                         ),
                     ),
@@ -349,7 +359,7 @@ class MeasureEndingPattern:
                     reduction=old_row.reduction,
                     export_refund_nomenclature_sid=old_row.export_refund_sid,
                     update_type=(
-                        UpdateType.DELETE if starts_after_brexit else UpdateType.UPDATE
+                        UpdateType.DELETE if starts_after_date else UpdateType.UPDATE
                     ),
                     workbasket=self.workbasket,
                 )

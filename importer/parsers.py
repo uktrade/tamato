@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import logging
 import xml.etree.ElementTree as etree
+from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Optional
+from xml.etree.ElementTree import Element
 
 from common.validators import UpdateType
 from importer.namespaces import Tag
@@ -74,11 +77,13 @@ class ElementParser:
     """
 
     tag: Tag = None
+    data_class: type = dict
+    end_hook: Optional[Callable[[Any, Element], None]] = None
 
     def __init__(self, tag: Tag = None, many: bool = False, depth: int = 1):
         self.child = None
         self.parent: Optional[ElementParser] = None
-        self.data = {}
+        self.data = self.data_class()
         self.depth = depth
         self.many = many
         self.parent = None
@@ -136,7 +141,7 @@ class ElementParser:
 
         self.parent = parent
         if not self.started:
-            self.data = {}
+            self.data = self.data_class()
             self.started = True
         else:
             # if the tag matches one of the child elements of this element, get the
@@ -169,6 +174,8 @@ class ElementParser:
             if element.text:
                 self.text = element.text.strip()
             self.data.update(element.attrib.items())
+            if self.end_hook:
+                self.end_hook(self.data, element)
             self.started = False
             self.clean()
             self.validate()
