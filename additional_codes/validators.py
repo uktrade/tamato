@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models import IntegerChoices
@@ -37,6 +38,12 @@ def validate_additional_code_type(obj):
     The referenced additional code type must exist and have as application code
     "non-Meursing" or "Export refund for processed agricultural good".
     """
+
+    try:
+        if obj.type is None:
+            return
+    except ObjectDoesNotExist as e:
+        raise ValidationError("The referenced additional code type must exist.") from e
 
     permitted_codes = [
         ApplicationCode.ADDITIONAL_CODES,

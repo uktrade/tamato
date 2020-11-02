@@ -59,20 +59,22 @@ def test_ACN1():
         )
 
 
-def test_ACN2():
+def test_ACN2(must_exist):
     """
     The referenced additional code type must exist and have as application code "non-
     Meursing" or "Export Refund for Processed Agricultural Goods”.
     """
 
-    wb = factories.WorkBasketFactory.create()
-    ac = factories.AdditionalCodeFactory.build(type=None, workbasket=wb)
-    with pytest.raises(ObjectDoesNotExist):
-        ac.save()
+    assert must_exist(
+        "type",
+        factories.AdditionalCodeTypeFactory,
+        factories.AdditionalCodeFactory,
+    )
 
-    ac.type = factories.AdditionalCodeTypeFactory.create(application_code=0)
     with pytest.raises(ValidationError):
-        ac.save()
+        factories.AdditionalCodeFactory(
+            type__application_code=0,
+        )
 
 
 def test_ACN3(date_ranges):
