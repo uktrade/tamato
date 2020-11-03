@@ -5,11 +5,30 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.models import Manager, Prefetch, QuerySet
 from django_fsm import FSMField
 from django_fsm import transition
 
-from common.models import TimestampedMixin
+from common.models import TimestampedMixin, TrackedModel
 from workbaskets.validators import WorkflowStatus
+
+
+class WorkBasketManager(Manager):
+    def prefetch_ordered_tracked_models(self) -> QuerySet:
+        """
+        By prefetching tracked_models order by record_code can be imposed.
+
+        As a side-effect, record_code and subrecord_code are annotations
+        are added to the tracked_models.
+        """
+        q = self.get_queryset()
+
+        q_annotate_record_code = TrackedModel.objects.annotate_record_codes().order_by(
+            "record_code", "subrecord_code"
+        )
+        return q.prefetch_related(
+            Prefetch("tracked_models", queryset=q_annotate_record_code)
+        )
 
 
 class WorkBasket(TimestampedMixin):
@@ -18,6 +37,8 @@ class WorkBasket(TimestampedMixin):
     WorkBasket status is controlled by a state machine:
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
+
+    objects = WorkBasketManager()
 
     title = models.CharField(max_length=255, help_text="Short name for this workbasket")
     reason = models.TextField(

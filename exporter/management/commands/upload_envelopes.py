@@ -1,15 +1,31 @@
 import hashlib
-import uuid
+import sys
+import xmlschema
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.management import BaseCommand
-from workbaskets.models import WorkflowStatus
-from django.test import Client
+from django.test import Client, RequestFactory
+
+from workbaskets.views import WorkBasketViewSet
+from workbaskets.models import WorkBasket, WorkflowStatus
 
 
-def get_envelope():
-    pass
+ENVELOPE_XSD = f"{settings.BASE_DIR}/common/assets/envelope.xsd"
+
+
+def get_envelope(workbaskets):
+    # Re-use the DRF infrastructure, data is exactly the same
+    # as can be output via views for testing.
+    view = WorkBasketViewSet.as_view({"get": "list"})
+    request = RequestFactory().get(
+        "/api/workbaskets.xml", status=WorkflowStatus.PUBLISHED
+    )
+
+    response = view(request, workbaskets, format="xml", envelope_id=1)
+
+    return response.render().content
 
 
 def upload_envelopes():
@@ -19,14 +35,20 @@ def upload_envelopes():
 
     # This uses the test client to grab data via a view, this is a bit of a hack
     # but seems does provide a really simple API to get the data in the required
-    # format.
-    client = Client()
-    request = client.get('/api/workbaskets.xml', status=str(WorkflowStatus.PUBLISHED))
-    response = request.render()
+    # forms
+    workbaskets = WorkBasket.objects.prefetch_ordered_tracked_models()
+    envelope = get_envelope(workbaskets)
 
-    content_file = ContentFile(response.content)
-    filename = f'{hashlib.sha256(response.content).hexdigest()}.xml'
-    default_storage.save(f'tohmrc/staging/{filename}', content_file)
+    content_file = ContentFile(envelope)
+    content_hash = hashlib.sha256(envelope).hexdigest()
+
+    xml_validates = xmlschema.is_valid(content_file, ENVELOPE_XSD)
+
+    if not xml_validates:
+        sys.exit(f"Envelope did not validate against XSD {ENVELOPE_XSD}")
+
+    filename = f"{content_hash}.xml"
+    default_storage.save(f"tohmrc/staging/{filename}", content_file)
 
 
 class Command(BaseCommand):
