@@ -1,9 +1,11 @@
 from datetime import datetime
 from datetime import timezone
 
+import boto3
 import pytest
 from django.core.exceptions import ValidationError
 from lxml import etree
+from moto import mock_s3
 from psycopg2.extras import DateTimeTZRange
 from pytest_bdd import given
 from rest_framework.test import APIClient
@@ -166,3 +168,14 @@ def validity_period_contained(date_ranges, approved_workbasket):
         return True
 
     return check
+
+
+@pytest.fixture
+def s3(settings):
+    """
+    Yields a fake boto3 s3 client
+    """
+    with mock_s3():
+        s3 = boto3.client("s3")
+        s3.create_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
+        yield s3

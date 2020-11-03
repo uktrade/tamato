@@ -20,7 +20,7 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
 
     queryset = WorkBasket.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ("status",)
+    filterset_fields = ("status",)
     serializer_class = WorkBasketSerializer
     renderer_classes = [
         renderers.JSONRenderer,

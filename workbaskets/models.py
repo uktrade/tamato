@@ -16,10 +16,8 @@ from workbaskets.validators import WorkflowStatus
 class WorkBasketManager(Manager):
     def prefetch_ordered_tracked_models(self) -> QuerySet:
         """
-        By prefetching tracked_models order by record_code can be imposed.
-
-        As a side-effect, record_code and subrecord_code are annotations
-        are added to the tracked_models.
+        Sort tracked_models by record_number, subrecord_number by
+        using prefetch and imposing the order there.
         """
         q = self.get_queryset()
 
