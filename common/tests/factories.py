@@ -600,6 +600,19 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
         return self.generating_regulation
 
 
+class MeasureWithQuotaFactory(MeasureFactory):
+    measure_type = factory.SubFactory(
+        MeasureTypeFactory,
+        order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+    )
+    order_number = factory.SubFactory(
+        QuotaOrderNumberFactory,
+        origin__geographical_area=factory.SelfAttribute("...geographical_area"),
+        valid_between=factory.SelfAttribute("..valid_between"),
+        workbasket=factory.SelfAttribute("..workbasket"),
+    )
+
+
 class MeasureComponentFactory(TrackedModelMixin):
     class Meta:
         model = "measures.MeasureComponent"

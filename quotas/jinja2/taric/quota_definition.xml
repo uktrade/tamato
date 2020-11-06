@@ -9,14 +9,14 @@
         <oub:quota.order.number.sid>{{ record.order_number.sid }}</oub:quota.order.number.sid>
         <oub:volume>{{ record.volume }}</oub:volume>
         <oub:initial.volume>{{ record.initial_volume }}</oub:initial.volume>
-        {% if record.monetary_unit_code -%}
-        <oub:monetary.unit.code>{{ record.monetary_unit_code }}</oub:monetary.unit.code>
+        {% if record.monetary_unit -%}
+        <oub:monetary.unit.code>{{ record.monetary_unit.code }}</oub:monetary.unit.code>
         {%- endif %}
-        {% if record.measurement_unit_code -%}
-        <oub:measurement.unit.code>{{ record.measurement_unit_code }}</oub:measurement.unit.code>
+        {% if record.measurement_unit -%}
+        <oub:measurement.unit.code>{{ record.measurement_unit.code }}</oub:measurement.unit.code>
         {%- endif %}
-        {% if record.measurement_unit_qualifier_code -%}
-        <oub:measurement.unit.qualifier.code>{{ record.measurement_unit_qualifier_code }}</oub:measurement.unit.qualifier.code>
+        {% if record.measurement_unit_qualifier -%}
+        <oub:measurement.unit.qualifier.code>{{ record.measurement_unit_qualifier.code }}</oub:measurement.unit.qualifier.code>
         {%- endif %}
         <oub:maximum.precision>{{ record.maximum_precision }}</oub:maximum.precision>
         <oub:critical.state>{% if record.quota_critical %}Y{% else %}N{% endif %}</oub:critical.state>

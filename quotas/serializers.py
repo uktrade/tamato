@@ -6,6 +6,9 @@ from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
 from geo_areas.serializers import GeographicalAreaSerializer
+from measures.serializers import MeasurementUnitQualifierSerializer
+from measures.serializers import MeasurementUnitSerializer
+from measures.serializers import MonetaryUnitSerializer
 from quotas import models
 
 
@@ -113,6 +116,9 @@ class QuotaDefinitionImporterSerializer(
 class QuotaDefinitionSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     order_number = QuotaOrderNumberSerializer(read_only=True)
     sid = serializers.IntegerField()
+    measurement_unit = MeasurementUnitSerializer(read_only=True)
+    measurement_unit_qualifier = MeasurementUnitQualifierSerializer(read_only=True)
+    monetary_unit = MonetaryUnitSerializer(read_only=True)
     sub_quotas = SimpleQuotaDefinitionSerializer(
         many=True, read_only=True, required=False
     )
@@ -125,6 +131,9 @@ class QuotaDefinitionSerializer(TrackedModelSerializerMixin, ValiditySerializerM
             "volume",
             "initial_volume",
             "maximum_precision",
+            "measurement_unit",
+            "measurement_unit_qualifier",
+            "monetary_unit",
             "quota_critical",
             "quota_critical_threshold",
             "description",

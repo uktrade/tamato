@@ -11,7 +11,6 @@ from footnotes.serializers import FootnoteSerializer
 from geo_areas.serializers import GeographicalAreaSerializer
 from measures import models
 from measures import validators
-from quotas.serializers import QuotaOrderNumberSerializer
 from regulations.serializers import RegulationSerializer
 
 
@@ -284,7 +283,7 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     geographical_area = GeographicalAreaSerializer(read_only=True)
     goods_nomenclature = GoodsNomenclatureSerializer(read_only=True)
     additional_code = AdditionalCodeSerializer(read_only=True)
-    order_number = QuotaOrderNumberSerializer(read_only=True)
+    order_number = serializers.SerializerMethodField(read_only=True)
     generating_regulation = RegulationSerializer(read_only=True)
     terminating_regulation = RegulationSerializer(read_only=True)
     reduction = serializers.IntegerField(
@@ -293,6 +292,10 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     export_refund_nomenclature_sid = serializers.IntegerField(
         min_value=1, max_value=99999999, required=False
     )
+
+    def get_order_number(self, obj):
+        if obj.order_number:
+            return obj.order_number.order_number
 
     class Meta:
         model = models.Measure

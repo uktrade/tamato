@@ -26,7 +26,7 @@ def test_footnote_association_measure_xml(api, schema, basket, xml):
     assert xml.find(".//footnote.association.measure", xml.nsmap) is not None
 
 
-@validate_taric_xml(factories.MeasureFactory)
+@validate_taric_xml(factories.MeasureWithQuotaFactory, check_order=False)
 def test_measure_xml(api, schema, basket, xml):
     assert xml.find(".//measure", xml.nsmap) is not None
 
