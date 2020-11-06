@@ -2,6 +2,7 @@ import logging
 import sys
 from datetime import timedelta
 from enum import Enum
+from functools import cached_property
 from typing import cast
 from typing import Iterator
 from typing import List
@@ -33,6 +34,8 @@ from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.utils import blank
+from importer.management.commands.utils import clean_duty_sentence
+from importer.management.commands.utils import clean_item_id
 from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import maybe_min
@@ -72,7 +75,7 @@ class EnhancedFrameworkRegime(Enum):
 class NewRow:
     def __init__(self, new_row: List[Cell]) -> None:
         assert new_row is not None
-        commodity_code = new_row[col("A")]
+        self.item_id = clean_item_id(new_row[col("A")])
 
         # Columns to generate General framework measures
         self.gf_regime = GeneralFrameworkRegime(new_row[col("D")].value)
@@ -91,35 +94,21 @@ class NewRow:
         self.ef_tariff = new_row[col("N")]
         self.ef_seasonal = str(new_row[col("O")].value) == "Seasonal"
 
-        if commodity_code.ctype == xlrd.XL_CELL_NUMBER:
-            self.item_id = str(int(commodity_code.value))
-        else:
-            self.item_id = str(commodity_code.value)
-
-        if len(self.item_id) % 2 == 1:
-            # If we have an odd number of digits its because
-            # we lost a leading zero due to the numeric storage
-            self.item_id = "0" + self.item_id
-
-        # We need a full 10 digit code so padd with trailing zeroes
-        assert len(self.item_id) % 2 == 0
-        if len(self.item_id) == 8:
-            self.item_id += "00"
-
+    @cached_property
+    def goods_nomenclature(self):
         try:
-            assert len(self.item_id) == 10
-            self.goods_nomenclature = GoodsNomenclature.objects.as_at(BREXIT).get(
+            return GoodsNomenclature.objects.as_at(BREXIT).get(
                 item_id=self.item_id, suffix="80"
             )
         except GoodsNomenclature.DoesNotExist as ex:
             logger.warning("Failed to find goods nomenclature %s", self.item_id)
-            self.goods_nomenclature = None
+            return None
 
 
 class GSPImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
         self.measure_types = {
-            int(m.sid): m
+            str(m.sid): m
             for m in [
                 MeasureType.objects.get(sid="142"),
                 MeasureType.objects.get(sid="145"),
@@ -142,13 +131,10 @@ class GSPImporter(RowsImporter):
         self.ldc_geography = GeographicalArea.objects.get(area_id="2005")
         self.ef_geography = GeographicalArea.objects.get(area_id="2027")
         self.geo_areas = {
-            g.sid: g
-            for g in [
-                self.gf_geography,
-                self.ldc_geography,
-                self.ef_geography,
-                GeographicalArea.objects.get(area_id="KH"),  # Cambodia
-            ]
+            "2020": self.gf_geography,
+            "2005": self.ldc_geography,
+            "2027": self.ef_geography,
+            "KH": GeographicalArea.objects.get(area_id="KH"),
         }
 
         self.exclusion_areas = {
@@ -215,15 +201,6 @@ class GSPImporter(RowsImporter):
             workbasket=self.workbasket,
             update_type=UpdateType.CREATE,
         )
-
-    def clean_duty_sentence(self, cell: Cell) -> str:
-        if cell.ctype == xlrd.XL_CELL_NUMBER:
-            # This is a percentage value that Excel has
-            # represented as a number.
-            return f"{cell.value * 100}%"
-        else:
-            # All other values will apear as text.
-            return cell.value
 
     def handle_row(
         self,
@@ -301,7 +278,7 @@ class GSPImporter(RowsImporter):
                 yield transaction
 
         else:
-            return iter([])
+            return
 
     def flush(self) -> Iterator[List[TrackedModel]]:
         # Send the old row to be end dated or removed
@@ -323,12 +300,16 @@ class GSPImporter(RowsImporter):
 
         # Create measures either for the single measure type or a mix
         for (
-            measure_type,
+            matched_old_rows,
             row,
             goods_nomenclature,
         ) in self.measure_slicer.sliced_new_rows(self.old_rows, self.new_rows):
             for transaction in self.make_new_measure(
-                row, measure_type, goods_nomenclature
+                row,
+                self.measure_slicer.get_measure_type(
+                    matched_old_rows, goods_nomenclature
+                ),
+                goods_nomenclature,
             ):
                 yield transaction
 
@@ -353,12 +334,12 @@ class GSPImporter(RowsImporter):
 
             yield list(
                 self.measure_creator.create(
-                    duty_sentence=self.clean_duty_sentence(new_row.gf_tariff),
+                    duty_sentence=clean_duty_sentence(new_row.gf_tariff),
                     geography=self.gf_geography,
                     geo_exclusion=new_row.gf_exclusion,
                     goods_nomenclature=goods_nomenclature,
                     new_measure_type=new_measure_type,
-                    authorised_use=(new_measure_type == self.measure_types[145]),
+                    authorised_use=(new_measure_type == self.measure_types["145"]),
                     footnotes=footnotes,
                 )
             )
@@ -367,12 +348,12 @@ class GSPImporter(RowsImporter):
         if new_row.ldc_regime not in [LeastDevelopedCountryRegime.NONE]:
             yield list(
                 self.measure_creator.create(
-                    duty_sentence=self.clean_duty_sentence(new_row.ldc_tariff),
+                    duty_sentence=clean_duty_sentence(new_row.ldc_tariff),
                     geography=self.ldc_geography,
                     geo_exclusion=new_row.ldc_exclusion,
                     goods_nomenclature=goods_nomenclature,
                     new_measure_type=new_measure_type,
-                    authorised_use=(new_measure_type == self.measure_types[145]),
+                    authorised_use=(new_measure_type == self.measure_types["145"]),
                 )
             )
 
@@ -387,12 +368,12 @@ class GSPImporter(RowsImporter):
 
             yield list(
                 self.measure_creator.create(
-                    duty_sentence=self.clean_duty_sentence(new_row.ef_tariff),
+                    duty_sentence=clean_duty_sentence(new_row.ef_tariff),
                     geography=self.ef_geography,
                     geo_exclusion=None,
                     goods_nomenclature=goods_nomenclature,
                     new_measure_type=new_measure_type,
-                    authorised_use=(new_measure_type == self.measure_types[145]),
+                    authorised_use=(new_measure_type == self.measure_types["145"]),
                     footnotes=footnotes,
                 )
             )
@@ -455,13 +436,9 @@ class GSPGeographicAreaImporter:
 
         def make_removal(area: GeographicalArea) -> TrackedModel:
             assert area.area_code != AreaCode.GROUP
-            membership = (
-                GeographicalMembership.objects.as_at(BREXIT)
-                .filter(
-                    geo_group=geography,
-                    member=area,
-                )
-                .get()
+            membership = GeographicalMembership.objects.as_at(BREXIT).get(
+                geo_group=geography,
+                member=area,
             )
 
             return GeographicalMembership(

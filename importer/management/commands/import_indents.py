@@ -170,9 +170,9 @@ class IndentImporter(RowsImporter):
                     next_indent = GoodsNomenclatureIndent.objects.get(
                         sid=GoodsNomenclatureIndentHandler.overrides[defn]
                     )
-                    next_parent = next_indent.nodes.filter(
+                    next_parent = next_indent.nodes.get(
                         valid_between__contains=start_date
-                    ).get()
+                    )
                     logger.info("Using manual override for indent %s", defn)
                 else:
                     next_parent = (

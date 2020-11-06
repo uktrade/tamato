@@ -234,10 +234,7 @@ class Command(BaseCommand):
 
             transaction, _ = Transaction.objects.get_or_create(workbasket=workbasket)
 
-            for pair in enumerate(worksheet.get_rows()):
-                num_rows = pair[0]
-                row = pair[1]
-
+            for num_rows, row in enumerate(worksheet.get_rows()):
                 if num_rows < options["skip_rows"]:
                     continue
 
@@ -254,7 +251,6 @@ class Command(BaseCommand):
                 instance = ModelClass(**data)
                 logger.debug("Create instance %s", instance.__dict__)
                 try:
-                    instance.full_clean()
                     instance.save()
                 except ValidationError as ex:
                     logger.error("Validation error creating %s", instance.__dict__)

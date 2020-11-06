@@ -1,5 +1,7 @@
+from decimal import Decimal
 from functools import reduce
-from typing import List
+from itertools import chain
+from typing import Iterable
 from typing import Union
 
 from parsec import choice
@@ -21,7 +23,71 @@ from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
 
 # Used to represent percentage or currency values.
-Amount = float
+Amount = Decimal
+
+
+# A parser that successfully matches nothing
+empty: Parser = string("").result(None)
+
+
+def token(s: str) -> Parser:
+    """Matches a string surrounded optionally by whitespace."""
+    return spaces() >> string(s) << spaces()
+
+
+def code(obj: MonetaryUnit) -> Parser:
+    """Matches a code and returns the associated object."""
+    return string(obj.code).result(obj)
+
+
+def abbrev(
+    obj: Union[
+        MeasurementUnit,
+        MeasurementUnitQualifier,
+    ]
+) -> Parser:
+    """Matches an abbreviation and returns the associated object.
+    Humans cannot be relied upon to use spaces or thousand separators
+    correctly so these can ignored."""
+    return reduce(
+        try_choice,
+        [
+            string(obj.abbreviation),
+            string(obj.abbreviation.replace(" ", "")),
+            string(obj.abbreviation.replace("1,000", "1000")),
+            string(obj.abbreviation.replace(" ", "").replace("1,000", "1000")),
+        ],
+    ).result(obj)
+
+
+def measurement(m: Measurement) -> Parser:
+    """For measurement units and qualifiers, we match a human-readable version
+    of the unit to its internal code. Units by themselves are always allowed,
+    but only some combinations of units and qualifiers are permitted."""
+    unit = abbrev(m.measurement_unit)
+    if m.measurement_unit_qualifier:
+        qualifier = token("/") >> abbrev(m.measurement_unit_qualifier)
+    else:
+        qualifier = empty
+    return joint(unit, qualifier).result(m)
+
+
+def if_applicable(
+    has_this: ApplicabilityCode, parser: Parser, default: Parser = empty
+) -> Parser:
+    """Matches a value depending on the passed applicability code."""
+    if has_this == ApplicabilityCode.PERMITTED:
+        return parser ^ default
+    elif has_this == ApplicabilityCode.NOT_PERMITTED:
+        return empty
+    else:
+        return parser
+
+
+@Parser
+def fail(text, index):
+    """A parser that always fails if reached."""
+    return Value.failure(index, "")
 
 
 class DutySentenceParser:
@@ -37,58 +103,10 @@ class DutySentenceParser:
 
     def __init__(
         self,
-        duty_expressions: List[DutyExpression],
-        monetary_units: List[MonetaryUnit],
-        permitted_measurements: List[Measurement],
+        duty_expressions: Iterable[DutyExpression],
+        monetary_units: Iterable[MonetaryUnit],
+        permitted_measurements: Iterable[Measurement],
     ):
-        empty = string("").result(None)
-
-        def token(s: str) -> Parser:
-            """Matches a string surrounded optionally by whitespace."""
-            return spaces() >> string(s) << spaces()
-
-        def code(
-            obj: Union[
-                MonetaryUnit,
-            ]
-        ) -> Parser:
-            """Matches an code and returns the associated object."""
-            return string(obj.code).result(obj)
-
-        def abbrev(
-            obj: Union[
-                MeasurementUnit,
-                MeasurementUnitQualifier,
-            ]
-        ) -> Parser:
-            """Matches an abbreviation and returns the associated object.
-            Humans cannot be relied upon to use spaces or thousand separators
-            correctly so these can ignored."""
-            return reduce(
-                try_choice,
-                [
-                    string(obj.abbreviation),
-                    string(obj.abbreviation.replace(" ", "")),
-                    string(obj.abbreviation.replace("1,000", "1000")),
-                    string(obj.abbreviation.replace(" ", "").replace("1,000", "1000")),
-                ],
-            ).result(obj)
-
-        def if_applicable(
-            has_this: ApplicabilityCode, parser: Parser, default: Parser = empty
-        ) -> Parser:
-            """Matches a value depending on the passed applicability code."""
-            if has_this == ApplicabilityCode.PERMITTED:
-                return parser ^ default
-            elif has_this == ApplicabilityCode.NOT_PERMITTED:
-                return empty
-            else:
-                return parser
-
-        @Parser
-        def fail(text, index):
-            return Value.failure(index, "")
-
         # Decimal numbers are a sequence of digits (without a left-trailing zero)
         # followed optionally by a decimal point and a number of digits (we have seen
         # some percentage values have three decimal digits).  Money values are similar
@@ -104,29 +122,17 @@ class DutySentenceParser:
         )
         percentage_unit = token("%").result(None)
 
-        # For measurement units and qualifiers, we match a human-readable version
-        # of the unit to its internal code. Units by themselves are always allowed,
-        # but only some combinations of units and qualifiers are permitted.
-        def measurement(m: Measurement) -> Parser:
-            unit = abbrev(m.measurement_unit)
-            qualifier = (
-                (token("/") >> abbrev(m.measurement_unit_qualifier))
-                if m.measurement_unit_qualifier
-                else empty
-            )
-            return joint(unit, qualifier).result(m)
-
         # We have to try and parse measurements with qualifiers first
         # else we may match the first part of a unit without the qualifier
-        some_qualifier = [
+        with_qualifier = [
             m
             for m in permitted_measurements
             if m.measurement_unit_qualifier is not None
         ]
-        none_qualifier = [
+        no_qualifier = [
             m for m in permitted_measurements if m.measurement_unit_qualifier is None
         ]
-        measurements = list(map(measurement, [*some_qualifier, *none_qualifier]))
+        measurements = [measurement(m) for m in chain(with_qualifier, no_qualifier)]
         self._measurement = reduce(try_choice, measurements) if measurements else fail
 
         # Each measure component can have an amount, monetary unit and measurement.
@@ -209,7 +215,7 @@ class DutySentenceParser:
         """A parser that can parse a single duty sentence."""
         return self._sentence
 
-    def parse(self, s: str) -> List[MeasureComponent]:
+    def parse(self, s: str) -> Iterable[MeasureComponent]:
         """Parses an entire string as a duty sentence, returning
         a list of the parsed measure components. Throws an error
         if the string cannot be successfully parsed."""
