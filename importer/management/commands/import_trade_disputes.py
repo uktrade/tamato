@@ -1,6 +1,5 @@
 import logging
 import sys
-from datetime import timedelta
 from typing import Iterator
 from typing import List
 from typing import Optional

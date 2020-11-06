@@ -1,2 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <env:envelope xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" id="{{ envelope_id }}">
