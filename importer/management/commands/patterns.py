@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime
 from datetime import timedelta
+from functools import cached_property
+from typing import Callable
 from typing import Dict
 from typing import Generic
 from typing import Iterator
@@ -8,6 +10,7 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import TypeVar
+from typing import Union
 
 import pytz
 import xlrd
@@ -20,6 +23,7 @@ from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
+from common.tests.factories import GoodsNomenclatureFactory
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -30,6 +34,7 @@ from importer.management.commands.utils import convert_eur_to_gbp
 from importer.management.commands.utils import Counter
 from importer.management.commands.utils import maybe_max
 from importer.management.commands.utils import maybe_min
+from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import SeasonalRateParser
 from measures.models import FootnoteAssociationMeasure
@@ -42,6 +47,8 @@ from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
 from measures.models import MonetaryUnit
 from quotas.models import QuotaOrderNumber
+from quotas.validators import AdministrationMechanism
+from quotas.validators import QuotaCategory
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
@@ -55,6 +62,17 @@ LONDON = pytz.timezone("Europe/London")
 BREXIT = LONDON.localize(datetime(2021, 1, 1))
 
 
+def parse_date(cell: Cell) -> datetime:
+    if cell.ctype == xlrd.XL_CELL_DATE:
+        return LONDON.localize(xlrd.xldate.xldate_as_datetime(cell.value, datemode=0))
+    else:
+        return LONDON.localize(datetime.strptime(cell.value, r"%Y-%m-%d"))
+
+
+def parse_list(value: str) -> List[str]:
+    return list(filter(lambda s: s != "", map(str.strip, value.split(","))))
+
+
 class OldMeasureRow:
     def __init__(self, old_row: List[Cell]) -> None:
         assert old_row is not None
@@ -63,30 +81,43 @@ class OldMeasureRow:
         self.inherited_measure = bool(old_row[6].value)
         assert not self.inherited_measure, "Old row should not be an inherited measure"
         self.measure_sid = int(old_row[7].value)
-        self.measure_type = str(old_row[8].value)
+        self.measure_type = str(int(old_row[8].value))
         self.geo_sid = int(old_row[13].value)
-        self.measure_start_date = self.parse_date(old_row[16].value)
-        self.measure_end_date = blank(old_row[17].value, self.parse_date)
+        self.measure_start_date = parse_date(old_row[16])
+        self.measure_end_date = blank(
+            old_row[17].value, lambda _: parse_date(old_row[17])
+        )
         self.regulation_role = int(old_row[18].value)
         self.regulation_id = str(old_row[19].value)
-        self.order_number = blank(old_row[15].value, int)
+        self.order_number = blank(old_row[15].value, str)
         self.justification_regulation_role = blank(old_row[20].value, int)
         self.justification_regulation_id = blank(old_row[21].value, str)
         self.stopped = bool(old_row[24].value)
-        self.additional_code = blank(old_row[22].value, str)
         self.additional_code_sid = blank(old_row[23].value, int)
         self.export_refund_sid = blank(old_row[25].value, int)
         self.reduction = blank(old_row[26].value, int)
-        self.footnotes = self.parse_list(old_row[27].value)
+        self.footnotes = parse_list(old_row[27].value)
         self.goods_nomenclature = GoodsNomenclature.objects.get(
             sid=self.goods_nomenclature_sid
         )
 
-    def parse_date(self, value: str) -> datetime:
-        return LONDON.localize(xlrd.xldate.xldate_as_datetime(value, datemode=0))
+    @cached_property
+    def additional_code(self) -> Optional[AdditionalCode]:
+        codes = AdditionalCode.objects.filter(sid=self.additional_code_sid).all()
+        return codes[0] if any(codes) else None
 
-    def parse_list(self, value: str) -> List[str]:
-        return list(filter(lambda s: s != "", map(str.strip, value.split(","))))
+    @cached_property
+    def measure_context(self) -> MeasureContext:
+        return MeasureContext(
+            self.measure_type,
+            self.geo_sid,
+            self.additional_code.type.sid if self.additional_code else None,
+            self.additional_code.code if self.additional_code else None,
+            self.order_number,
+            self.reduction,
+            self.measure_start_date,
+            self.measure_end_date,
+        )
 
 
 class MeasureCreatingPattern:
@@ -212,15 +243,28 @@ class MeasureCreatingPattern:
         for rate, start, end in self.seasonal_rate_parser.detect_seasonal_rates(
             duty_sentence
         ):
-            actual_start = maybe_max(start, validity_start)
+            actual_start = maybe_max(
+                start, validity_start, goods_nomenclature.valid_between.lower
+            )
             actual_end = maybe_min(
                 end, goods_nomenclature.valid_between.upper, validity_end
             )
+            new_measure_sid = self.measure_sid_counter()
+
+            if actual_end not in [validity_end, end]:
+                logger.warning(
+                    "Measure {} end date capped by {} end date: {:%Y-%m-%d}".format(
+                        new_measure_sid, goods_nomenclature.item_id, actual_end
+                    )
+                )
+
             assert actual_start
-            assert actual_end is None or actual_start <= actual_end
+            assert (
+                actual_end is None or actual_start <= actual_end
+            ), f"actual_start: {actual_start}, actual_end: {actual_end}"
 
             new_measure = Measure(
-                sid=self.measure_sid_counter(),
+                sid=new_measure_sid,
                 measure_type=new_measure_type,
                 geographical_area=geography,
                 goods_nomenclature=goods_nomenclature,
@@ -244,13 +288,6 @@ class MeasureCreatingPattern:
             for footnote in self.get_measure_footnotes(new_measure, footnotes):
                 yield footnote
 
-            if actual_end not in [validity_end, end]:
-                logger.warning(
-                    "Measure {} end date capped by {} end date: {:%Y-%m-%d}".format(
-                        new_measure.sid, goods_nomenclature.item_id, actual_end
-                    )
-                )
-
             # If this is a measure under authorised use, we need to add
             # some measure conditions with the N990 certificate.
             if authorised_use:
@@ -271,7 +308,7 @@ class MeasureEndingPattern:
     def __init__(
         self,
         workbasket: WorkBasket,
-        measure_types: Dict[int, MeasureType] = {},
+        measure_types: Dict[str, MeasureType] = {},
         geo_areas: Dict[int, GeographicalArea] = {},
         ensure_unique: bool = True,
     ) -> None:
@@ -280,6 +317,8 @@ class MeasureEndingPattern:
         self.geo_areas = geo_areas
         self.ensure_unique = ensure_unique
         self.old_sids: Set[int] = set()
+        self.fake_quota_sids = counter_generator(start=10000)
+        self.start_of_time = LONDON.localize(datetime(1970, 1, 1, 0, 0, 0))
 
     def end_date_measure(
         self,
@@ -302,6 +341,37 @@ class MeasureEndingPattern:
             if old_row.geo_sid not in self.geo_areas:
                 self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.get(
                     sid=old_row.geo_sid
+                )
+
+            # Look up the quota this measure should have
+            # If this measure has a licensed quota, we'll need to create it
+            # because it won't be in the source data. We assume this isn't saved.
+            if old_row.order_number and old_row.order_number.startswith("094"):
+                quota, created = QuotaOrderNumber.objects.get_or_create(
+                    order_number=old_row.order_number,
+                    defaults={
+                        "sid": self.fake_quota_sids(),
+                        "valid_between": DateTimeTZRange(
+                            lower=self.start_of_time,
+                            upper=None,
+                        ),
+                        "category": QuotaCategory.WTO,
+                        "mechanism": AdministrationMechanism.LICENSED,
+                        "workbasket": self.workbasket,
+                        "update_type": UpdateType.CREATE,
+                    },
+                )
+            else:
+                quota = (
+                    QuotaOrderNumber.objects.get(
+                        order_number=old_row.order_number,
+                        valid_between__contains=DateTimeTZRange(
+                            lower=old_row.measure_start_date,
+                            upper=old_row.measure_end_date,
+                        ),
+                    )
+                    if old_row.order_number
+                    else None
                 )
 
             # If the old measure starts after the start date, we instead
@@ -353,6 +423,7 @@ class MeasureEndingPattern:
                             else new_start_date - timedelta(days=1)
                         ),
                     ),
+                    order_number=quota,
                     generating_regulation=generating_regulation,
                     terminating_regulation=justification_regulation,
                     stopped=old_row.stopped,
@@ -371,16 +442,53 @@ class MeasureEndingPattern:
 
 OldRow = TypeVar("OldRow")
 NewRow = TypeVar("NewRow")
+OldContext = Union[
+    NomenclatureTreeCollector[OldRow], NomenclatureTreeCollector[List[OldRow]]
+]
+NewContext = Union[
+    NomenclatureTreeCollector[NewRow], NomenclatureTreeCollector[List[NewRow]]
+]
+
+
+def add_single_row(tree: NomenclatureTreeCollector[OldRow], row: OldRow) -> bool:
+    return tree.add(row.goods_nomenclature, context=row)
+
+
+def add_multiple_row(
+    tree: NomenclatureTreeCollector[List[OldRow]], row: OldRow
+) -> bool:
+    if row.goods_nomenclature in tree:
+        roots = [root for root in tree.buffer() if root[0] == row.goods_nomenclature]
+        assert len(roots) == 1
+        logger.debug(
+            "Adding to old context (len %s) when adding cc %s [%s]",
+            len(roots[0][1]),
+            row.goods_nomenclature.item_id,
+            row.goods_nomenclature.sid,
+        )
+        context = [*roots[0][1], row]
+    else:
+        logger.debug(
+            "Ignoring old context when adding cc %s [%s]",
+            row.goods_nomenclature.item_id,
+            row.goods_nomenclature.sid,
+        )
+        context = [row]
+    return tree.add(row.goods_nomenclature, context=context)
 
 
 class DualRowRunner(Generic[OldRow, NewRow]):
     def __init__(
         self,
-        old_rows: NomenclatureTreeCollector[List[OldRow]],
-        new_rows: NomenclatureTreeCollector[NewRow],
+        old_rows: OldContext,
+        new_rows: NewContext,
+        add_old_row=add_multiple_row,
+        add_new_row=add_single_row,
     ) -> None:
         self.old_rows = old_rows
         self.new_rows = new_rows
+        self.add_old_row = add_old_row
+        self.add_new_row = add_new_row
 
     def handle_rows(
         self, old_row: Optional[OldRow], new_row: Optional[NewRow]
@@ -397,40 +505,18 @@ class DualRowRunner(Generic[OldRow, NewRow]):
 
         # Push the new row into the tree, but only if we found a CC for it
         # Initialize the old row tree with the same subtree if it is not yet set
-        new_waiting = (
-            new_row is not None
-            and new_row.goods_nomenclature is not None
-            and not self.new_rows.add(new_row.goods_nomenclature, new_row)
-        )
+        if new_row is not None and new_row.goods_nomenclature is not None:
+            new_waiting = not self.add_new_row(self.new_rows, new_row)
+        else:
+            new_waiting = False
+
         if self.old_rows.root is None:
             self.old_rows.root = self.new_rows.root
 
         # Push the old row into the tree, adding to any rows already for this CC
         # Initialize the new row tree with the same subtree if it is not yet set
         if old_row is not None and old_row.goods_nomenclature is not None:
-            if old_row.goods_nomenclature in self.old_rows:
-                roots = [
-                    root
-                    for root in self.old_rows.buffer()
-                    if root[0] == old_row.goods_nomenclature
-                ]
-                assert len(roots) == 1
-                logger.debug(
-                    "Adding to old context (len %s) when adding cc %s [%s]",
-                    len(roots[0][1]),
-                    old_row.goods_nomenclature.item_id,
-                    old_row.goods_nomenclature.sid,
-                )
-                rows = [*roots[0][1], old_row]
-            else:
-                logger.debug(
-                    "Ignoring old context when adding cc %s [%s]",
-                    old_row.goods_nomenclature.item_id,
-                    old_row.goods_nomenclature.sid,
-                )
-                rows = [old_row]
-
-            old_waiting = not self.old_rows.add(old_row.goods_nomenclature, rows)
+            old_waiting = not self.add_old_row(self.old_rows, old_row)
         else:
             old_waiting = False
 

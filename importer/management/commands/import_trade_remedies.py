@@ -72,7 +72,7 @@ class NewRow:
         self.geo_area = GeographicalArea.objects.as_at(BREXIT).get(
             area_id=new_row[col("K")].value
         )
-        self.measure_type = int(new_row[col("L")].value)
+        self.measure_type = str(int(new_row[col("L")].value))
         self.additional_code = new_row[col("B")].value
 
         try:
@@ -200,8 +200,8 @@ class TRMeasureCreatingPattern(MeasureCreatingPattern):
 class TradeRemediesImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
         self.measure_types = {
-            552: MeasureType.objects.get(sid="552"),
-            554: MeasureType.objects.get(sid="554"),
+            "552": MeasureType.objects.get(sid="552"),
+            "554": MeasureType.objects.get(sid="554"),
         }
         self.measure_slicer = MeasureTypeSlicer[OldMeasureRow, NewRow](
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],

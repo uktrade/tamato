@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import re
@@ -23,9 +24,12 @@ from typing import TypeVar
 from typing import Union
 
 import xlrd
+from django.contrib.auth.models import User
+from django.core.management.base import CommandError
 from django.template.loader import render_to_string
 from xlrd.sheet import Cell
 
+import settings
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
@@ -38,6 +42,48 @@ OldRow = TypeVar("OldRow")
 ItemIdGetter = Callable[[Row], GoodsNomenclature]
 
 logger = logging.getLogger(__name__)
+
+
+class CountersAction(argparse.Action):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string=None,
+    ) -> None:
+        counters = getattr(namespace, "counters", {})
+        setattr(namespace, "counters", {self.dest: values, **counters})
+
+
+def id_argument(parser: Any, name: str, default: Optional[int] = None) -> None:
+    parser.add_argument(
+        f"--{name}-id",
+        help=f"The ID value to use for the first new {(name.replace('-',''))}.",
+        type=lambda s: counter_generator(int(s)),
+        action=CountersAction,
+        default=default,
+    )
+
+
+def spreadsheet_argument(parser: Any, name: str) -> None:
+    parser.add_argument(
+        f"{name}-spreadsheet",
+        help=f"The XLSX file containing new {name}s to be parsed.",
+        type=str,
+    )
+    parser.add_argument(
+        f"--{name}-skip-rows",
+        help="The number of rows from the spreadsheet to skip before importing data",
+        type=int,
+        default=0,
+    )
+
+
+def output_argument(parser: Any) -> None:
+    parser.add_argument(
+        "--output", help="The filename to output to.", type=str, default="out.xml"
+    )
 
 
 def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
@@ -269,6 +315,17 @@ def clean_duty_sentence(cell: Cell) -> str:
         return cell.value
 
 
+def get_author(username: Optional[str] = None) -> User:
+    username = username or settings.DATA_IMPORT_USERNAME
+    try:
+        return User.objects.get(username=username)
+    except User.DoesNotExist:
+        raise CommandError(
+            f"Author does not exist, create user '{username}'"
+            " or edit settings.DATA_IMPORT_USERNAME"
+        )
+
+
 WorkingSetItem = Tuple[GoodsNomenclature, Row, Set[int], bool]
 
 
@@ -340,11 +397,9 @@ class NomenclatureTreeCollector(Generic[Row]):
             # and break them down until there are no overlaps anymore.
             # Make sure all codes are actually declarable (suffix 80)
             # otherwise we break ME7.
-            to_be_split = set(
-                parent[0].sid
-                for parent, child in combinations(self.roots, 2)
-                if self.within_subtree(child[0], parent)
-            ) | set(root[0].sid for root in self.roots if root[0].suffix != "80")
+            to_be_split = self.to_be_split() | set(
+                root[0].sid for root in self.roots if root[0].suffix != "80"
+            )
             if not any(to_be_split):
                 return True
 
@@ -385,6 +440,13 @@ class NomenclatureTreeCollector(Generic[Row]):
             root = self.root
         return cc == root[0] or cc.sid in root[2]
 
+    def to_be_split(self) -> Set[int]:
+        return set(
+            parent[0].sid
+            for parent, child in combinations(self.roots, 2)
+            if self.within_subtree(child[0], parent)
+        )
+
     def is_split_beyond(self, cc: GoodsNomenclature) -> bool:
         """Returns True if the subtree has already been split to a depth beyond
         the passed commodity code."""
@@ -400,7 +462,10 @@ class NomenclatureTreeCollector(Generic[Row]):
         return ((root[0], root[1]) for root in self.roots)
 
     def make_item(
-        self, cc: GoodsNomenclature, context: Row, explicit: bool
+        self,
+        cc: GoodsNomenclature,
+        context: Row,
+        explicit: bool,
     ) -> WorkingSetItem:
         return (
             cc,
@@ -415,6 +480,66 @@ class NomenclatureTreeCollector(Generic[Row]):
                 .filter(valid_between__contains=self.date)
             ),
             explicit,
+        )
+
+
+# ME32: Measure type, geo sid, add type, add code, order number, reduction
+class MeasureContext:
+    def __init__(
+        self,
+        measure_type: str,
+        geographical_area_sid: int,
+        additional_code_type: Optional[str],
+        additional_code_body: Optional[str],
+        order_number: Optional[str],
+        reduction_indicator: Optional[int],
+        start_date: datetime,
+        end_date: Optional[datetime],
+    ) -> None:
+        self.equal_fields = (
+            measure_type,
+            geographical_area_sid,
+            additional_code_type,
+            additional_code_body,
+            order_number,
+            reduction_indicator,
+        )
+        self.start_date = start_date
+        self.end_date = end_date
+
+    def overlaps(self, other) -> bool:
+        # self: [-------]
+        # other:     [-------]
+        # self:    [------]
+        # other: [----------->
+        # self:     [-------->
+        # other: [----]
+        return (
+            self.equal_fields == other.equal_fields
+            and (self.start_date <= other.end_date if other.end_date else True)
+            and (self.end_date >= other.start_date if self.end_date else True)
+        )
+
+
+class MeasureTreeCollector(Generic[Row], NomenclatureTreeCollector[Row]):
+    def add(self, cc: GoodsNomenclature, context: Optional[Row]) -> bool:
+        losers = (
+            root
+            for root in self.roots
+            if root[0] == cc
+            and root[1].measure_context.overlaps(context.measure_context)
+        )
+        if any(losers):
+            logger.warning("About to overwrite context for %s[%s]", cc, cc.sid)
+
+        return super().add(cc, context)
+
+    def to_be_split(self) -> Set[int]:
+        return set(
+            parent[0].sid
+            for parent, child in combinations(self.roots, 2)
+            if self.within_subtree(child[0], parent)
+            and parent[1].measure_context.overlaps(child[1].measure_context)
         )
 
 

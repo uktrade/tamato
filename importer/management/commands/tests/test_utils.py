@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import pytest
 
 from commodities.models import GoodsNomenclature
@@ -5,6 +7,8 @@ from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import GoodsNomenclatureIndentNodeFactory
 from common.tests.util import Dates
 from importer.management.commands.utils import convert_eur_to_gbp
+from importer.management.commands.utils import MeasureContext
+from importer.management.commands.utils import MeasureTreeCollector
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import parse_trade_remedies_duty_expression
 
@@ -55,9 +59,59 @@ def child_of_phantom_cc(phantom_root_cc: GoodsNomenclature) -> GoodsNomenclature
     return make_child(phantom_root_cc, item_id="0201000000", suffix="80")
 
 
+RowTest = namedtuple("RowTest", ["measure_context", "number"])
+
+
 @pytest.fixture
 def working_set(date_ranges: Dates) -> NomenclatureTreeCollector[int]:
     return NomenclatureTreeCollector[int](date=date_ranges.now)
+
+
+@pytest.fixture
+def measure_working_set(date_ranges: Dates) -> MeasureTreeCollector[RowTest]:
+    return MeasureTreeCollector[RowTest](date=date_ranges.now)
+
+
+@pytest.fixture
+def measure_context(date_ranges: Dates) -> MeasureContext:
+    return MeasureContext(
+        "103",
+        100,
+        "A",
+        "123",
+        "094123",
+        None,
+        date_ranges.normal.lower,
+        date_ranges.normal.upper,
+    )
+
+
+@pytest.fixture
+def different_measure_context(date_ranges: Dates) -> MeasureContext:
+    return MeasureContext(
+        "105",
+        100,
+        "A",
+        "123",
+        "094123",
+        None,
+        date_ranges.normal.lower,
+        date_ranges.normal.upper,
+    )
+
+
+@pytest.fixture
+def overlapping_measure_context(date_ranges: Dates) -> MeasureContext:
+    return MeasureContext(
+        "103",
+        100,
+        "A",
+        "123",
+        "094123",
+        None,
+        date_ranges.overlap_normal.lower,
+        date_ranges.overlap_normal.upper,
+    )
 
 
 def test_single_root(
@@ -193,6 +247,80 @@ def test_same_cc_overrides_original_context(
     assert len(buffer) == 1
     assert buffer[0][0] == root_cc
     assert buffer[0][1] == 200
+
+
+def test_same_cc_with_different_measure_context_appears_twice(
+    measure_working_set: MeasureTreeCollector[RowTest],
+    measure_context: MeasureContext,
+    different_measure_context: MeasureContext,
+    root_cc: GoodsNomenclature,
+):
+    """When a node is added to the tree having already been added before,
+    but this time with a different measure context, it should hold both."""
+    measure_working_set.add(root_cc, RowTest(measure_context, 100))
+    measure_working_set.add(root_cc, RowTest(different_measure_context, 200))
+    buffer = list(measure_working_set.buffer())
+    assert len(buffer) == 2
+    assert buffer[0][0] == root_cc
+    assert buffer[0][1].number == 100
+    assert buffer[1][0] == root_cc
+    assert buffer[1][1].number == 200
+
+
+def test_child_cc_with_different_measure_context_does_not_split(
+    measure_working_set: MeasureTreeCollector[RowTest],
+    measure_context: MeasureContext,
+    different_measure_context: MeasureContext,
+    root_cc: GoodsNomenclature,
+    child_cc: GoodsNomenclature,
+):
+    """When a child node is added with a different measure context,
+    the parent does not get split because these measures don't overlap."""
+    measure_working_set.add(root_cc, RowTest(measure_context, 100))
+    measure_working_set.add(child_cc, RowTest(different_measure_context, 200))
+    buffer = list(measure_working_set.buffer())
+    assert len(buffer) == 2
+    assert buffer[0][0] == root_cc
+    assert buffer[0][1].number == 100
+    assert buffer[1][0] == child_cc
+    assert buffer[1][1].number == 200
+
+
+def test_child_cc_with_same_measure_context_does_cause_split(
+    measure_working_set: MeasureTreeCollector[RowTest],
+    measure_context: MeasureContext,
+    root_cc: GoodsNomenclature,
+    child_cc: GoodsNomenclature,
+    sibling_cc: GoodsNomenclature,
+):
+    """When a child node is added with the same measure context but
+    different row context, it overlaps so the parent is split."""
+    measure_working_set.add(root_cc, RowTest(measure_context, 100))
+    measure_working_set.add(child_cc, RowTest(measure_context, 200))
+    buffer = list(measure_working_set.buffer())
+    assert len(buffer) == 2
+    assert buffer[0][0] == child_cc
+    assert buffer[0][1].number == 200
+    assert buffer[1][0] == sibling_cc
+    assert buffer[1][1].number == 100
+
+
+def test_child_with_overlapping_measure_context_does_cause_split(
+    measure_working_set: MeasureTreeCollector[RowTest],
+    measure_context: MeasureContext,
+    overlapping_measure_context: MeasureContext,
+    root_cc: GoodsNomenclature,
+    child_cc: GoodsNomenclature,
+    sibling_cc: GoodsNomenclature,
+):
+    measure_working_set.add(root_cc, RowTest(measure_context, 100))
+    measure_working_set.add(child_cc, RowTest(overlapping_measure_context, 200))
+    buffer = list(measure_working_set.buffer())
+    assert len(buffer) == 2
+    assert buffer[0][0] == child_cc
+    assert buffer[0][1].number == 200
+    assert buffer[1][0] == sibling_cc
+    assert buffer[1][1].number == 100
 
 
 def test_parse_duty_expression():

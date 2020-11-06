@@ -33,6 +33,7 @@ from django.db.models.fields.related import ForeignKey
 from common.models import ApplicabilityCode
 from common.models import NumericSID
 from common.models import ShortDescription
+from common.models import SignedIntSID
 from common.validators import UpdateType
 from workbaskets.models import Transaction
 from workbaskets.models import WorkBasket
@@ -75,6 +76,7 @@ def get_type_transformer(field: Field, index: Optional[int] = None) -> Transform
         PositiveIntegerField,
         PositiveSmallIntegerField,
         NumericSID,
+        SignedIntSID,
         ApplicabilityCode,
     ]:
         return blank(field.blank, int)
