@@ -29,9 +29,11 @@ class RowsImporter(metaclass=ABCMeta):
         workbasket: WorkBasket,
         serializer: EnvelopeSerializer,
         forward_time: datetime = BREXIT,
+        first_run: bool = True,
     ) -> None:
         self.workbasket = workbasket
         self.serializer = serializer
+        self.first_run = first_run
 
         duty_expressions = (
             DutyExpression.objects.as_at(forward_time).order_by("sid")
@@ -155,10 +157,6 @@ class RowsImporter(metaclass=ABCMeta):
         # Final chance to flush any remaining rows
         for transaction in self.flush():
             self._save_and_render_transaction(transaction)
-
-        for name, counter in self.counters.items():
-            logger.info("Next %s: %s", name, counter())
-        logger.info("Import complete")
 
     def _save_and_render_transaction(self, transaction: List[TrackedModel]) -> None:
         for model in transaction:
