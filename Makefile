@@ -17,6 +17,10 @@ help: Makefile
 	@sed -n 's/^##//p' $< | column -t -s ':' | sed -e 's/^/ /'
 	@echo
 
+ifndef PYTHON
+PYTHON=python
+endif
+
 clean-static:
 	@echo
 	@echo "> Removing collected static files..."
@@ -40,7 +44,7 @@ dependencies: requirements.txt
 collectstatic: compilescss
 	@echo
 	@echo "> Collecting static assets..."
-	@${BIN}python manage.py collectstatic --noinput
+	@${BIN}${PYTHON} manage.py collectstatic --noinput
 
 compilescss:
 	@echo
@@ -55,14 +59,14 @@ node_modules:
 migrate:
 	@echo
 	@echo "> Running database migrations..."
-	@python manage.py migrate --noinput
+	@${PYTHON} manage.py migrate --noinput
 
 ## run: Run webapp
 run: export DJANGO_SETTINGS_MODULE=settings.dev
 run: collectstatic migrate
 	@echo
 	@echo "> Running webapp..."
-	@python manage.py runserver_plus 0.0.0.0:8000
+	@${PYTHON} manage.py runserver_plus 0.0.0.0:8000
 
 run-cf: export DJANGO_SETTINGS_MODULE=settings
 run-cf: collectstatic migrate
@@ -75,7 +79,7 @@ test: export DJANGO_SETTINGS_MODULE=settings.test
 test:
 	@echo
 	@echo "> Running tests..."
-	python manage.py test
+	${PYTHON} manage.py test --failfast
 
 ## docker-image: Build docker image
 docker-image:
@@ -95,7 +99,7 @@ docker-test:
 	@echo "> Running tests in Docker..."
 	@docker-compose run \
 		-e DJANGO_SETTINGS_MODULE=settings.test \
-		${PROJECT} sh -c "docker/wait_for_db && python manage.py test -- --cov"
+		${PROJECT} sh -c "docker/wait_for_db && ${PYTHON} manage.py test -- --cov"
 
 ## build-docs: Build the project documentation
 build-docs html:
