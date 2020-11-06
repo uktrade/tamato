@@ -13,7 +13,7 @@ from importer.management.commands.tests.test_utils import make_child
 
 pytestmark = pytest.mark.django_db
 
-fixture_path = './importer/management/commands/tests/fixtures/'
+fixture_path = "./importer/management/commands/tests/fixtures/"
 
 
 @contextmanager
@@ -26,7 +26,6 @@ def output():
 
 
 class TestTradeRemedies:
-
     def setup(self):
         # Add user
         factories.UserFactory.create(username="Alice")
@@ -69,31 +68,25 @@ class TestTradeRemedies:
 
         # Setup regulations
         regulation_group = factories.RegulationGroupFactory.create(
-            group_id='DUM',
-            description='Anti-dumping duties, countervailing duties'
+            group_id="DUM", description="Anti-dumping duties, countervailing duties"
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group,
-            regulation_id='R0100010'
+            regulation_group=regulation_group, regulation_id="R0100010"
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group,
-            regulation_id='R0200010'
+            regulation_group=regulation_group, regulation_id="R0200010"
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group,
-            regulation_id='R0100030'
+            regulation_group=regulation_group, regulation_id="R0100030"
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group,
-            regulation_id='R0100020'
+            regulation_group=regulation_group, regulation_id="R0100020"
         )
 
         # Setup certificates
         certificate_type = factories.CertificateTypeFactory.create(sid="D")
         factories.CertificateFactory.create(
-            sid="008",
-            certificate_type=certificate_type
+            sid="008", certificate_type=certificate_type
         )
 
         # Setup good nomenclature
@@ -116,39 +109,31 @@ class TestTradeRemedies:
             description="Anti-dumping/countervailing",
         )
         factories.AdditionalCodeFactory(
-            sid="13160",
-            code=555,
-            type=additional_code_type
+            sid="13160", code=555, type=additional_code_type
         )
 
         # Setup geographical area's
         area1 = factories.GeographicalAreaFactory.create(
-            sid=103,
-            area_id='US',
-            area_code=0
+            sid=103, area_id="US", area_code=0
         )
         area2 = factories.GeographicalAreaFactory.create(
-            sid=140,
-            area_id='AD',
-            area_code=0
+            sid=140, area_id="AD", area_code=0
         )
         factories.GeographicalAreaDescriptionFactory.create(
-            area=area1,
-            description='United States of America'
+            area=area1, description="United States of America"
         )
         factories.GeographicalAreaDescriptionFactory.create(
-            area=area2,
-            description='Andorra'
+            area=area2, description="Andorra"
         )
 
         # Footnotes
-        ftn = factories.FootnoteTypeFactory.create(footnote_type_id='FN')
-        factories.FootnoteFactory.create(footnote_id='001', footnote_type=ftn)
-        factories.FootnoteFactory.create(footnote_id='002', footnote_type=ftn)
-        factories.FootnoteFactory.create(footnote_id='003', footnote_type=ftn)
-        factories.FootnoteFactory.create(footnote_id='004', footnote_type=ftn)
+        ftn = factories.FootnoteTypeFactory.create(footnote_type_id="FN")
+        factories.FootnoteFactory.create(footnote_id="001", footnote_type=ftn)
+        factories.FootnoteFactory.create(footnote_id="002", footnote_type=ftn)
+        factories.FootnoteFactory.create(footnote_id="003", footnote_type=ftn)
+        factories.FootnoteFactory.create(footnote_id="004", footnote_type=ftn)
 
-    @override_settings(DATA_IMPORT_USERNAME='Alice')
+    @override_settings(DATA_IMPORT_USERNAME="Alice")
     def test_import_trade_remedies(self):
         """
         Expected output:
@@ -179,23 +164,21 @@ class TestTradeRemedies:
 
         """
         args = [
-            fixture_path + 'trade_remedies/regulations_to_maintain.xlsx',
-            fixture_path + 'trade_remedies/existing_measures.xlsx',
+            fixture_path + "trade_remedies/regulations_to_maintain.xlsx",
+            fixture_path + "trade_remedies/existing_measures.xlsx",
         ]
         with output() as xml_output:
             opts = {
-                'new_skip_rows': 1,
-                'old_skip_rows': 1,
-                'measure_sid': 6,
-                'measure_condition_sid': 1,
-                'transaction_id': 1,
-                'envelope_id': 1,
-                'output': xml_output.name
+                "new_skip_rows": 1,
+                "old_skip_rows": 1,
+                "measure_sid": 6,
+                "measure_condition_sid": 1,
+                "transaction_id": 1,
+                "envelope_id": 1,
+                "output": xml_output.name,
             }
-            call_command(
-                'import_trade_remedies', *args, **opts
-            )
-            expected_xml_output = fixture_path + 'trade_remedies/expected_output.xml'
+            call_command("import_trade_remedies", *args, **opts)
+            expected_xml_output = fixture_path + "trade_remedies/expected_output.xml"
             diff = main.diff_files(
                 xml_output,
                 expected_xml_output,
@@ -204,7 +187,6 @@ class TestTradeRemedies:
 
 
 class TestImportTradeDisputes:
-
     def setup(self):
         # Add user
         factories.UserFactory.create(username="Alice")
@@ -227,23 +209,19 @@ class TestImportTradeDisputes:
 
         # Setup regulations
         regulation_group = factories.RegulationGroupFactory.create(
-            group_id='ADD',
-            description='Additional Duties (AGRI)'
+            group_id="ADD", description="Additional Duties (AGRI)"
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group,
-            regulation_id='R0000001'
+            regulation_group=regulation_group, regulation_id="R0000001"
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group,
-            regulation_id='R0000002'
+            regulation_group=regulation_group, regulation_id="R0000002"
         )
 
         # Setup certificates
         certificate_type = factories.CertificateTypeFactory.create(sid="N")
         factories.CertificateFactory.create(
-            sid="990",
-            certificate_type=certificate_type
+            sid="990", certificate_type=certificate_type
         )
 
         # Setup good nomenclature
@@ -262,23 +240,20 @@ class TestImportTradeDisputes:
 
         # Setup geographical area's
         area = factories.GeographicalAreaFactory.create(
-            sid=103,
-            area_id='US',
-            area_code=0
+            sid=103, area_id="US", area_code=0
         )
         factories.GeographicalAreaDescriptionFactory.create(
-            area=area,
-            description='United States of America'
+            area=area, description="United States of America"
         )
 
         # Footnotes
-        ftn = factories.FootnoteTypeFactory.create(footnote_type_id='FN')
-        factories.FootnoteFactory.create(footnote_id='001', footnote_type=ftn)
-        factories.FootnoteFactory.create(footnote_id='002', footnote_type=ftn)
-        factories.FootnoteFactory.create(footnote_id='003', footnote_type=ftn)
-        factories.FootnoteFactory.create(footnote_id='004', footnote_type=ftn)
+        ftn = factories.FootnoteTypeFactory.create(footnote_type_id="FN")
+        factories.FootnoteFactory.create(footnote_id="001", footnote_type=ftn)
+        factories.FootnoteFactory.create(footnote_id="002", footnote_type=ftn)
+        factories.FootnoteFactory.create(footnote_id="003", footnote_type=ftn)
+        factories.FootnoteFactory.create(footnote_id="004", footnote_type=ftn)
 
-    @override_settings(DATA_IMPORT_USERNAME='Alice')
+    @override_settings(DATA_IMPORT_USERNAME="Alice")
     def test_import_trade_disputes(self):
         """
         Preconditions:
@@ -301,22 +276,20 @@ class TestImportTradeDisputes:
             - duty amount 1
         """
         args = [
-            fixture_path + 'trade_disputes/new_measures.xlsx',
-            fixture_path + 'trade_disputes/existing_measures.xlsx',
+            fixture_path + "trade_disputes/new_measures.xlsx",
+            fixture_path + "trade_disputes/existing_measures.xlsx",
         ]
         with output() as xml_output:
             opts = {
-                'new_skip_rows': 3,
-                'old_skip_rows': 1,
-                'measure_sid': 4,
-                'measure_condition_sid': 1,
-                'transaction_id': 1,
-                'output': xml_output.name
+                "new_skip_rows": 3,
+                "old_skip_rows": 1,
+                "measure_sid": 4,
+                "measure_condition_sid": 1,
+                "transaction_id": 1,
+                "output": xml_output.name,
             }
-            call_command(
-                'import_trade_disputes', *args, **opts
-            )
-            expected_xml_output = fixture_path + 'trade_disputes/expected_output.xml'
+            call_command("import_trade_disputes", *args, **opts)
+            expected_xml_output = fixture_path + "trade_disputes/expected_output.xml"
             diff = main.diff_files(
                 xml_output,
                 expected_xml_output,
@@ -325,39 +298,32 @@ class TestImportTradeDisputes:
 
 
 class TestImportCountries:
-
-    @override_settings(DATA_IMPORT_USERNAME='Alice')
+    @override_settings(DATA_IMPORT_USERNAME="Alice")
     def test_update_area_description(self):
         """
         Expected output:
         - description for geographical area with sid 1 changed to Andorra
 
         """
-        factories.UserFactory.create(username='Alice')
+        factories.UserFactory.create(username="Alice")
         geo_area = factories.GeographicalAreaFactory.create(
             sid=1,
-            area_id='AD',
+            area_id="AD",
             area_code=0,
         )
         factories.GeographicalAreaDescriptionFactory.create(
             sid=1,
             area=geo_area,
-            description='old description',
+            description="old description",
         )
         args = [
-            fixture_path + 'countries/countries-territories-and-regions.xlsx',
-            'Sheet1'
+            fixture_path + "countries/countries-territories-and-regions.xlsx",
+            "Sheet1",
         ]
         with output() as xml_output:
-            opts = {
-                'skip_rows': 1,
-                'transaction_id': 1,
-                'output': xml_output.name
-            }
-            call_command(
-                'import_countries', *args, **opts
-            )
-            expected_xml_output = fixture_path + 'countries/expected_output.xml'
+            opts = {"skip_rows": 1, "transaction_id": 1, "output": xml_output.name}
+            call_command("import_countries", *args, **opts)
+            expected_xml_output = fixture_path + "countries/expected_output.xml"
             diff = main.diff_files(
                 xml_output,
                 expected_xml_output,
