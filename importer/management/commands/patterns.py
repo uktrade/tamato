@@ -23,13 +23,13 @@ from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.duty_sentence_parser import DutySentenceParser
-from importer.management.commands.utils import blank, clean_item_id
+from importer.management.commands.utils import blank, clean_item_id, convert_eur_to_gbp
 from importer.management.commands.utils import Counter
 from importer.management.commands.utils import maybe_max
 from importer.management.commands.utils import maybe_min
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import SeasonalRateParser
-from measures.models import FootnoteAssociationMeasure
+from measures.models import FootnoteAssociationMeasure, MonetaryUnit, MeasureComponent
 from measures.models import Measure
 from measures.models import MeasureAction
 from measures.models import MeasureCondition
@@ -68,6 +68,7 @@ class OldMeasureRow:
         self.justification_regulation_role = blank(old_row[20].value, int)
         self.justification_regulation_id = blank(old_row[21].value, str)
         self.stopped = bool(old_row[24].value)
+        self.additional_code = blank(old_row[22].value, str)
         self.additional_code_sid = blank(old_row[23].value, int)
         self.export_refund_sid = blank(old_row[25].value, int)
         self.reduction = blank(old_row[26].value, int)
@@ -108,22 +109,82 @@ class MeasureCreatingPattern:
         self.measure_sid_counter = measure_sid_counter
         self.measure_condition_sid_counter = measure_condition_sid_counter
 
-        self.n990 = Certificate.objects.get(
+    def get_default_measure_conditions(self, measure: Measure) \
+            -> List[MeasureCondition]:
+        presentation_of_certificate = MeasureConditionCode.objects.get(
+            code="B",
+        )
+        certificate = Certificate.objects.get(
             sid="990",
             certificate_type=CertificateType.objects.get(sid="N"),
         )
-
-        self.presentation_of_certificate = MeasureConditionCode.objects.get(
-            code="B",
-        )
-
-        self.apply_mentioned_duty = MeasureAction.objects.get(
+        apply_mentioned_duty = MeasureAction.objects.get(
             code="27",
         )
-
-        self.subheading_not_allowed = MeasureAction.objects.get(
+        subheading_not_allowed = MeasureAction.objects.get(
             code="08",
         )
+        return [
+            MeasureCondition(
+                sid=self.measure_condition_sid_counter(),
+                dependent_measure=measure,
+                component_sequence_number=1,
+                condition_code=presentation_of_certificate,
+                required_certificate=certificate,
+                action=apply_mentioned_duty,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            ),
+            MeasureCondition(
+                sid=self.measure_condition_sid_counter(),
+                dependent_measure=measure,
+                component_sequence_number=2,
+                condition_code=presentation_of_certificate,
+                action=subheading_not_allowed,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            )
+        ]
+
+    def get_measure_components_from_duty_rate(self, measure: Measure, rate: str) \
+            -> List[MeasureComponent]:
+        try:
+            components = []
+            for component in self.duty_sentence_parser.parse(rate):
+                component.component_measure = measure
+                component.update_type = UpdateType.CREATE
+                component.workbasket = self.workbasket
+                components.append(component)
+            return components
+        except RuntimeError as ex:
+            logger.error(f"Explosion parsing {rate}")
+            raise ex
+
+    def get_measure_excluded_geographical_areas(self, measure: Measure, geo_exclusion: Optional[str] = None) \
+            -> MeasureExcludedGeographicalArea:
+        exclusion = (
+            self.exclusion_areas[geo_exclusion.strip()]
+        )
+        return MeasureExcludedGeographicalArea(
+            modified_measure=measure,
+            excluded_geographical_area=exclusion,
+            update_type=UpdateType.CREATE,
+            workbasket=self.workbasket,
+        )
+
+    def get_measure_footnotes(self, measure: Measure, footnotes: List[Footnote]) \
+            -> List[FootnoteAssociationMeasure]:
+        footnote_measures = []
+        for footnote in footnotes:
+            footnote_measures.append(
+                FootnoteAssociationMeasure(
+                    footnoted_measure=measure,
+                    associated_footnote=footnote,
+                    update_type=UpdateType.CREATE,
+                    workbasket=self.workbasket,
+                )
+            )
+        return footnote_measures
 
     def create(
         self,
@@ -141,9 +202,6 @@ class MeasureCreatingPattern:
     ) -> Iterator[TrackedModel]:
         assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
 
-        exclusion = (
-            self.exclusion_areas[geo_exclusion.strip()] if geo_exclusion else None
-        )
         for rate, start, end in self.seasonal_rate_parser.detect_seasonal_rates(
             duty_sentence
         ):
@@ -171,21 +229,11 @@ class MeasureCreatingPattern:
             )
             yield new_measure
 
-            if exclusion:
-                yield MeasureExcludedGeographicalArea(
-                    modified_measure=new_measure,
-                    excluded_geographical_area=exclusion,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
+            if geo_exclusion:
+                yield self.get_measure_exluded_geographical_areas(new_measure, geo_exclusion)
 
-            for footnote in footnotes:
-                yield FootnoteAssociationMeasure(
-                    footnoted_measure=new_measure,
-                    associated_footnote=footnote,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
+            for footnote in self.get_measure_footnotes(new_measure, footnotes):
+                yield footnote
 
             if actual_end not in [validity_end, end]:
                 logger.warning(
@@ -197,36 +245,11 @@ class MeasureCreatingPattern:
             # If this is a measure under authorised use, we need to add
             # some measure conditions with the N990 certificate.
             if authorised_use:
-                yield MeasureCondition(
-                    sid=self.measure_condition_sid_counter(),
-                    dependent_measure=new_measure,
-                    component_sequence_number=1,
-                    condition_code=self.presentation_of_certificate,
-                    required_certificate=self.n990,
-                    action=self.apply_mentioned_duty,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
-                yield MeasureCondition(
-                    sid=self.measure_condition_sid_counter(),
-                    dependent_measure=new_measure,
-                    component_sequence_number=2,
-                    condition_code=self.presentation_of_certificate,
-                    action=self.subheading_not_allowed,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
+                for condition in self.get_default_measure_conditions(new_measure):
+                    yield condition
 
-            try:
-                components = self.duty_sentence_parser.parse(rate)
-                for component in components:
-                    component.component_measure = new_measure
-                    component.update_type = UpdateType.CREATE
-                    component.workbasket = self.workbasket
-                    yield component
-            except RuntimeError as ex:
-                logger.error(f"Explosion parsing {rate}")
-                raise ex
+            for component in self.get_measure_components_from_duty_rate(new_measure, rate):
+                yield component
 
 
 class MeasureEndingPattern:

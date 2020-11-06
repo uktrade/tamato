@@ -2,7 +2,7 @@ from functools import reduce
 from typing import List
 from typing import Union
 
-from parsec import choice
+from parsec import choice, Value
 from parsec import joint
 from parsec import optional
 from parsec import Parser
@@ -84,6 +84,10 @@ class DutySentenceParser:
             else:
                 return parser
 
+        @Parser
+        def fail(text, index):
+            return Value.failure(index, "")
+
         # Decimal numbers are a sequence of digits (without a left-trailing zero)
         # followed optionally by a decimal point and a number of digits (we have seen
         # some percentage values have three decimal digits).  Money values are similar
@@ -94,7 +98,7 @@ class DutySentenceParser:
         # Specific duty amounts reference various types of unit.
         # For monetary units, the expression just contains the same code as is
         # present in the sentence. Percentage values correspond to no unit.
-        self._monetary_unit = reduce(choice, map(code, monetary_units)) if monetary_units else empty
+        self._monetary_unit = reduce(choice, map(code, monetary_units)) if monetary_units else fail
         percentage_unit = token("%").result(None)
 
         # For measurement units and qualifiers, we match a human-readable version
@@ -120,7 +124,7 @@ class DutySentenceParser:
             m for m in permitted_measurements if m.measurement_unit_qualifier is None
         ]
         measurements = list(map(measurement, [*some_qualifier, *none_qualifier]))
-        self._measurement = reduce(try_choice, measurements) if measurements else empty
+        self._measurement = reduce(try_choice, measurements) if measurements else fail
 
         # Each measure component can have an amount, monetary unit and measurement.
         # Which expression elements are allowed in a component is controlled by

@@ -7,7 +7,7 @@
       {%- if record.duty_amount -%}
       <oub:duty.amount>{{ record.duty_amount }}</oub:duty.amount>
       {%- endif %}
-      {%- if record.monetary_unit_code -%}
+      {%- if record.monetary_unit -%}
       <oub:monetary.unit.code>{{ record.monetary_unit.code }}</oub:monetary.unit.code>
       {%- endif %}
       {%- if record.condition_component_measurement -%}
