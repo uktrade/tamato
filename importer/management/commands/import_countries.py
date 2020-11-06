@@ -65,12 +65,9 @@ class GeoAreaImporter:
             if existing_data:
                 new_areas[key] = existing_data
 
-        for area in (
-            GeographicalArea.objects.filter(
-                area_code__in=[AreaCode.COUNTRY, AreaCode.REGION]
-            )
-            .order_by("area_id")
-        ):
+        for area in GeographicalArea.objects.filter(
+            area_code__in=[AreaCode.COUNTRY, AreaCode.REGION]
+        ).order_by("area_id"):
             if area.area_id not in new_areas:
                 logger.info("No information for area %s – skipped", area.area_id)
                 continue
@@ -154,8 +151,10 @@ class Command(BaseCommand):
         try:
             author = User.objects.get(username=username)
         except User.DoesNotExist:
-            sys.exit(f"Author does not exist, create user '{username}'"
-                     " or edit settings.DATA_IMPORT_USERNAME")
+            sys.exit(
+                f"Author does not exist, create user '{username}'"
+                " or edit settings.DATA_IMPORT_USERNAME"
+            )
 
         new_workbook = xlrd.open_workbook(options["spreadsheet"])
         schedule_sheet = new_workbook.sheet_by_name(options["sheet_name"])
@@ -179,5 +178,7 @@ class Command(BaseCommand):
                     next(new_rows)
 
                 geog_importer = GeoAreaImporter(workbasket)
-                for model in geog_importer.import_rows([NewRow(row) for row in new_rows]):
+                for model in geog_importer.import_rows(
+                    [NewRow(row) for row in new_rows]
+                ):
                     env.render_transaction([model])

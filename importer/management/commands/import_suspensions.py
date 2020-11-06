@@ -1,11 +1,11 @@
 import logging
 import sys
 from datetime import timedelta
+from typing import cast
 from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
-from typing import cast
 
 import xlrd
 from django.conf import settings
@@ -18,27 +18,27 @@ from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
 from common.validators import UpdateType
+from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.patterns import BREXIT
-from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import DualRowRunner
+from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
+from importer.management.commands.utils import clean_duty_sentence
+from importer.management.commands.utils import clean_item_id
+from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import SeasonalRateParser
-from importer.management.commands.utils import clean_duty_sentence
-from importer.management.commands.utils import clean_item_id
-from importer.management.commands.utils import col
 from measures.models import MeasureType
 from regulations.models import Group
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
-from footnotes.models import Footnote
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ from functools import reduce
 from typing import List
 from typing import Union
 
-from parsec import choice, Value
+from parsec import choice
 from parsec import joint
 from parsec import optional
 from parsec import Parser
@@ -10,6 +10,7 @@ from parsec import regex
 from parsec import spaces
 from parsec import string
 from parsec import try_choice
+from parsec import Value
 
 from common.validators import ApplicabilityCode
 from measures.models import DutyExpression
@@ -98,7 +99,9 @@ class DutySentenceParser:
         # Specific duty amounts reference various types of unit.
         # For monetary units, the expression just contains the same code as is
         # present in the sentence. Percentage values correspond to no unit.
-        self._monetary_unit = reduce(choice, map(code, monetary_units)) if monetary_units else fail
+        self._monetary_unit = (
+            reduce(choice, map(code, monetary_units)) if monetary_units else fail
+        )
         percentage_unit = token("%").result(None)
 
         # For measurement units and qualifiers, we match a human-readable version

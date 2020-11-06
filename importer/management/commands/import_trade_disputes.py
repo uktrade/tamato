@@ -24,13 +24,13 @@ from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
+from importer.management.commands.utils import clean_duty_sentence
+from importer.management.commands.utils import clean_item_id
+from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import SeasonalRateParser
-from importer.management.commands.utils import clean_duty_sentence
-from importer.management.commands.utils import clean_item_id
-from importer.management.commands.utils import col
 from measures.models import MeasureType
 from regulations.models import Group
 from regulations.models import Regulation
@@ -146,7 +146,9 @@ class TradeDisputesImporter(RowsImporter):
             matched_old_rows, goods_nomenclature
         )
         footnote_list = [row.footnotes for row in matched_old_rows]
-        footnote_ids = list(set([footnote for sublist in footnote_list for footnote in sublist]))
+        footnote_ids = list(
+            set([footnote for sublist in footnote_list for footnote in sublist])
+        )
         footnote_ids.sort()
         footnotes = [
             Footnote.objects.as_at(BREXIT).get(

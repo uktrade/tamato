@@ -23,19 +23,23 @@ from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.duty_sentence_parser import DutySentenceParser
-from importer.management.commands.utils import blank, clean_item_id, convert_eur_to_gbp
+from importer.management.commands.utils import blank
+from importer.management.commands.utils import clean_item_id
+from importer.management.commands.utils import convert_eur_to_gbp
 from importer.management.commands.utils import Counter
 from importer.management.commands.utils import maybe_max
 from importer.management.commands.utils import maybe_min
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import SeasonalRateParser
-from measures.models import FootnoteAssociationMeasure, MonetaryUnit, MeasureComponent
+from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureAction
+from measures.models import MeasureComponent
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
+from measures.models import MonetaryUnit
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
@@ -109,8 +113,9 @@ class MeasureCreatingPattern:
         self.measure_sid_counter = measure_sid_counter
         self.measure_condition_sid_counter = measure_condition_sid_counter
 
-    def get_default_measure_conditions(self, measure: Measure) \
-            -> List[MeasureCondition]:
+    def get_default_measure_conditions(
+        self, measure: Measure
+    ) -> List[MeasureCondition]:
         presentation_of_certificate = MeasureConditionCode.objects.get(
             code="B",
         )
@@ -143,11 +148,12 @@ class MeasureCreatingPattern:
                 action=subheading_not_allowed,
                 update_type=UpdateType.CREATE,
                 workbasket=self.workbasket,
-            )
+            ),
         ]
 
-    def get_measure_components_from_duty_rate(self, measure: Measure, rate: str) \
-            -> List[MeasureComponent]:
+    def get_measure_components_from_duty_rate(
+        self, measure: Measure, rate: str
+    ) -> List[MeasureComponent]:
         try:
             components = []
             for component in self.duty_sentence_parser.parse(rate):
@@ -160,11 +166,10 @@ class MeasureCreatingPattern:
             logger.error(f"Explosion parsing {rate}")
             raise ex
 
-    def get_measure_excluded_geographical_areas(self, measure: Measure, geo_exclusion: Optional[str] = None) \
-            -> MeasureExcludedGeographicalArea:
-        exclusion = (
-            self.exclusion_areas[geo_exclusion.strip()]
-        )
+    def get_measure_excluded_geographical_areas(
+        self, measure: Measure, geo_exclusion: Optional[str] = None
+    ) -> MeasureExcludedGeographicalArea:
+        exclusion = self.exclusion_areas[geo_exclusion.strip()]
         return MeasureExcludedGeographicalArea(
             modified_measure=measure,
             excluded_geographical_area=exclusion,
@@ -172,8 +177,9 @@ class MeasureCreatingPattern:
             workbasket=self.workbasket,
         )
 
-    def get_measure_footnotes(self, measure: Measure, footnotes: List[Footnote]) \
-            -> List[FootnoteAssociationMeasure]:
+    def get_measure_footnotes(
+        self, measure: Measure, footnotes: List[Footnote]
+    ) -> List[FootnoteAssociationMeasure]:
         footnote_measures = []
         for footnote in footnotes:
             footnote_measures.append(
@@ -230,7 +236,9 @@ class MeasureCreatingPattern:
             yield new_measure
 
             if geo_exclusion:
-                yield self.get_measure_exluded_geographical_areas(new_measure, geo_exclusion)
+                yield self.get_measure_exluded_geographical_areas(
+                    new_measure, geo_exclusion
+                )
 
             for footnote in self.get_measure_footnotes(new_measure, footnotes):
                 yield footnote
@@ -248,7 +256,9 @@ class MeasureCreatingPattern:
                 for condition in self.get_default_measure_conditions(new_measure):
                     yield condition
 
-            for component in self.get_measure_components_from_duty_rate(new_measure, rate):
+            for component in self.get_measure_components_from_duty_rate(
+                new_measure, rate
+            ):
                 yield component
 
 

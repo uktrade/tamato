@@ -15,7 +15,8 @@ from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
 from additional_codes.models import AdditionalCode
-from certificates.models import CertificateType, Certificate
+from certificates.models import Certificate
+from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
@@ -29,18 +30,28 @@ from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
-from importer.management.commands.utils import EnvelopeSerializer, clean_regulation, \
-    parse_trade_remedies_duty_expression, \
-    Expression
-from importer.management.commands.utils import MeasureTypeSlicer
-from importer.management.commands.utils import NomenclatureTreeCollector
-from importer.management.commands.utils import SeasonalRateParser
 from importer.management.commands.utils import clean_duty_sentence
 from importer.management.commands.utils import clean_item_id
+from importer.management.commands.utils import clean_regulation
 from importer.management.commands.utils import col
-from measures.models import MeasureType, MeasureCondition, MeasureComponent, Measure, MeasureAction, \
-    MeasureConditionCode, DutyExpression, MonetaryUnit, MeasurementUnit, MeasurementUnitQualifier, Measurement, \
-    MeasureConditionComponent
+from importer.management.commands.utils import EnvelopeSerializer
+from importer.management.commands.utils import Expression
+from importer.management.commands.utils import MeasureTypeSlicer
+from importer.management.commands.utils import NomenclatureTreeCollector
+from importer.management.commands.utils import parse_trade_remedies_duty_expression
+from importer.management.commands.utils import SeasonalRateParser
+from measures.models import DutyExpression
+from measures.models import Measure
+from measures.models import MeasureAction
+from measures.models import MeasureComponent
+from measures.models import MeasureCondition
+from measures.models import MeasureConditionCode
+from measures.models import MeasureConditionComponent
+from measures.models import Measurement
+from measures.models import MeasurementUnit
+from measures.models import MeasurementUnitQualifier
+from measures.models import MeasureType
+from measures.models import MonetaryUnit
 from quotas.models import QuotaOrderNumber
 from regulations.models import Group
 from regulations.models import Regulation
@@ -58,7 +69,9 @@ class NewRow:
         self.duty_rate = clean_duty_sentence(new_row[col("J")])
         self.maintained = new_row[col("N")].value
         self.regulation_id = clean_regulation(new_row[col("I")])
-        self.geo_area = GeographicalArea.objects.as_at(BREXIT).get(area_id=new_row[col("K")].value)
+        self.geo_area = GeographicalArea.objects.as_at(BREXIT).get(
+            area_id=new_row[col("K")].value
+        )
         self.measure_type = int(new_row[col("L")].value)
         self.additional_code = new_row[col("B")].value
 
@@ -74,122 +87,121 @@ class NewRow:
 
 
 class TRMeasureCreatingPattern(MeasureCreatingPattern):
+    def create(
+        self,
+        goods_nomenclature: GoodsNomenclature,
+        geography: GeographicalArea,
+        new_measure_type: MeasureType,
+        order_number: Optional[QuotaOrderNumber] = None,
+        additional_code: AdditionalCode = None,
+        validity_start: datetime = None,
+        validity_end: datetime = None,
+        footnotes: List[Footnote] = [],
+        measure_expressions: List[Expression] = [],
+    ) -> Iterator[TrackedModel]:
+        new_measure = Measure(
+            sid=self.measure_sid_counter(),
+            measure_type=new_measure_type,
+            geographical_area=geography,
+            goods_nomenclature=goods_nomenclature,
+            valid_between=DateTimeTZRange(validity_start, validity_end),
+            generating_regulation=self.generating_regulation,
+            terminating_regulation=(
+                self.generating_regulation if validity_end is not None else None
+            ),
+            order_number=order_number,
+            additional_code=additional_code,
+            update_type=UpdateType.CREATE,
+            workbasket=self.workbasket,
+        )
+        yield new_measure
 
-        def create(
-            self,
-            goods_nomenclature: GoodsNomenclature,
-            geography: GeographicalArea,
-            new_measure_type: MeasureType,
-            order_number: Optional[QuotaOrderNumber] = None,
-            additional_code: AdditionalCode = None,
-            validity_start: datetime = None,
-            validity_end: datetime = None,
-            footnotes: List[Footnote] = [],
-            measure_expressions: List[Expression] = [],
-        ) -> Iterator[TrackedModel]:
-            new_measure = Measure(
-                sid=self.measure_sid_counter(),
-                measure_type=new_measure_type,
-                geographical_area=geography,
-                goods_nomenclature=goods_nomenclature,
-                valid_between=DateTimeTZRange(validity_start, validity_end),
-                generating_regulation=self.generating_regulation,
-                terminating_regulation=(
-                    self.generating_regulation if validity_end is not None else None
-                ),
-                order_number=order_number,
-                additional_code=additional_code,
-                update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
-            )
-            yield new_measure
+        for footnote in self.get_measure_footnotes(new_measure, footnotes):
+            yield footnote
 
-            for footnote in self.get_measure_footnotes(new_measure, footnotes):
-                yield footnote
-
-            component_sequence_number = 1
-            for expression in measure_expressions:
-                if expression.condition:
-                    # Create measure condition
-                    condition = expression.condition
-                    measure_condition_code = MeasureConditionCode.objects.get(
-                        code=condition.condition_code,
-                    )
-                    action = MeasureAction.objects.get(
-                        code=condition.action_code,
-                    )
-                    if condition.certificate:
-                        certificate = Certificate.objects.get(
-                            sid=condition.certificate_code,
-                            certificate_type=CertificateType.objects.get(
-                                sid=condition.certificate_type_code
-                            ),
-                        )
-                    condition = MeasureCondition(
-                        sid=self.measure_condition_sid_counter(),
-                        dependent_measure=new_measure,
-                        component_sequence_number=component_sequence_number,
-                        condition_code=measure_condition_code,
-                        required_certificate=certificate if condition.certificate else None,
-                        action=action,
-                        update_type=UpdateType.CREATE,
-                        workbasket=self.workbasket,
-                    )
-                    component_sequence_number += 1
-                    yield condition
-
-                # Create measure component
-                component = expression.component
-                duty_expression = DutyExpression.objects.get(
-                    sid=component.duty_expression_id,
+        component_sequence_number = 1
+        for expression in measure_expressions:
+            if expression.condition:
+                # Create measure condition
+                condition = expression.condition
+                measure_condition_code = MeasureConditionCode.objects.get(
+                    code=condition.condition_code,
                 )
-                monetary_unit = None
-                if component.monetary_unit_code and component.monetary_unit_code != '%':
-                    monetary_unit = MonetaryUnit.objects.get(
-                        code=component.monetary_unit_code
+                action = MeasureAction.objects.get(
+                    code=condition.action_code,
+                )
+                if condition.certificate:
+                    certificate = Certificate.objects.get(
+                        sid=condition.certificate_code,
+                        certificate_type=CertificateType.objects.get(
+                            sid=condition.certificate_type_code
+                        ),
                     )
-                measurement = None
-                if component.measurement_unit_code:
-                    measurement_unit = MeasurementUnit.objects.get(
-                        code=component.measurement_unit_code
-                    )
-                    measurement_unit_qualifier = None
-                    if component.measurement_unit_qualifier_code:
-                        measurement_unit_qualifier = MeasurementUnitQualifier.objects.get(
-                            code=component.measurement_unit_qualifier_code,
-                        )
-                    measurement = Measurement.objects.get(
-                        measurement_unit=measurement_unit,
-                        measurement_unit_qualifier=measurement_unit_qualifier,
-                    )
+                condition = MeasureCondition(
+                    sid=self.measure_condition_sid_counter(),
+                    dependent_measure=new_measure,
+                    component_sequence_number=component_sequence_number,
+                    condition_code=measure_condition_code,
+                    required_certificate=certificate if condition.certificate else None,
+                    action=action,
+                    update_type=UpdateType.CREATE,
+                    workbasket=self.workbasket,
+                )
+                component_sequence_number += 1
+                yield condition
 
-                if expression.condition:
-                    yield MeasureConditionComponent(
-                        condition=condition,
-                        duty_expression=duty_expression,
-                        duty_amount=component.duty_amount,
-                        monetary_unit=monetary_unit,
-                        condition_component_measurement=measurement,
-                        update_type=UpdateType.CREATE,
-                        workbasket=self.workbasket,
+            # Create measure component
+            component = expression.component
+            duty_expression = DutyExpression.objects.get(
+                sid=component.duty_expression_id,
+            )
+            monetary_unit = None
+            if component.monetary_unit_code and component.monetary_unit_code != "%":
+                monetary_unit = MonetaryUnit.objects.get(
+                    code=component.monetary_unit_code
+                )
+            measurement = None
+            if component.measurement_unit_code:
+                measurement_unit = MeasurementUnit.objects.get(
+                    code=component.measurement_unit_code
+                )
+                measurement_unit_qualifier = None
+                if component.measurement_unit_qualifier_code:
+                    measurement_unit_qualifier = MeasurementUnitQualifier.objects.get(
+                        code=component.measurement_unit_qualifier_code,
                     )
-                else:
-                    yield MeasureComponent(
-                        duty_expression=duty_expression,
-                        duty_amount=component.duty_amount,
-                        monetary_unit=monetary_unit,
-                        component_measure=new_measure,
-                        component_measurement=measurement,
-                        update_type=UpdateType.CREATE,
-                        workbasket=self.workbasket,
-                    )
+                measurement = Measurement.objects.get(
+                    measurement_unit=measurement_unit,
+                    measurement_unit_qualifier=measurement_unit_qualifier,
+                )
+
+            if expression.condition:
+                yield MeasureConditionComponent(
+                    condition=condition,
+                    duty_expression=duty_expression,
+                    duty_amount=component.duty_amount,
+                    monetary_unit=monetary_unit,
+                    condition_component_measurement=measurement,
+                    update_type=UpdateType.CREATE,
+                    workbasket=self.workbasket,
+                )
+            else:
+                yield MeasureComponent(
+                    duty_expression=duty_expression,
+                    duty_amount=component.duty_amount,
+                    monetary_unit=monetary_unit,
+                    component_measure=new_measure,
+                    component_measurement=measurement,
+                    update_type=UpdateType.CREATE,
+                    workbasket=self.workbasket,
+                )
 
 
 class TradeRemediesImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
         self.measure_types = {
             552: MeasureType.objects.get(sid="552"),
-            554: MeasureType.objects.get(sid="554")
+            554: MeasureType.objects.get(sid="554"),
         }
         self.measure_slicer = MeasureTypeSlicer[OldMeasureRow, NewRow](
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],
@@ -251,7 +263,7 @@ class TradeRemediesImporter(RowsImporter):
                 ), f"{row.measure_type} not in {self.measure_types}"
                 assert row.order_number is None
                 geo_areas.add(row.geo_sid)
-                assert len(geo_areas) == 1, 'All geo_areas in buffer need to be same'
+                assert len(geo_areas) == 1, "All geo_areas in buffer need to be same"
                 logger.debug("End-dating measure: %s", row.measure_sid)
                 yield list(
                     self.measure_ender.end_date_measure(row, self.generating_regulation)
@@ -281,7 +293,9 @@ class TradeRemediesImporter(RowsImporter):
             matched_old_rows, goods_nomenclature
         )
         footnote_list = [row.footnotes for row in matched_old_rows]
-        footnote_ids = list(set([footnote for sublist in footnote_list for footnote in sublist]))
+        footnote_ids = list(
+            set([footnote for sublist in footnote_list for footnote in sublist])
+        )
         footnote_ids.sort()
         footnotes = [
             Footnote.objects.as_at(BREXIT).get(
@@ -290,15 +304,26 @@ class TradeRemediesImporter(RowsImporter):
             for f in footnote_ids
         ]
 
-        additional_code_list = list(set([row.additional_code_sid for row in matched_old_rows if row.additional_code_sid]))
-        assert len(additional_code_list) <= 1   # no multiple additional codes allowed in same run
-        additional_code = AdditionalCode.objects.get(
-            sid=additional_code_list[0]
-        ) if additional_code_list else None
+        additional_code_list = list(
+            set(
+                [
+                    row.additional_code_sid
+                    for row in matched_old_rows
+                    if row.additional_code_sid
+                ]
+            )
+        )
+        assert (
+            len(additional_code_list) <= 1
+        )  # no multiple additional codes allowed in same run
+        additional_code = (
+            AdditionalCode.objects.get(sid=additional_code_list[0])
+            if additional_code_list
+            else None
+        )
 
         parsed_measure_expressions = parse_trade_remedies_duty_expression(
-            new_row.duty_rate,
-            eur_gbp_conversion_rate=EUR_GBP_CONVERSION_RATE
+            new_row.duty_rate, eur_gbp_conversion_rate=EUR_GBP_CONVERSION_RATE
         )
         yield list(
             self.measure_creator.create(
@@ -403,38 +428,41 @@ class Command(BaseCommand):
                 for _ in range(options["old_skip_rows"]):
                     next(old_rows)
 
-                measure_sid_counter = counter_generator(
-                    options["measure_sid"]
-                )
+                measure_sid_counter = counter_generator(options["measure_sid"])
                 measure_condition_sid_counter = counter_generator(
                     options["measure_condition_sid"]
                 )
 
                 # Split by addional code, origin code, measure_type groups
-                new_groups = _split_groups(list(new_rows), 'A', ['B', 'K', 'L'])
-                old_groups = _split_groups(list(old_rows), 'B', ['W', 'L', 'I'])
+                new_groups = _split_groups(list(new_rows), "A", ["B", "K", "L"])
+                old_groups = _split_groups(list(old_rows), "B", ["W", "L", "I"])
                 logger.debug(new_groups.keys())
                 logger.debug(old_groups.keys())
 
-                group_ids = OrderedSet(list(old_groups.keys()) + list(new_groups.keys()))
+                group_ids = OrderedSet(
+                    list(old_groups.keys()) + list(new_groups.keys())
+                )
                 for i, group_by_id in enumerate(group_ids):
                     new_group_rows = new_groups.get(group_by_id, [])
                     old_group_rows = old_groups.get(group_by_id, [])
                     logger.debug(
-                        f'processing group {group_by_id}: {i+1}/{len(group_ids)} with '
-                        f'{len(new_group_rows)} new rows and {len(old_group_rows)} old rows'
+                        f"processing group {group_by_id}: {i+1}/{len(group_ids)} with "
+                        f"{len(new_group_rows)} new rows and {len(old_group_rows)} old rows"
                     )
                     importer = TradeRemediesImporter(workbasket, env, first_run=i == 0)
                     importer.counters["measure_sid_counter"] = measure_sid_counter
-                    importer.counters["measure_condition_sid_counter"] = measure_condition_sid_counter
+                    importer.counters[
+                        "measure_condition_sid_counter"
+                    ] = measure_condition_sid_counter
                     importer.import_sheets(
                         (NewRow(row) for row in new_group_rows),
                         (OldMeasureRow(row) for row in old_group_rows),
                     )
 
 
-def _split_groups(rows: List[List[Cell]], item_column: str, group_by_columns: List[str]) \
-        -> OrderedDict:
+def _split_groups(
+    rows: List[List[Cell]], item_column: str, group_by_columns: List[str]
+) -> OrderedDict:
     """
     Group rows by group_by_columns and sort ascending on item ID (requirement for dual row runner)
 
@@ -453,9 +481,8 @@ def _split_groups(rows: List[List[Cell]], item_column: str, group_by_columns: Li
             except ValueError:
                 value = str(row[col(column)].value)
             group_by_values.append(value)
-        group_by_id = '|'.join(group_by_values)
+        group_by_id = "|".join(group_by_values)
         group_rows = groups.get(group_by_id, [])
         group_rows.append(row)
         groups[group_by_id] = group_rows
     return groups
-
