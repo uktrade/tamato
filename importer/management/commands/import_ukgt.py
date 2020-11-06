@@ -71,7 +71,7 @@ class UKGTImporter(RowsImporter):
         third_country_duty = cast(MeasureType, MeasureType.objects.get(sid="103"))
         self.mfn_authorised_use = cast(MeasureType, MeasureType.objects.get(sid="105"))
         self.measure_types = {
-            int(m.sid): m for m in [third_country_duty, self.mfn_authorised_use]
+            str(m.sid): m for m in [third_country_duty, self.mfn_authorised_use]
         }
         self.measure_slicer = MeasureTypeSlicer[OldMeasureRow, NewRow](
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],

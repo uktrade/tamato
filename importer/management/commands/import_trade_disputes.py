@@ -58,7 +58,7 @@ class NewRow:
 
 class TradeDisputesImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
-        self.measure_types = {695: MeasureType.objects.get(sid="695")}
+        self.measure_types = {"695": MeasureType.objects.get(sid="695")}
         self.measure_slicer = MeasureTypeSlicer[OldMeasureRow, NewRow](
             get_old_measure_type=lambda r: self.measure_types[r.measure_type],
             get_goods_nomenclature=lambda r: r.goods_nomenclature,

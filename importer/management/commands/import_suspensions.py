@@ -63,7 +63,7 @@ class NewRow:
 class AutonomousSuspensionImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
         self.measure_types = {
-            int(m.sid): m
+            str(m.sid): m
             for m in [
                 MeasureType.objects.get(sid="112"),
                 MeasureType.objects.get(sid="115"),
@@ -175,7 +175,7 @@ class AutonomousSuspensionImporter(RowsImporter):
                 geography=self.erga_omnes,
                 goods_nomenclature=goods_nomenclature,
                 new_measure_type=new_measure_type,
-                authorised_use=(new_measure_type == self.measure_types[115]),
+                authorised_use=(new_measure_type == self.measure_types["115"]),
                 validity_start=BREXIT,
                 validity_end=BREXIT.replace(year=2022) - timedelta(days=1),
                 footnotes=footnotes,

@@ -2,6 +2,8 @@ import logging
 from abc import ABCMeta
 from abc import abstractmethod
 from datetime import datetime
+from typing import Dict
+from typing import Generic
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -12,6 +14,7 @@ from django.db import transaction
 from common.models import TrackedModel
 from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.patterns import BREXIT
+from importer.management.commands.patterns import Counter
 from importer.management.commands.utils import EnvelopeSerializer
 from measures.models import DutyExpression
 from measures.models import Measurement
@@ -30,6 +33,7 @@ class RowsImporter(metaclass=ABCMeta):
         workbasket: WorkBasket,
         serializer: EnvelopeSerializer,
         forward_time: datetime = BREXIT,
+        counters: Dict[str, Counter] = {},
         first_run: bool = True,
     ) -> None:
         self.workbasket = workbasket
@@ -54,7 +58,7 @@ class RowsImporter(metaclass=ABCMeta):
             duty_expressions, monetary_units, permitted_measurements
         )
 
-        self.counters = {}
+        self.counters = counters
         self.last_new_item_id = None
         self.last_old_item_id = None
 
