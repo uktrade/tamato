@@ -20,7 +20,7 @@ class WorkBasketSerializer(serializers.ModelSerializer):
         return None
 
     def get_envelope_id(self, object: models.WorkBasket):
-        return object.pk
+        return str(object.pk).zfill(6)
 
     class Meta:
         model = models.WorkBasket
