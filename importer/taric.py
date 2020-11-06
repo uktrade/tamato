@@ -77,7 +77,9 @@ class Envelope(ElementParser):
     tag = Tag("envelope", prefix=ENVELOPE)
     transaction = Transaction(many=True)
 
-    def __init__(self, workbasket_status=None, tamato_username=None, save: bool = True, **kwargs):
+    def __init__(
+        self, workbasket_status=None, tamato_username=None, save: bool = True, **kwargs
+    ):
         super().__init__(**kwargs)
         self.last_transaction_id = -1
         self.workbasket_status = workbasket_status

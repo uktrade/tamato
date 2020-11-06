@@ -309,7 +309,7 @@ class MeasureEndingPattern:
         self,
         workbasket: WorkBasket,
         measure_types: Dict[str, MeasureType] = {},
-        geo_areas: Dict[int, GeographicalArea] = {},
+        geo_areas: Dict[str, GeographicalArea] = {},
         ensure_unique: bool = True,
     ) -> None:
         self.workbasket = workbasket

@@ -107,8 +107,8 @@ class UKGTImporter(RowsImporter):
                 "approved": False,
                 "valid_between": self.brexit_to_infinity,
                 "workbasket": self.workbasket,
-                "update_type": UpdateType.CREATE
-            }
+                "update_type": UpdateType.CREATE,
+            },
         )
         if created:
             yield self.ukgt_si
@@ -175,21 +175,23 @@ class UKGTImporter(RowsImporter):
             new_measure_type = self.measure_slicer.get_measure_type(
                 matched_old_rows, goods_nomenclature
             )
-            yield list(self.measure_creator.create(
-                duty_sentence=self.clean_duty_sentence(
-                    self.select_rate_on_trade_remedy(row)
-                ),
-                goods_nomenclature=goods_nomenclature,
-                geography=self.erga_omnes,
-                new_measure_type=new_measure_type,
-                authorised_use=(new_measure_type == self.mfn_authorised_use),
-                validity_start=BREXIT,
-                additional_code=(
-                    self.additional_codes[row.additional_code]
-                    if row.additional_code
-                    else None
-                ),
-            ))
+            yield list(
+                self.measure_creator.create(
+                    duty_sentence=self.clean_duty_sentence(
+                        self.select_rate_on_trade_remedy(row)
+                    ),
+                    goods_nomenclature=goods_nomenclature,
+                    geography=self.erga_omnes,
+                    new_measure_type=new_measure_type,
+                    authorised_use=(new_measure_type == self.mfn_authorised_use),
+                    validity_start=BREXIT,
+                    additional_code=(
+                        self.additional_codes[row.additional_code]
+                        if row.additional_code
+                        else None
+                    ),
+                )
+            )
 
 
 class Command(BaseCommand):
@@ -271,8 +273,14 @@ class Command(BaseCommand):
 
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
         new_worksheet = new_workbook.sheet_by_name(options["new_sheet"])
-        old_workbook = xlrd.open_workbook(options["old-spreadsheet"]) if options["old-spreadsheet"] else None
-        old_worksheet = old_workbook.sheet_by_name(options["old_sheet"]) if old_workbook else None
+        old_workbook = (
+            xlrd.open_workbook(options["old-spreadsheet"])
+            if options["old-spreadsheet"]
+            else None
+        )
+        old_worksheet = (
+            old_workbook.sheet_by_name(options["old_sheet"]) if old_workbook else None
+        )
 
         workbasket, _ = WorkBasket.objects.get_or_create(
             title=f"UK Global Tariff",
@@ -306,5 +314,7 @@ class Command(BaseCommand):
 
                 importer.import_sheets(
                     (NewRow(row) for row in new_rows),
-                    (OldMeasureRow(row) for row in old_rows) if old_rows else iter([None]),
+                    (OldMeasureRow(row) for row in old_rows)
+                    if old_rows
+                    else iter([None]),
                 )

@@ -12,23 +12,25 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 from xml.etree.ElementTree import Element
 from xml.etree.ElementTree import ElementTree
 
 import xlrd
 from django.core.management import BaseCommand
+from typing_extensions import Literal
 from xlrd.sheet import Cell
 
 from commodities.models import GoodsNomenclature
 from common.renderers import counter_generator
 from importer.management.commands.patterns import BREXIT
-from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import Counter
+from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.patterns import parse_date
-from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import col
+from importer.management.commands.utils import EnvelopeSerializer
 from importer.namespaces import nsmap
 from importer.parsers import ElementParser
 from importer.taric import Envelope
@@ -244,15 +246,16 @@ class PassiveMeasureFilter:
                 return reg
         return None
 
-    def update_measure(self, xml: Element, tag: str, value: str):
+    Tags = Union[
+        Literal["oub:validity.end.date"],
+        Literal["oub:justification.regulation.role"],
+        Literal["oub:justification.regulation.id"],
+    ]
+
+    def update_measure(self, xml: Element, tag: Tags, value: str):
         """Set the tag in the measure XML to the new value. If the tag does not
         exist, create a new tag and add it before the "stopped.flag" element (so
         we assume we are adding end date or justification regulation)"""
-        assert tag in [
-            "oub:validity.end.date",
-            "oub:justification.regulation.role",
-            "oub:justification.regulation.id",
-        ]
         element = xml.find(tag, nsmap)
         if element is None:
             stopped = xml.find("oub:stopped.flag", nsmap)

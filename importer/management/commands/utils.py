@@ -417,8 +417,7 @@ class NomenclatureTreeCollector(Generic[Row]):
                         parent[0]
                         .indents.as_at(self.date)
                         .get()
-                        .nodes.filter(valid_between__contains=self.date)
-                        .get()
+                        .nodes.get(valid_between__contains=self.date)
                         .get_children()
                         .filter(valid_between__contains=self.date)
                     ):
@@ -474,8 +473,7 @@ class NomenclatureTreeCollector(Generic[Row]):
                 node.indent.indented_goods_nomenclature.sid
                 for node in cc.indents.as_at(self.date)
                 .get()
-                .nodes.filter(valid_between__contains=self.date)
-                .get()
+                .nodes.get(valid_between__contains=self.date)
                 .get_descendants()
                 .filter(valid_between__contains=self.date)
             ),

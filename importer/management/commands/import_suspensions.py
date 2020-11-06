@@ -161,7 +161,7 @@ class AutonomousSuspensionImporter(RowsImporter):
             matched_old_rows, goods_nomenclature
         )
 
-        footnote_ids = set(*[r.footnotes for r in matched_old_rows])
+        footnote_ids = set(r.footnotes for r in matched_old_rows)
         footnotes = [
             Footnote.objects.as_at(BREXIT).get(
                 footnote_id=f[2:], footnote_type__footnote_type_id=f[0:2]

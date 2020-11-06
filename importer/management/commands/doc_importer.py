@@ -27,6 +27,10 @@ OldRow = TypeVar("OldRow")
 NewRow = TypeVar("NewRow")
 
 
+class RowsOutOfOrderException(Exception):
+    pass
+
+
 class RowsImporter(metaclass=ABCMeta):
     def __init__(
         self,
@@ -82,16 +86,22 @@ class RowsImporter(metaclass=ABCMeta):
         if old_row is None:
             return 1
 
-        if self.last_old_item_id is not None:
-            assert (
-                self.last_old_item_id <= old_row.item_id
-            ), f"Old rows out of order around {old_row.item_id}"
+        if (
+            self.last_old_item_id is not None
+            and not self.last_old_item_id <= old_row.item_id
+        ):
+            raise RowsOutOfOrderException(
+                f"Old rows out of order around {old_row.item_id}"
+            )
         self.last_old_item_id = old_row.item_id
 
-        if self.last_new_item_id is not None:
-            assert (
-                self.last_new_item_id <= new_row.item_id
-            ), f"New rows out of order around {new_row.item_id}"
+        if (
+            self.last_new_item_id is not None
+            and not self.last_new_item_id <= new_row.item_id
+        ):
+            raise RowsOutOfOrderException(
+                f"New rows out of order around {new_row.item_id}"
+            )
         self.last_new_item_id = new_row.item_id
 
         logger.debug(
@@ -166,8 +176,6 @@ class RowsImporter(metaclass=ABCMeta):
 
     def _save_and_render_transaction(self, transaction: List[TrackedModel]) -> None:
         for model in transaction:
-            # model.clean_fields()
-            # model.save()
             logger.debug("%s: %s", type(model), model.__dict__)
         if any(transaction):
             self.serializer.render_transaction(transaction)
