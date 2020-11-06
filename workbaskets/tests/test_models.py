@@ -8,6 +8,8 @@ from common.tests.factories import (
     RegulationFactory,
     FootnoteTypeFactory,
 )
+from footnotes.models import FootnoteType
+from regulations.models import Regulation, Group
 from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
@@ -16,28 +18,37 @@ pytestmark = pytest.mark.django_db
 def test_ordering_of_workbasket_items(approved_workbasket):
     """
     By default Workbasket.tracked_models is unsorted, verify
-    that calling prefetch_ordered_tracked_models sorts them
-    by record_code, subrecord_code.
+    calling prefetch_ordered_tracked_models sorts items
+    by ascending record_code, subrecord_code.
     """
-    # Add items to workbasket with record codes that are not sorted:
-    regulation_group = RegulationGroupFactory()
-    RegulationFactory(workbasket=approved_workbasket, regulation_group=regulation_group)
-    FootnoteTypeFactory(workbasket=approved_workbasket)
+    # Add items to workbasket with record codes that are not sorted
+    # Note:  regulation.Regulation implicitly creates a regulation.Group
+    RegulationFactory.create(workbasket=approved_workbasket)
+    FootnoteTypeFactory.create(workbasket=approved_workbasket)
 
     unsorted_items = approved_workbasket.tracked_models.all()
+    # Assert types as a sanity check.
+    assertQuerysetEqual(
+        unsorted_items,
+        (Regulation, Group, FootnoteType),
+        transform=lambda o: o.__class__,
+        ordered=False,
+    )
+
     sorted_items = (
         WorkBasket.objects.prefetch_ordered_tracked_models()
         .get(id=approved_workbasket.id)
         .tracked_models.all()
     )
 
+    # Test sorting works as expected.
     with raises(AssertionError):
-        # This will only happen if this test or (more likely)
-        # the classes, it references are edited.
+        # objects is not sorted by default.
         assertQuerysetEqual(sorted_items, unsorted_items, transform=lambda o: o)
 
     assertQuerysetEqual(
         sorted_items,
         sorted(unsorted_items, key=lambda o: (o.record_code, o.subrecord_code)),
         transform=lambda o: o,
+        msg="Query did not sort items by record_code, subrecord_code.",
     )

@@ -14,6 +14,8 @@ from common.tests.factories import (
 )
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from footnotes.models import FootnoteType
+from regulations.models import Regulation, Group
 
 pytestmark = pytest.mark.django_db
 
@@ -201,13 +203,10 @@ def test_get_first_version_custom_identifier(date_ranges, model2_with_history):
     assert TestModel2.objects.get_first_version(custom_sid=model.custom_sid) == model
 
 
-def test_trackedmodel_can_attach_record_codes():
-    # Workbasket containing models with varying record codes
-    workbasket = ApprovedWorkBasketFactory()
-
-    regulation_group = RegulationGroupFactory(workbasket=workbasket)
-    RegulationFactory(workbasket=workbasket, regulation_group=regulation_group)
-    FootnoteTypeFactory(workbasket=workbasket)
+def test_trackedmodel_can_attach_record_codes(workbasket):
+    # Note:  regulation.Regulation implicitly creates a regulation.Group as well!
+    RegulationFactory.create(workbasket=workbasket)
+    FootnoteTypeFactory.create(workbasket=workbasket)
 
     tracked_models = (
         TrackedModel.objects.annotate_record_codes()
@@ -216,14 +215,19 @@ def test_trackedmodel_can_attach_record_codes():
     )
 
     expected_models = [
-        (workbasket.pk, "100", "00"),
-        (workbasket.pk, "150", "00"),
-        (workbasket.pk, "285", "00"),
+        (workbasket.pk, Regulation, "100", "00"),
+        (workbasket.pk, Group, "150", "00"),
+        (workbasket.pk, FootnoteType, "285", "00"),
     ]
 
     assertQuerysetEqual(
         tracked_models,
         expected_models,
-        transform=lambda o: (o.workbasket.pk, o.record_code, o.subrecord_code),
+        transform=lambda o: (
+            o.__class__,
+            o.workbasket.pk,
+            o.record_code,
+            o.subrecord_code,
+        ),
         ordered=False,
     )

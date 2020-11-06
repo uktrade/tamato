@@ -170,7 +170,7 @@ def validity_period_contained(date_ranges, approved_workbasket):
     return check
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def s3(settings):
     """
     Yields a fake boto3 s3 client

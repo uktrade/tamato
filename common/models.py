@@ -166,16 +166,14 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If any of the models start using a foreign key then this function will need to be updated.
         """
         return [
-            *(
-                When(
-                    Q(
-                        polymorphic_ctype__app_label=model._meta.app_label,
-                        polymorphic_ctype__model=model._meta.model_name,
-                    ),
-                    then=Value(model.record_code),
-                )
-                for model in TrackedModel.get_subclasses()
+            When(
+                Q(
+                    polymorphic_ctype__app_label=model._meta.app_label,
+                    polymorphic_ctype__model=model._meta.model_name,
+                ),
+                then=Value(model.record_code),
             )
+            for model in TrackedModel.get_subclasses()
         ]
 
     @staticmethod
@@ -197,16 +195,14 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         may be a standard class attribute or a ForeignKey.
         """
         return [
-            *(
-                When(
-                    Q(
-                        polymorphic_ctype__app_label=model._meta.app_label,
-                        polymorphic_ctype__model=model._meta.model_name,
-                    ),
-                    then=TrackedModelQuerySet._subrecord_value_or_f(model),
-                )
-                for model in TrackedModel.get_subclasses()
+            When(
+                Q(
+                    polymorphic_ctype__app_label=model._meta.app_label,
+                    polymorphic_ctype__model=model._meta.model_name,
+                ),
+                then=TrackedModelQuerySet._subrecord_value_or_f(model),
             )
+            for model in TrackedModel.get_subclasses()
         ]
 
 
