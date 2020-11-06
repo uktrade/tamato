@@ -155,7 +155,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     )
 
     def __str__(self):
-        return self.description
+        return str(self.sid)
 
     def clean(self):
         validators.validate_monetary_unit_validity_spans_definition_validity(self)
