@@ -69,10 +69,10 @@ def col(label: str) -> int:
 def clean_regulation(cell: Cell) -> str:
     regulation_id = str(cell.value)
     formats = [
-        r'Regulation (?P<part1>\d{4})/(?P<part2>\d{2})$',
-        r'Decision (?P<part1>\d{4})/(?P<part2>\d{2})$',
-        r'Information (?P<part1>\d{4})/(?P<part2>\d{2})$',
-        r'R\d{6}0$',
+        r"Regulation (?P<part1>\d{4})/(?P<part2>\d{2})$",
+        r"Decision (?P<part1>\d{4})/(?P<part2>\d{2})$",
+        r"Information (?P<part1>\d{4})/(?P<part2>\d{2})$",
+        r"R\d{6}0$",
     ]
     match, match_id = None, None
     for i, format in enumerate(formats):
@@ -81,47 +81,41 @@ def clean_regulation(cell: Cell) -> str:
             match_id = i
             break
     if match_id in [0, 1, 2]:
-        part1 = match.group('part1')
-        part2 = match.group('part2')
-        return f'R{part2}{part1}0'
+        part1 = match.group("part1")
+        part2 = match.group("part2")
+        return f"R{part2}{part1}0"
     elif match_id == 3:
         return regulation_id
-    raise ValueError('Unknown regulation')
+    raise ValueError("Unknown regulation")
 
 
-Expression = namedtuple(
-    'Expression',
-    'condition component'
-)
+Expression = namedtuple("Expression", "condition component")
 condition_fields = (
-    'condition_code',
-    'certificate',
-    'certificate_type_code',
-    'certificate_code',
-    'action_code'
+    "condition_code",
+    "certificate",
+    "certificate_type_code",
+    "certificate_code",
+    "action_code",
 )
 Condition = namedtuple(
-    'Condition',
-    condition_fields,
-    defaults=(None,) * len(condition_fields)
+    "Condition", condition_fields, defaults=(None,) * len(condition_fields)
 )
 component_fields = (
-    'duty_expression_id',
-    'duty_amount',
-    'monetary_unit_code',
-    'measurement_unit_code',
-    'measurement_unit_qualifier_code'
+    "duty_expression_id",
+    "duty_amount",
+    "monetary_unit_code",
+    "measurement_unit_code",
+    "measurement_unit_qualifier_code",
 )
 Component = namedtuple(
-    'Component',
-    component_fields,
-    defaults=(None,) * len(condition_fields)
+    "Component", component_fields, defaults=(None,) * len(condition_fields)
 )
 
 
-def parse_trade_remedies_duty_expression(value: str, eur_gbp_conversion_rate: float = None)\
-        -> List[Expression]:
-    """ Parse duty expression as expressions with conditions and components:
+def parse_trade_remedies_duty_expression(
+    value: str, eur_gbp_conversion_rate: float = None
+) -> List[Expression]:
+    """Parse duty expression as expressions with conditions and components:
 
     - Measure conditions
         c1: condition.code
@@ -171,36 +165,37 @@ def parse_trade_remedies_duty_expression(value: str, eur_gbp_conversion_rate: fl
         c5: 01     m5: N/A
 
     """
+
     def create_component(match):
         return Component(
-            duty_expression_id='37' if match.group('m1') == 'NIHIL' else '01',
-            duty_amount=convert_eur_to_gbp(match.group('m2'), eur_gbp_conversion_rate)
-                if match.group('m3') == 'EUR' and eur_gbp_conversion_rate
-                else match.group('m2'),
-            monetary_unit_code='GBP'
-                if match.group('m3') == 'EUR' and eur_gbp_conversion_rate
-                else match.group('m3'),
-            measurement_unit_code=match.group('m4'),
-            measurement_unit_qualifier_code=match.group('m5'),
+            duty_expression_id="37" if match.group("m1") == "NIHIL" else "01",
+            duty_amount=convert_eur_to_gbp(match.group("m2"), eur_gbp_conversion_rate)
+            if match.group("m3") == "EUR" and eur_gbp_conversion_rate
+            else match.group("m2"),
+            monetary_unit_code="GBP"
+            if match.group("m3") == "EUR" and eur_gbp_conversion_rate
+            else match.group("m3"),
+            measurement_unit_code=match.group("m4"),
+            measurement_unit_qualifier_code=match.group("m5"),
         )
 
-    if value.startswith('Cond: '):
+    if value.startswith("Cond: "):
         regex = (
-            r'^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-(?P<c4>\d{3}) )?\((?P<c5>\d{2})\):'
-            r'(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?'
-            r'(?:(?P<m5>\S+)(?:\s|$))?'
+            r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-(?P<c4>\d{3}) )?\((?P<c5>\d{2})\):"
+            r"(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
+            r"(?:(?P<m5>\S+)(?:\s|$))?"
         )
         parsed_expressions = []
-        for entry in value.lstrip('Cond: ').split(';'):
+        for entry in value.lstrip("Cond: ").split(";"):
             entry = entry.strip()
             match = re.match(regex, entry)
             if match:
                 condition = Condition(
-                    condition_code=match.group('c1'),
-                    certificate=match.group('c2') == 'cert:',
-                    certificate_type_code=match.group('c3'),
-                    certificate_code=match.group('c4'),
-                    action_code=match.group('c5'),
+                    condition_code=match.group("c1"),
+                    certificate=match.group("c2") == "cert:",
+                    certificate_type_code=match.group("c3"),
+                    certificate_code=match.group("c4"),
+                    action_code=match.group("c5"),
                 )
                 expression = Expression(
                     condition=condition,
@@ -208,11 +203,11 @@ def parse_trade_remedies_duty_expression(value: str, eur_gbp_conversion_rate: fl
                 )
                 parsed_expressions.append(expression)
             else:
-                raise ValueError(f'Could not parse duty expression: {value}')
+                raise ValueError(f"Could not parse duty expression: {value}")
     else:
         regex = (
-            r'^(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?'
-            r'(?:(?P<m5>\S+)(?:\s|$))?'
+            r"^(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
+            r"(?:(?P<m5>\S+)(?:\s|$))?"
         )
         parsed_expressions = []
         entry = value.strip()
@@ -224,15 +219,16 @@ def parse_trade_remedies_duty_expression(value: str, eur_gbp_conversion_rate: fl
             )
             parsed_expressions.append(expression)
         else:
-            raise ValueError(f'Could not parse duty expression: {value}')
+            raise ValueError(f"Could not parse duty expression: {value}")
     return parsed_expressions
 
 
 def convert_eur_to_gbp(amount: str, conversion_rate: float) -> str:
-    """ Convert EUR amount to GBP and round down to nearest pence
-    """
-    converted_amount = floor(int(Decimal(amount) * Decimal(conversion_rate) * 100))/100
-    return '{0:.3f}'.format(converted_amount)
+    """Convert EUR amount to GBP and round down to nearest pence"""
+    converted_amount = (
+        floor(int(Decimal(amount) * Decimal(conversion_rate) * 100)) / 100
+    )
+    return "{0:.3f}".format(converted_amount)
 
 
 def clean_item_id(cell: Cell) -> str:
@@ -602,19 +598,17 @@ class EnvelopeSerializer:
         self.envelope_count += 1
 
     def end_envelope(self) -> None:
-        self.write(
-            render_to_string(template_name="common/taric/end_envelope.xml")
-        )
+        self.write(render_to_string(template_name="common/taric/end_envelope.xml"))
 
     def new_envelope(self) -> None:
-            self.end_envelope()
-            self.envelope_id += 1
-            self.message_counter = counter_generator(start=1)
-            self.start_envelope()
-            self.envelope_count += 1
+        self.end_envelope()
+        self.envelope_id += 1
+        self.message_counter = counter_generator(start=1)
+        self.start_envelope()
+        self.envelope_count += 1
 
     def write(self, string_data) -> None:
-        if self.output.mode == 'wb':
+        if self.output.mode == "wb":
             f = self.output.write(string_data.encode())
             self.envelope_size_in_mb += f / (1024 * 1024)
         else:
@@ -624,8 +618,11 @@ class EnvelopeSerializer:
 
     def render_transaction(self, models: List[TrackedModel]) -> None:
         if any(models):
-            if self.max_envelope_size_in_mb and \
-                    self.envelope_size_in_mb > self.envelope_count * self.max_envelope_size_in_mb:
+            if (
+                self.max_envelope_size_in_mb
+                and self.envelope_size_in_mb
+                > self.envelope_count * self.max_envelope_size_in_mb
+            ):
                 self.new_envelope()
 
             self.write(

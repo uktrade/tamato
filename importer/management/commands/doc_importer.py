@@ -1,5 +1,6 @@
 import logging
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from datetime import datetime
 from typing import Iterator
 from typing import List
@@ -89,7 +90,8 @@ class RowsImporter(metaclass=ABCMeta):
             ), f"New rows out of order around {new_row.item_id}"
         self.last_new_item_id = new_row.item_id
 
-        logger.debug("Comparing old %s/%s [%s] and new %s/%s [%s]",
+        logger.debug(
+            "Comparing old %s/%s [%s] and new %s/%s [%s]",
             old_row.item_id,
             old_row.goods_nomenclature.suffix if old_row.goods_nomenclature else None,
             old_row.goods_nomenclature.sid if old_row.goods_nomenclature else None,
@@ -160,8 +162,8 @@ class RowsImporter(metaclass=ABCMeta):
 
     def _save_and_render_transaction(self, transaction: List[TrackedModel]) -> None:
         for model in transaction:
-            #model.clean_fields()
-            #model.save()
+            # model.clean_fields()
+            # model.save()
             logger.debug("%s: %s", type(model), model.__dict__)
         if any(transaction):
             self.serializer.render_transaction(transaction)

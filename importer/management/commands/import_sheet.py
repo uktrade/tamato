@@ -200,8 +200,10 @@ class Command(BaseCommand):
         try:
             author = User.objects.get(username=username)
         except User.DoesNotExist:
-            sys.exit(f"Author does not exist, create user '{username}'"
-                     " or edit settings.DATA_IMPORT_USERNAME")
+            sys.exit(
+                f"Author does not exist, create user '{username}'"
+                " or edit settings.DATA_IMPORT_USERNAME"
+            )
         update_type = UpdateType.CREATE
 
         # Pull out all of the tupes and put them into a dict

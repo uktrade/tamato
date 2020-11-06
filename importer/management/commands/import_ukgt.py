@@ -1,10 +1,10 @@
 import logging
 import sys
+from typing import cast
 from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
-from typing import cast
 
 import xlrd
 from django.conf import settings
@@ -25,10 +25,10 @@ from importer.management.commands.patterns import DualRowRunner
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
+from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
-from importer.management.commands.utils import col
 from measures.models import MeasureType
 from regulations.models import Group
 from regulations.models import Regulation
