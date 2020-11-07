@@ -11,6 +11,9 @@ from footnotes.serializers import FootnoteSerializer
 from geo_areas.serializers import GeographicalAreaSerializer
 from measures import models
 from measures import validators
+from measures.unit_serializers import MeasurementSerializer
+from measures.unit_serializers import MonetaryUnitSerializer
+from quotas.serializers import QuotaOrderNumberSerializer
 from regulations.serializers import RegulationSerializer
 
 
@@ -28,95 +31,6 @@ class MeasureTypeSeriesSerializer(TrackedModelSerializerMixin, ValiditySerialize
         fields = [
             "sid",
             "measure_type_combination",
-            "description",
-            "valid_between",
-            "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
-            "start_date",
-            "end_date",
-        ]
-
-
-@TrackedModelSerializer.register_polymorphic_model
-class MeasurementUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
-    code = serializers.CharField(
-        validators=[validators.measurement_unit_code_validator]
-    )
-
-    class Meta:
-        model = models.MeasurementUnit
-        fields = [
-            "code",
-            "description",
-            "valid_between",
-            "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
-            "start_date",
-            "end_date",
-        ]
-
-
-@TrackedModelSerializer.register_polymorphic_model
-class MeasurementUnitQualifierSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
-):
-    code = serializers.CharField(
-        validators=[validators.measurement_unit_qualifier_code_validator]
-    )
-
-    class Meta:
-        model = models.MeasurementUnitQualifier
-        fields = [
-            "code",
-            "description",
-            "valid_between",
-            "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
-            "start_date",
-            "end_date",
-        ]
-
-
-@TrackedModelSerializer.register_polymorphic_model
-class MeasurementSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
-    measurement_unit = MeasurementUnitSerializer(read_only=True)
-    measurement_unit_qualifier = MeasurementUnitQualifierSerializer(read_only=True)
-
-    class Meta:
-        model = models.Measurement
-        fields = [
-            "measurement_unit",
-            "measurement_unit_qualifier",
-            "valid_between",
-            "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
-            "start_date",
-            "end_date",
-        ]
-
-
-@TrackedModelSerializer.register_polymorphic_model
-class MonetaryUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
-    code = serializers.CharField(validators=[validators.monetary_unit_code_validator])
-
-    class Meta:
-        model = models.MonetaryUnit
-        fields = [
-            "code",
             "description",
             "valid_between",
             "update_type",
@@ -283,7 +197,7 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     geographical_area = GeographicalAreaSerializer(read_only=True)
     goods_nomenclature = GoodsNomenclatureSerializer(read_only=True)
     additional_code = AdditionalCodeSerializer(read_only=True)
-    order_number = serializers.SerializerMethodField(read_only=True)
+    order_number = QuotaOrderNumberSerializer(read_only=True)
     generating_regulation = RegulationSerializer(read_only=True)
     terminating_regulation = RegulationSerializer(read_only=True)
     reduction = serializers.IntegerField(
@@ -292,10 +206,6 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     export_refund_nomenclature_sid = serializers.IntegerField(
         min_value=1, max_value=99999999, required=False
     )
-
-    def get_order_number(self, obj):
-        if obj.order_number:
-            return obj.order_number.order_number
 
     class Meta:
         model = models.Measure

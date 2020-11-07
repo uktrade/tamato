@@ -30,9 +30,15 @@ def test_quota_order_number_origin_exclusion_xml(
     assert element is not None
 
 
-@validate_taric_xml(factories.QuotaDefinitionFactory)
+@validate_taric_xml(factories.QuotaDefinitionWithQualifierFactory)
 def test_quota_definition_xml(api_client, taric_schema, approved_workbasket, xml):
     element = xml.find(".//quota.definition", xml.nsmap)
+    assert element is not None
+    element = xml.find(".//monetary.unit.code", xml.nsmap)
+    assert element is not None
+    element = xml.find(".//measurement.unit.code", xml.nsmap)
+    assert element is not None
+    element = xml.find(".//measurement.unit.qualifier.code", xml.nsmap)
     assert element is not None
 
 

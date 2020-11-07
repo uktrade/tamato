@@ -2,6 +2,7 @@ import pytest
 
 from common.tests import factories
 from common.validators import UpdateType
+from measures import unit_serializers
 from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
 from workbaskets.validators import WorkflowStatus
@@ -15,11 +16,17 @@ def test_measure_type_series_importer_create(imported_fields_match):
 
 
 def test_measurement_unit_importer_create(imported_fields_match):
-    assert imported_fields_match(factories.MeasurementUnitFactory)
+    assert imported_fields_match(
+        factories.MeasurementUnitFactory,
+        serializer=unit_serializers.MeasurementUnitSerializer,
+    )
 
 
 def test_measurement_unit_qualifier_importer_create(imported_fields_match):
-    assert imported_fields_match(factories.MeasurementUnitQualifierFactory)
+    assert imported_fields_match(
+        factories.MeasurementUnitQualifierFactory,
+        serializer=unit_serializers.MeasurementUnitQualifierSerializer,
+    )
 
 
 def test_measurement_importer_create(imported_fields_match):
@@ -29,11 +36,15 @@ def test_measurement_importer_create(imported_fields_match):
             measurement_unit_qualifier=factories.MeasurementUnitQualifierFactory(),
             update_type=UpdateType.CREATE,
         ),
+        serializer=unit_serializers.MeasurementSerializer,
     )
 
 
 def test_monetary_unit_importer_create(imported_fields_match):
-    assert imported_fields_match(factories.MonetaryUnitFactory)
+    assert imported_fields_match(
+        factories.MonetaryUnitFactory,
+        serializer=unit_serializers.MonetaryUnitSerializer,
+    )
 
 
 def test_duty_expression_importer_create(imported_fields_match):
