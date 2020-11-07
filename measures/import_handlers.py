@@ -9,6 +9,7 @@ from importer.handlers import BaseHandler
 from measures import import_parsers as parsers
 from measures import models
 from measures import serializers
+from measures import unit_serializers
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 
@@ -26,26 +27,26 @@ class MeasureTypeSeriesDescriptionHandler(BaseHandler):
 
 
 class MeasurementUnitHandler(BaseHandler):
-    serializer_class = serializers.MeasurementUnitSerializer
+    serializer_class = unit_serializers.MeasurementUnitSerializer
     tag = parsers.MeasurementUnitParser.tag.name
 
 
 @MeasurementUnitHandler.register_dependant
 class MeasurementUnitDescriptionHandler(BaseHandler):
     dependencies = [MeasurementUnitHandler]
-    serializer_class = serializers.MeasurementUnitSerializer
+    serializer_class = unit_serializers.MeasurementUnitSerializer
     tag = parsers.MeasurementUnitDescriptionParser.tag.name
 
 
 class MeasurementUnitQualifierHandler(BaseHandler):
-    serializer_class = serializers.MeasurementUnitQualifierSerializer
+    serializer_class = unit_serializers.MeasurementUnitQualifierSerializer
     tag = parsers.MeasurementUnitQualifierParser.tag.name
 
 
 @MeasurementUnitQualifierHandler.register_dependant
 class MeasurementUnitQualifierDescriptionHandler(BaseHandler):
     dependencies = [MeasurementUnitQualifierHandler]
-    serializer_class = serializers.MeasurementUnitQualifierSerializer
+    serializer_class = unit_serializers.MeasurementUnitQualifierSerializer
     tag = parsers.MeasurementUnitQualifierDescriptionParser.tag.name
 
 
@@ -61,19 +62,19 @@ class MeasurementHandler(BaseHandler):
             "name": "measurement_unit_qualifier",
         },
     )
-    serializer_class = serializers.MeasurementSerializer
+    serializer_class = unit_serializers.MeasurementSerializer
     tag = parsers.MeasurementParser.tag.name
 
 
 class MonetaryUnitHandler(BaseHandler):
-    serializer_class = serializers.MonetaryUnitSerializer
+    serializer_class = unit_serializers.MonetaryUnitSerializer
     tag = parsers.MonetaryUnitParser.tag.name
 
 
 @MonetaryUnitHandler.register_dependant
 class MonetaryUnitDescriptionHandler(BaseHandler):
     dependencies = [MonetaryUnitHandler]
-    serializer_class = serializers.MonetaryUnitSerializer
+    serializer_class = unit_serializers.MonetaryUnitSerializer
     tag = parsers.MonetaryUnitDescriptionParser.tag.name
 
 

@@ -6,9 +6,9 @@ from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
 from geo_areas.serializers import GeographicalAreaSerializer
-from measures.serializers import MeasurementUnitQualifierSerializer
-from measures.serializers import MeasurementUnitSerializer
-from measures.serializers import MonetaryUnitSerializer
+from measures.unit_serializers import MeasurementUnitQualifierSerializer
+from measures.unit_serializers import MeasurementUnitSerializer
+from measures.unit_serializers import MonetaryUnitSerializer
 from quotas import models
 
 

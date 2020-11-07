@@ -353,6 +353,38 @@ class FootnoteAssociationGoodsNomenclatureFactory(
     associated_footnote = factory.SubFactory(FootnoteFactory)
 
 
+class MeasurementUnitFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasurementUnit"
+
+    code = string_sequence(3, characters=string.ascii_uppercase)
+    description = short_description()
+
+
+class MeasurementUnitQualifierFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MeasurementUnitQualifier"
+
+    code = string_sequence(1, characters=string.ascii_uppercase)
+    description = short_description()
+
+
+class MeasurementFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.Measurement"
+
+    measurement_unit = factory.SubFactory(MeasurementUnitFactory)
+    measurement_unit_qualifier = factory.SubFactory(MeasurementUnitQualifierFactory)
+
+
+class MonetaryUnitFactory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = "measures.MonetaryUnit"
+
+    code = string_sequence(3, characters=string.ascii_uppercase)
+    description = short_description()
+
+
 class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "quotas.QuotaOrderNumber"
@@ -398,10 +430,16 @@ class QuotaDefinitionFactory(TrackedModelMixin, ValidityFactoryMixin):
     order_number = factory.SubFactory(QuotaOrderNumberFactory)
     volume = 0
     initial_volume = 0
+    monetary_unit = factory.SubFactory(MonetaryUnitFactory)
+    measurement_unit = factory.SubFactory(MeasurementUnitFactory)
     maximum_precision = 0
     quota_critical = False
     quota_critical_threshold = 80
     description = short_description()
+
+
+class QuotaDefinitionWithQualifierFactory(QuotaDefinitionFactory):
+    measurement_unit_qualifier = factory.SubFactory(MeasurementUnitQualifierFactory)
 
 
 class QuotaAssociationFactory(TrackedModelMixin):
@@ -488,38 +526,6 @@ class MeasureTypeSeriesFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     sid = string_sequence(2, characters=string.ascii_uppercase)
     measure_type_combination = factory.fuzzy.FuzzyChoice(MeasureTypeCombination.values)
-    description = short_description()
-
-
-class MeasurementUnitFactory(TrackedModelMixin, ValidityFactoryMixin):
-    class Meta:
-        model = "measures.MeasurementUnit"
-
-    code = string_sequence(3, characters=string.ascii_uppercase)
-    description = short_description()
-
-
-class MeasurementUnitQualifierFactory(TrackedModelMixin, ValidityFactoryMixin):
-    class Meta:
-        model = "measures.MeasurementUnitQualifier"
-
-    code = string_sequence(1, characters=string.ascii_uppercase)
-    description = short_description()
-
-
-class MeasurementFactory(TrackedModelMixin, ValidityFactoryMixin):
-    class Meta:
-        model = "measures.Measurement"
-
-    measurement_unit = factory.SubFactory(MeasurementUnitFactory)
-    measurement_unit_qualifier = factory.SubFactory(MeasurementUnitQualifierFactory)
-
-
-class MonetaryUnitFactory(TrackedModelMixin, ValidityFactoryMixin):
-    class Meta:
-        model = "measures.MonetaryUnit"
-
-    code = string_sequence(3, characters=string.ascii_uppercase)
     description = short_description()
 
 

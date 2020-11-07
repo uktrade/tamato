@@ -11,7 +11,7 @@
       <oub:additional.code>{{ record.additional_code.code }}</oub:additional.code>
       {%- endif -%}
       {%- if record.order_number %}
-      <oub:ordernumber>{{ record.order_number }}</oub:ordernumber>
+      <oub:ordernumber>{{ record.order_number.order_number }}</oub:ordernumber>
       {%- endif -%}
       {%- if record.reduction %}
       <oub:reduction.indicator>{{ record.reduction }}</oub:reduction.indicator>
