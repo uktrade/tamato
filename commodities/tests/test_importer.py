@@ -66,23 +66,69 @@ def test_goods_nomenclature_description_importer_create(
     assert db_object.valid_between.upper == test_object.valid_between.upper
 
 
-@requires_update_importer
-def test_goods_nomenclature_importer_create_with_origin(valid_user):
-    origin = factories.GoodsNomenclatureFactory(update_type=UpdateType.CREATE.value)
-    good = factories.GoodsNomenclatureFactory.build(
+def test_goods_nomenclature_origin_importer_create(valid_user, date_ranges):
+    origin = factories.GoodsNomenclatureFactory(
         update_type=UpdateType.CREATE.value,
-        origin__derived_from_goods_nomenclature=origin,
+        valid_between=date_ranges.big,
+        origin__derived_from_goods_nomenclature__valid_between=date_ranges.adjacent_earlier_big,
+    )
+    good = factories.GoodsNomenclatureFactory(
+        update_type=UpdateType.CREATE.value,
+        origin=None,
+    )
+    origin_link = factories.GoodsNomenclatureOriginFactory.build(
+        derived_from_goods_nomenclature=origin,
+        new_goods_nomenclature=good,
+        update_type=UpdateType.CREATE.value,
     )
 
     xml = generate_test_import_xml(
-        serializers.GoodsNomenclatureSerializer(good, context={"format": "xml"}).data
+        serializers.GoodsNomenclatureOriginSerializer(
+            origin_link, context={"format": "xml"}
+        ).data
     )
 
     import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
-    db_good = models.GoodsNomenclature.objects.get(sid=good.sid)
+    db_link = models.GoodsNomenclatureOrigin.objects.get(
+        new_goods_nomenclature__sid=good.sid
+    )
+    assert db_link
 
-    assert db_good.origins[0] == origin
+    db_good = models.GoodsNomenclature.objects.get(sid=good.sid)
+    assert db_good.origins.get() == origin
+
+
+def test_goods_nomenclature_successor_importer_create(valid_user, date_ranges):
+    good = factories.GoodsNomenclatureFactory(
+        update_type=UpdateType.CREATE.value,
+        valid_between=date_ranges.normal,
+    )
+    successor = factories.GoodsNomenclatureFactory(
+        update_type=UpdateType.CREATE.value,
+        valid_between=date_ranges.adjacent_later,
+    )
+    successor_link = factories.GoodsNomenclatureSuccessorFactory.build(
+        replaced_goods_nomenclature=good,
+        absorbed_into_goods_nomenclature=successor,
+        update_type=UpdateType.CREATE.value,
+    )
+
+    xml = generate_test_import_xml(
+        serializers.GoodsNomenclatureSuccessorSerializer(
+            successor_link, context={"format": "xml"}
+        ).data
+    )
+
+    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+
+    db_link = models.GoodsNomenclatureSuccessor.objects.get(
+        replaced_goods_nomenclature__sid=good.sid
+    )
+    assert db_link
+
+    db_good = models.GoodsNomenclature.objects.get(sid=good.sid)
+    assert db_good.successors.get() == successor
 
 
 def test_goods_nomenclature_indent_importer_create(valid_user):
