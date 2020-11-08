@@ -34,13 +34,11 @@ def test_NIG2(date_ranges, normal_good):
         indented_goods_nomenclature__valid_between=date_ranges.big,
     ).nodes.first()
     factories.GoodsNomenclatureFactory.create(
-        origin=normal_good,
         valid_between=date_ranges.adjacent_later,
     )
     with pytest.raises(ValidationError):
         factories.GoodsNomenclatureFactory.create(
             valid_between=date_ranges.adjacent_later_big,
-            origin=normal_good,
             indent__node__parent=parent,
         )
 
@@ -66,13 +64,14 @@ def test_NIG5(date_ranges):
 
     with pytest.raises(ValidationError):
         good = factories.GoodsNomenclatureFactory.create(
+            origin=None,
             valid_between=date_ranges.adjacent_later,
             indent__node__parent=parent,
         )
         good.workbasket.submit_for_approval()
 
     good = factories.GoodsNomenclatureFactory.create(
-        origin=origin,
+        origin__derived_from_goods_nomenclature=origin,
         valid_between=date_ranges.adjacent_later,
         indent__node__parent=parent,
     )
@@ -82,30 +81,71 @@ def test_NIG5(date_ranges):
 def test_NIG7(date_ranges):
     """
     The origin must be applicable the day before the start date of the new code entered.
-
-    This covers NIG10 as well
     """
 
     origin = factories.GoodsNomenclatureFactory.create(valid_between=date_ranges.normal)
     with pytest.raises(ValidationError):
         factories.GoodsNomenclatureFactory.create(
-            origin=origin, valid_between=date_ranges.later
+            origin__derived_from_goods_nomenclature=origin,
+            valid_between=date_ranges.later,
         )
     with pytest.raises(ValidationError):
         factories.GoodsNomenclatureFactory.create(
-            origin=origin, valid_between=date_ranges.earlier
+            origin__derived_from_goods_nomenclature=origin,
+            valid_between=date_ranges.earlier,
         )
     with pytest.raises(ValidationError):
         factories.GoodsNomenclatureFactory.create(
-            origin=origin, valid_between=date_ranges.adjacent_earlier
+            origin__derived_from_goods_nomenclature=origin,
+            valid_between=date_ranges.adjacent_earlier,
         )
     with pytest.raises(ValidationError):
         factories.GoodsNomenclatureFactory.create(
-            origin=origin, valid_between=date_ranges.overlap_normal
+            origin__derived_from_goods_nomenclature=origin,
+            valid_between=date_ranges.normal,
         )
 
     factories.GoodsNomenclatureFactory.create(
-        origin=origin, valid_between=date_ranges.adjacent_later
+        origin__derived_from_goods_nomenclature=origin,
+        valid_between=date_ranges.overlap_normal,
+    )
+    factories.GoodsNomenclatureFactory.create(
+        origin__derived_from_goods_nomenclature=origin,
+        valid_between=date_ranges.adjacent_later,
+    )
+
+
+def test_NIG10(date_ranges):
+    """
+    The successor must be applicable the day after the end date of the old code.
+    """
+
+    successor = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.normal
+    )
+    with pytest.raises(ValidationError):
+        factories.GoodsNomenclatureWithSuccessorFactory.create(
+            successor__absorbed_into_goods_nomenclature=successor,
+            valid_between=date_ranges.later,
+        )
+    with pytest.raises(ValidationError):
+        factories.GoodsNomenclatureWithSuccessorFactory.create(
+            successor__absorbed_into_goods_nomenclature=successor,
+            valid_between=date_ranges.earlier,
+        )
+    with pytest.raises(ValidationError):
+        factories.GoodsNomenclatureWithSuccessorFactory.create(
+            successor__absorbed_into_goods_nomenclature=successor,
+            valid_between=date_ranges.no_end,
+        )
+
+    factories.GoodsNomenclatureWithSuccessorFactory.create(
+        successor__absorbed_into_goods_nomenclature=successor,
+        valid_between=date_ranges.adjacent_earlier,
+    )
+    factories.GoodsNomenclatureWithSuccessorFactory.create(
+        successor__absorbed_into_goods_nomenclature=successor,
+        valid_between=date_ranges.overlap_normal_earlier,
     )
 
 
@@ -199,7 +239,10 @@ def test_NIG22(date_ranges):
     """
     The period of the association with a footnote must be within the validity period of the nomenclature.
     """
-    good = factories.GoodsNomenclatureFactory.create(valid_between=date_ranges.big)
+    good = factories.GoodsNomenclatureFactory.create(
+        origin__derived_from_goods_nomenclature__valid_between=date_ranges.adjacent_earlier_big,
+        valid_between=date_ranges.big,
+    )
     factories.FootnoteAssociationGoodsNomenclatureFactory(
         goods_nomenclature=good, valid_between=date_ranges.normal
     )

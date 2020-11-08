@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -60,31 +61,55 @@ def validate_has_origin(goods_nomenclature):
         or goods_nomenclature.valid_between.lower <= lower_bound
     ):
         return
-    if not goods_nomenclature.origin:
+    if not goods_nomenclature.origins.exists():
         raise ValidationError(
-            {"origin": "Non top-level goods must have an origin specified."}
+            {"origins": "Non top-level goods must have an origin specified."}
         )
 
 
-def validate_predecessor_ends_before_successor_starts(goods_nomenclature):
+def validate_derived_from_applicable_before_code_starts(origin):
     """
     NIG7
 
     By default the upper bound is exclusive whilst the lower bound is inclusive.
     So we just need to make sure the bounds match.
     """
-    predecessor = goods_nomenclature.origin
+    origin_range = origin.derived_from_goods_nomenclature.valid_between
+    starts_on = origin.new_goods_nomenclature.valid_between.lower
 
-    if not predecessor:
-        return
-
-    ends_on = predecessor.valid_between.upper
-    starts_on = goods_nomenclature.valid_between.lower
-
-    if ends_on is None or not ends_on == starts_on:
+    if (starts_on - timedelta(days=1)) not in origin_range:
         raise ValidationError(
             {
-                "valid_between": "Succeeding Goods Nomenclature must start the day after the origin ends"
+                "derived_from_goods_nomenclature": 'The "derived from" code, if entered, '
+                "must be a goods nomenclature which exists "
+                "and is applicable the day before the start date of the new code entered. "
+                f"Origin {origin_range} is not applicable on {starts_on - timedelta(days=1)}."
+            }
+        )
+
+
+def validate_absorbed_by_code_applicable_after_closing_date(successor):
+    """
+    NIG10
+    """
+    ends_on = successor.replaced_goods_nomenclature.valid_between.upper
+    successor_range = successor.absorbed_into_goods_nomenclature.valid_between
+
+    if ends_on is None:
+        raise ValidationError(
+            {
+                "absorbed_into_goods_nomenclature": "A successor can only be added "
+                "for goods nomenclature codes with a closing date."
+            }
+        )
+
+    elif ends_on + timedelta(days=1) not in successor_range:
+        raise ValidationError(
+            {
+                "absorbed_into_goods_nomenclature": 'The "absorbed by" code, if entered, '
+                "must be a goods nomenclature which exists "
+                "and is applicable the day after the closing date. "
+                f"Successor {successor_range} is not applicable on {ends_on + timedelta(days=1)}."
             }
         )
 

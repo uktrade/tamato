@@ -20,56 +20,20 @@ def test_goods_nomenclature_indent_xml(
     assert element is not None
 
 
-def goods_nomenclature_relation_test(
-    relation_name, api_client, taric_schema, approved_workbasket, date_ranges
-):
-    parent = factories.GoodsNomenclatureIndentFactory.create(
-        valid_between=date_ranges.big, workbasket=approved_workbasket
-    ).nodes.first()
-    origin = factories.GoodsNomenclatureFactory.create(
-        workbasket=approved_workbasket,
-        valid_between=date_ranges.normal,
-        indent__node__parent=parent,
-    )
-
-    @validate_taric_xml(
-        factories.GoodsNomenclatureFactory,
-        factory_kwargs={
-            "indent__node__parent": parent,
-            "origin": origin,
-            "valid_between": date_ranges.adjacent_later,
-        },
-        check_order=False,
-    )
-    def run_test(*_args, xml=None):
-        element = xml.find(relation_name, xml.nsmap)
-        assert element is not None
-
-    run_test(api_client, taric_schema, approved_workbasket)
-
-
+@validate_taric_xml(factories.GoodsNomenclatureOriginFactory)
 def test_goods_nomenclature_origin_xml(
-    api_client, taric_schema, approved_workbasket, date_ranges
+    api_client, taric_schema, approved_workbasket, xml
 ):
-    goods_nomenclature_relation_test(
-        ".//goods.nomenclature.origin",
-        api_client,
-        taric_schema,
-        approved_workbasket,
-        date_ranges,
-    )
+    element = xml.find(".//goods.nomenclature.origin", xml.nsmap)
+    assert element is not None
 
 
+@validate_taric_xml(factories.GoodsNomenclatureSuccessorFactory)
 def test_goods_nomenclature_successor_xml(
-    api_client, taric_schema, approved_workbasket, date_ranges
+    api_client, taric_schema, approved_workbasket, xml
 ):
-    goods_nomenclature_relation_test(
-        ".//goods.nomenclature.successor",
-        api_client,
-        taric_schema,
-        approved_workbasket,
-        date_ranges,
-    )
+    element = xml.find(".//goods.nomenclature.successor", xml.nsmap)
+    assert element is not None
 
 
 @validate_taric_xml(factories.GoodsNomenclatureDescriptionFactory)
