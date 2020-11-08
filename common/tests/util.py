@@ -274,6 +274,13 @@ class Dates:
         )
 
     @property
+    def adjacent_earlier_big(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(years=-2, months=-2),
+            self.now + relativedelta(years=-2),
+        )
+
+    @property
     def adjacent_later_big(self):
         return DateTimeTZRange(
             self.now + relativedelta(months=+1),

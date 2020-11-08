@@ -1,7 +1,6 @@
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.core.validators import MaxValueValidator
-from django.core.validators import MinLengthValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 from treebeard.mp_tree import MP_Node
@@ -14,10 +13,6 @@ from common.models import ValidityMixin
 class GoodsNomenclature(TrackedModel, ValidityMixin):
     record_code = "400"
     subrecord_code = "00"
-    origin_record_code = "400"
-    origin_subrecord_code = "35"
-    successor_record_code = "400"
-    successor_subrecord_code = "40"
 
     sid = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
@@ -33,13 +28,19 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
     statistical = models.BooleanField()
 
-    origin = models.ForeignKey(
+    origins = models.ManyToManyField(
         "self",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="succeeding_goods",
-        related_query_name="succeeding_goods",
+        through="GoodsNomenclatureOrigin",
+        through_fields=("new_goods_nomenclature", "derived_from_goods_nomenclature"),
+    )
+
+    successors = models.ManyToManyField(
+        "self",
+        through="GoodsNomenclatureSuccessor",
+        through_fields=(
+            "replaced_goods_nomenclature",
+            "absorbed_into_goods_nomenclature",
+        ),
     )
 
     def validate_workbasket(self):
@@ -48,14 +49,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         validators.validate_has_origin(self)
         self.full_clean()  # This means it is run twice but due to weirdness with the origin it is required.
         return super().validate_workbasket()
-
-    def clean(self):
-        validators.validate_predecessor_ends_before_successor_starts(self)
-        return super().clean()
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Goods Nomenclature: {self.item_id}"
@@ -215,10 +208,6 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
         validators.validate_description_is_not_null(self)
         return super().clean()
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
     class Meta:
         constraints = (
             ExclusionConstraint(
@@ -229,6 +218,53 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
                 ],
             ),
         )
+
+
+class GoodsNomenclatureOrigin(TrackedModel):
+    """Represents a link between a newly-created GoodsNomenclature and the codes
+    that previously represented it. This will often be the parent nomenclature
+    code. A GoodsNomenclature can have multiple origins when the hierarchy has
+    been reorganised and the new classification was previously covered by
+    multiple codes."""
+
+    record_code = "400"
+    subrecord_code = "35"
+
+    new_goods_nomenclature = models.ForeignKey(
+        GoodsNomenclature,
+        related_name="origin_links",
+        on_delete=models.PROTECT,
+    )
+    derived_from_goods_nomenclature = models.ForeignKey(
+        GoodsNomenclature,
+        on_delete=models.PROTECT,
+    )
+
+    def clean(self):
+        validators.validate_derived_from_applicable_before_code_starts(self)
+
+
+class GoodsNomenclatureSuccessor(TrackedModel):
+    """Represents a link between a end-dated GoodsNomenclature and the codes
+    that have replaced it (or in TARIC parlance have "absorbed" it). The
+    replacing codes cover the goods that this classification code previously
+    covered."""
+
+    record_code = "400"
+    subrecord_code = "40"
+
+    replaced_goods_nomenclature = models.ForeignKey(
+        GoodsNomenclature,
+        related_name="successor_links",
+        on_delete=models.PROTECT,
+    )
+    absorbed_into_goods_nomenclature = models.ForeignKey(
+        GoodsNomenclature,
+        on_delete=models.PROTECT,
+    )
+
+    def clean(self):
+        validators.validate_absorbed_by_code_applicable_after_closing_date(self)
 
 
 class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
@@ -247,7 +283,3 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
         validators.validate_footnote_validity_includes_footnote_association(self)
         validators.validate_duplicate_footnote_associations_cant_overlap(self)
         return super().clean()
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)

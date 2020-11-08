@@ -70,7 +70,8 @@ def test_goods_nomenclature_description_importer_create(
 def test_goods_nomenclature_importer_create_with_origin(valid_user):
     origin = factories.GoodsNomenclatureFactory(update_type=UpdateType.CREATE.value)
     good = factories.GoodsNomenclatureFactory.build(
-        update_type=UpdateType.CREATE.value, origin=origin
+        update_type=UpdateType.CREATE.value,
+        origin__derived_from_goods_nomenclature=origin,
     )
 
     xml = generate_test_import_xml(
@@ -81,7 +82,7 @@ def test_goods_nomenclature_importer_create_with_origin(valid_user):
 
     db_good = models.GoodsNomenclature.objects.get(sid=good.sid)
 
-    assert db_good.origin == origin
+    assert db_good.origins[0] == origin
 
 
 def test_goods_nomenclature_indent_importer_create(valid_user):

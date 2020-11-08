@@ -1,6 +1,7 @@
 """Factory classes for BDD tests."""
 import random
 import string
+from datetime import timedelta
 from decimal import Decimal
 from itertools import product
 
@@ -260,14 +261,9 @@ class SimpleGoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
     statistical = False
 
 
-class GoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
+class GoodsNomenclatureFactory(SimpleGoodsNomenclatureFactory):
     class Meta:
         model = "commodities.GoodsNomenclature"
-
-    sid = numeric_sid()
-    item_id = string_sequence(10, characters=string.digits)
-    suffix = "80"
-    statistical = False
 
     indent = factory.RelatedFactory(
         "common.tests.factories.GoodsNomenclatureIndentFactory",
@@ -281,6 +277,20 @@ class GoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
         factory_related_name="described_goods_nomenclature",
         workbasket=factory.SelfAttribute("..workbasket"),
         valid_between=factory.SelfAttribute("..valid_between"),
+    )
+
+    origin = factory.RelatedFactory(
+        "common.tests.factories.GoodsNomenclatureOriginFactory",
+        factory_related_name="new_goods_nomenclature",
+        workbasket=factory.SelfAttribute("..workbasket"),
+    )
+
+
+class GoodsNomenclatureWithSuccessorFactory(GoodsNomenclatureFactory):
+    successor = factory.RelatedFactory(
+        "common.tests.factories.GoodsNomenclatureSuccessorFactory",
+        factory_related_name="replaced_goods_nomenclature",
+        workbasket=factory.SelfAttribute("..workbasket"),
     )
 
 
@@ -341,6 +351,28 @@ class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityFactoryMixi
     sid = numeric_sid()
     described_goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
     description = short_description()
+
+
+class GoodsNomenclatureOriginFactory(TrackedModelMixin):
+    class Meta:
+        model = "commodities.GoodsNomenclatureOrigin"
+
+    new_goods_nomenclature = factory.SubFactory(SimpleGoodsNomenclatureFactory)
+    derived_from_goods_nomenclature = factory.SubFactory(
+        SimpleGoodsNomenclatureFactory, valid_between=date_ranges("big")
+    )
+
+
+class GoodsNomenclatureSuccessorFactory(TrackedModelMixin):
+    class Meta:
+        model = "commodities.GoodsNomenclatureSuccessor"
+
+    replaced_goods_nomenclature = factory.SubFactory(
+        SimpleGoodsNomenclatureFactory, valid_between=date_ranges("adjacent_earlier")
+    )
+    absorbed_into_goods_nomenclature = factory.SubFactory(
+        SimpleGoodsNomenclatureFactory
+    )
 
 
 class FootnoteAssociationGoodsNomenclatureFactory(

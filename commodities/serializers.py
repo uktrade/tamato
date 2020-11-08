@@ -1,5 +1,3 @@
-from rest_framework import serializers
-
 from commodities import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
@@ -25,9 +23,6 @@ class SimpleGoodsNomenclatureSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
-    origin = SimpleGoodsNomenclatureSerializer(read_only=True)
-    succeeding_goods = SimpleGoodsNomenclatureSerializer(read_only=True, many=True)
-
     class Meta:
         model = models.GoodsNomenclature
         fields = [
@@ -35,15 +30,9 @@ class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerialize
             "item_id",
             "suffix",
             "statistical",
-            "origin",
-            "succeeding_goods",
             "update_type",
             "record_code",
             "subrecord_code",
-            "origin_record_code",
-            "origin_subrecord_code",
-            "successor_record_code",
-            "successor_subrecord_code",
             "taric_template",
             "start_date",
             "end_date",
@@ -94,6 +83,40 @@ class GoodsNomenclatureDescriptionSerializer(
             "start_date",
             "end_date",
             "valid_between",
+        ]
+
+
+@TrackedModelSerializer.register_polymorphic_model
+class GoodsNomenclatureOriginSerializer(TrackedModelSerializerMixin):
+    new_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
+    derived_from_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
+
+    class Meta:
+        model = models.GoodsNomenclatureOrigin
+        fields = [
+            "new_goods_nomenclature",
+            "derived_from_goods_nomenclature",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
+        ]
+
+
+@TrackedModelSerializer.register_polymorphic_model
+class GoodsNomenclatureSuccessorSerializer(TrackedModelSerializerMixin):
+    replaced_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
+    absorbed_into_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
+
+    class Meta:
+        model = models.GoodsNomenclatureSuccessor
+        fields = [
+            "replaced_goods_nomenclature",
+            "absorbed_into_goods_nomenclature",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "taric_template",
         ]
 
 
