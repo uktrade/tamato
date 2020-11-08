@@ -56,11 +56,46 @@ class GoodsNomenclatureOriginParser(Writable, ElementParser):
 
     tag = Tag("goods.nomenclature.origin")
 
-    sid = TextElement(Tag("goods.nomenclature.sid"))
-    derived_item_id = TextElement(Tag("derived.goods.nomenclature.item.id"))
-    derived_suffix = TextElement(Tag("derived.productline.suffix"))
-    item_id = TextElement(Tag("goods.nomenclature.item.id"))
-    suffix = TextElement(Tag("productline.suffix"))
+    new_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
+    derived_from_goods_nomenclature__item_id = TextElement(
+        Tag("derived.goods.nomenclature.item.id")
+    )
+    derived_from_goods_nomenclature__suffix = TextElement(
+        Tag("derived.productline.suffix")
+    )
+    new_goods_nomenclature__item_id = TextElement(Tag("goods.nomenclature.item.id"))
+    new_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
+
+
+@Record.register_child("goods_nomenclature_successor")
+class GoodsNomenclatureSuccessorParser(Writable, ElementParser):
+    """
+    <xs:element name="goods.nomenclature.successor" substitutionGroup="abstract.record">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="goods.nomenclature.sid" type="SID"/>
+                <xs:element name="absorbed.goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                <xs:element name="absorbed.productline.suffix" type="ProductLineSuffix"/>
+                <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                <xs:element name="productline.suffix" type="ProductLineSuffix"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    """
+
+    tag = Tag("goods.nomenclature.successor")
+
+    replaced_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
+    absorbed_into_goods_nomenclature__item_id = TextElement(
+        Tag("absorbed.goods.nomenclature.item.id")
+    )
+    absorbed_into_goods_nomenclature__suffix = TextElement(
+        Tag("absorbed.productline.suffix")
+    )
+    replaced_goods_nomenclature__item_id = TextElement(
+        Tag("goods.nomenclature.item.id")
+    )
+    replaced_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
 @Record.register_child("goods_nomenclature_description")

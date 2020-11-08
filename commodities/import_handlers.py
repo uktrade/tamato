@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from typing import Any
 from typing import Optional
 
@@ -32,8 +33,71 @@ class GoodsNomenclatureHandler(BaseHandler):
 
 
 class GoodsNomenclatureOriginHandler(BaseHandler):
-    serializer_class = serializers.GoodsNomenclatureSerializer
+    serializer_class = serializers.GoodsNomenclatureOriginSerializer
     tag = parsers.GoodsNomenclatureOriginParser.tag.name
+
+    identifying_fields = (
+        "new_goods_nomenclature__sid",
+        "derived_from_goods_nomenclature__item_id",
+        "derived_from_goods_nomenclature__suffix",
+    )
+
+    links = (
+        {
+            "model": models.GoodsNomenclature,
+            "name": "new_goods_nomenclature",
+            "optional": False,
+        },
+        {
+            "model": models.GoodsNomenclature,
+            "name": "derived_from_goods_nomenclature",
+            "optional": False,
+            "identifying_fields": ("item_id", "suffix"),
+        },
+    )
+
+    def get_derived_from_goods_nomenclature_link(self, model, kwargs):
+        must_be_active_on_date = self.resolved_links[
+            "new_goods_nomenclature"
+        ].valid_between.lower - timedelta(days=1)
+        return model.objects.get(
+            valid_between__contains=must_be_active_on_date,
+            **kwargs,
+        )
+
+
+class GoodsNomenclatureSuccessorHandler(BaseHandler):
+    serializer_class = serializers.GoodsNomenclatureSuccessorSerializer
+    tag = parsers.GoodsNomenclatureSuccessorParser.tag.name
+
+    identifying_fields = (
+        "replaced_goods_nomenclature__sid",
+        "absorbed_into_goods_nomenclature__item_id",
+        "absorbed_into_goods_nomenclature__suffix",
+    )
+
+    links = (
+        {
+            "model": models.GoodsNomenclature,
+            "name": "replaced_goods_nomenclature",
+            "optional": False,
+        },
+        {
+            "model": models.GoodsNomenclature,
+            "name": "absorbed_into_goods_nomenclature",
+            "optional": False,
+            "identifying_fields": ("item_id", "suffix"),
+        },
+    )
+
+    def get_absorbed_into_goods_nomenclature_link(self, model, kwargs):
+        must_be_active_on_date = self.resolved_links[
+            "replaced_goods_nomenclature"
+        ].valid_between.upper + timedelta(days=1)
+        return model.objects.get(
+            valid_between__contains=must_be_active_on_date,
+            **kwargs,
+        )
 
 
 class BaseGoodsNomenclatureDescriptionHandler(BaseHandler):
