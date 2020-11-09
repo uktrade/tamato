@@ -201,9 +201,8 @@ def hmrc_storage():
             "storages.backends.s3boto3.S3Boto3Storage.bucket",
             new_callable=PropertyMock,
         ) as mock_bucket_property:
-            # By default mock_s3 from moto doesn't seem to work with S3Boto3Storage
-            # this patch ensures it uses Motos mock implementation
-            # with settings that can be changed from the test using @override_settings.
+            # By default Motos mock_s3 doesn't stop S3Boto3Storage from connection to s3.
+            # Patch the connection and bucket properties on it to use Moto instead.
             @lru_cache(None)
             def get_connection():
                 return session.resource("s3")

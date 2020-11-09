@@ -41,9 +41,8 @@ def test_ordering_of_workbasket_items(approved_workbasket):
         .tracked_models.all()
     )
 
-    # Test sorting works as expected.
     with raises(AssertionError):
-        # objects is not sorted by default.
+        # Verify initial items are unsorted otherwise the test will never fail.
         assertQuerysetEqual(sorted_items, unsorted_items, transform=lambda o: o)
 
     assertQuerysetEqual(

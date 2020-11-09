@@ -12,8 +12,6 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
     """
     settings.HMRC_BUCKET_NAME = "test-hmrc-bucket"
 
-    from exporter.management.commands import upload_workbaskets
-
     call_command("upload_workbaskets")
 
     bucket_names = [bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]]
