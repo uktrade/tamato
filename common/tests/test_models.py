@@ -7,8 +7,6 @@ from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.tests import factories
 from common.tests.factories import (
-    ApprovedWorkBasketFactory,
-    RegulationGroupFactory,
     RegulationFactory,
     FootnoteTypeFactory,
 )
@@ -215,17 +213,17 @@ def test_trackedmodel_can_attach_record_codes(workbasket):
     )
 
     expected_models = [
-        (workbasket.pk, Regulation, "100", "00"),
         (workbasket.pk, Group, "150", "00"),
-        (workbasket.pk, FootnoteType, "285", "00"),
+        (workbasket.pk, Regulation, "285", "00"),
+        (workbasket.pk, FootnoteType, "100", "00"),
     ]
 
     assertQuerysetEqual(
         tracked_models,
         expected_models,
         transform=lambda o: (
-            o.__class__,
             o.workbasket.pk,
+            o.__class__,
             o.record_code,
             o.subrecord_code,
         ),

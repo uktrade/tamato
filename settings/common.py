@@ -186,6 +186,7 @@ TIME_ZONE = "UTC"
 
 # Storage
 HMRC_BUCKET_NAME = os.environ.get("HMRC_BUCKET_NAME", "hmrc")
+HMRC_UPLOAD_DIR = os.environ.get("HMRC_UPLOAD_DIR", "tohmrc/staging/")
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")

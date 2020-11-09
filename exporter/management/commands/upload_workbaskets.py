@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.core.files.base import ContentFile
 
 from exporter.management.commands.util import (
@@ -5,11 +7,12 @@ from exporter.management.commands.util import (
     validate_envelope_xml,
     get_envelope_filename,
 )
-from exporter.storages import get_hmrc_storage
+from exporter.storages import HMRCStorage
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 import sys
+from django.conf import settings
 from django.core.management import BaseCommand
 
 
@@ -26,7 +29,9 @@ class Command(BaseCommand):
             sys.exit(f"Envelope did not validate against XSD")
 
         filename = get_envelope_filename(1)
+        full_filename = str(Path(settings.HMRC_UPLOAD_DIR) / filename)
+
         content_file = ContentFile(envelope)
-        storage = get_hmrc_storage()
-        destination = storage.save(f"tohmrc/staging/{filename}", content_file)
+        storage = HMRCStorage()
+        destination = storage.save(full_filename, content_file)
         print(f"Uploaded: {destination}")

@@ -1,14 +1,15 @@
 from functools import lru_cache
 
-from django.conf import settings
 from storages.backends.s3boto3 import S3Boto3Storage
 
 
 class HMRCStorage(S3Boto3Storage):
-    default_acl = "private"
-    location = settings.HMRC_BUCKET_NAME
+    def get_default_settings(self):
+        # Importing settings here makes it possible for tests to override_settings
+        from django.conf import settings
 
-
-@lru_cache(None)
-def get_hmrc_storage():
-    return HMRCStorage()
+        return dict(
+            super().get_default_settings(),
+            location=settings.HMRC_BUCKET_NAME,
+            default_acl="private",
+        )
