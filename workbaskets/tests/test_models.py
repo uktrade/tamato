@@ -3,8 +3,6 @@ from pytest import raises
 from pytest_django.asserts import assertQuerysetEqual
 
 from common.tests.factories import (
-    ApprovedWorkBasketFactory,
-    RegulationGroupFactory,
     RegulationFactory,
     FootnoteTypeFactory,
 )

@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
         envelope = get_envelope_of_active_workbaskets(workbaskets)
         if not validate_envelope_xml(envelope):
-            sys.exit(f"Envelope did not validate against XSD")
+            sys.exit("Envelope did not validate against XSD")
 
         filename = get_envelope_filename(1)
         full_filename = str(Path(settings.HMRC_UPLOAD_DIR) / filename)

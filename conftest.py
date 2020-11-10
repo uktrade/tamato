@@ -195,8 +195,8 @@ def hmrc_storage():
         session = boto3.session.Session()
 
         with patch(
-            "storages.backends.s3boto3.S3Boto3Storage.connection",
-            new_callable=PropertyMock,
+                "storages.backends.s3boto3.S3Boto3Storage.connection",
+                new_callable=PropertyMock,
         ) as mock_connection_property, patch(
             "storages.backends.s3boto3.S3Boto3Storage.bucket",
             new_callable=PropertyMock,
