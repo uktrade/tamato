@@ -62,10 +62,12 @@ INSTALLED_APPS = [
     "commodities.apps.CommoditiesConfig",
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
+    "hmrc_sdes",
     "importer",
     "measures.apps.MeasuresConfig",
     "quotas.apps.QuotasConfig",
     "regulations.apps.RegulationsConfig",
+    "taric",
     "workbaskets",
 ]
 
@@ -261,3 +263,12 @@ REST_FRAMEWORK = {
 TARIC_XSD = os.path.join(BASE_DIR, "common", "assets", "taric3.xsd")
 
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
+
+HMRC = {
+    "client_id": os.environ.get("HMRC_API_CLIENT_ID"),
+    "client_secret": os.environ.get("HMRC_API_CLIENT_SECRET"),
+    "token_url": os.environ.get(
+        "HMRC_API_TOKEN_URL", "https://test-api.service.hmrc.gov.uk/oauth/token"
+    ),
+    "service_reference_number": os.environ.get("HMRC_API_SERVICE_REFERENCE_NUMBER"),
+}

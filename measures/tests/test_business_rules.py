@@ -1,5 +1,3 @@
-from datetime import datetime
-from datetime import timezone
 from decimal import Decimal
 
 import pytest
@@ -15,12 +13,10 @@ from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
 from common.validators import ApplicabilityCode
-from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -70,7 +66,7 @@ def test_MT3(validity_period_contained):
     )
 
 
-def test_MT7(date_ranges):
+def test_MT7():
     """A measure type can not be deleted if it is used in a measure."""
 
     with pytest.raises(IntegrityError):
@@ -705,7 +701,7 @@ def test_ME53(must_exist):
 
 
 @pytest.mark.skip(reason="Erroneous business rule")
-def test_ME54(date_ranges):
+def test_ME54():
     """The validity period of the referenced measure condition must span the validity
     period of the measure.
 

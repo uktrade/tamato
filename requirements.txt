@@ -1,5 +1,7 @@
 allure-pytest-bdd
+api-client
 black>=20.8b1
+boto3
 dj-database-url
 django>=3.0,<3.1
 django-dotenv
@@ -9,6 +11,7 @@ django-fsm
 django-health-check
 django-polymorphic
 django-rest-polymorphic
+django-storages
 django-treebeard
 django-webpack-loader
 django_extensions
@@ -24,7 +27,15 @@ pytest
 pytest-bdd
 pytest-cov
 pytest-django
+pytest-responses
+requests_oauthlib
+responses
 sentry-sdk
 sphinx
+
+# This needs to be pinned below 1.26.0 for responses to work until
+# https://github.com/getsentry/responses/issues/354 is resolved.
+urllib3<1.26.0
+
 werkzeug
 whitenoise
