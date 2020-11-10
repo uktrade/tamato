@@ -42,7 +42,7 @@ class WorkBasketBaseCommand(BaseCommand):
             try:
                 schema.assertValid(xml)
             except etree.DocumentInvalid as err:
-                print("Envelelope did not validate against XSD:", file=self.stderr)
+                print("Envelope did not validate against XSD:", file=self.stderr)
                 self.stderr.write(str(err.error_log))
                 sys.exit(1)
             try:
