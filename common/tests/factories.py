@@ -5,7 +5,8 @@ from datetime import timedelta
 from decimal import Decimal
 from itertools import product
 
-import factory.fuzzy
+import factory
+from factory.fuzzy import FuzzyChoice
 
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
@@ -79,7 +80,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
 class TrackedModelMixin(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(WorkBasketFactory)
-    update_type = UpdateType.UPDATE.value
+    update_type = UpdateType.UPDATE
 
 
 class FootnoteTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -165,7 +166,7 @@ class GeographicalMembershipFactory(TrackedModelMixin, ValidityFactoryMixin):
     geo_group = factory.SubFactory(GeographicalAreaFactory, area_code=1)
     member = factory.SubFactory(
         GeographicalAreaFactory,
-        area_code=factory.fuzzy.FuzzyChoice([0, 2]),
+        area_code=FuzzyChoice([0, 2]),
     )
 
 
@@ -480,7 +481,7 @@ class QuotaAssociationFactory(TrackedModelMixin):
 
     main_quota = factory.SubFactory(QuotaDefinitionFactory)
     sub_quota = factory.SubFactory(QuotaDefinitionFactory)
-    sub_quota_relation_type = factory.fuzzy.FuzzyChoice(["EQ", "NM"])
+    sub_quota_relation_type = FuzzyChoice(["EQ", "NM"])
     coefficient = Decimal("1.00000")
 
 
@@ -500,7 +501,7 @@ class QuotaBlockingFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     sid = numeric_sid()
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
-    blocking_period_type = factory.fuzzy.FuzzyChoice(range(1, 9))
+    blocking_period_type = FuzzyChoice(range(1, 9))
     valid_between = date_ranges("normal")
 
 
@@ -508,7 +509,7 @@ class QuotaEventFactory(TrackedModelMixin):
     class Meta:
         model = "quotas.QuotaEvent"
 
-    subrecord_code = factory.fuzzy.FuzzyChoice(QuotaEventType.values)
+    subrecord_code = FuzzyChoice(QuotaEventType.values)
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
     occurrence_timestamp = factory.LazyFunction(lambda: Dates().now)
 
@@ -557,7 +558,7 @@ class MeasureTypeSeriesFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "measures.MeasureTypeSeries"
 
     sid = string_sequence(2, characters=string.ascii_uppercase)
-    measure_type_combination = factory.fuzzy.FuzzyChoice(MeasureTypeCombination.values)
+    measure_type_combination = FuzzyChoice(MeasureTypeCombination.values)
     description = short_description()
 
 
@@ -565,7 +566,7 @@ class DutyExpressionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "measures.DutyExpression"
 
-    sid = factory.fuzzy.FuzzyChoice(DutyExpressionId.values)
+    sid = FuzzyChoice(DutyExpressionId.values)
     duty_amount_applicability_code = ApplicabilityCode.PERMITTED
     measurement_unit_applicability_code = ApplicabilityCode.PERMITTED
     monetary_unit_applicability_code = ApplicabilityCode.PERMITTED
@@ -577,14 +578,12 @@ class MeasureTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "measures.MeasureType"
 
     sid = string_sequence(3, characters=string.digits)
-    trade_movement_code = factory.fuzzy.FuzzyChoice(ImportExportCode.values)
-    priority_code = factory.fuzzy.FuzzyChoice(range(1, 10))
-    measure_component_applicability_code = factory.fuzzy.FuzzyChoice(
-        ApplicabilityCode.values
-    )
-    origin_destination_code = factory.fuzzy.FuzzyChoice(ImportExportCode.values)
+    trade_movement_code = FuzzyChoice(ImportExportCode.values)
+    priority_code = FuzzyChoice(range(1, 10))
+    measure_component_applicability_code = FuzzyChoice(ApplicabilityCode.values)
+    origin_destination_code = FuzzyChoice(ImportExportCode.values)
     order_number_capture_code = OrderNumberCaptureCode.NOT_PERMITTED
-    measure_explosion_level = factory.fuzzy.FuzzyChoice(range(2, 11, 2))
+    measure_explosion_level = FuzzyChoice(range(2, 11, 2))
     description = short_description()
     measure_type_series = factory.SubFactory(MeasureTypeSeriesFactory)
 
@@ -721,3 +720,33 @@ class FootnoteAssociationMeasureFactory(TrackedModelMixin):
 
     footnoted_measure = factory.SubFactory(MeasureFactory)
     associated_footnote = factory.SubFactory(FootnoteFactory)
+
+
+class EnvelopeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "taric.Envelope"
+
+    envelope_id = factory.Sequence(lambda x: f"{Dates().now:%y}{(x + 1):04d}")
+
+
+class NewTransactionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "taric.Transaction"
+
+
+class EnvelopeTransactionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "taric.EnvelopeTransaction"
+
+    index = factory.Sequence(lambda x: x + 1)
+    transaction = factory.SubFactory(NewTransactionFactory)
+    envelope = factory.SubFactory(EnvelopeFactory)
+
+
+class UploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "hmrc_sdes.Upload"
+
+    envelope = factory.SubFactory(EnvelopeFactory)
+    correlation_id = factory.Faker("uuid4")
+    checksum = factory.Faker("md5")
