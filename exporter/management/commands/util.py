@@ -1,10 +1,13 @@
 import datetime
+import sys
 from typing import Sequence
 
 from django.conf import settings
+from django.core.management import BaseCommand
 from django.test import RequestFactory
 from lxml import etree
 
+from common.tests.util import validate_taric_xml_record_order
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import WorkBasketViewSet
@@ -24,14 +27,25 @@ def get_envelope_of_active_workbaskets(workbaskets: Sequence[WorkBasket]) -> byt
     return envelope
 
 
-def validate_envelope_xml(envelope: bytes) -> bool:
-    """Validate xml contained in a bytes against the envelope XSD"""
-    with open(settings.TARIC_XSD) as xsd_file:
-        schema = etree.XMLSchema(etree.parse(xsd_file))
-        xml = etree.XML(envelope)
-        return schema.validate(xml)
-
-
 def get_envelope_filename(counter) -> str:
     now = datetime.datetime.now()
     return f"DIT{str(now.year)[:2]}{counter:04}.xml"
+
+
+class WorkBasketBaseCommand(BaseCommand):
+    def validate_envelope(self, envelope):
+        """Exit with error if envelope does not validate"""
+        with open(settings.TARIC_XSD) as xsd_file:
+            schema = etree.XMLSchema(etree.parse(xsd_file))
+            xml = etree.XML(envelope)
+
+            try:
+                schema.assertValid(xml)
+            except etree.DocumentInvalid as err:
+                print("Envelelope did not validate against XSD:", file=self.stderr)
+                self.stderr.write(str(err.error_log))
+                sys.exit(1)
+            try:
+                validate_taric_xml_record_order(xml)
+            except AssertionError as e:
+                sys.exit(e.args[0])

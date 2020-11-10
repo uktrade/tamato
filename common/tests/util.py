@@ -104,16 +104,11 @@ def generate_test_import_xml(obj: dict) -> StringIO:
 
 
 def validate_taric_xml_record_order(xml):
-    """Raise AssertionError if any record codes are not in order.
-    """
+    """Raise AssertionError if any record codes are not in order."""
     last_code = "00000"
     for record in xml.findall(".//record", namespaces=xml.nsmap):
-        record_code = record.findtext(
-            ".//record.code", namespaces=xml.nsmap
-        )
-        subrecord_code = record.findtext(
-            ".//subrecord.code", namespaces=xml.nsmap
-        )
+        record_code = record.findtext(".//record.code", namespaces=xml.nsmap)
+        subrecord_code = record.findtext(".//subrecord.code", namespaces=xml.nsmap)
         full_code = record_code + subrecord_code
         if full_code < last_code:
             raise AssertionError(
@@ -125,19 +120,16 @@ def validate_taric_xml_record_order(xml):
 def taric_xml_record_codes(xml):
     """Yields tuples of (record_code, subrecord_code)"""
     return [
-        (record.findtext(
-            ".//record.code", namespaces=xml.nsmap
-        ),
-         record.findtext(
-             ".//subrecord.code", namespaces=xml.nsmap
-         )
+        (
+            record.findtext(".//record.code", namespaces=xml.nsmap),
+            record.findtext(".//subrecord.code", namespaces=xml.nsmap),
         )
         for record in xml.findall(".//record", namespaces=xml.nsmap)
     ]
 
 
 def validate_taric_xml(
-        factory=None, instance=None, factory_kwargs=None, check_order=True
+    factory=None, instance=None, factory_kwargs=None, check_order=True
 ):
     def decorator(func):
         def wraps(api_client, taric_schema, approved_workbasket, *args, **kwargs):
@@ -178,12 +170,12 @@ def validate_taric_xml(
 
 
 def validate_taric_import(
-        serializer: Type[TrackedModelSerializer],
-        factory: DjangoModelFactory = None,
-        instance: TrackedModel = None,
-        update_type: int = UpdateType.CREATE.value,
-        factory_kwargs: Dict[str, Any] = None,
-        dependencies: Dict[str, Type[DjangoModelFactory]] = None,
+    serializer: Type[TrackedModelSerializer],
+    factory: DjangoModelFactory = None,
+    instance: TrackedModel = None,
+    update_type: int = UpdateType.CREATE.value,
+    factory_kwargs: Dict[str, Any] = None,
+    dependencies: Dict[str, Type[DjangoModelFactory]] = None,
 ):
     def decorator(func):
         def wraps(valid_user, *args, **kwargs):

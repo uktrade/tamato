@@ -1,18 +1,12 @@
-import sys
-
-from django.core.management import BaseCommand
-from lxml import etree
-
-from common.tests.util import validate_taric_xml_record_order
 from exporter.management.commands.util import (
     get_envelope_of_active_workbaskets,
-    validate_envelope_xml,
+    WorkBasketBaseCommand,
 )
 from workbaskets.validators import WorkflowStatus
 from workbaskets.models import WorkBasket
 
 
-class Command(BaseCommand):
+class Command(WorkBasketBaseCommand):
     help = "Output workbaskets ready for export to a file or stdout."
 
     def add_arguments(self, parser):
@@ -36,11 +30,7 @@ class Command(BaseCommand):
         )
 
         envelope = get_envelope_of_active_workbaskets(workbaskets)
-        if not validate_envelope_xml(envelope):
-            sys.exit("Envelope did not validate against XSD")
-
-        xml = etree.XML(envelope)
-        validate_taric_xml_record_order(xml)
+        self.validate_envelope(envelope)
 
         f = self.get_output_file(options["filename"])
         f.write(envelope.decode("utf-8"))
