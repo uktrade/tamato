@@ -13,10 +13,12 @@ from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
 from common.validators import ApplicabilityCode
+from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -33,14 +35,14 @@ def test_MTS2():
     """
 
     with pytest.raises(IntegrityError):
-        factories.MeasureTypeFactory().measure_type_series.delete()
+        factories.MeasureTypeFactory.create().measure_type_series.delete()
 
 
 def test_MTS3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.MeasureTypeSeriesFactory(valid_between=date_ranges.backwards)
+        factories.MeasureTypeSeriesFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_MT1(unique_identifying_fields):
@@ -53,7 +55,7 @@ def test_MT2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.MeasureTypeFactory(valid_between=date_ranges.backwards)
+        factories.MeasureTypeFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_MT3(validity_period_contained):
@@ -95,7 +97,9 @@ def test_MC2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.MeasureConditionCodeFactory(valid_between=date_ranges.backwards)
+        factories.MeasureConditionCodeFactory.create(
+            valid_between=date_ranges.backwards
+        )
 
 
 def test_MC3(date_ranges):
@@ -104,7 +108,7 @@ def test_MC3(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
+        factories.MeasureConditionFactory.create(
             condition_code__valid_between=date_ranges.starts_with_normal,
             dependent_measure__valid_between=date_ranges.normal,
         )
@@ -116,7 +120,7 @@ def test_MC4():
     """
 
     with pytest.raises(IntegrityError):
-        factories.MeasureConditionComponentFactory().condition.condition_code.delete()
+        factories.MeasureConditionComponentFactory.create().condition.condition_code.delete()
 
 
 def test_MA1(unique_identifying_fields):
@@ -147,7 +151,7 @@ def test_MA4(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
+        factories.MeasureConditionFactory.create(
             action__valid_between=date_ranges.starts_with_normal,
             dependent_measure__valid_between=date_ranges.normal,
         )
@@ -185,9 +189,9 @@ def test_ME7():
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(goods_nomenclature__suffix="00")
+        factories.MeasureFactory.create(goods_nomenclature__suffix="00")
 
-    factories.MeasureFactory(goods_nomenclature__suffix="80")
+    factories.MeasureFactory.create(goods_nomenclature__suffix="80")
 
 
 def test_ME8(validity_period_contained):
@@ -217,50 +221,50 @@ def test_ME9():
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             additional_code=None,
             goods_nomenclature=None,
         )
 
-    factories.MeasureFactory(
+    factories.MeasureFactory.create(
         additional_code=None,
-        goods_nomenclature=factories.GoodsNomenclatureFactory(),
+        goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
     )
 
-    assoc = factories.AdditionalCodeTypeMeasureTypeFactory()
-    additional_code = factories.AdditionalCodeFactory(type=assoc.additional_code_type)
+    assoc = factories.AdditionalCodeTypeMeasureTypeFactory.create()
+    additional_code = factories.AdditionalCodeFactory.create(
+        type=assoc.additional_code_type
+    )
 
-    factories.MeasureFactory(
+    factories.MeasureFactory.create(
         additional_code=additional_code,
         goods_nomenclature=None,
         measure_type=assoc.measure_type,
     )
 
-    factories.MeasureFactory(
+    factories.MeasureFactory.create(
         additional_code=additional_code,
-        goods_nomenclature=factories.GoodsNomenclatureFactory(),
+        goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
         measure_type=assoc.measure_type,
     )
 
 
-def test_ME10(approved_workbasket):
+def test_ME10():
     """The order number must be specified if the "order number flag" (specified in the
     measure type record) has the value "mandatory". If the flag is set to "not
     permitted" then the field cannot be entered.
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
             order_number=None,
         )
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type__order_number_capture_code=OrderNumberCaptureCode.NOT_PERMITTED,
-            order_number=factories.QuotaOrderNumberFactory(
-                workbasket=approved_workbasket
-            ),
+            order_number=factories.QuotaOrderNumberFactory.create(),
         )
 
 
@@ -270,11 +274,13 @@ def test_ME12():
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(additional_code=factories.AdditionalCodeFactory())
+        factories.MeasureFactory.create(
+            additional_code=factories.AdditionalCodeFactory.create()
+        )
 
-    rel = factories.AdditionalCodeTypeMeasureTypeFactory()
+    rel = factories.AdditionalCodeTypeMeasureTypeFactory.create()
 
-    factories.MeasureFactory(
+    factories.MeasureFactory.create(
         measure_type=rel.measure_type,
         additional_code__type=rel.additional_code_type,
     )
@@ -311,11 +317,11 @@ def test_ME16():
     forbidden.
     """
 
-    existing = factories.MeasureFactory(additional_code=None)
-    additional_code = factories.AdditionalCodeFactory()
+    existing = factories.MeasureFactory.create(additional_code=None)
+    additional_code = factories.AdditionalCodeFactory.create()
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type=existing.measure_type,
             geographical_area=existing.geographical_area,
             goods_nomenclature=existing.goods_nomenclature,
@@ -325,14 +331,14 @@ def test_ME16():
         )
 
     existing.additional_code = additional_code
-    factories.AdditionalCodeTypeMeasureTypeFactory(
+    factories.AdditionalCodeTypeMeasureTypeFactory.create(
         measure_type=existing.measure_type,
         additional_code_type=additional_code.type,
     )
-    existing.save()
+    existing.save(force_write=True)
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type=existing.measure_type,
             geographical_area=existing.geographical_area,
             goods_nomenclature=existing.goods_nomenclature,
@@ -350,9 +356,7 @@ def test_ME17(must_exist):
     additional code must exist.
     """
 
-    assert must_exist(
-        "additional_code", factories.AdditionalCodeFactory, factories.MeasureFactory
-    )
+    assert must_exist("additional_code", factories.MeasureFactory)
 
 
 @pytest.mark.skip(reason="No meursing, so duplicate of ME115")
@@ -385,9 +389,7 @@ def test_ME24(must_exist):
     defaults to the regulation start date.
     """
 
-    assert must_exist(
-        "generating_regulation", factories.RegulationFactory, factories.MeasureFactory
-    )
+    assert must_exist("generating_regulation", factories.MeasureFactory)
 
 
 def test_ME25(date_ranges):
@@ -398,7 +400,7 @@ def test_ME25(date_ranges):
     """
 
     with pytest.raises(DataError):
-        factories.MeasureFactory(valid_between=date_ranges.backwards)
+        factories.MeasureFactory.create(valid_between=date_ranges.backwards)
 
 
 @pytest.mark.skip(
@@ -433,7 +435,7 @@ def test_ME29():
     """
 
 
-def test_ME32(approved_workbasket, date_ranges):
+def test_ME32(approved_workbasket, unapproved_workbasket, date_ranges):
     """There may be no overlap in time with other measure occurrences with a goods code
     in the same nomenclature hierarchy which references the same measure type, geo area,
     order number, additional code and reduction indicator. This rule is not applicable
@@ -461,6 +463,7 @@ def test_ME32(approved_workbasket, date_ranges):
         order_number=existing.order_number,
         additional_code=existing.additional_code,
         reduction=existing.reduction,
+        workbasket=unapproved_workbasket,
     )
 
     with pytest.raises(ValidationError):
@@ -497,7 +500,7 @@ def test_ME34(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             valid_between=date_ranges.normal,
             terminating_regulation=None,
         )
@@ -510,7 +513,7 @@ def test_ME39():
     pytest.fail()
 
 
-def test_ME40():
+def test_ME40(unapproved_workbasket):
     """If the flag "duty expression" on measure type is "mandatory" then at least one
     measure component or measure condition component record must be specified.  If the
     flag is set "not permitted" then no measure component or measure condition component
@@ -526,39 +529,43 @@ def test_ME40():
     if either of these conditions are not met.
     """
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.MANDATORY,
+        workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
     )
     with pytest.raises(ValidationError):
         measure.workbasket.submit_for_approval()
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
     )
-    factories.MeasureComponentFactory(
+    factories.MeasureComponentFactory.create(
         component_measure=measure, workbasket=measure.workbasket
     )
     with pytest.raises(ValidationError):
         measure.workbasket.submit_for_approval()
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
     )
-    factories.MeasureConditionComponentFactory(
+    factories.MeasureConditionComponentFactory.create(
         condition__dependent_measure=measure,
         workbasket=measure.workbasket,
     )
     with pytest.raises(ValidationError):
         measure.workbasket.submit_for_approval()
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.MANDATORY,
+        workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
     )
-    factories.MeasureComponentFactory(
+    factories.MeasureComponentFactory.create(
         component_measure=measure,
         workbasket=measure.workbasket,
     )
-    factories.MeasureConditionComponentFactory(
+    factories.MeasureConditionComponentFactory.create(
         condition__dependent_measure=measure,
         workbasket=measure.workbasket,
     )
@@ -571,7 +578,6 @@ def test_ME41(must_exist):
 
     assert must_exist(
         "duty_expression",
-        factories.DutyExpressionFactory,
         factories.MeasureComponentFactory,
     )
 
@@ -581,23 +587,23 @@ def test_ME42(date_ranges):
     measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureComponentFactory(
+        factories.MeasureComponentFactory.create(
             duty_expression__valid_between=date_ranges.starts_with_normal,
             component_measure__valid_between=date_ranges.normal,
         )
 
 
-def test_ME43(approved_workbasket):
+def test_ME43():
     """The same duty expression can only be used once with the same measure.
 
     Even if an expression that (in English) reads the same needs to be used more than
     once in a measure, we must use a different expression ID, never the same one twice.
     """
 
-    existing = factories.MeasureComponentFactory(workbasket=approved_workbasket)
+    existing = factories.MeasureComponentFactory.create()
 
     with pytest.raises(ValidationError):
-        factories.MeasureComponentFactory(
+        factories.MeasureComponentFactory.create(
             duty_expression=existing.duty_expression,
             component_measure=existing.component_measure,
         )
@@ -615,7 +621,9 @@ def test_ME46(component_applicability):
     unit must be specified. If the flag is set "not permitted" then no monetary unit may
     be entered."""
 
-    assert component_applicability("monetary_unit", factories.MonetaryUnitFactory())
+    assert component_applicability(
+        "monetary_unit", factories.MonetaryUnitFactory.create()
+    )
 
 
 def test_ME47(component_applicability):
@@ -626,7 +634,7 @@ def test_ME47(component_applicability):
 
     assert component_applicability(
         "component_measurement",
-        factories.MeasurementFactory(),
+        factories.MeasurementFactory.create(),
         applicability_field="duty_expression__measurement_unit_applicability_code",
     )
 
@@ -636,7 +644,6 @@ def test_ME48(must_exist):
 
     assert must_exist(
         "monetary_unit",
-        factories.MonetaryUnitFactory,
         factories.MeasureComponentFactory,
     )
 
@@ -646,8 +653,8 @@ def test_ME49(date_ranges):
     of the measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureComponentFactory(
-            monetary_unit=factories.MonetaryUnitFactory(
+        factories.MeasureComponentFactory.create(
+            monetary_unit=factories.MonetaryUnitFactory.create(
                 valid_between=date_ranges.starts_with_normal
             ),
             component_measure__valid_between=date_ranges.normal,
@@ -659,7 +666,6 @@ def test_ME50(must_exist):
 
     assert must_exist(
         "component_measurement",
-        factories.MeasurementFactory,
         factories.MeasureComponentFactory,
     )
 
@@ -669,8 +675,8 @@ def test_ME51(date_ranges):
     measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureComponentFactory(
-            component_measurement=factories.MeasurementFactory(
+        factories.MeasureComponentFactory.create(
+            component_measurement=factories.MeasurementFactory.create(
                 measurement_unit__valid_between=date_ranges.starts_with_normal
             ),
             component_measure__valid_between=date_ranges.normal,
@@ -682,8 +688,8 @@ def test_ME52(date_ranges):
     period of the measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureComponentFactory(
-            component_measurement=factories.MeasurementFactory(
+        factories.MeasureComponentFactory.create(
+            component_measurement=factories.MeasurementFactory.create(
                 measurement_unit_qualifier__valid_between=date_ranges.starts_with_normal
             ),
             component_measure__valid_between=date_ranges.normal,
@@ -695,7 +701,6 @@ def test_ME53(must_exist):
 
     assert must_exist(
         "condition",
-        factories.MeasureConditionFactory,
         factories.MeasureConditionComponentFactory,
     )
 
@@ -728,7 +733,6 @@ def test_ME56(must_exist):
 
     assert must_exist(
         "required_certificate",
-        factories.CertificateFactory,
         factories.MeasureConditionFactory,
     )
 
@@ -738,25 +742,24 @@ def test_ME57(date_ranges):
     of the measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
-            required_certificate=factories.CertificateFactory(
+        factories.MeasureConditionFactory.create(
+            required_certificate=factories.CertificateFactory.create(
                 valid_between=date_ranges.starts_with_normal
             ),
             dependent_measure__valid_between=date_ranges.normal,
         )
 
 
-def test_ME58(approved_workbasket):
+def test_ME58():
     """The same certificate can only be referenced once by the same measure and the same
     condition type."""
 
-    existing = factories.MeasureConditionFactory(
-        required_certificate=factories.CertificateFactory(),
-        workbasket=approved_workbasket,
+    existing = factories.MeasureConditionFactory.create(
+        required_certificate=factories.CertificateFactory.create(),
     )
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
+        factories.MeasureConditionFactory.create(
             condition_code=existing.condition_code,
             dependent_measure=existing.dependent_measure,
             required_certificate=existing.required_certificate,
@@ -768,7 +771,6 @@ def test_ME59(must_exist):
 
     assert must_exist(
         "action",
-        factories.MeasureActionFactory,
         factories.MeasureConditionFactory,
     )
 
@@ -778,7 +780,6 @@ def test_ME60(must_exist):
 
     assert must_exist(
         "monetary_unit",
-        factories.MonetaryUnitFactory,
         factories.MeasureConditionFactory,
     )
 
@@ -788,8 +789,8 @@ def test_ME61(date_ranges):
     of the measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
-            monetary_unit=factories.MonetaryUnitFactory(
+        factories.MeasureConditionFactory.create(
+            monetary_unit=factories.MonetaryUnitFactory.create(
                 valid_between=date_ranges.starts_with_normal
             ),
             dependent_measure__valid_between=date_ranges.normal,
@@ -801,7 +802,6 @@ def test_ME62(must_exist):
 
     assert must_exist(
         "condition_measurement",
-        factories.MeasurementFactory,
         factories.MeasureConditionFactory,
     )
 
@@ -811,8 +811,8 @@ def test_ME63(date_ranges):
     measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
-            condition_measurement=factories.MeasurementFactory(
+        factories.MeasureConditionFactory.create(
+            condition_measurement=factories.MeasurementFactory.create(
                 measurement_unit__valid_between=date_ranges.starts_with_normal
             ),
             dependent_measure__valid_between=date_ranges.normal,
@@ -824,8 +824,8 @@ def test_ME64(date_ranges):
     period of the measure."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
-            condition_measurement=factories.MeasurementFactory(
+        factories.MeasureConditionFactory.create(
+            condition_measurement=factories.MeasurementFactory.create(
                 measurement_unit_qualifier__valid_between=date_ranges.starts_with_normal
             ),
             dependent_measure__valid_between=date_ranges.normal,
@@ -835,17 +835,19 @@ def test_ME64(date_ranges):
 def test_measurement_unit_qualifier_is_optional():
     """In TARIC measurement unit qualifiers do not have to be used on every
     measure."""
-    factories.MeasurementFactory(measurement_unit_qualifier=None)
+    factories.MeasurementFactory.create(measurement_unit_qualifier=None)
 
 
 def test_ME65():
     """An exclusion can only be entered if the measure is applicable to a geographical
     area group (area code = 1)."""
 
-    measure = factories.MeasureFactory(geographical_area__area_code=AreaCode.COUNTRY)
+    measure = factories.MeasureFactory.create(
+        geographical_area__area_code=AreaCode.COUNTRY
+    )
 
     with pytest.raises(ValidationError):
-        factories.MeasureExcludedGeographicalAreaFactory(
+        factories.MeasureExcludedGeographicalAreaFactory.create(
             modified_measure=measure,
         )
 
@@ -853,16 +855,16 @@ def test_ME65():
 def test_ME66():
     """The excluded geographical area must be a member of the geographical area group."""
 
-    membership = factories.GeographicalMembershipFactory()
-    measure = factories.MeasureFactory(geographical_area=membership.geo_group)
+    membership = factories.GeographicalMembershipFactory.create()
+    measure = factories.MeasureFactory.create(geographical_area=membership.geo_group)
 
     with pytest.raises(ValidationError):
-        factories.MeasureExcludedGeographicalAreaFactory(
+        factories.MeasureExcludedGeographicalAreaFactory.create(
             modified_measure=measure,
-            excluded_geographical_area=factories.GeographicalAreaFactory(),
+            excluded_geographical_area=factories.GeographicalAreaFactory.create(),
         )
 
-    factories.MeasureExcludedGeographicalAreaFactory(
+    factories.MeasureExcludedGeographicalAreaFactory.create(
         modified_measure=measure,
         excluded_geographical_area=membership.member,
     )
@@ -872,12 +874,12 @@ def test_ME67(date_ranges):
     """The membership period of the excluded geographical area must span the validity
     period of the measure."""
 
-    membership = factories.GeographicalMembershipFactory(
+    membership = factories.GeographicalMembershipFactory.create(
         valid_between=date_ranges.starts_with_normal,
     )
 
     with pytest.raises(ValidationError):
-        factories.MeasureExcludedGeographicalAreaFactory(
+        factories.MeasureExcludedGeographicalAreaFactory.create(
             excluded_geographical_area=membership.member,
             modified_measure__geographical_area=membership.geo_group,
             modified_measure__valid_between=date_ranges.normal,
@@ -887,15 +889,15 @@ def test_ME67(date_ranges):
 def test_ME68():
     """The same geographical area can only be excluded once by the same measure."""
 
-    membership = factories.GeographicalMembershipFactory()
+    membership = factories.GeographicalMembershipFactory.create()
 
-    existing = factories.MeasureExcludedGeographicalAreaFactory(
+    existing = factories.MeasureExcludedGeographicalAreaFactory.create(
         excluded_geographical_area=membership.member,
         modified_measure__geographical_area=membership.geo_group,
     )
 
     with pytest.raises(ValidationError):
-        factories.MeasureExcludedGeographicalAreaFactory(
+        factories.MeasureExcludedGeographicalAreaFactory.create(
             excluded_geographical_area=existing.excluded_geographical_area,
             modified_measure=existing.modified_measure,
         )
@@ -907,20 +909,17 @@ def test_ME69(must_exist):
 
     assert must_exist(
         "associated_footnote",
-        factories.FootnoteFactory,
         factories.FootnoteAssociationMeasureFactory,
     )
 
 
-def test_ME70(approved_workbasket):
+def test_ME70():
     """The same footnote can only be associated once with the same measure."""
 
-    existing = factories.FootnoteAssociationMeasureFactory(
-        workbasket=approved_workbasket,
-    )
+    existing = factories.FootnoteAssociationMeasureFactory.create()
 
     with pytest.raises(ValidationError):
-        factories.FootnoteAssociationMeasureFactory(
+        factories.FootnoteAssociationMeasureFactory.create(
             footnoted_measure=existing.footnoted_measure,
             associated_footnote=existing.associated_footnote,
         )
@@ -931,9 +930,9 @@ def test_ME71():
     cannot be associated with TARIC codes (codes with pos. 9-10 different from 00)"""
 
     with pytest.raises(ValidationError):
-        factories.FootnoteAssociationMeasureFactory(
+        factories.FootnoteAssociationMeasureFactory.create(
             associated_footnote__footnote_type__application_code=ApplicationCode.CN_MEASURES,
-            footnoted_measure__goods_nomenclature=factories.GoodsNomenclatureFactory(
+            footnoted_measure__goods_nomenclature=factories.GoodsNomenclatureFactory.create(
                 item_id="0123456789",
             ),
         )
@@ -947,9 +946,9 @@ def test_ME72():
     have an application code of “7”.
     """
 
-    factories.FootnoteAssociationMeasureFactory(
+    factories.FootnoteAssociationMeasureFactory.create(
         associated_footnote__footnote_type__application_code=ApplicationCode.OTHER_MEASURES,
-        footnoted_measure__goods_nomenclature=factories.GoodsNomenclatureFactory(
+        footnoted_measure__goods_nomenclature=factories.GoodsNomenclatureFactory.create(
             item_id="0123456789",
         ),
     )
@@ -960,7 +959,7 @@ def test_ME73(date_ranges):
     the measure."""
 
     with pytest.raises(ValidationError):
-        factories.FootnoteAssociationMeasureFactory(
+        factories.FootnoteAssociationMeasureFactory.create(
             associated_footnote__valid_between=date_ranges.starts_with_normal,
             footnoted_measure__valid_between=date_ranges.normal,
         )
@@ -1034,7 +1033,7 @@ def test_ME87(date_ranges):
 
     # explicit
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             generating_regulation__valid_between=date_ranges.starts_with_normal,
             valid_between=date_ranges.normal,
         )
@@ -1043,20 +1042,21 @@ def test_ME87(date_ranges):
     # generating reg:  s---x
     # measure:         s---i----x       i = implicit end date
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             generating_regulation__valid_between=date_ranges.starts_with_normal,
             valid_between=date_ranges.normal,
         )
 
 
-def test_ME88(date_ranges, approved_workbasket):
+def test_ME88(date_ranges):
     """The level of the goods code, if present, cannot exceed the explosion level of the
     measure type.
     """
 
     mt = factories.MeasureTypeFactory.create(measure_explosion_level=2)
-    good = factories.GoodsNomenclatureFactory.build(workbasket=approved_workbasket)
-    good.save()
+    good = factories.GoodsNomenclatureFactory.create(
+        update_type=UpdateType.CREATE.value
+    )
     factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=good, node__depth=2
     )
@@ -1069,7 +1069,7 @@ def test_ME88(date_ranges, approved_workbasket):
         )
 
 
-def test_ME104(date_ranges):
+def test_ME104(date_ranges, unapproved_workbasket):
     """The justification regulation must be either:
         - the measure’s measure-generating regulation, or
         - a measure-generating regulation, valid on the day after the measure’s
@@ -1078,7 +1078,9 @@ def test_ME104(date_ranges):
     justification regulation.
     """
 
-    measure = factories.MeasureFactory(valid_between=date_ranges.normal)
+    measure = factories.MeasureFactory.create(
+        valid_between=date_ranges.normal, workbasket=unapproved_workbasket
+    )
     generating = measure.generating_regulation
     terminating = measure.terminating_regulation
 
@@ -1087,17 +1089,17 @@ def test_ME104(date_ranges):
         and terminating.role_type == generating.role_type
     )
 
-    measure.terminating_regulation = factories.RegulationFactory(
+    measure.terminating_regulation = factories.RegulationFactory.create(
         valid_between=DateTimeTZRange(
             measure.valid_between.upper + relativedelta(days=+1),
             None,
         ),
     )
-    measure.save()
+    measure.save(force_write=True)
 
-    measure.terminating_regulation = factories.RegulationFactory()
+    measure.terminating_regulation = factories.RegulationFactory.create()
     with pytest.raises(ValidationError):
-        measure.save()
+        measure.save(force_write=True)
 
 
 def test_ME105(must_exist):
@@ -1105,7 +1107,6 @@ def test_ME105(must_exist):
 
     assert must_exist(
         "duty_expression",
-        factories.DutyExpressionFactory,
         factories.MeasureConditionComponentFactory,
     )
 
@@ -1116,24 +1117,22 @@ def test_ME106(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionComponentFactory(
+        factories.MeasureConditionComponentFactory.create(
             duty_expression__valid_between=date_ranges.starts_with_normal,
             condition__dependent_measure__valid_between=date_ranges.normal,
         )
 
 
-def test_ME108(approved_workbasket):
+def test_ME108():
     """The same duty expression can only be used once within condition components of the
     same condition of the same measure.  (i.e. it can be re-used in other conditions, no
     matter what condition type, of the same measure)
     """
 
-    existing = factories.MeasureConditionComponentFactory(
-        workbasket=approved_workbasket
-    )
+    existing = factories.MeasureConditionComponentFactory.create()
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionComponentFactory(
+        factories.MeasureConditionComponentFactory.create(
             duty_expression=existing.duty_expression,
             condition=existing.condition,
         )
@@ -1157,7 +1156,7 @@ def test_ME110(component_applicability):
 
     assert component_applicability(
         "monetary_unit",
-        factories.MonetaryUnitFactory(),
+        factories.MonetaryUnitFactory.create(),
         factory=factories.MeasureConditionComponentFactory,
     )
 
@@ -1170,7 +1169,7 @@ def test_ME111(component_applicability):
 
     assert component_applicability(
         "condition_component_measurement",
-        factories.MeasurementFactory(),
+        factories.MeasurementFactory.create(),
         factory=factories.MeasureConditionComponentFactory,
         applicability_field="duty_expression__measurement_unit_applicability_code",
     )
@@ -1221,8 +1220,8 @@ def test_ME116(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
-            order_number=factories.QuotaOrderNumberFactory(
+        factories.MeasureFactory.create(
+            order_number=factories.QuotaOrderNumberFactory.create(
                 valid_between=date_ranges.starts_with_normal,
             ),
             valid_between=date_ranges.normal,
@@ -1231,7 +1230,7 @@ def test_ME116(date_ranges):
 
 
 @only_applicable_after("31/12/2007")
-def test_ME117(approved_workbasket):
+def test_ME117(unapproved_workbasket):
     """When a measure has a quota measure type then the origin must exist as a quota
     order number origin.
 
@@ -1241,19 +1240,19 @@ def test_ME117(approved_workbasket):
     principle are in scope
     """
 
-    origin = factories.QuotaOrderNumberOriginFactory(
+    origin = factories.QuotaOrderNumberOriginFactory.create(
         order_number__mechanism=AdministrationMechanism.FCFS,
-        workbasket=approved_workbasket,
+        workbasket=unapproved_workbasket,
     )
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
             order_number=origin.order_number,
-            geographical_area=factories.GeographicalAreaFactory(),
+            geographical_area=factories.GeographicalAreaFactory.create(),
         )
 
-    factories.MeasureFactory(
+    factories.MeasureFactory.create(
         measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
         order_number=origin.order_number,
         geographical_area=origin.geographical_area,
@@ -1270,7 +1269,7 @@ def test_ME118():
 
 
 @only_applicable_after("31/12/2007")
-def test_ME119(approved_workbasket, date_ranges):
+def test_ME119(date_ranges):
     """When a quota order number is used in a measure then the validity period of the
     quota order number origin must span the validity period of the measure.
 
@@ -1278,12 +1277,11 @@ def test_ME119(approved_workbasket, date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
-            order_number=factories.QuotaOrderNumberOriginFactory(
+            order_number=factories.QuotaOrderNumberOriginFactory.create(
                 valid_between=date_ranges.starts_with_normal,
                 order_number__origin=None,
-                workbasket=approved_workbasket,
             ).order_number,
             valid_between=date_ranges.normal,
         )

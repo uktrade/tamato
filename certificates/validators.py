@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
 from common.util import validity_range_contains_range
+from common.validators import UpdateType
 
 CERTIFICATE_TYPE_SID_REGEX = r"^[A-Z0-9]{1}$"
 certificate_type_sid_validator = RegexValidator(CERTIFICATE_TYPE_SID_REGEX)
@@ -92,11 +93,14 @@ def validate_previous_certificate_description_is_adjacent(certificate_descriptio
 
     There must be no period where there is no description for the certificate.
     """
-    if not certificate_description.predecessor:
+    if (
+        not certificate_description.version_group.current_version
+        and certificate_description.update_type == UpdateType.CREATE
+    ):
         return
 
     if (
-        certificate_description.predecessor.valid_between.upper
+        certificate_description.version_group.current_version.valid_between.upper
         != certificate_description.valid_between.lower
     ):
         raise ValidationError(

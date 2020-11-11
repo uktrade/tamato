@@ -114,8 +114,10 @@ def validate_approved_from_not_approved(regulation):
 
 def validate_official_journal(regulation):
     """Official Journal number and page must both be set, or must both be NULL"""
-    if regulation.valid_between.lower and regulation.valid_between.lower < datetime(
-        2021, 1, 1, tzinfo=timezone.utc
+    if (
+        regulation.role_type == RoleType.BASE
+        and regulation.valid_between.lower
+        and regulation.valid_between.lower < datetime(2021, 1, 1, tzinfo=timezone.utc)
     ):
         return
 
@@ -143,7 +145,7 @@ def unique_regulation_id_for_role_type(regulation):
     # )
     existing = Regulation.objects.filter(
         regulation_id=regulation.regulation_id, role_type=regulation.role_type
-    )
+    ).excluding_versions_of(version_group=regulation.version_group)
     if regulation.id:
         existing = existing.exclude(id=regulation.id)
     if len(existing) > 0:

@@ -5,8 +5,8 @@ from django.db.models import CheckConstraint
 from django.db.models import F
 from django.db.models import Q
 
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas import validators
@@ -87,7 +87,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         GeographicalArea, related_name="groups", on_delete=models.PROTECT
     )
 
-    identifying_fields = ("geo_group", "member")
+    identifying_fields = ("geo_group_id", "member_id")
 
     def clean(self):
         validators.validate_group_is_group(self)

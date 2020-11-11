@@ -27,7 +27,7 @@ def test_ROIMB3(date_ranges):
     # In the UK, legislation will be rarely end-dated.
 
     with pytest.raises(DataError):
-        factories.RegulationFactory(valid_between=date_ranges.backwards)
+        factories.RegulationFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_ROIMB4(must_exist):
@@ -35,7 +35,6 @@ def test_ROIMB4(must_exist):
 
     assert must_exist(
         "regulation_group",
-        factories.RegulationGroupFactory,
         factories.RegulationFactory,
     )
 
@@ -74,7 +73,7 @@ def test_ROIMB8(date_ranges):
     Only applicable for measures with start date after 31/12/2003."""
 
     with pytest.raises(ValidationError):
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             generating_regulation__valid_between=date_ranges.starts_with_normal,
             valid_between=date_ranges.normal,
         )
@@ -84,7 +83,7 @@ def test_ROIMB8(date_ranges):
 def test_ROIMB8_before_cutoff(date_ranges):
     cutoff = datetime(2003, 12, 31, tzinfo=timezone.utc)
 
-    factories.MeasureFactory(
+    factories.MeasureFactory.create(
         generating_regulation__valid_between=date_ranges.short_before(cutoff),
         valid_between=date_ranges.medium_before(cutoff),
         geographical_area__valid_between=date_ranges.medium_before(cutoff),

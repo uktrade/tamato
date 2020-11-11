@@ -1,11 +1,11 @@
 from datetime import date
 from typing import Type
+from typing import Union
 
 import pytest
 
 from common.tests import factories
 from common.tests.util import generate_test_import_xml
-from common.tests.util import validate_taric_import
 from common.validators import UpdateType
 from importer.management.commands.import_taric import import_taric
 from regulations import models
@@ -19,12 +19,25 @@ pytestmark = pytest.mark.django_db
 def create_and_test_m2m_regulation(
     role_type: int,
     template: str,
-    through_model: Type[models.TrackedModel],
+    through_model: Union[Type[models.TrackedModel], Type[factories.TrackedModelMixin]],
     valid_user,
+    update_type=UpdateType.CREATE,
+    factory_kwargs=None,
     **extra_data
 ):
     base_regulation = factories.RegulationFactory.create()
-    test_regulation = factories.RegulationFactory.build(role_type=role_type)
+
+    if update_type != UpdateType.CREATE:
+        test_regulation = factories.RegulationFactory.create(role_type=role_type)
+        through_model.create(
+            enacting_regulation=test_regulation,
+            target_regulation=base_regulation,
+            **(factory_kwargs or {})
+        )
+        through_model = through_model._meta.model
+    else:
+        test_regulation = factories.RegulationFactory.build(role_type=role_type)
+
     data = {
         "enacting_regulation": {
             "role_type": test_regulation.role_type,
@@ -44,7 +57,7 @@ def create_and_test_m2m_regulation(
             "regulation_id": base_regulation.regulation_id,
         },
         "taric_template": template,
-        "update_type": UpdateType.CREATE.value,
+        "update_type": update_type,
         **extra_data,
     }
 
@@ -54,6 +67,7 @@ def create_and_test_m2m_regulation(
     through_table_instance = through_model.objects.get(
         enacting_regulation__regulation_id=test_regulation.regulation_id,
         target_regulation__regulation_id=base_regulation.regulation_id,
+        update_type=update_type,
     )
 
     enacting_regulation = through_table_instance.enacting_regulation
@@ -86,41 +100,61 @@ def create_and_test_m2m_regulation(
     return through_table_instance
 
 
-@validate_taric_import(serializers.GroupSerializer, factories.RegulationGroupFactory)
-def test_regulation_group_importer_create(valid_user, test_object, db_object):
-    assert db_object.group_id == test_object.group_id
-    assert db_object.description == test_object.description
-    assert db_object.valid_between.lower == test_object.valid_between.lower
-    assert db_object.valid_between.upper == test_object.valid_between.upper
+def test_regulation_group_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.RegulationGroupFactory, serializers.GroupSerializer
+    )
 
 
-@validate_taric_import(
-    serializers.RegulationImporterSerializer,
-    factories.RegulationFactory,
-    dependencies={"regulation_group": factories.RegulationGroupFactory},
-)
-def test_regulation_importer_create(valid_user, test_object, db_object):
-    assert db_object.role_type == test_object.role_type
-    assert db_object.regulation_id == test_object.regulation_id
-    assert db_object.official_journal_number == test_object.official_journal_number
-    assert db_object.official_journal_page == test_object.official_journal_page
-    assert db_object.published_at == test_object.published_at
-    assert db_object.information_text == test_object.information_text
-    assert db_object.public_identifier == test_object.public_identifier
-    assert db_object.url == test_object.url
-    assert db_object.approved == test_object.approved
-    assert db_object.replacement_indicator == test_object.replacement_indicator
-    assert db_object.effective_end_date == test_object.effective_end_date
-    assert db_object.stopped == test_object.stopped
-    assert db_object.community_code == test_object.community_code
-    assert db_object.stopped == test_object.stopped
-    assert db_object.valid_between.lower == test_object.valid_between.lower
-    assert db_object.valid_between.upper == test_object.valid_between.upper
+def test_regulation_group_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.RegulationGroupFactory, serializers.GroupSerializer
+    )
+
+
+def test_regulation_importer_create(imported_fields_match):
+    regulation = factories.RegulationFactory.build(
+        regulation_group=factories.RegulationGroupFactory.create()
+    )
+
+    assert imported_fields_match(
+        regulation,
+        serializers.RegulationImporterSerializer,
+    )
+
+
+def test_regulation_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.RegulationFactory,
+        serializers.RegulationImporterSerializer,
+        dependencies={"regulation_group": factories.RegulationGroupFactory},
+    )
 
 
 def test_amendment_importer_create(valid_user):
     create_and_test_m2m_regulation(
         RoleType.MODIFICATION, "taric/amendment.xml", models.Amendment, valid_user
+    )
+
+
+@pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
+def test_amendment_importer_update(valid_user, update_type):
+    amendment = create_and_test_m2m_regulation(
+        RoleType.MODIFICATION,
+        "taric/amendment.xml",
+        factories.AmendmentFactory,
+        valid_user,
+        update_type=update_type,
+    )
+
+    amendment_version_group = amendment.version_group
+    enacting_regulation_version_group = amendment.enacting_regulation.version_group
+    assert amendment_version_group.versions.count() == 2
+    assert amendment_version_group.current_version == amendment
+    assert enacting_regulation_version_group.versions.count() == 2
+    assert (
+        enacting_regulation_version_group.current_version
+        == amendment.enacting_regulation
     )
 
 
@@ -134,6 +168,33 @@ def test_suspension_importer_create(valid_user):
         effective_end_date=effective_end_date,
         action_record_code=models.Suspension.action_record_code,
         action_subrecord_code=models.Suspension.action_subrecord_code,
+    )
+    assert suspension.effective_end_date == effective_end_date
+
+
+@pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
+def test_suspension_importer_update(valid_user, update_type):
+    effective_end_date = date(2021, 2, 1)
+    suspension = create_and_test_m2m_regulation(
+        RoleType.FULL_TEMPORARY_STOP,
+        "taric/suspension.xml",
+        factories.SuspensionFactory,
+        valid_user,
+        update_type=update_type,
+        factory_kwargs={"effective_end_date": effective_end_date},
+        effective_end_date=effective_end_date,
+        action_record_code=models.Suspension.action_record_code,
+        action_subrecord_code=models.Suspension.action_subrecord_code,
+    )
+
+    suspension_version_group = suspension.version_group
+    enacting_regulation_version_group = suspension.enacting_regulation.version_group
+    assert suspension_version_group.versions.count() == 2
+    assert suspension_version_group.current_version == suspension
+    assert enacting_regulation_version_group.versions.count() == 2
+    assert (
+        enacting_regulation_version_group.current_version
+        == suspension.enacting_regulation
     )
     assert suspension.effective_end_date == effective_end_date
 
@@ -175,3 +236,47 @@ def test_replacement_importer_create(valid_user):
     assert replacement.chapter_heading == chapter_heading
     assert replacement.enacting_regulation == enacting_regulation
     assert replacement.target_regulation == target_regulation
+
+
+def test_replacement_importer_update(valid_user):
+    replacement = factories.ReplacementFactory.create()
+
+    data = {
+        "enacting_regulation": {
+            "role_type": replacement.enacting_regulation.role_type,
+            "regulation_id": replacement.enacting_regulation.regulation_id,
+        },
+        "target_regulation": {
+            "role_type": replacement.target_regulation.role_type,
+            "regulation_id": replacement.target_regulation.regulation_id,
+        },
+        "taric_template": "taric/replacement.xml",
+        "update_type": UpdateType.UPDATE.value,
+        "measure_type_id": replacement.measure_type_id,
+        "geographical_area_id": "UK",
+        "chapter_heading": replacement.chapter_heading,
+    }
+
+    xml = generate_test_import_xml(data)
+    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+
+    replacements = models.Replacement.objects.filter(
+        enacting_regulation__regulation_id=replacement.enacting_regulation.regulation_id,
+        target_regulation__regulation_id=replacement.target_regulation.regulation_id,
+    )
+
+    assert replacements.count() == 2
+
+    replacement = replacements.get(update_type=UpdateType.UPDATE)
+
+    assert replacement.measure_type_id == replacement.measure_type_id
+    assert replacement.geographical_area_id == replacement.geographical_area_id
+    assert replacement.chapter_heading == replacement.chapter_heading
+    assert replacement.enacting_regulation == replacement.enacting_regulation
+    assert replacement.target_regulation == replacement.target_regulation
+    version_group = replacement.version_group
+    assert version_group.versions.count() == 2
+    assert (
+        version_group == replacements.get(update_type=UpdateType.CREATE).version_group
+    )
+    assert version_group.current_version == replacement

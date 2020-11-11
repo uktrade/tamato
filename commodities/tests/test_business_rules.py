@@ -51,7 +51,7 @@ def test_NIG4(date_ranges):
         factories.GoodsNomenclatureFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_NIG5(date_ranges):
+def test_NIG5(date_ranges, unapproved_workbasket):
     """
     When creating a goods nomenclature code, an origin must exist. This rule is only applicable to update extractions.
     """
@@ -67,6 +67,7 @@ def test_NIG5(date_ranges):
             origin=None,
             valid_between=date_ranges.adjacent_later,
             indent__node__parent=parent,
+            workbasket=unapproved_workbasket,
         )
         good.workbasket.submit_for_approval()
 
@@ -74,6 +75,7 @@ def test_NIG5(date_ranges):
         origin__derived_from_goods_nomenclature=origin,
         valid_between=date_ranges.adjacent_later,
         indent__node__parent=parent,
+        workbasket=factories.WorkBasketFactory.create(),
     )
     good.workbasket.submit_for_approval()
 
@@ -179,9 +181,10 @@ def test_NIG11_no_overlapping_indents(date_ranges):
     indent = factories.GoodsNomenclatureIndentFactory.create(
         valid_between=date_ranges.normal
     )
-    with pytest.raises(IntegrityError):
+
+    with pytest.raises(ValidationError):
         factories.GoodsNomenclatureIndentFactory.create(
-            sid=indent.sid, valid_between=date_ranges.overlap_normal
+            sid=indent.sid, valid_between=date_ranges.normal
         )
 
 
@@ -197,7 +200,7 @@ def test_NIG11_start_date_less_than_end_date(date_ranges):
         )
 
 
-def test_NIG12(date_ranges):
+def test_NIG12(date_ranges, unapproved_workbasket):
     """
     At least one description is mandatory. The start date of the first description period
     must be equal to the start date of the nomenclature.
@@ -205,6 +208,7 @@ def test_NIG12(date_ranges):
     good = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.normal,
         description=None,
+        workbasket=unapproved_workbasket,
     )
 
     with pytest.raises(ValidationError):
@@ -212,7 +216,7 @@ def test_NIG12(date_ranges):
 
     description = factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=good,
-        workbasket=good.workbasket,
+        workbasket=unapproved_workbasket,
         valid_between=date_ranges.overlap_normal,
     )
 
@@ -243,7 +247,7 @@ def test_NIG22(date_ranges):
         origin__derived_from_goods_nomenclature__valid_between=date_ranges.adjacent_earlier_big,
         valid_between=date_ranges.big,
     )
-    factories.FootnoteAssociationGoodsNomenclatureFactory(
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create(
         goods_nomenclature=good, valid_between=date_ranges.normal
     )
     with pytest.raises(ValidationError):
@@ -317,8 +321,8 @@ def test_NIG34(approved_workbasket):
     A goods nomenclature cannot be deleted if it is used in a goods measure.
     """
 
-    measure = factories.MeasureFactory(
-        goods_nomenclature=factories.GoodsNomenclatureFactory(
+    measure = factories.MeasureFactory.create(
+        goods_nomenclature=factories.GoodsNomenclatureFactory.create(
             workbasket=approved_workbasket,
         ),
         workbasket=approved_workbasket,

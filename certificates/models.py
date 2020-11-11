@@ -3,8 +3,8 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db import models
 
 from certificates import validators
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 

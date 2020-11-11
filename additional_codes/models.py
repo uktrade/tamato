@@ -4,8 +4,8 @@ from django.db import models
 from django.db.models.functions import Lower
 
 from additional_codes import validators
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 

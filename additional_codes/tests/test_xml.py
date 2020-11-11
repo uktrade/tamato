@@ -7,7 +7,7 @@ pytestmark = pytest.mark.django_db
 
 
 @validate_taric_xml(factories.AdditionalCodeTypeFactory)
-def test_additional_code_type_xml(api_client, taric_schema, approved_workbasket, xml):
+def test_additional_code_type_xml(api_client, taric_schema, xml):
     element = xml.find(".//additional.code.type", xml.nsmap)
     assert element is not None
     element = xml.find(".//additional.code.type.description", xml.nsmap)
@@ -15,9 +15,7 @@ def test_additional_code_type_xml(api_client, taric_schema, approved_workbasket,
 
 
 @validate_taric_xml(factories.AdditionalCodeDescriptionFactory)
-def test_additional_code_description_xml(
-    api_client, taric_schema, approved_workbasket, xml
-):
+def test_additional_code_description_xml(api_client, taric_schema, xml):
     element = xml.find(".//additional.code.description", xml.nsmap)
     assert element is not None
     element = xml.find(".//additional.code.description.period", xml.nsmap)
@@ -25,6 +23,6 @@ def test_additional_code_description_xml(
 
 
 @validate_taric_xml(factories.AdditionalCodeFactory)
-def test_additional_code_xml(api_client, taric_schema, approved_workbasket, xml):
+def test_additional_code_xml(api_client, taric_schema, xml):
     element = xml.find(".//additional.code", xml.nsmap)
     assert element is not None

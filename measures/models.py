@@ -1,9 +1,9 @@
 from django.db import models
 from psycopg2.extras import DateTimeTZRange
 
-from common.models import ApplicabilityCode
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ApplicabilityCode
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from measures import validators

@@ -111,9 +111,9 @@ class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
     order_number__sid = TextElement(Tag("quota.order.number.sid"))
     volume = TextElement(Tag("volume"))
     initial_volume = TextElement(Tag("initial.volume"))
-    monetary_unit_code = TextElement(Tag("monetary.unit.code"))
-    measurement_unit_code = TextElement(Tag("measurement.unit.code"))
-    measurement_unit_qualifier_code = TextElement(
+    monetary_unit__code = TextElement(Tag("monetary.unit.code"))
+    measurement_unit__code = TextElement(Tag("measurement.unit.code"))
+    measurement_unit_qualifier__code = TextElement(
         Tag("measurement.unit.qualifier.code")
     )
     maximum_precision = TextElement(Tag("maximum.precision"))

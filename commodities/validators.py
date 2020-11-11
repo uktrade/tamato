@@ -153,6 +153,35 @@ def validate_indent_start_date_less_than_goods_end_date(goods_nomenclature_inden
         )
 
 
+def validate_indent_start_date_not_shared(goods_nomenclature_indent):
+    """
+    NIG11
+    """
+    indent_start_date = goods_nomenclature_indent.valid_between.lower
+
+    goods_nomenclature_indent_with_overlapping_validity = (
+        type(goods_nomenclature_indent)
+        .objects.approved()
+        .filter(
+            sid=goods_nomenclature_indent.sid,
+            valid_between__startswith=indent_start_date,
+        )
+    )
+
+    if goods_nomenclature_indent.pk:
+        goods_nomenclature_indent_with_overlapping_validity = (
+            goods_nomenclature_indent_with_overlapping_validity.exclude(
+                pk=goods_nomenclature_indent.pk
+            )
+        )
+    if goods_nomenclature_indent_with_overlapping_validity.exists():
+        raise ValidationError(
+            {
+                "valid_between": "An indents start date must not be shared with an associated indent."
+            }
+        )
+
+
 def validate_at_least_one_description(goods_nomenclature):
     """
     NIG12

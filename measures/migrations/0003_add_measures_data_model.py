@@ -5,6 +5,7 @@ import django.db.models.deletion
 from django.db import migrations
 from django.db import models
 
+import common.fields
 import common.models
 import common.validators
 import measures.validators
@@ -115,13 +116,13 @@ class Migration(migrations.Migration):
                         max_length=2,
                     ),
                 ),
-                ("duty_amount_applicability_code", common.models.ApplicabilityCode()),
+                ("duty_amount_applicability_code", common.fields.ApplicabilityCode()),
                 (
                     "measurement_unit_applicability_code",
-                    common.models.ApplicabilityCode(),
+                    common.fields.ApplicabilityCode(),
                 ),
-                ("monetary_unit_applicability_code", common.models.ApplicabilityCode()),
-                ("description", common.models.ShortDescription()),
+                ("monetary_unit_applicability_code", common.fields.ApplicabilityCode()),
+                ("description", common.fields.ShortDescription()),
             ],
             options={
                 "abstract": False,
@@ -154,7 +155,7 @@ class Migration(migrations.Migration):
                         validators=[measures.validators.validate_action_code],
                     ),
                 ),
-                ("description", common.models.ShortDescription()),
+                ("description", common.fields.ShortDescription()),
             ],
             options={
                 "abstract": False,
@@ -176,7 +177,7 @@ class Migration(migrations.Migration):
                         to="common.TrackedModel",
                     ),
                 ),
-                ("sid", common.models.NumericSID()),
+                ("sid", common.fields.NumericSID()),
                 (
                     "component_sequence_number",
                     models.PositiveSmallIntegerField(
@@ -232,7 +233,7 @@ class Migration(migrations.Migration):
                         ],
                     ),
                 ),
-                ("description", common.models.ShortDescription()),
+                ("description", common.fields.ShortDescription()),
             ],
             options={
                 "abstract": False,
@@ -267,7 +268,7 @@ class Migration(migrations.Migration):
                         ],
                     ),
                 ),
-                ("description", common.models.ShortDescription()),
+                ("description", common.fields.ShortDescription()),
             ],
             options={
                 "abstract": False,
@@ -300,7 +301,7 @@ class Migration(migrations.Migration):
                         validators=[django.core.validators.RegexValidator("^[A-Z]$")],
                     ),
                 ),
-                ("description", common.models.ShortDescription()),
+                ("description", common.fields.ShortDescription()),
             ],
             options={
                 "abstract": False,
@@ -347,7 +348,7 @@ class Migration(migrations.Migration):
                         ]
                     ),
                 ),
-                ("description", common.models.ShortDescription()),
+                ("description", common.fields.ShortDescription()),
             ],
             options={
                 "abstract": False,
@@ -382,7 +383,7 @@ class Migration(migrations.Migration):
                         ],
                     ),
                 ),
-                ("description", common.models.ShortDescription()),
+                ("description", common.fields.ShortDescription()),
             ],
             options={
                 "abstract": False,
@@ -411,7 +412,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="measure",
             name="export_refund_nomenclature_sid",
-            field=common.models.NumericSID(blank=True, default=None, null=True),
+            field=common.fields.NumericSID(blank=True, default=None, null=True),
         ),
         migrations.AddField(
             model_name="measure",
@@ -466,7 +467,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="measure",
             name="sid",
-            field=common.models.NumericSID(default=1),
+            field=common.fields.NumericSID(default=1),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -528,7 +529,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "measure_component_applicability_code",
-                    common.models.ApplicabilityCode(),
+                    common.fields.ApplicabilityCode(),
                 ),
                 (
                     "order_number_capture_code",
@@ -544,7 +545,7 @@ class Migration(migrations.Migration):
                         ]
                     ),
                 ),
-                ("description", common.models.ShortDescription()),
+                ("description", common.fields.ShortDescription()),
                 (
                     "additional_code_types",
                     models.ManyToManyField(

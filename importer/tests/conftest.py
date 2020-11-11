@@ -21,7 +21,7 @@ def mock_serializer() -> Type[ModelSerializer]:
     class TestSerializer(ModelSerializer):
         class Meta:
             model = TestModel1
-            fields = "__all__"
+            exclude = ("version_group",)
 
     return TestSerializer
 
