@@ -10,6 +10,7 @@ from factory.fuzzy import FuzzyChoice
 
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from common.tests.models import TestModel3
 from common.tests.util import Dates
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
@@ -271,6 +272,14 @@ class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
 
     description = factory.Faker("text", max_nb_chars=24)
     custom_sid = numeric_sid()
+
+
+class TestModel3Factory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = TestModel3
+
+    linked_model = factory.SubFactory(TestModel1Factory)
+    sid = numeric_sid()
 
 
 class AdditionalCodeTypeFactory(TrackedModelMixin, ValidityFactoryMixin):

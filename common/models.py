@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 import re
 from typing import Any
 from typing import Dict
+from typing import List
+from typing import Tuple
+from typing import Type
 
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
 from django.db import transaction
+from django.db.models import Field
 from django.db.models import Q
 from django.template import loader
 from polymorphic.managers import PolymorphicManager
@@ -66,7 +72,7 @@ class TrackedModel(PolymorphicModel):
 
     taric_template = None
 
-    def get_taric_template(self):
+    def get_taric_template(self) -> str:
         """
         Generate a TARIC XML template name for the given class.
 
@@ -98,7 +104,7 @@ inherit TrackedModel must either:
 
         return template_name
 
-    def new_draft(self, workbasket, save=True, **kwargs):
+    def new_draft(self, workbasket, save: bool = True, **kwargs) -> TrackedModel:
         cls = self.__class__
 
         new_object_kwargs = {
@@ -120,23 +126,17 @@ inherit TrackedModel must either:
 
         return new_object
 
-    def get_versions(self):
+    def get_versions(self) -> TrackedModelQuerySet:
         if hasattr(self, "version_group"):
             return self.version_group.versions.all()
 
         query = Q(**self.get_identifying_fields())
         return self.__class__.objects.filter(query).order_by("-pk")
 
-    def get_latest_version(self):
-        current_version = self.version_group.current_version
-        if current_version is None:
-            raise self.__class__.DoesNotExist("Object has no current version")
-        return current_version
-
     def validate_workbasket(self):
         pass
 
-    def add_to_workbasket(self, workbasket):
+    def add_to_workbasket(self, workbasket) -> TrackedModel:
         if workbasket == self.workbasket:
             self.save()
             return self
@@ -148,7 +148,7 @@ inherit TrackedModel must either:
             return VersionGroup.objects.create()
         return self.get_versions().first().version_group
 
-    def _can_write(self):
+    def _can_write(self) -> bool:
         return not (
             self.pk and self.workbasket.status in WorkflowStatus.approved_statuses()
         )
@@ -163,6 +163,58 @@ inherit TrackedModel must either:
             fields[field] = value
 
         return fields
+
+    @property
+    def current_version(self) -> TrackedModel:
+        current_version = self.version_group.current_version
+        if current_version is None:
+            raise self.__class__.DoesNotExist("Object has no current version")
+        return current_version
+
+    @classmethod
+    def get_relations(cls) -> List[Tuple[Field, Type[TrackedModel]]]:
+        """
+        Find all foreign key and one-to-one relations on an object and return a list containing
+        tuples of the field instance and the related model it links to.
+        """
+        return [
+            (f, f.related_model)
+            for f in cls._meta.get_fields()
+            if (f.many_to_one or f.one_to_one)
+            and not f.auto_created
+            and f.concrete
+            and f.model == cls
+            and issubclass(f.related_model, TrackedModel)
+        ]
+
+    def __getattr__(self, item: str):
+        """
+        Add the ability to get the current instance of a related object through an attribute.
+        For example if a model is like so:
+
+        .. code:: python
+            class ExampleModel(TrackedModel):
+                # must be a TrackedModel
+                other_model = models.ForeignKey(OtherModel, on_delete=models.PROTECT)
+
+        The latest version of the relation can be accessed via:
+
+        .. code:: python
+            example_model = ExampleModel.objects.first()
+            example_model.other_model_current  # Gets the latest version
+        """
+        relations = {
+            f"{relation.name}_current": relation.name
+            for relation, model in self.get_relations()
+        }
+        if item not in relations:
+            try:
+                return super().__getattr__(item)
+            except AttributeError as e:
+                raise AttributeError(
+                    f"{item} does not exist on {self.__class__.__name__}"
+                ) from e
+        return getattr(self, relations[item]).current_version
 
     @transaction.atomic
     def save(self, *args, force_write=False, **kwargs):
