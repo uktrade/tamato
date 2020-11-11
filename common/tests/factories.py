@@ -1,8 +1,8 @@
 """Factory classes for BDD tests."""
 import random
 import string
-from datetime import timedelta
 from decimal import Decimal
+from itertools import cycle
 from itertools import product
 
 import factory
@@ -26,7 +26,7 @@ def short_description():
 
 
 def string_generator(length=1, characters=string.ascii_uppercase + string.digits):
-    g = product(characters, repeat=length)
+    g = cycle(product(characters, repeat=length))
     return lambda *_: "".join(next(g))
 
 
@@ -69,18 +69,43 @@ class ApprovedWorkBasketFactory(WorkBasketFactory):
 
     approver = factory.SubFactory(UserFactory)
     status = WorkflowStatus.READY_FOR_EXPORT
+    transaction = factory.RelatedFactory(
+        "common.tests.factories.TransactionFactory",
+        factory_related_name="workbasket",
+    )
+
+
+class SimpleApprovedWorkBasketFactory(WorkBasketFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    approver = factory.SubFactory(UserFactory)
+    status = WorkflowStatus.READY_FOR_EXPORT
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "workbaskets.Transaction"
 
-    workbasket = factory.SubFactory(ApprovedWorkBasketFactory)
+    workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+
+
+class VersionGroupFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "common.VersionGroup"
 
 
 class TrackedModelMixin(factory.django.DjangoModelFactory):
-    workbasket = factory.SubFactory(WorkBasketFactory)
-    update_type = UpdateType.UPDATE
+    workbasket = factory.SubFactory(ApprovedWorkBasketFactory)
+    update_type = UpdateType.CREATE.value
+    version_group = factory.SubFactory(VersionGroupFactory)
+
+    @classmethod
+    def _after_postgeneration(cls, instance, create, results=None):
+        """Save again the instance if creating and at least one hook ran."""
+        if create and results:
+            # Some post-generation hooks ran, and may have modified us.
+            instance.save(force_write=True)
 
 
 class FootnoteTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -151,6 +176,33 @@ class RegulationFactory(TrackedModelMixin):
     information_text = string_sequence(length=50)
     public_identifier = factory.sequence(lambda n: f"S.I. 2021/{n}")
     url = factory.sequence(lambda n: f"https://legislation.gov.uk/uksi/2021/{n}")
+
+
+class AmendmentFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Amendment"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+
+
+class SuspensionFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Suspension"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+
+
+class ReplacementFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Replacement"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+    measure_type_id = "AAAAAA"
+    geographical_area_id = "GB"
+    chapter_heading = "01"
 
 
 class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -318,6 +370,7 @@ class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
         "common.tests.factories.GoodsNomenclatureIndentNodeFactory",
         factory_related_name="indent",
         valid_between=factory.SelfAttribute("..valid_between"),
+        transaction=factory.SelfAttribute("..workbasket"),
     )
 
     indent = 0
@@ -346,6 +399,8 @@ class GoodsNomenclatureIndentNodeFactory(ValidityFactoryMixin):
     depth = factory.LazyAttribute(lambda o: len(o.path) // 4)
 
     indent = factory.SubFactory(SimpleGoodsNomenclatureIndentFactory)
+
+    transaction = factory.SubFactory(ApprovedWorkBasketFactory)
 
 
 class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -428,7 +483,7 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
     order_number = string_sequence(6, characters=string.digits)
     mechanism = 0
-    category = 0
+    category = 1
 
     origin = factory.RelatedFactory(
         "common.tests.factories.QuotaOrderNumberOriginFactory",
@@ -521,9 +576,9 @@ class QuotaEventFactory(TrackedModelMixin):
         now = "{:%Y-%m-%d}".format(Dates().now)
         if self.subrecord_code == "00":
             return {
-                "old.balance": 0.0,
-                "new.balance": 0.0,
-                "imported.amount": 0.0,
+                "old.balance": "0.0",
+                "new.balance": "0.0",
+                "imported.amount": "0.0",
                 "last.import.date.in.allocation": now,
             }
         if self.subrecord_code == "05":
@@ -551,8 +606,8 @@ class QuotaEventFactory(TrackedModelMixin):
             return {
                 "transfer.date": now,
                 "quota.closed": "Y",
-                "transferred.amount": 0.0,
-                "target.quota.definition.sid": 1,
+                "transferred.amount": "0.0",
+                "target.quota.definition.sid": "1",
             }
 
 

@@ -2,6 +2,7 @@ import pytest
 
 from common.tests import factories
 from common.validators import UpdateType
+from measures import serializers
 from measures import unit_serializers
 from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
@@ -12,13 +13,27 @@ pytestmark = pytest.mark.django_db
 
 
 def test_measure_type_series_importer_create(imported_fields_match):
-    assert imported_fields_match(factories.MeasureTypeSeriesFactory)
+    assert imported_fields_match(
+        factories.MeasureTypeSeriesFactory, serializers.MeasureTypeSeriesSerializer
+    )
+
+
+def test_measure_type_series_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasureTypeSeriesFactory, serializers.MeasureTypeSeriesSerializer
+    )
 
 
 def test_measurement_unit_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.MeasurementUnitFactory,
         serializer=unit_serializers.MeasurementUnitSerializer,
+    )
+
+
+def test_measurement_unit_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasurementUnitFactory, unit_serializers.MeasurementUnitSerializer
     )
 
 
@@ -29,14 +44,31 @@ def test_measurement_unit_qualifier_importer_create(imported_fields_match):
     )
 
 
+def test_measurement_unit_qualifier_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasurementUnitQualifierFactory,
+        unit_serializers.MeasurementUnitQualifierSerializer,
+    )
+
+
 def test_measurement_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.MeasurementFactory.build(
-            measurement_unit=factories.MeasurementUnitFactory(),
-            measurement_unit_qualifier=factories.MeasurementUnitQualifierFactory(),
-            update_type=UpdateType.CREATE,
+            measurement_unit=factories.MeasurementUnitFactory.create(),
+            measurement_unit_qualifier=factories.MeasurementUnitQualifierFactory.create(),
         ),
         serializer=unit_serializers.MeasurementSerializer,
+    )
+
+
+def test_measurement_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasurementFactory,
+        serializers.MeasurementSerializer,
+        dependencies={
+            "measurement_unit": factories.MeasurementUnitFactory,
+            "measurement_unit_qualifier": factories.MeasurementUnitQualifierFactory,
+        },
     )
 
 
@@ -47,122 +79,272 @@ def test_monetary_unit_importer_create(imported_fields_match):
     )
 
 
+def test_monetary_unit_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MonetaryUnitFactory, unit_serializers.MeasurementUnitSerializer
+    )
+
+
 def test_duty_expression_importer_create(imported_fields_match):
-    assert imported_fields_match(factories.DutyExpressionFactory)
+    assert imported_fields_match(
+        factories.DutyExpressionFactory, serializers.DutyExpressionSerializer
+    )
+
+
+def test_duty_expression_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.DutyExpressionFactory, serializers.DutyExpressionSerializer
+    )
 
 
 def test_measure_type_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.MeasureTypeFactory.build(
-            measure_type_series=factories.MeasureTypeSeriesFactory(),
-            update_type=UpdateType.CREATE,
-        )
+            measure_type_series=factories.MeasureTypeSeriesFactory.create(),
+        ),
+        serializers.MeasureTypeSerializer,
+    )
+
+
+def test_measure_type_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasureTypeFactory,
+        serializers.MeasureTypeSerializer,
+        dependencies={
+            "measure_type_series": factories.MeasureTypeSeriesFactory,
+        },
     )
 
 
 def test_additional_code_type_measure_type_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.AdditionalCodeTypeMeasureTypeFactory.build(
-            measure_type=factories.MeasureTypeFactory(),
-            additional_code_type=factories.AdditionalCodeTypeFactory(),
-            update_type=UpdateType.CREATE,
-        )
+            measure_type=factories.MeasureTypeFactory.create(),
+            additional_code_type=factories.AdditionalCodeTypeFactory.create(),
+        ),
+        serializers.AdditionalCodeTypeMeasureTypeSerializer,
+    )
+
+
+def test_additional_code_type_measure_type_importer_update(
+    update_imported_fields_match,
+):
+    assert update_imported_fields_match(
+        factories.AdditionalCodeTypeMeasureTypeFactory,
+        serializers.AdditionalCodeTypeMeasureTypeSerializer,
+        dependencies={
+            "measure_type": factories.MeasureTypeFactory,
+            "additional_code_type": factories.AdditionalCodeTypeFactory,
+        },
     )
 
 
 def test_measure_condition_code_importer_create(imported_fields_match):
-    assert imported_fields_match(factories.MeasureConditionCodeFactory)
+    assert imported_fields_match(
+        factories.MeasureConditionCodeFactory,
+        serializers.MeasureConditionCodeSerializer,
+    )
+
+
+def test_measure_condition_code_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasureConditionCodeFactory,
+        serializers.MeasureConditionCodeSerializer,
+    )
 
 
 def test_measure_action_importer_create(imported_fields_match):
-    assert imported_fields_match(factories.MeasureActionFactory)
+    assert imported_fields_match(
+        factories.MeasureActionFactory, serializers.MeasureActionSerializer
+    )
 
 
-def test_measure_importer_create(imported_fields_match):
-    rel = factories.AdditionalCodeTypeMeasureTypeFactory(
+def test_measure_action_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasureActionFactory, serializers.MeasureActionSerializer
+    )
+
+
+def test_measure_importer_create(imported_fields_match, unapproved_workbasket):
+    rel = factories.AdditionalCodeTypeMeasureTypeFactory.create(
         measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
     )
-    origin = factories.QuotaOrderNumberOriginFactory(
+    origin = factories.QuotaOrderNumberOriginFactory.create(
         order_number__mechanism=AdministrationMechanism.FCFS,
-        workbasket=factories.WorkBasketFactory(
-            pk=999,
-            status=WorkflowStatus.READY_FOR_EXPORT,
-            approver=factories.UserFactory(),
-        ),
+        workbasket=unapproved_workbasket,
     )
 
     assert imported_fields_match(
         factories.MeasureFactory.build(
             measure_type=rel.measure_type,
             geographical_area=origin.geographical_area,
-            goods_nomenclature=factories.GoodsNomenclatureFactory(),
-            additional_code=factories.AdditionalCodeFactory(
+            goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
+            additional_code=factories.AdditionalCodeFactory.create(
                 type=rel.additional_code_type
             ),
             order_number=origin.order_number,
-            generating_regulation=factories.RegulationFactory(),
-            update_type=UpdateType.CREATE,
-        )
+            generating_regulation=factories.RegulationFactory.create(),
+        ),
+        serializers.MeasureSerializer,
+    )
+
+
+def test_measure_importer_update(update_imported_fields_match, unapproved_workbasket):
+    rel = factories.AdditionalCodeTypeMeasureTypeFactory.create(
+        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+    )
+    origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number__mechanism=AdministrationMechanism.FCFS,
+        workbasket=unapproved_workbasket,
+    )
+
+    assert update_imported_fields_match(
+        factories.MeasureFactory,
+        serializers.MeasureSerializer,
+        dependencies={
+            "measure_type": rel.measure_type,
+            "geographical_area": origin.geographical_area,
+            "goods_nomenclature": factories.GoodsNomenclatureFactory,
+            "additional_code": factories.AdditionalCodeFactory.create(
+                type=rel.additional_code_type
+            ),
+            "order_number": origin.order_number,
+            "generating_regulation": factories.RegulationFactory,
+        },
     )
 
 
 def test_measure_component_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.MeasureComponentFactory.build(
-            component_measure=factories.MeasureFactory(),
-            duty_expression=factories.DutyExpressionFactory(),
-            monetary_unit=factories.MonetaryUnitFactory(),
-            component_measurement=factories.MeasurementFactory(),
-            update_type=UpdateType.CREATE,
-        )
+            component_measure=factories.MeasureFactory.create(),
+            duty_expression=factories.DutyExpressionFactory.create(),
+            monetary_unit=factories.MonetaryUnitFactory.create(),
+            component_measurement=factories.MeasurementFactory.create(),
+        ),
+        serializers.MeasureComponentSerializer,
+    )
+
+
+def test_measure_component_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasureComponentFactory,
+        serializers.MeasureComponentSerializer,
+        dependencies={
+            "component_measure": factories.MeasureFactory,
+            "duty_expression": factories.DutyExpressionFactory,
+            "monetary_unit": factories.MonetaryUnitFactory,
+            "component_measurement": factories.MeasurementFactory,
+        },
+        validity=False,
     )
 
 
 def test_measure_condition_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.MeasureConditionFactory.build(
-            dependent_measure=factories.MeasureFactory(),
-            condition_code=factories.MeasureConditionCodeFactory(),
-            monetary_unit=factories.MonetaryUnitFactory(),
-            condition_measurement=factories.MeasurementFactory(),
-            action=factories.MeasureActionFactory(),
-            required_certificate=factories.CertificateFactory(),
-            update_type=UpdateType.CREATE,
-        )
+            dependent_measure=factories.MeasureFactory.create(),
+            condition_code=factories.MeasureConditionCodeFactory.create(),
+            monetary_unit=factories.MonetaryUnitFactory.create(),
+            condition_measurement=factories.MeasurementFactory.create(),
+            action=factories.MeasureActionFactory.create(),
+            required_certificate=factories.CertificateFactory.create(),
+        ),
+        serializers.MeasureConditionSerializer,
+    )
+
+
+def test_measure_condition_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasureConditionFactory,
+        serializers.MeasureConditionSerializer,
+        dependencies={
+            "dependent_measure": factories.MeasureFactory,
+            "condition_code": factories.MeasureConditionCodeFactory,
+            "monetary_unit": factories.MonetaryUnitFactory,
+            "condition_measurement": factories.MeasurementFactory,
+            "action": factories.MeasureActionFactory,
+            "required_certificate": factories.CertificateFactory,
+        },
+        validity=False,
     )
 
 
 def test_measure_condition_component_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.MeasureConditionComponentFactory.build(
-            condition=factories.MeasureConditionFactory(),
-            duty_expression=factories.DutyExpressionFactory(),
-            monetary_unit=factories.MonetaryUnitFactory(),
-            condition_component_measurement=factories.MeasurementFactory(),
-            update_type=UpdateType.CREATE,
-        )
+            condition=factories.MeasureConditionFactory.create(),
+            duty_expression=factories.DutyExpressionFactory.create(),
+            monetary_unit=factories.MonetaryUnitFactory.create(),
+            condition_component_measurement=factories.MeasurementFactory.create(),
+        ),
+        serializers.MeasureConditionComponentSerializer,
+    )
+
+
+def test_measure_condition_component_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.MeasureConditionComponentFactory,
+        serializers.MeasureConditionComponentSerializer,
+        dependencies={
+            "condition": factories.MeasureConditionFactory,
+            "duty_expression": factories.DutyExpressionFactory,
+            "monetary_unit": factories.MonetaryUnitFactory,
+            "condition_component_measurement": factories.MeasurementFactory,
+        },
+        validity=False,
     )
 
 
 def test_measure_excluded_geographical_area_importer_create(imported_fields_match):
-    membership = factories.GeographicalMembershipFactory()
+    membership = factories.GeographicalMembershipFactory.create()
 
     assert imported_fields_match(
         factories.MeasureExcludedGeographicalAreaFactory.build(
-            modified_measure=factories.MeasureFactory(
+            modified_measure=factories.MeasureFactory.create(
                 geographical_area=membership.geo_group
             ),
             excluded_geographical_area=membership.member,
-            update_type=UpdateType.CREATE,
-        )
+        ),
+        serializers.MeasureExcludedGeographicalAreaSerializer,
+    )
+
+
+def test_measure_excluded_geographical_area_importer_update(
+    update_imported_fields_match,
+):
+    membership = factories.GeographicalMembershipFactory.create()
+
+    assert update_imported_fields_match(
+        factories.MeasureExcludedGeographicalAreaFactory,
+        serializers.MeasureExcludedGeographicalAreaSerializer,
+        dependencies={
+            "modified_measure": factories.MeasureFactory.create(
+                geographical_area=membership.geo_group
+            ),
+            "excluded_geographical_area": membership.member,
+        },
+        validity=False,
     )
 
 
 def test_footnote_association_measure_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.FootnoteAssociationMeasureFactory.build(
-            footnoted_measure=factories.MeasureFactory(),
-            associated_footnote=factories.FootnoteFactory(),
-            update_type=UpdateType.CREATE,
-        )
+            footnoted_measure=factories.MeasureFactory.create(),
+            associated_footnote=factories.FootnoteFactory.create(),
+        ),
+        serializers.FootnoteAssociationMeasureSerializer,
+    )
+
+
+def test_footnote_association_measure_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.FootnoteAssociationMeasureFactory,
+        serializers.FootnoteAssociationMeasureSerializer,
+        dependencies={
+            "footnoted_measure": factories.MeasureFactory,
+            "associated_footnote": factories.FootnoteFactory,
+        },
+        validity=False,
     )

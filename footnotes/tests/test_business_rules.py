@@ -18,17 +18,17 @@ pytestmark = pytest.mark.django_db
 def test_FOT1():
     """The type of the footnote must be unique"""
 
-    t = factories.FootnoteTypeFactory()
+    t = factories.FootnoteTypeFactory.create()
 
     with pytest.raises(IntegrityError):
-        factories.FootnoteTypeFactory(footnote_type_id=t.footnote_type_id)
+        factories.FootnoteTypeFactory.create(footnote_type_id=t.footnote_type_id)
 
 
 def test_FOT2():
     """The footnote type cannot be deleted if it is used in a footnote"""
 
-    t = factories.FootnoteTypeFactory()
-    factories.FootnoteFactory(footnote_type=t)
+    t = factories.FootnoteTypeFactory.create()
+    factories.FootnoteFactory.create(footnote_type=t)
 
     with pytest.raises(IntegrityError):
         t.delete()
@@ -38,19 +38,19 @@ def test_FOT3(date_ranges):
     """The start date must be less than or equal to the end date"""
 
     with pytest.raises(DataError):
-        factories.FootnoteTypeFactory(valid_between=date_ranges.backwards)
+        factories.FootnoteTypeFactory.create(valid_between=date_ranges.backwards)
 
 
 # Footnote
 
 
-def test_FO2(approved_workbasket):
+def test_FO2(unapproved_workbasket):
     """The combination footnote type and code must be unique."""
 
-    workbasket = factories.WorkBasketFactory()
-    t = factories.FootnoteTypeFactory(workbasket=approved_workbasket)
-    f = factories.FootnoteFactory(footnote_type=t, workbasket=approved_workbasket)
-    factories.FootnoteFactory(
+    workbasket = factories.WorkBasketFactory.create()
+    t = factories.FootnoteTypeFactory.create()
+    f = factories.FootnoteFactory.create(footnote_type=t)
+    factories.FootnoteFactory.create(
         footnote_id=f.footnote_id, footnote_type=t, workbasket=workbasket
     )
     with pytest.raises(ValidationError):
@@ -61,13 +61,15 @@ def test_FO3(date_ranges):
     """The start date must be less than or equal to the end date"""
 
     with pytest.raises(DataError):
-        factories.FootnoteFactory(valid_between=date_ranges.backwards)
+        factories.FootnoteFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_FO4_one_description_mandatory():
+def test_FO4_one_description_mandatory(unapproved_workbasket):
     """At least one description record is mandatory."""
 
-    footnote = factories.FootnoteFactory(description=None)
+    footnote = factories.FootnoteFactory.create(
+        description=None, workbasket=unapproved_workbasket
+    )
 
     with pytest.raises(ValidationError):
         footnote.workbasket.submit_for_approval()
@@ -79,17 +81,18 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.FootnoteFactory(description__valid_between=date_ranges.later)
+        factories.FootnoteFactory.create(description__valid_between=date_ranges.later)
 
 
-def test_FO4_start_dates_cannot_match(approved_workbasket):
+def test_FO4_start_dates_cannot_match(unapproved_workbasket):
     """No two associated description periods may have the same start date."""
 
-    footnote = factories.FootnoteFactory(workbasket=approved_workbasket)
+    footnote = factories.FootnoteFactory.create()
 
-    description = factories.FootnoteDescriptionFactory(
+    description = factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,
         valid_between=footnote.valid_between,
+        workbasket=unapproved_workbasket,
     )
     with pytest.raises(ValidationError):
         description.workbasket.submit_for_approval()
@@ -98,14 +101,14 @@ def test_FO4_start_dates_cannot_match(approved_workbasket):
 def test_FO4_description_start_before_footnote_end(date_ranges):
     """The start date must be less than or equal to the end date of the footnote."""
 
-    footnote = factories.FootnoteFactory(
+    footnote = factories.FootnoteFactory.create(
         valid_between=date_ranges.normal,
         footnote_type__valid_between=date_ranges.big,
         description__valid_between=date_ranges.starts_with_normal,
     )
 
     with pytest.raises(ValidationError):
-        factories.FootnoteDescriptionFactory(
+        factories.FootnoteDescriptionFactory.create(
             described_footnote=footnote, valid_between=date_ranges.later
         )
 
@@ -115,12 +118,12 @@ def test_FO5(date_ranges):
     span the validity period of the measure.
     """
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         valid_between=date_ranges.normal,
     )
 
     with pytest.raises(ValidationError):
-        factories.FootnoteAssociationMeasureFactory(
+        factories.FootnoteAssociationMeasureFactory.create(
             footnoted_measure=measure,
             associated_footnote__valid_between=date_ranges.starts_with_normal,
         )
@@ -162,17 +165,17 @@ def test_FO17(date_ranges):
     footnote.
     """
 
-    t = factories.FootnoteTypeFactory(valid_between=date_ranges.normal)
+    t = factories.FootnoteTypeFactory.create(valid_between=date_ranges.normal)
     with pytest.raises(ValidationError):
-        factories.FootnoteFactory(
+        factories.FootnoteFactory.create(
             footnote_type=t, valid_between=date_ranges.overlap_normal
         )
 
 
-def test_FO11(approved_workbasket):
+def test_FO11():
     """When a footnote is used in a measure then the footnote may not be deleted."""
 
-    assoc = factories.FootnoteAssociationMeasureFactory(workbasket=approved_workbasket)
+    assoc = factories.FootnoteAssociationMeasureFactory.create()
 
     with pytest.raises(IntegrityError):
         assoc.associated_footnote.delete()

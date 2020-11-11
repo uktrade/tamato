@@ -92,6 +92,9 @@ class QuotaDefinitionImporterSerializer(
 ):
     order_number = QuotaOrderNumberSerializer(required=False)
     sid = serializers.IntegerField()
+    measurement_unit = MeasurementUnitSerializer(read_only=True)
+    measurement_unit_qualifier = MeasurementUnitQualifierSerializer(read_only=True)
+    monetary_unit = MonetaryUnitSerializer(read_only=True)
 
     class Meta:
         model = models.QuotaDefinition
@@ -101,6 +104,9 @@ class QuotaDefinitionImporterSerializer(
             "volume",
             "initial_volume",
             "maximum_precision",
+            "measurement_unit",
+            "measurement_unit_qualifier",
+            "monetary_unit",
             "quota_critical",
             "quota_critical_threshold",
             "description",

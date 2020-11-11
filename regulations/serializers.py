@@ -208,6 +208,8 @@ class RegulationImporterSerializer(
             "effective_end_date",
             "update_type",
             "taric_template",
+            "start_date",
+            "end_date",
         ]
 
 

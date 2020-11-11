@@ -355,6 +355,7 @@ def validate_measure_unique_except_additional_code(measure):
             reduction=measure.reduction,
         )
         .exclude(pk=measure.pk if measure.pk else None)
+        .excluding_versions_of(version_group=measure.version_group)
         .exists()
     ):
         raise ValidationError(
@@ -496,6 +497,7 @@ def validate_measure_component_duty_expression_only_used_once_per_measure(
         .objects.approved()
         .with_workbasket(measure_component.workbasket)
         .exclude(pk=measure_component.pk if measure_component.pk else None)
+        .excluding_versions_of(version_group=measure_component.version_group)
         .filter(
             component_measure__sid=measure_component.component_measure.sid,
         )
@@ -659,6 +661,7 @@ def validate_measure_condition_certificate_only_used_once_per_measure(
         .objects.approved()
         .with_workbasket(measure_condition.workbasket)
         .exclude(pk=measure_condition.pk if measure_condition.pk else None)
+        .excluding_versions_of(version_group=measure_condition.version_group)
         .filter(
             condition_code__code=measure_condition.condition_code.code,
             required_certificate__sid=measure_condition.required_certificate.sid,
@@ -743,6 +746,7 @@ def validate_excluded_geo_area_only_once(exclusion):
             excluded_geographical_area__sid=exclusion.excluded_geographical_area.sid,
             modified_measure__sid=exclusion.modified_measure.sid,
         )
+        .excluding_versions_of(version_group=exclusion.version_group)
         .exists()
     ):
         raise ValidationError(
@@ -773,6 +777,7 @@ def validate_footnote_only_associated_with_measure_once(
         .objects.approved()
         .with_workbasket(association.workbasket)
         .exclude(pk=association.pk if association.pk else None)
+        .excluding_versions_of(version_group=association.version_group)
         .filter(
             footnoted_measure__sid=association.footnoted_measure.sid,
             associated_footnote__footnote_id=association.associated_footnote.footnote_id,
@@ -905,6 +910,7 @@ def validate_measure_condition_component_duty_expression_only_used_once_per_cond
         .objects.approved()
         .with_workbasket(component.workbasket)
         .exclude(pk=component.pk if component.pk else None)
+        .excluding_versions_of(version_group=component.version_group)
         .filter(
             condition__sid=component.condition.sid,
             duty_expression__sid=component.duty_expression.sid,

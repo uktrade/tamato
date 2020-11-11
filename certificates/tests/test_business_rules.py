@@ -8,7 +8,7 @@ from django.db import IntegrityError
 from psycopg2._range import DateTimeTZRange
 
 from common.tests import factories
-
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -69,22 +69,21 @@ def test_ce4(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
-            required_certificate=factories.CertificateFactory(
+        factories.MeasureConditionFactory.create(
+            required_certificate=factories.CertificateFactory.create(
                 valid_between=date_ranges.starts_with_normal,
             ),
             dependent_measure__valid_between=date_ranges.normal,
         )
 
 
-def test_ce5(approved_workbasket):
+def test_ce5():
     """
     When a certificate cannot be deleted if it is used in a measure condition
     """
 
-    condition = factories.MeasureConditionFactory(
-        required_certificate=factories.CertificateFactory(),
-        workbasket=approved_workbasket,
+    condition = factories.MeasureConditionFactory.create(
+        required_certificate=factories.CertificateFactory.create()
     )
 
     with pytest.raises(IntegrityError):
@@ -96,8 +95,8 @@ def test_ce6_one_description_mandatory():
     At least one description record is mandatory
     """
 
-    workbasket = factories.WorkBasketFactory()
-    factories.CertificateFactory(workbasket=workbasket)
+    workbasket = factories.WorkBasketFactory.create()
+    factories.CertificateFactory.create(workbasket=workbasket)
 
     with pytest.raises(ValidationError):
         workbasket.submit_for_approval()
@@ -107,10 +106,10 @@ def test_ce6_first_description_must_have_same_start_date(date_ranges):
     """
     The start date of the first description period must be equal to the start date of the certificate
     """
-    certificate = factories.CertificateFactory(valid_between=date_ranges.no_end)
+    certificate = factories.CertificateFactory.create(valid_between=date_ranges.no_end)
 
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
+        factories.CertificateDescriptionFactory.create(
             described_certificate=certificate, valid_between=date_ranges.later
         )
 
@@ -119,13 +118,13 @@ def test_ce6_start_dates_cannot_match(date_ranges):
     """
     No two associated description periods for the same certificate and language may have the same start date
     """
-    certificate = factories.CertificateFactory(valid_between=date_ranges.no_end)
+    certificate = factories.CertificateFactory.create(valid_between=date_ranges.no_end)
 
-    factories.CertificateDescriptionFactory(
+    factories.CertificateDescriptionFactory.create(
         described_certificate=certificate, valid_between=date_ranges.no_end
     )
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
+        factories.CertificateDescriptionFactory.create(
             described_certificate=certificate, valid_between=date_ranges.no_end
         )
 
@@ -134,9 +133,9 @@ def test_ce6_certificate_validity_period_must_span_description(date_ranges):
     """
     The validity period of the certificate must span the validity period of the certificate description
     """
-    certificate = factories.CertificateFactory(valid_between=date_ranges.normal)
+    certificate = factories.CertificateFactory.create(valid_between=date_ranges.normal)
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
+        factories.CertificateDescriptionFactory.create(
             described_certificate=certificate, valid_between=date_ranges.overlap_normal
         )
 
@@ -145,9 +144,9 @@ def test_ce7(date_ranges):
     """
     The validity period of the certificate type must span the validity period of the certificate.
     """
-    t = factories.CertificateTypeFactory(valid_between=date_ranges.normal)
+    t = factories.CertificateTypeFactory.create(valid_between=date_ranges.normal)
     with pytest.raises(ValidationError):
-        factories.CertificateFactory(
+        factories.CertificateFactory.create(
             certificate_type=t, valid_between=date_ranges.overlap_normal
         )
 
@@ -156,13 +155,13 @@ def test_certificate_description_periods_cannot_overlap(date_ranges):
     """
     Ensure validity periods for descriptions with a given SID cannot overlap.
     """
-    first = factories.CertificateDescriptionFactory(
+    first = factories.CertificateDescriptionFactory.create(
         sid=10000,
         valid_between=date_ranges.normal,
         described_certificate__valid_between=date_ranges.no_end,
     )
     with pytest.raises(IntegrityError):
-        factories.CertificateDescriptionFactory(
+        factories.CertificateDescriptionFactory.create(
             sid=10000,
             valid_between=date_ranges.overlap_normal,
             described_certificate=first.described_certificate,
@@ -173,20 +172,23 @@ def test_certificate_description_period_must_be_adjacent_to_predecessor(date_ran
     """
     Ensure validity periods for successive descriptions must be adjacent.
     """
-    predecessor = factories.CertificateDescriptionFactory(
+    predecessor = factories.CertificateDescriptionFactory.create(
         valid_between=date_ranges.normal,
         described_certificate__valid_between=date_ranges.no_end,
     )
-    predecessor = factories.CertificateDescriptionFactory(
+    predecessor = factories.CertificateDescriptionFactory.create(
         sid=predecessor.sid,
-        predecessor=predecessor,
         described_certificate=predecessor.described_certificate,
         valid_between=date_ranges.adjacent_later,
+        version_group=None,
+        update_type=UpdateType.UPDATE,
     )
+
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
+        factories.CertificateDescriptionFactory.create(
             sid=predecessor.sid,
-            predecessor=predecessor,
             described_certificate=predecessor.described_certificate,
             valid_between=date_ranges.adjacent_even_later,
+            version_group=None,
+            update_type=UpdateType.UPDATE,
         )

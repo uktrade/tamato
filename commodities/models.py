@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db import models
+from psycopg2._range import DateTimeTZRange
 from treebeard.mp_tree import MP_Node
 
 from commodities import validators
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from common.validators import UpdateType
 
 
 class GoodsNomenclature(TrackedModel, ValidityMixin):
@@ -79,27 +83,26 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
     )
 
+    def save(self, *args, **kwargs):
+        return_value = super().save(*args, **kwargs)
+
+        if not hasattr(self, "version_group"):
+            self.version_group = self._get_version_group()
+
+        if self.update_type != UpdateType.CREATE:
+            previous_version = self.version_group.versions.approved().exclude(
+                pk=self.pk
+            )
+        return return_value
+
     def clean(self):
         validators.validate_indent_start_date_less_than_goods_end_date(self)
+        validators.validate_indent_start_date_not_shared(self)
         validators.validate_goods_parent_validity_includes_good(self)
         return super().clean()
 
     def __str__(self):
-        depth = self.nodes.first().depth
-        return (
-            f"Goods Nomenclature Indent: {depth} - {self.indented_goods_nomenclature}"
-        )
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_goods_indents",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )
+        return f"Goods Nomenclature Indent: {self.indent} - {self.indented_goods_nomenclature}"
 
 
 class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
@@ -163,6 +166,8 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         GoodsNomenclatureIndent, on_delete=models.PROTECT, related_name="nodes"
     )
 
+    transaction = models.ForeignKey("workbaskets.WorkBasket", on_delete=models.PROTECT)
+
     def get_measures(self, **kwargs):
         if self.indent.measures.exists():
             return self.indent.measures.all()
@@ -186,6 +191,29 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
             or ascendant_measures.exists()
             or descendant_measures.exists()
         )
+
+    def copy_tree(
+        self, parent: GoodsNomenclatureIndentNode, valid_between, transaction
+    ):
+        new_valid_between = self.valid_between
+        if not new_valid_between.lower or (
+            valid_between.lower and new_valid_between.lower < valid_between.lower
+        ):
+            new_valid_between = DateTimeTZRange(
+                valid_between.lower, new_valid_between.upper
+            )
+        if not new_valid_between.upper or (
+            valid_between.upper and new_valid_between.upper > valid_between.upper
+        ):
+            new_valid_between = DateTimeTZRange(
+                new_valid_between.lower, valid_between.upper
+            )
+
+        new_node = parent.add_child(
+            indent=self.indent, valid_between=new_valid_between, transaction=transaction
+        )
+        for child in self.get_children():
+            child.copy_tree(new_node, valid_between, transaction)
 
 
 class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):

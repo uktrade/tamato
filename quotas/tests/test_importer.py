@@ -1,121 +1,174 @@
-from operator import itemgetter
-
 import pytest
 
 from common.tests import factories
-from common.tests.util import validate_taric_import
 from quotas import serializers
 
 pytestmark = pytest.mark.django_db
 
 
-@validate_taric_import(
-    serializers.QuotaOrderNumberSerializer, factories.QuotaOrderNumberFactory
-)
-def test_quota_order_number_importer_create(valid_user, test_object, db_object):
-    assert db_object.order_number == test_object.order_number
-    assert db_object.valid_between.lower == test_object.valid_between.lower
-    assert db_object.valid_between.upper == test_object.valid_between.upper
-
-
-@validate_taric_import(
-    serializers.QuotaOrderNumberOriginSerializer,
-    factories.QuotaOrderNumberOriginFactory,
-    dependencies={
-        "order_number": factories.QuotaOrderNumberFactory,
-        "geographical_area": factories.GeographicalAreaFactory,
-    },
-)
-def test_quota_order_number_origin_importer_create(valid_user, test_object, db_object):
-    assert db_object.order_number == test_object.order_number
-    assert db_object.geographical_area == test_object.geographical_area
-    assert db_object.valid_between.lower == test_object.valid_between.lower
-    assert db_object.valid_between.upper == test_object.valid_between.upper
-
-
-@validate_taric_import(
-    serializers.QuotaOrderNumberOriginExclusionSerializer,
-    factories.QuotaOrderNumberOriginExclusionFactory,
-    dependencies={
-        "origin": factories.QuotaOrderNumberOriginFactory,
-        "excluded_geographical_area": factories.GeographicalAreaFactory,
-    },
-)
-def test_quota_order_number_origin_exclusion_importer_create(
-    valid_user, test_object, db_object
-):
-    assert db_object.origin == test_object.origin
-    assert (
-        db_object.excluded_geographical_area == test_object.excluded_geographical_area
+def test_quota_order_number_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaOrderNumberFactory, serializers.QuotaOrderNumberSerializer
     )
 
 
-@validate_taric_import(
-    serializers.QuotaDefinitionImporterSerializer,
-    factories.QuotaDefinitionFactory,
-    dependencies={"order_number": factories.QuotaOrderNumberFactory},
-)
-def test_quota_definition_importer_create(valid_user, test_object, db_object):
-    assert db_object.order_number == test_object.order_number
-    assert db_object.volume == test_object.volume
-    assert db_object.initial_volume == test_object.initial_volume
-    assert db_object.valid_between.lower == test_object.valid_between.lower
-    assert db_object.valid_between.upper == test_object.valid_between.upper
-    assert db_object.maximum_precision == test_object.maximum_precision
-    assert db_object.quota_critical == test_object.quota_critical
-    assert db_object.quota_critical_threshold == test_object.quota_critical_threshold
-    assert db_object.description == test_object.description
+def test_quota_order_number_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.QuotaOrderNumberFactory, serializers.QuotaOrderNumberSerializer
+    )
 
 
-@validate_taric_import(
-    serializers.QuotaAssociationSerializer,
-    factories.QuotaAssociationFactory,
-    dependencies={
-        "main_quota": factories.QuotaDefinitionFactory,
-        "sub_quota": factories.QuotaDefinitionFactory,
-    },
-)
-def test_quota_association_importer_create(valid_user, test_object, db_object):
-    assert db_object.sub_quota_relation_type == test_object.sub_quota_relation_type
-    assert db_object.coefficient == test_object.coefficient
+def test_quota_order_number_origin_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaOrderNumberOriginFactory.build(
+            order_number=factories.QuotaOrderNumberFactory.create(),
+            geographical_area=factories.GeographicalAreaFactory.create(),
+        ),
+        serializers.QuotaOrderNumberOriginSerializer,
+    )
 
 
-@validate_taric_import(
-    serializers.QuotaSuspensionSerializer,
-    factories.QuotaSuspensionFactory,
-    dependencies={"quota_definition": factories.QuotaDefinitionFactory},
-)
-def test_quota_suspension_importer_create(valid_user, test_object, db_object):
-    assert db_object.quota_definition == test_object.quota_definition
-    assert db_object.description == test_object.description
+def test_quota_order_number_origin_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.QuotaOrderNumberOriginFactory,
+        serializers.QuotaOrderNumberOriginSerializer,
+        dependencies={
+            "order_number": factories.QuotaOrderNumberFactory,
+            "geographical_area": factories.GeographicalAreaFactory,
+        },
+    )
 
 
-@validate_taric_import(
-    serializers.QuotaBlockingSerializer,
-    factories.QuotaBlockingFactory,
-    dependencies={"quota_definition": factories.QuotaDefinitionFactory},
-)
-def test_quota_blocking_importer_create(valid_user, test_object, db_object):
-    assert db_object.quota_definition == test_object.quota_definition
-    assert db_object.blocking_period_type == test_object.blocking_period_type
-    assert db_object.description == test_object.description
+def test_quota_order_number_origin_exclusion_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaOrderNumberOriginExclusionFactory.build(
+            origin=factories.QuotaOrderNumberOriginFactory.create(),
+            excluded_geographical_area=factories.GeographicalAreaFactory.create(),
+        ),
+        serializers.QuotaOrderNumberOriginExclusionSerializer,
+    )
+
+
+def test_quota_order_number_origin_exclusion_importer_update(
+    update_imported_fields_match,
+):
+    assert update_imported_fields_match(
+        factories.QuotaOrderNumberOriginExclusionFactory,
+        serializers.QuotaOrderNumberOriginExclusionSerializer,
+        dependencies={
+            "origin": factories.QuotaOrderNumberOriginFactory,
+            "excluded_geographical_area": factories.GeographicalAreaFactory,
+        },
+        validity=False,
+    )
+
+
+def test_quota_definition_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaDefinitionFactory.build(
+            order_number=factories.QuotaOrderNumberFactory.create(),
+            monetary_unit=factories.MonetaryUnitFactory.create(),
+            measurement_unit=factories.MeasurementUnitFactory.create(),
+            measurement_unit_qualifier=factories.MeasurementUnitQualifierFactory.create(),
+        ),
+        serializers.QuotaDefinitionImporterSerializer,
+    )
+
+
+def test_quota_definition_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.QuotaDefinitionFactory,
+        serializers.QuotaDefinitionImporterSerializer,
+        dependencies={
+            "order_number": factories.QuotaOrderNumberFactory,
+            "monetary_unit": factories.MonetaryUnitFactory,
+            "measurement_unit": factories.MeasurementUnitFactory,
+            "measurement_unit_qualifier": factories.MeasurementUnitQualifierFactory,
+        },
+    )
+
+
+def test_quota_association_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaAssociationFactory.build(
+            main_quota=factories.QuotaDefinitionFactory.create(),
+            sub_quota=factories.QuotaDefinitionFactory.create(),
+        ),
+        serializers.QuotaAssociationSerializer,
+    )
+
+
+def test_quota_association_importer_update(update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.QuotaAssociationFactory,
+        serializers.QuotaAssociationSerializer,
+        dependencies={
+            "main_quota": factories.QuotaDefinitionFactory,
+            "sub_quota": factories.QuotaDefinitionFactory,
+        },
+        validity=False,
+    )
+
+
+def test_quota_suspension_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaSuspensionFactory.build(
+            quota_definition=factories.QuotaDefinitionFactory.create()
+        ),
+        serializers.QuotaSuspensionSerializer,
+    )
+
+
+def test_quota_suspension_importer_update(update_imported_fields_match, date_ranges):
+    assert update_imported_fields_match(
+        factories.QuotaSuspensionFactory,
+        serializers.QuotaSuspensionSerializer,
+        dependencies={
+            "quota_definition": factories.QuotaDefinitionFactory,
+        },
+        validity=[date_ranges.normal, date_ranges.adjacent_later],
+    )
+
+
+def test_quota_blocking_importer_create(imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaBlockingFactory.build(
+            quota_definition=factories.QuotaDefinitionFactory.create()
+        ),
+        serializers.QuotaBlockingSerializer,
+    )
+
+
+def test_quota_blocking_importer_update(update_imported_fields_match, date_ranges):
+    assert update_imported_fields_match(
+        factories.QuotaBlockingFactory,
+        serializers.QuotaBlockingSerializer,
+        dependencies={
+            "quota_definition": factories.QuotaDefinitionFactory,
+        },
+        validity=[date_ranges.normal, date_ranges.adjacent_later],
+    )
 
 
 @pytest.mark.parametrize("subrecord_code", ["00", "05", "10", "15", "20", "25", "30"])
-def test_quota_event_importer_create(subrecord_code, valid_user):
-    @validate_taric_import(
+def test_quota_event_importer_create(subrecord_code, valid_user, imported_fields_match):
+    assert imported_fields_match(
+        factories.QuotaEventFactory.build(
+            quota_definition=factories.QuotaDefinitionFactory.create(),
+            subrecord_code=subrecord_code,
+        ),
         serializers.QuotaEventSerializer,
-        factories.QuotaEventFactory,
-        factory_kwargs={"subrecord_code": subrecord_code},
-        dependencies={"quota_definition": factories.QuotaDefinitionFactory},
     )
-    def run_assertions(_valid_user, test_object, db_object):
-        db_data = sorted(db_object.data.items(), key=itemgetter(0))
-        data = sorted(
-            ((key, str(value)) for key, value in test_object.data.items()),
-            key=itemgetter(0),
-        )
-        assert db_data == data
-        assert test_object.subrecord_code == db_object.subrecord_code
 
-    run_assertions(valid_user)
+
+@pytest.mark.parametrize("subrecord_code", ["00", "05", "10", "15", "20", "25", "30"])
+def test_quota_event_importer_update(subrecord_code, update_imported_fields_match):
+    assert update_imported_fields_match(
+        factories.QuotaEventFactory,
+        serializers.QuotaEventSerializer,
+        dependencies={
+            "quota_definition": factories.QuotaDefinitionFactory,
+        },
+        kwargs={"subrecord_code": subrecord_code},
+        validity=False,
+    )

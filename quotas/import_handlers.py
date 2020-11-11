@@ -2,6 +2,9 @@ from datetime import datetime
 
 from geo_areas.models import GeographicalArea
 from importer.handlers import BaseHandler
+from measures.models import MeasurementUnit
+from measures.models import MeasurementUnitQualifier
+from measures.models import MonetaryUnit
 from quotas import import_parsers as parsers
 from quotas import models
 from quotas import serializers
@@ -45,9 +48,22 @@ class QuotaOrderNumberOriginExclusionHandler(BaseHandler):
 
 
 class QuotaDefinitionHandler(BaseHandler):
-    links = ({"model": models.QuotaOrderNumber, "name": "order_number"},)
+    links = (
+        {"model": models.QuotaOrderNumber, "name": "order_number"},
+        {"model": MonetaryUnit, "name": "monetary_unit", "optional": True},
+        {"model": MeasurementUnit, "name": "measurement_unit", "optional": True},
+        {
+            "model": MeasurementUnitQualifier,
+            "name": "measurement_unit_qualifier",
+            "optional": True,
+        },
+    )
     serializer_class = serializers.QuotaDefinitionImporterSerializer
     tag = parsers.QuotaDefinitionParser.tag.name
+
+    def get_generic_link(self, model, kwargs):
+        print(model, kwargs)
+        return super(QuotaDefinitionHandler, self).get_generic_link(model, kwargs)
 
 
 class QuotaAssociationHandler(BaseHandler):

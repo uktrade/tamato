@@ -4,7 +4,7 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
-from common.models import ShortDescription
+from common.fields import ShortDescription
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas.validators import area_id_validator
@@ -218,6 +218,11 @@ class Amendment(TrackedModel):
         Regulation, on_delete=models.PROTECT, related_name="amendments"
     )
 
+    identifying_fields = (
+        "enacting_regulation__regulation_id",
+        "target_regulation__regulation_id",
+    )
+
 
 class Extension(TrackedModel):
     """Prorogation regulations have no validity period of their own but extend the
@@ -244,6 +249,8 @@ class Extension(TrackedModel):
     )
     effective_end_date = models.DateField(null=True)
 
+    identifying_fields = ("enacting_regulation_id", "target_regulation_id")
+
 
 class Suspension(TrackedModel):
     """A FTS regulation suspends the applicability of a regulation for a period of time.
@@ -264,6 +271,11 @@ class Suspension(TrackedModel):
         Regulation, on_delete=models.PROTECT, related_name="suspensions"
     )
     effective_end_date = models.DateField(null=True)
+
+    identifying_fields = (
+        "enacting_regulation__regulation_id",
+        "target_regulation__regulation_id",
+    )
 
 
 class Termination(TrackedModel):
@@ -291,6 +303,8 @@ class Termination(TrackedModel):
     )
     effective_date = models.DateField()
 
+    identifying_fields = ("enacting_regulation_id", "target_regulation_id")
+
 
 class Replacement(TrackedModel):
     """This record holds the information specifying which draft regulations are replaced
@@ -316,3 +330,5 @@ class Replacement(TrackedModel):
         max_length=4, validators=[area_id_validator], null=True
     )
     chapter_heading = models.CharField(max_length=2, null=True)
+
+    identifying_fields = ("enacting_regulation_id", "target_regulation_id")

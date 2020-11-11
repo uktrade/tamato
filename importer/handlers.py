@@ -10,6 +10,7 @@ from typing import Type
 from rest_framework.serializers import ModelSerializer
 
 from common.models import TrackedModel
+from common.models import VersionGroup
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
 from importer.utils import generate_key
@@ -221,9 +222,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         self.data = dispatched_object["data"]
         if not self.identifying_fields:
-            self.identifying_fields = (
-                self.serializer_class.Meta.model.identifying_fields
-            )
+            self.identifying_fields = self.model.identifying_fields
         self.workbasket_id = dispatched_object["workbasket_id"]
 
         self.key = generate_key(
@@ -388,7 +387,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         data = self.clean(self.data)
         data.update(workbasket_id=self.workbasket_id)
 
-        logger.debug(f"Creating {self.serializer_class.Meta.model}: {data}")
+        logger.debug(f"Creating {self.model}: {data}")
         data = self.pre_save(data, self.resolved_links)
         obj = self.save(data)
         self.post_save(obj)
@@ -420,3 +419,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
             cls.dependencies.append(dependant)
 
         return dependant
+
+    @property
+    def model(self):
+        return self.serializer_class.Meta.model
