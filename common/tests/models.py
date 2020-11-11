@@ -10,12 +10,18 @@ from common.models import ValidityMixin
 
 class TestModel1(TrackedModel, ValidityMixin):
     __test__ = False
+    record_code = "01"
+    subrecord_code = "01"
+
     sid = models.PositiveIntegerField()
     name = models.CharField(max_length=24, null=True)
 
 
 class TestModel2(TrackedModel, ValidityMixin):
     __test__ = False
+    record_code = "02"
+    subrecord_code = "01"
+
     custom_sid = models.PositiveIntegerField()
     description = models.CharField(max_length=24, null=True)
 

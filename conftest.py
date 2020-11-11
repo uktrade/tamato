@@ -1,15 +1,22 @@
 from datetime import datetime
 from datetime import timezone
+from functools import lru_cache
+from unittest.mock import patch, PropertyMock
 
+import boto3
 import pytest
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from lxml import etree
+from moto import mock_s3
 from psycopg2.extras import DateTimeTZRange
 from pytest_bdd import given
 from rest_framework.test import APIClient
 
 from common.tests import factories
+from common.tests.factories import WorkBasketFactory
 from common.tests.util import Dates
+from exporter.storages import HMRCStorage
 
 
 @pytest.fixture(
@@ -75,6 +82,11 @@ def taric_schema(settings) -> etree.XMLSchema:
 @pytest.fixture
 def approved_workbasket():
     return factories.TransactionFactory().workbasket
+
+
+@pytest.fixture
+def workbasket():
+    return WorkBasketFactory.create()
 
 
 @pytest.fixture
@@ -166,3 +178,48 @@ def validity_period_contained(date_ranges, approved_workbasket):
         return True
 
     return check
+
+
+@pytest.yield_fixture
+def s3():
+    with mock_s3():
+        s3 = boto3.client("s3")
+        yield s3
+
+
+@pytest.yield_fixture
+def hmrc_storage():
+    """Patch HMRCStorage with moto so that nothing is really uploaded to s3"""
+    with mock_s3():
+        storage = HMRCStorage()
+        session = boto3.session.Session()
+
+        with patch(
+            "storages.backends.s3boto3.S3Boto3Storage.connection",
+            new_callable=PropertyMock,
+        ) as mock_connection_property, patch(
+            "storages.backends.s3boto3.S3Boto3Storage.bucket",
+            new_callable=PropertyMock,
+        ) as mock_bucket_property:
+            # By default Motos mock_s3 doesn't stop S3Boto3Storage from connection to s3.
+            # Patch the connection and bucket properties on it to use Moto instead.
+            @lru_cache(None)
+            def get_connection():
+                return session.resource("s3")
+
+            @lru_cache(None)
+            def get_bucket():
+                connection = get_connection()
+                connection.create_bucket(
+                    Bucket=settings.HMRC_BUCKET_NAME,
+                    CreateBucketConfiguration={
+                        "LocationConstraint": settings.AWS_S3_REGION_NAME
+                    },
+                )
+
+                bucket = connection.Bucket(settings.HMRC_BUCKET_NAME)
+                return bucket
+
+            mock_connection_property.side_effect = get_connection
+            mock_bucket_property.side_effect = get_bucket
+            yield storage

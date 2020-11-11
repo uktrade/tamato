@@ -1,12 +1,15 @@
 from typing import List
 
 import pytest
+from pytest_django.asserts import assertQuerysetEqual
 
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.tests import factories
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from footnotes.models import FootnoteType
+from regulations.models import Regulation, Group
 
 pytestmark = pytest.mark.django_db
 
@@ -192,3 +195,33 @@ def test_get_first_version_custom_identifier(date_ranges, model2_with_history):
     model = model2_with_history.all_models[0]
 
     assert TestModel2.objects.get_first_version(custom_sid=model.custom_sid) == model
+
+
+def test_trackedmodel_can_attach_record_codes(workbasket):
+    # Note:  regulation.Regulation implicitly creates a regulation.Group as well!
+    factories.RegulationFactory.create(workbasket=workbasket)
+    factories.FootnoteTypeFactory.create(workbasket=workbasket)
+
+    tracked_models = (
+        TrackedModel.objects.annotate_record_codes()
+        .select_related()
+        .filter(workbasket_id=workbasket.id)
+    )
+
+    expected_models = [
+        (workbasket.pk, Group, "150", "00"),
+        (workbasket.pk, Regulation, "285", "00"),
+        (workbasket.pk, FootnoteType, "100", "00"),
+    ]
+
+    assertQuerysetEqual(
+        tracked_models,
+        expected_models,
+        transform=lambda o: (
+            o.workbasket.pk,
+            o.__class__,
+            o.record_code,
+            o.subrecord_code,
+        ),
+        ordered=False,
+    )

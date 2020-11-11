@@ -3,8 +3,10 @@ from datetime import datetime
 
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
-from django.db.models import Q
+from django.db.models import CharField, Case
+from django.db.models import F, Q, Value, When
 from django.db.models import QuerySet
+from django.db.models.query_utils import DeferredAttribute
 from django.template import loader
 from django.utils import timezone
 from polymorphic.managers import PolymorphicManager
@@ -136,6 +138,71 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 workbasket__approver__isnull=False,
             )
         )
+
+    def annotate_record_codes(self) -> QuerySet:
+        """
+        :return: Query annotated with record_code and subrecord_code.
+        """
+        # Generates case statements to do the mapping from model to record_code and subrecord_code.
+        q = self.annotate(
+            record_code=Case(
+                *(TrackedModelQuerySet._when_model_record_codes()),
+                output_field=CharField(),
+            ),
+            subrecord_code=Case(
+                *(TrackedModelQuerySet._when_model_subrecord_codes()),
+                output_field=CharField(),
+            ),
+        )
+        return q
+
+    @staticmethod
+    def _when_model_record_codes():
+        """
+        Iterate all TrackedModel subclasses, generating When statements that map
+        the model to its record_code.
+
+        If any of the models start using a foreign key then this function will need to be updated.
+        """
+        return [
+            When(
+                Q(
+                    polymorphic_ctype__app_label=model._meta.app_label,
+                    polymorphic_ctype__model=model._meta.model_name,
+                ),
+                then=Value(model.record_code),
+            )
+            for model in TrackedModel.__subclasses__()
+        ]
+
+    @staticmethod
+    def _subrecord_value_or_f(model):
+        """
+        Return F function or Value to fetch subrecord_code in a query.
+        """
+        if isinstance(model.subrecord_code, DeferredAttribute):
+            return F(f"{model._meta.model_name}__subrecord_code")
+        return Value(model.subrecord_code)
+
+    @staticmethod
+    def _when_model_subrecord_codes():
+        """
+        Iterate all TrackedModel subclasses, generating When statements that map
+        the model to its subrecord_code.
+
+        This function is a little more complex than when_model_record_codes as subrecord_code
+        may be a standard class attribute or a ForeignKey.
+        """
+        return [
+            When(
+                Q(
+                    polymorphic_ctype__app_label=model._meta.app_label,
+                    polymorphic_ctype__model=model._meta.model_name,
+                ),
+                then=TrackedModelQuerySet._subrecord_value_or_f(model),
+            )
+            for model in TrackedModel.__subclasses__()
+        ]
 
 
 class PolymorphicMPTreeQuerySet(TrackedModelQuerySet, MP_NodeQuerySet):

@@ -7,7 +7,9 @@ from workbaskets.models import WorkBasket
 def index(request):
     workbaskets = []
     if request.user.is_authenticated:
-        workbaskets = WorkBasket.objects.filter(author=request.user)
+        workbaskets = WorkBasket.objects.prefetch_ordered_tracked_models().filter(
+            author=request.user
+        )
     return render(
         request,
         "common/index.jinja",
