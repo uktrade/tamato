@@ -1,7 +1,6 @@
 import re
 from datetime import datetime
 
-from django.apps import apps
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
 from django.db.models import CharField, Case
@@ -173,7 +172,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 ),
                 then=Value(model.record_code),
             )
-            for model in TrackedModel.get_subclasses()
+            for model in TrackedModel.__subclasses__()
         ]
 
     @staticmethod
@@ -202,7 +201,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 ),
                 then=TrackedModelQuerySet._subrecord_value_or_f(model),
             )
-            for model in TrackedModel.get_subclasses()
+            for model in TrackedModel.__subclasses__()
         ]
 
 
@@ -268,19 +267,6 @@ class TrackedModel(PolymorphicModel):
     identifying_fields = ("sid",)
 
     taric_template = None
-
-    @staticmethod
-    def get_subclasses():
-        """
-        :return: list of all subclasses of TrackedModel
-        """
-        # Using the django.apps registry generates 0 queries.
-        return [
-            model
-            for table_name_model in apps.all_models.values()
-            for model in table_name_model.values()
-            if model is not TrackedModel and issubclass(model, TrackedModel)
-        ]
 
     def get_taric_template(self):
         """
