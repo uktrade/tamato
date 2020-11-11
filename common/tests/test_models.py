@@ -8,6 +8,7 @@ from common.models import TrackedModel
 from common.tests import factories
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from common.tests.models import TestModel3
 from footnotes.models import FootnoteType
 from regulations.models import Regulation, Group
 from common.validators import UpdateType
@@ -18,12 +19,12 @@ pytestmark = pytest.mark.django_db
 def generate_model_history(factory, number=5, **kwargs) -> List:
     objects = []
     kwargs["update_type"] = kwargs.get("update_type", UpdateType.CREATE)
-    current = factory(**kwargs)
+    current = factory.create(**kwargs)
     objects.append(current)
     kwargs["update_type"] = UpdateType.UPDATE
     kwargs["version_group"] = kwargs.get("version_group", current.version_group)
     for _ in range(number - 1):
-        current = factory(**kwargs)
+        current = factory.create(**kwargs)
         objects.append(current)
 
     return objects
@@ -45,7 +46,7 @@ def model_with_history(factory, date_ranges, **kwargs):
             factory, valid_between=date_ranges.earlier, **kwargs
         )
 
-        active_model = factory(
+        active_model = factory.create(
             valid_between=date_ranges.current, update_type=UpdateType.UPDATE, **kwargs
         )
 
@@ -156,7 +157,7 @@ def test_get_version_raises_error():
         TestModel2.objects.get_versions(sid=1)
 
 
-def test_get_current_version(date_ranges, model1_with_history):
+def test_get_current_version(model1_with_history):
     """
     Ensure getting the current version works with a standard sid identifier.
     """
@@ -165,7 +166,7 @@ def test_get_current_version(date_ranges, model1_with_history):
     assert TestModel1.objects.get_current_version(sid=model.sid) == model
 
 
-def test_get_current_version_custom_identifier(date_ranges, model2_with_history):
+def test_get_current_version_custom_identifier(model2_with_history):
     """
     Ensure getting the current version works with a custom identifier.
     """
@@ -174,7 +175,7 @@ def test_get_current_version_custom_identifier(date_ranges, model2_with_history)
     assert TestModel2.objects.get_current_version(custom_sid=model.custom_sid) == model
 
 
-def test_get_latest_version(date_ranges, model1_with_history):
+def test_get_latest_version(model1_with_history):
     """
     Ensure getting the latest version works with a standard sid identifier.
     """
@@ -183,7 +184,7 @@ def test_get_latest_version(date_ranges, model1_with_history):
     assert TestModel1.objects.get_latest_version(sid=model.sid) == model
 
 
-def test_get_latest_version_custom_identifier(date_ranges, model2_with_history):
+def test_get_latest_version_custom_identifier(model2_with_history):
     """
     Ensure getting the latest version works with a custom identifier.
     """
@@ -192,7 +193,7 @@ def test_get_latest_version_custom_identifier(date_ranges, model2_with_history):
     assert TestModel2.objects.get_latest_version(custom_sid=model.custom_sid) == model
 
 
-def test_get_first_version(date_ranges, model1_with_history):
+def test_get_first_version(model1_with_history):
     """
     Ensure getting the first version works with a standard sid identifier.
     """
@@ -201,13 +202,47 @@ def test_get_first_version(date_ranges, model1_with_history):
     assert TestModel1.objects.get_first_version(sid=model.sid) == model
 
 
-def test_get_first_version_custom_identifier(date_ranges, model2_with_history):
+def test_get_first_version_custom_identifier(model2_with_history):
     """
     Ensure getting the first version works with a custom identifier.
     """
     model = model2_with_history.all_models[0]
 
     assert TestModel2.objects.get_first_version(custom_sid=model.custom_sid) == model
+
+
+def test_get_latest_relation_with_latest_links(
+    model1_with_history, django_assert_num_queries
+):
+    oldest_link = model1_with_history.all_models[0]
+    latest_link = model1_with_history.all_models[-1]
+
+    factories.TestModel3Factory.create(linked_model=oldest_link)
+
+    with django_assert_num_queries(1):
+        instance = TestModel3.objects.all().with_latest_links()[0]
+        fetched_oldest_link = instance.linked_model
+        fetched_latest_link = instance.linked_model_current
+
+    assert oldest_link.pk == fetched_oldest_link.pk
+    assert latest_link.pk == fetched_latest_link.pk
+
+
+def test_get_latest_relation_without_latest_links(
+    model1_with_history, django_assert_num_queries
+):
+    oldest_link = model1_with_history.all_models[0]
+    latest_link = model1_with_history.all_models[-1]
+
+    factories.TestModel3Factory.create(linked_model=oldest_link)
+
+    with django_assert_num_queries(4):
+        instance = TestModel3.objects.all().select_related("linked_model")[0]
+        fetched_oldest_link = instance.linked_model
+        fetched_latest_link = instance.linked_model_current
+
+    assert oldest_link == fetched_oldest_link
+    assert latest_link == fetched_latest_link
 
 
 def test_trackedmodel_can_attach_record_codes(workbasket):
