@@ -13,6 +13,7 @@ class Command(WorkBasketBaseCommand):
 
     Invalid envelopes are output but with error level set.
     """
+
     help = "Output workbaskets ready for export to a file or stdout"
 
     def add_arguments(self, parser):

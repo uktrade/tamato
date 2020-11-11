@@ -18,6 +18,7 @@ class Command(WorkBasketBaseCommand):
 
     Invalid envelopes are NOT uploaded.
     """
+
     help = "Upload workbaskets ready for export to HMRC S3 Storage."
 
     def handle(self, *args, **options):
