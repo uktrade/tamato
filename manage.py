@@ -7,7 +7,8 @@ import dotenv
 
 
 def main():
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+    in_test = not {"pytest", "test"}.isdisjoint(sys.argv[1:])
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.test" if in_test else "settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
