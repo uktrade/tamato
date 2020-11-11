@@ -6,10 +6,6 @@ from pytest_django.asserts import assertQuerysetEqual
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.tests import factories
-from common.tests.factories import (
-    RegulationFactory,
-    FootnoteTypeFactory,
-)
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from footnotes.models import FootnoteType
@@ -203,8 +199,8 @@ def test_get_first_version_custom_identifier(date_ranges, model2_with_history):
 
 def test_trackedmodel_can_attach_record_codes(workbasket):
     # Note:  regulation.Regulation implicitly creates a regulation.Group as well!
-    RegulationFactory.create(workbasket=workbasket)
-    FootnoteTypeFactory.create(workbasket=workbasket)
+    factories.RegulationFactory.create(workbasket=workbasket)
+    factories.FootnoteTypeFactory.create(workbasket=workbasket)
 
     tracked_models = (
         TrackedModel.objects.annotate_record_codes()
