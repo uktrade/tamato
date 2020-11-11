@@ -14,6 +14,10 @@ from workbaskets.validators import WorkflowStatus
 
 
 class Command(WorkBasketBaseCommand):
+    """Upload envelope to HMRC s3 storage.
+
+    Invalid envelopes are NOT uploaded.
+    """
     help = "Upload workbaskets ready for export to HMRC S3 Storage."
 
     def handle(self, *args, **options):

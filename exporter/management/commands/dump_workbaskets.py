@@ -1,3 +1,5 @@
+import sys
+
 from exporter.management.commands.util import (
     get_envelope_of_active_workbaskets,
     WorkBasketBaseCommand,
@@ -7,7 +9,11 @@ from workbaskets.models import WorkBasket
 
 
 class Command(WorkBasketBaseCommand):
-    help = "Output workbaskets ready for export to a file or stdout."
+    """Dump envelope to file or stdout.
+
+    Invalid envelopes are output but with error level set.
+    """
+    help = "Output workbaskets ready for export to a file or stdout"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -30,7 +36,6 @@ class Command(WorkBasketBaseCommand):
         )
 
         envelope = get_envelope_of_active_workbaskets(workbaskets)
-        self.validate_envelope(envelope)
 
         f = self.get_output_file(options["filename"])
         f.write(envelope.decode("utf-8"))
@@ -39,3 +44,4 @@ class Command(WorkBasketBaseCommand):
             f.close()
 
         # Don't add more output here in case we are outputting to stdout.
+        self.validate_envelope(envelope)
