@@ -59,6 +59,8 @@ To run with coverage use the following:
 
     ./manage.py test -- --cov
 
+When running tests the settings module defaults to settings.test
+
 ## Environment Variables
 
 | Name | Description |
