@@ -3,9 +3,13 @@ from datetime import datetime
 
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
-from django.db.models import CharField, Case
-from django.db.models import F, Q, Value, When
+from django.db.models import Case
+from django.db.models import CharField
+from django.db.models import F
+from django.db.models import Q
 from django.db.models import QuerySet
+from django.db.models import Value
+from django.db.models import When
 from django.db.models.query_utils import DeferredAttribute
 from django.template import loader
 from django.utils import timezone
@@ -17,6 +21,37 @@ from treebeard.mp_tree import MP_NodeQuerySet
 from common import exceptions
 from common import validators
 from workbaskets.validators import WorkflowStatus
+
+
+class TaricRecordType(models.Model):
+    record_code = models.CharField(max_length=3)
+    subrecord_code = models.CharField(max_length=2)
+
+
+class TaricIdentifier(models.ForeignKey):
+    def __init__(self, record_code, subrecord_code):
+        super().__init__(
+            to="common.TaricRecordType",
+            on_delete=models.PROTECT,
+            default=lambda: (
+                TaricRecordType.objects.get_or_create(
+                    record_code=record_code, subrecord_code=subrecord_code
+                )
+            )[0].pk,
+            editable=False,
+        )
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        args = ("000", "00")
+        if kwargs["default"]:
+            taric = TaricRecordType.objects.get(pk=kwargs["default"]())
+            args = (taric.record_code, taric.subrecord_code)
+        del kwargs["to"]
+        del kwargs["on_delete"]
+        del kwargs["default"]
+        del kwargs["editable"]
+        return name, path, args, kwargs
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet):
@@ -266,6 +301,7 @@ class TrackedModel(PolymorphicModel):
 
     identifying_fields = ("sid",)
 
+    taric = TaricIdentifier("000", "00")
     taric_template = None
 
     def get_taric_template(self):

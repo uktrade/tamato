@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from common.models import ShortDescription
 from common.models import SignedIntSID
+from common.models import TaricIdentifier
 from common.models import TimestampedMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
@@ -59,6 +60,7 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
 
     record_code = "200"
     subrecord_code = "00"
+    taric = TaricIdentifier("200", "00")
 
     footnote_id = models.CharField(
         max_length=5, validators=[validators.footnote_id_validator]
