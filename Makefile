@@ -75,7 +75,6 @@ run-cf: collectstatic migrate
 	@gunicorn -b 0.0.0.0:8080 wsgi:application
 
 ## test: Run tests
-test: export DJANGO_SETTINGS_MODULE=settings.test
 test:
 	@echo
 	@echo "> Running tests..."
@@ -98,7 +97,6 @@ docker-test:
 	@echo
 	@echo "> Running tests in Docker..."
 	@docker-compose run \
-		-e DJANGO_SETTINGS_MODULE=settings.test \
 		${PROJECT} sh -c "docker/wait_for_db && ${PYTHON} manage.py test -- --cov"
 
 ## build-docs: Build the project documentation
