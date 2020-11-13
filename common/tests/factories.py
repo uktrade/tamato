@@ -727,19 +727,19 @@ class FootnoteAssociationMeasureFactory(TrackedModelMixin):
 
 class EnvelopeFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "taric.Envelope"
+        model = "exporter.Envelope"
 
     envelope_id = factory.Sequence(lambda x: f"{Dates().now:%y}{(x + 1):04d}")
 
 
 class NewTransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "taric.Transaction"
+        model = "exporter.Transaction"
 
 
 class EnvelopeTransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "taric.EnvelopeTransaction"
+        model = "exporter.EnvelopeTransaction"
 
     index = factory.Sequence(lambda x: x + 1)
     transaction = factory.SubFactory(NewTransactionFactory)
@@ -748,7 +748,7 @@ class EnvelopeTransactionFactory(factory.django.DjangoModelFactory):
 
 class UploadFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "hmrc_sdes.Upload"
+        model = "exporter.Upload"
 
     envelope = factory.SubFactory(EnvelopeFactory)
     correlation_id = factory.Faker("uuid4")
