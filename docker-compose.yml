@@ -9,6 +9,14 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6378:6379"
+    volumes:
+      - .:/redis.conf
+
   s3:
     image: minio/minio
     restart: always
@@ -40,6 +48,32 @@ services:
       - manage.py
       - runserver
       - 0.0.0.0:8000
+
+  celery_worker:
+    image: tamato
+    restart: always
+    env_file: .env
+    entrypoint: celery
+    command: -A celery_app.celery beat --loglevel=info
+    links:
+      - redis
+      - db
+      - s3
+    depends_on:
+      - tamato
+
+  celery_beat:
+    image: tamato
+    restart: always
+    env_file: .env
+    entrypoint: celery
+    command: -A celery_app.celery beat --loglevel=info
+    links:
+      - celery_worker
+      - redis
+    depends_on:
+      - redis
+      - tamato
 
 volumes:
   tamato-data-volume:
