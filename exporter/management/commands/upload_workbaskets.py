@@ -22,11 +22,7 @@ class Command(WorkBasketBaseCommand):
     help = "Upload workbaskets ready for export to HMRC S3 Storage."
 
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.prefetch_ordered_tracked_models().filter(
-            status=WorkflowStatus.READY_FOR_EXPORT
-        )
-
-        envelope = get_envelope_of_active_workbaskets(workbaskets)
+        envelope = get_envelope_of_active_workbaskets()
         self.validate_envelope(envelope)
 
         filename = get_envelope_filename(1)

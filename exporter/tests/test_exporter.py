@@ -15,12 +15,15 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
     approved_workbasket, hmrc_storage, s3
 ):
     """
-    Exercise HMRCStorage and verify content is saved to bucket.
+    Exercise HMRCStorage and verify expected content is saved to bucket.
     """
     expected_bucket_name = "test-hmrc"
 
+    # Expected items.
     RegulationFactory.create(workbasket=approved_workbasket)
     FootnoteTypeFactory.create(workbasket=approved_workbasket)
+    # Un
+    RegulationFactory.create(workbasket=workbasket)
 
     with mock.patch(
         "exporter.storages.HMRCStorage.save",
@@ -67,7 +70,7 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
     assert codes == expected_codes
 
 
-def test_dump_command_outputs_approved_workbasket(
+def test_dump_command_outputs_approved_workbasket_to_stdout(
     approved_workbasket, settings, capsys
 ):
     """
@@ -81,9 +84,9 @@ def test_dump_command_outputs_approved_workbasket(
 
     call_command("dump_workbaskets")
 
-    envelope_bytes, _ = capsys.readouterr()
+    envelope, _ = capsys.readouterr()
     with capsys.disabled():
-        xml = etree.XML(envelope_bytes.encode("utf-8"))
+        xml = etree.XML(envelope.encode("utf-8"))
 
         validate_taric_xml_record_order(xml)
 

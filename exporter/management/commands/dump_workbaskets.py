@@ -32,11 +32,7 @@ class Command(WorkBasketBaseCommand):
         return open(filename, "w+")
 
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.prefetch_ordered_tracked_models().filter(
-            status=WorkflowStatus.READY_FOR_EXPORT
-        )
-
-        envelope = get_envelope_of_active_workbaskets(workbaskets)
+        envelope = get_envelope_of_active_workbaskets()
 
         f = self.get_output_file(options["filename"])
         f.write(envelope.decode("utf-8"))
