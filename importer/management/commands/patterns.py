@@ -145,30 +145,43 @@ class MeasureCreatingPattern:
         self.measure_sid_counter = measure_sid_counter
         self.measure_condition_sid_counter = measure_condition_sid_counter
 
+    @cached_property
+    def presentation_of_certificate(self) -> MeasureConditionCode:
+        return MeasureConditionCode.objects.get(code="B")
+
+    @cached_property
+    def presentation_of_endorsed_certificate(self) -> MeasureConditionCode:
+        return MeasureConditionCode.objects.get(code="Q")
+
+    @cached_property
+    def end_use_certificate(self) -> Certificate:
+        return Certificate.objects.get(
+            sid="990", certificate_type=CertificateType.objects.get(sid="N")
+        )
+
+    @cached_property
+    def apply_mentioned_duty(self) -> MeasureAction:
+        return MeasureAction.objects.get(code="27")
+
+    @cached_property
+    def subheading_not_allowed(self) -> MeasureAction:
+        return MeasureAction.objects.get(code="08")
+
+    @cached_property
+    def measure_not_applicable(self) -> MeasureAction:
+        return MeasureAction.objects.get(code="07")
+
     def get_default_measure_conditions(
         self, measure: Measure
     ) -> List[MeasureCondition]:
-        presentation_of_certificate = MeasureConditionCode.objects.get(
-            code="B",
-        )
-        certificate = Certificate.objects.get(
-            sid="990",
-            certificate_type=CertificateType.objects.get(sid="N"),
-        )
-        apply_mentioned_duty = MeasureAction.objects.get(
-            code="27",
-        )
-        subheading_not_allowed = MeasureAction.objects.get(
-            code="08",
-        )
         return [
             MeasureCondition(
                 sid=self.measure_condition_sid_counter(),
                 dependent_measure=measure,
                 component_sequence_number=1,
-                condition_code=presentation_of_certificate,
-                required_certificate=certificate,
-                action=apply_mentioned_duty,
+                condition_code=self.presentation_of_certificate,
+                required_certificate=self.end_use_certificate,
+                action=self.apply_mentioned_duty,
                 update_type=UpdateType.CREATE,
                 workbasket=self.workbasket,
             ),
@@ -176,12 +189,35 @@ class MeasureCreatingPattern:
                 sid=self.measure_condition_sid_counter(),
                 dependent_measure=measure,
                 component_sequence_number=2,
-                condition_code=presentation_of_certificate,
-                action=subheading_not_allowed,
+                condition_code=self.presentation_of_certificate,
+                action=self.subheading_not_allowed,
                 update_type=UpdateType.CREATE,
                 workbasket=self.workbasket,
             ),
         ]
+
+    def get_proof_of_origin_condition(
+        self, measure: Measure, certificate: Certificate
+    ) -> Iterator[MeasureCondition]:
+        yield MeasureCondition(
+            sid=self.measure_condition_sid_counter(),
+            dependent_measure=measure,
+            component_sequence_number=1,
+            condition_code=self.presentation_of_endorsed_certificate,
+            required_certificate=certificate,
+            action=self.apply_mentioned_duty,
+            update_type=UpdateType.CREATE,
+            workbasket=self.workbasket,
+        )
+        yield MeasureCondition(
+            sid=self.measure_condition_sid_counter(),
+            dependent_measure=measure,
+            component_sequence_number=2,
+            condition_code=self.presentation_of_endorsed_certificate,
+            action=self.measure_not_applicable,
+            update_type=UpdateType.CREATE,
+            workbasket=self.workbasket,
+        )
 
     def get_measure_components_from_duty_rate(
         self, measure: Measure, rate: str
@@ -237,6 +273,7 @@ class MeasureCreatingPattern:
         validity_start: datetime = None,
         validity_end: datetime = None,
         footnotes: List[Footnote] = [],
+        proof_of_origin: Certificate = None,
     ) -> Iterator[TrackedModel]:
         assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
 
@@ -281,7 +318,7 @@ class MeasureCreatingPattern:
             yield new_measure
 
             if geo_exclusion:
-                yield self.get_measure_exluded_geographical_areas(
+                yield self.get_measure_excluded_geographical_areas(
                     new_measure, geo_exclusion
                 )
 
@@ -292,6 +329,10 @@ class MeasureCreatingPattern:
             # some measure conditions with the N990 certificate.
             if authorised_use:
                 for condition in self.get_default_measure_conditions(new_measure):
+                    yield condition
+
+            if proof_of_origin:
+                for condition in self.get_proof_of_origin_condition(new_measure, proof_of_origin):
                     yield condition
 
             for component in self.get_measure_components_from_duty_rate(

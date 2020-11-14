@@ -16,6 +16,7 @@ from django.db import transaction
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
+from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.util import validity_range_contains_range
@@ -96,6 +97,8 @@ class NewQuotaRow:
         self.source = QuotaSource(str(row[col("N")].value))
         self.suspension_start = blank(row[col("O")], parse_date)
         self.suspension_end = blank(row[col("P")], parse_date)
+        self.certificate_str = blank(row[col("R")].value, str)
+        self.end_use = bool(row[col("Q")].value)
         self.mechanism = (
             AdministrationMechanism.LICENSED
             if self.order_number.startswith("054")
@@ -118,10 +121,22 @@ class NewQuotaRow:
 
         return Measurement.objects.as_at(BREXIT).get(**kwargs)
 
+    @cached_property
+    def certificate(self) -> Optional[Certificate]:
+        if self.certificate_str:
+            logger.debug("Looking up certificate %s", self.certificate_str)
+            return Certificate.objects.get(
+                sid=self.certificate_str[1:],
+                certificate_type__sid=self.certificate_str[0],
+            )
+        else:
+            return None
+
 
 class FTAQuotaImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.quotas = {}
         return iter([])
 
     def compare_rows(self, new_row: Optional[NewQuotaRow], old_row: None) -> int:
@@ -131,6 +146,8 @@ class FTAQuotaImporter(RowsImporter):
     def handle_row(
         self, row: Optional[NewQuotaRow], old_row: None
     ) -> Iterator[Iterable[TrackedModel]]:
+        self.quotas[row.order_number] = row
+
         # 1. Create a quota order number
         quota = QuotaOrderNumber(
             sid=self.counters["quota_order_number_id"](),
@@ -452,9 +469,10 @@ CUSTOMS_UNION_EQUIVALENT_TYPES = {
 
 
 class FTAMeasuresImporter(RowsImporter):
-    def __init__(self, *args, staged_rows={}, **kwargs) -> None:
+    def __init__(self, *args, staged_rows={}, quotas={}, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.staged_rows = staged_rows
+        self.quotas = quotas
 
     def setup(self) -> Iterator[TrackedModel]:
         self.measure_types = {
@@ -616,6 +634,12 @@ class FTAMeasuresImporter(RowsImporter):
             for f in footnote_ids
         ]
 
+        if row.order_number in self.quotas:
+            origin_certificate = self.quotas[row.order_number].certificate
+            assert row.order_number is not None
+        else:
+            origin_certificate = None
+
         # 3. Otherwise, take the start (col O) and end (col P) dates
         # and use the same month and day for 2021, and apply the new rate in column AM.
         # Check that any attached quota has the same or greater validity period.
@@ -651,6 +675,7 @@ class FTAMeasuresImporter(RowsImporter):
                     validity_start=start,
                     validity_end=end,
                     footnotes=footnotes,
+                    proof_of_origin=origin_certificate,
                 )
             )
 
@@ -757,6 +782,7 @@ class Command(BaseCommand):
                         env,
                         counters=options["counters"],
                         staged_rows=staging_dict,
+                        quotas=quota_importer.quotas,
                     )
                     importer.import_sheets(country_new_rows, country_old_rows)
 
