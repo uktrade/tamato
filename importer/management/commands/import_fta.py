@@ -479,16 +479,16 @@ class FTAMeasuresImporter(RowsImporter):
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
 
         self.preferential_si, created = Regulation.objects.get_or_create(
-            regulation_id="C2100005",
-            regulation_group=Group.objects.get(group_id="PRF"),
-            published_at=BREXIT,
-            approved=False,
-            valid_between=self.brexit_to_infinity,
-            workbasket=self.workbasket,
-            update_type=UpdateType.CREATE,
+            regulation_id="C2100006",
+            defaults={
+                "regulation_group": Group.objects.get(group_id="PRF"),
+                "published_at": BREXIT,
+                "approved": False,
+                "valid_between": self.brexit_to_infinity,
+                "workbasket": self.workbasket,
+                "update_type": UpdateType.CREATE,
+            },
         )
-        if created:
-            yield self.preferential_si
 
         self.measure_ender = MeasureEndingPattern(
             workbasket=self.workbasket,
@@ -689,21 +689,21 @@ class Command(BaseCommand):
         old_workbook = xlrd.open_workbook(options["old-spreadsheet"])
         old_worksheet = old_workbook.sheet_by_name("Sheet")
 
-        for country in options["geographical_area"]:
-            origin = GeographicalArea.objects.as_at(BREXIT).get(area_id=country)
+        with open(options["output"], mode="w", encoding="UTF8") as output:
+            with EnvelopeSerializer(
+                output,
+                options["counters"]["envelope_id"](),
+                options["counters"]["transaction_id"],
+            ) as env:
+                for country in options["geographical_area"]:
+                    origin = GeographicalArea.objects.as_at(BREXIT).get(area_id=country)
 
-            workbasket, _ = WorkBasket.objects.get_or_create(
-                title=f"Preferential data for {country}",
-                author=author,
-                status=WorkflowStatus.PUBLISHED,
-            )
+                    workbasket, _ = WorkBasket.objects.get_or_create(
+                        title=f"Preferential data for {country}",
+                        author=author,
+                        status=WorkflowStatus.PUBLISHED,
+                    )
 
-            with open(options["output"], mode="w", encoding="UTF8") as output:
-                with EnvelopeSerializer(
-                    output,
-                    options["counters"]["envelope_id"](),
-                    options["counters"]["transaction_id"],
-                ) as env:
                     quota_rows = islice(
                         quota_sheet.get_rows(), options["quota_skip_rows"], None
                     )
