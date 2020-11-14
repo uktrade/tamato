@@ -48,6 +48,7 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaOrderNumberOrigin
 from quotas.models import QuotaOrderNumberOriginExclusion
+from quotas.models import QuotaSuspension
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
 from quotas.validators import SubQuotaType
@@ -55,6 +56,7 @@ from regulations.models import Group
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+from dateutil.relativedelta import relativedelta
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,8 @@ class NewQuotaRow:
         self.parent_order_number = blank(row[col("L")].value, str)
         self.coefficient = blank(row[col("M")].value, str)
         self.source = QuotaSource(str(row[col("N")].value))
+        self.suspension_start = blank(row[col("O")], parse_date)
+        self.suspension_end = blank(row[col("P")], parse_date)
         self.mechanism = (
             AdministrationMechanism.LICENSED
             if self.order_number.startswith("054")
@@ -254,6 +258,26 @@ class FTAQuotaImporter(RowsImporter):
             association.save()
             if quota.mechanism != AdministrationMechanism.LICENSED:
                 yield [association]
+
+        if row.suspension_start and row.suspension_end:
+            assert row.type != QuotaType.NON_CALENDAR, "Need to handle both QDs"
+            start = row.suspension_start.replace(year=BREXIT.year)
+            end = row.suspension_end.replace(year=BREXIT.year)
+            if start < normal_qd.valid_between.lower:
+                start += relativedelta(years=1)
+                end += relativedelta(years=1)
+            assert start >= normal_qd.valid_between.lower
+            assert end <= normal_qd.valid_between.upper
+            suspension = QuotaSuspension(
+                sid=self.counters["quota_suspension_id"](),
+                quota_definition=normal_qd,
+                valid_between=DateTimeTZRange(start, end),
+                workbasket=self.workbasket,
+                update_type=UpdateType.CREATE,
+            )
+            suspension.save()
+            if quota.mechanism != AdministrationMechanism.LICENSED:
+                yield [suspension]
 
 
 class TransitionCategory(Enum):
@@ -628,6 +652,7 @@ class Command(BaseCommand):
         id_argument(p, "quota-order-number")
         id_argument(p, "quota-order-number-origin")
         id_argument(p, "quota-definition")
+        id_argument(p, "quota-suspension")
         id_argument(p, "envelope")
         id_argument(p, "transaction", 140)
         output_argument(p)
