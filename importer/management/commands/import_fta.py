@@ -47,6 +47,7 @@ from quotas.models import QuotaAssociation
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaOrderNumberOrigin
+from quotas.models import QuotaOrderNumberOriginExclusion
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
 from quotas.validators import SubQuotaType
@@ -149,6 +150,19 @@ class FTAQuotaImporter(RowsImporter):
             quota,
             quota_origin,
         ]
+
+        for excluded_id in row.excluded_origins:
+            excluded_area = GeographicalArea.objects.as_at(BREXIT).get(
+                area_id=excluded_id
+            )
+            exclusion = QuotaOrderNumberOriginExclusion(
+                origin=quota_origin,
+                excluded_geographical_area=excluded_area,
+                workbasket=self.workbasket,
+                update_type=UpdateType.CREATE,
+            )
+            exclusion.save()
+            to_output.append(exclusion)
 
         if quota.mechanism != AdministrationMechanism.LICENSED:
             yield to_output
