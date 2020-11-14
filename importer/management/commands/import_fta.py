@@ -3,6 +3,7 @@ from collections import defaultdict
 from datetime import timedelta
 from enum import Enum
 from functools import cached_property
+from itertools import chain
 from itertools import islice
 from typing import Iterable
 from typing import Iterator
@@ -25,6 +26,7 @@ from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.patterns import add_single_row
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import DualRowRunner
+from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
@@ -40,6 +42,7 @@ from importer.management.commands.utils import id_argument
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
 from importer.management.commands.utils import output_argument
+from importer.management.commands.utils import SeasonalRateParser
 from importer.management.commands.utils import spreadsheet_argument
 from measures.models import Measurement
 from measures.models import MeasureType
@@ -344,13 +347,16 @@ class MainMeasureRow:
     def __init__(self, row: List[Cell], origin: GeographicalArea) -> None:
         self.category = TransitionCategory(str(row[col("AF")].value).split(":")[0])
         self.origin_id = str(row[col("K")].value)
-        if self.category == TransitionCategory.COUNTRY_NOT_IN_SCOPE:
+        self.origin = origin
+        if (
+            self.category == TransitionCategory.COUNTRY_NOT_IN_SCOPE
+            or self.origin.area_id != self.origin_id
+        ):
             return
         self.row_id = int(row[col("A")].value)
         self.item_id = clean_item_id(row[col("B")])
         self.measure_type_id = str(int(row[col("I")].value))
         self.origin_description = str(row[col("L")].value)
-        self.origin = origin
         self.excluded_origin_description = str(row[col("M")].value)
         original_order_number = blank(row[col("N")].value, str)
         self.order_number = (
@@ -429,13 +435,13 @@ class CanadaStagingRow(StagedMeasureRow):
 
 
 STAGED_COUNTRIES = {
-    "South Africa": SouthAfricaStagingRow,
-    "Ecuador": EcuadorStagingRow,
-    "Colombia": ColombiaStagingRow,
-    "Peru": PeruStagingRow,
-    "Ukraine": UkraineStagingRow,
-    "Central America": CentralAmericaStagingRow,
-    "Canada": CanadaStagingRow,
+    "ZA": SouthAfricaStagingRow,
+    "EC": EcuadorStagingRow,
+    "CO": ColombiaStagingRow,
+    "PE": PeruStagingRow,
+    "UA": UkraineStagingRow,
+    "2200": CentralAmericaStagingRow,
+    "CA": CanadaStagingRow,
 }
 
 
@@ -464,6 +470,10 @@ class FTAMeasuresImporter(RowsImporter):
             self.new_rows,
             add_old_row=add_single_row,
             add_new_row=add_single_row,
+        )
+        self.seasonal_rate_parser = SeasonalRateParser(
+            base_date=BREXIT,
+            timezone=LONDON,
         )
 
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
@@ -508,7 +518,6 @@ class FTAMeasuresImporter(RowsImporter):
         item_ids = defaultdict(list)
         # Send the old row to be end dated or removed
         for cc, row in self.old_rows.buffer():
-            assert cc not in item_ids
             item_ids[cc].append(row)
             logger.debug("End-dating measure: %s", row.measure_sid)
             yield list(self.measure_ender.end_date_measure(row, self.preferential_si))
@@ -542,6 +551,14 @@ class FTAMeasuresImporter(RowsImporter):
         old_rows: List[OldMeasureRow],
         goods_nomenclature: GoodsNomenclature,
     ) -> Iterator[List[TrackedModel]]:
+        if row.start_date.year < BREXIT.year - 1 and row.end_date is not None:
+            # We will ignore dates that are not in 2020
+            # because any seasonal preferences should appear again
+            logger.warning(
+                "Ignoring row %s because seasonal dates from previous years", row.row_id
+            )
+            return
+
         # 1. If this is a staged row, take it's new duty expression
         # from the staging sheet, else from the main sheet
         if row.staging != TransitionStaging.NONE:
@@ -551,56 +568,29 @@ class FTAMeasuresImporter(RowsImporter):
             duty_exp = row.duty_exp
         duty_exp = duty_exp.replace("tonne", "1,000 kg")
 
-        quota = (
-            QuotaOrderNumber.objects.get(
-                order_number=row.order_number,
-            )
-            if row.order_number
-            else None
-        )
+        if row.order_number:
+            quotas = QuotaOrderNumber.objects.filter(
+                order_number=row.order_number
+            ).all()
+            if not any(quotas):
+                # Drop the measure if we are not transitioning the quota
+                logger.warning(
+                    "Dropping row %s because there is no matching quota %s",
+                    row.row_id,
+                    row.order_number,
+                )
+                return
+            else:
+                quota = quotas[0]
+        else:
+            quota = None
 
         # 2. If the preference is marked "A2: Pref already zero",
-        # set the duty rate to 0% with no end date
-        # OR with the validity period of the attached quota if there is one.
+        # set the duty rate to 0%
         if row.category == TransitionCategory.PREF_ALREADY_ZERO:
             assert duty_exp == "."
             assert row.staging == TransitionStaging.NONE
             duty_exp = "0.00%"
-
-            if quota:
-                start_date = quota.valid_between.lower
-                end_date = quota.valid_between.upper
-            else:
-                start_date = BREXIT
-                end_date = None
-
-        # 3. Otherwise, take the start (col O) and end (col P) dates
-        # and use the same month and day for 2021, and apply the new rate in column AM.
-        # Check that any attached quota has the same or greater validity period.
-        else:
-            start_date = max(
-                BREXIT, row.start_date.replace(year=row.start_date.year + 1)
-            )
-            if row.end_date is None:
-                end_date = None
-            elif (
-                row.end_date.year == 2020
-                and row.end_date.month == 2
-                and row.end_date.day == 29
-            ):
-                end_date = row.end_date.replace(
-                    year=2021, day=28
-                )  # 2020 was a leap year :(
-            else:
-                end_date = (
-                    row.end_date.replace(year=row.end_date.year + 1)
-                    if row.end_date
-                    else None
-                )
-            if quota:
-                assert validity_range_contains_range(
-                    quota.valid_between, DateTimeTZRange(start_date, end_date)
-                )
 
         # Turkey: Where the measure type is currently "Customs Union" use
         # instead of the normal type.
@@ -610,7 +600,15 @@ class FTAMeasuresImporter(RowsImporter):
             measure_type_id = row.measure_type_id
         measure_type = self.measure_types[measure_type_id]
 
-        footnote_ids = set(*[r.footnotes for r in old_rows])
+        # `old_rows` is all the rows with the same item id but not necessarily
+        # the same measure context
+        footnote_ids = set(
+            chain(
+                r.footnotes
+                for r in old_rows
+                if r.measure_context == row.measure_context
+            )
+        )
         footnotes = [
             Footnote.objects.as_at(BREXIT).get(
                 footnote_id=f[2:], footnote_type__footnote_type_id=f[0:2]
@@ -618,20 +616,43 @@ class FTAMeasuresImporter(RowsImporter):
             for f in footnote_ids
         ]
 
-        yield list(
-            self.measure_creator.create(
-                duty_sentence=duty_exp,
-                geography=row.origin,
-                goods_nomenclature=goods_nomenclature,
-                geo_exclusion=row.excluded_origin_description,
-                new_measure_type=measure_type,
-                authorised_use=(measure_type_id in {"146", "145"}),
-                order_number=quota,
-                validity_start=start_date,
-                validity_end=end_date,
-                footnotes=footnotes,
+        # 3. Otherwise, take the start (col O) and end (col P) dates
+        # and use the same month and day for 2021, and apply the new rate in column AM.
+        # Check that any attached quota has the same or greater validity period.
+        for start, end in self.seasonal_rate_parser.correct_dates(
+            row.start_date, row.end_date
+        ):
+            if quota:
+                date_range = DateTimeTZRange(start, end)
+                assert validity_range_contains_range(quota.valid_between, date_range)
+                if not QuotaDefinition.objects.filter(
+                    order_number=quota, valid_between__contains=date_range
+                ).exists():
+                    defns = QuotaDefinition.objects.filter(order_number=quota).all()
+                    periods = "; ".join(
+                        f"{defn.sid}: {defn.valid_between}" for defn in defns
+                    )
+                    logger.warning(
+                        "No matching definition for %s contains %s. Options are: %s",
+                        quota.order_number,
+                        date_range,
+                        periods,
+                    )
+
+            yield list(
+                self.measure_creator.create(
+                    duty_sentence=duty_exp,
+                    geography=row.origin,
+                    goods_nomenclature=goods_nomenclature,
+                    geo_exclusion=row.excluded_origin_description,
+                    new_measure_type=measure_type,
+                    authorised_use=(measure_type_id in {"146", "145"}),
+                    order_number=quota,
+                    validity_start=start,
+                    validity_end=end,
+                    footnotes=footnotes,
+                )
             )
-        )
 
 
 class Command(BaseCommand):
