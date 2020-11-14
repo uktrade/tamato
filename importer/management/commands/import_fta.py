@@ -146,11 +146,13 @@ class FTAQuotaImporter(RowsImporter):
             update_type=UpdateType.CREATE,
         )
         quota_origin.save()
-
-        yield [
+        to_output = [
             quota,
             quota_origin,
-        ]  # TODO: don't output licensed quotas
+        ]
+
+        if quota.mechanism != AdministrationMechanism.LICENSED:
+            yield to_output
 
         # If this is a seasonal quota that would normally have already started,
         # start is on 1 Jan and use the interim volume to set up the quota
@@ -183,7 +185,8 @@ class FTAQuotaImporter(RowsImporter):
             update_type=UpdateType.CREATE,
         )
         normal_qd.save()
-        yield [normal_qd]
+        if quota.mechanism != AdministrationMechanism.LICENSED:
+            yield [normal_qd]
 
         # 4. Create a defn for 2021 from interim volume and Jan 01 to start date
         if row.type == QuotaType.NON_CALENDAR and start_date > BREXIT:
@@ -207,7 +210,8 @@ class FTAQuotaImporter(RowsImporter):
                 update_type=UpdateType.CREATE,
             )
             interim_qd.save()
-            yield [interim_qd]
+            if quota.mechanism != AdministrationMechanism.LICENSED:
+                yield [interim_qd]
 
 
 class TransitionCategory(Enum):
