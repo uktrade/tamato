@@ -1,4 +1,6 @@
 from collections import namedtuple
+from datetime import datetime
+from datetime import timezone
 
 import pytest
 
@@ -11,6 +13,7 @@ from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import parse_trade_remedies_duty_expression
+from importer.management.commands.utils import SeasonalRateParser
 
 pytestmark = pytest.mark.django_db
 
@@ -111,6 +114,19 @@ def overlapping_measure_context(date_ranges: Dates) -> MeasureContext:
         None,
         date_ranges.overlap_normal.lower,
         date_ranges.overlap_normal.upper,
+    )
+
+
+@pytest.fixture
+def start_of_year(date_ranges: Dates) -> datetime:
+    return date_ranges.now.replace(month=1, day=1)
+
+
+@pytest.fixture
+def seasonal_rate_parser(start_of_year: datetime) -> SeasonalRateParser:
+    return SeasonalRateParser(
+        base_date=start_of_year,
+        timezone=timezone.utc,
     )
 
 
@@ -461,3 +477,67 @@ def test_parse_duty_expression_with_nihil():
 def test_eur_to_gbp_conversion():
     assert convert_eur_to_gbp("20.000", conversion_rate=2) == "40.000"
     assert convert_eur_to_gbp("1.000", conversion_rate=0.83687) == "0.830"
+
+
+def test_dates_with_no_end_date(
+    seasonal_rate_parser: SeasonalRateParser,
+    start_of_year: datetime,
+):
+    date_range = Dates.no_end_before(start_of_year)
+    start = date_range.lower
+    end = date_range.upper
+    dates = list(seasonal_rate_parser.correct_dates(start, end))
+    assert len(dates) == 1
+    assert dates[0][0] == start_of_year
+    assert dates[0][1] is None
+
+
+def test_dates_not_across_year_boundary(
+    seasonal_rate_parser: SeasonalRateParser,
+    start_of_year: datetime,
+):
+    date_range = Dates.short_before(start_of_year)
+    start = date_range.lower
+    end = date_range.upper
+    dates = list(seasonal_rate_parser.correct_dates(start, end))
+    assert len(dates) == 1
+    assert dates[0][0].year == start_of_year.year
+    assert dates[0][0].month == start.month
+    assert dates[0][0].day == start.day
+    assert dates[0][1].year == start_of_year.year
+    assert dates[0][1].month == end.month
+    assert dates[0][1].day == end.day
+
+
+def test_dates_across_year_boundary(
+    seasonal_rate_parser: SeasonalRateParser,
+    start_of_year: datetime,
+):
+    date_range = Dates.short_overlap(start_of_year)
+    start = date_range.lower
+    end = date_range.upper
+    dates = list(seasonal_rate_parser.correct_dates(start, end))
+    assert len(dates) == 2
+    assert dates[0][0] == start_of_year
+    assert dates[0][1].year == start_of_year.year
+    assert dates[0][1].month == end.month
+    assert dates[0][1].day == end.day
+    assert dates[1][0].year == start_of_year.year
+    assert dates[1][0].month == start.month
+    assert dates[1][0].day == start.day
+    assert dates[1][1].year == start_of_year.year + 1
+    assert dates[1][1].month == end.month
+    assert dates[1][1].day == end.day
+
+
+def test_dates_in_correct_year(
+    seasonal_rate_parser: SeasonalRateParser,
+    start_of_year: datetime,
+):
+    date_range = Dates.short_after(start_of_year)
+    start = date_range.lower
+    end = date_range.upper
+    dates = list(seasonal_rate_parser.correct_dates(start, end))
+    assert len(dates) == 1
+    assert dates[0][0] == start
+    assert dates[0][1] == end

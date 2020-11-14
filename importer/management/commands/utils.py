@@ -24,6 +24,7 @@ from typing import TypeVar
 from typing import Union
 
 import xlrd
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
 from django.core.management.base import CommandError
 from django.template.loader import render_to_string
@@ -645,6 +646,31 @@ class SeasonalRateParser:
         self.base = base_date
         self.timezone = timezone
 
+    def correct_dates(
+        self, start_date: datetime, end_date: Optional[datetime]
+    ) -> Iterable:
+        start = start_date + relativedelta(years=self.base.year - start_date.year)
+        end = (
+            (end_date + relativedelta(years=self.base.year - end_date.year))
+            if end_date
+            else None
+        )
+        assert start.year == self.base.year
+        assert end is None or end.year == self.base.year
+
+        if end is None:
+            # Non-seasonal rate!
+            yield (self.base, None)
+        elif start > end:
+            # This straddles a year boundary so
+            # we need to make one measure for BREXIT to end
+            # and then another for start to the next end
+            yield (self.base, end)
+            yield (start, end + relativedelta(years=1))
+        else:
+            # Both months are in one year, hence make them 2021
+            yield (start, end)
+
     def detect_seasonal_rates(self, duty_exp: str) -> Iterable:
         if SeasonalRateParser.SEASONAL_RATE.search(duty_exp):
             for match in SeasonalRateParser.SEASONAL_RATE.finditer(duty_exp):
@@ -653,23 +679,10 @@ class SeasonalRateParser:
                     datetime.strptime(start, r"%d %b")
                 )
                 validity_end = self.timezone.localize(datetime.strptime(end, r"%d %b"))
-                if validity_start.month > validity_end.month:
-                    # This straddles a year boundary so
-                    # we need to make one measure for BREXIT to end
-                    # and then another for start to BREXIT+1
-                    yield (rate, self.base, validity_end.replace(year=self.base.year))
-                    yield (
-                        rate,
-                        validity_start.replace(year=self.base.year),
-                        self.base.replace(year=self.base.year + 1) + timedelta(days=-1),
-                    )
-                else:
-                    # Both months are in one year, hence make them 2021
-                    yield (
-                        rate,
-                        validity_start.replace(year=self.base.year),
-                        validity_end.replace(year=self.base.year),
-                    )
+                for new_start, new_end in self.correct_dates(
+                    validity_start, validity_end
+                ):
+                    yield (rate, new_start, new_end)
         else:
             # Non-seasonal rate!
             yield (duty_exp, self.base, None)

@@ -383,6 +383,20 @@ class Dates:
         )
 
     @classmethod
+    def short_after(cls, dt):
+        return DateTimeTZRange(
+            dt + relativedelta(days=+14),
+            dt + relativedelta(months=+1),
+        )
+
+    @classmethod
+    def short_overlap(cls, dt):
+        return DateTimeTZRange(
+            dt + relativedelta(months=-1),
+            dt + relativedelta(months=+1),
+        )
+
+    @classmethod
     def medium_before(cls, dt):
         return DateTimeTZRange(
             dt + relativedelta(months=-1),
