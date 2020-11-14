@@ -76,6 +76,7 @@ def parse_list(value: str) -> List[str]:
 class OldMeasureRow:
     def __init__(self, old_row: List[Cell]) -> None:
         assert old_row is not None
+        self.origin_id = str(old_row[14].value)
         self.goods_nomenclature_sid = int(old_row[0].value)
         self.item_id = clean_item_id(old_row[1])
         self.inherited_measure = bool(old_row[6].value)
@@ -84,9 +85,7 @@ class OldMeasureRow:
         self.measure_type = str(int(old_row[8].value))
         self.geo_sid = int(old_row[13].value)
         self.measure_start_date = parse_date(old_row[16])
-        self.measure_end_date = blank(
-            old_row[17].value, lambda _: parse_date(old_row[17])
-        )
+        self.measure_end_date = blank(old_row[17], parse_date)
         self.regulation_role = int(old_row[18].value)
         self.regulation_id = str(old_row[19].value)
         self.order_number = blank(old_row[15].value, str)
@@ -97,9 +96,10 @@ class OldMeasureRow:
         self.export_refund_sid = blank(old_row[25].value, int)
         self.reduction = blank(old_row[26].value, int)
         self.footnotes = parse_list(old_row[27].value)
-        self.goods_nomenclature = GoodsNomenclature.objects.get(
-            sid=self.goods_nomenclature_sid
-        )
+
+    @cached_property
+    def goods_nomenclature(self) -> GoodsNomenclature:
+        return GoodsNomenclature.objects.get(sid=self.goods_nomenclature_sid)
 
     @cached_property
     def additional_code(self) -> Optional[AdditionalCode]:

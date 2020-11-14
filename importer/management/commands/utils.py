@@ -103,8 +103,11 @@ def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return None
 
 
-def blank(value: Any, convert: Callable[[Any], TypeVar("T")]) -> Optional[TypeVar("T")]:
-    return None if value == "" else convert(value)
+def blank(
+    obj: Union[Cell, Any], convert: Callable[[Any], TypeVar("T")]
+) -> Optional[TypeVar("T")]:
+    value = obj.value if type(obj) is Cell else obj
+    return None if value == "" else convert(obj)
 
 
 def col(label: str) -> int:

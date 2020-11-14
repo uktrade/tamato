@@ -62,20 +62,28 @@ class QuotaType(Enum):
     SEASONAL = "Seasonal"
 
 
+class QuotaSource(Enum):
+    PREFERENTIAL = "Pref"
+    ORIGIN = "Origin"
+    WTO = "WTO"
+
+
 class NewQuotaRow:
     def __init__(self, row: List[Cell], origin: GeographicalArea) -> None:
         self.origin = origin
-        self.origin_description = str(row[col("B")].value)
-        self.origin_ids = parse_list(str(row[col("P")].value))
-        self.excluded_origins = parse_list(str(row[col("Q")].value))
-        original_order_number = str(row[col("C")].value)
-        self.order_number = original_order_number.replace("09", "05", 1)
-        self.period_start = parse_date(row[col("F")])
-        self.period_end = parse_date(row[col("G")])
-        self.type = QuotaType(row[col("I")].value)
-        self.volume = self.parse_volume(row[col("L")])
-        self.interim_volume = self.parse_volume(row[col("M")])
-        self.unit = row[col("N")].value  # TODO convert to measurement
+        self.origin_ids = parse_list(str(row[col("B")].value))
+        if origin.area_id not in self.origin_ids:
+            return
+        self.excluded_origins = parse_list(str(row[col("C")].value))
+        self.order_number = str(row[col("A")].value)
+        self.period_start = parse_date(row[col("D")])
+        self.period_end = parse_date(row[col("E")])
+        self.type = QuotaType(row[col("F")].value)
+        self.volume = self.parse_volume(row[col("G")])
+        self.interim_volume = blank(row[col("H")], self.parse_volume)
+        self.unit = row[col("I")].value  # TODO convert to measurement
+        self.qualifier = blank(row[col("J")].value, str)  # TODO convert to measurement
+        self.source = QuotaSource(str(row[col("N")].value))
         self.mechanism = (
             AdministrationMechanism.LICENSED
             if self.order_number.startswith("054")
@@ -88,33 +96,20 @@ class NewQuotaRow:
         else:
             return int(cell.value.replace(",", ""))
 
+    @cached_property
+    def measurement(self) -> Measurement:
+        kwargs = {"measurement_unit__code": self.unit}
+        if self.qualifier is None:
+            kwargs["measurement_unit_qualifier"] = None
+        else:
+            kwargs["measurement_unit_qualifier__code"] = self.qualifier
+
+        return Measurement.objects.as_at(BREXIT).get(**kwargs)
+
 
 class FTAQuotaImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
         self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
-        self.units = {
-            "Kilograms": Measurement.objects.get(
-                measurement_unit__code="KGM",
-                measurement_unit_qualifier=None,
-            ),
-            "Litres": Measurement.objects.get(
-                measurement_unit__code="LTR",
-                measurement_unit_qualifier=None,
-            ),
-            "Litres of pure alcohol": Measurement.objects.get(
-                measurement_unit__code="LPA",
-                measurement_unit_qualifier=None,
-            ),
-            "Head": Measurement.objects.get(
-                measurement_unit__code="NAR",
-                measurement_unit_qualifier=None,
-            ),
-            "Pieces": Measurement.objects.get(
-                measurement_unit__code="NAR",
-                measurement_unit_qualifier=None,
-            ),
-        }
-
         return iter([])
 
     def compare_rows(self, new_row: Optional[NewQuotaRow], old_row: None) -> int:
@@ -155,7 +150,7 @@ class FTAQuotaImporter(RowsImporter):
             yield to_output
 
         # If this is a seasonal quota that would normally have already started,
-        # start is on 1 Jan and use the interim volume to set up the quota
+        # start it on 1 Jan and use the interim volume to set up the quota
         start_date = row.period_start
         end_date = row.period_end
         volume = row.volume
@@ -163,9 +158,14 @@ class FTAQuotaImporter(RowsImporter):
             row.type in [QuotaType.SEASONAL, QuotaType.NON_CALENDAR]
             and start_date.year < BREXIT.year
         ):
-            start_date = start_date.replace(year=start_date.year + 1)
-            end_date = end_date.replace(year=end_date.year + 1)
-            assert start_date < end_date
+            # Dates in the sheet are not reliable – only days/months are correct
+            # So assume that all the dates are for year 2021
+            # If the end date comes before, it must be for 2022
+            start_date = start_date.replace(year=BREXIT.year)
+            end_date = end_date.replace(year=BREXIT.year)
+            if end_date < start_date:
+                end_date = end_date.replace(year=BREXIT.year + 1)
+            assert end_date >= start_date
 
         # 3. Create a defn for 2021 from normal volume and start date to end date
         normal_qd = QuotaDefinition(
@@ -173,7 +173,8 @@ class FTAQuotaImporter(RowsImporter):
             order_number=quota,
             volume=volume,
             initial_volume=volume,
-            measurement_unit=self.units[row.unit].measurement_unit,
+            measurement_unit=row.measurement.measurement_unit,
+            measurement_unit_qualifier=row.measurement.measurement_unit_qualifier,
             maximum_precision=3,
             valid_between=DateTimeTZRange(
                 lower=start_date,
@@ -198,7 +199,8 @@ class FTAQuotaImporter(RowsImporter):
                 order_number=quota,
                 volume=row.interim_volume,
                 initial_volume=row.interim_volume,
-                measurement_unit=self.units[row.unit].measurement_unit,
+                measurement_unit=row.measurement.measurement_unit,
+                measurement_unit_qualifier=row.measurement.measurement_unit_qualifier,
                 maximum_precision=3,
                 valid_between=DateTimeTZRange(
                     lower=BREXIT,
@@ -595,7 +597,7 @@ class Command(BaseCommand):
         author = get_author()
 
         quota_workbook = xlrd.open_workbook(options["quota-spreadsheet"])
-        quota_sheet = quota_workbook.sheet_by_name("TRQ_database_inward_agreed")
+        quota_sheet = quota_workbook.sheet_by_name("ALL")
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
         schedule_sheet = new_workbook.sheet_by_name("MAIN")
         old_workbook = xlrd.open_workbook(options["old-spreadsheet"])
@@ -623,6 +625,7 @@ class Command(BaseCommand):
                         row
                         for row in (NewQuotaRow(row, origin) for row in quota_rows)
                         if country in row.origin_ids
+                        and row.source in [QuotaSource.ORIGIN, QuotaSource.PREFERENTIAL]
                     )
 
                     staging_dict = {}
