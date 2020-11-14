@@ -43,11 +43,13 @@ from importer.management.commands.utils import output_argument
 from importer.management.commands.utils import spreadsheet_argument
 from measures.models import Measurement
 from measures.models import MeasureType
+from quotas.models import QuotaAssociation
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaOrderNumberOrigin
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
+from quotas.validators import SubQuotaType
 from regulations.models import Group
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
@@ -83,6 +85,8 @@ class NewQuotaRow:
         self.interim_volume = blank(row[col("H")], self.parse_volume)
         self.unit = row[col("I")].value  # TODO convert to measurement
         self.qualifier = blank(row[col("J")].value, str)  # TODO convert to measurement
+        self.parent_order_number = blank(row[col("L")].value, str)
+        self.coefficient = blank(row[col("M")].value, str)
         self.source = QuotaSource(str(row[col("N")].value))
         self.mechanism = (
             AdministrationMechanism.LICENSED
@@ -214,6 +218,28 @@ class FTAQuotaImporter(RowsImporter):
             interim_qd.save()
             if quota.mechanism != AdministrationMechanism.LICENSED:
                 yield [interim_qd]
+
+        if row.parent_order_number:
+            assert row.type == QuotaType.CALENDAR, row
+            main_quota = QuotaDefinition.objects.get(
+                order_number__order_number=row.parent_order_number,
+            )
+
+            association = QuotaAssociation(
+                main_quota=main_quota,
+                sub_quota=normal_qd,
+                sub_quota_relation_type=(
+                    SubQuotaType.NORMAL
+                    if row.coefficient in ["1.00", "1.0", "1"]
+                    else SubQuotaType.EQUIVALENT
+                ),
+                coefficient=row.coefficient,
+                workbasket=self.workbasket,
+                update_type=UpdateType.CREATE,
+            )
+            association.save()
+            if quota.mechanism != AdministrationMechanism.LICENSED:
+                yield [association]
 
 
 class TransitionCategory(Enum):
