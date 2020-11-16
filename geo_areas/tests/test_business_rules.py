@@ -1,15 +1,11 @@
-from datetime import datetime
-from datetime import timezone
-
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
 from django.db import IntegrityError
 from django.db.models import ProtectedError
-from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
-
+from common.tests.util import only_applicable_after
 
 pytestmark = pytest.mark.django_db
 
@@ -52,10 +48,40 @@ def test_ga2(date_ranges):
         factories.GeographicalAreaFactory(valid_between=date_ranges.backwards)
 
 
-def test_ga3():
+@only_applicable_after("1998-02-01")
+def test_ga3_blanks():
     """ The area must have a description. """
     with pytest.raises(ValidationError):
         factories.GeographicalAreaDescriptionFactory(description="")
+
+
+def test_ga3_dates(date_ranges):
+    """At least one description record is mandatory. The start date of the first
+    description period must be equal to the start date of the geographical
+    area. Two descriptions may not have the same start date. The start date of the
+    description must be less than or equal to the end date of the geographical
+    area."""
+    with pytest.raises(ValidationError):
+        area = factories.GeographicalAreaFactory()
+        area.validate_workbasket()
+
+    with pytest.raises(ValidationError):
+        factories.GeographicalAreaDescriptionFactory(
+            area__valid_between=date_ranges.no_end,
+            valid_between=date_ranges.later,
+        )
+
+    desc = factories.GeographicalAreaDescriptionFactory()
+    with pytest.raises(ValidationError):
+        factories.GeographicalAreaDescriptionFactory(
+            area=desc.area, valid_between=desc.valid_between
+        )
+
+    with pytest.raises(ValidationError):
+        factories.GeographicalAreaDescriptionFactory(
+            area__valid_between=date_ranges.normal,
+            valid_between=date_ranges.later,
+        )
 
 
 @pytest.mark.xfail(reason="GA4 is ignored for now")

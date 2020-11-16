@@ -29,6 +29,69 @@ def validate_description_is_not_null(area_description):
         raise ValidationError({"description": "A description cannot be blank"})
 
 
+def validate_first_geographical_area_description_has_geographical_area_start_date(
+    geographical_area_description,
+):
+    """GA3"""
+
+    geographical_area = geographical_area_description.area
+
+    if (
+        geographical_area.geographicalareadescription_set.count() == 0
+        and geographical_area.valid_between.lower
+        != geographical_area_description.valid_between.lower
+    ):
+        raise ValidationError(
+            {
+                "valid_between": f"The first description for geographical area {geographical_area} "
+                f"must have the same start date as the geographical area"
+            }
+        )
+
+
+def validate_geographical_area_description_have_unique_start_date(
+    geographical_area_description,
+):
+    """GA3"""
+    geographical_area = geographical_area_description.area
+
+    if geographical_area.geographicalareadescription_set.filter(
+        valid_between__startswith=geographical_area_description.valid_between.lower
+    ).exists():
+        raise ValidationError(
+            {
+                "valid_between": f"Geographical area {geographical_area} cannot have two descriptions with the same start date"
+            }
+        )
+
+
+def validate_geographical_area_description_start_date_before_geographical_area_end_date(
+    geographical_area_description,
+):
+    """GA3"""
+    geographical_area = geographical_area_description.area
+
+    if (
+        geographical_area.valid_between.upper is not None
+        and geographical_area_description.valid_between.lower
+        >= geographical_area.valid_between.upper
+    ):
+        raise ValidationError(
+            {
+                "valid_between": "The start date must be less than or equal to the end "
+                "date of the geographical area."
+            }
+        )
+
+
+def validate_at_least_one_description(area):
+    """
+    GA3
+    """
+    if area.geographicalareadescription_set.count() < 1:
+        raise ValidationError("At least one description record is mandatory.")
+
+
 def validate_member_is_country_or_region(area_membership):
     """
     GA13
