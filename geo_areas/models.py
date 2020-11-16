@@ -46,6 +46,9 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     def get_description(self):
         return self.geographicalareadescription_set.last()
 
+    def validate_workbasket(self):
+        validators.validate_at_least_one_description(self)
+
     def __str__(self):
         return f'"{self.get_area_code_display()}" SID:{self.sid}'
 
@@ -136,6 +139,13 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
 
     def clean(self):
         validators.validate_description_is_not_null(self)
+        validators.validate_geographical_area_description_have_unique_start_date(self)
+        validators.validate_geographical_area_description_start_date_before_geographical_area_end_date(
+            self
+        )
+        validators.validate_first_geographical_area_description_has_geographical_area_start_date(
+            self
+        )
 
     def __str__(self):
         return f'description ({self.sid}) - "{self.description}" for {self.area}'
