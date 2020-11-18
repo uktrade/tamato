@@ -1,4 +1,6 @@
 import logging
+import time
+import xml.etree.ElementTree as etree
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -11,6 +13,9 @@ from importer.parsers import ElementParser
 from importer.parsers import ParserError
 from importer.parsers import TextElement
 from workbaskets import models
+
+
+now = time.time()
 
 
 class Record(ElementParser):
@@ -47,26 +52,50 @@ class Transaction(ElementParser):
     tag = Tag("transaction", prefix=ENVELOPE)
     message = Message(many=True)
 
+    workbasket_status = None
+    tamato_username = None
+
     def save(self, data, envelope_id, workbasket_status=None, tamato_username=None):
         logging.debug(f"Saving transaction {self.data['id']}")
-        if workbasket_status is None:
-            workbasket_status = models.WorkflowStatus.AWAITING_APPROVAL.value
+        workbasket_status = (
+            workbasket_status
+            or self.workbasket_status
+            or models.WorkflowStatus.PUBLISHED.value
+        )
 
-        username = tamato_username or settings.DATA_IMPORT_USERNAME
+        username = (
+            tamato_username or self.tamato_username or settings.DATA_IMPORT_USERNAME
+        )
 
-        workbasket, _ = models.WorkBasket.objects.get_or_create(
+        workbasket, created = models.WorkBasket.objects.get_or_create(
             title=f"Data Import {envelope_id}",
             author=User.objects.get(username=username),
             status=workbasket_status,
         )
 
-        transaction, _ = models.Transaction.objects.get_or_create(
+        transaction, transaction_created = models.Transaction.objects.get_or_create(
             pk=int(self.data["id"]), workbasket=workbasket
         )
-        logging.debug(f"WorkBasket {workbasket.pk}: {workbasket.title}")
 
-        for message_data in self.data["message"]:
-            self.message.save(message_data, workbasket.pk)
+        if transaction_created:
+            logging.debug(f"WorkBasket {workbasket.pk}: {workbasket.title}")
+
+            for message_data in self.data["message"]:
+                self.message.save(message_data, workbasket.pk)
+
+    def end(self, element: etree.Element):
+        super().end(element)
+        if element.tag == self.tag:
+            logging.debug(f"Saving import {self.data['id']}")
+            with transaction.atomic():
+                if int(self.data["id"]) % 1000 == 0:
+                    print(
+                        f"{self.data['id']} transactions done in {int(time.time() - now)} seconds"
+                    )
+                self.save(
+                    self.data,
+                    envelope_id=self.data["id"],
+                )
 
 
 class EnvelopeError(ParserError):
@@ -82,6 +111,8 @@ class Envelope(ElementParser):
         self.last_transaction_id = -1
         self.workbasket_status = workbasket_status
         self.tamato_username = tamato_username
+        self.transaction.workbasket_status = workbasket_status
+        self.transaction.tamato_username = tamato_username
 
     def end(self, element):
         super().end(element)
@@ -91,14 +122,3 @@ class Envelope(ElementParser):
             if tx_id <= self.last_transaction_id:
                 raise EnvelopeError(f"Transaction ID {tx_id} is out of order")
             self.last_transaction_id = tx_id
-
-        if element.tag == self.tag:
-            logging.debug(f"Saving import {self.data['id']}")
-            with transaction.atomic():
-                for transaction_data in self.data["transaction"]:
-                    self.transaction.save(
-                        transaction_data,
-                        envelope_id=self.data["id"],
-                        workbasket_status=self.workbasket_status,
-                        tamato_username=self.tamato_username,
-                    )

@@ -62,18 +62,31 @@ class TariffObjectNursery:
         Handles whether an object can be dispatched to the database or, if some pieces of data
         are missing, cached to await new data.
         """
-
-        handler_class = self.get_handler(obj["tag"])
-        handler = handler_class(obj, self)
-        result = handler.build()
-        if not result:
-            self._cache_object(handler)
-        else:
-            for key in result:
-                self.cache.pop(key)
+        try:
+            handler_class = self.get_handler(obj["tag"])
+            handler = handler_class(obj, self)
+            result = handler.build()
+            if not result:
+                self._cache_object(handler)
+            else:
+                for key in result:
+                    self.cache.pop(key)
+        except Exception:
+            self.clear_cache()
+            raise
 
     def _cache_object(self, handler):
         self.cache.put(handler.key, handler.serialize())
+
+    def clear_cache(self):
+        for key in self.cache.keys():
+            handler = self.get_handler_from_cache(key)
+            result = handler.build()
+            if not result:
+                self._cache_object(handler)
+            else:
+                for key in result:
+                    self.cache.pop(key)
 
     def get_handler_from_cache(self, key):
         match = self.cache.get(key)

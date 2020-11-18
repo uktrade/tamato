@@ -22,3 +22,6 @@ class ObjectCacheFacade:
 
     def put(self, key, obj):
         self.CACHE[key] = obj
+
+    def keys(self):
+        return self.CACHE.keys()
