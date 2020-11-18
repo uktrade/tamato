@@ -93,7 +93,8 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         validators.validate_group_is_group(self)
         validators.validate_member_is_country_or_region(self)
         validators.validate_group_validity_includes_membership_validity(self)
-        validators.validate_members_of_child_group_are_in_parent_group(self)
+        # TODO: Reactivate validation and check for any breaking records
+        # validators.validate_members_of_child_group_are_in_parent_group(self)
 
     def __str__(self):
         return f"<{self.member}> -> <{self.geo_group}>"
@@ -122,17 +123,6 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
     description = ShortDescription()
     sid = SignedIntSID()
-
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_area_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("area", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
 
     def clean(self):
         validators.validate_description_is_not_null(self)
