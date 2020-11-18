@@ -8,12 +8,11 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
-from psycopg2.extras import DateTimeTZRange
 
+from common.util import TaricDateTimeRange
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
-from workbaskets.validators import WorkflowStatus
 
 
 quota_order_number_validator = RegexValidator(r"^[0-9]{6}$")
@@ -191,7 +190,7 @@ def validate_origin_validity_spans_measure_validity(origin):
 
     if (
         origin.order_number.measure_set.exclude(
-            valid_between__overlap=DateTimeTZRange(
+            valid_between__overlap=TaricDateTimeRange(
                 None,
                 datetime(2008, 1, 1, tzinfo=timezone.utc),
             )
@@ -213,7 +212,7 @@ def validate_order_number_used_in_measure_cannot_be_deleted(order_number):
     This rule is only applicable for measures with start date after 31/12/2007."""
 
     if order_number.measure_set.exclude(
-        valid_between__overlap=DateTimeTZRange(
+        valid_between__overlap=TaricDateTimeRange(
             None,
             datetime(2008, 1, 1, tzinfo=timezone.utc),
         )
@@ -231,7 +230,7 @@ def validate_origin_used_in_measure_cannot_be_deleted(origin):
     if (
         origin.order_number.measure_set.active()
         .exclude(
-            valid_between__overlap=DateTimeTZRange(
+            valid_between__overlap=TaricDateTimeRange(
                 None,
                 datetime(2008, 1, 1, tzinfo=timezone.utc),
             )

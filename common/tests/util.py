@@ -12,9 +12,9 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from freezegun import freeze_time
 from lxml import etree
-from psycopg2._range import DateTimeTZRange
 
 from common.renderers import counter_generator
+from common.util import TaricDateTimeRange
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
 UPDATE_IMPORTER_IMPLEMENTED = False
@@ -80,12 +80,12 @@ def check_validator(validate, value, expected_valid):
             pytest.fail(f'Expected validation error for value "{value}"')
 
 
-def generate_test_import_xml(obj: dict) -> StringIO:
+def generate_test_import_xml(obj: dict, transaction_id=1) -> StringIO:
     xml = render_to_string(
         template_name="workbaskets/taric/transaction_detail.xml",
         context={
             "tracked_models": [obj],
-            "transaction_id": 1,
+            "transaction_id": transaction_id,
             "message_counter": counter_generator(),
             "counter_generator": counter_generator,
         },
@@ -168,168 +168,168 @@ class Dates:
 
     @property
     def normal(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now,
             self.now + relativedelta(months=+1),
         )
 
     @property
     def earlier(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(years=-1),
             self.now + relativedelta(years=-1, months=+1),
         )
 
     @property
     def later(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(years=+1, months=+1, days=+1),
             self.now + relativedelta(years=+1, months=+2),
         )
 
     @property
     def big(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(years=-2),
             self.now + relativedelta(years=+2, days=+1),
         )
 
     @property
     def adjacent_earlier(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(months=-1),
-            self.now,
+            self.now + relativedelta(days=-1),
         )
 
     @property
     def adjacent_later(self):
-        return DateTimeTZRange(
-            self.now + relativedelta(months=+1),
+        return TaricDateTimeRange(
+            self.now + relativedelta(months=+1, days=+1),
             self.now + relativedelta(months=+2),
         )
 
     @property
     def adjacent_no_end(self):
-        return DateTimeTZRange(
-            self.now + relativedelta(months=+1),
+        return TaricDateTimeRange(
+            self.now + relativedelta(months=+1, days=+1),
             None,
         )
 
     @property
     def adjacent_even_later(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(months=+2, days=+1),
             self.now + relativedelta(months=+3),
         )
 
     @property
     def adjacent_earlier_big(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(years=-2, months=-2),
             self.now + relativedelta(years=-2),
         )
 
     @property
     def adjacent_later_big(self):
-        return DateTimeTZRange(
-            self.now + relativedelta(months=+1),
+        return TaricDateTimeRange(
+            self.now + relativedelta(months=+1, days=+1),
             self.now + relativedelta(years=+2, months=+2),
         )
 
     @property
     def overlap_normal(self):
-        return DateTimeTZRange(
-            self.now + relativedelta(days=+14),
+        return TaricDateTimeRange(
+            self.now + relativedelta(days=+15),
             self.now + relativedelta(days=+14, months=+1, years=+1),
         )
 
     @property
     def overlap_normal_earlier(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(months=-1, days=+14),
             self.now + relativedelta(days=+14),
         )
 
     @property
     def overlap_big(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(years=+1),
             self.now + relativedelta(years=+3, days=+2),
         )
 
     @property
     def after_big(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(years=+3, months=+1),
             self.now + relativedelta(years=+3, months=+2),
         )
 
     @property
     def backwards(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(months=+1),
             self.now + relativedelta(days=+1),
         )
 
     @property
     def starts_with_normal(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now,
             self.now + relativedelta(days=+14),
         )
 
     @property
     def ends_with_normal(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(days=+14),
             self.now + relativedelta(months=+1),
         )
 
     @property
     def current(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(weeks=-4),
             self.now + relativedelta(weeks=+4),
         )
 
     @property
     def future(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now + relativedelta(weeks=+10),
             self.now + relativedelta(weeks=+20),
         )
 
     @property
     def no_end(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now,
             None,
         )
 
     @property
     def normal_first_half(self):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             self.now,
             self.now + relativedelta(days=+14),
         )
 
     @classmethod
     def short_before(cls, dt):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             dt + relativedelta(months=-1),
             dt + relativedelta(days=-14),
         )
 
     @classmethod
     def medium_before(cls, dt):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             dt + relativedelta(months=-1),
             dt + relativedelta(days=-1),
         )
 
     @classmethod
     def no_end_before(cls, dt):
-        return DateTimeTZRange(
+        return TaricDateTimeRange(
             dt + relativedelta(months=-1),
             None,
         )

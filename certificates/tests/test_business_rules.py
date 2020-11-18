@@ -1,11 +1,7 @@
-from datetime import datetime
-from datetime import timezone
-
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
 from django.db import IntegrityError
-from psycopg2._range import DateTimeTZRange
 
 from common.tests import factories
 from common.validators import UpdateType
@@ -175,13 +171,6 @@ def test_certificate_description_period_must_be_adjacent_to_predecessor(date_ran
     predecessor = factories.CertificateDescriptionFactory.create(
         valid_between=date_ranges.normal,
         described_certificate__valid_between=date_ranges.no_end,
-    )
-    predecessor = factories.CertificateDescriptionFactory.create(
-        sid=predecessor.sid,
-        described_certificate=predecessor.described_certificate,
-        valid_between=date_ranges.adjacent_later,
-        version_group=None,
-        update_type=UpdateType.UPDATE,
     )
 
     with pytest.raises(ValidationError):

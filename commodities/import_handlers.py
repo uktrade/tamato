@@ -3,11 +3,13 @@ from datetime import timedelta
 from typing import Any
 from typing import Optional
 
+from dateutil.relativedelta import relativedelta
 from django.db import transaction
 
 from commodities import import_parsers as parsers
 from commodities import models
 from commodities import serializers
+from common.util import TaricDateTimeRange
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from footnotes.models import FootnoteType
@@ -230,7 +232,6 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                     .order_by("-indent__indented_goods_nomenclature__item_id")
                     .first()
                 )
-
             if not next_parent:
                 raise InvalidIndentError(
                     f"Parent indent not found for {item_id} for date {start_date}"
@@ -244,12 +245,13 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                 end_date,
             )
 
-            node_data["valid_between"] = (indent_start, indent_end)
+            node_data["valid_between"] = TaricDateTimeRange(indent_start, indent_end)
 
             next_parent.add_child(**node_data)
 
-            start_date = indent_end
-
+            start_date = (
+                indent_end + relativedelta(days=+1) if indent_end else indent_end
+            )
         return indent
 
     def post_save(self, obj: models.GoodsNomenclatureIndent):

@@ -10,7 +10,6 @@ from typing import Type
 from rest_framework.serializers import ModelSerializer
 
 from common.models import TrackedModel
-from common.models import VersionGroup
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
 from importer.utils import generate_key
