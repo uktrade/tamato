@@ -18,7 +18,12 @@ from polymorphic.models import PolymorphicModel
 
 from common import validators
 from common.querysets import TrackedModelQuerySet
+from common.util import TaricDateTimeRange
 from workbaskets.validators import WorkflowStatus
+
+
+class TaricDateTimeRangeField(DateTimeRangeField):
+    range_type = TaricDateTimeRange
 
 
 class IllegalSaveError(Exception):
@@ -34,7 +39,7 @@ class TimestampedMixin(models.Model):
 
 
 class ValidityMixin(models.Model):
-    valid_between = DateTimeRangeField()
+    valid_between = TaricDateTimeRangeField()
 
     class Meta:
         abstract = True

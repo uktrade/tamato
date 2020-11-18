@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
@@ -101,6 +102,7 @@ def validate_previous_certificate_description_is_adjacent(certificate_descriptio
 
     if (
         certificate_description.version_group.current_version.valid_between.upper
+        + relativedelta(days=+1)
         != certificate_description.valid_between.lower
     ):
         raise ValidationError(

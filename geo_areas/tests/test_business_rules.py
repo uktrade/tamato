@@ -1,12 +1,8 @@
-from datetime import datetime
-from datetime import timezone
-
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
 from django.db import IntegrityError
 from django.db.models import ProtectedError
-from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
 
