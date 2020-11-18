@@ -24,7 +24,6 @@ services:
       - "9003:9003"
     volumes:
       - tamato-s3-volume:/data
-    env_file: .env
     command: server --address 0.0.0.0:9003 /data
 
   tamato:

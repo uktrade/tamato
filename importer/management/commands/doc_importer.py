@@ -127,7 +127,7 @@ class RowsImporter(metaclass=ABCMeta):
     ) -> None:
         setup_models = []
         for model in self.setup():
-            model.save()
+            model.save(force_write=True)
             setup_models.append(model)
         self.serializer.render_transaction(setup_models)
 

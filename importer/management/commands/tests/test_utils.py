@@ -17,10 +17,14 @@ pytestmark = pytest.mark.django_db
 
 def make_child(parent: GoodsNomenclature, **kwargs) -> GoodsNomenclature:
     g = GoodsNomenclatureFactory(indent__node=None, **kwargs)
-    data = GoodsNomenclatureIndentNodeFactory.stub(
+    data = GoodsNomenclatureIndentNodeFactory.build(
         indent=g.indents.get(),
-    ).__dict__
-    parent.indents.get().nodes.get().add_child(**data)
+    )
+    parent.indents.get().nodes.get().add_child(
+        indent=g.indents.get(),
+        transaction=parent.workbasket,
+        valid_between=data.valid_between,
+    )
     return g
 
 
@@ -46,12 +50,12 @@ def grandchild_cc(child_cc: GoodsNomenclature) -> GoodsNomenclature:
 
 @pytest.fixture
 def indepedent_root_cc() -> GoodsNomenclature:
-    return GoodsNomenclatureFactory(item_id="0100000000", suffix="80")
+    return GoodsNomenclatureFactory.create(item_id="0100000000", suffix="80")
 
 
 @pytest.fixture
 def phantom_root_cc() -> GoodsNomenclature:
-    return GoodsNomenclatureFactory(item_id="0200000000", suffix="10")
+    return GoodsNomenclatureFactory.create(item_id="0200000000", suffix="10")
 
 
 @pytest.fixture

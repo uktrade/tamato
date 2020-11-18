@@ -226,6 +226,7 @@ def test_ga18_20(date_ranges):
         )
 
 
+@pytest.mark.xfail(reason="GA19 disabled for seed file")
 def test_ga19(child, country):
     """ If the group has a parent the members must also be members of the parent. """
     member = factories.GeographicalAreaFactory.create(area_code=0)
