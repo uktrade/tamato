@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
-      - tamato-data-volume:/var/lib/postgresql/data
+      - tamato-seed-volume:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
@@ -83,5 +83,6 @@ services:
       - tamato
 
 volumes:
-  tamato-data-volume:
   tamato-s3-volume:
+#  tamato-data-volume:
+  tamato-seed-volume:
