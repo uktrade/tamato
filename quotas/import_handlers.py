@@ -61,10 +61,6 @@ class QuotaDefinitionHandler(BaseHandler):
     serializer_class = serializers.QuotaDefinitionImporterSerializer
     tag = parsers.QuotaDefinitionParser.tag.name
 
-    def get_generic_link(self, model, kwargs):
-        print(model, kwargs)
-        return super(QuotaDefinitionHandler, self).get_generic_link(model, kwargs)
-
 
 class QuotaAssociationHandler(BaseHandler):
     identifying_fields = "main_quota__sid", "sub_quota__sid"
