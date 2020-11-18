@@ -7,11 +7,13 @@ from typing import Union
 Namespace = Tuple[str, str]
 
 ENVELOPE = "env"
-MESSAGE = "oub"  # this is the prefix used in EU TARIC3 xml files
+SEED_MESSAGE = "ns2"  # this is the prefix used in the seed file
+TARIC_MESSAGE = "oub"  # this is the prefix used in EU TARIC3 xml files
 
 nsmap = {
     ENVELOPE: "urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0",
-    MESSAGE: "urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0",
+    SEED_MESSAGE: "urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0",
+    TARIC_MESSAGE: "urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0",
 }
 
 T = TypeVar("T", bound="Tag")
@@ -20,7 +22,7 @@ T = TypeVar("T", bound="Tag")
 class Tag:
     """An XML element tag with a namespace mapping prefix."""
 
-    def __init__(self, name, prefix=MESSAGE):
+    def __init__(self, name, prefix=SEED_MESSAGE):
         self.name = name
         self.prefix = prefix
 
@@ -35,7 +37,7 @@ class Tag:
 
 
 class RegexTag(Tag):
-    def __init__(self, pattern, prefix=MESSAGE):
+    def __init__(self, pattern, prefix=SEED_MESSAGE):
         super().__init__(pattern)
         self.name = pattern
         self.pattern = re.compile(re.escape(f"{{{nsmap[prefix]}}}") + pattern)
