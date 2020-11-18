@@ -150,9 +150,9 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    sub_quotas = models.ManyToManyField(
-        "self", through="QuotaAssociation", through_fields=("main_quota", "sub_quota")
-    )
+    #sub_quotas = models.ManyToManyField(
+    #    "self", through="QuotaAssociation", through_fields=("main_quota", "sub_quota")
+    #)
 
     def __str__(self):
         return str(self.sid)

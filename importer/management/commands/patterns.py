@@ -199,15 +199,15 @@ class MeasureCreatingPattern:
             raise ex
 
     def get_measure_excluded_geographical_areas(
-        self, measure: Measure, geo_exclusion: Optional[str] = None
+        self, measure: Measure, geo_exclusions: List[GeographicalArea]
     ) -> MeasureExcludedGeographicalArea:
-        exclusion = self.exclusion_areas[geo_exclusion.strip()]
-        return MeasureExcludedGeographicalArea(
-            modified_measure=measure,
-            excluded_geographical_area=exclusion,
-            update_type=UpdateType.CREATE,
-            workbasket=self.workbasket,
-        )
+        for geo_area in geo_exclusions:
+            yield MeasureExcludedGeographicalArea(
+                modified_measure=measure,
+                excluded_geographical_area=geo_area,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            )
 
     def get_measure_footnotes(
         self, measure: Measure, footnotes: List[Footnote]
@@ -231,6 +231,7 @@ class MeasureCreatingPattern:
         goods_nomenclature: GoodsNomenclature,
         new_measure_type: MeasureType,
         geo_exclusion: Optional[str] = None,
+        geo_exclusion_list: Optional[List[GeographicalArea]] = None,
         order_number: Optional[QuotaOrderNumber] = None,
         authorised_use: bool = False,
         additional_code: AdditionalCode = None,
@@ -281,8 +282,13 @@ class MeasureCreatingPattern:
             yield new_measure
 
             if geo_exclusion:
-                yield self.get_measure_exluded_geographical_areas(
-                    new_measure, geo_exclusion
+                exclusions = [self.exclusion_areas[geo_exclusion.strip()]]
+                yield from self.get_measure_excluded_geographical_areas(
+                    new_measure, exclusions
+                )
+            if geo_exclusion_list:
+                yield from self.get_measure_excluded_geographical_areas(
+                    new_measure, geo_exclusion_list
                 )
 
             for footnote in self.get_measure_footnotes(new_measure, footnotes):
@@ -366,8 +372,8 @@ class MeasureEndingPattern:
                     QuotaOrderNumber.objects.get(
                         order_number=old_row.order_number,
                         valid_between__contains=DateTimeTZRange(
-                            lower=old_row.measure_start_date,
-                            upper=old_row.measure_end_date,
+                            lower=old_row.measure_start_date + timedelta(days=1),
+                            upper=old_row.measure_end_date - timedelta(days=1),
                         ),
                     )
                     if old_row.order_number

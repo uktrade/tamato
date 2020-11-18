@@ -125,12 +125,10 @@ class RowsImporter(metaclass=ABCMeta):
         new_rows: Iterator[NewRow],
         old_rows: Iterator[OldRow],
     ) -> None:
-        setup_models = []
-        for model in self.setup():
-            model.save()
-            setup_models.append(model)
-        self.serializer.render_transaction(setup_models)
-
+        for models in self.setup():
+            if not isinstance(models, List):
+                models = [models]
+            self.serializer.render_transaction(models)
         new_row_generator = iter(new_rows)
         old_row_generator = iter(old_rows)
         new_row = next(new_row_generator, None)
@@ -176,6 +174,7 @@ class RowsImporter(metaclass=ABCMeta):
 
     def _save_and_render_transaction(self, transaction: List[TrackedModel]) -> None:
         for model in transaction:
-            logger.debug("%s: %s", type(model), model.__dict__)
+            pass
+            #logger.debug("%s: %s", type(model), model.__dict__)
         if any(transaction):
             self.serializer.render_transaction(transaction)
