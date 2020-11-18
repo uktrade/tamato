@@ -119,17 +119,6 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
 
     identifying_fields = ("description_period_sid",)
 
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_additional_code_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("described_additional_code", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
-
     def clean(self):
         validators.validate_description_is_not_null(self)
         validators.validate_first_additional_code_description_has_additional_code_start_date(
