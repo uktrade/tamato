@@ -1,12 +1,13 @@
 from datetime import datetime
 from datetime import timezone
 from functools import lru_cache
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
+from unittest.mock import PropertyMock
 
 import boto3
 import pytest
-from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from lxml import etree
 from moto import mock_s3
 from psycopg2.extras import DateTimeTZRange
@@ -17,6 +18,27 @@ from common.tests import factories
 from common.tests.factories import WorkBasketFactory
 from common.tests.util import Dates
 from exporter.storages import HMRCStorage
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--hmrc-live-api",
+        action="store_true",
+        help="Test will call the live HMRC Sandbox API and not mock the request.",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "hmrc_live_api: mark test calling the live HMRC Sandbox API"
+    )
+
+
+def pytest_runtest_setup(item):
+    if "hmrc_live_api" in item.keywords and not item.config.getoption(
+        "--hmrc-live-api"
+    ):
+        pytest.skip("Not calling live HMRC Sandbox API. Use --hmrc-live-api to do so.")
 
 
 @pytest.fixture(scope="session")

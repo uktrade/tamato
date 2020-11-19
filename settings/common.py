@@ -3,6 +3,7 @@ Django settings for tamato project.
 """
 import os
 import sys
+import uuid
 from os.path import abspath
 from os.path import dirname
 from os.path import join
@@ -295,12 +296,18 @@ TARIC_XSD = os.path.join(BASE_DIR, "common", "assets", "taric3.xsd")
 
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
 
-# HMRC external API
+
+# -- HMRC API client settings
+# See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/application-restricted-endpoints
+# And https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0
+# And https://developer.service.hmrc.gov.uk/guides/fraud-prevention/
 HMRC = {
+    "base_url": os.environ.get(
+        "HMRC_API_BASE_URL", "https://test-api.service.hmrc.gov.uk"
+    ),
     "client_id": os.environ.get("HMRC_API_CLIENT_ID"),
     "client_secret": os.environ.get("HMRC_API_CLIENT_SECRET"),
-    "token_url": os.environ.get(
-        "HMRC_API_TOKEN_URL", "https://test-api.service.hmrc.gov.uk/oauth/token"
-    ),
+    "token_url": os.environ.get("HMRC_API_TOKEN_URL", "/oauth/token"),
     "service_reference_number": os.environ.get("HMRC_API_SERVICE_REFERENCE_NUMBER"),
+    "device_id": str(uuid.uuid4()),
 }
