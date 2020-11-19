@@ -26,7 +26,7 @@ class HmrcSdesClient(APIClient):
             ],
         )
         params = dict(
-            token_url=settings.HMRC["token_url"],
+            token_url="{base_url}{token_url}".format(**settings.HMRC),
             client_id=settings.HMRC["client_id"],
             client_secret=settings.HMRC["client_secret"],
             include_client_id=True,
@@ -41,11 +41,22 @@ class HmrcSdesClient(APIClient):
         self.srn = settings.HMRC["service_reference_number"]
 
     def get_default_headers(self) -> dict:
+        # TODO The correct values for these headers are to be confirmed by HMRC
         return dict(
             **super().get_default_headers(),
             **{
                 "Content-Type": "application/vnd.hmrc.1.0+json; charset=UTF-8",
                 "Accept": "application/vnd.hmrc.1.0+json",
+                "Gov-Client-Connection-Method": "OTHER_DIRECT",
+                "Gov-Client-Device-ID": settings.HMRC["device_id"],
+                "Gov-Client-Local-IPs": "127.0.0.1",
+                "Gov-Client-MAC-Addresses": "00%3A00%3A00%3A00%3A00%3A00",
+                "Gov-Client-Multi-Factor": "",
+                "Gov-Client-Timezone": "UTC+00:00",
+                "Gov-Client-User-Agent": "Linux/Debian%20Buster%2010.6 (Docker/container)",
+                "Gov-Client-User-IDs": "os=test",
+                "Gov-Vendor-License-IDs": "",
+                "Gov-Vendor-Version": "tariff-management-tool=0.0.0",
             },
         )
 
