@@ -24,7 +24,7 @@ class Upload(models.Model):
     checksum = models.CharField(max_length=32, editable=False)
     notification_sent = models.DateTimeField(editable=False, null=True)
 
-    def notify_hmrc(self, now: Optional[datetime]):
+    def notify_hmrc(self, now: Optional[datetime] = None):
         client = HmrcSdesClient()
         client.notify_transfer_ready(self)
 
@@ -41,7 +41,7 @@ class Upload(models.Model):
     def notification_payload(self):
         return {
             "informationType": "EDM",
-            "correlationID": self.correlation_id,
+            "correlationID": str(self.correlation_id),
             "file": {
                 "fileName": self.filename,
                 "fileSize": self.file.size,
