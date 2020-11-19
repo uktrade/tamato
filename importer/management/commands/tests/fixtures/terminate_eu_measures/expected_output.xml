@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+              id="1">
+    <env:transaction id="1">
+        <env:app.message id="1">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>430</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:measure>
+                        <oub:measure.sid>1</oub:measure.sid>
+                        <oub:measure.type>142</oub:measure.type>
+                        <oub:geographical.area>1011</oub:geographical.area>
+                        <oub:goods.nomenclature.item.id>1000000000</oub:goods.nomenclature.item.id>
+                        <oub:validity.start.date>1993-01-01</oub:validity.start.date>
+                        <oub:measure.generating.regulation.role>1</oub:measure.generating.regulation.role>
+                        <oub:measure.generating.regulation.id>A8500010</oub:measure.generating.regulation.id>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                        <oub:justification.regulation.role>1</oub:justification.regulation.role>
+                        <oub:justification.regulation.id>A8500010</oub:justification.regulation.id>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:geographical.area.sid>400</oub:geographical.area.sid>
+                        <oub:goods.nomenclature.sid>1000</oub:goods.nomenclature.sid>
+                    </oub:measure>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

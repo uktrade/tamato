@@ -130,7 +130,7 @@ def test_unit_with_qualifier():
 
 def test_multi_component_expression():
     assert_parses(
-        "12.9 % + 20.0 EUR/kg", (1, 12.9, None, None), (2, 20.0, "EUR", ("KGM", None))
+        "6.00% + 3.50 GBP / 100 kg", (1, 12.9, None, None), (2, 20.0, "EUR", ("KGM", None))
     )
 
 

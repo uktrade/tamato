@@ -3,7 +3,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 from datetime import datetime
 from typing import Dict
-from typing import Generic
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -16,7 +15,7 @@ from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import Counter
 from importer.management.commands.utils import EnvelopeSerializer
-from measures.models import DutyExpression
+from measures.models import DutyExpression, MeasureType
 from measures.models import Measurement
 from measures.models import MonetaryUnit
 from workbaskets.models import WorkBasket
@@ -39,10 +38,12 @@ class RowsImporter(metaclass=ABCMeta):
         forward_time: datetime = BREXIT,
         counters: Dict[str, Counter] = {},
         first_run: bool = True,
+        default_measure_type: MeasureType = None,
     ) -> None:
         self.workbasket = workbasket
         self.serializer = serializer
         self.first_run = first_run
+        self.default_measure_type = default_measure_type
 
         duty_expressions = (
             DutyExpression.objects.as_at(forward_time).order_by("sid")
@@ -104,15 +105,15 @@ class RowsImporter(metaclass=ABCMeta):
             )
         self.last_new_item_id = new_row.item_id
 
-        logger.debug(
-            "Comparing old %s/%s [%s] and new %s/%s [%s]",
-            old_row.item_id,
-            old_row.goods_nomenclature.suffix if old_row.goods_nomenclature else None,
-            old_row.goods_nomenclature.sid if old_row.goods_nomenclature else None,
-            new_row.item_id,
-            new_row.goods_nomenclature.suffix if new_row.goods_nomenclature else None,
-            new_row.goods_nomenclature.sid if new_row.goods_nomenclature else None,
-        )
+        # logger.debug(
+        #     "Comparing old %s/%s [%s] and new %s/%s [%s]",
+        #     old_row.item_id,
+        #     old_row.goods_nomenclature.suffix if old_row.goods_nomenclature else None,
+        #     old_row.goods_nomenclature.sid if old_row.goods_nomenclature else None,
+        #     new_row.item_id,
+        #     new_row.goods_nomenclature.suffix if new_row.goods_nomenclature else None,
+        #     new_row.goods_nomenclature.sid if new_row.goods_nomenclature else None,
+        # )
         if old_row.item_id < new_row.item_id:
             return -1
         elif old_row.item_id > new_row.item_id:
@@ -125,12 +126,10 @@ class RowsImporter(metaclass=ABCMeta):
         new_rows: Iterator[NewRow],
         old_rows: Iterator[OldRow],
     ) -> None:
-        setup_models = []
-        for model in self.setup():
-            model.save()
-            setup_models.append(model)
-        self.serializer.render_transaction(setup_models)
-
+        for models in self.setup():
+            if not isinstance(models, List):
+                models = [models]
+            self.serializer.render_transaction(models)
         new_row_generator = iter(new_rows)
         old_row_generator = iter(old_rows)
         new_row = next(new_row_generator, None)
@@ -176,6 +175,7 @@ class RowsImporter(metaclass=ABCMeta):
 
     def _save_and_render_transaction(self, transaction: List[TrackedModel]) -> None:
         for model in transaction:
-            logger.debug("%s: %s", type(model), model.__dict__)
+            pass
+            #logger.debug("%s: %s", type(model), model.__dict__)
         if any(transaction):
             self.serializer.render_transaction(transaction)

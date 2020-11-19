@@ -1,15 +1,15 @@
 import argparse
+import datetime
 import logging
 import os
 import re
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
 from itertools import combinations
 from math import floor
-from typing import Any
-from typing import Callable
+from typing import Callable, Any
 from typing import cast
 from typing import Dict
 from typing import Generic
@@ -27,6 +27,7 @@ import xlrd
 from django.contrib.auth.models import User
 from django.core.management.base import CommandError
 from django.template.loader import render_to_string
+from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
 import settings
@@ -34,6 +35,9 @@ from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
 from common.serializers import TrackedModelSerializer
+from common.validators import UpdateType
+from geo_areas.models import GeographicalArea, GeographicalAreaDescription, GeographicalMembership
+from geo_areas.validators import AreaCode
 from measures.models import MeasureType
 
 Row = TypeVar("Row")
@@ -102,8 +106,11 @@ def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return None
 
 
-def blank(value: Any, convert: Callable[[Any], TypeVar("T")]) -> Optional[TypeVar("T")]:
-    return None if value == "" else convert(value)
+def blank(
+    obj: Union[Cell, Any], convert: Callable[[Any], TypeVar("T")]
+) -> Optional[TypeVar("T")]:
+    value = obj.value if type(obj) is Cell else obj
+    return None if value == "" else convert(obj)
 
 
 def col(label: str) -> int:
@@ -143,6 +150,10 @@ condition_fields = (
     "certificate",
     "certificate_type_code",
     "certificate_code",
+    "condition_duty_amount",
+    "condition_monetary_unit_code",
+    "condition_measurement_unit_code",
+    "condition_measurement_unit_qualifier_code",
     "action_code",
 )
 Condition = namedtuple(
@@ -156,7 +167,7 @@ component_fields = (
     "measurement_unit_qualifier_code",
 )
 Component = namedtuple(
-    "Component", component_fields, defaults=(None,) * len(condition_fields)
+    "Component", component_fields, defaults=(None,) * len(component_fields)
 )
 
 
@@ -227,13 +238,13 @@ def parse_trade_remedies_duty_expression(
             measurement_unit_qualifier_code=match.group("m5"),
         )
 
+    parsed_expressions = []
     if value.startswith("Cond: "):
         regex = (
-            r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-(?P<c4>\d{3}) )?\((?P<c5>\d{2})\):"
-            r"(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
-            r"(?:(?P<m5>\S+)(?:\s|$))?"
+            r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z9])-(?P<c4>\d{3}) )?\((?P<c5>\d{2})\):"
+            r"(?P<component>(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
+            r"(?:(?P<m5>\S+)(?:\s|$))?)?"
         )
-        parsed_expressions = []
         for entry in value.lstrip("Cond: ").split(";"):
             entry = entry.strip()
             match = re.match(regex, entry)
@@ -247,27 +258,81 @@ def parse_trade_remedies_duty_expression(
                 )
                 expression = Expression(
                     condition=condition,
-                    component=create_component(match),
+                    component=create_component(match) if match.group("component") else None,
                 )
                 parsed_expressions.append(expression)
             else:
                 raise ValueError(f"Could not parse duty expression: {value}")
     else:
         regex = (
-            r"^(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
-            r"(?:(?P<m5>\S+)(?:\s|$))?"
+            r"(?P<component>(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
+            r"(?:(?P<m5>\S+)(?:\s|$))?)?"
         )
-        parsed_expressions = []
         entry = value.strip()
         match = re.match(regex, entry)
         if match:
             expression = Expression(
                 condition=None,
-                component=create_component(match),
+                component=create_component(match) if match.group("component") else None,
             )
             parsed_expressions.append(expression)
         else:
             raise ValueError(f"Could not parse duty expression: {value}")
+    return parsed_expressions
+
+
+def parse_duty_parts(duty_parts_json, eur_gbp_conversion_rate):
+    """ Parse duty parts from JSON
+
+    """
+    def create_component(component_json):
+        if all(component_json[v] is None for v in
+            [
+                'duty_expression_id',
+                'duty_amount',
+                'monetary_unit_code',
+                'measurement_unit_code',
+                'measurement_unit_qualifier_code'
+            ]
+        ):
+            return None
+        return Component(
+            duty_expression_id=component_json['duty_expression_id'],
+            duty_amount=convert_eur_to_gbp_ukgt(component_json['duty_amount'], eur_gbp_conversion_rate)
+            if component_json['monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+            else component_json['duty_amount'],
+            monetary_unit_code="GBP"
+            if component_json['monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+            else component_json['monetary_unit_code'],
+            measurement_unit_code=component_json['measurement_unit_code'],
+            measurement_unit_qualifier_code=component_json['measurement_unit_qualifier_code'],
+        )
+    parsed_expressions = []
+    # measure_conditions as list
+    for entry in duty_parts_json:
+        if 'condition_code' in entry:
+            condition = Condition(
+                condition_code=entry['condition_code'],
+                certificate=entry['certificate_type_code'] is not None,
+                certificate_type_code=entry['certificate_type_code'],
+                certificate_code=entry['certificate_code'],
+                condition_duty_amount=convert_eur_to_gbp_ukgt(entry['condition_duty_amount'], eur_gbp_conversion_rate)
+                if entry['condition_monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+                else entry['condition_duty_amount'],
+                condition_monetary_unit_code="GBP"
+                if entry['condition_monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+                else entry['condition_monetary_unit_code'],
+                condition_measurement_unit_code=entry['condition_measurement_unit_code'],
+                condition_measurement_unit_qualifier_code=entry['condition_measurement_unit_qualifier_code'],
+                action_code=entry['action_code'],
+            )
+            expression = Expression(
+                condition=condition,
+                component=create_component(entry),
+            )
+            parsed_expressions.append(expression)
+        else:
+            parsed_expressions.append(create_component(entry))
     return parsed_expressions
 
 
@@ -279,6 +344,23 @@ def convert_eur_to_gbp(amount: str, conversion_rate: float) -> str:
     return "{0:.3f}".format(converted_amount)
 
 
+def convert_eur_to_gbp_ukgt(amount: str, conversion_rate: float) -> str:
+    """ Tariffs have been converted at an exchange rate of €1 = 0.83687 GBP.
+        After this conversion, rates equal to or over £10 have been rounded down to
+        the nearest whole pound. Rates under £10 have been rounded down to the nearest 10 pence.
+    """
+    converted_amount = Decimal(amount) * Decimal(conversion_rate)
+    if converted_amount >= 10:
+        converted_amount_rounded = (
+                floor(int(converted_amount))
+        )
+    else:
+        converted_amount_rounded = (
+                floor(int(converted_amount * 10)) / 10
+        )
+    return "{0:.3f}".format(converted_amount_rounded)
+
+
 def clean_item_id(cell: Cell) -> str:
     """Given an Excel cell, return a string representing the 10-digit item id
     of a goods nomenclature item taking into account that the cell may
@@ -286,7 +368,7 @@ def clean_item_id(cell: Cell) -> str:
     if cell.ctype == xlrd.XL_CELL_NUMBER:
         item_id = str(int(cell.value))
     else:
-        item_id = str(cell.value)
+        item_id = str(cell.value).strip()
 
     if len(item_id) % 2 == 1:
         # If we have an odd number of digits its because
@@ -300,6 +382,13 @@ def clean_item_id(cell: Cell) -> str:
 
     assert len(item_id) == 10
     return item_id
+
+
+def cell_as_text(cell: Cell) -> str:
+    if cell.ctype == xlrd.XL_CELL_NUMBER:
+        return str(int(cell.value))
+    else:
+        return str(cell.value)
 
 
 def clean_duty_sentence(cell: Cell) -> str:
@@ -569,7 +658,7 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
         # First we need to work out if there is any measure type split
         # in the old row subtree. If not, we can just apply the same measure
         # type to all of the new rows.
-        item_ids = cast(Dict[GoodsNomenclature, List[OldRow]], {})
+        item_ids: Dict[GoodsNomenclature, List[OldRow]] = {}
         for cc, rows in old_rows.buffer():
             # We should not have the same item ID appearing in two sets
             assert cc not in item_ids
@@ -622,7 +711,8 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
         self, old_rows: List[OldRow], cc: Optional[GoodsNomenclature] = None
     ) -> MeasureType:
         measure_types = set(self.get_old_measure_type(r) for r in old_rows)
-        assert len(measure_types) <= 1, f"{len(measure_types)} for rows {old_rows}"
+        if not len(measure_types) <= 1:
+            logger.debug(f"Different measure types in old measures: {len(measure_types)}/{[r.measure_type for r in old_rows]} for rows {[r.measure_sid for r in old_rows]}")
         if len(measure_types) == 1:
             return measure_types.pop()
         elif self.default_measure_type:
@@ -763,3 +853,209 @@ class EnvelopeSerializer:
                     },
                 )
             )
+
+
+def split_groups(
+    rows: List[List[Cell]], item_column: str, group_by_columns: List[str]
+) -> OrderedDict:
+    """
+    Group rows by group_by_columns and sort ascending on item ID (requirement for dual row runner)
+
+    :param rows: all non-empty rows from Excel sheet
+    :param item_column: the column where the item ID is found
+    :param group_by_columns: list of columns used to group the rows by
+    :return: Ordered Dictionary with key group_by_id and value list of rows belonging to the group
+    """
+    rows.sort(key=lambda row: clean_item_id(row[col(item_column)]))
+    groups = OrderedDict()
+    for row in rows:
+        group_by_values = []
+        for column in group_by_columns:
+            value = ''
+            if row[col(column)]:
+                try:
+                    value = str(int(row[col(column)].value))
+                except ValueError:
+                    value = str(row[col(column)].value).strip()
+            group_by_values.append(value)
+        group_by_id = "|".join(group_by_values)
+        group_rows = groups.get(group_by_id, [])
+        group_rows.append(row)
+        groups[group_by_id] = group_rows
+    return groups
+
+
+def get_filtered_rows(sheet, header_row_first_column, columns):
+    rows = sheet.get_rows()
+    counter = 0
+    # get column headers
+    while True:
+        row = next(rows)
+        if row[0].value == header_row_first_column:
+            columns_found = [
+                row[c].value.strip().lower() for c in range(sheet.ncols)
+            ]
+            break
+        if counter > 100:
+            raise ValueError('Column headers not found in sheet')
+        counter += 1
+
+    # get row indices for columns
+    column_indexes = [
+        columns_found.index(column.strip().lower())
+        if column.strip().lower() in columns_found
+        else None
+        for column in columns
+    ]
+
+    # filter row by indices
+    return [
+        [
+            row[idx]
+            if idx is not None
+            else None
+            for idx in column_indexes
+        ] for row in rows
+    ]
+
+
+def create_geo_area(
+    valid_between,
+    workbasket,
+    area_sid,
+    area_id,
+    area_description_sid,
+    description,
+    member_sids=[],
+    type=AreaCode.GROUP
+):
+    group_area = GeographicalArea(
+        sid=area_sid,
+        area_id=area_id,
+        area_code=type,
+        valid_between=valid_between,
+        workbasket=workbasket,
+        update_type=UpdateType.CREATE,
+    )
+    yield group_area
+    group_area_description = GeographicalAreaDescription(
+        sid=area_description_sid,
+        description=description,
+        valid_between=valid_between,
+        area=group_area,
+        workbasket=workbasket,
+        update_type=UpdateType.CREATE,
+    )
+    yield group_area_description
+    if type == AreaCode.GROUP:
+        yield from add_geo_area_members(
+            valid_between,
+            workbasket,
+            member_sids,
+            group_area,
+        )
+
+
+def update_geo_area_description(
+    valid_between,
+    workbasket,
+    group_area_sid,
+    old_area_description_sid,
+    new_area_description_sid,
+    description,
+):
+    group_area = GeographicalArea.objects.get(
+        sid=group_area_sid
+    )
+    old_description = GeographicalAreaDescription.objects.get(
+        sid=old_area_description_sid,
+    )
+    old_description.valid_between = DateTimeTZRange(
+        old_description.valid_between.lower,
+        valid_between.lower - timedelta(days=1),
+    )
+    old_description.save()
+    yield GeographicalAreaDescription(
+        sid=new_area_description_sid,
+        description=description,
+        valid_between=valid_between,
+        area=group_area,
+        workbasket=workbasket,
+        update_type=UpdateType.CREATE,
+    )
+
+
+def add_geo_area_members(
+    valid_between,
+    workbasket,
+    member_area_sids,
+    group_area,
+):
+    group_area = group_area if type(group_area) == GeographicalArea \
+        else GeographicalArea.objects.get(
+            sid=group_area
+        )
+    member_sids_list = list(member_area_sids)
+    member_sids_list.sort()
+    for member_area_sid in member_sids_list:
+        member_area = GeographicalArea.objects.get(
+            sid=member_area_sid
+        )
+        existing_membership = GeographicalMembership.objects.filter(
+            geo_group=group_area,
+            member=member_area,
+            valid_between__contains=DateTimeTZRange(
+                lower=valid_between.lower,
+                upper=valid_between.upper,
+            ),
+        ).exists()
+        if not existing_membership:
+            yield GeographicalMembership(
+                geo_group=group_area,
+                member=member_area,
+                valid_between=valid_between,
+                workbasket=workbasket,
+                update_type=UpdateType.CREATE,
+            )
+        else:
+            logger.debug(f'membership already exists: group_area {group_area.sid}, member {member_area.sid}')
+
+
+def terminate_geo_area_members(
+    end_date,
+    workbasket,
+    member_area_sids,
+    group_area_sid,
+    delete=False,
+):
+    group_area = GeographicalArea.objects.get(
+        sid=group_area_sid
+    )
+    member_sids_list = list(member_area_sids)
+    member_sids_list.sort()
+    for member_area_sid in member_sids_list:
+        member_area = GeographicalArea.objects.get(
+            sid=member_area_sid
+        )
+        membership = GeographicalMembership.objects.get(
+            geo_group=group_area,
+            member=member_area,
+        )
+        if not delete and membership.valid_between.lower >= end_date or (
+            membership.valid_between.upper is not None
+            and membership.valid_between.upper <= end_date
+        ):
+            raise ValueError(
+                f'Termination date {end_date} needs to be between start {membership.valid_between.lower} and end date {membership.valid_between.upper}: group_area {group_area.sid}, member {member_area.sid}')
+
+        membership.valid_between = DateTimeTZRange(
+                lower=membership.valid_between.lower,
+                upper=end_date,
+        ) if not delete else DateTimeTZRange(
+                lower=membership.valid_between.lower,
+                upper=membership.valid_between.upper,
+        )
+        membership.workbasket = workbasket
+        membership.update_type = UpdateType.UPDATE if not delete else UpdateType.DELETE
+        yield membership
+

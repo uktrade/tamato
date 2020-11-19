@@ -1,3 +1,4 @@
+import json
 from collections import namedtuple
 
 import pytest
@@ -6,7 +7,8 @@ from commodities.models import GoodsNomenclature
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import GoodsNomenclatureIndentNodeFactory
 from common.tests.util import Dates
-from importer.management.commands.utils import convert_eur_to_gbp
+from importer.management.commands.utils import convert_eur_to_gbp, parse_duty_parts, Expression, Condition, Component, \
+    convert_eur_to_gbp_ukgt
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
 from importer.management.commands.utils import NomenclatureTreeCollector
@@ -459,6 +461,224 @@ def test_parse_duty_expression_with_nihil():
     assert expression[0].component.measurement_unit_qualifier_code is None
 
 
+def test_parse_duty_expression_with_no_duty_component():
+    expression = parse_trade_remedies_duty_expression("Cond:  Y cert: Y-949 (29):; Y cert: C-067 (29):; Y (09):")
+
+    assert expression[0].condition.condition_code == "Y"
+    assert expression[0].condition.certificate is True
+    assert expression[0].condition.certificate_type_code == "Y"
+    assert expression[0].condition.certificate_code == "949"
+    assert expression[0].condition.action_code == "29"
+
+    assert not expression[0].component
+
+    assert expression[1].condition.condition_code == "Y"
+    assert expression[1].condition.certificate is True
+    assert expression[1].condition.certificate_type_code == "C"
+    assert expression[1].condition.certificate_code == "067"
+    assert expression[1].condition.action_code == "29"
+
+    assert not expression[1].component
+
+    assert expression[2].condition.condition_code == "Y"
+    assert expression[2].condition.certificate is False
+    assert expression[2].condition.certificate_type_code is None
+    assert expression[2].condition.certificate_code is None
+    assert expression[2].condition.action_code == "09"
+
+    assert not expression[2].component
+
+
+def test_parse_empty_duty_expression():
+    expression = parse_trade_remedies_duty_expression("")
+    assert not expression[0].condition
+    assert not expression[0].component
+
+
+@pytest.mark.parametrize(
+    'parts_json,eur_gbp_conversion_rate,expected_expression',
+    (
+        (
+            """
+            {
+                "duty_expression_id": "01", 
+                "duty_amount": 1, 
+                "monetary_unit_code": "EUR",
+                "measurement_unit_code": "TNE", 
+                "measurement_unit_qualifier_code": null
+            }
+            """,
+            0.83687,
+            Component(
+                duty_expression_id='01',
+                duty_amount='0.800',
+                monetary_unit_code='GBP',
+                measurement_unit_code='TNE',
+                measurement_unit_qualifier_code=None
+            )
+
+        ),
+        (
+            """
+            [
+                {
+                    "condition_code" : "R", 
+                    "certificate_type_code" : "Y", 
+                    "certificate_code" : "098", 
+                    "condition_duty_amount" : 0.186, 
+                    "condition_monetary_unit_code" : null, 
+                    "condition_measurement_unit_code" : "KGM", 
+                    "condition_measurement_unit_qualifier_code" : null, 
+                    "action_code" : "10", 
+                    "duty_expression_id" : null, 
+                    "duty_amount" : null, 
+                    "monetary_unit_code" : null, 
+                    "measurement_unit_code" : null, 
+                    "measurement_unit_qualifier_code" : null
+                }, 
+                {
+                    "condition_code" : "R", 
+                    "certificate_type_code" : null, 
+                    "certificate_code" : null, 
+                    "condition_duty_amount" : 0, 
+                    "condition_monetary_unit_code" : null, 
+                    "condition_measurement_unit_code" : "KGM", 
+                    "condition_measurement_unit_qualifier_code" : null, 
+                    "action_code" : "28", 
+                    "duty_expression_id" : null, 
+                    "duty_amount" : null, 
+                    "monetary_unit_code" : null, 
+                    "measurement_unit_code" : null, 
+                    "measurement_unit_qualifier_code" : null
+                }
+            ]
+            """,
+            0.83687,
+            [
+                Expression(
+                    condition=Condition(
+                        condition_code='R',
+                        certificate=True,
+                        certificate_type_code="Y",
+                        certificate_code="098",
+                        condition_duty_amount=0.186,
+                        condition_monetary_unit_code=None,
+                        condition_measurement_unit_code='KGM',
+                        condition_measurement_unit_qualifier_code=None,
+                        action_code='10'
+                    ),
+                    component=None
+                ),
+                Expression(
+                    condition=Condition(
+                        condition_code='R',
+                        certificate=False,
+                        certificate_type_code=None,
+                        certificate_code=None,
+                        condition_duty_amount=0,
+                        condition_monetary_unit_code=None,
+                        condition_measurement_unit_code='KGM',
+                        condition_measurement_unit_qualifier_code=None,
+                        action_code='28'
+                    ),
+                    component=None
+                )
+            ]
+        ),
+        (
+            """
+            [
+                {
+                    "condition_code" : "F", 
+                    "certificate_type_code" : null, 
+                    "certificate_code" : null, 
+                    "condition_duty_amount" : 325, 
+                    "condition_monetary_unit_code" : "EUR", 
+                    "condition_measurement_unit_code" : "MIL", 
+                    "condition_measurement_unit_qualifier_code" : null, 
+                    "action_code" : "01", 
+                    "duty_expression_id" : "01", 
+                    "duty_amount" : 0, 
+                    "monetary_unit_code" : "EUR", 
+                    "measurement_unit_code" : "MIL", 
+                    "measurement_unit_qualifier_code" : null
+                }, 
+                {
+                    "condition_code" : "F", 
+                    "certificate_type_code" : null, 
+                    "certificate_code" : null, 
+                    "condition_duty_amount" : 0, 
+                    "condition_monetary_unit_code" : "EUR", 
+                    "condition_measurement_unit_code" : "MIL", 
+                    "condition_measurement_unit_qualifier_code" : null, 
+                    "action_code" : "11", 
+                    "duty_expression_id" : "01", 
+                    "duty_amount" : 325, 
+                    "monetary_unit_code" : "EUR", 
+                    "measurement_unit_code" : "MIL", 
+                    "measurement_unit_qualifier_code" : null
+                }
+            ]
+            """,
+            0.83687,
+            [
+                Expression(
+                    condition=Condition(
+                        condition_code='F',
+                        certificate=False,
+                        certificate_type_code=None,
+                        certificate_code=None,
+                        condition_duty_amount='271.000',
+                        condition_monetary_unit_code='GBP',
+                        condition_measurement_unit_code='MIL',
+                        condition_measurement_unit_qualifier_code=None,
+                        action_code='01'
+                    ),
+                    component=Component(
+                        duty_expression_id='01',
+                        duty_amount='0.000',
+                        monetary_unit_code='GBP',
+                        measurement_unit_code='MIL',
+                        measurement_unit_qualifier_code=None
+                    )
+                ),
+                Expression(
+                    condition=Condition(
+                        condition_code='F',
+                        certificate=False,
+                        certificate_type_code=None,
+                        certificate_code=None,
+                        condition_duty_amount='0.000',
+                        condition_monetary_unit_code='GBP',
+                        condition_measurement_unit_code='MIL',
+                        condition_measurement_unit_qualifier_code=None,
+                        action_code='11'
+                    ),
+                    component=Component(
+                        duty_expression_id='01',
+                        duty_amount='271.000',
+                        monetary_unit_code='GBP',
+                        measurement_unit_code='MIL',
+                        measurement_unit_qualifier_code=None
+                    )
+                )
+            ]
+        )
+    )
+)
+def test_parse_duty_parts(parts_json, eur_gbp_conversion_rate, expected_expression):
+    parsed_expression = parse_duty_parts(json.loads(parts_json), eur_gbp_conversion_rate)
+    assert parsed_expression == expected_expression
+
+
 def test_eur_to_gbp_conversion():
     assert convert_eur_to_gbp("20.000", conversion_rate=2) == "40.000"
     assert convert_eur_to_gbp("1.000", conversion_rate=0.83687) == "0.830"
+
+
+def test_eur_to_gbp_conversion_ukgt():
+    assert convert_eur_to_gbp_ukgt("20.000", conversion_rate=2) == "40.000"
+    assert convert_eur_to_gbp_ukgt("1.000", conversion_rate=0.83687) == "0.800"
+    assert convert_eur_to_gbp_ukgt("5.000", conversion_rate=0.83687) == "4.100"
+    assert convert_eur_to_gbp_ukgt("10.000", conversion_rate=0.83687) == "8.300"
+    assert convert_eur_to_gbp_ukgt("100.000", conversion_rate=0.83687) == "83.000"

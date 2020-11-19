@@ -1,0 +1,895 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+              id="1">
+    <env:transaction id="1">
+        <env:app.message id="1">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100001</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>DNC</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="2">
+        <env:app.message id="2">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>2</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100002</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>SPG</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="3">
+        <env:app.message id="3">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>3</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100003</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>SUS</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="4">
+        <env:app.message id="4">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>4</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100004</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>TXC</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="5">
+        <env:app.message id="5">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>5</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100005</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>DUM</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="6">
+        <env:app.message id="6">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>6</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100006</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>FTA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="7">
+        <env:app.message id="7">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>7</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100007</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>KON</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="8">
+        <env:app.message id="8">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>8</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100008</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>TXC</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="9">
+        <env:app.message id="9">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100009</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="10">
+        <env:app.message id="10">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100010</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="11">
+        <env:app.message id="11">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>11</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100011</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="12">
+        <env:app.message id="12">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>12</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100012</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="13">
+        <env:app.message id="13">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>13</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100013</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="14">
+        <env:app.message id="14">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>14</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100014</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="15">
+        <env:app.message id="15">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>15</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100015</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="16">
+        <env:app.message id="16">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>16</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100016</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="17">
+        <env:app.message id="17">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>17</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100017</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="18">
+        <env:app.message id="18">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>18</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100018</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="19">
+        <env:app.message id="19">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100019</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="20">
+        <env:app.message id="20">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>20</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100020</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="21">
+        <env:app.message id="21">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>21</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100021</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="22">
+        <env:app.message id="22">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>22</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100022</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>UKR</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="23">
+        <env:app.message id="23">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>23</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100110</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>MLA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="24">
+        <env:app.message id="24">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>24</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100230</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>MLA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="25">
+        <env:app.message id="25">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>25</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100240</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>PRF</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="26">
+        <env:app.message id="26">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>26</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100250</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>MLA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="27">
+        <env:app.message id="27">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>27</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100260</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>PRS</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="28">
+        <env:app.message id="28">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>28</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100270</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>MLA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="29">
+        <env:app.message id="29">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>29</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100280</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>MLA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="30">
+        <env:app.message id="30">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>30</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100290</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>MLA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="31">
+        <env:app.message id="31">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>31</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100300</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>MLA</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="32">
+        <env:app.message id="32">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>32</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100310</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>DUM</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="33">
+        <env:app.message id="33">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>33</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>C2100320</oub:base.regulation.id>
+                        <oub:published.date>2021-01-01</oub:published.date>
+                        <oub:officialjournal.number>1</oub:officialjournal.number>
+                        <oub:officialjournal.page>1</oub:officialjournal.page>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:regulation.group.id>DUM</oub:regulation.group.id>
+                        <oub:replacement.indicator>0</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:approved.flag>1</oub:approved.flag>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

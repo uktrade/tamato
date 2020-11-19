@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 from datetime import timedelta
@@ -27,15 +28,18 @@ from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.duty_sentence_parser import DutySentenceParser
-from importer.management.commands.utils import blank
+from importer.management.commands.utils import Counter, Component
+from importer.management.commands.utils import MeasureContext
+from importer.management.commands.utils import NomenclatureTreeCollector
+from importer.management.commands.utils import SeasonalRateParser
+from importer.management.commands.utils import blank, Expression, logger
 from importer.management.commands.utils import clean_item_id
 from importer.management.commands.utils import Counter
 from importer.management.commands.utils import maybe_max
 from importer.management.commands.utils import maybe_min
-from importer.management.commands.utils import MeasureContext
-from importer.management.commands.utils import NomenclatureTreeCollector
-from importer.management.commands.utils import SeasonalRateParser
-from measures.models import FootnoteAssociationMeasure
+from measures.models import FootnoteAssociationMeasure, DutyExpression, MeasurementUnit, MeasurementUnitQualifier, \
+    Measurement, \
+    MeasureConditionComponent, MonetaryUnit
 from measures.models import Measure
 from measures.models import MeasureAction
 from measures.models import MeasureComponent
@@ -55,14 +59,14 @@ LONDON = pytz.timezone("Europe/London")
 
 # The date of the end of the transition period,
 # localized to the Europe/London timezone.
-BREXIT = LONDON.localize(datetime(2021, 1, 1))
+BREXIT = datetime(2021, 1, 1)
 
 
 def parse_date(cell: Cell) -> datetime:
     if cell.ctype == xlrd.XL_CELL_DATE:
-        return LONDON.localize(xlrd.xldate.xldate_as_datetime(cell.value, datemode=0))
+        return xlrd.xldate.xldate_as_datetime(cell.value, datemode=0)
     else:
-        return LONDON.localize(datetime.strptime(cell.value, r"%Y-%m-%d"))
+        return datetime.strptime(cell.value, r"%Y-%m-%d")
 
 
 def parse_list(value: str) -> List[str]:
@@ -72,13 +76,19 @@ def parse_list(value: str) -> List[str]:
 class OldMeasureRow:
     def __init__(self, old_row: List[Cell]) -> None:
         assert old_row is not None
-        self.goods_nomenclature_sid = int(old_row[0].value)
+        self.goods_nomenclature_sid = int(old_row[0].value) if old_row[0].value else None
         self.item_id = clean_item_id(old_row[1])
-        self.inherited_measure = bool(old_row[6].value)
+        self.inherited_measure = str(old_row[6].value).lower() == 'true'
         assert not self.inherited_measure, "Old row should not be an inherited measure"
-        self.measure_sid = int(old_row[7].value)
-        self.measure_type = str(int(old_row[8].value))
+        self.measure_sid = int(old_row[7].value) if old_row[7].value else None
+        try:
+            self.measure_type = str(int(old_row[8].value))
+        except ValueError:
+            self.measure_type = str(old_row[8].value)
+        self.duty_expression = str(old_row[10].value)
         self.geo_sid = int(old_row[13].value)
+        self.geo_id = str(old_row[11].value)
+        self.excluded_geo_areas = parse_list(old_row[14].value)
         self.measure_start_date = parse_date(old_row[16])
         self.measure_end_date = blank(
             old_row[17].value, lambda _: parse_date(old_row[17])
@@ -95,7 +105,19 @@ class OldMeasureRow:
         self.footnotes = parse_list(old_row[27].value)
         self.goods_nomenclature = GoodsNomenclature.objects.get(
             sid=self.goods_nomenclature_sid
+        ) if self.goods_nomenclature_sid else GoodsNomenclature.objects.as_at(BREXIT).get(
+            item_id=self.item_id, suffix="80"
         )
+
+        self.conditions = blank(old_row[28].value, str)
+        if len(old_row) >= 30:
+            self.real_end_date = blank(old_row[29], parse_date)
+        else:
+            self.real_end_date = self.measure_end_date
+        if len(old_row) >= 31:
+            self.duty_condition_parts = blank(old_row[30].value, json.loads)
+        if len(old_row) >= 32:
+            self.duty_component_parts = blank(old_row[31].value, json.loads)
 
     @cached_property
     def additional_code(self) -> Optional[AdditionalCode]:
@@ -195,15 +217,15 @@ class MeasureCreatingPattern:
             raise ex
 
     def get_measure_excluded_geographical_areas(
-        self, measure: Measure, geo_exclusion: Optional[str] = None
+        self, measure: Measure, geo_exclusions: List[GeographicalArea]
     ) -> MeasureExcludedGeographicalArea:
-        exclusion = self.exclusion_areas[geo_exclusion.strip()]
-        return MeasureExcludedGeographicalArea(
-            modified_measure=measure,
-            excluded_geographical_area=exclusion,
-            update_type=UpdateType.CREATE,
-            transaction=self.transaction,
-        )
+        for geo_area in geo_exclusions:
+            yield MeasureExcludedGeographicalArea(
+                modified_measure=measure,
+                excluded_geographical_area=geo_area,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            )
 
     def get_measure_footnotes(
         self, measure: Measure, footnotes: List[Footnote]
@@ -225,6 +247,7 @@ class MeasureCreatingPattern:
         goods_nomenclature: GoodsNomenclature,
         new_measure_type: MeasureType,
         geo_exclusion: Optional[str] = None,
+        geo_exclusion_list: Optional[List[GeographicalArea]] = None,
         order_number: Optional[QuotaOrderNumber] = None,
         authorised_use: bool = False,
         additional_code: AdditionalCode = None,
@@ -275,8 +298,13 @@ class MeasureCreatingPattern:
             yield new_measure
 
             if geo_exclusion:
-                yield self.get_measure_exluded_geographical_areas(
-                    new_measure, geo_exclusion
+                exclusions = [self.exclusion_areas[geo_exclusion.strip()]]
+                yield from self.get_measure_excluded_geographical_areas(
+                    new_measure, exclusions
+                )
+            if geo_exclusion_list:
+                yield from self.get_measure_excluded_geographical_areas(
+                    new_measure, geo_exclusion_list
                 )
 
             yield from self.get_measure_footnotes(new_measure, footnotes)
@@ -525,3 +553,167 @@ class DualRowRunner(Generic[OldRow, NewRow]):
             )
         else:
             return iter([])
+
+
+class MeasureCreatingPatternWithExpression(MeasureCreatingPattern):
+    def create(
+        self,
+        goods_nomenclature: GoodsNomenclature,
+        geography: GeographicalArea,
+        new_measure_type: MeasureType,
+        geo_exclusion_list: Optional[List[GeographicalArea]] = None,
+        order_number: Optional[QuotaOrderNumber] = None,
+        additional_code: AdditionalCode = None,
+        validity_start: datetime = None,
+        validity_end: datetime = None,
+        footnotes: List[Footnote] = [],
+        duty_condition_expressions: List[Expression] = [],
+        measure_components: List[Component] = [],
+        generating_regulation: Regulation = None,
+    ) -> Iterator[TrackedModel]:
+
+        actual_start = maybe_max(
+            validity_start, goods_nomenclature.valid_between.lower.replace(tzinfo=None)
+        )
+        actual_end = maybe_min(
+            goods_nomenclature.valid_between.upper, validity_end
+        )
+        new_measure_sid = self.measure_sid_counter()
+
+        if actual_end != validity_end:
+            logger.warning(
+                "Measure {} end date capped by {} end date: {:%Y-%m-%d}".format(
+                    new_measure_sid, goods_nomenclature.item_id, actual_end
+                )
+            )
+        assert actual_start
+        assert (
+                actual_end is None or actual_start.replace(tzinfo=None) <= actual_end.replace(tzinfo=None)
+        ), f"actual_start: {actual_start}, actual_end: {actual_end}"
+        assert not (actual_end and not generating_regulation)
+
+        new_measure = Measure(
+            sid=new_measure_sid,
+            measure_type=new_measure_type,
+            geographical_area=geography,
+            goods_nomenclature=goods_nomenclature,
+            valid_between=DateTimeTZRange(actual_start, actual_end),
+            generating_regulation=generating_regulation or self.generating_regulation,
+            terminating_regulation=(
+                (self.generating_regulation or generating_regulation) if actual_end is not None else None
+            ),
+            order_number=order_number,
+            additional_code=additional_code,
+            update_type=UpdateType.CREATE,
+            workbasket=self.workbasket,
+        )
+        yield new_measure
+
+        if geo_exclusion_list:
+            yield from self.get_measure_excluded_geographical_areas(
+                new_measure, geo_exclusion_list
+            )
+
+        for footnote in self.get_measure_footnotes(new_measure, footnotes):
+            yield footnote
+
+        component_sequence_number = 1
+        for expression in duty_condition_expressions:
+            if expression.component and measure_components:
+                raise ValueError('Measure cannot have both condition component and measure component')
+            if expression.condition:
+                # Create measure condition
+                condition = expression.condition
+                measure_condition_code = MeasureConditionCode.objects.get(
+                    code=condition.condition_code,
+                )
+                action = MeasureAction.objects.get(
+                    code=condition.action_code,
+                )
+                certificate = Certificate.objects.get(
+                    sid=condition.certificate_code,
+                    certificate_type=CertificateType.objects.get(
+                        sid=condition.certificate_type_code
+                    ),
+                ) if condition.certificate else None
+                condition_monetary_unit = MonetaryUnit.objects.get(
+                    code=condition.condition_monetary_unit_code
+                ) if condition.condition_monetary_unit_code else None
+                condition_measurement = Measurement.objects.get(
+                    measurement_unit=MeasurementUnit.objects.get(
+                        code=condition.condition_measurement_unit_code
+                    ),
+                    measurement_unit_qualifier=MeasurementUnitQualifier.objects.get(
+                        code=condition.condition_measurement_unit_qualifier_code
+                    ) if condition.condition_measurement_unit_qualifier_code else None
+                ) if condition.condition_measurement_unit_code else None
+
+                condition = MeasureCondition(
+                    sid=self.measure_condition_sid_counter(),
+                    dependent_measure=new_measure,
+                    component_sequence_number=component_sequence_number,
+                    condition_code=measure_condition_code,
+                    required_certificate=certificate,
+                    duty_amount=condition.condition_duty_amount,
+                    monetary_unit=condition_monetary_unit,
+                    condition_measurement=condition_measurement,
+                    action=action,
+                    update_type=UpdateType.CREATE,
+                    workbasket=self.workbasket,
+                )
+                component_sequence_number += 1
+                yield condition
+
+            # Create measure component
+            if expression.component:
+                condition_component = expression.component
+                yield from self.create_component(
+                    component=condition_component,
+                    condition=condition,
+                )
+
+        for measure_component in measure_components:
+            yield from self.create_component(
+                component=measure_component,
+                new_measure=new_measure,
+            )
+
+    def create_component(self, component, condition=None, new_measure=None):
+        duty_expression = DutyExpression.objects.get(
+            sid=component.duty_expression_id,
+        )
+        monetary_unit = None
+        if component.monetary_unit_code and component.monetary_unit_code != "%":
+            monetary_unit = MonetaryUnit.objects.get(
+                code=component.monetary_unit_code
+            )
+
+        measurement = Measurement.objects.get(
+            measurement_unit=MeasurementUnit.objects.get(
+                code=component.measurement_unit_code
+            ),
+            measurement_unit_qualifier=MeasurementUnitQualifier.objects.get(
+                code=component.measurement_unit_qualifier_code,
+            ) if component.measurement_unit_qualifier_code else None,
+        ) if component.measurement_unit_code else None
+
+        if condition:
+            yield MeasureConditionComponent(
+                condition=condition,
+                duty_expression=duty_expression,
+                duty_amount=component.duty_amount,
+                monetary_unit=monetary_unit,
+                condition_component_measurement=measurement,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            )
+        else:
+            yield MeasureComponent(
+                duty_expression=duty_expression,
+                duty_amount=component.duty_amount,
+                monetary_unit=monetary_unit,
+                component_measure=new_measure,
+                component_measurement=measurement,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            )

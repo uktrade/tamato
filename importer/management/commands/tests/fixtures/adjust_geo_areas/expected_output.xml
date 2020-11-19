@@ -1,0 +1,1830 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+              id="1">
+    <env:transaction id="1">
+        <env:app.message id="1">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit>
+                        <oub:measurement.unit.code>MGM</oub:measurement.unit.code>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:measurement.unit>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="2">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit.description>
+                        <oub:measurement.unit.code>MGM</oub:measurement.unit.code>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:description>Milligram</oub:description>
+                    </oub:measurement.unit.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="2">
+        <env:app.message id="3">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>2</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit>
+                        <oub:measurement.unit.code>MCG</oub:measurement.unit.code>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:measurement.unit>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="4">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>2</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit.description>
+                        <oub:measurement.unit.code>MCG</oub:measurement.unit.code>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:description>Microgram</oub:description>
+                    </oub:measurement.unit.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="3">
+        <env:app.message id="5">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>3</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit>
+                        <oub:measurement.unit.code>MLT</oub:measurement.unit.code>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:measurement.unit>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="6">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>3</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit.description>
+                        <oub:measurement.unit.code>MLT</oub:measurement.unit.code>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:description>Millilitre</oub:description>
+                    </oub:measurement.unit.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="4">
+        <env:app.message id="7">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>4</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit>
+                        <oub:measurement.unit.code>MCL</oub:measurement.unit.code>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:measurement.unit>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="8">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>4</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit.description>
+                        <oub:measurement.unit.code>MCL</oub:measurement.unit.code>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:description>Microlitre</oub:description>
+                    </oub:measurement.unit.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="5">
+        <env:app.message id="9">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>5</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area>
+                        <oub:geographical.area.sid>1</oub:geographical.area.sid>
+                        <oub:geographical.area.id>JE</oub:geographical.area.id>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.code>2</oub:geographical.code>
+                    </oub:geographical.area>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="10">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>5</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description.period>
+                        <oub:geographical.area.description.period.sid>1</oub:geographical.area.description.period.sid>
+                        <oub:geographical.area.sid>1</oub:geographical.area.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.area.id>JE</oub:geographical.area.id>
+                    </oub:geographical.area.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="11">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>5</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description>
+                        <oub:geographical.area.description.period.sid>1</oub:geographical.area.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:geographical.area.sid>1</oub:geographical.area.sid>
+                        <oub:geographical.area.id>JE</oub:geographical.area.id>
+                        <oub:description>Jersey</oub:description>
+                    </oub:geographical.area.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="6">
+        <env:app.message id="12">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>6</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area>
+                        <oub:geographical.area.sid>2</oub:geographical.area.sid>
+                        <oub:geographical.area.id>GG</oub:geographical.area.id>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.code>2</oub:geographical.code>
+                    </oub:geographical.area>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="13">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>6</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description.period>
+                        <oub:geographical.area.description.period.sid>2</oub:geographical.area.description.period.sid>
+                        <oub:geographical.area.sid>2</oub:geographical.area.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.area.id>GG</oub:geographical.area.id>
+                    </oub:geographical.area.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="14">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>6</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description>
+                        <oub:geographical.area.description.period.sid>2</oub:geographical.area.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:geographical.area.sid>2</oub:geographical.area.sid>
+                        <oub:geographical.area.id>GG</oub:geographical.area.id>
+                        <oub:description>Guernsey</oub:description>
+                    </oub:geographical.area.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="7">
+        <env:app.message id="15">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>7</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area>
+                        <oub:geographical.area.sid>3</oub:geographical.area.sid>
+                        <oub:geographical.area.id>1400</oub:geographical.area.id>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.code>1</oub:geographical.code>
+                    </oub:geographical.area>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="16">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>7</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description.period>
+                        <oub:geographical.area.description.period.sid>3</oub:geographical.area.description.period.sid>
+                        <oub:geographical.area.sid>3</oub:geographical.area.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.area.id>1400</oub:geographical.area.id>
+                    </oub:geographical.area.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="17">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>7</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description>
+                        <oub:geographical.area.description.period.sid>3</oub:geographical.area.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:geographical.area.sid>3</oub:geographical.area.sid>
+                        <oub:geographical.area.id>1400</oub:geographical.area.id>
+                        <oub:description>Areas subject to VAT</oub:description>
+                    </oub:geographical.area.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="18">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>7</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>1</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>3</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="19">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>7</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>2</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>3</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="8">
+        <env:app.message id="20">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>8</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>211</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>217</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="21">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>8</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>260</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>217</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="22">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>8</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>279</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>217</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="9">
+        <env:app.message id="23">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>36</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="24">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>47</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="25">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>90</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="26">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>91</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="27">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>92</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="28">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>104</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="29">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>106</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="30">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>117</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="31">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>118</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="32">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>122</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="33">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>148</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="34">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>153</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="35">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>169</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="36">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>195</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="37">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>236</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="38">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>256</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="39">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>264</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="40">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>265</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="41">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>266</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="42">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>270</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="43">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>317</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="44">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>340</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="45">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>390</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="46">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>395</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="47">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>397</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="48">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>403</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="49">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>428</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="50">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>9</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>430</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>68</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="10">
+        <env:app.message id="51">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>49</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="52">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>138</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="53">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>197</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="54">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>342</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="55">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>370</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="56">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>378</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="57">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>393</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="58">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>427</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="59">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>456</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="60">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>458</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="61">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>459</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="62">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>10</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>460</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>445</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="11">
+        <env:app.message id="63">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>11</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>346</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>484</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="64">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>11</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>431</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>484</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="12">
+        <env:app.message id="65">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>12</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description.period>
+                        <oub:geographical.area.description.period.sid>4</oub:geographical.area.description.period.sid>
+                        <oub:geographical.area.sid>484</oub:geographical.area.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.area.id>1098</oub:geographical.area.id>
+                    </oub:geographical.area.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="66">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>12</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description>
+                        <oub:geographical.area.description.period.sid>4</oub:geographical.area.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:geographical.area.sid>484</oub:geographical.area.sid>
+                        <oub:geographical.area.id>1098</oub:geographical.area.id>
+                        <oub:description>West Balkan Countries</oub:description>
+                    </oub:geographical.area.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="13">
+        <env:app.message id="67">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>13</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>169</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>485</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="14">
+        <env:app.message id="68">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>14</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>331</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>485</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="15">
+        <env:app.message id="69">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>15</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description.period>
+                        <oub:geographical.area.description.period.sid>5</oub:geographical.area.description.period.sid>
+                        <oub:geographical.area.sid>485</oub:geographical.area.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.area.id>1006</oub:geographical.area.id>
+                    </oub:geographical.area.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="70">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>15</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description>
+                        <oub:geographical.area.description.period.sid>5</oub:geographical.area.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:geographical.area.sid>485</oub:geographical.area.sid>
+                        <oub:geographical.area.id>1006</oub:geographical.area.id>
+                        <oub:description>UK-Canada agreement: re-imported goods</oub:description>
+                    </oub:geographical.area.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="16">
+        <env:app.message id="71">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>16</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>169</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>232</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="17">
+        <env:app.message id="72">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>17</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>331</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>232</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="18">
+        <env:app.message id="73">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>18</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description.period>
+                        <oub:geographical.area.description.period.sid>6</oub:geographical.area.description.period.sid>
+                        <oub:geographical.area.sid>232</oub:geographical.area.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:geographical.area.id>1007</oub:geographical.area.id>
+                    </oub:geographical.area.description.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="74">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>18</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>10</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.description>
+                        <oub:geographical.area.description.period.sid>6</oub:geographical.area.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:geographical.area.sid>232</oub:geographical.area.sid>
+                        <oub:geographical.area.id>1007</oub:geographical.area.id>
+                        <oub:description>UK-Switzerland agreement: re-imported goods</oub:description>
+                    </oub:geographical.area.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="19">
+        <env:app.message id="75">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>36</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="76">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>47</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="77">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>90</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="78">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>91</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="79">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>92</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="80">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>104</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="81">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>106</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="82">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>117</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="83">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>118</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="84">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>122</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="85">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>148</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="86">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>153</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="87">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>195</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="88">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>236</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="89">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>256</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="90">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>264</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="91">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>265</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="92">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>266</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="93">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>270</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="94">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>317</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="95">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>340</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="96">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>390</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="97">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>395</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="98">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>397</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="99">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>403</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="100">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>428</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="101">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>430</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>496</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="20">
+        <env:app.message id="102">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>20</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>338</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>455</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="103">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>20</oub:transaction.id>
+                    <oub:record.code>250</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:geographical.area.membership>
+                        <oub:geographical.area.sid>341</oub:geographical.area.sid>
+                        <oub:geographical.area.group.sid>455</oub:geographical.area.group.sid>
+                        <oub:validity.start.date>2019-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2020-12-31</oub:validity.end.date>
+                    </oub:geographical.area.membership>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

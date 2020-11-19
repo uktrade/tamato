@@ -79,7 +79,7 @@ class Regulation(TrackedModel):
     )
     published_at = models.DateField(blank=True, null=True, editable=False)
     information_text = ShortDescription(
-        validators=[validators.no_information_text_delimiters]
+        validators=[]#[validators.no_information_text_delimiters]
     )
     public_identifier = models.CharField(
         max_length=50,
