@@ -118,6 +118,16 @@ def col(label: str) -> int:
     return multiple * 26 + index
 
 
+def strint(cell: Cell) -> str:
+    """If the passed cell contains a number, return the
+    number as a string with no deciaml point or places.
+    Else just return the string."""
+    if cell.ctype == xlrd.XL_CELL_NUMBER:
+        return str(int(cell.value))
+    else:
+        return str(cell.value)
+
+
 def clean_regulation(cell: Cell) -> str:
     regulation_id = str(cell.value)
     formats = [
@@ -299,8 +309,7 @@ def clean_item_id(cell: Cell) -> str:
 
     # We need a full 10 digit code so padd with trailing zeroes
     assert len(item_id) % 2 == 0
-    if len(item_id) == 8:
-        item_id += "00"
+    item_id += "0" * (10 - len(item_id))
 
     assert len(item_id) == 10
     return item_id
@@ -525,14 +534,16 @@ class MeasureContext:
 
 class MeasureTreeCollector(Generic[Row], NomenclatureTreeCollector[Row]):
     def add(self, cc: GoodsNomenclature, context: Optional[Row]) -> bool:
-        losers = (
+        losers = list(
             root
             for root in self.roots
             if root[0] == cc
             and root[1].measure_context.overlaps(context.measure_context)
         )
-        if any(losers):
-            logger.warning("About to overwrite context for %s[%s]", cc, cc.sid)
+        if any(l for l in losers if l[3] == True):
+            logger.warning("About to overwrite explicit context for %s[%s]", cc, cc.sid)
+        if any(l for l in losers if l[3] == False):
+            logger.debug("About to overwrite implicit context for %s[%s]", cc, cc.sid)
 
         return super().add(cc, context)
 
