@@ -96,6 +96,10 @@ class OldMeasureRow:
         self.export_refund_sid = blank(old_row[25].value, int)
         self.reduction = blank(old_row[26].value, int)
         self.footnotes = parse_list(old_row[27].value)
+        if len(old_row) >= 30:
+            self.real_end_date = blank(old_row[29], parse_date)
+        else:
+            self.real_end_date = self.measure_end_date
 
     @cached_property
     def goods_nomenclature(self) -> GoodsNomenclature:
@@ -418,9 +422,12 @@ class MeasureEndingPattern:
             # If the old measure starts after the start date, we instead
             # need to delete it and it will never come into force
             # If it ends before the start date, we don't need to do anything!
+            if old_row.measure_end_date:
+                assert old_row.real_end_date
+                assert old_row.real_end_date <= old_row.measure_end_date
             starts_after_date = old_row.measure_start_date >= new_start_date
             ends_before_date = (
-                old_row.measure_end_date and old_row.measure_end_date < new_start_date
+                old_row.real_end_date and old_row.real_end_date < new_start_date
             )
 
             generating_regulation = Regulation.objects.get(
@@ -428,9 +435,9 @@ class MeasureEndingPattern:
                 regulation_id=old_row.regulation_id,
             )
 
-            if old_row.justification_regulation_id and starts_after_date:
-                # We are going to delete the measure, but we still need the
-                # regulation to be correct if it has already been end-dated
+            if old_row.justification_regulation_id:
+                # We are going to delete or end-date the measure, and we need the
+                # regulation to be correct if it has already been end-dated.
                 assert old_row.measure_end_date
                 justification_regulation = Regulation.objects.get(
                     role_type=old_row.regulation_role,
