@@ -36,7 +36,13 @@ def create_and_test_m2m_regulation(
             "replacement_indicator": test_regulation.replacement_indicator,
             "community_code": test_regulation.community_code,
             "stopped": test_regulation.stopped,
-            "information_text": test_regulation.information_text,
+            "information_text": "|".join(
+                [
+                    test_regulation.information_text,
+                    test_regulation.public_identifier,
+                    test_regulation.url,
+                ]
+            ),
             "approved": test_regulation.approved,
         },
         "target_regulation": {
