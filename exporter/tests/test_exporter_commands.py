@@ -12,12 +12,13 @@ pytestmark = pytest.mark.django_db
 
 
 def test_upload_command_uploads_approved_workbasket_to_s3(
-    approved_workbasket, hmrc_storage, s3
+    approved_workbasket, hmrc_storage, s3, s3_object_exists
 ):
     """
     Exercise HMRCStorage and verify content is saved to bucket.
     """
-    expected_bucket_name = "test-hmrc"
+    expected_bucket = "test-hmrc"
+    expected_key = "test-hmrc/tohmrc/staging/DIT200001.xml"
 
     RegulationFactory.create(workbasket=approved_workbasket)
     FootnoteTypeFactory.create(workbasket=approved_workbasket)
@@ -29,25 +30,13 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
         call_command("upload_workbaskets")
 
         mock_save.assert_called_once()
-        # Don't check what content was passed in here, ask moto what was saved later.
 
-    bucket_names = [bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]]
-    assert (
-        expected_bucket_name in bucket_names
-    ), "Bucket named in HMRC_BUCKET_NAME setting was not created."
-
-    object_names = [
-        contents["Key"]
-        for contents in s3.list_objects(Bucket=expected_bucket_name)["Contents"]
-    ]
-    assert (
-        "test-hmrc/tohmrc/staging/DIT200001.xml" in object_names
+    assert s3_object_exists(
+        expected_bucket, expected_key
     ), "File was not uploaded with expected name."
 
     # Attempt to fetch data from Motos fake s3
-    object = s3.get_object(
-        Bucket="test-hmrc", Key="test-hmrc/tohmrc/staging/DIT200001.xml"
-    )
+    object = s3.get_object(Bucket=expected_bucket, Key=expected_key)
     envelope = object["Body"].read()
     xml = etree.XML(envelope)
 
@@ -67,13 +56,10 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
     assert codes == expected_codes
 
 
-def test_dump_command_outputs_approved_workbasket(
-    approved_workbasket, settings, capsys
-):
+def test_dump_command_outputs_approved_workbasket(approved_workbasket, capsys):
     """
     Exercise HMRCStorage and verify content is saved to bucket.
     """
-    settings.HMRC_BUCKET_NAME = "test-hmrc-bucket"
     with capsys.disabled():
         RegulationFactory.create(workbasket=approved_workbasket)
         # RegulationFactory also creates a Group

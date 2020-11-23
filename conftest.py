@@ -18,6 +18,17 @@ from common.tests.factories import WorkBasketFactory
 from common.tests.util import Dates
 from exporter.storages import HMRCStorage
 
+pytest_plugins = ("celery.contrib.pytest",)
+
+
+@pytest.fixture(scope="session")
+def celery_config():
+    return {
+        "broker_url": "memory://",
+        "result_backend": "cache",
+        "task_always_eager": True,
+    }
+
 
 @pytest.fixture(
     params=[
@@ -97,6 +108,7 @@ def unique_identifying_fields(approved_workbasket):
     Usage:
         assert unique_identifying_fields(FactoryClass)
     """
+
     # TODO allow factory or model instance as argument
 
     def check(factory):
@@ -123,6 +135,7 @@ def must_exist(approved_workbasket):
     Usage:
         assert must_exist("field_name", LinkedModelFactory, ModelFactory)
     """
+
     # TODO drop the `dependency_name` argument, as with validity_period_contained
 
     def check(dependency_name, dependency_factory, dependent_factory):
@@ -148,6 +161,7 @@ def validity_period_contained(date_ranges, approved_workbasket):
     Usage:
         assert validity_period_contained("field_name", ContainerModelFactory, ContainedModelFactory)
     """
+
     # TODO drop the `dependency_name` argument, inspect the model for a ForeignKey to
     # the specified container model. Add `field_name` kwarg for disambiguation if
     # multiple ForeignKeys.
@@ -185,6 +199,25 @@ def s3():
     with mock_s3():
         s3 = boto3.client("s3")
         yield s3
+
+
+@pytest.fixture
+def s3_object_exists(s3):
+    def check(bucked_name, key):
+        bucket_names = [
+            bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]
+        ]
+        assert (
+            bucked_name in bucket_names
+        ), "Bucket named in HMRC_BUCKET_NAME setting was not created."
+
+        object_names = [
+            contents["Key"]
+            for contents in s3.list_objects(Bucket=bucked_name)["Contents"]
+        ]
+        return key in object_names
+
+    return check
 
 
 @pytest.yield_fixture
