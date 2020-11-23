@@ -203,17 +203,20 @@ def s3():
 
 @pytest.fixture
 def s3_object_exists(s3):
-    def check(bucked_name, key):
+    """Provide a function to verify that a particular object exists in
+    an expected bucket.
+    """
+
+    def check(bucket_name, key):
         bucket_names = [
             bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]
         ]
-        assert (
-            bucked_name in bucket_names
-        ), "Bucket named in HMRC_BUCKET_NAME setting was not created."
+        if not bucket_names:
+            return False
 
         object_names = [
             contents["Key"]
-            for contents in s3.list_objects(Bucket=bucked_name)["Contents"]
+            for contents in s3.list_objects(Bucket=bucket_name)["Contents"]
         ]
         return key in object_names
 

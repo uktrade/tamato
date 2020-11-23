@@ -35,4 +35,4 @@ class Command(WorkBasketBaseCommand):
         content_file = ContentFile(envelope)
         storage = HMRCStorage()
         destination = storage.save(full_filename, content_file)
-        print(f"Uploaded: {destination}")
+        self.stdout.write(f"Uploaded: {destination}")

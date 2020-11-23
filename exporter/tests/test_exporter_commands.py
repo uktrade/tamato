@@ -35,9 +35,7 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
         expected_bucket, expected_key
     ), "File was not uploaded with expected name."
 
-    # Attempt to fetch data from Motos fake s3
-    object = s3.get_object(Bucket=expected_bucket, Key=expected_key)
-    envelope = object["Body"].read()
+    envelope = s3.get_object(Bucket=expected_bucket, Key=expected_key)["Body"].read()
     xml = etree.XML(envelope)
 
     validate_taric_xml_record_order(xml)
