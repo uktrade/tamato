@@ -29,11 +29,27 @@ class RegulationHandler(BaseHandler):
     serializer_class = serializers.RegulationImporterSerializer
     tag = parsers.BaseRegulationParser.tag.name
 
+    def clean(self, data: dict) -> dict:
+        if "information_text" in data and "|" in data["information_text"]:
+            text, pid, url = data["information_text"].split("|")
+            data["information_text"] = text
+            data["public_identifier"] = pid
+            data["url"] = url
+        return super().clean(data)
+
 
 class BaseRegulationThroughTableHandler(BaseHandler):
     links = ({"model": models.Regulation, "name": "target_regulation"},)
     serializer_class = serializers.RegulationImporterSerializer
     tag = "BaseRegulationThroughTableHandler"
+
+    def clean(self, data: dict) -> dict:
+        if "information_text" in data and "|" in data["information_text"]:
+            text, pid, url = data["information_text"].split("|")
+            data["information_text"] = text
+            data["public_identifier"] = pid
+            data["url"] = url
+        return super().clean(data)
 
 
 class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):

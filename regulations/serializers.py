@@ -173,11 +173,17 @@ class RegulationImporterSerializer(
         validators=[validators.regulation_id_validator],
     )
 
+    compound_information_text = serializers.SerializerMethodField()
     official_journal_number = serializers.CharField(read_only=False, required=False)
     official_journal_page = serializers.IntegerField(read_only=False, required=False)
     published_at = serializers.DateTimeField(read_only=False, required=False)
     replacement_indicator = serializers.IntegerField(read_only=False)
     valid_between = TARIC3DateTimeRangeField(required=False)
+
+    def get_compound_information_text(self, obj):
+        parts = [obj.information_text, obj.public_identifier, obj.url]
+        if any(parts):
+            return "|".join([p or "" for p in parts])
 
     class Meta:
         model = models.Regulation
@@ -189,7 +195,10 @@ class RegulationImporterSerializer(
             "official_journal_number",
             "official_journal_page",
             "published_at",
+            "compound_information_text",
             "information_text",
+            "public_identifier",
+            "url",
             "approved",
             "replacement_indicator",
             "stopped",
@@ -219,6 +228,7 @@ class RegulationSerializer(
     terminations = NestedTerminationSerializer(many=True)
     replaces = NestedRegulationSerializer(many=True)
     replacements = NestedReplacementSerializer(many=True)
+    compound_information_text = serializers.SerializerMethodField()
 
     published_date = serializers.SerializerMethodField()
     effective_end_date = serializers.SerializerMethodField()
@@ -231,6 +241,11 @@ class RegulationSerializer(
         if obj.effective_end_date:
             return self.date_format_string.format(obj.effective_end_date)
 
+    def get_compound_information_text(self, obj):
+        parts = [obj.information_text, obj.public_identifier, obj.url]
+        if any(parts):
+            return "|".join([p or "" for p in parts])
+
     class Meta:
         model = models.Regulation
         fields = [
@@ -240,6 +255,7 @@ class RegulationSerializer(
             "official_journal_number",
             "official_journal_page",
             "published_date",
+            "compound_information_text",
             "information_text",
             "approved",
             "replacement_indicator",

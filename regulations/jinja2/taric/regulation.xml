@@ -43,8 +43,8 @@
 {#            {% endif %}#}
         <oub:replacement.indicator>{{ record.replacement_indicator }}</oub:replacement.indicator>
         <oub:stopped.flag>{{ record.stopped | int }}</oub:stopped.flag>
-        {% if record.information_text %}
-        <oub:information.text>{{ record.information_text }}</oub:information.text>
+        {% if record.compound_information_text %}
+        <oub:information.text>{{ record.compound_information_text }}</oub:information.text>
         {% endif %}
         <oub:approved.flag>{{ record.approved | int }}</oub:approved.flag>
     </oub:base.regulation>

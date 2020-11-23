@@ -148,6 +148,9 @@ class RegulationFactory(TrackedModelMixin):
         if o.role_type == 1
         else None
     )
+    information_text = string_sequence(length=50)
+    public_identifier = factory.sequence(lambda n: f"S.I. 2021/{n}")
+    url = factory.sequence(lambda n: f"https://legislation.gov.uk/uksi/2021/{n}")
 
 
 class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
