@@ -54,7 +54,7 @@ services:
     restart: always
     env_file: .env
     entrypoint: celery
-    command: -A celery_app.celery beat --loglevel=info
+    command: -A common.celery worker --loglevel=info
     links:
       - redis
       - db
@@ -67,7 +67,7 @@ services:
     restart: always
     env_file: .env
     entrypoint: celery
-    command: -A celery_app.celery beat --loglevel=info
+    command: -A common.celery beat --loglevel=info
     links:
       - celery_worker
       - redis
