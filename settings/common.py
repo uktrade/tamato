@@ -184,10 +184,11 @@ USE_TZ = True
 # Time zone
 TIME_ZONE = "UTC"
 
-# Storage
-HMRC_BUCKET_NAME = os.environ.get("HMRC_BUCKET_NAME", "hmrc")
-HMRC_UPLOAD_DIR = os.environ.get("HMRC_UPLOAD_DIR", "tohmrc/staging/")
+# HMRC AWS settings (override the defaults)
+HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
+HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
+# Default AWS settings.
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
@@ -196,6 +197,14 @@ AWS_PRELOAD_METADATA = False
 AWS_DEFAULT_ACL = None
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_REGION_NAME = "eu-west-2"
+
+# Pickle could be used as a serializer here, as this always runs in a DMZ
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
+CELERY_TRACK_STARTED = True
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
 
 
 # -- Logging
@@ -235,6 +244,10 @@ LOGGING = {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
         },
+    },
+    "celery": {
+        "handlers": ['celery', 'console'],
+        "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
     },
 }
 
@@ -282,6 +295,7 @@ TARIC_XSD = os.path.join(BASE_DIR, "common", "assets", "taric3.xsd")
 
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
 
+# HMRC external API
 HMRC = {
     "client_id": os.environ.get("HMRC_API_CLIENT_ID"),
     "client_secret": os.environ.get("HMRC_API_CLIENT_SECRET"),

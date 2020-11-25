@@ -8,6 +8,6 @@ class HMRCStorage(S3Boto3Storage):
 
         return dict(
             super().get_default_settings(),
-            location=settings.HMRC_BUCKET_NAME,
+            location=settings.HMRC_STORAGE_DIRECTORY,
             default_acl="private",
         )
