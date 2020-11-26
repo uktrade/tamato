@@ -30,7 +30,7 @@ class Command(WorkBasketBaseCommand):
         self.validate_envelope(envelope)
 
         filename = get_envelope_filename(1)
-        full_filename = str(Path(settings.HMRC_UPLOAD_DIR) / filename)
+        full_filename = str(Path(settings.HMRC_STORAGE_DIRECTORY) / filename)
 
         content_file = ContentFile(envelope)
         storage = HMRCStorage()
