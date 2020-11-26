@@ -53,8 +53,8 @@ services:
     image: tamato
     restart: always
     env_file: .env
-    entrypoint: celery
-    command: -A common.celery worker --loglevel=info
+    entrypoint: /home/tamato/.local/bin/celery
+    command: worker -A common.celery --loglevel=info
     links:
       - redis
       - db
@@ -66,8 +66,9 @@ services:
     image: tamato
     restart: always
     env_file: .env
-    entrypoint: celery
-    command: -A common.celery beat --loglevel=info
+    # entrypoint: bash
+    entrypoint: /home/tamato/.local/bin/celery
+    command: beat -A common.celery --loglevel=info
     links:
       - celery_worker
       - redis
