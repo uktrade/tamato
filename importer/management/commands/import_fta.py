@@ -44,7 +44,7 @@ from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
 from importer.management.commands.utils import output_argument
 from importer.management.commands.utils import SeasonalRateParser
-from importer.management.commands.utils import spreadsheet_argument
+from importer.management.commands.utils import spreadsheet_argument, strint
 from measures.models import Measurement
 from measures.models import MeasureType
 from quotas.models import QuotaAssociation
@@ -84,7 +84,7 @@ class NewQuotaRow:
         if origin.area_id not in self.origin_ids:
             return
         self.excluded_origins = parse_list(str(row[col("C")].value))
-        self.order_number = str(row[col("A")].value)
+        self.order_number = str(row[col("A")].value).strip()
         self.period_start = parse_date(row[col("D")])
         self.period_end = parse_date(row[col("E")])
         self.type = QuotaType(row[col("F")].value)
@@ -370,9 +370,9 @@ class MainMeasureRow:
             or self.origin.area_id != self.origin_id
         ):
             return
-        self.row_id = int(row[col("A")].value)
+        self.row_id = strint(row[col("A")])
         self.item_id = clean_item_id(row[col("B")])
-        self.measure_type_id = str(int(row[col("I")].value))
+        self.measure_type_id = strint(row[col("I")])
         self.origin_description = str(row[col("L")].value)
         self.excluded_origin_description = str(row[col("M")].value)
         original_order_number = blank(row[col("N")].value, str)
@@ -411,7 +411,7 @@ class StagedMeasureRow:
     staging_2021_column = str(None)
 
     def __init__(self, row: List[Cell]) -> None:
-        self.row_id = int(row[col("A")].value)
+        self.row_id = strint(row[col("A")])
         self.item_id = clean_item_id(row[col("B")])
         self.duty_exp = clean_duty_sentence(row[col(self.staging_2021_column)])
 
@@ -525,6 +525,8 @@ class FTAMeasuresImporter(RowsImporter):
             },
         )
 
+        return iter([])
+
     def handle_row(
         self, new_row: Optional[MainMeasureRow], old_row: Optional[OldMeasureRow]
     ) -> Iterator[List[TrackedModel]]:
@@ -629,7 +631,7 @@ class FTAMeasuresImporter(RowsImporter):
         )
         footnotes = [
             Footnote.objects.as_at(BREXIT).get(
-                footnote_id=f[2:], footnote_type__footnote_type_id=f[0:2]
+                footnote_id=f[3:], footnote_type__footnote_type_id=f[0:2]
             )
             for f in footnote_ids
         ]
@@ -719,6 +721,7 @@ class Command(BaseCommand):
                 output,
                 options["counters"]["envelope_id"](),
                 options["counters"]["transaction_id"],
+                max_envelope_size_in_mb=39,
             ) as env:
                 for country in options["geographical_area"]:
                     origin = GeographicalArea.objects.as_at(BREXIT).get(area_id=country)
