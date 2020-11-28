@@ -2,9 +2,9 @@ import logging
 from datetime import datetime
 from datetime import timedelta
 from functools import cached_property
-from typing import Callable
 from typing import Dict
 from typing import Generic
+from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -14,6 +14,7 @@ from typing import Union
 
 import pytz
 import xlrd
+from dateutil.relativedelta import relativedelta
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
@@ -23,14 +24,12 @@ from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
-from common.tests.factories import GoodsNomenclatureFactory
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.utils import blank
 from importer.management.commands.utils import clean_item_id
-from importer.management.commands.utils import convert_eur_to_gbp
 from importer.management.commands.utils import Counter
 from importer.management.commands.utils import maybe_max
 from importer.management.commands.utils import maybe_min
@@ -44,11 +43,17 @@ from measures.models import MeasureComponent
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
 from measures.models import MeasureExcludedGeographicalArea
+from measures.models import Measurement
 from measures.models import MeasureType
-from measures.models import MonetaryUnit
+from quotas.models import QuotaAssociation
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
+from quotas.models import QuotaOrderNumberOriginExclusion
+from quotas.models import QuotaSuspension
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
+from quotas.validators import SubQuotaType
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
@@ -336,7 +341,9 @@ class MeasureCreatingPattern:
                     yield condition
 
             if proof_of_origin:
-                for condition in self.get_proof_of_origin_condition(new_measure, proof_of_origin):
+                for condition in self.get_proof_of_origin_condition(
+                    new_measure, proof_of_origin
+                ):
                     yield condition
 
             for component in self.get_measure_components_from_duty_rate(
@@ -486,6 +493,225 @@ class MeasureEndingPattern:
                 logger.debug(
                     "Ignoring old measure %s as ends before Brexit", old_row.measure_sid
                 )
+
+
+class QuotaCreatingPattern:
+    def __init__(
+        self,
+        order_number_counter: Counter,
+        order_number_origin_counter: Counter,
+        definition_counter: Counter,
+        suspension_counter: Counter,
+        workbasket: WorkBasket,
+        start_date: datetime = BREXIT,
+    ) -> None:
+        self.start_date = start_date
+        self.order_number_counter = order_number_counter
+        self.order_number_origin_counter = order_number_origin_counter
+        self.definition_counter = definition_counter
+        self.suspension_counter = suspension_counter
+        self.workbasket = workbasket
+
+    def add_origin(
+        self, quota: QuotaOrderNumber, origin: GeographicalArea
+    ) -> QuotaOrderNumberOrigin:
+        return QuotaOrderNumberOrigin(
+            sid=self.order_number_origin_counter(),
+            order_number=quota,
+            geographical_area=origin,
+            valid_between=quota.valid_between,
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+
+    def exclude_origin(
+        self, quota_origin: QuotaOrderNumberOrigin, origin: GeographicalArea
+    ) -> QuotaOrderNumberOriginExclusion:
+        return QuotaOrderNumberOriginExclusion(
+            origin=quota_origin,
+            excluded_geographical_area=origin,
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+
+    def define_quota(
+        self,
+        quota: QuotaOrderNumber,
+        volume: int,
+        unit: Measurement,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> QuotaDefinition:
+        return QuotaDefinition(
+            sid=self.definition_counter(),
+            order_number=quota,
+            volume=volume,
+            initial_volume=volume,
+            measurement_unit=unit.measurement_unit,
+            measurement_unit_qualifier=unit.measurement_unit_qualifier,
+            maximum_precision=3,
+            valid_between=DateTimeTZRange(
+                lower=start_date,
+                upper=end_date,
+            ),
+            quota_critical_threshold=90,
+            description="",
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+
+    def associate_to_parent(
+        self, definition: QuotaDefinition, parent: str, coefficient: str
+    ) -> QuotaAssociation:
+        main_quota = QuotaDefinition.objects.get(
+            order_number__order_number=parent,
+        )
+
+        return QuotaAssociation(
+            main_quota=main_quota,
+            sub_quota=definition,
+            sub_quota_relation_type=(
+                SubQuotaType.NORMAL
+                if coefficient in ["1.00", "1.0", "1"]
+                else SubQuotaType.EQUIVALENT
+            ),
+            coefficient=coefficient,
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+
+    def suspend(
+        self, definition: QuotaDefinition, start: datetime, end: datetime
+    ) -> QuotaSuspension:
+        assert start >= definition.valid_between.lower
+        assert end <= definition.valid_between.upper
+        return QuotaSuspension(
+            sid=self.suspension_counter(),
+            quota_definition=definition,
+            valid_between=DateTimeTZRange(start, end),
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+
+    def create(
+        self,
+        order_number: str,
+        mechanism: AdministrationMechanism,
+        origins: List[GeographicalArea],
+        category: QuotaCategory,
+        period_start_date: datetime,
+        period_end_date: datetime,
+        unit: Measurement,
+        volume: int,
+        interim_volume: Optional[int] = None,
+        parent_order_number: Optional[str] = None,
+        coefficient: Optional[str] = "",
+        excluded_origins: List[GeographicalArea] = [],
+        suspension_start_date: Optional[datetime] = None,
+        suspension_end_date: Optional[datetime] = None,
+    ) -> Iterator[List[TrackedModel]]:
+        if (
+            period_start_date.month == 1
+            and period_start_date.day == 1
+            and period_end_date.month == 12
+            and period_end_date.day == 31
+        ):
+            calendar, noncalendar, seasonal = True, False, False
+        elif relativedelta(period_start_date, period_end_date).years == 1:
+            calendar, noncalendar, seasonal = False, True, False
+        else:
+            calendar, noncalendar, seasonal = False, False, True
+
+        # 1. Create a quota order number
+        quota = QuotaOrderNumber(
+            sid=self.order_number_counter(),
+            order_number=order_number,
+            mechanism=mechanism,
+            category=category,
+            valid_between=DateTimeTZRange(self.start_date, None),
+            workbasket=self.workbasket,
+            update_type=UpdateType.CREATE,
+        )
+        quota.save()
+        to_output = [quota]
+
+        # 2. Create origins and any exclusions
+        assert (len(origins) >= 1 and len(excluded_origins) == 0) or (
+            len(origins) == 1 and len(excluded_origins) >= 1
+        ), """This pattern can currently only support one origin with multiple
+            exclusions or multiple origins with no exclusions."""
+
+        for origin in origins:
+            quota_origin = self.add_origin(quota, origin)
+            quota_origin.save()
+            to_output.append(origin)
+
+            for excluded in excluded_origins:
+                exclusion = self.exclude_origin(quota_origin, excluded)
+                exclusion.save()
+                to_output.append(exclusion)
+
+        if quota.mechanism != AdministrationMechanism.LICENSED:
+            yield to_output
+
+        # If this is a seasonal quota that would normally have already started,
+        # start it on 1 Jan and use the interim volume to set up the quota
+        start_date = period_start_date
+        end_date = period_end_date
+        if (seasonal or noncalendar) and start_date.year < self.start_date.year:
+            # Dates in the sheet are not reliable – only days/months are correct
+            # So assume that all the dates are for year 2021
+            # If the end date comes before, it must be for 2022
+            start_date = start_date.replace(year=self.start_date.year)
+            end_date = end_date.replace(year=self.start_date.year)
+            if end_date < start_date:
+                end_date = end_date.replace(year=self.start_date.year + 1)
+            assert end_date >= start_date
+
+        # 3. Create a defn for 2021 from normal volume and start date to end date
+        normal_qd = self.define_quota(quota, volume, unit, start_date, end_date)
+        normal_qd.save()
+        if quota.mechanism != AdministrationMechanism.LICENSED:
+            yield [normal_qd]
+
+        # 4. Create a defn for 2021 from interim volume and Jan 01 to start date
+        if noncalendar and start_date > self.start_date:
+            interim_end = start_date - timedelta(days=1)
+            assert interim_volume is not None
+            assert interim_end >= self.start_date
+
+            interim_qd = self.define_quota(
+                quota,
+                interim_volume,
+                unit,
+                BREXIT,
+                interim_end,
+            )
+            interim_qd.save()
+            if quota.mechanism != AdministrationMechanism.LICENSED:
+                yield [interim_qd]
+
+        if parent_order_number:
+            assert calendar
+            assert coefficient
+            association = self.associate_to_parent(
+                normal_qd, parent_order_number, coefficient
+            )
+            association.save()
+            if quota.mechanism != AdministrationMechanism.LICENSED:
+                yield [association]
+
+        if suspension_start_date and suspension_end_date:
+            assert not noncalendar, "Need to handle both QDs"
+            start = suspension_start_date.replace(year=self.start_date.year)
+            end = suspension_end_date.replace(year=self.start_date.year)
+            if start < normal_qd.valid_between.lower:
+                start += relativedelta(years=1)
+                end += relativedelta(years=1)
+            suspension = self.suspend(normal_qd, start, end)
+            suspension.save()
+            if quota.mechanism != AdministrationMechanism.LICENSED:
+                yield [suspension]
 
 
 OldRow = TypeVar("OldRow")
