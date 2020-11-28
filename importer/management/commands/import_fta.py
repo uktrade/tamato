@@ -11,6 +11,7 @@ from typing import List
 from typing import Optional
 
 import xlrd
+from dateutil.relativedelta import relativedelta
 from django.core.management import BaseCommand
 from django.db import transaction
 from psycopg2._range import DateTimeTZRange
@@ -44,7 +45,9 @@ from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
 from importer.management.commands.utils import output_argument
 from importer.management.commands.utils import SeasonalRateParser
-from importer.management.commands.utils import spreadsheet_argument, strint
+from importer.management.commands.utils import spreadsheet_argument
+from importer.management.commands.utils import strint
+from importer.management.commands.utils import write_summary
 from measures.models import Measurement
 from measures.models import MeasureType
 from quotas.models import QuotaAssociation
@@ -60,7 +63,6 @@ from regulations.models import Group
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
-from dateutil.relativedelta import relativedelta
 
 logger = logging.getLogger(__name__)
 
@@ -793,3 +795,9 @@ class Command(BaseCommand):
             logger.info("Next %s: %s", name, counter())
 
         transaction.set_rollback(True)
+        write_summary(
+            options["output"],
+            "Trade agreements",
+            options["counters"],
+            options["counters__original"],
+        )

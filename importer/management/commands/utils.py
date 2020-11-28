@@ -4,10 +4,11 @@ import os
 import re
 from collections import namedtuple
 from datetime import datetime
-from datetime import timedelta
 from decimal import Decimal
 from itertools import combinations
 from math import floor
+from os import path
+from string import capwords
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -41,6 +42,7 @@ Row = TypeVar("Row")
 NewRow = TypeVar("NewRow")
 OldRow = TypeVar("OldRow")
 ItemIdGetter = Callable[[Row], GoodsNomenclature]
+Counter = Callable[[], int]
 
 logger = logging.getLogger(__name__)
 
@@ -50,18 +52,22 @@ class CountersAction(argparse.Action):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: Any,
+        values: int,
         option_string=None,
     ) -> None:
         counters = getattr(namespace, "counters", {})
-        setattr(namespace, "counters", {self.dest: values, **counters})
+        setattr(
+            namespace, "counters", {self.dest: counter_generator(values), **counters}
+        )
+        originals = getattr(namespace, "counters__original", {})
+        setattr(namespace, "counters__original", {self.dest: values, **originals})
 
 
 def id_argument(parser: Any, name: str, default: Optional[int] = None) -> None:
     parser.add_argument(
         f"--{name}-id",
         help=f"The ID value to use for the first new {(name.replace('-',''))}.",
-        type=lambda s: counter_generator(int(s)),
+        type=int,
         action=CountersAction,
         default=default,
     )
@@ -85,6 +91,32 @@ def output_argument(parser: Any) -> None:
     parser.add_argument(
         "--output", help="The filename to output to.", type=str, default="out.xml"
     )
+
+
+def write_summary(
+    xml_filename: str,
+    theme: str,
+    counters: Dict[str, Counter] = {},
+    originals: Dict[str, int] = {},
+) -> None:
+    dirname, filename = path.split(xml_filename)
+    filename = filename.replace(".raw", "")
+    base = path.splitext(filename)[0]
+    txt_filename = path.join(dirname, base + ".txt")
+
+    with open(txt_filename, mode="a") as output:
+        output.seek(0, 0)
+
+        output.write(f"# {base}\n\n")
+        output.write(f"Theme: {theme}\n\n")
+        output.write(f"Filename: {filename}\n")
+        for counter in counters:
+            last = counters[counter]() - 1
+            first = originals[counter]
+            name = capwords(counter, "_").replace("_", " ")
+            output.write(f"{name}s: {first} – {last}\n")
+        output.write(f"Date generated: {datetime.now().strftime('%d %b %Y')}\n")
+        output.write(f"Date sent:\n")
 
 
 def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
@@ -700,9 +732,6 @@ class SeasonalRateParser:
         else:
             # Non-seasonal rate!
             yield (duty_exp, self.base, None)
-
-
-Counter = Callable[[], int]
 
 
 class EnvelopeSerializer:

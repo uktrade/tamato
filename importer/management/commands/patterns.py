@@ -76,7 +76,7 @@ def parse_list(value: str) -> List[str]:
 class OldMeasureRow:
     def __init__(self, old_row: List[Cell]) -> None:
         assert old_row is not None
-        self.origin_id = str(old_row[14].value)
+        self.origin_id = str(old_row[11].value)
         self.goods_nomenclature_sid = int(old_row[0].value)
         self.item_id = clean_item_id(old_row[1])
         self.inherited_measure = bool(old_row[6].value)
@@ -354,7 +354,7 @@ class MeasureEndingPattern:
         self,
         workbasket: WorkBasket,
         measure_types: Dict[str, MeasureType] = {},
-        geo_areas: Dict[str, GeographicalArea] = {},
+        geo_areas: Dict[int, GeographicalArea] = {},
         ensure_unique: bool = True,
     ) -> None:
         self.workbasket = workbasket
