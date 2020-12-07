@@ -25,7 +25,8 @@ RUN groupadd -g 1000 tamato && \
     useradd -u 1000 -g tamato -m tamato
 USER tamato
 
-WORKDIR /home/tamato
+RUN mkdir /home/tamato/app
+WORKDIR /home/tamato/app
 
 # install python dependencies
 COPY requirements.txt ./
@@ -42,6 +43,8 @@ RUN touch .env
 
 # collect static files for deployment
 RUN python manage.py collectstatic --noinput
+
+ADD ./ /home/tamato/app/
 
 EXPOSE 8000
 CMD ["/home/tamato/.local/bin/gunicorn", "-b", "0.0.0.0:8000", "-w", "1", "wsgi:application"]

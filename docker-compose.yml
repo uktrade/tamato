@@ -28,7 +28,8 @@ services:
     command: server --address 0.0.0.0:9003 /data
 
   tamato:
-    build: .
+    build:
+      context: .
     image: tamato
     ports:
       - "8000:8000"
@@ -38,7 +39,12 @@ services:
     links:
       - db
       - s3
+    volumes:
+      - ".:/home/tamato/app"
     environment:
+      AWS_S3_ENDPOINT_URL: "http://s3:9003"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       DATABASE_URL: "postgres://postgres@db/postgres"
       DJANGO_SETTINGS_MODULE: "settings.dev"
       ENABLE_DJANGO_DEBUG_TOOLBAR: "False"
@@ -54,7 +60,7 @@ services:
     restart: always
     env_file: .env
     entrypoint: /home/tamato/.local/bin/celery
-    command: worker -A common.celery --loglevel=info
+    command: -A common.celery worker --loglevel=INFO
     links:
       - redis
       - db
@@ -66,9 +72,8 @@ services:
     image: tamato
     restart: always
     env_file: .env
-    # entrypoint: bash
     entrypoint: /home/tamato/.local/bin/celery
-    command: beat -A common.celery --loglevel=info
+    command: -A common.celery beat -l info
     links:
       - celery_worker
       - redis

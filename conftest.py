@@ -18,8 +18,6 @@ from common.tests.factories import WorkBasketFactory
 from common.tests.util import Dates
 from exporter.storages import HMRCStorage
 
-pytest_plugins = ("celery.contrib.pytest",)
-
 
 @pytest.fixture(scope="session")
 def celery_config():
@@ -247,13 +245,13 @@ def hmrc_storage():
             def get_bucket():
                 connection = get_connection()
                 connection.create_bucket(
-                    Bucket=settings.HMRC_BUCKET_NAME,
+                    Bucket=settings.HMRC_STORAGE_BUCKET_NAME,
                     CreateBucketConfiguration={
                         "LocationConstraint": settings.AWS_S3_REGION_NAME
                     },
                 )
 
-                bucket = connection.Bucket(settings.HMRC_BUCKET_NAME)
+                bucket = connection.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
                 return bucket
 
             mock_connection_property.side_effect = get_connection

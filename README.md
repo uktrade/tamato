@@ -137,22 +137,23 @@ Run the script to see the command line arguments:
 
 The Tariff Management Tool (TAMATO) exports data to HMRC.
 
-During normal operation uploads trigger the upload_workbaskets task which uploads workbasket XML to the HMRC bucket. 
+During normal operation uploads trigger the upload_transactions task which uploads transactions as XML to the HMRC bucket. 
 
 ### Manually trigger the upload to s3
 
-    celery -A common.celery call exporter.tasks.upload_workbaskets  
+    celery -A common.celery call exporter.tasks.upload_transactions  
 
 The celery job UUID is output and the command quits.  To see output switch to the celery workers console.
 A more ergonomic way of launching the celery job is to launch the management command:
 
-    ./manage.py upload_workbaskets
+    ./manage.py upload_transactions
 
-### Dump workbaskets
+### Dump transactions
 
-Dump workbaskets to stdout or to a file.
+Transactions waiting to be uploaded to the HMRC S3 bucket can be saved to a file or output to stdout
+using a management command: 
 
-     ./manage.py dump_workbaskets [-o filename]
+     ./manage.py dump_transactions [-o filename]
      
 Output defaults to stdout if filename is - or is not supplied.
 

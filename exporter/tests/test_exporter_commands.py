@@ -12,13 +12,16 @@ pytestmark = pytest.mark.django_db
 
 
 def test_upload_command_uploads_approved_workbasket_to_s3(
-    approved_workbasket, hmrc_storage, s3, s3_object_exists
+    approved_workbasket, hmrc_storage, s3, s3_object_exists, settings
 ):
     """
     Exercise HMRCStorage and verify content is saved to bucket.
     """
     expected_bucket = "test-hmrc"
-    expected_key = "test-hmrc/tohmrc/staging/DIT200001.xml"
+    expected_key = "staging/DIT200001.xml"
+
+    settings.HMRC_STORAGE_BUCKET_NAME = expected_bucket
+    # settings.HMRC_STORAGE_DIRECTORY = "staging"
 
     RegulationFactory.create(workbasket=approved_workbasket)
     FootnoteTypeFactory.create(workbasket=approved_workbasket)
@@ -33,7 +36,7 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
 
     assert s3_object_exists(
         expected_bucket, expected_key
-    ), "File was not uploaded with expected name."
+    ), f"File was not uploaded with expected name, uploaded: Bucket: {expected_bucket} Key: {expected_key}"
 
     envelope = s3.get_object(Bucket=expected_bucket, Key=expected_key)["Body"].read()
     xml = etree.XML(envelope)
