@@ -59,11 +59,11 @@ def to_date(value: str) -> date:
 
 
 def blank(blank: bool, transformer: Transformer) -> Transformer:
-    def transform(value: Any) -> Any:
-        if blank and value == "":
+    def transform(cell: Cell) -> Any:
+        if blank and cell.value == "":
             return None
         else:
-            return transformer(value)
+            return transformer(cell)
 
     return transform
 
@@ -267,7 +267,7 @@ class Command(BaseCommand):
             status=workbasket_status,
         )
 
-        importer = SheetImporter(ModelClass, workbasket, options["columns"])
+        importer = SheetImporter(ModelClass, workbasket, *options["columns"])
 
         num_rows = 0
         with django.db.transaction.atomic():

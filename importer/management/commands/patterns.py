@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
 from datetime import timedelta
+from enum import Enum
 from functools import cached_property
 from typing import Dict
 from typing import Generic
-from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -27,6 +27,7 @@ from common.renderers import counter_generator
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from geo_areas.validators import AreaCode
 from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.utils import blank
 from importer.management.commands.utils import clean_item_id
@@ -206,22 +207,24 @@ class MeasureCreatingPattern:
         ]
 
     def get_proof_of_origin_condition(
-        self, measure: Measure, certificate: Certificate
+        self, measure: Measure, certificates: List[Certificate]
     ) -> Iterator[MeasureCondition]:
+        assert any(certificates)
+        for index, certificate in enumerate(certificates, start=1):
+            yield MeasureCondition(
+                sid=self.measure_condition_sid_counter(),
+                dependent_measure=measure,
+                component_sequence_number=index,
+                condition_code=self.presentation_of_endorsed_certificate,
+                required_certificate=certificate,
+                action=self.apply_mentioned_duty,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            )
         yield MeasureCondition(
             sid=self.measure_condition_sid_counter(),
             dependent_measure=measure,
-            component_sequence_number=1,
-            condition_code=self.presentation_of_endorsed_certificate,
-            required_certificate=certificate,
-            action=self.apply_mentioned_duty,
-            update_type=UpdateType.CREATE,
-            workbasket=self.workbasket,
-        )
-        yield MeasureCondition(
-            sid=self.measure_condition_sid_counter(),
-            dependent_measure=measure,
-            component_sequence_number=2,
+            component_sequence_number=index + 1,
             condition_code=self.presentation_of_endorsed_certificate,
             action=self.measure_not_applicable,
             update_type=UpdateType.CREATE,
@@ -244,9 +247,10 @@ class MeasureCreatingPattern:
             raise ex
 
     def get_measure_excluded_geographical_areas(
-        self, measure: Measure, geo_exclusion: Optional[str] = None
+        self,
+        measure: Measure,
+        exclusion: GeographicalArea,
     ) -> MeasureExcludedGeographicalArea:
-        exclusion = self.exclusion_areas[geo_exclusion.strip()]
         return MeasureExcludedGeographicalArea(
             modified_measure=measure,
             excluded_geographical_area=exclusion,
@@ -276,6 +280,7 @@ class MeasureCreatingPattern:
         goods_nomenclature: GoodsNomenclature,
         new_measure_type: MeasureType,
         geo_exclusion: Optional[str] = None,
+        exclusions: Optional[List[GeographicalArea]] = [],
         order_number: Optional[QuotaOrderNumber] = None,
         authorised_use: bool = False,
         additional_code: AdditionalCode = None,
@@ -283,6 +288,7 @@ class MeasureCreatingPattern:
         validity_end: datetime = None,
         footnotes: List[Footnote] = [],
         proof_of_origin: Certificate = None,
+        proofs_of_origin: List[Certificate] = [],
     ) -> Iterator[TrackedModel]:
         assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
 
@@ -327,8 +333,11 @@ class MeasureCreatingPattern:
             yield new_measure
 
             if geo_exclusion:
+                exclusions.append(self.exclusion_areas[geo_exclusion.strip()])
+
+            for exclusion in exclusions:
                 yield self.get_measure_excluded_geographical_areas(
-                    new_measure, geo_exclusion
+                    new_measure, exclusion
                 )
 
             for footnote in self.get_measure_footnotes(new_measure, footnotes):
@@ -341,8 +350,11 @@ class MeasureCreatingPattern:
                     yield condition
 
             if proof_of_origin:
+                proofs_of_origin.append(proof_of_origin)
+
+            if any(proofs_of_origin):
                 for condition in self.get_proof_of_origin_condition(
-                    new_measure, proof_of_origin
+                    new_measure, proofs_of_origin
                 ):
                     yield condition
 
@@ -495,6 +507,12 @@ class MeasureEndingPattern:
                 )
 
 
+class QuotaType(Enum):
+    CALENDAR = "Calendar year"
+    NON_CALENDAR = "Non-calendar year"
+    SEASONAL = "Seasonal"
+
+
 class QuotaCreatingPattern:
     def __init__(
         self,
@@ -503,9 +521,11 @@ class QuotaCreatingPattern:
         definition_counter: Counter,
         suspension_counter: Counter,
         workbasket: WorkBasket,
+        critical_interim: bool = False,
         start_date: datetime = BREXIT,
     ) -> None:
         self.start_date = start_date
+        self.critical_interim = critical_interim
         self.order_number_counter = order_number_counter
         self.order_number_origin_counter = order_number_origin_counter
         self.definition_counter = definition_counter
@@ -526,13 +546,28 @@ class QuotaCreatingPattern:
 
     def exclude_origin(
         self, quota_origin: QuotaOrderNumberOrigin, origin: GeographicalArea
-    ) -> QuotaOrderNumberOriginExclusion:
-        return QuotaOrderNumberOriginExclusion(
-            origin=quota_origin,
-            excluded_geographical_area=origin,
-            workbasket=self.workbasket,
-            update_type=UpdateType.CREATE,
-        )
+    ) -> Iterator[QuotaOrderNumberOriginExclusion]:
+        if origin.area_code == AreaCode.GROUP:
+            main_origins = quota_origin.geographical_area.memberships.as_at(
+                self.start_date
+            ).all()
+            for member in origin.memberships.as_at(self.start_date).all():
+                assert (
+                    member in main_origins
+                ), f"{member.area_id} not in {list(x.area_id for x in main_origins)}"
+                yield QuotaOrderNumberOriginExclusion(
+                    origin=quota_origin,
+                    excluded_geographical_area=member,
+                    workbasket=self.workbasket,
+                    update_type=UpdateType.CREATE,
+                )
+        else:
+            yield QuotaOrderNumberOriginExclusion(
+                origin=quota_origin,
+                excluded_geographical_area=origin,
+                workbasket=self.workbasket,
+                update_type=UpdateType.CREATE,
+            )
 
     def define_quota(
         self,
@@ -541,7 +576,9 @@ class QuotaCreatingPattern:
         unit: Measurement,
         start_date: datetime,
         end_date: datetime,
+        critical: bool = False,
     ) -> QuotaDefinition:
+        assert start_date <= end_date, f"{start_date} > {end_date}"
         return QuotaDefinition(
             sid=self.definition_counter(),
             order_number=quota,
@@ -555,6 +592,7 @@ class QuotaCreatingPattern:
                 upper=end_date,
             ),
             quota_critical_threshold=90,
+            quota_critical=critical,
             description="",
             workbasket=self.workbasket,
             update_type=UpdateType.CREATE,
@@ -565,6 +603,7 @@ class QuotaCreatingPattern:
     ) -> QuotaAssociation:
         main_quota = QuotaDefinition.objects.get(
             order_number__order_number=parent,
+            valid_between=definition.valid_between,
         )
 
         return QuotaAssociation(
@@ -603,6 +642,7 @@ class QuotaCreatingPattern:
         period_end_date: datetime,
         unit: Measurement,
         volume: int,
+        period_type: QuotaType,
         interim_volume: Optional[int] = None,
         parent_order_number: Optional[str] = None,
         coefficient: Optional[str] = "",
@@ -610,30 +650,31 @@ class QuotaCreatingPattern:
         suspension_start_date: Optional[datetime] = None,
         suspension_end_date: Optional[datetime] = None,
     ) -> Iterator[List[TrackedModel]]:
-        if (
-            period_start_date.month == 1
-            and period_start_date.day == 1
-            and period_end_date.month == 12
-            and period_end_date.day == 31
-        ):
+        logger.debug("Processing quota order number %s", order_number)
+        if period_type == QuotaType.CALENDAR:
             calendar, noncalendar, seasonal = True, False, False
-        elif relativedelta(period_start_date, period_end_date).years == 1:
+        elif period_type == QuotaType.NON_CALENDAR:
             calendar, noncalendar, seasonal = False, True, False
         else:
+            assert period_type == QuotaType.SEASONAL
             calendar, noncalendar, seasonal = False, False, True
 
         # 1. Create a quota order number
-        quota = QuotaOrderNumber(
-            sid=self.order_number_counter(),
+        to_output = []
+        quota, created = QuotaOrderNumber.objects.get_or_create(
             order_number=order_number,
-            mechanism=mechanism,
-            category=category,
             valid_between=DateTimeTZRange(self.start_date, None),
-            workbasket=self.workbasket,
-            update_type=UpdateType.CREATE,
+            defaults={
+                "sid": self.order_number_counter(),
+                "mechanism": mechanism,
+                "category": category,
+                "workbasket": self.workbasket,
+                "update_type": UpdateType.CREATE,
+            },
         )
-        quota.save()
-        to_output = [quota]
+        if created:
+            logger.debug("Created quota order number %s", order_number)
+            to_output.append(quota)
 
         # 2. Create origins and any exclusions
         assert (len(origins) >= 1 and len(excluded_origins) == 0) or (
@@ -644,21 +685,23 @@ class QuotaCreatingPattern:
         for origin in origins:
             quota_origin = self.add_origin(quota, origin)
             quota_origin.save()
-            to_output.append(origin)
+            to_output.append(quota_origin)
 
             for excluded in excluded_origins:
-                exclusion = self.exclude_origin(quota_origin, excluded)
-                exclusion.save()
-                to_output.append(exclusion)
+                for exclusion in self.exclude_origin(quota_origin, excluded):
+                    exclusion.save()
+                    to_output.append(exclusion)
 
-        if quota.mechanism != AdministrationMechanism.LICENSED:
-            yield to_output
+        yield to_output
 
         # If this is a seasonal quota that would normally have already started,
         # start it on 1 Jan and use the interim volume to set up the quota
         start_date = period_start_date
         end_date = period_end_date
-        if (seasonal or noncalendar) and start_date.year < self.start_date.year:
+        if (seasonal or noncalendar) and (
+            start_date.year < self.start_date.year
+            or end_date.year < self.start_date.year
+        ):
             # Dates in the sheet are not reliable – only days/months are correct
             # So assume that all the dates are for year 2021
             # If the end date comes before, it must be for 2022
@@ -667,14 +710,15 @@ class QuotaCreatingPattern:
             if end_date < start_date:
                 end_date = end_date.replace(year=self.start_date.year + 1)
             assert end_date >= start_date
+            logger.info("%s, %s", start_date, end_date)
 
         # 3. Create a defn for 2021 from normal volume and start date to end date
         normal_qd = self.define_quota(quota, volume, unit, start_date, end_date)
         normal_qd.save()
-        if quota.mechanism != AdministrationMechanism.LICENSED:
-            yield [normal_qd]
+        yield [normal_qd]
 
         # 4. Create a defn for 2021 from interim volume and Jan 01 to start date
+        interim_qd = None
         if noncalendar and start_date > self.start_date:
             interim_end = start_date - timedelta(days=1)
             assert interim_volume is not None
@@ -686,19 +730,24 @@ class QuotaCreatingPattern:
                 unit,
                 BREXIT,
                 interim_end,
+                critical=self.critical_interim,
             )
             interim_qd.save()
-            if quota.mechanism != AdministrationMechanism.LICENSED:
-                yield [interim_qd]
+            yield [interim_qd]
 
         if parent_order_number:
-            assert calendar
             assert coefficient
             association = self.associate_to_parent(
                 normal_qd, parent_order_number, coefficient
             )
             association.save()
-            if quota.mechanism != AdministrationMechanism.LICENSED:
+            yield [association]
+
+            if interim_qd:
+                association = self.associate_to_parent(
+                    interim_qd, parent_order_number, coefficient
+                )
+                association.save()
                 yield [association]
 
         if suspension_start_date and suspension_end_date:
@@ -710,8 +759,7 @@ class QuotaCreatingPattern:
                 end += relativedelta(years=1)
             suspension = self.suspend(normal_qd, start, end)
             suspension.save()
-            if quota.mechanism != AdministrationMechanism.LICENSED:
-                yield [suspension]
+            yield [suspension]
 
 
 OldRow = TypeVar("OldRow")

@@ -331,13 +331,14 @@ def clean_item_id(cell: Cell) -> str:
     be storing the item as a number and that trailing zeroes may be missing."""
     if cell.ctype == xlrd.XL_CELL_NUMBER:
         item_id = str(int(cell.value))
+        if len(item_id) % 2 == 1:
+            # If we have an odd number of digits its because
+            # we lost a leading zero due to the numeric storage
+            item_id = "0" + item_id
     else:
         item_id = str(cell.value)
 
-    if len(item_id) % 2 == 1:
-        # If we have an odd number of digits its because
-        # we lost a leading zero due to the numeric storage
-        item_id = "0" + item_id
+    item_id = item_id.replace(" ", "").replace(".", "")
 
     # We need a full 10 digit code so padd with trailing zeroes
     assert len(item_id) % 2 == 0
@@ -357,7 +358,7 @@ def clean_duty_sentence(cell: Cell) -> str:
         return f"{cell.value * 100}%"
     else:
         # All other values will apear as text.
-        return cell.value
+        return str(cell.value).strip()
 
 
 def get_author(username: Optional[str] = None) -> User:

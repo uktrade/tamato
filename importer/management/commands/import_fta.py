@@ -9,17 +9,20 @@ from typing import List
 from typing import Optional
 
 import xlrd
+from dateutil.relativedelta import relativedelta
 from django.core.management import BaseCommand
 from django.db import transaction
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
+from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.patterns import add_single_row
 from importer.management.commands.patterns import BREXIT
@@ -49,6 +52,7 @@ from importer.management.commands.utils import write_summary
 from measures.models import MeasureType
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
 from quotas.validators import QuotaCategory
 from regulations.models import Group
 from regulations.models import Regulation
@@ -105,6 +109,8 @@ class TransitionCategory(Enum):
     CHILE_SPECIAL_CASE = "S2"
     # expired
     EXPIRED = "X"
+    # manually entered
+    MANUAL = "M"
 
 
 class TransitionStaging(Enum):
@@ -116,6 +122,7 @@ class TransitionStaging(Enum):
     SOUTH_AFRICA = "ZAF"
     CENTRAL_AMERICA = "Central America"
     UKRAINE = "UKR"
+    JAPAN = "Japan"
 
 
 class MainMeasureRow:
@@ -209,6 +216,11 @@ class CanadaStagingRow(StagedMeasureRow):
     staging_2021_column = "AY"
 
 
+class JapanStagingRow(StagedMeasureRow):
+    sheet = "STG - Japan"
+    staging_2021_column = "E"
+
+
 STAGED_COUNTRIES = {
     "ZA": SouthAfricaStagingRow,
     "EC": EcuadorStagingRow,
@@ -217,6 +229,7 @@ STAGED_COUNTRIES = {
     "UA": UkraineStagingRow,
     "2200": CentralAmericaStagingRow,
     "CA": CanadaStagingRow,
+    "JP": JapanStagingRow,
 }
 
 
@@ -305,16 +318,16 @@ class FTAMeasuresImporter(RowsImporter):
             if cc in item_ids:
                 matched_old_rows = item_ids[cc]
             else:
-                ancestor_cc = [
+                ancestor_cc = set(
                     root[0]
                     for root in self.old_rows.roots
                     if self.old_rows.within_subtree(cc, root)
-                ]
+                )
                 assert (
                     len(ancestor_cc) <= 1
                 ), f"Looking for: {cc.item_id}[{cc.sid}], found {len(ancestor_cc)}"
                 if len(ancestor_cc) == 1:
-                    matched_old_rows = item_ids[ancestor_cc[0]]
+                    matched_old_rows = item_ids[ancestor_cc.pop()]
                 else:
                     matched_old_rows = []
             for old_row in matched_old_rows:
@@ -339,7 +352,7 @@ class FTAMeasuresImporter(RowsImporter):
 
         # 1. If this is a staged row, take it's new duty expression
         # from the staging sheet, else from the main sheet
-        if row.staging != TransitionStaging.NONE:
+        if row.staging not in (TransitionStaging.NONE, TransitionStaging.JAPAN):
             staged_row = self.staged_rows[row.row_id]
             duty_exp = staged_row.duty_exp
         else:
@@ -372,7 +385,7 @@ class FTAMeasuresImporter(RowsImporter):
 
         # Turkey: Where the measure type is currently "Customs Union" use
         # instead of the normal type.
-        if row.origin.area_id == "TR":
+        if row.measure_type_id in CUSTOMS_UNION_EQUIVALENT_TYPES:
             measure_type_id = CUSTOMS_UNION_EQUIVALENT_TYPES[row.measure_type_id]
         else:
             measure_type_id = row.measure_type_id
@@ -395,10 +408,47 @@ class FTAMeasuresImporter(RowsImporter):
         ]
 
         if row.order_number in self.quotas:
-            origin_certificate = self.quotas[row.order_number].certificate
+            origin_certificates = [self.quotas[row.order_number].certificate]
             assert row.order_number is not None
         else:
-            origin_certificate = None
+            origin_certificates = []
+
+        # The UK-Canada re-imported goods agreement uses extra origin certification.
+        if row.origin.area_id == "1006":
+            assert not any(origin_certificates)
+            origin_certificates.append(
+                Certificate.objects.get(
+                    certificate_type__sid="U",
+                    sid="088",
+                )
+            )
+            footnotes.append(
+                Footnote.objects.as_at(BREXIT).get(
+                    footnote_type__footnote_type_id="CD",
+                    footnote_id="727",
+                )
+            )
+        # The UK-Switzerland re-imported goods agreement uses extra origin certification.
+        elif row.origin.area_id == "1007":
+            assert not any(origin_certificates)
+            origin_certificates.append(
+                Certificate.objects.get(
+                    certificiate_type__sid="U",
+                    sid="090",
+                ),
+            )
+            origin_certificates.append(
+                Certificate.objects.get(
+                    certificiate_type__sid="U",
+                    sid="091",
+                ),
+            )
+            footnotes.append(
+                Footnote.objects.as_at(BREXIT).get(
+                    footnote_type__footnote_type_id="CD",
+                    footnote_id="500",
+                )
+            )
 
         # 3. Otherwise, take the start (col O) and end (col P) dates
         # and use the same month and day for 2021, and apply the new rate in column AM.
@@ -435,9 +485,27 @@ class FTAMeasuresImporter(RowsImporter):
                     validity_start=start,
                     validity_end=end,
                     footnotes=footnotes,
-                    proof_of_origin=origin_certificate,
+                    proofs_of_origin=origin_certificates,
                 )
             )
+
+            if row.staging == TransitionStaging.JAPAN:
+                staged_row = self.staged_rows[row.row_id]
+                yield list(
+                    self.measure_creator.create(
+                        duty_sentence=staged_row.duty_exp,
+                        geography=row.origin,
+                        goods_nomenclature=goods_nomenclature,
+                        geo_exclusion=row.excluded_origin_description,
+                        new_measure_type=measure_type,
+                        authorised_use=(measure_type_id in {"146", "145"}),
+                        order_number=quota,
+                        validity_start=end + relativedelta(days=1),
+                        validity_end=end + relativedelta(years=1),
+                        footnotes=footnotes,
+                        proofs_of_origin=origin_certificates,
+                    )
+                )
 
 
 class Command(BaseCommand):
@@ -467,6 +535,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         author = get_author()
 
+        logger.info("Opening workbooks…")
         quota_workbook = xlrd.open_workbook(options["quota-spreadsheet"])
         quota_sheet = quota_workbook.sheet_by_name("ALL")
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
@@ -479,9 +548,10 @@ class Command(BaseCommand):
                 output,
                 options["counters"]["envelope_id"](),
                 options["counters"]["transaction_id"],
-                max_envelope_size_in_mb=39,
+                max_envelope_size_in_mb=40,
             ) as env:
                 for country in options["geographical_area"]:
+                    logger.info("Loading data for %s", country)
                     origin = GeographicalArea.objects.as_at(BREXIT).get(area_id=country)
 
                     workbasket, _ = WorkBasket.objects.get_or_create(
@@ -489,6 +559,22 @@ class Command(BaseCommand):
                         author=author,
                         status=WorkflowStatus.PUBLISHED,
                     )
+
+                    if country == "1013":
+                        membership = GeographicalMembership.objects.get(
+                            geo_group=origin, member__area_id="GB"
+                        )
+                        m = GeographicalMembership(
+                            geo_group=membership.geo_group,
+                            member=membership.member,
+                            valid_between=DateTimeTZRange(
+                                membership.valid_between.lower,
+                                BREXIT - relativedelta(days=1),
+                            ),
+                            update_type=UpdateType.UPDATE,
+                            workbasket=workbasket,
+                        )
+                        env.render_transaction([m])
 
                     quota_rows = islice(
                         quota_sheet.get_rows(), options["quota_skip_rows"], None
@@ -519,6 +605,27 @@ class Command(BaseCommand):
                         category=QuotaCategory.PREFERENTIAL,
                         counters=options["counters"],
                     )
+
+                    if country == "LI":
+                        quota_importer.setup()
+                        for quota_origin in (
+                            QuotaOrderNumberOrigin.objects.as_at(BREXIT)
+                            .filter(geographical_area__area_id="CH")
+                            .all()
+                        ):
+                            env.render_transaction(
+                                [
+                                    quota_importer.quota_creator.add_origin(
+                                        quota_origin.order_number, origin
+                                    )
+                                ]
+                            )
+                        country_quota_rows = (
+                            r
+                            for r in country_quota_rows
+                            if r.order_number[0:3] == "054"
+                        )
+
                     quota_importer.import_sheets(country_quota_rows, iter([None]))
 
                     new_rows = islice(
@@ -548,13 +655,15 @@ class Command(BaseCommand):
                     )
                     importer.import_sheets(country_new_rows, country_old_rows)
 
-        for name, counter in options["counters"].items():
-            logger.info("Next %s: %s", name, counter())
+        all_origins = GeographicalArea.objects.filter(
+            area_id__in=options["geographical_area"]
+        ).all()
 
-        transaction.set_rollback(True)
         write_summary(
             options["output"],
-            "Trade agreements",
+            f"Trade agreements for {', '.join(o.get_description().description for o in all_origins)}",
             options["counters"],
             options["counters__original"],
         )
+
+        transaction.set_rollback(True)

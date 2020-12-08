@@ -1,6 +1,7 @@
 import logging
 from enum import Enum
 from functools import cached_property
+from itertools import chain
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -17,19 +18,18 @@ from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import parse_date
 from importer.management.commands.patterns import parse_list
 from importer.management.commands.patterns import QuotaCreatingPattern
+from importer.management.commands.patterns import QuotaType
 from importer.management.commands.utils import blank
 from importer.management.commands.utils import col
+from importer.management.commands.utils import strint
 from measures.models import Measurement
+from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
+from quotas.models import QuotaOrderNumberOriginExclusion
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
 
 logger = logging.getLogger(__name__)
-
-
-class QuotaType(Enum):
-    CALENDAR = "Calendar year"
-    NON_CALENDAR = "Non-calendar year"
-    SEASONAL = "Seasonal"
 
 
 class QuotaSource(Enum):
@@ -39,12 +39,16 @@ class QuotaSource(Enum):
 
 
 class QuotaRow:
-    def __init__(self, row: List[Cell], origin: GeographicalArea) -> None:
+    def __init__(
+        self, row: List[Cell], origin: Optional[GeographicalArea] = None
+    ) -> None:
         self.origin = origin
-        self.origin_ids = parse_list(str(row[col("B")].value))
-        if origin.area_id not in self.origin_ids:
+        self.origin_ids = parse_list(strint(row[col("B")]))
+        if not any(self.origin_ids):
+            self.origin_ids = ["1011"]
+        if origin and origin.area_id not in self.origin_ids:
             return
-        self.excluded_origin_ids = parse_list(str(row[col("C")].value))
+        self.excluded_origin_ids = parse_list(strint(row[col("C")]))
         self.order_number = str(row[col("A")].value).strip()
         self.period_start = parse_date(row[col("D")])
         self.period_end = parse_date(row[col("E")])
@@ -73,7 +77,13 @@ class QuotaRow:
             return int(cell.value.replace(",", ""))
 
     @cached_property
+    def origins(self) -> List[GeographicalArea]:
+        logger.debug("Origins: %s", self.origin_ids)
+        return [GeographicalArea.objects.get(area_id=e) for e in self.origin_ids]
+
+    @cached_property
     def excluded_origins(self) -> List[GeographicalArea]:
+        logger.debug("Excluded origins: %s", self.excluded_origin_ids)
         return [
             GeographicalArea.objects.get(area_id=e) for e in self.excluded_origin_ids
         ]
@@ -101,9 +111,12 @@ class QuotaRow:
 
 
 class QuotaImporter(RowsImporter):
-    def __init__(self, *args, category: QuotaCategory, **kwargs) -> None:
+    def __init__(
+        self, *args, category: QuotaCategory, critical_interim: bool = False, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.category = category
+        self.critical_interim = critical_interim
 
     def setup(self) -> Iterator[TrackedModel]:
         self.quota_creator = QuotaCreatingPattern(
@@ -113,6 +126,7 @@ class QuotaImporter(RowsImporter):
             suspension_counter=self.counters["quota_suspension_id"],
             workbasket=self.workbasket,
             start_date=BREXIT,
+            critical_interim=self.critical_interim,
         )
         self.quotas = {}
         return iter([])
@@ -124,25 +138,37 @@ class QuotaImporter(RowsImporter):
     def handle_row(
         self, row: Optional[QuotaRow], old_row: None
     ) -> Iterator[Iterable[TrackedModel]]:
-        self.quotas[row.order_number] = row
-
-        models = self.quota_creator.create(
-            row.order_number,
-            row.mechanism,
-            row.origin,
-            self.category,
-            row.period_start,
-            row.period_end,
-            row.unit,
-            row.volume,
-            row.interim_volume,
-            row.parent_order_number,
-            row.coefficient,
-            row.excluded_origins,
-            row.suspension_start,
-            row.suspension_end,
-        )
-        if row.mechanism != AdministrationMechanism.LICENSED:
-            return models
+        if row.order_number in self.quotas:
+            quota = QuotaOrderNumber.objects.get(order_number=row.order_number)
+            defn = self.quota_creator.define_quota(
+                quota=quota,
+                volume=row.volume,
+                unit=row.measurement,
+                start_date=row.period_start,
+                end_date=row.period_end,
+            )
+            defn.save()
+            models = iter([[defn]])
         else:
-            return iter([])
+            models = self.quota_creator.create(
+                row.order_number,
+                row.mechanism,
+                row.origins,
+                self.category,
+                row.period_start,
+                row.period_end,
+                row.measurement,
+                row.volume,
+                row.type,
+                row.interim_volume,
+                row.parent_order_number,
+                row.coefficient,
+                row.excluded_origins,
+                row.suspension_start,
+                row.suspension_end,
+            )
+
+        self.quotas[row.order_number] = row
+        for transaction in models:
+            if row.mechanism != AdministrationMechanism.LICENSED:
+                yield transaction
