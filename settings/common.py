@@ -199,11 +199,11 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_REGION_NAME = "eu-west-2"
 
 # Pickle could be used as a serializer here, as this always runs in a DMZ
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
 CELERY_TRACK_STARTED = True
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 
@@ -246,7 +246,7 @@ LOGGING = {
         },
     },
     "celery": {
-        "handlers": ['celery', 'console'],
+        "handlers": ["celery", "console"],
         "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
     },
 }
