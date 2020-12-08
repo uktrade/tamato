@@ -9,7 +9,7 @@ SESSION_COOKIE_SECURE = False
 INSTALLED_APPS.append("common.tests")
 
 # Bucket settings are belt-and-braces to guard against running in a real bucket
-HMRC_BUCKET_NAME = os.environ.get("TEST_HMRC_BUCKET_NAME", "test-hmrc")
+HMRC_BUCKET_STORAGE_NAME = os.environ.get("TEST_HMRC_BUCKET_STORAGE_NAME", "test-hmrc")
 
 AWS_ACCESS_KEY_ID = os.environ.get("TEST_AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.environ.get("TEST_AWS_SECRET_ACCESS_KEY", "")

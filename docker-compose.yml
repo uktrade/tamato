@@ -9,6 +9,14 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6378:6379"
+    volumes:
+      - .:/redis.conf
+
   s3:
     image: minio/minio
     restart: always
@@ -20,7 +28,8 @@ services:
     command: server --address 0.0.0.0:9003 /data
 
   tamato:
-    build: .
+    build:
+      context: .
     image: tamato
     ports:
       - "8000:8000"
@@ -30,7 +39,12 @@ services:
     links:
       - db
       - s3
+    volumes:
+      - ".:/home/tamato/app"
     environment:
+      AWS_S3_ENDPOINT_URL: "http://s3:9003"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       DATABASE_URL: "postgres://postgres@db/postgres"
       DJANGO_SETTINGS_MODULE: "settings.dev"
       ENABLE_DJANGO_DEBUG_TOOLBAR: "False"
@@ -40,6 +54,32 @@ services:
       - manage.py
       - runserver
       - 0.0.0.0:8000
+
+  celery_worker:
+    image: tamato
+    restart: always
+    env_file: .env
+    entrypoint: /home/tamato/.local/bin/celery
+    command: -A common.celery worker --loglevel=INFO
+    links:
+      - redis
+      - db
+      - s3
+    depends_on:
+      - tamato
+
+  celery_beat:
+    image: tamato
+    restart: always
+    env_file: .env
+    entrypoint: /home/tamato/.local/bin/celery
+    command: -A common.celery beat -l info
+    links:
+      - celery_worker
+      - redis
+    depends_on:
+      - redis
+      - tamato
 
 volumes:
   tamato-data-volume:

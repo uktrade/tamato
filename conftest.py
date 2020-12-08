@@ -19,6 +19,15 @@ from common.tests.util import Dates
 from exporter.storages import HMRCStorage
 
 
+@pytest.fixture(scope="session")
+def celery_config():
+    return {
+        "broker_url": "memory://",
+        "result_backend": "cache",
+        "task_always_eager": True,
+    }
+
+
 @pytest.fixture(
     params=[
         ("2020-05-18", "2020-05-17", True),
@@ -97,6 +106,7 @@ def unique_identifying_fields(approved_workbasket):
     Usage:
         assert unique_identifying_fields(FactoryClass)
     """
+
     # TODO allow factory or model instance as argument
 
     def check(factory):
@@ -123,6 +133,7 @@ def must_exist(approved_workbasket):
     Usage:
         assert must_exist("field_name", LinkedModelFactory, ModelFactory)
     """
+
     # TODO drop the `dependency_name` argument, as with validity_period_contained
 
     def check(dependency_name, dependency_factory, dependent_factory):
@@ -148,6 +159,7 @@ def validity_period_contained(date_ranges, approved_workbasket):
     Usage:
         assert validity_period_contained("field_name", ContainerModelFactory, ContainedModelFactory)
     """
+
     # TODO drop the `dependency_name` argument, inspect the model for a ForeignKey to
     # the specified container model. Add `field_name` kwarg for disambiguation if
     # multiple ForeignKeys.
@@ -187,6 +199,28 @@ def s3():
         yield s3
 
 
+@pytest.fixture
+def s3_object_exists(s3):
+    """Provide a function to verify that a particular object exists in
+    an expected bucket.
+    """
+
+    def check(bucket_name, key):
+        bucket_names = [
+            bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]
+        ]
+        if not bucket_names:
+            return False
+
+        object_names = [
+            contents["Key"]
+            for contents in s3.list_objects(Bucket=bucket_name)["Contents"]
+        ]
+        return key in object_names
+
+    return check
+
+
 @pytest.yield_fixture
 def hmrc_storage():
     """Patch HMRCStorage with moto so that nothing is really uploaded to s3"""
@@ -211,13 +245,13 @@ def hmrc_storage():
             def get_bucket():
                 connection = get_connection()
                 connection.create_bucket(
-                    Bucket=settings.HMRC_BUCKET_NAME,
+                    Bucket=settings.HMRC_STORAGE_BUCKET_NAME,
                     CreateBucketConfiguration={
                         "LocationConstraint": settings.AWS_S3_REGION_NAME
                     },
                 )
 
-                bucket = connection.Bucket(settings.HMRC_BUCKET_NAME)
+                bucket = connection.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
                 return bucket
 
             mock_connection_property.side_effect = get_connection
