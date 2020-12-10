@@ -4,5 +4,5 @@
 .python-version
 .pytest_cache
 node_modules/
+static/
 venv/
-
