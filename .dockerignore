@@ -2,6 +2,7 @@
 .git/
 .github/
 .python-version
+.pytest_cache
 node_modules/
 venv/
 
