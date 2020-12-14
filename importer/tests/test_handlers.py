@@ -121,7 +121,7 @@ def test_get_generic_link(prepped_handler):
         TestModel1, {"sid": test_instance.sid}
     )
 
-    assert test_instance == obj_instance
+    assert (test_instance, False) == obj_instance
 
 
 def test_get_custom_link(mock_serializer, handler_test_data, object_nursery):

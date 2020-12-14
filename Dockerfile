@@ -44,7 +44,7 @@ COPY --chown=tamato:tamato --from=jsdeps static/webpack_bundles static/webpack_b
 COPY --chown=tamato:tamato --from=jsdeps webpack-stats.json ./
 
 # collect static files for deployment
-RUN python manage.py collectstatic --noinput
+#RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 CMD ["/home/tamato/.local/bin/gunicorn", "-b", "0.0.0.0:8000", "-w", "1", "wsgi:application"]

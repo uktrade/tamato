@@ -31,3 +31,5 @@ CACHES = {
 }
 
 NURSERY_CACHE_ENGINE = "importer.cache.memory.MemoryCacheEngine"
+
+print(NURSERY_CACHE_ENGINE)

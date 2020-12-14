@@ -151,6 +151,7 @@ def validate_unique_measure_type(measure_type):
             sid=measure_type.sid,
             valid_between__overlap=measure_type.valid_between,
         )
+        .exclude(pk=measure_type.pk)
     )
     if measure_type_with_overlapping_validity.exists():
         raise ValidationError("The measure type code must be unique.")
@@ -158,7 +159,6 @@ def validate_unique_measure_type(measure_type):
 
 def validate_measure_type_validity_spans_measure_validity(measure):
     """MT3"""
-
     if not validity_range_contains_range(
         measure.measure_type.valid_between, measure.effective_valid_between
     ):
@@ -328,6 +328,9 @@ def validate_order_number_capture(measure):
             "cannot be entered."
         )
 
+    print("order", measure.order_number)
+    print("dorder", measure.dead_order_number)
+    print("type", measure.measure_type.order_number_mandatory)
     if (
         not measure.order_number
         and not measure.dead_order_number

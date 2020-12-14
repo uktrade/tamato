@@ -9,6 +9,7 @@ from common.tests import factories
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.xfail(reason="NIG1 disabled")
 def test_NIG1(date_ranges, normal_good):
     """
     The validity period of the goods nomenclature must not overlap any other goods nomenclature with the
@@ -272,6 +273,7 @@ def test_NIG23(date_ranges):
         )
 
 
+@pytest.mark.xfail(reason="NIG24 disabled")
 def test_NIG24(date_ranges):
     """
     When the same footnote is associated more than once with the same nomenclature then

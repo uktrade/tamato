@@ -162,8 +162,20 @@ def test_ME1(unique_identifying_fields):
     + additional code type + additional code + order number + reduction indicator +
     start date must be unique.
     """
+    m = factories.MeasureFactory.create()
 
-    assert unique_identifying_fields(factories.MeasureFactory)
+    with pytest.raises(ValidationError):
+        factories.MeasureFactory.create(
+            measure_type=m.measure_type,
+            geographical_area=m.geographical_area,
+            goods_nomenclature=m.goods_nomenclature,
+            additional_code=m.additional_code,
+            dead_additional_code=m.dead_additional_code,
+            order_number=m.order_number,
+            dead_order_number=m.dead_order_number,
+            reduction=m.reduction,
+            valid_between=m.valid_between,
+        )
 
 
 @pytest.mark.skip(reason="Duplicates MT3")
@@ -259,6 +271,7 @@ def test_ME10():
         factories.MeasureFactory.create(
             measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
             order_number=None,
+            dead_order_number=None,
         )
 
     with pytest.raises(ValidationError):
@@ -283,6 +296,7 @@ def test_ME12():
     factories.MeasureFactory.create(
         measure_type=rel.measure_type,
         additional_code__type=rel.additional_code_type,
+        goods_nomenclature__item_id="7700000000",
     )
 
 
@@ -870,6 +884,7 @@ def test_ME66():
     )
 
 
+@pytest.mark.xfail(reason="ME67 disabled")
 def test_ME67(date_ranges):
     """The membership period of the excluded geographical area must span the validity
     period of the measure."""
@@ -1055,7 +1070,8 @@ def test_ME88(date_ranges):
 
     mt = factories.MeasureTypeFactory.create(measure_explosion_level=2)
     good = factories.GoodsNomenclatureFactory.create(
-        update_type=UpdateType.CREATE.value
+        item_id="7777000000",
+        update_type=UpdateType.CREATE.value,
     )
     factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=good, node__depth=2
@@ -1066,9 +1082,11 @@ def test_ME88(date_ranges):
             measure_type=mt,
             goods_nomenclature=good,
             valid_between=date_ranges.normal,
+            leave_measure=True,
         )
 
 
+@pytest.mark.xfail(reason="ME104 disabled")
 def test_ME104(date_ranges, unapproved_workbasket):
     """The justification regulation must be either:
         - the measure’s measure-generating regulation, or

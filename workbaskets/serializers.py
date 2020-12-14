@@ -15,8 +15,9 @@ class WorkBasketSerializer(serializers.ModelSerializer):
     tracked_models = TrackedModelSerializer(many=True)
 
     def get_transaction_id(self, object: models.WorkBasket):
-        if hasattr(object, "transaction"):
-            return object.transaction.id
+        transaction = object.transaction_set.first()
+        if transaction:
+            return transaction.id
         return None
 
     def get_envelope_id(self, object: models.WorkBasket):

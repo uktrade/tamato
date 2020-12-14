@@ -30,6 +30,7 @@ def child(group):
     return factories.GeographicalAreaFactory.create(area_code=1, parent=group)
 
 
+@pytest.mark.xfail(reason="GA1 disabled")
 def test_ga1(date_ranges):
     """ The combination geographical area id + validity start date must be unique. """
     factories.GeographicalAreaFactory.create(
@@ -61,6 +62,7 @@ def test_ga3_blanks():
         factories.GeographicalAreaDescriptionFactory.create(description="")
 
 
+@pytest.mark.xfail(reason="GA3 disabled")
 def test_ga3_dates(date_ranges):
     """At least one description record is mandatory. The start date of the first
     description period must be equal to the start date of the geographical
@@ -121,6 +123,7 @@ def test_ga6(child):
         child.parent.save()
 
 
+@pytest.mark.xfail(reason="GA7 disabled")
 def test_ga7(date_ranges):
     """ Geographic Areas with the same area id must not overlap. """
     factories.GeographicalAreaFactory.create(
@@ -205,6 +208,7 @@ def test_ga16_17(date_ranges):
         )
 
 
+@pytest.mark.xfail(reason="GA18_20 disabled")
 def test_ga18_20(date_ranges):
     """ Multiple memberships between a single area and group must not have overlapping validity ranges. """
     group = factories.GeographicalAreaFactory.create(

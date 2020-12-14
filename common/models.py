@@ -526,6 +526,8 @@ inherit TrackedModel must either:
                 datum = self
                 for sub_field in field.split("__"):
                     datum = getattr(datum, sub_field)
+                    if datum is None:
+                        break
                 identifying_data[field] = datum
             cache_key = generate_key(
                 f"link_cache_{self.__class__.__name__}", link, identifying_data
@@ -538,4 +540,4 @@ inherit TrackedModel must either:
         )
 
     def __hash__(self):
-        return f"{__name__}.{self.__name__}"
+        return hash(f"{__name__}.{self.__class__.__name__}")

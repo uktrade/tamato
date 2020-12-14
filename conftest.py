@@ -11,6 +11,7 @@ from unittest.mock import PropertyMock
 import boto3
 import pytest
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from factory.django import DjangoModelFactory
 from lxml import etree
@@ -177,7 +178,7 @@ def must_exist():
     def check(dependency_name, dependent_factory):
         non_existent_id = -1
 
-        with pytest.raises(ValidationError):
+        with pytest.raises((ValidationError, ObjectDoesNotExist)):
             dependent_factory.create(
                 **{f"{dependency_name}_id": non_existent_id},
             )
@@ -333,8 +334,7 @@ def imported_fields_match(valid_user):
             WorkflowStatus.PUBLISHED,
         )
 
-        db_kwargs = {field: getattr(model, field) for field in model.identifying_fields}
-
+        db_kwargs = model.get_identifying_fields()
         imported = model.__class__.objects.get_latest_version(**db_kwargs)
 
         checked_fields = (
@@ -355,7 +355,7 @@ def imported_fields_match(valid_user):
     return check
 
 
-@pytest.fixture(params=[UpdateType.UPDATE, UpdateType.DELETE])
+@pytest.fixture(params=(UpdateType.UPDATE, UpdateType.DELETE))
 def update_imported_fields_match(
     imported_fields_match,
     date_ranges,
@@ -391,12 +391,7 @@ def update_imported_fields_match(
 
             parent_model = model.create(**kwargs)
 
-            kwargs.update(
-                {
-                    field: getattr(parent_model, field)
-                    for field in parent_model.identifying_fields
-                }
-            )
+            kwargs.update(parent_model.get_identifying_fields())
             if validity:
                 kwargs["valid_between"] = validity[1]
 
@@ -407,10 +402,17 @@ def update_imported_fields_match(
         elif not parent_model:
             raise ValueError("parent_model must be defined if an instance is provided")
 
-        updated_model = imported_fields_match(
-            model,
-            serializer,
-        )
+        try:
+            updated_model = imported_fields_match(
+                model,
+                serializer,
+            )
+        except model.__class__.DoesNotExist:
+            if update_type == UpdateType.UPDATE:
+                raise
+            updated_model = model.__class__.objects.get(
+                update_type=UpdateType.DELETE, **model.get_identifying_fields()
+            )
 
         version_group = parent_model.version_group
         version_group.refresh_from_db()

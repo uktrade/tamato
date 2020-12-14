@@ -14,6 +14,7 @@ pytestmark = pytest.mark.django_db
 # Additional Code Type
 
 
+@pytest.mark.xfail(reason="CT1 disabled")
 def test_CT1():
     """
     The additional code type must be unique.

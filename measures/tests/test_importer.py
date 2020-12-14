@@ -173,15 +173,16 @@ def test_measure_importer_create(imported_fields_match, unapproved_workbasket):
         order_number__mechanism=AdministrationMechanism.FCFS,
         workbasket=unapproved_workbasket,
     )
-
+    ac = factories.AdditionalCodeFactory.create(type=rel.additional_code_type)
+    print("ac", ac, ac.sid)
     assert imported_fields_match(
         factories.MeasureFactory.build(
             measure_type=rel.measure_type,
             geographical_area=origin.geographical_area,
-            goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
-            additional_code=factories.AdditionalCodeFactory.create(
-                type=rel.additional_code_type
+            goods_nomenclature=factories.GoodsNomenclatureFactory.create(
+                item_id="7600000000"
             ),
+            additional_code=ac,
             order_number=origin.order_number,
             generating_regulation=factories.RegulationFactory.create(),
         ),
@@ -197,6 +198,8 @@ def test_measure_importer_update(update_imported_fields_match, unapproved_workba
         order_number__mechanism=AdministrationMechanism.FCFS,
         workbasket=unapproved_workbasket,
     )
+    ac = factories.AdditionalCodeFactory.create(type=rel.additional_code_type)
+    print("ac", ac, ac.sid)
 
     assert update_imported_fields_match(
         factories.MeasureFactory,
@@ -205,9 +208,7 @@ def test_measure_importer_update(update_imported_fields_match, unapproved_workba
             "measure_type": rel.measure_type,
             "geographical_area": origin.geographical_area,
             "goods_nomenclature": factories.GoodsNomenclatureFactory,
-            "additional_code": factories.AdditionalCodeFactory.create(
-                type=rel.additional_code_type
-            ),
+            "additional_code": ac,
             "order_number": origin.order_number,
             "generating_regulation": factories.RegulationFactory,
         },

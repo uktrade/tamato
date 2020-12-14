@@ -278,6 +278,7 @@ class MeasureHandler(BaseHandler):
 
     def get_additional_code_link(self, model, kwargs):
         try:
+            print("getting ac", model, kwargs)
             return self.get_generic_link(model, kwargs)
         except model.DoesNotExist:
             if any(kwargs.values()):

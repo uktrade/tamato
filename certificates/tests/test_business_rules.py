@@ -38,6 +38,7 @@ def test_cet3(date_ranges):
         factories.CertificateTypeFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.xfail(reason="CE2 disabled")
 def test_ce2():
     """
     The combination certificate type and code must be unique.
@@ -147,6 +148,7 @@ def test_ce7(date_ranges):
         )
 
 
+@pytest.mark.xfail(reason="rule disabled")
 def test_certificate_description_periods_cannot_overlap(date_ranges):
     """
     Ensure validity periods for descriptions with a given SID cannot overlap.

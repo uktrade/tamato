@@ -8,6 +8,7 @@ from itertools import product
 import factory
 from factory.fuzzy import FuzzyChoice
 
+from common.models import TrackedModel
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
@@ -28,7 +29,7 @@ def short_description():
 
 def string_generator(length=1, characters=string.ascii_uppercase + string.digits):
     g = cycle(product(characters, repeat=length))
-    return lambda *_: "".join(next(g))
+    return lambda *_: "".join(next(g))[::-1]
 
 
 def string_sequence(length=1, characters=string.ascii_uppercase + string.digits):
@@ -103,7 +104,7 @@ class TrackedModelMixin(factory.django.DjangoModelFactory):
     version_group = factory.SubFactory(VersionGroupFactory)
 
     @classmethod
-    def _after_postgeneration(cls, instance, create, results=None):
+    def _after_postgeneration(cls, instance: TrackedModel, create, results=None):
         """Save again the instance if creating and at least one hook ran."""
         if create and results:
             # Some post-generation hooks ran, and may have modified us.
@@ -350,6 +351,9 @@ class GoodsNomenclatureFactory(SimpleGoodsNomenclatureFactory):
         factory_related_name="new_goods_nomenclature",
         workbasket=factory.SelfAttribute("..workbasket"),
     )
+
+
+SimpleGoodsNomenclatureFactory.reset_sequence(1)
 
 
 class GoodsNomenclatureWithSuccessorFactory(GoodsNomenclatureFactory):
@@ -680,18 +684,6 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     description = short_description()
 
 
-def get_measure_type_with_explosion(obj, **kwargs):
-    if not obj.goods_nomenclature:
-        return
-    item_id = obj.goods_nomenclature.item_id
-    explosion_level = 10
-    while item_id.endswith("00"):
-        explosion_level -= 2
-        item_id = item_id[:-2]
-
-    return MeasureTypeFactory(measure_explosion_level=explosion_level, **kwargs)
-
-
 class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "measures.Measure"
@@ -702,7 +694,7 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
         GoodsNomenclatureFactory,
         workbasket=factory.SelfAttribute("..workbasket"),
     )
-    measure_type = factory.LazyAttribute(get_measure_type_with_explosion)
+    measure_type = factory.SubFactory(MeasureTypeFactory)
     additional_code = None
     order_number = None
     reduction = factory.Faker("random_int", min=1, max=3)
@@ -716,12 +708,35 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
             return None
         return self.generating_regulation
 
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        leave_measure = kwargs.pop("leave_measure", False)
+        if "measure_type" in kwargs and not leave_measure:
+            kwargs["measure_type"] = cls.measure_type_explosion(
+                kwargs["measure_type"], kwargs.get("goods_nomenclature")
+            )
+        obj = model_class(*args, **kwargs)
+        obj.save()
+        return obj
+
+    @staticmethod
+    def measure_type_explosion(measure_type, goods_nomenclature):
+        if not goods_nomenclature:
+            return measure_type
+        item_id = goods_nomenclature.item_id
+        explosion_level = 10
+        while item_id.endswith("00"):
+            explosion_level -= 2
+            item_id = item_id[:-2]
+        print("ended with", goods_nomenclature, item_id, explosion_level)
+        measure_type.measure_explosion_level = explosion_level
+        measure_type.save(force_write=True)
+        return measure_type
+
 
 class MeasureWithQuotaFactory(MeasureFactory):
-    measure_type = factory.LazyAttribute(
-        lambda o: get_measure_type_with_explosion(
-            o, order_number_capture_code=OrderNumberCaptureCode.MANDATORY
-        ),
+    measure_type = factory.SubFactory(
+        MeasureTypeFactory, order_number_capture_code=OrderNumberCaptureCode.MANDATORY
     )
     order_number = factory.SubFactory(
         QuotaOrderNumberFactory,
