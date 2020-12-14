@@ -32,6 +32,7 @@ class GovukFrontendExtension(NunjucksExtension):
             # fix nested attribute access
             # NunjucksUndefined ought to catch these, but doesn't
             nested_attrs = [
+                r"cell.attributes",
                 r"item.conditional",
                 r"item.hint",
                 r"item.label",
