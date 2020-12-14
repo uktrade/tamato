@@ -10,7 +10,7 @@ from common.tests.util import generate_test_import_xml
 from common.tests.util import requires_update_importer
 from common.util import TaricDateTimeRange
 from common.validators import UpdateType
-from importer.management.commands.import_taric import import_taric
+from importer.management.commands.import_taric import import_taric_file
 from workbaskets.validators import WorkflowStatus
 
 
@@ -65,7 +65,7 @@ def make_and_get_indent(indent, valid_user, depth, transaction_id=1):
 
     xml = generate_test_import_xml(data, transaction_id=transaction_id)
 
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+    import_taric_file(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
     return models.GoodsNomenclatureIndent.objects.filter(
         sid=indent.sid,
@@ -125,7 +125,7 @@ def test_goods_nomenclature_origin_importer_create(valid_user, date_ranges):
         ).data
     )
 
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+    import_taric_file(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
     db_link = models.GoodsNomenclatureOrigin.objects.get(
         new_goods_nomenclature__sid=good.sid
@@ -157,7 +157,7 @@ def test_goods_nomenclature_successor_importer_create(valid_user, date_ranges):
         ).data
     )
 
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+    import_taric_file(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
     db_link = models.GoodsNomenclatureSuccessor.objects.get(
         replaced_goods_nomenclature__sid=good.sid

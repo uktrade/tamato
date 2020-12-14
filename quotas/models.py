@@ -22,9 +22,11 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     record_code = "360"
     subrecord_code = "00"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     order_number = models.CharField(
-        max_length=6, validators=[validators.quota_order_number_validator]
+        max_length=6,
+        validators=[validators.quota_order_number_validator],
+        db_index=True,
     )
     mechanism = models.PositiveSmallIntegerField(
         choices=validators.AdministrationMechanism.choices
@@ -61,7 +63,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     record_code = "360"
     subrecord_code = "10"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea", on_delete=models.PROTECT
@@ -99,7 +101,7 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
         "geo_areas.GeographicalArea", on_delete=models.PROTECT
     )
 
-    identifying_fields = "origin", "excluded_geographical_area"
+    identifying_fields = "origin__sid", "excluded_geographical_area__sid"
 
     def validate_workbasket(self):
         validators.validate_exclusion_only_from_group_origin(self)
@@ -118,7 +120,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "00"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     volume = models.DecimalField(max_digits=14, decimal_places=3)
     initial_volume = models.DecimalField(max_digits=14, decimal_places=3)
@@ -192,7 +194,7 @@ class QuotaAssociation(TrackedModel):
         default=Decimal("1.00000"),
         validators=[validators.validate_coefficient],
     )
-    identifying_fields = ("main_quota", "sub_quota")
+    identifying_fields = ("main_quota__sid", "sub_quota__sid")
 
     def validate_workbasket(self):
         validators.validate_unique_quota_association(self)
@@ -208,7 +210,7 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "15"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
 
@@ -226,7 +228,7 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "10"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     blocking_period_type = models.PositiveSmallIntegerField(
         choices=validators.BlockingPeriodType.choices
@@ -244,11 +246,11 @@ class QuotaEvent(TrackedModel):
 
     record_code = "375"
     subrecord_code = models.CharField(
-        max_length=2, choices=validators.QuotaEventType.choices
+        max_length=2, choices=validators.QuotaEventType.choices, db_index=True
     )
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     occurrence_timestamp = models.DateTimeField()
     # store the event-type specific data in a JSON object
     data = JSONField(default=dict, encoder=DjangoJSONEncoder)
 
-    identifying_fields = ("subrecord_code", "quota_definition")
+    identifying_fields = ("subrecord_code", "quota_definition__sid")

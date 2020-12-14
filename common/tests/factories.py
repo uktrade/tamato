@@ -89,6 +89,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
         model = "workbaskets.Transaction"
 
     workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+    composite_key = factory.Sequence(str)
 
 
 class VersionGroupFactory(factory.django.DjangoModelFactory):
@@ -650,7 +651,7 @@ class MeasureTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
     measure_component_applicability_code = FuzzyChoice(ApplicabilityCode.values)
     origin_destination_code = FuzzyChoice(ImportExportCode.values)
     order_number_capture_code = OrderNumberCaptureCode.NOT_PERMITTED
-    measure_explosion_level = FuzzyChoice(range(2, 11, 2))
+    measure_explosion_level = 2
     description = short_description()
     measure_type_series = factory.SubFactory(MeasureTypeSeriesFactory)
 
@@ -679,17 +680,29 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     description = short_description()
 
 
+def get_measure_type_with_explosion(obj, **kwargs):
+    if not obj.goods_nomenclature:
+        return
+    item_id = obj.goods_nomenclature.item_id
+    explosion_level = 10
+    while item_id.endswith("00"):
+        explosion_level -= 2
+        item_id = item_id[:-2]
+
+    return MeasureTypeFactory(measure_explosion_level=explosion_level, **kwargs)
+
+
 class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "measures.Measure"
 
     sid = numeric_sid()
-    measure_type = factory.SubFactory(MeasureTypeFactory)
     geographical_area = factory.SubFactory(GeographicalAreaFactory)
     goods_nomenclature = factory.SubFactory(
         GoodsNomenclatureFactory,
         workbasket=factory.SelfAttribute("..workbasket"),
     )
+    measure_type = factory.LazyAttribute(get_measure_type_with_explosion)
     additional_code = None
     order_number = None
     reduction = factory.Faker("random_int", min=1, max=3)
@@ -705,9 +718,10 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
 
 
 class MeasureWithQuotaFactory(MeasureFactory):
-    measure_type = factory.SubFactory(
-        MeasureTypeFactory,
-        order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+    measure_type = factory.LazyAttribute(
+        lambda o: get_measure_type_with_explosion(
+            o, order_number_capture_code=OrderNumberCaptureCode.MANDATORY
+        ),
     )
     order_number = factory.SubFactory(
         QuotaOrderNumberFactory,

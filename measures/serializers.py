@@ -201,7 +201,8 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     generating_regulation = RegulationSerializer(read_only=True)
     terminating_regulation = RegulationSerializer(read_only=True)
     reduction = serializers.IntegerField(
-        validators=[validators.validate_reduction_indicator]
+        validators=[validators.validate_reduction_indicator],
+        required=False,
     )
     export_refund_nomenclature_sid = serializers.IntegerField(
         min_value=1, max_value=99999999, required=False
@@ -215,7 +216,9 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
             "geographical_area",
             "goods_nomenclature",
             "additional_code",
+            "dead_additional_code",
             "order_number",
+            "dead_order_number",
             "reduction",
             "generating_regulation",
             "terminating_regulation",

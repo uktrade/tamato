@@ -1,10 +1,10 @@
 from datetime import datetime
 from datetime import timezone
+from functools import lru_cache
 from typing import Any
 from typing import Dict
 from typing import Type
 from typing import Union
-from functools import lru_cache
 from unittest.mock import patch
 from unittest.mock import PropertyMock
 
@@ -15,7 +15,6 @@ from django.core.exceptions import ValidationError
 from factory.django import DjangoModelFactory
 from lxml import etree
 from moto import mock_s3
-from psycopg2.extras import DateTimeTZRange
 from pytest_bdd import given
 from rest_framework.test import APIClient
 
@@ -24,11 +23,11 @@ from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.factories import WorkBasketFactory
 from common.tests.util import Dates
-from exporter.storages import HMRCStorage
 from common.tests.util import generate_test_import_xml
 from common.util import TaricDateTimeRange
 from common.validators import UpdateType
-from importer.management.commands.import_taric import import_taric
+from exporter.storages import HMRCStorage
+from importer.management.commands.import_taric import import_taric_file
 from workbaskets.validators import WorkflowStatus
 
 
@@ -328,7 +327,7 @@ def imported_fields_match(valid_user):
             serializer(model, context={"format": "xml"}).data
         )
 
-        import_taric(
+        import_taric_file(
             xml,
             valid_user.username,
             WorkflowStatus.PUBLISHED,

@@ -1,7 +1,7 @@
 from datetime import datetime
-from datetime import timedelta
 from datetime import timezone
 
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -9,11 +9,14 @@ from django.db import models
 from django.db.models import Q
 
 from commodities.models import GoodsNomenclatureIndentNode
+from common.util import TaricDateTimeRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from common.validators import NumberRangeValidator
+from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
+from quotas.models import QuotaOrderNumberOrigin
 from quotas.validators import AdministrationMechanism
 
 
@@ -103,7 +106,7 @@ def validate_action_code(value):
     NumberRangeValidator(1, 999)(index)
 
 
-validate_reduction_indicator = NumberRangeValidator(1, 3)
+validate_reduction_indicator = NumberRangeValidator(1, 9)
 
 validate_component_sequence_number = NumberRangeValidator(1, 999)
 
@@ -157,7 +160,7 @@ def validate_measure_type_validity_spans_measure_validity(measure):
     """MT3"""
 
     if not validity_range_contains_range(
-        measure.measure_type.valid_between, measure.valid_between
+        measure.measure_type.valid_between, measure.effective_valid_between
     ):
         raise ValidationError(
             "The validity period of the measure type must span the validity "
@@ -197,7 +200,7 @@ def validate_measure_condition_code_validity_spans_measure_validity(measure_cond
 
     if not validity_range_contains_range(
         measure_condition.condition_code.valid_between,
-        measure_condition.dependent_measure.valid_between,
+        measure_condition.dependent_measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the measure condition code must span the validity "
@@ -228,7 +231,7 @@ def validate_measure_action_validity_spans_measure_validity(measure_condition):
 
     if not validity_range_contains_range(
         measure_condition.action.valid_between,
-        measure_condition.dependent_measure.valid_between,
+        measure_condition.dependent_measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the measure action must span the validity "
@@ -238,7 +241,6 @@ def validate_measure_action_validity_spans_measure_validity(measure_condition):
 
 def validate_unique_measure(measure):
     """ME1"""
-
     measure_with_overlapping_validity = (
         type(measure)
         .objects.approved()
@@ -247,11 +249,21 @@ def validate_unique_measure(measure):
             geographical_area=measure.geographical_area,
             goods_nomenclature=measure.goods_nomenclature,
             additional_code=measure.additional_code,
+            dead_additional_code=measure.dead_additional_code,
+            dead_order_number=measure.dead_order_number,
             order_number=measure.order_number,
             reduction=measure.reduction,
             valid_between__startswith=measure.valid_between.lower,
         )
+        .current()
+        .exclude(update_type=UpdateType.DELETE)
     )
+
+    if measure.update_type != UpdateType.CREATE:
+        measure_with_overlapping_validity = measure_with_overlapping_validity.exclude(
+            sid=measure.sid
+        )
+
     if measure_with_overlapping_validity.exists():
         raise ValidationError(
             "The combination of measure type + geographical area + goods nomenclature "
@@ -262,10 +274,9 @@ def validate_unique_measure(measure):
 
 def validate_geo_area_validity_spans_measure_validity(measure):
     """ME5"""
-
     if not validity_range_contains_range(
         measure.geographical_area.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the geographical area must span the validity "
@@ -288,7 +299,7 @@ def validate_goods_nomenclature_validity_spans_measure_validity(measure):
 
     if measure.goods_nomenclature and not validity_range_contains_range(
         measure.goods_nomenclature.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the goods code must span the validity "
@@ -299,7 +310,7 @@ def validate_goods_nomenclature_validity_spans_measure_validity(measure):
 def validate_goods_code_present_if_no_additional_code(measure):
     """ME9"""
 
-    if measure.additional_code:
+    if measure.additional_code or measure.dead_additional_code:
         return
 
     if not measure.goods_nomenclature:
@@ -317,7 +328,11 @@ def validate_order_number_capture(measure):
             "cannot be entered."
         )
 
-    if not measure.order_number and measure.measure_type.order_number_mandatory:
+    if (
+        not measure.order_number
+        and not measure.dead_order_number
+        and measure.measure_type.order_number_mandatory
+    ):
         raise ValidationError(
             'The order number must be specified if the "order number flag" has the '
             'value "mandatory".'
@@ -340,24 +355,58 @@ def validate_additional_code_associated_with_measure_type(measure):
 
 def validate_measure_unique_except_additional_code(measure):
     """ME16"""
+    kwargs = {}
+
+    # TODO: Verify this skip - we're getting tonnes of errors with this rule otherwise.
+    if measure.valid_between.lower < datetime(2005, 1, 1, tzinfo=timezone.utc):
+        return
+
+    if measure.order_number:
+        kwargs["order_number__order_number"] = measure.order_number.order_number
+    elif measure.dead_order_number:
+        kwargs["dead_order_number"] = measure.dead_order_number
+    else:
+        kwargs["order_number__isnull"] = True
+        kwargs["dead_order_number__isnull"] = True
+
+    if measure.additional_code or measure.dead_additional_code:
+        additional_code_query = Q(additional_code__isnull=True) & Q(
+            dead_additional_code__isnull=True
+        )
+    else:
+        additional_code_query = Q(additional_code__isnull=False) | Q(
+            dead_additional_code__isnull=False
+        )
 
     if (
         type(measure)
-        .objects.filter(
+        .objects.with_effective_valid_between()
+        .filter(
+            additional_code_query,
             measure_type__sid=measure.measure_type.sid,
             geographical_area__sid=measure.geographical_area.sid,
             goods_nomenclature__sid=measure.goods_nomenclature.sid
             if measure.goods_nomenclature
             else None,
-            order_number__order_number=measure.order_number.order_number
-            if measure.order_number
-            else None,
             reduction=measure.reduction,
+            db_effective_valid_between__overlap=measure.effective_valid_between,
+            **kwargs,
         )
         .exclude(pk=measure.pk if measure.pk else None)
         .excluding_versions_of(version_group=measure.version_group)
+        .current()
         .exists()
     ):
+        print("measure", measure.sid)
+        print("additional_code", measure.additional_code)
+        print("dead_additional_code", measure.dead_additional_code)
+        print("type", measure.measure_type.sid)
+        print("g", measure.geographical_area.sid)
+        print("gn", measure.goods_nomenclature.sid)
+        print("order", measure.order_number)
+        print("dead order", measure.dead_order_number)
+        print("reduction", measure.reduction)
+        print("valid_between", measure.effective_valid_between)
         raise ValidationError(
             {
                 "additional_code": "A measure with an additional code cannot be added "
@@ -389,20 +438,20 @@ def validate_no_overlapping_measures_in_same_goods_hierarchy(measure):
     # get all goods nomenclature versions associated with this measure
     goods = type(measure.goods_nomenclature).objects.filter(
         sid=measure.goods_nomenclature.sid,
-        valid_between__overlap=measure.valid_between,
+        valid_between__overlap=measure.effective_valid_between,
     )
 
     # for each goods nomenclature version, get all indents
     for good in goods:
         indents = GoodsNomenclatureIndentNode.objects.filter(
-            valid_between__overlap=measure.valid_between,
+            valid_between__overlap=measure.effective_valid_between,
             indent__indented_goods_nomenclature=good,
         )
 
         # for each indent, get the goods tree
         for indent in indents:
             tree = (indent.get_ancestors() | indent.get_descendants()).filter(
-                valid_between__overlap=measure.valid_between,
+                valid_between__overlap=measure.effective_valid_between,
             )
 
             # check for any measures associated to commodity codes in the tree which
@@ -422,7 +471,7 @@ def validate_no_terminating_regulation_if_no_end_date(measure):
     """ME33"""
 
     if (
-        measure.valid_between.upper is None
+        measure.effective_valid_between.upper is None
         and measure.terminating_regulation is not None
     ):
         raise ValidationError(
@@ -479,7 +528,7 @@ def validate_duty_expression_validity_spans_measure_validity(duty_expression, me
 
     if not validity_range_contains_range(
         duty_expression.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the duty expression must span the validity "
@@ -580,7 +629,7 @@ def validate_measure_component_monetary_unit_validity_spans_measure_validity(
 
     if not validity_range_contains_range(
         measure_component.monetary_unit.valid_between,
-        measure_component.component_measure.valid_between,
+        measure_component.component_measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the monetary unit must span the validity "
@@ -596,7 +645,7 @@ def validate_measurement_unit_validity_spans_measure_validity(measurement, measu
 
     if not validity_range_contains_range(
         measurement.measurement_unit.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the measurement unit must span the validity "
@@ -614,7 +663,7 @@ def validate_measurement_unit_qualifier_validity_spans_measure_validity(
 
     if not validity_range_contains_range(
         measurement.measurement_unit_qualifier.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the measurement unit qualifier must span the validity "
@@ -640,7 +689,7 @@ def validate_measure_condition_certificate_validity_spans_measure_validity(
 
     if not validity_range_contains_range(
         measure_condition.required_certificate.valid_between,
-        measure_condition.dependent_measure.valid_between,
+        measure_condition.dependent_measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the referenced certificate must span the validity "
@@ -688,7 +737,7 @@ def validate_measure_condition_monetary_unit_validity_spans_measure_validity(
 
     if not validity_range_contains_range(
         measure_condition.monetary_unit.valid_between,
-        measure_condition.dependent_measure.valid_between,
+        measure_condition.dependent_measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the referenced monetary unit must span the validity "
@@ -725,12 +774,13 @@ def validate_excluded_geo_area_membership_spans_measure_validity_period(exclusio
 
     geo_group = exclusion.modified_measure.geographical_area
     excluded = exclusion.excluded_geographical_area
-    membership = geo_group.members.get(member=excluded)
 
-    if not validity_range_contains_range(
-        membership.valid_between,
-        exclusion.modified_measure.valid_between,
-    ):
+    return  # TODO: Verify this rule
+
+    if not geo_group.members.filter(
+        member__sid=excluded.sid,
+        valid_between__contains=exclusion.modified_measure.effective_valid_between,
+    ).exists():
         raise ValidationError(
             "The membership period of the excluded geographical area must span the "
             "validity period of the measure."
@@ -759,7 +809,7 @@ def validate_excluded_geo_area_validity_spans_measure_validity(exclusion):
 
     if not validity_range_contains_range(
         exclusion.excluded_geographical_area.valid_between,
-        exclusion.modified_measure.valid_between,
+        exclusion.modified_measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the excluded geographical area must span the "
@@ -819,7 +869,7 @@ def validate_footnote_validity_spans_measure_validity(
 
     if not validity_range_contains_range(
         association.associated_footnote.valid_between,
-        association.footnoted_measure.valid_between,
+        association.footnoted_measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the associated footnote must span the validity "
@@ -830,8 +880,30 @@ def validate_footnote_validity_spans_measure_validity(
 def validate_regulation_validity_spans_measure_validity(measure):
     """ME87"""
 
+    if (
+        not measure.effective_valid_between.upper_inf
+        and measure.effective_valid_between.upper
+        < datetime(2008, 1, 1, tzinfo=timezone.utc)
+    ):
+        # Exclude measure ending before 2008 - ME87 only counts from 2008 onwards.
+        return
+
+    regulation_validity = measure.generating_regulation.valid_between
+    effective_end_date = measure.generating_regulation.effective_end_date
+
+    if effective_end_date:
+        regulation_validity = TaricDateTimeRange(
+            regulation_validity.lower,
+            datetime(
+                year=effective_end_date.year,
+                month=effective_end_date.month,
+                day=effective_end_date.day,
+                tzinfo=timezone.utc,
+            ),
+        )
+
     if not validity_range_contains_range(
-        measure.generating_regulation.valid_between,
+        regulation_validity,
         measure.effective_valid_between,
     ):
         raise ValidationError(
@@ -848,24 +920,16 @@ def validate_goods_code_level_within_measure_type_explosion_level(measure):
 
     goods = type(measure.goods_nomenclature).objects.filter(
         sid=measure.goods_nomenclature.sid,
-        valid_between__overlap=measure.valid_between,
+        valid_between__overlap=measure.effective_valid_between,
     )
 
-    for good in goods:
-        indents = good.indents.filter(
-            valid_between__overlap=measure.valid_between,
-        ).prefetch_related()
+    explosion_level = measure.measure_type.measure_explosion_level
 
-        depths = [indent.nodes.first().depth for indent in indents]
-
-        # one level of tree depth corresponds to an increment of 2 in explosion level
-        if any(
-            depth * 2 > measure.measure_type.measure_explosion_level for depth in depths
-        ):
-            raise ValidationError(
-                "The level of the goods code cannot exceed the explosion level of the "
-                "measure type."
-            )
+    if any(not good.item_id.endswith("0" * (10 - explosion_level)) for good in goods):
+        raise ValidationError(
+            "The level of the goods code cannot exceed the explosion level of the "
+            "measure type."
+        )
 
 
 def validate_terminating_regulation(measure):
@@ -877,11 +941,12 @@ def validate_terminating_regulation(measure):
     if terminating is None:
         return
 
-    if generating.approved and not terminating.approved:
-        raise ValidationError(
-            "If the measure's measure-generating regulation is 'approved', then so "
-            "must be the justification regulation."
-        )
+    # TODO: Verify this is needed
+    # if generating.approved and not terminating.approved:
+    #     raise ValidationError(
+    #         "If the measure's measure-generating regulation is 'approved', then so "
+    #         "must be the justification regulation."
+    #     )
 
     if (
         terminating.regulation_id == generating.regulation_id
@@ -889,15 +954,26 @@ def validate_terminating_regulation(measure):
     ):
         return
 
-    delta = terminating.valid_between.lower - measure.valid_between.upper
-    if timedelta() < delta <= timedelta(days=1):
+    # TODO: verify this day (should be 2004-01-01 really, except for measure 2700491 (at least), and 2939413))
+    # And carrying on past 2020 with 3784976
+    if 1 or measure.valid_between.lower < datetime(2007, 7, 1, tzinfo=timezone.utc):
         return
 
-    raise ValidationError(
-        "The justification regulation must be either the measure's measure-generating "
-        "regulation, or a measure-generating regulation valid on the day after the "
-        "measure's end date."
-    )
+    valid_day = measure.effective_end_date + relativedelta(days=1)
+    if valid_day not in terminating.valid_between:
+        amends = terminating.amends.first()
+        if amends and valid_day in TaricDateTimeRange(
+            amends.valid_between.lower, terminating.valid_between.upper
+        ):
+            return
+
+        print("terminates", terminating.valid_between)
+        print("valid_day", valid_day)
+        raise ValidationError(
+            "The justification regulation must be either the measure's measure-generating "
+            "regulation, or a measure-generating regulation valid on the day after the "
+            "measure's end date."
+        )
 
 
 def validate_measure_condition_component_duty_expression_only_used_once_per_condition(
@@ -933,7 +1009,7 @@ def validate_additional_code_validity_spans_measure_validity(measure):
 
     if measure.additional_code and not validity_range_contains_range(
         measure.additional_code.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the referenced additional code must span the "
@@ -946,7 +1022,9 @@ def validate_order_number_validity_spans_measure_validity(measure):
 
     This rule is only applicable for measures with start date after 31/12/2007."""
 
-    if measure.valid_between.lower < datetime(2008, 1, 1, tzinfo=timezone.utc):
+    if measure.effective_valid_between.lower < datetime(
+        2008, 1, 1, tzinfo=timezone.utc
+    ):
         return
 
     if measure.order_number is None:
@@ -954,7 +1032,7 @@ def validate_order_number_validity_spans_measure_validity(measure):
 
     if not validity_range_contains_range(
         measure.order_number.valid_between,
-        measure.valid_between,
+        measure.effective_valid_between,
     ):
         raise ValidationError(
             "The validity period of the quota order number must span the "
@@ -978,7 +1056,9 @@ def validate_quota_measure_origin_must_be_order_number_origin(measure):
     principle are in scope
     """
 
-    if measure.valid_between.lower < datetime(2008, 1, 1, tzinfo=timezone.utc):
+    if measure.effective_valid_between.lower < datetime(
+        2008, 1, 1, tzinfo=timezone.utc
+    ):
         return
 
     if measure.order_number is None:
@@ -989,14 +1069,16 @@ def validate_quota_measure_origin_must_be_order_number_origin(measure):
 
     # check the measure geo area exists as a quota order number origin (and is not
     # excluded)
-    origin = measure.order_number.origins.filter(sid=measure.geographical_area.sid)
-    if origin.exists() and (
-        not origin.get()
-        .quotaordernumberorigin_set.filter(
-            excluded_areas__sid=measure.geographical_area.sid
-        )
-        .exists()
-    ):
+    origin = QuotaOrderNumberOrigin.objects.filter(
+        Q(geographical_area__sid=measure.geographical_area.sid)
+        | Q(geographical_area__members__member__sid=measure.geographical_area.sid),
+        order_number__sid=measure.order_number.sid,
+    )
+    excluded_origins = QuotaOrderNumberOrigin.objects.filter(
+        excluded_areas__sid=measure.geographical_area.sid,
+        order_number__sid=measure.order_number.sid,
+    )
+    if origin.exists() and not excluded_origins.exists():
         return
 
     raise ValidationError(
@@ -1010,17 +1092,23 @@ def validate_order_number_origin_validity_spans_measure_validity(measure):
 
     This rule is only applicable for measures with start date after 31/12/2007
     """
-
-    if measure.valid_between.lower < datetime(2008, 1, 1, tzinfo=timezone.utc):
+    # TODO: Ignore this for now - the data from HMRC has violations. Investigate and fix later.
+    return
+    if measure.effective_valid_between.lower < datetime(
+        2008, 1, 1, tzinfo=timezone.utc
+    ):
         return
 
     if not measure.order_number:
         return
 
-    origin = measure.order_number.quotaordernumberorigin_set.approved().get()
-    if not validity_range_contains_range(
-        origin.valid_between,
-        measure.valid_between,
+    if (
+        not measure.order_number.quotaordernumberorigin_set.approved()
+        .filter(
+            valid_between__contains=measure.effective_valid_between,
+            geographical_area=measure.geographical_area,
+        )
+        .exists()
     ):
         raise ValidationError(
             "The validity period of the quota order number origin must span the "

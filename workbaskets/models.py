@@ -5,11 +5,14 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Manager, Prefetch, QuerySet
+from django.db.models import Manager
+from django.db.models import Prefetch
+from django.db.models import QuerySet
 from django_fsm import FSMField
 from django_fsm import transition
 
-from common.models import TimestampedMixin, TrackedModel
+from common.models import TimestampedMixin
+from common.models import TrackedModel
 from workbaskets.validators import WorkflowStatus
 
 
@@ -38,7 +41,9 @@ class WorkBasket(TimestampedMixin):
 
     objects = WorkBasketManager()
 
-    title = models.CharField(max_length=255, help_text="Short name for this workbasket")
+    title = models.CharField(
+        max_length=255, help_text="Short name for this workbasket", db_index=True
+    )
     reason = models.TextField(
         blank=True, help_text="Reason for the changes to the tariff"
     )
@@ -57,6 +62,7 @@ class WorkBasket(TimestampedMixin):
     status = FSMField(
         default=WorkflowStatus.NEW_IN_PROGRESS,
         choices=WorkflowStatus.choices,
+        db_index=True,
     )
 
     def __str__(self):
@@ -178,11 +184,13 @@ class WorkBasket(TimestampedMixin):
 class Transaction(TimestampedMixin):
     """A Transaction is created once the WorkBasket has been sent for approval"""
 
-    workbasket = models.OneToOneField(
+    workbasket = models.ForeignKey(
         WorkBasket,
         on_delete=models.PROTECT,
         editable=False,
     )
+
+    composite_key = models.CharField(max_length=16, unique=True)
 
     def to_json(self):
         """Used for serializing to the session"""

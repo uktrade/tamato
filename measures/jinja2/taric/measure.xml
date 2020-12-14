@@ -12,6 +12,8 @@
       {%- endif -%}
       {%- if record.order_number %}
       <oub:ordernumber>{{ record.order_number.order_number }}</oub:ordernumber>
+      {% elif record.dead_order_number %}
+      <oub:ordernumber>{{ record.dead_order_number }}</oub:ordernumber>
       {%- endif -%}
       {%- if record.reduction %}
       <oub:reduction.indicator>{{ record.reduction }}</oub:reduction.indicator>

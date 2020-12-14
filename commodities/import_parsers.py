@@ -209,4 +209,6 @@ class FootnoteAssociationGoodsNomenclatureParser(
 
     goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
-    associated_footnote__footnote_type_id = TextElement(Tag("footnote.type"))
+    associated_footnote__footnote_type__footnote_type_id = TextElement(
+        Tag("footnote.type")
+    )

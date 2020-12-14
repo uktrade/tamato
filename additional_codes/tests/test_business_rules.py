@@ -247,7 +247,9 @@ def test_ACN14():
     assoc = factories.AdditionalCodeTypeMeasureTypeFactory()
     additional_code = factories.AdditionalCodeFactory(type=assoc.additional_code_type)
     measure = factories.MeasureFactory(
-        measure_type=assoc.measure_type, additional_code=additional_code
+        measure_type=assoc.measure_type,
+        additional_code=additional_code,
+        goods_nomenclature__item_id="2000000000",
     )
 
     with pytest.raises(IntegrityError):

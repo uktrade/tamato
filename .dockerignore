@@ -6,3 +6,7 @@
 node_modules/
 static/
 venv/
+*.xml
+*.gz
+seed_files/
+_split_seed_import_files/

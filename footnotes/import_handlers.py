@@ -39,12 +39,6 @@ class BaseFootnoteDescriptionHandler(BaseHandler):
     serializer_class = serializers.FootnoteDescriptionSerializer
     tag = "BaseFootnoteDescriptionHandler"
 
-    def get_described_footnote_link(self, model, kwargs):
-        footnote_type = models.FootnoteType.objects.get_latest_version(
-            footnote_type_id=kwargs.pop("footnote_type__footnote_type_id")
-        )
-        return model.objects.get_latest_version(footnote_type=footnote_type, **kwargs)
-
 
 class FootnoteDescriptionHandler(BaseFootnoteDescriptionHandler):
     serializer_class = serializers.FootnoteDescriptionSerializer

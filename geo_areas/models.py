@@ -33,7 +33,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     record_code = "250"
     subrecord_code = "00"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     area_id = models.CharField(max_length=4, validators=[validators.area_id_validator])
     area_code = models.PositiveSmallIntegerField(choices=validators.AreaCode.choices)
 
@@ -54,14 +54,6 @@ class GeographicalArea(TrackedModel, ValidityMixin):
 
     class Meta:
         constraints = (
-            # GA1 and GA7
-            ExclusionConstraint(
-                name="exclude_overlapping_areas",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("area_id", RangeOperators.EQUAL),
-                ],
-            ),
             CheckConstraint(
                 name="only_groups_have_parents",
                 check=Q(area_code=1) | Q(parent__isnull=True),
@@ -102,19 +94,6 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"<{self.member}> -> <{self.geo_group}>"
 
-    class Meta:
-        constraints = (
-            # GA18
-            ExclusionConstraint(
-                name="exclude_overlapping_memberships",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    (F("geo_group"), RangeOperators.EQUAL),
-                    (F("member"), RangeOperators.EQUAL),
-                ],
-            ),
-        )
-
 
 class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     record_code = "250"
@@ -125,7 +104,7 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
 
     area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
     description = ShortDescription()
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
 
     def clean(self):
         validators.validate_description_is_not_null(self)
@@ -133,6 +112,8 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
         validators.validate_geographical_area_description_start_date_before_geographical_area_end_date(
             self
         )
+
+    def validate_workbasket(self):
         validators.validate_first_geographical_area_description_has_geographical_area_start_date(
             self
         )

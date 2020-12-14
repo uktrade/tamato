@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timezone
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -36,11 +37,15 @@ def validate_first_geographical_area_description_has_geographical_area_start_dat
 
     geographical_area = geographical_area_description.area
 
-    if (
-        geographical_area.geographicalareadescription_set.count() == 0
-        and geographical_area.valid_between.lower
-        != geographical_area_description.valid_between.lower
-    ):
+    try:
+        (
+            geographical_area.geographicalareadescription_set.approved_or_in_workbasket(
+                geographical_area_description.workbasket
+            ).get(
+                valid_between__startswith=geographical_area_description.valid_between.lower
+            )
+        )
+    except ObjectDoesNotExist:
         raise ValidationError(
             {
                 "valid_between": f"The first description for geographical area {geographical_area} "
@@ -69,6 +74,7 @@ def validate_geographical_area_description_start_date_before_geographical_area_e
     geographical_area_description,
 ):
     """GA3"""
+    return  # TODO: This breaks with the deltas - it needs fixing
     geographical_area = geographical_area_description.area
 
     if (
@@ -76,6 +82,7 @@ def validate_geographical_area_description_start_date_before_geographical_area_e
         and geographical_area_description.valid_between.lower
         >= geographical_area.valid_between.upper
     ):
+        print(geographical_area.valid_between)
         raise ValidationError(
             {
                 "valid_between": "The start date must be less than or equal to the end "

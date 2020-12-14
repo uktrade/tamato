@@ -6,6 +6,7 @@ from django.core.validators import RegexValidator
 from django.utils import timezone
 
 from common.util import validity_range_contains_range
+from common.validators import UpdateType
 
 ITEM_ID_REGEX = r"\d{10}"
 item_id_validator = RegexValidator(ITEM_ID_REGEX)
@@ -157,6 +158,8 @@ def validate_indent_start_date_not_shared(goods_nomenclature_indent):
     """
     NIG11
     """
+    if goods_nomenclature_indent.update_type != UpdateType.CREATE:
+        return
     indent_start_date = goods_nomenclature_indent.valid_between.lower
 
     goods_nomenclature_indent_with_overlapping_validity = (
@@ -243,6 +246,7 @@ def validate_duplicate_footnote_associations_cant_overlap(footnote_association):
     FootnoteAssociationGoodsNomenclature = footnote_association.__class__
     if FootnoteAssociationGoodsNomenclature.objects.filter(
         associated_footnote__footnote_id=footnote_association.associated_footnote.footnote_id,
+        associated_footnote__footnote_type__footnote_type_id=footnote_association.associated_footnote.footnote_id,
         goods_nomenclature__sid=footnote_association.goods_nomenclature.sid,
         valid_between__overlap=footnote_association.valid_between,
     ).exists():

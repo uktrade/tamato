@@ -26,7 +26,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
     identifying_fields = ("footnote_type_id",)
 
     footnote_type_id = models.CharField(
-        max_length=3, validators=[validators.footnote_type_id_validator]
+        max_length=3, validators=[validators.footnote_type_id_validator], db_index=True
     )
     application_code = models.PositiveIntegerField(
         choices=validators.ApplicationCode.choices
@@ -60,11 +60,11 @@ class Footnote(TrackedModel, ValidityMixin):
     subrecord_code = "00"
 
     footnote_id = models.CharField(
-        max_length=5, validators=[validators.footnote_id_validator]
+        max_length=5, validators=[validators.footnote_id_validator], db_index=True
     )
     footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
 
-    identifying_fields = ("footnote_id", "footnote_type")
+    identifying_fields = ("footnote_id", "footnote_type__footnote_type_id")
 
     def __str__(self):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
@@ -122,7 +122,7 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
         Footnote, on_delete=models.CASCADE, related_name="descriptions"
     )
     description = models.TextField()
-    description_period_sid = SignedIntSID()
+    description_period_sid = SignedIntSID(db_index=True)
 
     identifying_fields = ("description_period_sid",)
 

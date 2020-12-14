@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
+from itertools import chain
 from typing import Dict
 from typing import Type
 
+from django.core.cache import cache
+
+from commodities.exceptions import InvalidIndentError
 from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
+from importer.utils import generate_key
 
 logger = logging.getLogger(__name__)
 
@@ -71,22 +77,40 @@ class TariffObjectNursery:
             else:
                 for key in result:
                     self.cache.pop(key)
+        except InvalidIndentError:
+            print("Parent not found for", obj)
+            print("Caching indent")
+            self._cache_object(handler)
         except Exception:
+            print("obj errored", obj)
+            print("cache size", len(self.cache.keys()))
             self.clear_cache()
+            self.cache.dump()
             raise
 
     def _cache_object(self, handler):
         self.cache.put(handler.key, handler.serialize())
 
     def clear_cache(self):
-        for key in self.cache.keys():
-            handler = self.get_handler_from_cache(key)
-            result = handler.build()
-            if not result:
-                self._cache_object(handler)
-            else:
-                for key in result:
-                    self.cache.pop(key)
+        index = 0
+        while index < 2 and len(self.cache.keys()) > 0:
+            for key in list(self.cache.keys()):
+                try:
+                    handler = self.get_handler_from_cache(key)
+                    if handler is None:
+                        self.cache.pop(key)
+                        continue
+                    result = handler.build()
+                    if not result:
+                        self._cache_object(handler)
+                    else:
+                        for key in result:
+                            self.cache.pop(key)
+                except InvalidIndentError:
+                    self._cache_object(handler)
+            index += 1
+        if self.cache.keys():
+            print("cache not cleared", len(self.cache.keys()))
 
     def get_handler_from_cache(self, key):
         match = self.cache.get(key)

@@ -26,6 +26,7 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
     sid = models.CharField(
         max_length=1,
         validators=[validators.additional_code_type_sid_validator],
+        db_index=True,
     )
     description = ShortDescription()
 
@@ -37,17 +38,6 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"AdditionalcodeType {self.sid}: {self.description}"
 
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_additional_code_types",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
-
 
 class AdditionalCode(TrackedModel, ValidityMixin):
     """The additional code identifies a piece of text associated with a goods
@@ -57,7 +47,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
     record_code = "245"
     subrecord_code = "00"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     type = models.ForeignKey(AdditionalCodeType, on_delete=models.PROTECT)
     code = models.CharField(
         max_length=3, validators=[validators.additional_code_validator]
@@ -77,13 +67,6 @@ class AdditionalCode(TrackedModel, ValidityMixin):
 
     class Meta:
         constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_additional_codes",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
             ExclusionConstraint(
                 name="exclude_overlapping_additional_codes_ACN1",
                 expressions=[
@@ -110,7 +93,7 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
 
     # Store the additional code description period sid so that we can send it in TARIC3
     # updates to systems that expect it.
-    description_period_sid = SignedIntSID()
+    description_period_sid = SignedIntSID(db_index=True)
 
     described_additional_code = models.ForeignKey(
         AdditionalCode, on_delete=models.PROTECT, related_name="descriptions"

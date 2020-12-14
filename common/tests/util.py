@@ -2,7 +2,7 @@ import contextlib
 from datetime import datetime
 from datetime import timezone
 from functools import wraps
-from io import StringIO
+from io import BytesIO
 
 import pytest
 from dateutil.parser import parse as parse_date
@@ -80,7 +80,7 @@ def check_validator(validate, value, expected_valid):
             pytest.fail(f'Expected validation error for value "{value}"')
 
 
-def generate_test_import_xml(obj: dict, transaction_id=1) -> StringIO:
+def generate_test_import_xml(obj: dict, transaction_id=1) -> BytesIO:
     xml = render_to_string(
         template_name="workbaskets/taric/transaction_detail.xml",
         context={
@@ -91,7 +91,7 @@ def generate_test_import_xml(obj: dict, transaction_id=1) -> StringIO:
         },
     )
 
-    return StringIO(xml)
+    return BytesIO(xml.encode())
 
 
 def validate_taric_xml_record_order(xml):

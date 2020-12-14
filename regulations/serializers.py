@@ -171,12 +171,14 @@ class RegulationImporterSerializer(
     regulation_id = serializers.CharField(
         max_length=8,
         validators=[validators.regulation_id_validator],
+        read_only=False,
     )
 
     compound_information_text = serializers.SerializerMethodField()
     official_journal_number = serializers.CharField(read_only=False, required=False)
     official_journal_page = serializers.IntegerField(read_only=False, required=False)
     published_at = serializers.DateField(read_only=False, required=False)
+    effective_end_date = serializers.DateField(read_only=False, required=False)
     replacement_indicator = serializers.IntegerField(read_only=False)
     valid_between = TARIC3DateTimeRangeField(required=False)
 

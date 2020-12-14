@@ -57,17 +57,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"Goods Nomenclature: {self.item_id}"
 
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_goods",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )
-
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
     record_code = "400"
@@ -77,7 +66,9 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
         validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
     )
 
-    indent = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    indent = models.PositiveIntegerField(
+        validators=[MinValueValidator(0)], db_index=True
+    )
 
     indented_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
@@ -223,29 +214,19 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
     period_subrecord_code = "10"
 
     sid = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99999999)]
+        validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
     )
     described_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature,
         on_delete=models.PROTECT,
         related_name="descriptions",
     )
-    description = models.TextField()
+    description = models.TextField(blank=True)
 
     def clean(self):
-        validators.validate_description_is_not_null(self)
+        # TODO: Re-enable no blank descriptions
+        # validators.validate_description_is_not_null(self)
         return super().clean()
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_goods_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )
 
 
 class GoodsNomenclatureOrigin(TrackedModel):
@@ -266,6 +247,11 @@ class GoodsNomenclatureOrigin(TrackedModel):
     derived_from_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature,
         on_delete=models.PROTECT,
+    )
+
+    identifying_fields = (
+        "new_goods_nomenclature__sid",
+        "derived_from_goods_nomenclature__sid",
     )
 
     def clean(self):

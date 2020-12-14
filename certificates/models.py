@@ -17,7 +17,9 @@ class CertificateType(TrackedModel, ValidityMixin):
     description_subrecord_code = "05"
 
     sid = models.CharField(
-        max_length=1, validators=[validators.certificate_type_sid_validator]
+        max_length=1,
+        validators=[validators.certificate_type_sid_validator],
+        db_index=True,
     )
     description = ShortDescription()
 
@@ -43,7 +45,7 @@ class Certificate(TrackedModel, ValidityMixin):
     record_code = "205"
     subrecord_code = "00"
     sid = models.CharField(
-        max_length=3, validators=[validators.certificate_sid_validator]
+        max_length=3, validators=[validators.certificate_sid_validator], db_index=True
     )
 
     certificate_type = models.ForeignKey(
@@ -65,18 +67,6 @@ class Certificate(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"Certificate {self.code}"
 
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_certificates",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                    ("certificate_type", RangeOperators.EQUAL),
-                ],
-            ),
-        )
-
 
 class CertificateDescription(TrackedModel, ValidityMixin):
     record_code = "205"
@@ -85,7 +75,7 @@ class CertificateDescription(TrackedModel, ValidityMixin):
     period_record_code = "205"
     period_subrecord_code = "05"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
 
     description = ShortDescription()
     described_certificate = models.ForeignKey(
@@ -102,14 +92,3 @@ class CertificateDescription(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return f"Certificate Description for {self.described_certificate}: {self.description}"
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_certificate_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )

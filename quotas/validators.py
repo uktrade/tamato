@@ -98,6 +98,8 @@ def validate_unique_id_and_start_date(order_number):
             order_number=order_number.order_number,
             valid_between__startswith=order_number.valid_between.lower,
         )
+        .current()
+        .exclude(update_type=UpdateType.DELETE)
         .exists()
     ):
         raise ValidationError("Quota order number id + start date must be unique.")
@@ -274,7 +276,8 @@ def validate_unique_order_number_and_start_date(definition):
             order_number=definition.order_number,
             valid_between__startswith=definition.valid_between.lower,
         )
-        .exclude(sid=definition.sid)
+        .current()
+        .exclude(sid=definition.sid, update_type=UpdateType.DELETE)
     )
     if definitions_with_order_number_and_start_date.exists():
         raise ValidationError("Quota order number id + start date must be unique.")
