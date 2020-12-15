@@ -367,12 +367,8 @@ inherit TrackedModel must either:
     def get_versions(self) -> TrackedModelQuerySet:
         if hasattr(self, "version_group"):
             return self.version_group.versions.all()
-        try:
-            query = Q(**self.get_identifying_fields())
-            return self.__class__.objects.filter(query)
-        except ObjectDoesNotExist:
-            print("failed", self)
-            print("failed", self.identifying_fields)
+        query = Q(**self.get_identifying_fields())
+        return self.__class__.objects.filter(query)
 
     def validate_workbasket(self):
         pass
@@ -500,10 +496,8 @@ inherit TrackedModel must either:
         link_fields = cls.get_handler_link_fields()
 
         if not link_fields:
-            print(cls, "no cache")
             return
 
-        print(cls, "is caching")
         values_list = set(chain.from_iterable(link_fields))
         values_list.add("pk")
 

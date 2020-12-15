@@ -174,7 +174,7 @@ def test_measure_importer_create(imported_fields_match, unapproved_workbasket):
         workbasket=unapproved_workbasket,
     )
     ac = factories.AdditionalCodeFactory.create(type=rel.additional_code_type)
-    print("ac", ac, ac.sid)
+
     assert imported_fields_match(
         factories.MeasureFactory.build(
             measure_type=rel.measure_type,
@@ -199,7 +199,6 @@ def test_measure_importer_update(update_imported_fields_match, unapproved_workba
         workbasket=unapproved_workbasket,
     )
     ac = factories.AdditionalCodeFactory.create(type=rel.additional_code_type)
-    print("ac", ac, ac.sid)
 
     assert update_imported_fields_match(
         factories.MeasureFactory,

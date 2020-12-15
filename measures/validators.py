@@ -328,9 +328,6 @@ def validate_order_number_capture(measure):
             "cannot be entered."
         )
 
-    print("order", measure.order_number)
-    print("dorder", measure.dead_order_number)
-    print("type", measure.measure_type.order_number_mandatory)
     if (
         not measure.order_number
         and not measure.dead_order_number

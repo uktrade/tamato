@@ -728,7 +728,7 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
         while item_id.endswith("00"):
             explosion_level -= 2
             item_id = item_id[:-2]
-        print("ended with", goods_nomenclature, item_id, explosion_level)
+
         measure_type.measure_explosion_level = explosion_level
         measure_type.save(force_write=True)
         return measure_type

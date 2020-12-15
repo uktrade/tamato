@@ -58,11 +58,7 @@ def get_measurement_link(model, kwargs):
     if not any(kwargs.values()):
         raise model.DoesNotExist
 
-    try:
-        return model.objects.current().get(**kwargs)
-    except:
-        print("kwargs", kwargs)
-        raise
+    return model.objects.current().get(**kwargs)
 
 
 class MeasureTypeSeriesHandler(BaseHandler):
@@ -278,7 +274,6 @@ class MeasureHandler(BaseHandler):
 
     def get_additional_code_link(self, model, kwargs):
         try:
-            print("getting ac", model, kwargs)
             return self.get_generic_link(model, kwargs)
         except model.DoesNotExist:
             if any(kwargs.values()):
