@@ -163,7 +163,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         item_id = data["indented_goods_nomenclature"].item_id
 
-        indent = super(GoodsNomenclatureIndentHandler, self).save(data)
+        indent = super().save(data)
 
         node_data = {
             "indent": indent,

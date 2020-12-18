@@ -1,19 +1,27 @@
+"""Parsers for TARIC envelope entities."""
 import logging
+from typing import Any
+from typing import Mapping
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import transaction
 
+from common import models
 from common.validators import UpdateType
 from importer.namespaces import ENVELOPE
 from importer.namespaces import Tag
 from importer.parsers import ElementParser
 from importer.parsers import ParserError
 from importer.parsers import TextElement
-from workbaskets import models
+from taric.models import Envelope
+from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 
-class Record(ElementParser):
+class RecordParser(ElementParser):
+    """Parser for TARIC3 `record` element."""
+
     tag = Tag("record")
     transaction_id = TextElement(Tag("transaction.id"))
     record_code = TextElement(Tag("record.code"))
@@ -21,61 +29,77 @@ class Record(ElementParser):
     sequence_number = TextElement(Tag("record.sequence.number"))
     update_type = TextElement(Tag("update.type"))
 
-    def save(self, data, workbasket_id):
+    def save(self, data: Mapping[str, Any], transaction_id: int):
+        """Save the Record to the database.
+
+        :param data: A dict of the parsed element, mapping field names to values
+        :param transaction_id: The primary key of the transaction to add the record to
+        """
+        print(f"RecordParser.save({data})")
         method_name = {
-            str(UpdateType.UPDATE.value): "update",
-            str(UpdateType.DELETE.value): "delete",
-            str(UpdateType.CREATE.value): "create",
+            str(UpdateType.UPDATE): "update",
+            str(UpdateType.DELETE): "delete",
+            str(UpdateType.CREATE): "create",
         }[data["update_type"]]
 
         for parser, field_name in self._field_lookup.items():
             record_data = data.get(field_name)
             if record_data and hasattr(parser, method_name):
-                getattr(parser, method_name)(record_data, workbasket_id)
+                getattr(parser, method_name)(record_data, transaction_id)
 
 
-class Message(ElementParser):
+class MessageParser(ElementParser):
+    """Parser for TARIC3 `message` element."""
+
     tag = Tag("app.message", prefix=ENVELOPE)
-    record = Record(many=True)
+    record = RecordParser(many=True)
 
-    def save(self, data, workbasket_id):
+    def save(self, data: Mapping[str, Any], transaction_id: int):
+        """Save the contained records to the database.
+
+        :param data: A dict of parsed element, mapping field names to values
+        :param transaction_id: The primary key of the transaction to add records to
+        """
         for record_data in data["record"]:
-            self.record.save(record_data, workbasket_id)
+            self.record.save(record_data, transaction_id)
 
 
-class Transaction(ElementParser):
+class TransactionParser(ElementParser):
+    """Parser for TARIC3 `transaction` element."""
+
     tag = Tag("transaction", prefix=ENVELOPE)
-    message = Message(many=True)
+    message = MessageParser(many=True)
 
-    def save(self, data, envelope_id, workbasket_status=None, tamato_username=None):
+    def save(
+        self,
+        data: Mapping[str, Any],
+        envelope: Envelope,
+        workbasket: WorkBasket,
+    ):
+        """Save the transaction and the contained records to the database.
+
+        :param data: A dict of the parsed element, containing at least an "id" and list
+        of "message" dicts
+        :param envelope_id: The ID of the containing Envelope
+        :param workbasket_id: The primary key of the workbasket to add transactions to
+        """
         logging.debug(f"Saving transaction {self.data['id']}")
-        if workbasket_status is None:
-            workbasket_status = models.WorkflowStatus.AWAITING_APPROVAL.value
-
-        username = tamato_username or settings.DATA_IMPORT_USERNAME
-
-        workbasket, _ = models.WorkBasket.objects.get_or_create(
-            title=f"Data Import {envelope_id}",
-            author=User.objects.get(username=username),
-            status=workbasket_status,
+        transaction = workbasket.get_transaction(
+            import_transaction_id=int(data["id"]),
         )
+        transaction.envelopes.add(envelope, through_defaults={"order": int(data["id"])})
 
-        transaction, _ = models.Transaction.objects.get_or_create(
-            pk=int(self.data["id"]), workbasket=workbasket
-        )
-        logging.debug(f"WorkBasket {workbasket.pk}: {workbasket.title}")
-
-        for message_data in self.data["message"]:
-            self.message.save(message_data, workbasket.pk)
+        for message_data in data["message"]:
+            self.message.save(message_data, transaction.id)
 
 
 class EnvelopeError(ParserError):
     pass
 
 
-class Envelope(ElementParser):
+class EnvelopeParser(ElementParser):
     tag = Tag("envelope", prefix=ENVELOPE)
-    transaction = Transaction(many=True)
+    transaction = TransactionParser(many=True)
 
     def __init__(
         self, workbasket_status=None, tamato_username=None, save: bool = True, **kwargs
@@ -96,12 +120,21 @@ class Envelope(ElementParser):
             self.last_transaction_id = tx_id
 
         if element.tag == self.tag and self.save:
-            logging.debug(f"Saving import {self.data['id']}")
-            with transaction.atomic():
-                for transaction_data in self.data["transaction"]:
-                    self.transaction.save(
-                        transaction_data,
-                        envelope_id=self.data["id"],
-                        workbasket_status=self.workbasket_status,
-                        tamato_username=self.tamato_username,
-                    )
+            logging.debug(f"Saving import %d", self.data["id"])
+            envelope = Envelope.objects.create(envelope_id=self.data["id"])
+
+            workbasket, _ = WorkBasket.objects.get_or_create(
+                title=f"Data Import {self.data['id']}",
+                author=get_user_model().objects.get(
+                    username=self.tamato_username or settings.DATA_IMPORT_USERNAME
+                ),
+                status=self.workbasket_status or WorkflowStatus.AWAITING_APPROVAL,
+            )
+            logging.debug(f"WorkBasket {workbasket.id}: {workbasket.title}")
+
+            for transaction_data in self.data["transaction"]:
+                self.transaction.save(
+                    transaction_data,
+                    envelope=envelope,
+                    workbasket=workbasket,
+                )

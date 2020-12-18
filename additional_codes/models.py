@@ -34,20 +34,6 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         choices=validators.ApplicationCode.choices,
     )
 
-    def __str__(self):
-        return f"AdditionalcodeType {self.sid}: {self.description}"
-
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_additional_code_types",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
-
 
 class AdditionalCode(TrackedModel, ValidityMixin):
     """The additional code identifies a piece of text associated with a goods
@@ -66,33 +52,20 @@ class AdditionalCode(TrackedModel, ValidityMixin):
     def get_description(self):
         return self.descriptions.last()
 
-    def clean(self):
-        validators.validate_additional_code_type(self)
-        validators.validate_additional_code_type_validity_includes_additional_code_validity(
-            self
-        )
+    # def clean(self):
+    # validators.validate_additional_code_type(self)
+    # validators.validate_additional_code_type_validity_includes_additional_code_validity(
+    #     self
+    # )
 
-    def validate_workbasket(self):
-        validators.validate_at_least_one_description(self)
+    # def validate_workbasket(self):
+    #     validators.validate_at_least_one_description(self)
 
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_additional_codes",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-            ExclusionConstraint(
-                name="exclude_overlapping_additional_codes_ACN1",
-                expressions=[
-                    (Lower("valid_between"), RangeOperators.EQUAL),
-                    ("type", RangeOperators.EQUAL),
-                    ("code", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
+    def in_use(self):
+        # TODO handle deletes
+        return self.measure_set.model.objects.filter(
+            additional_code__sid=self.sid,
+        ).exists()
 
 
 class AdditionalCodeDescription(TrackedModel, ValidityMixin):
@@ -119,30 +92,19 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
 
     identifying_fields = ("description_period_sid",)
 
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_additional_code_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("described_additional_code", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
-
     def clean(self):
         validators.validate_description_is_not_null(self)
-        validators.validate_first_additional_code_description_has_additional_code_start_date(
-            self
-        )
-        validators.validate_additional_code_description_dont_have_same_start_date(self)
-        validators.validate_additional_code_description_start_date_before_additional_code_end_date(
-            self
-        )
+        # validators.validate_first_additional_code_description_has_additional_code_start_date(
+        #     self
+        # )
+        # validators.validate_additional_code_description_dont_have_same_start_date(self)
+        # validators.validate_additional_code_description_start_date_before_additional_code_end_date(
+        #     self
+        # )
 
     def __str__(self):
-        return (
-            f'description - "{self.description}" for {self.described_additional_code}'
+        return self.identifying_fields_to_string(
+            identifying_fields=("described_additional_code", "valid_between"),
         )
 
 

@@ -4,10 +4,10 @@ from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
-@Record.register_child("regulation_group")
+@RecordParser.register_child("regulation_group")
 class RegulationGroupParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="regulation.group" substitutionGroup="abstract.record">
@@ -26,7 +26,7 @@ class RegulationGroupParser(ValidityMixin, Writable, ElementParser):
     group_id = TextElement(Tag("regulation.group.id"))
 
 
-@Record.register_child("regulation_group_description")
+@RecordParser.register_child("regulation_group_description")
 class RegulationGroupDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="regulation.group.description" substitutionGroup="abstract.record">
@@ -46,7 +46,7 @@ class RegulationGroupDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("base_regulation")
+@RecordParser.register_child("base_regulation")
 class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="base.regulation" substitutionGroup="abstract.record">
@@ -92,7 +92,7 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
     approved = TextElement(Tag("approved.flag"))
 
 
-@Record.register_child("modification_regulation")
+@RecordParser.register_child("modification_regulation")
 class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="modification.regulation" substitutionGroup="abstract.record">
@@ -137,7 +137,7 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     approved = TextElement(Tag("approved.flag"))
 
 
-@Record.register_child("fts_regulation")
+@RecordParser.register_child("fts_regulation")
 class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="full.temporary.stop.regulation" substitutionGroup="abstract.record">
@@ -176,7 +176,7 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
     approved = TextElement(Tag("approved.flag"))
 
 
-@Record.register_child("fts_action")
+@RecordParser.register_child("fts_action")
 class FullTemporaryStopActionParser(Writable, ElementParser):
     """
     <xs:element name="fts.regulation.action" substitutionGroup="abstract.record">
@@ -199,7 +199,7 @@ class FullTemporaryStopActionParser(Writable, ElementParser):
     target_regulation__regulation_id = TextElement(Tag("stopped.regulation.id"))
 
 
-@Record.register_child("regulation_replacement")
+@RecordParser.register_child("regulation_replacement")
 class RegulationReplacementParser(Writable, ElementParser):
     """
     <xs:element name="regulation.replacement" substitutionGroup="abstract.record">

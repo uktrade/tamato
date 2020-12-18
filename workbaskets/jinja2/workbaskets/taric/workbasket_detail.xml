@@ -1,0 +1,4 @@
+{%- extends "common/taric/base.xml" -%}
+{%- block transactions -%}
+{%- include "workbaskets/taric/workbasket.xml" -%}
+{%- endblock -%}

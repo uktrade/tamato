@@ -5,6 +5,7 @@ import xml.etree.ElementTree as etree
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Mapping
 from typing import Optional
 from xml.etree.ElementTree import Element
 
@@ -76,7 +77,7 @@ class ElementParser:
 
     """
 
-    tag: Tag = None
+    tag: Optional[Tag] = None
     data_class: type = dict
     end_hook: Optional[Callable[[Any, Element], None]] = None
 
@@ -117,7 +118,7 @@ class ElementParser:
 
     def start(self, element: etree.Element, parent: ElementParser = None):
         """
-        Handle the start of an XML tag. The tag may be not yet have all of its
+        Handle the start of an XML tag. The tag may not yet have all of its
         children.
 
         We have a few cases where there are tags nested within a tag of the same name.
@@ -174,7 +175,7 @@ class ElementParser:
             if element.text:
                 self.text = element.text.strip()
             self.data.update(element.attrib.items())
-            if self.end_hook:
+            if callable(self.end_hook):
                 self.end_hook(self.data, element)
             self.started = False
             self.clean()
@@ -263,27 +264,27 @@ class Writable:
 
     nursery = get_nursery()
 
-    def create(self, data, workbasket_id):
+    def create(self, data: Mapping[str, Any], transaction_id: int):
         """
         Preps the given data as a create record and submits it to the nursery for processing.
         """
-        data.update(update_type=UpdateType.CREATE.value)
+        data.update(update_type=UpdateType.CREATE)
 
         dispatch_object = {
             "data": data,
             "tag": self.tag.name,
-            "workbasket_id": workbasket_id,
+            "transaction_id": transaction_id,
         }
 
         self.nursery.submit(dispatch_object)
 
-    def update(self, data, workbasket_id):
+    def update(self, data: Mapping[str, Any], transaction_id: int):
         """Update a DB record with provided data"""
         raise NotImplementedError(
             f"{self.__class__.__name__} must implement `update` method"
         )
 
-    def delete(self, data, workbasket_id):
+    def delete(self, data: Mapping[str, Any], transaction_id: int):
         """Delete a DB record with provided data"""
         raise NotImplementedError(
             f"{self.__class__.__name__} must implement `delete` method"

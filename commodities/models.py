@@ -1,11 +1,8 @@
-from django.contrib.postgres.constraints import ExclusionConstraint
-from django.contrib.postgres.fields import RangeOperators
-from django.core.validators import MaxValueValidator
-from django.core.validators import MinValueValidator
 from django.db import models
 from treebeard.mp_tree import MP_Node
 
 from commodities import validators
+from common.models import NumericSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 
@@ -14,9 +11,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     record_code = "400"
     subrecord_code = "00"
 
-    sid = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
-    )
+    sid = NumericSID()
 
     # These are character fields as they often has leading 0s
     item_id = models.CharField(
@@ -43,63 +38,34 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         ),
     )
 
-    def validate_workbasket(self):
-        validators.validate_at_least_one_description(self)
-        validators.validate_at_least_one_indent(self)
-        validators.validate_has_origin(self)
-        self.full_clean()  # This means it is run twice but due to weirdness with the origin it is required.
-        return super().validate_workbasket()
-
     def __str__(self):
-        return f"Goods Nomenclature: {self.item_id}"
+        return self.item_id
 
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_goods",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )
+    def in_use(self):
+        # TODO handle deletes
+        return self.measures.model.objects.filter(
+            goods_nomenclature__sid=self.sid,
+        ).exists()
 
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
     record_code = "400"
     subrecord_code = "05"
 
-    sid = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99999999)], db_index=True
-    )
+    sid = NumericSID()
 
-    indent = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    indent = models.PositiveIntegerField()
 
     indented_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
     )
 
-    def clean(self):
-        validators.validate_indent_start_date_less_than_goods_end_date(self)
-        validators.validate_goods_parent_validity_includes_good(self)
-        return super().clean()
-
     def __str__(self):
-        depth = self.nodes.first().depth
-        return (
-            f"Goods Nomenclature Indent: {depth} - {self.indented_goods_nomenclature}"
-        )
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_goods_indents",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )
+        depth = "_"
+        first_node = self.nodes.first()
+        if first_node:
+            depth = first_node.depth
+        return f"{depth} - {self.indented_goods_nomenclature}"
 
 
 class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
@@ -187,6 +153,9 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
             or descendant_measures.exists()
         )
 
+    def __str__(self):
+        return f"path={self.path}, indent=({self.indent})"
+
 
 class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
     record_code = "400"
@@ -194,9 +163,7 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
     period_record_code = "400"
     period_subrecord_code = "10"
 
-    sid = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99999999)]
-    )
+    sid = NumericSID()
     described_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature,
         on_delete=models.PROTECT,
@@ -207,17 +174,6 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
     def clean(self):
         validators.validate_description_is_not_null(self)
         return super().clean()
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_goods_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )
 
 
 class GoodsNomenclatureOrigin(TrackedModel):
@@ -240,8 +196,11 @@ class GoodsNomenclatureOrigin(TrackedModel):
         on_delete=models.PROTECT,
     )
 
-    def clean(self):
-        validators.validate_derived_from_applicable_before_code_starts(self)
+    def __str__(self):
+        return (
+            f"derived_from=({self.derived_from_goods_nomenclature}), "
+            f"new=({self.new_goods_nomenclature})"
+        )
 
 
 class GoodsNomenclatureSuccessor(TrackedModel):
@@ -263,8 +222,11 @@ class GoodsNomenclatureSuccessor(TrackedModel):
         on_delete=models.PROTECT,
     )
 
-    def clean(self):
-        validators.validate_absorbed_by_code_applicable_after_closing_date(self)
+    def __str__(self):
+        return (
+            f"replaced=({self.replaced_goods_nomenclature}), "
+            f"absorbed_into=({self.absorbed_into_goods_nomenclature})"
+        )
 
 
 class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
@@ -277,9 +239,3 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
     )
 
     identifying_fields = "goods_nomenclature", "associated_footnote"
-
-    def clean(self):
-        validators.validate_goods_validity_includes_footnote_association(self)
-        validators.validate_footnote_validity_includes_footnote_association(self)
-        validators.validate_duplicate_footnote_associations_cant_overlap(self)
-        return super().clean()

@@ -1,7 +1,5 @@
 from django import forms
-from psycopg2.extras import DateTimeTZRange
 
-from common.forms import GovukDateField
 from common.forms import GovukDateRangeField
 from footnotes import models
 

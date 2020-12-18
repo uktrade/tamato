@@ -1,12 +1,10 @@
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
-from django.db import IntegrityError
 
 from common.tests import factories
-from common.tests.util import requires_commodities
 from common.tests.util import requires_meursing_tables
-from workbaskets.validators import WorkflowStatus
+from footnotes import business_rules
 
 
 pytestmark = pytest.mark.django_db
@@ -15,23 +13,22 @@ pytestmark = pytest.mark.django_db
 # Footnote Type
 
 
-def test_FOT1():
+def test_FOT1(make_duplicate_record):
     """The type of the footnote must be unique"""
 
-    t = factories.FootnoteTypeFactory()
+    duplicate = make_duplicate_record(factories.FootnoteTypeFactory)
 
-    with pytest.raises(IntegrityError):
-        factories.FootnoteTypeFactory(footnote_type_id=t.footnote_type_id)
+    with pytest.raises(ValidationError):
+        business_rules.FOT1().validate(duplicate)
 
 
-def test_FOT2():
+def test_FOT2(delete_record):
     """The footnote type cannot be deleted if it is used in a footnote"""
 
-    t = factories.FootnoteTypeFactory()
-    factories.FootnoteFactory(footnote_type=t)
+    footnote = factories.FootnoteFactory()
 
-    with pytest.raises(IntegrityError):
-        t.delete()
+    with pytest.raises(ValidationError):
+        business_rules.FOT2().validate(delete_record(footnote.footnote_type))
 
 
 def test_FOT3(date_ranges):
@@ -44,17 +41,13 @@ def test_FOT3(date_ranges):
 # Footnote
 
 
-def test_FO2(approved_workbasket):
+def test_FO2(make_duplicate_record):
     """The combination footnote type and code must be unique."""
 
-    workbasket = factories.WorkBasketFactory()
-    t = factories.FootnoteTypeFactory(workbasket=approved_workbasket)
-    f = factories.FootnoteFactory(footnote_type=t, workbasket=approved_workbasket)
-    factories.FootnoteFactory(
-        footnote_id=f.footnote_id, footnote_type=t, workbasket=workbasket
-    )
+    duplicate = make_duplicate_record(factories.FootnoteFactory)
+
     with pytest.raises(ValidationError):
-        workbasket.submit_for_approval()
+        business_rules.FO2().validate(duplicate)
 
 
 def test_FO3(date_ranges):
@@ -67,10 +60,8 @@ def test_FO3(date_ranges):
 def test_FO4_one_description_mandatory():
     """At least one description record is mandatory."""
 
-    footnote = factories.FootnoteFactory(description=None)
-
     with pytest.raises(ValidationError):
-        footnote.workbasket.submit_for_approval()
+        business_rules.FO4().validate(factories.FootnoteFactory(description=None))
 
 
 def test_FO4_first_description_must_have_same_start_date(date_ranges):
@@ -79,20 +70,21 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
     """
 
     with pytest.raises(ValidationError):
-        factories.FootnoteFactory(description__valid_between=date_ranges.later)
+        business_rules.FO4().validate(
+            factories.FootnoteFactory(description__valid_between=date_ranges.later)
+        )
 
 
-def test_FO4_start_dates_cannot_match(approved_workbasket):
+def test_FO4_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
-    footnote = factories.FootnoteFactory(workbasket=approved_workbasket)
-
-    description = factories.FootnoteDescriptionFactory(
+    footnote = factories.FootnoteFactory()
+    factories.FootnoteDescriptionFactory(
         described_footnote=footnote,
         valid_between=footnote.valid_between,
     )
     with pytest.raises(ValidationError):
-        description.workbasket.submit_for_approval()
+        business_rules.FO4().validate(footnote)
 
 
 def test_FO4_description_start_before_footnote_end(date_ranges):
@@ -100,14 +92,14 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
 
     footnote = factories.FootnoteFactory(
         valid_between=date_ranges.normal,
-        footnote_type__valid_between=date_ranges.big,
         description__valid_between=date_ranges.starts_with_normal,
+    )
+    factories.FootnoteDescriptionFactory(
+        described_footnote=footnote, valid_between=date_ranges.later
     )
 
     with pytest.raises(ValidationError):
-        factories.FootnoteDescriptionFactory(
-            described_footnote=footnote, valid_between=date_ranges.later
-        )
+        business_rules.FO4().validate(footnote)
 
 
 def test_FO5(date_ranges):
@@ -115,39 +107,56 @@ def test_FO5(date_ranges):
     span the validity period of the measure.
     """
 
-    measure = factories.MeasureFactory(
-        valid_between=date_ranges.normal,
+    assoc = factories.FootnoteAssociationMeasureFactory(
+        footnoted_measure=factories.MeasureFactory(valid_between=date_ranges.normal),
+        associated_footnote__valid_between=date_ranges.starts_with_normal,
     )
 
     with pytest.raises(ValidationError):
-        factories.FootnoteAssociationMeasureFactory(
-            footnoted_measure=measure,
-            associated_footnote__valid_between=date_ranges.starts_with_normal,
-        )
+        business_rules.FO5().validate(assoc.associated_footnote)
 
 
-@requires_commodities
-def test_FO6():
+def test_FO6(date_ranges):
     """When a footnote is used in a goods nomenclature the validity period of the
     footnote must span the validity period of the association with the goods
     nomenclature.
     """
 
+    assoc = factories.FootnoteAssociationGoodsNomenclatureFactory(
+        goods_nomenclature=factories.GoodsNomenclatureFactory(
+            valid_between=date_ranges.normal
+        ),
+        associated_footnote__valid_between=date_ranges.starts_with_normal,
+    )
 
-@requires_commodities
+    with pytest.raises(ValidationError):
+        business_rules.FO6().validate(assoc.associated_footnote)
+
+
+@pytest.mark.skip(reason="Export Refunds not implemented")
 def test_FO7():
     """When a footnote is used in an export refund nomenclature code the validity period
     of the footnote must span the validity period of the association with the export
     refund code.
     """
 
+    assert False
 
-@pytest.mark.skip(reason="Additional codes not implemented")
-def test_FO9():
+
+def test_FO9(date_ranges):
     """When a footnote is used in an additional code the validity period of the footnote
     must span the validity period of the association with the additional code.
     """
-    pass
+
+    assoc = factories.FootnoteAssociationAdditionalCodeFactory(
+        additional_code=factories.AdditionalCodeFactory(
+            valid_between=date_ranges.normal
+        ),
+        associated_footnote__valid_between=date_ranges.starts_with_normal,
+    )
+
+    with pytest.raises(ValidationError):
+        business_rules.FO9().validate(assoc.associated_footnote)
 
 
 @requires_meursing_tables
@@ -162,41 +171,53 @@ def test_FO17(date_ranges):
     footnote.
     """
 
-    t = factories.FootnoteTypeFactory(valid_between=date_ranges.normal)
     with pytest.raises(ValidationError):
-        factories.FootnoteFactory(
-            footnote_type=t, valid_between=date_ranges.overlap_normal
+        business_rules.FO17().validate(
+            factories.FootnoteFactory(
+                footnote_type__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal,
+            )
         )
 
 
-def test_FO11(approved_workbasket):
+def test_FO11(delete_record):
     """When a footnote is used in a measure then the footnote may not be deleted."""
 
-    assoc = factories.FootnoteAssociationMeasureFactory(workbasket=approved_workbasket)
+    assoc = factories.FootnoteAssociationMeasureFactory()
 
-    with pytest.raises(IntegrityError):
-        assoc.associated_footnote.delete()
+    with pytest.raises(ValidationError):
+        business_rules.FO11().validate(delete_record(assoc.associated_footnote))
 
 
-@requires_commodities
-def test_FO12():
+def test_FO12(delete_record):
     """When a footnote is used in a goods nomenclature then the footnote may not be
     deleted.
     """
 
+    assoc = factories.FootnoteAssociationGoodsNomenclatureFactory()
 
-@requires_commodities
+    with pytest.raises(ValidationError):
+        business_rules.FO12().validate(delete_record(assoc.associated_footnote))
+
+
+@pytest.mark.skip(reason="Export Refunds not implemented")
 def test_FO13():
     """When a footnote is used in an export refund code then the footnote may not be
     deleted.
     """
 
+    assert False
 
-@pytest.mark.skip(reason="Additional codes not implemented")
-def test_FO15():
+
+def test_FO15(delete_record):
     """When a footnote is used in an additional code then the footnote may not be
     deleted.
     """
+
+    assoc = factories.FootnoteAssociationAdditionalCodeFactory()
+
+    with pytest.raises(ValidationError):
+        business_rules.FO15().validate(delete_record(assoc.associated_footnote))
 
 
 @requires_meursing_tables

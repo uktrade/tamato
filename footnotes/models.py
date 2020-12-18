@@ -1,5 +1,5 @@
-from django.contrib.postgres.constraints import ExclusionConstraint
-from django.contrib.postgres.fields import RangeOperators
+from typing import Type
+
 from django.db import models
 from django.urls import reverse
 
@@ -8,6 +8,7 @@ from common.models import SignedIntSID
 from common.models import TimestampedMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from footnotes import business_rules
 from footnotes import validators
 
 
@@ -34,22 +35,19 @@ class FootnoteType(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
+    business_rules = (
+        business_rules.FOT1,
+        business_rules.FOT2,
+    )
+
     def __str__(self):
-        return f"{self.footnote_type_id} - {self.description}"
+        return self.footnote_type_id
 
-    def clean(self):
-        validators.validate_description_is_not_null(self)
-
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_footnote_types",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("footnote_type_id", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
+    def in_use(self):
+        # TODO this needs to repect deletes
+        return Footnote.objects.filter(
+            footnote_type__footnote_type_id=self.footnote_type_id
+        ).exists()
 
 
 class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
@@ -66,6 +64,12 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
     footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
 
     identifying_fields = ("footnote_id", "footnote_type")
+
+    business_rules = (
+        business_rules.FO2,
+        business_rules.FO4,
+        business_rules.FO17,
+    )
 
     def __str__(self):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
@@ -92,12 +96,28 @@ class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
     def get_description(self):
         return self.get_descriptions().last()
 
-    def clean(self):
-        validators.validate_footnote_type_validity_includes_footnote_validity(self)
+    def _used_in(self, dependent_type: Type[TrackedModel]):
+        # TODO this should respect deletes
+        return dependent_type.objects.filter(
+            associated_footnote__footnote_id=self.footnote_id,
+            associated_footnote__footnote_type__footnote_type_id=self.footnote_type.footnote_type_id,
+        ).exists()
 
-    def validate_workbasket(self):
-        validators.validate_unique_type_and_id(self)
-        validators.validate_at_least_one_description(self)
+    def used_in_additional_code(self):
+        return self._used_in(self.footnoteassociationadditionalcode_set.model)
+
+    def used_in_goods_nomenclature(self):
+        return self._used_in(self.footnoteassociationgoodsnomenclature_set.model)
+
+    def used_in_measure(self):
+        return self._used_in(self.footnoteassociationmeasure_set.model)
+
+    def in_use(self):
+        return (
+            self.used_in_additional_code()
+            or self.used_in_goods_nomenclature()
+            or self.used_in_measure()
+        )
 
     class Meta:
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
@@ -128,16 +148,7 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
     identifying_fields = ("description_period_sid",)
 
     def __str__(self):
-        return self.description
-
-    def clean(self):
-        validators.validate_first_footnote_description_has_footnote_start_date(self)
-        validators.validate_footnote_description_start_date_before_footnote_end_date(
-            self
-        )
-
-    def validate_workbasket(self):
-        validators.validate_footnote_description_dont_have_same_start_date(self)
+        return f"for Footnote {self.described_footnote}"
 
     def get_url(self, action="detail"):
         return reverse(

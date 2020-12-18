@@ -33,9 +33,7 @@ class ParentGeographicalAreaSerializer(ValiditySerializerMixin):
 
 @TrackedModelSerializer.register_polymorphic_model
 class GeographicalAreaSerializer(ValiditySerializerMixin, TrackedModelSerializerMixin):
-    descriptions = GeographicalAreaDescriptionSerializer(
-        many=True, source="geographicalareadescription_set"
-    )
+    descriptions = GeographicalAreaDescriptionSerializer(many=True)
     parent = ParentGeographicalAreaSerializer(read_only=True)
 
     class Meta:

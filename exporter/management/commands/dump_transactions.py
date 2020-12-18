@@ -1,11 +1,9 @@
 import sys
 
-from exporter.management.commands.util import (
-    get_envelope_of_active_workbaskets,
-    WorkBasketBaseCommand,
-)
-from workbaskets.validators import WorkflowStatus
+from exporter.management.commands.util import get_envelope_of_active_workbaskets
+from exporter.management.commands.util import WorkBasketBaseCommand
 from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 
 class Command(WorkBasketBaseCommand):
@@ -32,9 +30,7 @@ class Command(WorkBasketBaseCommand):
         return open(filename, "w+")
 
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.prefetch_ordered_tracked_models().filter(
-            status=WorkflowStatus.READY_FOR_EXPORT
-        )
+        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
 
         envelope = get_envelope_of_active_workbaskets(workbaskets)
 

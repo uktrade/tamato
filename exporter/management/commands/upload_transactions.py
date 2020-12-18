@@ -3,11 +3,9 @@ from pathlib import Path
 from django.conf import settings
 from django.core.files.base import ContentFile
 
-from exporter.management.commands.util import (
-    get_envelope_of_active_workbaskets,
-    get_envelope_filename,
-    WorkBasketBaseCommand,
-)
+from exporter.management.commands.util import get_envelope_filename
+from exporter.management.commands.util import get_envelope_of_active_workbaskets
+from exporter.management.commands.util import WorkBasketBaseCommand
 from exporter.storages import HMRCStorage
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -22,9 +20,7 @@ class Command(WorkBasketBaseCommand):
     help = "Upload workbaskets ready for export to HMRC S3 Storage."
 
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.prefetch_ordered_tracked_models().filter(
-            status=WorkflowStatus.READY_FOR_EXPORT
-        )
+        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
 
         envelope = get_envelope_of_active_workbaskets(workbaskets)
         self.validate_envelope(envelope)

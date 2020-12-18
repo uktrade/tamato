@@ -9,7 +9,8 @@ from common.tests import factories
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from footnotes.models import FootnoteType
-from regulations.models import Regulation, Group
+from regulations.models import Group
+from regulations.models import Regulation
 
 pytestmark = pytest.mark.django_db
 
@@ -83,30 +84,7 @@ def test_get_current(model1_with_history, model2_with_history):
     }
 
 
-def test_since_transaction():
-    """
-    Ensure all records since a transaction are fetched.
-    """
-    for _ in range(5):
-        workbasket = factories.TransactionFactory().workbasket
-        factories.TestModel1Factory(workbasket=workbasket)
-        factories.TestModel2Factory(workbasket=workbasket)
-
-    transaction = factories.TransactionFactory()
-
-    recent_transactions = set()
-
-    for _ in range(2):
-        workbasket = factories.TransactionFactory().workbasket
-        recent_transactions.add(factories.TestModel1Factory(workbasket=workbasket).pk)
-        recent_transactions.add(factories.TestModel2Factory(workbasket=workbasket).pk)
-
-    since_transaction = TrackedModel.objects.since_transaction(transaction.pk)
-
-    assert set(since_transaction.values_list("pk", flat=True)) == recent_transactions
-
-
-def test_as_at(model1_with_history, date_ranges):
+def test_as_at(date_ranges):
     """
     Ensure only records active at a specific date are fetched.
     """
@@ -121,7 +99,7 @@ def test_as_at(model1_with_history, date_ranges):
     assert set(queryset.values_list("pk", flat=True)) == pks
 
 
-def test_active(model1_with_history, date_ranges):
+def test_active(model1_with_history):
     """
     Ensure only the currently active records are fetched.
     """
@@ -143,7 +121,7 @@ def test_get_version_raises_error():
         TestModel2.objects.get_version(sid=1)
 
 
-def test_get_current_version(date_ranges, model1_with_history):
+def test_get_current_version(model1_with_history):
     """
     Ensure getting the current version works with a standard sid identifier.
     """
@@ -152,7 +130,7 @@ def test_get_current_version(date_ranges, model1_with_history):
     assert TestModel1.objects.get_current_version(sid=model.sid) == model
 
 
-def test_get_current_version_custom_identifier(date_ranges, model2_with_history):
+def test_get_current_version_custom_identifier(model2_with_history):
     """
     Ensure getting the current version works with a custom identifier.
     """
@@ -161,7 +139,7 @@ def test_get_current_version_custom_identifier(date_ranges, model2_with_history)
     assert TestModel2.objects.get_current_version(custom_sid=model.custom_sid) == model
 
 
-def test_get_latest_version(date_ranges, model1_with_history):
+def test_get_latest_version(model1_with_history):
     """
     Ensure getting the latest version works with a standard sid identifier.
     """
@@ -170,7 +148,7 @@ def test_get_latest_version(date_ranges, model1_with_history):
     assert TestModel1.objects.get_latest_version(sid=model.sid) == model
 
 
-def test_get_latest_version_custom_identifier(date_ranges, model2_with_history):
+def test_get_latest_version_custom_identifier(model2_with_history):
     """
     Ensure getting the latest version works with a custom identifier.
     """
@@ -179,7 +157,7 @@ def test_get_latest_version_custom_identifier(date_ranges, model2_with_history):
     assert TestModel2.objects.get_latest_version(custom_sid=model.custom_sid) == model
 
 
-def test_get_first_version(date_ranges, model1_with_history):
+def test_get_first_version(model1_with_history):
     """
     Ensure getting the first version works with a standard sid identifier.
     """
@@ -188,7 +166,7 @@ def test_get_first_version(date_ranges, model1_with_history):
     assert TestModel1.objects.get_first_version(sid=model.sid) == model
 
 
-def test_get_first_version_custom_identifier(date_ranges, model2_with_history):
+def test_get_first_version_custom_identifier(model2_with_history):
     """
     Ensure getting the first version works with a custom identifier.
     """
@@ -198,27 +176,30 @@ def test_get_first_version_custom_identifier(date_ranges, model2_with_history):
 
 
 def test_trackedmodel_can_attach_record_codes(workbasket):
-    # Note:  regulation.Regulation implicitly creates a regulation.Group as well!
-    factories.RegulationFactory.create(workbasket=workbasket)
-    factories.FootnoteTypeFactory.create(workbasket=workbasket)
+    tx = workbasket.new_transaction()
+
+    with tx:
+        # Note:  regulation.Regulation implicitly creates a regulation.Group as well!
+        factories.RegulationFactory.create()
+        factories.FootnoteTypeFactory.create()
 
     tracked_models = (
         TrackedModel.objects.annotate_record_codes()
         .select_related()
-        .filter(workbasket_id=workbasket.id)
+        .filter(transaction=tx)
     )
 
     expected_models = [
-        (workbasket.pk, Group, "150", "00"),
-        (workbasket.pk, Regulation, "285", "00"),
-        (workbasket.pk, FootnoteType, "100", "00"),
+        (tx.pk, Group, "150", "00"),
+        (tx.pk, Regulation, "285", "00"),
+        (tx.pk, FootnoteType, "100", "00"),
     ]
 
     assertQuerysetEqual(
         tracked_models,
         expected_models,
         transform=lambda o: (
-            o.workbasket.pk,
+            o.transaction.pk,
             o.__class__,
             o.record_code,
             o.subrecord_code,

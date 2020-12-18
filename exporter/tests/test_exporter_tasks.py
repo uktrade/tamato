@@ -1,19 +1,20 @@
-from exporter.tasks import upload_workbaskets
 from unittest import mock
-
-from lxml import etree
 
 import pytest
 from django.core.management import call_command
+from lxml import etree
 
-from common.tests.factories import RegulationFactory, FootnoteTypeFactory
-from common.tests.util import validate_taric_xml_record_order, taric_xml_record_codes
+from common.tests.factories import FootnoteTypeFactory
+from common.tests.factories import RegulationFactory
+from common.tests.util import taric_xml_record_codes
+from common.tests.util import validate_taric_xml_record_order
+from exporter.tasks import upload_workbaskets
 
 pytestmark = pytest.mark.django_db
 
 
 def test_upload_task_uploads_approved_workbasket_to_s3(
-    approved_workbasket,
+    approved_transaction,
     hmrc_storage,
     s3,
     s3_object_exists,
@@ -27,8 +28,8 @@ def test_upload_task_uploads_approved_workbasket_to_s3(
 
     settings.HMRC_STORAGE_BUCKET_NAME = expected_bucket
 
-    RegulationFactory.create(workbasket=approved_workbasket)
-    FootnoteTypeFactory.create(workbasket=approved_workbasket)
+    RegulationFactory.create(transaction=approved_transaction)
+    FootnoteTypeFactory.create(transaction=approved_transaction)
 
     with mock.patch(
         "exporter.storages.HMRCStorage.save",

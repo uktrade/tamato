@@ -3,6 +3,8 @@ import os
 from hashlib import md5
 from unittest.mock import Mock
 
+import pytest
+
 from common.tests import factories
 from hmrc_sdes.api_client import HmrcSdesClient
 

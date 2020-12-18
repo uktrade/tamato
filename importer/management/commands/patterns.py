@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 from datetime import timedelta
 from functools import cached_property
-from typing import Callable
 from typing import Dict
 from typing import Generic
 from typing import Iterator
@@ -22,15 +21,14 @@ from certificates.models import Certificate
 from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
+from common.models import Transaction
 from common.renderers import counter_generator
-from common.tests.factories import GoodsNomenclatureFactory
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.utils import blank
 from importer.management.commands.utils import clean_item_id
-from importer.management.commands.utils import convert_eur_to_gbp
 from importer.management.commands.utils import Counter
 from importer.management.commands.utils import maybe_max
 from importer.management.commands.utils import maybe_min
@@ -45,12 +43,10 @@ from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
-from measures.models import MonetaryUnit
 from quotas.models import QuotaOrderNumber
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
 from regulations.models import Regulation
-from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
 
@@ -127,20 +123,20 @@ class MeasureCreatingPattern:
     def __init__(
         self,
         generating_regulation: Regulation,
-        workbasket: WorkBasket,
+        transaction: Transaction,
         duty_sentence_parser: DutySentenceParser,
         base_date: datetime = BREXIT,
         timezone=LONDON,
-        exclusion_areas: Dict[str, GeographicalArea] = {},
+        exclusion_areas: Optional[Dict[str, GeographicalArea]] = None,
         measure_sid_counter: Counter = counter_generator(),
         measure_condition_sid_counter: Counter = counter_generator(),
     ) -> None:
         self.seasonal_rate_parser = SeasonalRateParser(
             base_date=base_date, timezone=timezone
         )
-        self.exclusion_areas = exclusion_areas
+        self.exclusion_areas = exclusion_areas or {}
         self.generating_regulation = generating_regulation
-        self.workbasket = workbasket
+        self.transaction = transaction
         self.duty_sentence_parser = duty_sentence_parser
         self.measure_sid_counter = measure_sid_counter
         self.measure_condition_sid_counter = measure_condition_sid_counter
@@ -170,7 +166,7 @@ class MeasureCreatingPattern:
                 required_certificate=certificate,
                 action=apply_mentioned_duty,
                 update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+                transaction=self.transaction,
             ),
             MeasureCondition(
                 sid=self.measure_condition_sid_counter(),
@@ -179,7 +175,7 @@ class MeasureCreatingPattern:
                 condition_code=presentation_of_certificate,
                 action=subheading_not_allowed,
                 update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+                transaction=self.transaction,
             ),
         ]
 
@@ -191,7 +187,7 @@ class MeasureCreatingPattern:
             for component in self.duty_sentence_parser.parse(rate):
                 component.component_measure = measure
                 component.update_type = UpdateType.CREATE
-                component.workbasket = self.workbasket
+                component.transaction = self.transaction
                 components.append(component)
             return components
         except RuntimeError as ex:
@@ -206,23 +202,21 @@ class MeasureCreatingPattern:
             modified_measure=measure,
             excluded_geographical_area=exclusion,
             update_type=UpdateType.CREATE,
-            workbasket=self.workbasket,
+            transaction=self.transaction,
         )
 
     def get_measure_footnotes(
         self, measure: Measure, footnotes: List[Footnote]
     ) -> List[FootnoteAssociationMeasure]:
-        footnote_measures = []
-        for footnote in footnotes:
-            footnote_measures.append(
-                FootnoteAssociationMeasure(
-                    footnoted_measure=measure,
-                    associated_footnote=footnote,
-                    update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
-                )
+        return [
+            FootnoteAssociationMeasure(
+                footnoted_measure=measure,
+                associated_footnote=footnote,
+                update_type=UpdateType.CREATE,
+                transaction=self.transaction,
             )
-        return footnote_measures
+            for footnote in footnotes
+        ]
 
     def create(
         self,
@@ -276,7 +270,7 @@ class MeasureCreatingPattern:
                 order_number=order_number,
                 additional_code=additional_code,
                 update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+                transaction=self.transaction,
             )
             yield new_measure
 
@@ -285,19 +279,13 @@ class MeasureCreatingPattern:
                     new_measure, geo_exclusion
                 )
 
-            for footnote in self.get_measure_footnotes(new_measure, footnotes):
-                yield footnote
+            yield from self.get_measure_footnotes(new_measure, footnotes)
 
             # If this is a measure under authorised use, we need to add
             # some measure conditions with the N990 certificate.
             if authorised_use:
-                for condition in self.get_default_measure_conditions(new_measure):
-                    yield condition
-
-            for component in self.get_measure_components_from_duty_rate(
-                new_measure, rate
-            ):
-                yield component
+                yield from self.get_default_measure_conditions(new_measure)
+            yield from self.get_measure_components_from_duty_rate(new_measure, rate)
 
 
 class MeasureEndingPattern:
@@ -307,12 +295,12 @@ class MeasureEndingPattern:
 
     def __init__(
         self,
-        workbasket: WorkBasket,
+        transaction: Optional[Transaction] = None,
         measure_types: Dict[str, MeasureType] = {},
         geo_areas: Dict[str, GeographicalArea] = {},
         ensure_unique: bool = True,
     ) -> None:
-        self.workbasket = workbasket
+        self.transaction = transaction
         self.measure_types = measure_types
         self.geo_areas = geo_areas
         self.ensure_unique = ensure_unique
@@ -326,118 +314,117 @@ class MeasureEndingPattern:
         terminating_regulation: Regulation,
         new_start_date: datetime = BREXIT,
     ) -> Iterator[TrackedModel]:
-        if not old_row.inherited_measure:
-            if old_row.measure_sid in self.old_sids and self.ensure_unique:
-                raise Exception(
-                    f"Measure appears more than once: {old_row.measure_sid}"
-                )
-            self.old_sids.add(old_row.measure_sid)
+        if old_row.inherited_measure:
+            return
+        if old_row.measure_sid in self.old_sids and self.ensure_unique:
+            raise Exception(f"Measure appears more than once: {old_row.measure_sid}")
+        self.old_sids.add(old_row.measure_sid)
 
-            # Make sure we have loaded the types and areas we need
-            if old_row.measure_type not in self.measure_types:
-                self.measure_types[old_row.measure_type] = MeasureType.objects.get(
-                    sid=old_row.measure_type
-                )
-            if old_row.geo_sid not in self.geo_areas:
-                self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.get(
-                    sid=old_row.geo_sid
-                )
-
-            # Look up the quota this measure should have
-            # If this measure has a licensed quota, we'll need to create it
-            # because it won't be in the source data. We assume this isn't saved.
-            if old_row.order_number and old_row.order_number.startswith("094"):
-                quota, created = QuotaOrderNumber.objects.get_or_create(
-                    order_number=old_row.order_number,
-                    defaults={
-                        "sid": self.fake_quota_sids(),
-                        "valid_between": DateTimeTZRange(
-                            lower=self.start_of_time,
-                            upper=None,
-                        ),
-                        "category": QuotaCategory.WTO,
-                        "mechanism": AdministrationMechanism.LICENSED,
-                        "workbasket": self.workbasket,
-                        "update_type": UpdateType.CREATE,
-                    },
-                )
-            else:
-                quota = (
-                    QuotaOrderNumber.objects.get(
-                        order_number=old_row.order_number,
-                        valid_between__contains=DateTimeTZRange(
-                            lower=old_row.measure_start_date,
-                            upper=old_row.measure_end_date,
-                        ),
-                    )
-                    if old_row.order_number
-                    else None
-                )
-
-            # If the old measure starts after the start date, we instead
-            # need to delete it and it will never come into force
-            # If it ends before the start date, we don't need to do anything!
-            starts_after_date = old_row.measure_start_date >= new_start_date
-            ends_before_date = (
-                old_row.measure_end_date and old_row.measure_end_date < new_start_date
+        # Make sure we have loaded the types and areas we need
+        if old_row.measure_type not in self.measure_types:
+            self.measure_types[old_row.measure_type] = MeasureType.objects.get(
+                sid=old_row.measure_type
+            )
+        if old_row.geo_sid not in self.geo_areas:
+            self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.get(
+                sid=old_row.geo_sid
             )
 
-            generating_regulation = Regulation.objects.get(
+        # Look up the quota this measure should have
+        # If this measure has a licensed quota, we'll need to create it
+        # because it won't be in the source data. We assume this isn't saved.
+        if old_row.order_number and old_row.order_number.startswith("094"):
+            quota, _ = QuotaOrderNumber.objects.get_or_create(
+                order_number=old_row.order_number,
+                defaults={
+                    "sid": self.fake_quota_sids(),
+                    "valid_between": DateTimeTZRange(
+                        lower=self.start_of_time,
+                        upper=None,
+                    ),
+                    "category": QuotaCategory.WTO,
+                    "mechanism": AdministrationMechanism.LICENSED,
+                    "transaction": self.transaction,
+                    "update_type": UpdateType.CREATE,
+                },
+            )
+        else:
+            quota = (
+                QuotaOrderNumber.objects.get(
+                    order_number=old_row.order_number,
+                    valid_between__contains=DateTimeTZRange(
+                        lower=old_row.measure_start_date,
+                        upper=old_row.measure_end_date,
+                    ),
+                )
+                if old_row.order_number
+                else None
+            )
+
+        # If the old measure starts after the start date, we instead
+        # need to delete it and it will never come into force
+        # If it ends before the start date, we don't need to do anything!
+        starts_after_date = old_row.measure_start_date >= new_start_date
+        ends_before_date = (
+            old_row.measure_end_date and old_row.measure_end_date < new_start_date
+        )
+
+        generating_regulation = Regulation.objects.get(
+            role_type=old_row.regulation_role,
+            regulation_id=old_row.regulation_id,
+        )
+
+        if old_row.justification_regulation_id and starts_after_date:
+            # We are going to delete the measure, but we still need the
+            # regulation to be correct if it has already been end-dated
+            assert old_row.measure_end_date
+            justification_regulation = Regulation.objects.get(
                 role_type=old_row.regulation_role,
                 regulation_id=old_row.regulation_id,
             )
+        elif not starts_after_date:
+            # We are going to end-date the measure, and terminate it with
+            # the UKGT SI.
+            justification_regulation = terminating_regulation
+        else:
+            # We are going to delete the measure but it has not been end-dated.
+            assert old_row.measure_end_date is None
+            justification_regulation = None
 
-            if old_row.justification_regulation_id and starts_after_date:
-                # We are going to delete the measure, but we still need the
-                # regulation to be correct if it has already been end-dated
-                assert old_row.measure_end_date
-                justification_regulation = Regulation.objects.get(
-                    role_type=old_row.regulation_role,
-                    regulation_id=old_row.regulation_id,
-                )
-            elif not starts_after_date:
-                # We are going to end-date the measure, and terminate it with
-                # the UKGT SI.
-                justification_regulation = terminating_regulation
-            else:
-                # We are going to delete the measure but it has not been end-dated.
-                assert old_row.measure_end_date is None
-                justification_regulation = None
-
-            if not ends_before_date:
-                yield Measure(
-                    sid=old_row.measure_sid,
-                    measure_type=self.measure_types[old_row.measure_type],
-                    geographical_area=self.geo_areas[old_row.geo_sid],
-                    goods_nomenclature=old_row.goods_nomenclature,
-                    additional_code=(
-                        AdditionalCode.objects.get(sid=old_row.additional_code_sid)
-                        if old_row.additional_code_sid
-                        else None
+        if not ends_before_date:
+            yield Measure(
+                sid=old_row.measure_sid,
+                measure_type=self.measure_types[old_row.measure_type],
+                geographical_area=self.geo_areas[old_row.geo_sid],
+                goods_nomenclature=old_row.goods_nomenclature,
+                additional_code=(
+                    AdditionalCode.objects.get(sid=old_row.additional_code_sid)
+                    if old_row.additional_code_sid
+                    else None
+                ),
+                valid_between=DateTimeTZRange(
+                    old_row.measure_start_date,
+                    (
+                        old_row.measure_end_date
+                        if starts_after_date
+                        else new_start_date - timedelta(days=1)
                     ),
-                    valid_between=DateTimeTZRange(
-                        old_row.measure_start_date,
-                        (
-                            old_row.measure_end_date
-                            if starts_after_date
-                            else new_start_date - timedelta(days=1)
-                        ),
-                    ),
-                    order_number=quota,
-                    generating_regulation=generating_regulation,
-                    terminating_regulation=justification_regulation,
-                    stopped=old_row.stopped,
-                    reduction=old_row.reduction,
-                    export_refund_nomenclature_sid=old_row.export_refund_sid,
-                    update_type=(
-                        UpdateType.DELETE if starts_after_date else UpdateType.UPDATE
-                    ),
-                    workbasket=self.workbasket,
-                )
-            else:
-                logger.debug(
-                    "Ignoring old measure %s as ends before Brexit", old_row.measure_sid
-                )
+                ),
+                order_number=quota,
+                generating_regulation=generating_regulation,
+                terminating_regulation=justification_regulation,
+                stopped=old_row.stopped,
+                reduction=old_row.reduction,
+                export_refund_nomenclature_sid=old_row.export_refund_sid,
+                update_type=(
+                    UpdateType.DELETE if starts_after_date else UpdateType.UPDATE
+                ),
+                transaction=self.transaction,
+            )
+        else:
+            logger.debug(
+                "Ignoring old measure %s as ends before Brexit", old_row.measure_sid
+            )
 
 
 OldRow = TypeVar("OldRow")
@@ -534,11 +521,9 @@ class DualRowRunner(Generic[OldRow, NewRow]):
 
             self.old_rows.reset()
             self.new_rows.reset()
-            for transaction in self.handle_rows(
+            yield from self.handle_rows(
                 old_row if old_waiting else None,
                 new_row if new_waiting else None,
-            ):
-                yield transaction
-
+            )
         else:
             return iter([])

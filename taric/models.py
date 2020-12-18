@@ -1,6 +1,7 @@
 # XXX need to keep this file for migrations to work. delete later.
 from django.db import models
 
+from common.models.transactions import Transaction
 from taric import validators
 
 
@@ -20,3 +21,27 @@ class EnvelopeId(models.CharField):
         del kwargs["max_length"]
         del kwargs["validators"]
         return name, path, args, kwargs
+
+
+class Envelope(models.Model):
+    """Represents a TARIC3 envelope
+
+    An Envelope contains one or more Transactions, listing changes to be applied to the
+    tariff in the sequence defined by the transaction IDs.
+    """
+
+    envelope_id = EnvelopeId()
+    transactions = models.ManyToManyField(
+        Transaction, related_name="envelopes", through="EnvelopeTransaction"
+    )
+
+
+class EnvelopeTransaction(models.Model):
+    """Applies a sequence to Transactions contained in an Envelope."""
+
+    order = models.IntegerField()
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    envelope = models.ForeignKey(Envelope, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ("order",)

@@ -4,10 +4,10 @@ from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
-@Record.register_child("certificate_type")
+@RecordParser.register_child("certificate_type")
 class CertificateTypeParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="certificate.type" substitutionGroup="abstract.record">
@@ -26,7 +26,7 @@ class CertificateTypeParser(ValidityMixin, Writable, ElementParser):
     sid = TextElement(Tag("certificate.type.code"))
 
 
-@Record.register_child("certificate_type_description")
+@RecordParser.register_child("certificate_type_description")
 class CertificateTypeDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="certificate.type.description" substitutionGroup="abstract.record">
@@ -46,7 +46,7 @@ class CertificateTypeDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("certificate")
+@RecordParser.register_child("certificate")
 class CertificateParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="certificate" substitutionGroup="abstract.record">
@@ -67,7 +67,7 @@ class CertificateParser(ValidityMixin, Writable, ElementParser):
     certificate_type__sid = TextElement(Tag("certificate.type.code"))
 
 
-@Record.register_child("certificate_description")
+@RecordParser.register_child("certificate_description")
 class CertificateDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="certificate.description" substitutionGroup="abstract.record">
@@ -91,7 +91,7 @@ class CertificateDescriptionParser(Writable, ElementParser):
     described_certificate__type__sid = TextElement(Tag("certificate.type.code"))
 
 
-@Record.register_child("certificate_description_period")
+@RecordParser.register_child("certificate_description_period")
 class CertificateDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="certificate.description.period" substitutionGroup="abstract.record">

@@ -1,17 +1,14 @@
-from datetime import datetime
-from datetime import timezone
 from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
-from django.db import IntegrityError
 
 from common.tests import factories
 from common.tests.util import only_applicable_after
-from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from measures.validators import OrderNumberCaptureCode
+from quotas import business_rules
 from quotas.validators import AdministrationMechanism
 from quotas.validators import SubQuotaType
 
@@ -19,25 +16,25 @@ from quotas.validators import SubQuotaType
 pytestmark = pytest.mark.django_db
 
 
-def test_ON1(approved_workbasket):
+def test_ON1(make_duplicate_record):
     """Quota order number id + start date must be unique"""
 
-    existing = factories.QuotaOrderNumberFactory(workbasket=approved_workbasket)
+    duplicate = make_duplicate_record(
+        factories.QuotaOrderNumberFactory,
+        identifying_fields=business_rules.ON1.identifying_fields,
+    )
 
     with pytest.raises(ValidationError):
-        factories.QuotaOrderNumberFactory(
-            order_number=existing.order_number,
-            valid_between=existing.valid_between,
-        )
+        business_rules.ON1().validate(duplicate)
 
 
-def test_ON2(date_ranges, approved_workbasket):
+def test_ON2(date_ranges, approved_transaction):
     """There may be no overlap in time of two quota order numbers with the same quota
     order number id.
     """
 
     existing = factories.QuotaOrderNumberFactory(
-        valid_between=date_ranges.normal, workbasket=approved_workbasket
+        valid_between=date_ranges.normal, transaction=approved_transaction
     )
 
     order_number = factories.QuotaOrderNumberFactory(
@@ -46,160 +43,146 @@ def test_ON2(date_ranges, approved_workbasket):
     )
 
     with pytest.raises(ValidationError):
-        order_number.workbasket.submit_for_approval()
+        business_rules.ON2().validate(order_number)
 
 
-def test_ON5(date_ranges, approved_workbasket):
+def test_ON5(date_ranges, approved_transaction):
     """There may be no overlap in time of two quota order number origins with the same
     quota order number SID and geographical area id.
     """
 
     order_number = factories.QuotaOrderNumberFactory(
-        valid_between=date_ranges.normal, workbasket=approved_workbasket
+        valid_between=date_ranges.normal, transaction=approved_transaction
     )
     existing = factories.QuotaOrderNumberOriginFactory(
         order_number=order_number,
         valid_between=date_ranges.starts_with_normal,
-        workbasket=approved_workbasket,
+        transaction=approved_transaction,
     )
 
     origin = factories.QuotaOrderNumberOriginFactory(
         geographical_area=existing.geographical_area,
         order_number=order_number,
-        update_type=UpdateType.CREATE,
         valid_between=date_ranges.starts_with_normal,
     )
 
     with pytest.raises(ValidationError):
-        origin.workbasket.submit_for_approval()
+        business_rules.ON5().validate(origin)
 
 
-@only_applicable_after("31/12/2006")
-def test_ON6(date_ranges, approved_workbasket):
+@only_applicable_after("2006-12-31")
+def test_ON6(date_ranges):
     """The validity period of the geographical area must span the validity period of the
     quota order number origin.
 
     Only applies to quota order numbers with a validity start date after 2006-12-31.
     """
 
+    origin = factories.QuotaOrderNumberOriginFactory(
+        geographical_area__valid_between=date_ranges.starts_with_normal,
+        valid_between=date_ranges.normal,
+    )
+
     with pytest.raises(ValidationError):
-        factories.QuotaOrderNumberOriginFactory(
-            geographical_area__valid_between=date_ranges.starts_with_normal,
-            valid_between=date_ranges.normal,
-        )
+        business_rules.ON6().validate(origin)
 
 
-def test_ON7(date_ranges, approved_workbasket):
+def test_ON7(date_ranges, approved_transaction):
     """The validity period of the quota order number must span the validity period of
     the quota order number origin.
     """
 
     order_number = factories.QuotaOrderNumberFactory(
-        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
+        transaction=approved_transaction, valid_between=date_ranges.starts_with_normal
     )
     origin = factories.QuotaOrderNumberOriginFactory(
         order_number=order_number,
-        update_type=UpdateType.CREATE,
         valid_between=date_ranges.normal,
     )
 
     with pytest.raises(ValidationError):
-        origin.workbasket.submit_for_approval()
+        business_rules.ON7().validate(origin)
 
 
-def test_ON8(date_ranges, approved_workbasket):
+def test_ON8(date_ranges, approved_transaction):
     """The validity period of the quota order number must span the validity period of
     the referencing quota definition.
     """
 
     order_number = factories.QuotaOrderNumberFactory(
-        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
+        transaction=approved_transaction, valid_between=date_ranges.starts_with_normal
     )
     quota_def = factories.QuotaDefinitionFactory(
         order_number=order_number,
-        update_type=UpdateType.CREATE,
         valid_between=date_ranges.normal,
     )
 
     with pytest.raises(ValidationError):
-        quota_def.workbasket.submit_for_approval()
+        business_rules.ON8().validate(quota_def)
 
 
-@pytest.mark.skip(reason="Duplicates ME116")
-def test_ON9(date_ranges, approved_workbasket):
+@only_applicable_after("2007-12-31")
+def test_ON9(date_ranges):
     """When a quota order number is used in a measure then the validity period of the
     quota order number must span the validity period of the measure.
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
 
+    order_number = factories.QuotaOrderNumberFactory(valid_between=date_ranges.normal)
+    factories.MeasureFactory(
+        order_number=order_number, valid_between=date_ranges.overlap_normal
+    )
 
-@pytest.mark.skip(reason="Duplicates ME119")
-def test_ON10(date_ranges, approved_workbasket):
+    with pytest.raises(ValidationError):
+        business_rules.ON9().validate(order_number)
+
+
+@only_applicable_after("2007-12-31")
+def test_ON10(date_ranges):
     """When a quota order number is used in a measure then the validity period of the
     quota order number origin must span the validity period of the measure.
 
     This rule is only applicable for measures with start date after 31/12/2007.
     """
 
-    origin = factories.QuotaOrderNumberOriginFactory(
-        order_number__mechanism=AdministrationMechanism.FCFS,
-        valid_between=date_ranges.normal,
-        workbasket=approved_workbasket,
+    measure = factories.MeasureWithQuotaFactory(
+        order_number__origin__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
     )
 
-    factories.MeasureFactory(
-        geographical_area=origin.geographical_area,
-        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
-        order_number=origin.order_number,
-    )
+    with pytest.raises(ValidationError):
+        business_rules.ON10().validate(
+            measure.order_number.quotaordernumberorigin_set.first()
+        )
 
 
-@only_applicable_after("31/12/2007")
-def test_ON11(approved_workbasket):
+@only_applicable_after("2007-12-31")
+def test_ON11(delete_record):
     """The quota order number cannot be deleted if it is used in a measure.
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
 
-    origin = factories.QuotaOrderNumberOriginFactory(
-        order_number__mechanism=AdministrationMechanism.FCFS,
-        workbasket=approved_workbasket,
-    )
-    measure = factories.MeasureFactory(
-        geographical_area=origin.geographical_area,
-        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
-        order_number=origin.order_number,
-    )
+    measure = factories.MeasureWithQuotaFactory()
 
     with pytest.raises(ValidationError):
-        try:
-            measure.order_number.delete()
-        except IntegrityError:
-            # XXX can't delete from database due to on_delete=models.PROTECT
-            # we need to revisit this validation for TARIC deletions
-            pass
+        business_rules.ON11().validate(delete_record(measure.order_number))
 
 
-@only_applicable_after("31/12/2007")
-def test_ON12(approved_workbasket):
+@only_applicable_after("2007-12-31")
+def test_ON12(delete_record):
     """The quota order number origin cannot be deleted if it is used in a measure.
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
 
-    origin = factories.QuotaOrderNumberOriginFactory(
-        order_number__mechanism=AdministrationMechanism.FCFS,
-        workbasket=approved_workbasket,
-    )
-    measure = factories.MeasureFactory(
-        geographical_area=origin.geographical_area,
-        measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
-        order_number=origin.order_number,
-    )
+    measure = factories.MeasureWithQuotaFactory()
 
     with pytest.raises(ValidationError):
-        origin.delete()
+        business_rules.ON12().validate(
+            delete_record(measure.order_number.quotaordernumberorigin_set.first())
+        )
 
 
 @pytest.mark.parametrize(
@@ -210,71 +193,58 @@ def test_ON12(approved_workbasket):
         (AreaCode.REGION, True),
     ],
 )
-def test_ON13(date_ranges, approved_workbasket, area_code, expect_error):
+def test_ON13(area_code, expect_error):
     """An exclusion can only be entered if the order number origin is a geographical
     area group (area code = 1).
     """
 
-    geo_area = factories.GeographicalAreaFactory(
-        area_code=area_code, workbasket=approved_workbasket
-    )
-    member_area = factories.GeographicalAreaFactory(
-        area_code=AreaCode.COUNTRY,
-        workbasket=approved_workbasket,
-    )
-    if area_code == AreaCode.GROUP:
-        factories.GeographicalMembershipFactory(
-            geo_group=geo_area,
-            member=member_area,
-        )
     origin = factories.QuotaOrderNumberOriginFactory(
-        geographical_area=geo_area,
-        workbasket=approved_workbasket,
+        geographical_area__area_code=area_code
     )
-    exclusion = factories.QuotaOrderNumberOriginExclusionFactory(
-        origin=origin, excluded_geographical_area=member_area
-    )
+    exclusion = factories.QuotaOrderNumberOriginExclusionFactory(origin=origin)
 
     try:
-        exclusion.workbasket.submit_for_approval()
+        business_rules.ON13().validate(exclusion)
     except ValidationError as e:
         if not expect_error:
             raise e
     else:
         if expect_error:
-            pytest.fail("Did not raise ValidationError")
+            pytest.fail(msg="Did not raise ValidationError")
 
 
-def test_ON14(approved_workbasket):
+def test_ON14():
     """The excluded geographical area must be a member of the geographical area group."""
 
-    origin = factories.QuotaOrderNumberOriginFactory(
-        geographical_area=factories.GeographicalAreaFactory(
-            area_code=AreaCode.GROUP, workbasket=approved_workbasket
-        ),
-        workbasket=approved_workbasket,
-    )
-    exclusion = factories.QuotaOrderNumberOriginExclusionFactory(origin=origin)
+    membership = factories.GeographicalMembershipFactory()
+    non_member = factories.GeographicalAreaFactory()
 
     with pytest.raises(ValidationError):
-        exclusion.workbasket.submit_for_approval()
+        business_rules.ON14().validate(
+            factories.QuotaOrderNumberOriginExclusionFactory(
+                origin__geographical_area=membership.geo_group,
+                excluded_geographical_area=non_member,
+            )
+        )
+
+    business_rules.ON14().validate(
+        factories.QuotaOrderNumberOriginExclusionFactory(
+            origin__geographical_area=membership.geo_group,
+            excluded_geographical_area=membership.member,
+        )
+    )
 
 
-def test_QD1(approved_workbasket):
+def test_QD1(make_duplicate_record):
     """Quota order number id + start date must be unique"""
 
-    existing = factories.QuotaDefinitionFactory(
-        workbasket=approved_workbasket, update_type=UpdateType.CREATE
-    )
-
-    definition = factories.QuotaDefinitionFactory(
-        order_number=existing.order_number,
-        valid_between=existing.valid_between,
-        update_type=UpdateType.CREATE,
+    duplicate = make_duplicate_record(
+        factories.QuotaDefinitionFactory,
+        identifying_fields=business_rules.QD1.identifying_fields,
     )
 
     with pytest.raises(ValidationError):
-        definition.workbasket.submit_for_approval()
+        business_rules.QD1().validate(duplicate)
 
 
 def test_QD2(date_ranges):
@@ -284,7 +254,7 @@ def test_QD2(date_ranges):
         factories.QuotaDefinitionFactory(valid_between=date_ranges.backwards)
 
 
-def test_QD7(date_ranges, approved_workbasket):
+def test_QD7(date_ranges):
     """The validity period of the quota definition must be spanned by one of the
     validity periods of the referenced quota order number.
     """
@@ -292,28 +262,27 @@ def test_QD7(date_ranges, approved_workbasket):
     # validity period, but this is not true. QD7 mirrors ON8, to check the same
     # constraint whether adding a quota definition or an order number.
 
-    order_number = factories.QuotaOrderNumberFactory(
-        valid_between=date_ranges.normal, workbasket=approved_workbasket
-    )
-    definition = factories.QuotaDefinitionFactory(
-        order_number=order_number,
-        valid_between=date_ranges.overlap_normal,
-    )
-
     with pytest.raises(ValidationError):
-        definition.workbasket.submit_for_approval()
+        business_rules.QD7().validate(
+            factories.QuotaDefinitionFactory(
+                order_number__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal,
+            )
+        )
 
 
-def test_QD8(validity_period_contained):
+def test_QD8(date_ranges):
     """The validity period of the monetary unit code must span the validity period of
     the quota definition.
     """
 
-    assert validity_period_contained(
-        "monetary_unit",
-        factories.MonetaryUnitFactory,
-        factories.QuotaDefinitionFactory,
-    )
+    with pytest.raises(ValidationError):
+        business_rules.QD8().validate(
+            factories.QuotaDefinitionFactory(
+                monetary_unit__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal,
+            )
+        )
 
 
 @pytest.mark.skip(reason="Using GBP, not EUR")
@@ -325,28 +294,32 @@ def test_QD9():
     assert False
 
 
-def test_QD10(validity_period_contained):
+def test_QD10(date_ranges):
     """The validity period of the measurement unit code must span the validity period of
     the quota definition.
     """
 
-    assert validity_period_contained(
-        "measurement_unit",
-        factories.MeasurementUnitFactory,
-        factories.QuotaDefinitionFactory,
-    )
+    with pytest.raises(ValidationError):
+        business_rules.QD10().validate(
+            factories.QuotaDefinitionFactory(
+                measurement_unit__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal,
+            )
+        )
 
 
-def test_QD11(validity_period_contained):
+def test_QD11(date_ranges):
     """The validity period of the measurement unit qualifier code must span the validity
     period of the quota definition.
     """
 
-    assert validity_period_contained(
-        "measurement_unit_qualifier",
-        factories.MeasurementUnitQualifierFactory,
-        factories.QuotaDefinitionFactory,
-    )
+    with pytest.raises(ValidationError):
+        business_rules.QD11().validate(
+            factories.QuotaDefinitionWithQualifierFactory(
+                measurement_unit_qualifier__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal,
+            )
+        )
 
 
 @pytest.mark.skip("Quota events are not supported")
@@ -377,36 +350,27 @@ def test_QD15():
     """
 
 
-def test_QA1(approved_workbasket):
+def test_QA1(make_duplicate_record):
     """The association between two quota definitions must be unique."""
 
-    existing = factories.QuotaAssociationFactory(workbasket=approved_workbasket)
-
-    assoc = factories.QuotaAssociationFactory(
-        main_quota=existing.main_quota,
-        sub_quota=existing.sub_quota,
-        update_type=UpdateType.CREATE,
-    )
+    duplicate = make_duplicate_record(factories.QuotaAssociationFactory)
 
     with pytest.raises(ValidationError):
-        assoc.workbasket.submit_for_approval()
+        business_rules.QA1().validate(duplicate)
 
 
-def test_QA2(date_ranges, approved_workbasket):
+def test_QA2(date_ranges):
     """The sub-quota’s validity period must be entirely enclosed within the validity
     period of the main quota
     """
 
-    main = factories.QuotaDefinitionFactory(
-        valid_between=date_ranges.normal, workbasket=approved_workbasket
-    )
-    sub = factories.QuotaDefinitionFactory(
-        valid_between=date_ranges.overlap_normal, workbasket=approved_workbasket
-    )
-    assoc = factories.QuotaAssociationFactory(main_quota=main, sub_quota=sub)
-
     with pytest.raises(ValidationError):
-        assoc.workbasket.submit_for_approval()
+        business_rules.QA2().validate(
+            factories.QuotaAssociationFactory(
+                main_quota__valid_between=date_ranges.normal,
+                sub_quota__valid_between=date_ranges.overlap_normal,
+            )
+        )
 
 
 @pytest.mark.skip(reason="Needs clarification")
@@ -438,7 +402,7 @@ def test_QA4(coefficient, expect_error):
         kwargs["coefficient"] = coefficient
 
     try:
-        factories.QuotaAssociationFactory(**kwargs)
+        business_rules.QA4().validate(factories.QuotaAssociationFactory(**kwargs))
 
     except ValidationError:
         if not expect_error:
@@ -449,113 +413,88 @@ def test_QA4(coefficient, expect_error):
             pytest.fail("Did not raise ValidationError")
 
 
-def test_QA5(approved_workbasket):
+def test_QA5():
     """Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the same
     volume as the ones associated with the parent quota. Moreover it must be defined
     with a coefficient not equal to 1
     """
 
-    sub1 = factories.QuotaDefinitionFactory(
-        volume=23000, workbasket=approved_workbasket
+    existing = factories.EquivalentQuotaAssociationFactory(
+        sub_quota__volume=Decimal("1000.0")
     )
-    sub2 = factories.QuotaDefinitionFactory(
-        volume=10000, workbasket=approved_workbasket
-    )
-    existing = factories.QuotaAssociationFactory(
-        coefficient=Decimal("1.20000"),
-        sub_quota=sub1,
-        sub_quota_relation_type=SubQuotaType.EQUIVALENT,
-        workbasket=approved_workbasket,
-    )
-    assoc = factories.QuotaAssociationFactory(
-        coefficient=Decimal("1.20000"),
-        main_quota=existing.main_quota,
-        sub_quota=sub2,
-        sub_quota_relation_type=SubQuotaType.EQUIVALENT,
+    assoc = factories.EquivalentQuotaAssociationFactory(
+        main_quota=existing.main_quota, sub_quota__volume=Decimal("2000.0")
     )
 
     with pytest.raises(ValidationError):
-        assoc.workbasket.submit_for_approval()
+        business_rules.QA5().validate(assoc)
 
 
-def test_QA5_pt2(approved_workbasket):
+def test_QA5_pt2():
     """Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the same
     volume as the ones associated with the parent quota. Moreover it must be defined
     with a coefficient not equal to 1
     """
 
-    assoc = factories.QuotaAssociationFactory(
-        coefficient=Decimal("1.00000"),
-        sub_quota_relation_type=SubQuotaType.EQUIVALENT,
-    )
-
     with pytest.raises(ValidationError):
-        assoc.workbasket.submit_for_approval()
+        business_rules.QA5().validate(
+            factories.EquivalentQuotaAssociationFactory(coefficient=Decimal("1.00000"))
+        )
 
 
-def test_QA5_pt3(approved_workbasket):
+def test_QA5_pt3():
     """A sub-quota defined with the 'normal' type must have a coefficient of 1"""
 
-    assoc = factories.QuotaAssociationFactory(
-        coefficient=Decimal("1.20000"),
-        sub_quota_relation_type=SubQuotaType.NORMAL,
-    )
-
     with pytest.raises(ValidationError):
-        assoc.workbasket.submit_for_approval()
+        business_rules.QA5().validate(
+            factories.QuotaAssociationFactory(
+                coefficient=Decimal("1.20000"),
+                sub_quota_relation_type=SubQuotaType.NORMAL,
+            )
+        )
 
 
-def test_QA6(approved_workbasket):
+def test_QA6():
     """Sub-quotas associated with the same main quota must have the same relation type"""
 
     existing = factories.QuotaAssociationFactory(
-        sub_quota_relation_type=SubQuotaType.NORMAL, workbasket=approved_workbasket
+        sub_quota_relation_type=SubQuotaType.NORMAL
     )
     assoc = factories.QuotaAssociationFactory(
-        coefficient=Decimal("1.20000"),
         main_quota=existing.main_quota,
         sub_quota_relation_type=SubQuotaType.EQUIVALENT,
     )
 
     with pytest.raises(ValidationError):
-        assoc.workbasket.submit_for_approval()
+        business_rules.QA6().validate(assoc)
 
 
-def test_blocking_of_fcfs_quotas_only(approved_workbasket):
+def test_blocking_of_fcfs_quotas_only():
     """Blocking periods are only applicable to FCFS quotas."""
 
-    order_number = factories.QuotaOrderNumberFactory(
-        mechanism=AdministrationMechanism.LICENSED, workbasket=approved_workbasket
-    )
-    definition = factories.QuotaDefinitionFactory(
-        workbasket=approved_workbasket,
-        order_number=order_number,
-    )
-    blocking = factories.QuotaBlockingFactory(
-        quota_definition=definition,
-    )
-
     with pytest.raises(ValidationError):
-        blocking.workbasket.submit_for_approval()
+        business_rules.BlockingOnlyOfFCFSQuotas().validate(
+            factories.QuotaBlockingFactory(
+                quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED
+            )
+        )
 
 
-def test_QBP2(date_ranges, approved_workbasket):
+def test_QBP2(date_ranges):
     """The start date of the quota blocking period must be later than or equal to the
     start date of the quota validity period.
     """
 
-    definition = factories.QuotaDefinitionFactory(
-        valid_between=date_ranges.normal, workbasket=approved_workbasket
-    )
-    block = factories.QuotaBlockingFactory(
-        quota_definition=definition, valid_between=date_ranges.overlap_normal_earlier
-    )
-
     with pytest.raises(ValidationError):
-        block.workbasket.submit_for_approval()
+        business_rules.QBP2().validate(
+            factories.QuotaBlockingFactory(
+                quota_definition__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal_earlier,
+            )
+        )
 
 
-def test_QBP3(date_ranges, approved_workbasket):
+def test_QBP3(date_ranges):
     """The end date of the quota blocking period must be later than the start date of
     the quota blocking period.
     """
@@ -564,35 +503,24 @@ def test_QBP3(date_ranges, approved_workbasket):
         factories.QuotaBlockingFactory(valid_between=date_ranges.backwards)
 
 
-def test_suspension_of_fcfs_quotas_only(approved_workbasket):
+def test_suspension_of_fcfs_quotas_only():
     """Quota suspensions are only applicable to First Come First Served quotas"""
 
-    order_number = factories.QuotaOrderNumberFactory(
-        mechanism=AdministrationMechanism.LICENSED, workbasket=approved_workbasket
-    )
-    definition = factories.QuotaDefinitionFactory(
-        workbasket=approved_workbasket,
-        order_number=order_number,
-    )
-    suspension = factories.QuotaSuspensionFactory(
-        quota_definition=definition,
-    )
-
     with pytest.raises(ValidationError):
-        suspension.workbasket.submit_for_approval()
+        business_rules.SuspensionsOnlyToFCFSQuotas().validate(
+            factories.QuotaSuspensionFactory(
+                quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED,
+            )
+        )
 
 
-def test_QSP2(date_ranges, approved_workbasket):
+def test_QSP2(date_ranges):
     """The validity period of the quota must span the quota suspension period."""
 
-    definition = factories.QuotaDefinitionFactory(
-        workbasket=approved_workbasket, valid_between=date_ranges.starts_with_normal
-    )
-    suspension = factories.QuotaSuspensionFactory(
-        quota_definition=definition,
-        update_type=UpdateType.CREATE,
-        valid_between=date_ranges.normal,
-    )
-
     with pytest.raises(ValidationError):
-        suspension.workbasket.submit_for_approval()
+        business_rules.QSP2().validate(
+            factories.QuotaSuspensionFactory(
+                quota_definition__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal,
+            )
+        )

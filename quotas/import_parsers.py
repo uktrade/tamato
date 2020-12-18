@@ -6,10 +6,10 @@ from importer.parsers import InvalidDataError
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
-@Record.register_child("quota_order_number")
+@RecordParser.register_child("quota_order_number")
 class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="quota.order.number" substitutionGroup="abstract.record">
@@ -35,7 +35,7 @@ class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
         self.data["category"] = "1"
 
 
-@Record.register_child("quota_order_number_origin")
+@RecordParser.register_child("quota_order_number_origin")
 class QuotaOrderNumberOriginParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="quota.order.number.origin" substitutionGroup="abstract.record">
@@ -60,7 +60,7 @@ class QuotaOrderNumberOriginParser(ValidityMixin, Writable, ElementParser):
     geographical_area__sid = TextElement(Tag("geographical.area.sid"))
 
 
-@Record.register_child("quota_order_number_origin_exclusion")
+@RecordParser.register_child("quota_order_number_origin_exclusion")
 class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
     """
     <xs:element name="quota.order.number.origin.exclusions" substitutionGroup="abstract.record">
@@ -79,7 +79,7 @@ class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
     excluded_geographical_area__sid = TextElement(Tag("excluded.geographical.area.sid"))
 
 
-@Record.register_child("quota_definition")
+@RecordParser.register_child("quota_definition")
 class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="quota.definition" substitutionGroup="abstract.record">
@@ -131,7 +131,7 @@ class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
         self.data["quota_critical"] = quota_critical == "Y"
 
 
-@Record.register_child("quota_association")
+@RecordParser.register_child("quota_association")
 class QuotaAssociationParser(Writable, ElementParser):
     """
     <xs:element name="quota.association" substitutionGroup="abstract.record">
@@ -154,7 +154,7 @@ class QuotaAssociationParser(Writable, ElementParser):
     coefficient = TextElement(Tag("coefficient"))
 
 
-@Record.register_child("quota_blocking_period")
+@RecordParser.register_child("quota_blocking_period")
 class QuotaBlockingPeriodParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="quota.blocking.period" substitutionGroup="abstract.record">
@@ -181,7 +181,7 @@ class QuotaBlockingPeriodParser(ValidityMixin, Writable, ElementParser):
     blocking_period_type = IntElement(Tag("blocking.period.type"))
 
 
-@Record.register_child("quota_suspension_period")
+@RecordParser.register_child("quota_suspension_period")
 class QuotaSuspensionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="quota.suspension.period" substitutionGroup="abstract.record">
@@ -206,7 +206,7 @@ class QuotaSuspensionPeriodParser(ValidityMixin, Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("quota_event")
+@RecordParser.register_child("quota_event")
 class QuotaEventParser(Writable, ElementParser):
     """
     Could be one of any of the below:

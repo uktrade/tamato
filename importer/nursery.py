@@ -3,9 +3,13 @@ from __future__ import annotations
 import logging
 from typing import Dict
 from typing import Type
+from typing import TYPE_CHECKING
 
 from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
+
+if TYPE_CHECKING:
+    from importer.handlers import BaseHandler
 
 logger = logging.getLogger(__name__)
 

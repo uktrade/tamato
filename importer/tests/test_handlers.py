@@ -177,5 +177,5 @@ def test_serialize(prepped_handler):
     assert prepped_handler.serialize() == {
         "data": prepped_handler.data,
         "tag": prepped_handler.tag,
-        "workbasket_id": prepped_handler.workbasket_id,
+        "transaction_id": prepped_handler.transaction_id,
     }

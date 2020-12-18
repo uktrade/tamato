@@ -1,3 +1,5 @@
+from django.db.models import F
+from django.db.models import Prefetch
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django_filters import rest_framework as filters
@@ -6,6 +8,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.reverse import reverse
 
+from common.models import Transaction
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.serializers import WorkBasketSerializer
@@ -17,7 +20,7 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
     API endpoint that allows workbaskets to be viewed and edited.
     """
 
-    queryset = WorkBasket.objects.prefetch_ordered_tracked_models()
+    queryset = WorkBasket.objects.prefetch_related("transactions")
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ("status",)
     serializer_class = WorkBasketSerializer
@@ -27,12 +30,12 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
         TaricXMLRenderer,
     ]
     search_fields = ["title"]
-    template_name = "workbaskets/taric/transaction_list.xml"
+    template_name = "workbaskets/taric/workbasket_list.xml"
 
     def get_template_names(self, *args, **kwargs):
         if self.detail:
-            return ["workbaskets/taric/transaction_detail.xml"]
-        return ["workbaskets/taric/transaction_list.xml"]
+            return ["workbaskets/taric/workbasket_detail.xml"]
+        return ["workbaskets/taric/workbasket_list.xml"]
 
 
 class WorkBasketUIViewSet(WorkBasketViewSet):

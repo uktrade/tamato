@@ -5,13 +5,13 @@ from importer.parsers import ElementParser
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
 logger = logging.getLogger(__name__)
 
 
-@Record.register_child("goods_nomenclature")
+@RecordParser.register_child("goods_nomenclature")
 class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="goods.nomenclature" substitutionGroup="abstract.record">
@@ -38,7 +38,7 @@ class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
     statistical = TextElement(Tag("statistical.indicator"))
 
 
-@Record.register_child("goods_nomenclature_origin")
+@RecordParser.register_child("goods_nomenclature_origin")
 class GoodsNomenclatureOriginParser(Writable, ElementParser):
     """
     <xs:element name="goods.nomenclature.origin" substitutionGroup="abstract.record">
@@ -67,7 +67,7 @@ class GoodsNomenclatureOriginParser(Writable, ElementParser):
     new_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
-@Record.register_child("goods_nomenclature_successor")
+@RecordParser.register_child("goods_nomenclature_successor")
 class GoodsNomenclatureSuccessorParser(Writable, ElementParser):
     """
     <xs:element name="goods.nomenclature.successor" substitutionGroup="abstract.record">
@@ -98,7 +98,7 @@ class GoodsNomenclatureSuccessorParser(Writable, ElementParser):
     replaced_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
-@Record.register_child("goods_nomenclature_description")
+@RecordParser.register_child("goods_nomenclature_description")
 class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="goods.nomenclature.description" substitutionGroup="abstract.record">
@@ -129,7 +129,7 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("goods_nomenclature_description_period")
+@RecordParser.register_child("goods_nomenclature_description_period")
 class GoodsNomenclatureDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="goods.nomenclature.description.period" substitutionGroup="abstract.record">
@@ -157,7 +157,7 @@ class GoodsNomenclatureDescriptionPeriodParser(ValidityMixin, Writable, ElementP
     )
 
 
-@Record.register_child("goods_nomenclature_indent")
+@RecordParser.register_child("goods_nomenclature_indent")
 class GoodsNomenclatureIndentsParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="goods.nomenclature.indents" substitutionGroup="abstract.record">
@@ -185,7 +185,7 @@ class GoodsNomenclatureIndentsParser(ValidityMixin, Writable, ElementParser):
     indented_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
-@Record.register_child("footnote_association_goods_nomenclature")
+@RecordParser.register_child("footnote_association_goods_nomenclature")
 class FootnoteAssociationGoodsNomenclatureParser(
     ValidityMixin, Writable, ElementParser
 ):

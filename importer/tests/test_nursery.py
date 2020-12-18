@@ -17,7 +17,7 @@ def test_nursery_caches_object(object_nursery, handler_class):
         {
             "data": {"sid": 1},
             "tag": "some unique tag",
-            "workbasket_id": 1,
+            "transaction_id": 1,
         },
         object_nursery,
     )

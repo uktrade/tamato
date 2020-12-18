@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.deconstruct import deconstructible
 
@@ -50,3 +51,6 @@ class ApplicabilityCode(models.IntegerChoices):
     PERMITTED = 0, "Permitted"
     MANDATORY = 1, "Mandatory"
     NOT_PERMITTED = 2, "Not permitted"
+
+
+EnvelopeIdValidator = RegexValidator(r"^(?P<year>\d\d)(?P<counter>\d{4})$")

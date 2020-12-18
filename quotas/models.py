@@ -42,15 +42,11 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     def __str__(self):
         return self.order_number
 
-    def clean(self):
-        validators.validate_unique_id_and_start_date(self)
-
-    def validate_workbasket(self):
-        validators.validate_no_overlapping_quota_order_numbers(self)
-
-    def delete(self):
-        validators.validate_order_number_used_in_measure_cannot_be_deleted(self)
-        super().delete()
+    def in_use(self):
+        # TODO this should respect deletes
+        return self.measure_set.model.objects.filter(
+            order_number__sid=self.sid
+        ).exists()
 
 
 class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
@@ -73,17 +69,11 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         related_name="+",
     )
 
-    def clean(self):
-        validators.validate_geo_area_validity_spans_origin_validity(self)
-
-    def validate_workbasket(self):
-        validators.validate_no_overlapping_quota_order_number_origins(self)
-        validators.validate_order_number_validity_spans_origin_validity(self)
-        validators.validate_origin_validity_spans_measure_validity(self)
-
-    def delete(self):
-        validators.validate_origin_used_in_measure_cannot_be_deleted(self)
-        super().delete()
+    def in_use(self):
+        # TODO this should respect deletes
+        return self.order_number.measure_set.model.objects.filter(
+            order_number__sid=self.order_number.sid
+        ).exists()
 
 
 class QuotaOrderNumberOriginExclusion(TrackedModel):
@@ -100,10 +90,6 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
     )
 
     identifying_fields = "origin", "excluded_geographical_area"
-
-    def validate_workbasket(self):
-        validators.validate_exclusion_only_from_group_origin(self)
-        validators.validate_excluded_geo_area_must_be_member_of_origin_group(self)
 
 
 class QuotaDefinition(TrackedModel, ValidityMixin):
@@ -157,17 +143,6 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     def __str__(self):
         return str(self.sid)
 
-    def clean(self):
-        validators.validate_monetary_unit_validity_spans_definition_validity(self)
-        validators.validate_measurement_unit_validity_spans_definition_validity(self)
-        validators.validate_measurement_unit_qualifier_validity_spans_definition_validity(
-            self
-        )
-
-    def validate_workbasket(self):
-        validators.validate_unique_order_number_and_start_date(self)
-        validators.validate_order_number_validity_spans_quota_definition_validity(self)
-
 
 class QuotaAssociation(TrackedModel):
     """The quota association defines the relation between quota and sub-quotas."""
@@ -194,13 +169,6 @@ class QuotaAssociation(TrackedModel):
     )
     identifying_fields = ("main_quota", "sub_quota")
 
-    def validate_workbasket(self):
-        validators.validate_unique_quota_association(self)
-        validators.validate_sub_quota_validity_enclosed_by_main_quota_validity(self)
-        validators.validate_equivalent_subquotas(self)
-        validators.validate_normal_subquotas(self)
-        validators.validate_sub_quotas_have_same_type(self)
-
 
 class QuotaSuspension(TrackedModel, ValidityMixin):
     """Defines a suspension period for a quota."""
@@ -211,13 +179,6 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     sid = SignedIntSID()
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
-
-    def __str__(self):
-        return self.description
-
-    def validate_workbasket(self):
-        validators.validate_suspension_only_on_fcfs_quotas(self)
-        validators.validate_suspension_period(self)
 
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
@@ -232,10 +193,6 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
         choices=validators.BlockingPeriodType.choices
     )
     description = ShortDescription()
-
-    def validate_workbasket(self):
-        validators.validate_blocking_only_on_fcfs_quotas(self)
-        validators.validate_blocking_period_start_date(self)
 
 
 class QuotaEvent(TrackedModel):

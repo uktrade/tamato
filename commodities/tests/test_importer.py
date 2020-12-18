@@ -87,6 +87,8 @@ def test_goods_nomenclature_origin_importer_create(valid_user, date_ranges):
             origin_link, context={"format": "xml"}
         ).data
     )
+    print(xml.read())
+    xml.seek(0)
 
     import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 

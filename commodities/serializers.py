@@ -1,3 +1,5 @@
+from rest_framework import serializers
+
 from commodities import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
@@ -23,6 +25,8 @@ class SimpleGoodsNomenclatureSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
+    sid = serializers.IntegerField()
+
     class Meta:
         model = models.GoodsNomenclature
         fields = [
@@ -45,6 +49,7 @@ class GoodsNomenclatureIndentSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
     indented_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
+    sid = serializers.IntegerField()
 
     class Meta:
         model = models.GoodsNomenclatureIndent
@@ -67,6 +72,7 @@ class GoodsNomenclatureDescriptionSerializer(
     TrackedModelSerializerMixin, ValiditySerializerMixin
 ):
     described_goods_nomenclature = GoodsNomenclatureSerializer(read_only=True)
+    sid = serializers.IntegerField()
 
     class Meta:
         model = models.GoodsNomenclatureDescription

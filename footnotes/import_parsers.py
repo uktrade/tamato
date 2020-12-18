@@ -6,13 +6,13 @@ from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
 logger = logging.getLogger(__name__)
 
 
-@Record.register_child("footnote_type")
+@RecordParser.register_child("footnote_type")
 class FootnoteTypeParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="footnote.type" substitutionGroup="abstract.record">
@@ -35,7 +35,7 @@ class FootnoteTypeParser(ValidityMixin, Writable, ElementParser):
     application_code = TextElement(Tag("application.code"))
 
 
-@Record.register_child("footnote_type_description")
+@RecordParser.register_child("footnote_type_description")
 class FootnoteTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="footnote.type.description" substitutionGroup="abstract.record">
@@ -55,7 +55,7 @@ class FootnoteTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("footnote")
+@RecordParser.register_child("footnote")
 class FootnoteParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="footnote" substitutionGroup="abstract.record">
@@ -76,7 +76,7 @@ class FootnoteParser(ValidityMixin, Writable, ElementParser):
     footnote_id = TextElement(Tag("footnote.id"))
 
 
-@Record.register_child("footnote_description")
+@RecordParser.register_child("footnote_description")
 class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="footnote.description" substitutionGroup="abstract.record">
@@ -102,7 +102,7 @@ class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("footnote_description_period")
+@RecordParser.register_child("footnote_description_period")
 class FootnoteDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="footnote.description.period" substitutionGroup="abstract.record">

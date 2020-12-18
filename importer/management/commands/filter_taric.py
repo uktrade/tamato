@@ -33,7 +33,7 @@ from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.namespaces import nsmap
 from importer.parsers import ElementParser
-from importer.taric import Envelope
+from importer.taric import EnvelopeParser
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureComponent
@@ -90,7 +90,7 @@ class TriggeredMeasureTerminator:
         self.message_sequence = message_sequence
         self.transaction_sequence = transaction_sequence
         self.triggers = self.load_triggers(filename)
-        self.measure_ender = MeasureEndingPattern(workbasket=None)
+        self.measure_ender = MeasureEndingPattern()
 
     def post_transaction(self, transaction: Dict[str, Any]) -> Iterator[Element]:
         for message in transaction["message"]:
@@ -117,8 +117,7 @@ class TriggeredMeasureTerminator:
                     str(record["modification_regulation"]["regulation_id"]),
                 )
 
-            for element in self.run_triggers(trigger_key):
-                yield element
+            yield from self.run_triggers(trigger_key)
 
     def pre_transaction(self, transaction: Dict[str, Any]) -> Iterator[Element]:
         for message in transaction["message"]:
@@ -134,8 +133,7 @@ class TriggeredMeasureTerminator:
             ):
                 trigger_key = int(record["goods_nomenclature"]["sid"])
 
-            for element in self.run_triggers(trigger_key):
-                yield element
+            yield from self.run_triggers(trigger_key)
 
     def run_triggers(self, trigger_key: Any) -> Iterator[Element]:
         if trigger_key in self.triggers:
@@ -353,51 +351,51 @@ class PassiveMeasureFilter:
                         )
                         logger.info("End-dated measure %s", sid)
                         return True
-                    elif start_before_brexit and not ends_after_brexit:
+                    if start_before_brexit and not ends_after_brexit:
                         # Just output it verbatim
                         self.measure_kept_sids.add(sid)
                         return True
-                    else:
-                        # Deleted – output nothing
-                        assert not start_before_brexit
-                        self.measure_dropped_sids.add(sid)
-                        logger.info("Dropped measure %s", sid)
-                        return False
-                else:
-                    # We haven't touched measurse of this type yet.
-                    self.measure_kept_sids.add(sid)
-                    return True
 
-            elif subrecord_code == MeasureCondition.subrecord_code:
+                    # Deleted – output nothing
+                    assert not start_before_brexit
+                    self.measure_dropped_sids.add(sid)
+                    logger.info("Dropped measure %s", sid)
+                    return False
+
+                # We haven't touched measurse of this type yet.
+                self.measure_kept_sids.add(sid)
+                return True
+
+            if subrecord_code == MeasureCondition.subrecord_code:
                 measure_sid = record["measure_condition"]["dependent_measure__sid"]
                 condition_sid = record["measure_condition"]["sid"]
                 if measure_sid in self.measure_kept_sids:
                     self.measure_condition_kept_sids.add(condition_sid)
                     return True
-                elif measure_sid in self.measure_dropped_sids:
+                if measure_sid in self.measure_dropped_sids:
                     self.measure_condition_dropped_sids.add(condition_sid)
                     return False
-                else:
-                    logger.warning(
-                        "Dependent condition for unknown measure %s", measure_sid
-                    )
-                    self.measure_condition_kept_sids.add(condition_sid)
-                    return True
 
-            elif subrecord_code == MeasureConditionComponent.subrecord_code:
+                logger.warning(
+                    "Dependent condition for unknown measure %s", measure_sid
+                )
+                self.measure_condition_kept_sids.add(condition_sid)
+                return True
+
+            if subrecord_code == MeasureConditionComponent.subrecord_code:
                 condition_sid = record["measure_condition_component"]["condition__sid"]
                 if condition_sid in self.measure_condition_kept_sids:
                     return True
-                elif condition_sid in self.measure_condition_dropped_sids:
+                if condition_sid in self.measure_condition_dropped_sids:
                     return False
-                else:
-                    logger.warning(
-                        "Dependent component for unknown measure condition %s",
-                        condition_sid,
-                    )
-                    return True
 
-            elif subrecord_code in [
+                logger.warning(
+                    "Dependent component for unknown measure condition %s",
+                    condition_sid,
+                )
+                return True
+
+            if subrecord_code in [
                 MeasureComponent.subrecord_code,
                 FootnoteAssociationMeasure.subrecord_code,
                 MeasureExcludedGeographicalArea.subrecord_code,
@@ -419,17 +417,14 @@ class PassiveMeasureFilter:
 
                 if measure_sid in self.measure_kept_sids:
                     return True
-                elif measure_sid in self.measure_dropped_sids:
+                if measure_sid in self.measure_dropped_sids:
                     return False
-                else:
-                    logger.warning("Dependent item for unknown measure %s", measure_sid)
-                    return True
-            else:
-                raise Exception("Unhandled measure family element: %s", record)
+                logger.warning("Dependent item for unknown measure %s", measure_sid)
+                return True
+            raise Exception("Unhandled measure family element: %s", record)
 
-        else:
-            # This record is not of interest and we can pass it through.
-            return True
+        # This record is not of interest and we can pass it through.
+        return True
 
 
 class Command(BaseCommand):
@@ -470,11 +465,11 @@ class Command(BaseCommand):
             type=str,
         )
 
-    def parse_envelope(self, taric3_file) -> Envelope:
+    def parse_envelope(self, taric3_file) -> EnvelopeParser:
         xmlparser = etree.iterparse(taric3_file, ["start", "end", "start-ns"])
         ElementParser.data_class = xml_dict
         ElementParser.end_hook = xml_dict.set_xml
-        handler = Envelope(save=False)
+        handler = EnvelopeParser(save=False)
 
         for event, elem in xmlparser:
             if event == "start":

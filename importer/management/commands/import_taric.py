@@ -3,7 +3,7 @@ import xml.etree.ElementTree as etree
 from django.core.management import BaseCommand
 
 from importer.namespaces import nsmap
-from importer.taric import Envelope
+from importer.taric import EnvelopeParser
 from workbaskets.validators import WorkflowStatus
 
 
@@ -12,7 +12,7 @@ XML_CHUNK_SIZE = 4096
 
 def import_taric(taric3_file, username, status):
     xmlparser = etree.XMLPullParser(["start", "end", "start-ns"])
-    handler = Envelope(
+    handler = EnvelopeParser(
         workbasket_status=status,
         tamato_username=username,
     )
