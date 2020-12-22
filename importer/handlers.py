@@ -15,8 +15,8 @@ from common.models import TrackedModel
 from common.validators import UpdateType
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
-from importer.utils import LinksType
 from importer.utils import generate_key
+from importer.utils import LinksType
 
 logger = logging.getLogger(__name__)
 

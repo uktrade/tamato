@@ -1,0 +1,4 @@
+{%- extends "common/taric/base.xml" -%}
+{%- block transactions -%}
+{%- include "exporter/taric/envelope.xml" -%}
+{%- endblock -%}

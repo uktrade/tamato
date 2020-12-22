@@ -7,8 +7,8 @@ from typing import Dict
 from typing import Optional
 from typing import Type
 from typing import Union
-from unittest.mock import PropertyMock
 from unittest.mock import patch
+from unittest.mock import PropertyMock
 
 import boto3
 import pytest
@@ -26,8 +26,8 @@ from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import generate_test_import_xml
-from common.util import TaricDateRange
 from common.util import get_field_tuple
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
 from importer.nursery import get_nursery

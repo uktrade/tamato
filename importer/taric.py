@@ -16,8 +16,8 @@ from lxml import etree
 from common import models
 from common.validators import UpdateType
 from importer.namespaces import ENVELOPE
-from importer.namespaces import Tag
 from importer.namespaces import nsmap
+from importer.namespaces import Tag
 from importer.nursery import get_nursery
 from importer.parsers import ElementParser
 from importer.parsers import ParserError

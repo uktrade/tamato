@@ -5,14 +5,14 @@ from datetime import datetime
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Manager
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Subquery
 from django.db.models import QuerySet
 from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
 from common.models import TrackedModel
+from common.models import Transaction
 from workbaskets.validators import WorkflowStatus
 
 
@@ -29,6 +29,15 @@ class WorkBasketQueryset(QuerySet):
             Prefetch("tracked_models", queryset=q_annotate_record_code),
         )
 
+    def ordered_transactions(self):
+        """This Workbaskets transactions in creation order.
+
+        Note: tracked_models are ordered by record_code, subrecord_code by TransactionManager"""
+        workbasket_pks = self.values_list("pk", flat=True)
+        return Transaction.objects.filter(
+            workbasket__pk__in=Subquery(workbasket_pks)
+        ).order_by("order")
+
 
 class WorkBasket(TimestampedMixin):
     """
@@ -38,7 +47,7 @@ class WorkBasket(TimestampedMixin):
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
 
-    objects = Manager.from_queryset(WorkBasketQueryset)
+    objects = WorkBasketQueryset.as_manager()
 
     title = models.CharField(
         max_length=255,

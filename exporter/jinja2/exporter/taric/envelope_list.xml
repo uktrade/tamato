@@ -1,0 +1,10 @@
+{%- extends "common/taric/base.xml"  -%}
+{%- block transactions -%}
+{%- for envelope in items -%}
+<!-- envelope {{envelope.envelope_id}} -->
+{%- set transactions = envelope.transactions -%}
+{%- include "exporter/taric/envelope.xml" -%}
+<!-- end of envelope {{envelope.envelope_id}} -->
+
+{%- endfor -%}
+{%- endblock -%}

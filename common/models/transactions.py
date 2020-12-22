@@ -5,7 +5,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Prefetch
 
 from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
@@ -22,8 +21,22 @@ class TransactionManager(models.Manager):
         return (
             super()
             .get_queryset()
-            .prefetch_related(Prefetch("tracked_models", queryset=annotate_record_code))
+            .prefetch_related(
+                models.Prefetch("tracked_models", queryset=annotate_record_code)
+            )
         )
+
+
+class TransactionQueryset(models.QuerySet):
+    def ordered_tracked_models(self):
+        """TrackedModel in order of their transactions creation order."""
+
+        tracked_models = self.model.tracked_models.rel.related_model.objects.filter(
+            transaction__in=self
+        ).order_by(
+            "transaction__order"
+        )  # order_by record_code, subrecord_code already happened in get_queryset
+        return tracked_models
 
 
 class Transaction(TimestampedMixin):
@@ -49,7 +62,7 @@ class Transaction(TimestampedMixin):
 
     composite_key = models.CharField(max_length=16, unique=True)
 
-    objects = TransactionManager()
+    objects = TransactionManager.from_queryset(TransactionQueryset)()
 
     def clean(self):
         """Validate business rules against contained TrackedModels."""
