@@ -1,5 +1,7 @@
-from exporter.management.commands.util import get_envelope_of_active_workbaskets
-from exporter.management.commands.util import WorkBasketBaseCommand
+from exporter.management.commands.util import (
+    get_envelope_of_active_workbaskets,
+    WorkBasketBaseCommand,
+)
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
