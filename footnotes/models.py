@@ -135,8 +135,11 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
             self
         )
 
-    def validate_workbasket(self):
-        validators.validate_footnote_description_dont_have_same_start_date(self)
+    @classmethod
+    def validate_workbasket(cls, workbasket):
+        validators.validate_footnote_description_dont_have_same_start_date(
+            cls, workbasket
+        )
 
     def get_url(self, action="detail"):
         return reverse(

@@ -61,8 +61,11 @@ class Certificate(TrackedModel, ValidityMixin):
             self
         )
 
-    def validate_workbasket(self):
-        validators.validate_at_least_one_description(self)
+    @classmethod
+    def validate_workbasket(cls, workbasket):
+        validators.validate_at_least_one_description(
+            cls, CertificateDescription, workbasket
+        )
 
     def __str__(self):
         return f"Certificate {self.code}"

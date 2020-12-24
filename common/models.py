@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from itertools import chain
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -12,9 +11,6 @@ from typing import Type
 
 from django.conf import settings
 from django.contrib.postgres.fields import DateTimeRangeField
-from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection
 from django.db import models
 from django.db import transaction
 from django.db.models import Case
@@ -36,9 +32,6 @@ from common import exceptions
 from common import validators
 from common.util import TaricDateTimeRange
 from common.validators import UpdateType
-from importer.handlers import BaseHandler
-from importer.nursery import get_nursery
-from importer.utils import generate_key
 from workbaskets.validators import WorkflowStatus
 
 
@@ -46,6 +39,25 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
     def current(self) -> QuerySet:
         """
         Get all the current versions of the model being queried.
+
+        Current is defined as the last row relating to the history of an object.
+        This may include current operationally live rows, it will often also mean
+        rows that are not operationally live yet but may be soon. It could also include
+        rows which were operationally live, are no longer operationally live, but have
+        no new row to supercede them, as long as they were set as deleted.
+
+        Any row marked as deleted will not be fetched.
+
+        If done from the TrackedModel this will return the current objects for all tracked
+        models.
+        """
+        return self.filter(is_current__isnull=False).exclude(
+            update_type=UpdateType.DELETE
+        )
+
+    def current_deleted(self) -> QuerySet:
+        """
+        Get all the current versions of the model being queried which have been deleted
 
         Current is defined as the last row relating to the history of an object.
         this may include current operationally live rows, it will often also mean
@@ -56,9 +68,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If done from the TrackedModel this will return the current objects for all tracked
         models.
         """
-        return self.filter(is_current__isnull=False).exclude(
-            update_type=UpdateType.DELETE
-        )
+        return self.filter(is_current__isnull=False, update_type=UpdateType.DELETE)
 
     def since_transaction(self, transaction_id: int) -> QuerySet:
         """
@@ -131,7 +141,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         query = Q()
 
         # get models in the workbasket
-        in_workbasket = self.filter(workbasket=workbasket)
+        in_workbasket = self.model.objects.filter(workbasket=workbasket)
         # add latest version of models from the current workbasket
         return self.filter(query) | in_workbasket.current()
 
@@ -370,7 +380,8 @@ inherit TrackedModel must either:
         query = Q(**self.get_identifying_fields())
         return self.__class__.objects.filter(query)
 
-    def validate_workbasket(self):
+    @classmethod
+    def validate_workbasket(cls, workbasket):
         pass
 
     def add_to_workbasket(self, workbasket) -> TrackedModel:
@@ -390,10 +401,14 @@ inherit TrackedModel must either:
             self.pk and self.workbasket.status in WorkflowStatus.approved_statuses()
         )
 
-    def get_identifying_fields(self) -> Dict[str, Any]:
+    def get_identifying_fields(
+        self, identifying_fields: Iterable = None
+    ) -> Dict[str, Any]:
         fields = {}
 
-        for field in self.identifying_fields:
+        identifying_fields = identifying_fields or self.identifying_fields
+
+        for field in identifying_fields:
             value = self
             for layer in field.split("__"):
                 value = getattr(value, layer)
@@ -471,62 +486,8 @@ inherit TrackedModel must either:
         if self.workbasket.status in WorkflowStatus.approved_statuses():
             self.version_group.current_version = self
             self.version_group.save()
-            self.cache_self()
 
         return return_value
-
-    @classmethod
-    def get_handler_link_fields(cls, link_fields=None):
-        link_fields = link_fields or set()
-        for handler in filter(lambda x: x.links, get_nursery().handlers.values()):
-            for link in filter(lambda x: x["model"] == cls, handler.links):
-                link_fields.add(
-                    tuple(
-                        sorted(link.get("identifying_fields", cls.identifying_fields))
-                    )
-                )
-        return link_fields
-
-    @classmethod
-    def generate_cache_key(cls, identifying_fields, obj):
-        return "object_cache_" + generate_key(cls.__name__, identifying_fields, obj)
-
-    @classmethod
-    def cache_current_instances(cls):
-        link_fields = cls.get_handler_link_fields()
-
-        if not link_fields:
-            return
-
-        values_list = set(chain.from_iterable(link_fields))
-        values_list.add("pk")
-
-        for obj in cls.objects.current().values(*values_list):
-            for identifying_fields in link_fields:
-                cache_key = cls.generate_cache_key(identifying_fields, obj)
-                cache.set(cache_key, (obj["pk"], cls.__name__), timeout=None)
-
-    @classmethod
-    def get_id_from_cache(cls, identifying_fields, obj):
-        key = cls.generate_cache_key(identifying_fields, obj)
-        return cache.get(key)
-
-    def cache_self(self):
-        link_fields = self.get_handler_link_fields()
-
-        for link in link_fields:
-            identifying_data = {}
-            for field in link:
-                datum = self
-                for sub_field in field.split("__"):
-                    datum = getattr(datum, sub_field)
-                    if datum is None:
-                        break
-                identifying_data[field] = datum
-            cache_key = generate_key(
-                f"link_cache_{self.__class__.__name__}", link, identifying_data
-            )
-            cache.set(cache_key, (self.pk, self.__class__.__name__), timeout=None)
 
     def __str__(self):
         return ", ".join(

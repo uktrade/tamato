@@ -5,6 +5,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import Subquery
+from django.db.models.functions import Lower
 
 from common.util import validity_range_contains_range
 
@@ -31,24 +33,23 @@ def validate_description_is_not_null(area_description):
 
 
 def validate_first_geographical_area_description_has_geographical_area_start_date(
-    geographical_area_description,
+    description_class, area_class, workbasket
 ):
     """GA3"""
 
-    geographical_area = geographical_area_description.area
-
-    try:
-        (
-            geographical_area.geographicalareadescription_set.approved_or_in_workbasket(
-                geographical_area_description.workbasket
-            ).get(
-                valid_between__startswith=geographical_area_description.valid_between.lower
+    if not area_class.objects.filter(
+        sid__in=Subquery(
+            description_class.objects.filter(workbasket=workbasket).values_list(
+                "area__sid", flat=True
             )
-        )
-    except ObjectDoesNotExist:
+        ),
+        geographicalareadescription_set__valid_between__startswith=Lower(
+            "valid_between"
+        ),
+    ).exists():
         raise ValidationError(
             {
-                "valid_between": f"The first description for geographical area {geographical_area} "
+                "valid_between": f"The first description for a geographical area "
                 f"must have the same start date as the geographical area"
             }
         )
@@ -91,11 +92,23 @@ def validate_geographical_area_description_start_date_before_geographical_area_e
         )
 
 
-def validate_at_least_one_description(area):
+def validate_at_least_one_description(area_class, description_class, workbasket):
     """
     GA3
     """
-    if area.geographicalareadescription_set.count() < 1:
+    area_sids = set(
+        area_class.objects.filter(workbasket=workbasket)
+        .values_list("sid", flat=True)
+        .distinct()
+    )
+    if (
+        not set(
+            description_class.objects.filter(area__sid__in=area_sids)
+            .values_list("area__sid", flat=True)
+            .distinct()
+        )
+        == area_sids
+    ):
         raise ValidationError("At least one description record is mandatory.")
 
 

@@ -508,7 +508,7 @@ def validate_measure_has_required_components(measure):
             "record must be specified."
         )
 
-    elif measure.measure_type.components_not_permitted and (
+    if measure.measure_type.components_not_permitted and (
         has_components or has_condition_components
     ):
         raise ValidationError(
@@ -717,6 +717,7 @@ def validate_measure_condition_certificate_only_used_once_per_measure(
             required_certificate__certificate_type__sid=measure_condition.required_certificate.certificate_type.sid,
             dependent_measure__sid=measure_condition.dependent_measure.sid,
         )
+        .current()
         .exists()
     )
 
@@ -955,7 +956,7 @@ def validate_terminating_regulation(measure):
         return
 
     # TODO: verify this day (should be 2004-01-01 really, except for measure 2700491 (at least), and 2939413))
-    # And carrying on past 2020 with 3784976
+    # TODO: And carrying on past 2020 with 3784976
     if 1 or measure.valid_between.lower < datetime(2007, 7, 1, tzinfo=timezone.utc):
         return
 

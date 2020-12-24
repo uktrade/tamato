@@ -62,8 +62,11 @@ class AdditionalCode(TrackedModel, ValidityMixin):
             self
         )
 
-    def validate_workbasket(self):
-        validators.validate_at_least_one_description(self)
+    @classmethod
+    def validate_workbasket(cls, workbasket):
+        validators.validate_at_least_one_description(
+            cls, AdditionalCodeDescription, workbasket
+        )
 
     class Meta:
         constraints = [

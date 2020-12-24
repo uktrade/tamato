@@ -1,6 +1,7 @@
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.db.models import Subquery
 
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
@@ -113,6 +114,12 @@ def validate_previous_certificate_description_is_adjacent(certificate_descriptio
         )
 
 
-def validate_at_least_one_description(certificate):
-    if certificate.descriptions.count() < 1:
+def validate_at_least_one_description(certicate_class, description_class, workbasket):
+    if not description_class.objects.filter(
+        described_certificate__sid__in=Subquery(
+            certicate_class.objects.filter(workbasket=workbasket).values_list(
+                "sid", flat=True
+            )
+        )
+    ).exists():
         raise ValidationError("At least one description record is mandatory.")

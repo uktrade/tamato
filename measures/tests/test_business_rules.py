@@ -546,6 +546,8 @@ def test_ME40(unapproved_workbasket):
     measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.MANDATORY,
         workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
+        goods_nomenclature__item_id="7100000000",
+        leave_measure=True,
     )
     with pytest.raises(ValidationError):
         measure.workbasket.submit_for_approval()
@@ -553,16 +555,24 @@ def test_ME40(unapproved_workbasket):
     measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
+        goods_nomenclature__item_id="7200000000",
+        leave_measure=True,
     )
     factories.MeasureComponentFactory.create(
         component_measure=measure, workbasket=measure.workbasket
     )
+
+    print("components", measure.has_components())
+    print("condition components", measure.has_condition_components())
+    print("measure_type", measure.measure_type.components_not_permitted)
     with pytest.raises(ValidationError):
         measure.workbasket.submit_for_approval()
 
     measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
+        goods_nomenclature__item_id="7300000000",
+        leave_measure=True,
     )
     factories.MeasureConditionComponentFactory.create(
         condition__dependent_measure=measure,
@@ -574,6 +584,8 @@ def test_ME40(unapproved_workbasket):
     measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=ApplicabilityCode.MANDATORY,
         workbasket__status=WorkflowStatus.NEW_IN_PROGRESS,
+        goods_nomenclature__item_id="7400000000",
+        leave_measure=True,
     )
     factories.MeasureComponentFactory.create(
         component_measure=measure,

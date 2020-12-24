@@ -371,8 +371,6 @@ class Measure(TrackedModel, ValidityMixin):
     stopped = models.BooleanField(default=False)
     export_refund_nomenclature_sid = SignedIntSID(null=True, blank=True, default=None)
 
-    identifying_fields = ("sid",)
-
     objects = PolymorphicManager.from_queryset(MeasuresQuerySet)()
 
     @property
@@ -440,19 +438,19 @@ class Measure(TrackedModel, ValidityMixin):
 
     def has_components(self):
         return (
-            self.measurecomponent_set.approved()
-            | self.measurecomponent_set.filter(workbasket=self.workbasket)
-        ).exists()
+            MeasureComponent.objects.approved_or_in_workbasket(
+                workbasket=self.workbasket
+            )
+            .filter(component_measure__sid=self.sid)
+            .exists()
+        )
 
     def has_condition_components(self):
         return (
-            (
-                MeasureConditionComponent.objects.approved()
-                | MeasureConditionComponent.objects.filter(workbasket=self.workbasket)
+            MeasureConditionComponent.objects.approved_or_in_workbasket(
+                workbasket=self.workbasket
             )
-            .filter(
-                condition__dependent_measure__sid=self.sid,
-            )
+            .filter(condition__dependent_measure__sid=self.sid)
             .exists()
         )
 

@@ -7,7 +7,7 @@ services:
     volumes:
       - tamato-seed2-volume:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5431:5432"
 
   redis:
     image: redis
@@ -24,6 +24,12 @@ services:
       - "6378:6379"
     volumes:
       - .:/redis.conf
+
+  rabbit:
+    image: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
 
   s3:
     image: minio/minio
@@ -44,11 +50,13 @@ services:
       - s3
       - redis
       - redis2
+      - rabbit
     links:
       - db
       - s3
       - redis
       - redis2
+      - rabbit
     environment:
       DATABASE_URL: "postgres://postgres@db/postgres"
       DJANGO_SETTINGS_MODULE: "settings.dev"

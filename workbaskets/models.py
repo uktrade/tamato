@@ -134,12 +134,22 @@ class WorkBasket(TimestampedMixin):
         pass
 
     def clean(self):
+        if settings.SKIP_WORKBASKET_VALIDATION:
+            return
         self.errors = []
-        for model in self.tracked_models.all():
+        types = set(
+            tracked_model.polymorphic_ctype.model_class()
+            for tracked_model in self.tracked_models.non_polymorphic().select_related(
+                "polymorphic_ctype"
+            )
+        )
+        for model_type in types:
             try:
-                model.validate_workbasket()
+                self.tracked_models.instance_of(model_type).first().validate_workbasket(
+                    self
+                )
             except ValidationError as error:
-                self.errors.append((model, error))
+                self.errors.append((model_type, error))
         if self.errors:
             raise ValidationError(self.errors)
 

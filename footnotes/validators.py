@@ -4,6 +4,10 @@ Validators for footnotes
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import Count
+from django.db.models import Subquery
+from django.db.models.functions import Concat
+from django.db.models.functions import Lower
 
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
@@ -68,18 +72,39 @@ def validate_first_footnote_description_has_footnote_start_date(
         )
 
 
-def validate_footnote_description_dont_have_same_start_date(footnote_description):
+def validate_footnote_description_dont_have_same_start_date(
+    description_class, workbasket
+):
     """FO4"""
-    footnote = footnote_description.described_footnote
+    footnote_sids = (
+        description_class.objects.filter(workbasket=workbasket)
+        .annotate(
+            sid=Concat(
+                "described_footnote__footnote_id",
+                "described_footnote__footnote_type__footnote_type_id",
+            )
+        )
+        .values_list("sid", flat=True)
+    )
 
     if (
-        footnote.get_descriptions()
-        .filter(valid_between__startswith=footnote_description.valid_between.lower)
+        description_class.objects.annotate(
+            footnote_sid=Concat(
+                "described_footnote__footnote_id",
+                "described_footnote__footnote_type__footnote_type_id",
+            ),
+            start_date=Lower("valid_between"),
+        )
+        .values("footnote_sid", "start_date")
+        .filter(footnote_sid__in=Subquery(footnote_sids))
+        .approved_or_in_workbasket(workbasket)
+        .annotate(start_count=Count("pk"))
+        .filter(start_count__gt=1)
         .exists()
     ):
         raise ValidationError(
             {
-                "valid_between": f"Footnote {footnote} cannot have two descriptions with the same start date"
+                "valid_between": f"Footnotes cannot have two descriptions with the same start date"
             }
         )
 

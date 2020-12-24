@@ -7,11 +7,11 @@ from typing import List
 from typing import Set
 from typing import Type
 
-from django.core.cache import cache
-from django.db import connection
-from django.db import reset_queries
+from django.utils.functional import classproperty
 from rest_framework.serializers import ModelSerializer
 
+from common.models import TrackedModel
+from common.validators import UpdateType
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
 from importer.utils import generate_key
@@ -56,10 +56,10 @@ class BaseHandlerMeta(type):
 
         handler_class.abstract = False
 
-        if not isinstance(dct.get("tag"), str):
+        if not isinstance(getattr(handler_class, "tag"), str):
             raise AttributeError(f'{name} requires attribute "tag" to be a str.')
 
-        if not issubclass(dct.get("serializer_class"), ModelSerializer):
+        if not issubclass(getattr(handler_class, "serializer_class"), ModelSerializer):
             raise AttributeError(
                 f'{name} requires attribute "serializer_class" to be a subclass of "ModelSerializer".'
             )
@@ -238,7 +238,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         self.dependency_keys = self._generate_dependency_keys()
         self.resolved_links = {}
 
-    def _generate_dependency_keys(self) -> Set[bytes]:
+    def _generate_dependency_keys(self) -> Set[str]:
         """
         Objects are stored in the cache using unique but identifiable IDs. Any dependant object
         must be able to figure out all the keys for its dependencies.
@@ -294,16 +294,45 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     def get_generic_link(self, model, kwargs):
         """
         Fallback method if no specific method is found for fetching a link.
+
+        Raises DoesNotExist if no kwargs passed.
+
+        First attempts to retrieve the object PK from the cache (saves queries). If this
+        is not found a database query is made to find the object.
         """
         if not any(kwargs.values()):
             raise model.DoesNotExist
 
-        cached_object = model.get_id_from_cache(kwargs.keys(), kwargs)
+        cached_object = self.nursery.get_obj_from_cache(model, kwargs.keys(), kwargs)
         if cached_object and cached_object[1] == model.__name__:
             return cached_object[0], True
-        return model.objects.get_latest_version(**kwargs), False
+
+        try:
+            if self.data["update_type"] == UpdateType.DELETE:
+                return (
+                    model.objects.get_versions(**kwargs).current_deleted().get(),
+                    False,
+                )
+            return model.objects.get_latest_version(**kwargs), False
+        except model.DoesNotExist as e:
+            if self.data["update_type"] == UpdateType.DELETE:
+                return model.objects.get_latest_version(**kwargs), False
+            raise e
 
     def load_link(self, name, model, identifying_fields=None, optional=False):
+        """
+        Load a given link for a handler.
+
+        This method first attempts to find any custom method existing on the handler
+        for finding the specific link. The custom method must be named:
+
+            get_{LINK_NAME}_link
+
+        If no custom method is found then :py:meth:`.BaseHandler.get_generic_link` is used.
+
+        If no object matching the given link is found and the link is non-optional then a
+        DoesNotExist error is raised.
+        """
         identifying_fields = identifying_fields or model.identifying_fields
         try:
             linked_object_identifiers = {
@@ -369,10 +398,12 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     def post_save(self, obj):
         """
         Post-processing after the object has been saved to the database.
-        """
-        pass
 
-    def build(self) -> Set[bytes]:
+        By default this caches any new saved object.
+        """
+        self.nursery.cache_object(obj)
+
+    def build(self) -> Set[str]:
         """
         Build up all the data for the object.
 
@@ -442,6 +473,6 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         return dependant
 
-    @property
-    def model(self):
+    @classproperty
+    def model(self) -> Type[TrackedModel]:
         return self.serializer_class.Meta.model

@@ -1,19 +1,18 @@
 import logging
-import math
 import os
 import time
 import xml.etree.ElementTree as etree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import connection
-from django.db import DataError
 from django.db import IntegrityError
 from django.db import reset_queries
 from django.db import transaction
+from lxml import etree
 
 from common.validators import UpdateType
 from importer.namespaces import ENVELOPE
+from importer.namespaces import nsmap
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
 from importer.parsers import ElementParser
@@ -64,32 +63,21 @@ class Transaction(ElementParser):
     workbasket_status = None
     tamato_username = None
 
-    def save(self, data, envelope_id):
+    def save(self, envelope_id):
+        reset_queries()
         logging.debug(f"Saving transaction {self.data['id']}")
 
         composite_key = envelope_id + self.data["id"]
         try:
-            cursor = connection.cursor()
-            while 1:
-                try:
-                    transaction = models.Transaction.objects.create(
-                        composite_key=composite_key, workbasket=self.parent.workbasket
-                    )
-                    break
-                except IntegrityError as e:
-                    if "workbaskets_transaction_pkey" not in str(e):
-                        raise
-                    cursor.execute(
-                        f"select nextval('{models.Transaction._meta.db_table}_id_seq')"
-                    )
-                    cursor.fetchone()
-
-            cursor.close()
+            models.Transaction.objects.create(
+                composite_key=composite_key, workbasket=self.parent.workbasket
+            )
         except IntegrityError:
             return
 
         for message_data in self.data["message"]:
             self.message.save(message_data, self.parent.workbasket.pk)
+        self.parent.workbasket.clean()
 
     def end(self, element: etree.Element):
         super().end(element)
@@ -104,7 +92,6 @@ class Transaction(ElementParser):
                 return True
             with transaction.atomic():
                 self.save(
-                    self.data,
                     envelope_id=self.parent.envelope_id,
                 )
             return True
@@ -123,8 +110,10 @@ class Envelope(ElementParser):
     ):
         super().__init__(**kwargs)
         self.last_transaction_id = -1
-        self.workbasket_status = workbasket_status
-        self.tamato_username = tamato_username
+        self.workbasket_status = (
+            workbasket_status or models.WorkflowStatus.PUBLISHED.value
+        )
+        self.tamato_username = tamato_username or settings.DATA_IMPORT_USERNAME
         self.save = save
         self.envelope_id = None
         self.workbasket = None
@@ -134,18 +123,13 @@ class Envelope(ElementParser):
 
         if element.tag == self.tag:
             self.envelope_id = element.get("id")
-            workbasket_status = (
-                self.workbasket_status or models.WorkflowStatus.PUBLISHED.value
-            )
 
-            user = User.objects.get(
-                username=(self.tamato_username or settings.DATA_IMPORT_USERNAME)
-            )
+            user = User.objects.get(username=self.tamato_username)
             self.workbasket, _ = models.WorkBasket.objects.get_or_create(
                 title=f"Data Import {self.envelope_id}",
                 author=user,
                 approver=user,
-                status=workbasket_status,
+                status=self.workbasket_status,
             )
 
     def end(self, element):
@@ -155,3 +139,26 @@ class Envelope(ElementParser):
             nursery = get_nursery()
             print("cache size", len(nursery.cache.keys()))
             nursery.clear_cache()
+
+
+def process_taric_xml_stream(taric_stream, status, username):
+    """
+    Parse a TARIC XML stream through the import handlers
+
+    This will load the data from the stream into the database.
+    """
+    xmlparser = etree.iterparse(taric_stream, ["start", "end", "start-ns"])
+    handler = Envelope(
+        workbasket_status=status,
+        tamato_username=username,
+    )
+    for event, elem in xmlparser:
+        if event == "start":
+            handler.start(elem)
+
+        if event == "start_ns":
+            nsmap.update([elem])
+
+        if event == "end":
+            if handler.end(elem):
+                elem.clear()
