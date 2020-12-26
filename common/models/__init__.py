@@ -6,6 +6,7 @@ from common.models.fields import SignedIntSID
 from common.models.mixins import TimestampedMixin
 from common.models.mixins import ValidityMixin
 from common.models.records import TrackedModel
+from common.models.records import VersionGroup
 from common.models.transactions import Transaction
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "TrackedModel",
     "Transaction",
     "ValidityMixin",
+    "VersionGroup",
 ]

@@ -53,7 +53,7 @@ class BusinessRule:
                 msg = " ".join(msg.split())
 
         if model:
-            msg = f"{model.__class__.__name__} {model}: {msg}"
+            msg = f"{model.__class__.__name__} {model.pk}: {msg}"
 
         return BusinessRuleViolation(msg)
 

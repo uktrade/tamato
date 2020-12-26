@@ -74,7 +74,7 @@ def test_ROIMB8(date_ranges):
 
     Only applicable for measures with start date after 31/12/2003."""
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         generating_regulation=factories.BaseRegulationFactory(
             valid_between=date_ranges.normal,
         ),
@@ -116,14 +116,15 @@ def test_ROIMB44(id, approved, change_flag, expect_error):
     # We need to work on the draft –> live status however, as we have not yet worked
     # this through
 
-    regulation = factories.RegulationFactory(
+    regulation = factories.RegulationFactory.create(
         regulation_id=id,
         approved=approved,
     )
 
     if change_flag:
         regulation = regulation.new_draft(
-            approved=not regulation.approved, workbasket=factories.WorkBasketFactory()
+            approved=not regulation.approved,
+            workbasket=factories.WorkBasketFactory.create(),
         )
 
     if expect_error:

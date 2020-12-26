@@ -53,11 +53,15 @@ class ROIMB44(BusinessRule):
     # this through
 
     def validate(self, regulation):
-        if regulation.is_draft_regulation:
+        if regulation.is_draft_regulation and not regulation.approved:
             if (
-                regulation.predecessor
-                and regulation.predecessor.approved
-                and not regulation.approved
+                type(regulation)
+                .objects.filter(
+                    version_group=regulation.version_group,
+                    approved=not regulation.approved,
+                )
+                .exclude(pk=regulation.pk)
+                .exists()
             ):
                 raise self.violation(
                     f"Regulation {regulation}: A draft regulation can only have its "

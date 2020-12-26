@@ -85,8 +85,10 @@ no_information_text_delimiters = RegexValidator(r"^[^|]*$", "Must not contain '|
 
 def validate_official_journal(regulation):
     """Official Journal number and page must both be set, or must both be NULL"""
-    if regulation.valid_between.lower and regulation.valid_between.lower < datetime(
-        2021, 1, 1, tzinfo=timezone.utc
+    if (
+        regulation.role_type == RoleType.BASE
+        and regulation.valid_between.lower
+        and regulation.valid_between.lower < datetime(2021, 1, 1, tzinfo=timezone.utc)
     ):
         return
 

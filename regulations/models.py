@@ -4,7 +4,7 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
-from common.models import ShortDescription
+from common.fields import ShortDescription
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas.validators import area_id_validator
@@ -182,18 +182,6 @@ class Regulation(TrackedModel):
     def is_draft_regulation(self):
         return self.regulation_id.startswith("C")
 
-    # def clean(self):
-    #     validators.unique_regulation_id_for_role_type(self)
-    #     validators.validate_regulation_group_exists(self)
-    #     validators.validate_group_validity_spans_regulation_validity(self)
-    #     validators.validate_approved(self)
-    #     validators.validate_official_journal(self)
-    #     validators.validate_information_text(self)
-    #     validators.validate_approved(self)
-    #     validators.validate_base_regulations_have_start_date(self)
-    #     validators.validate_base_regulations_have_community_code(self)
-    #     validators.validate_base_regulations_have_group(self)
-
     def __str__(self):
         return f"{self.regulation_id} ({self.get_role_type_display()})"
 
@@ -238,6 +226,11 @@ class Amendment(TrackedModel):
         Regulation, on_delete=models.PROTECT, related_name="amendments"
     )
 
+    identifying_fields = (
+        "enacting_regulation__regulation_id",
+        "target_regulation__regulation_id",
+    )
+
 
 class Extension(TrackedModel):
     """Prorogation regulations have no validity period of their own but extend the
@@ -264,6 +257,8 @@ class Extension(TrackedModel):
     )
     effective_end_date = models.DateField(null=True)
 
+    identifying_fields = ("enacting_regulation_id", "target_regulation_id")
+
 
 class Suspension(TrackedModel):
     """A FTS regulation suspends the applicability of a regulation for a period of time.
@@ -284,6 +279,11 @@ class Suspension(TrackedModel):
         Regulation, on_delete=models.PROTECT, related_name="suspensions"
     )
     effective_end_date = models.DateField(null=True)
+
+    identifying_fields = (
+        "enacting_regulation__regulation_id",
+        "target_regulation__regulation_id",
+    )
 
 
 class Termination(TrackedModel):
@@ -311,6 +311,8 @@ class Termination(TrackedModel):
     )
     effective_date = models.DateField()
 
+    identifying_fields = ("enacting_regulation_id", "target_regulation_id")
+
 
 class Replacement(TrackedModel):
     """This record holds the information specifying which draft regulations are replaced
@@ -336,3 +338,5 @@ class Replacement(TrackedModel):
         max_length=4, validators=[area_id_validator], null=True
     )
     chapter_heading = models.CharField(max_length=2, null=True)
+
+    identifying_fields = ("enacting_regulation_id", "target_regulation_id")

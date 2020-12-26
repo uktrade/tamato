@@ -8,6 +8,7 @@ from django.db import transaction
 from commodities import import_parsers as parsers
 from commodities import models
 from commodities import serializers
+from common.validators import UpdateType
 from footnotes.models import Footnote
 from footnotes.models import FootnoteType
 from importer.handlers import BaseHandler
@@ -164,10 +165,10 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         item_id = data["indented_goods_nomenclature"].item_id
 
         indent = super().save(data)
-
         node_data = {
             "indent": indent,
             "valid_between": data["valid_between"],
+            "creating_transaction_id": data["transaction_id"],
         }
 
         if depth == 0 and item_id[2:] == "00000000":
@@ -251,20 +252,38 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         return indent
 
-    def post_save(self, obj):
+    def post_save(self, obj: models.GoodsNomenclatureIndent):
         """
-        There is a possible (albeit unlikely) scenario when introducing an indent that the
-        new indent is put between an existing indent and it's children (i.e. it becomes the
-        new parent for those children).
+        There is a possible scenario when introducing an indent that the new indent is put between an
+        existing indent and it's children (i.e. it becomes the new parent for those children). This is
+        possible as the old system had no real materialized tree behind it.
 
-        As the old system had no real materialized tree behind the system it is not
-        unreasonable to suggest this as a possibility.
+        Furthermore on updating changes any node which originally has children will need to have
+        its children copied across to the new updated node.
 
-        This method handles this by checking for any children which need to be moved
-        in case this happens.
+        This method currently handles copying children for updated indents only.
+
+        TODO: Update this method to handle the new indents being added in between previous ones (the
+        TODO: first scenario)
         """
+        if self.data["update_type"] == UpdateType.CREATE:
+            return super(GoodsNomenclatureIndentHandler, self).post_save(obj)
 
-        # TODO: Implement this scenario (requires updating to be implemented first).
+        # TODO: Should only use approved versions - but imported objects don't have approvers.
+        previous_version = obj.version_group.versions.exclude(pk=obj.pk).last()
+
+        for node in obj.nodes.all():
+            for previous_node in previous_version.nodes.filter(
+                valid_between__overlap=node.valid_between
+            ):
+                for child in previous_node.get_children().filter(
+                    valid_between__overlap=node.valid_between
+                ):
+                    child.copy_tree(
+                        parent=node,
+                        valid_between=node.valid_between,
+                        transaction=node.creating_transaction,
+                    )
 
         return super(GoodsNomenclatureIndentHandler, self).post_save(obj)
 

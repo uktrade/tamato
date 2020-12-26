@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture()
 def child():
-    return factories.GeographicalAreaFactory(
+    return factories.GeographicalAreaFactory.create(
         area_code=1, parent=factories.GeoGroupFactory()
     )
 
@@ -33,7 +33,7 @@ def test_GA2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.GeographicalAreaFactory(valid_between=date_ranges.backwards)
+        factories.GeographicalAreaFactory.create(valid_between=date_ranges.backwards)
 
 
 @only_applicable_after("1998-02-01")
@@ -42,7 +42,7 @@ def test_description_not_empty():
 
     with pytest.raises(ValidationError):
         business_rules.DescriptionNotEmpty().validate(
-            factories.GeographicalAreaDescriptionFactory(description="")
+            factories.GeographicalAreaDescriptionFactory.create(description="")
         )
 
 
@@ -94,11 +94,11 @@ def test_GA3_description_start_before_geographical_area_end(date_ranges):
 def test_GA4():
     """A parent geographical area must be a group."""
 
-    parent = factories.GeographicalAreaFactory(area_code=0)
+    parent = factories.GeographicalAreaFactory.create(area_code=0)
 
     with pytest.raises(ValidationError):
         business_rules.GA4().validate(
-            factories.GeographicalAreaFactory(area_code=1, parent=parent)
+            factories.GeographicalAreaFactory.create(area_code=1, parent=parent)
         )
 
 
@@ -122,7 +122,7 @@ def test_GA6():
     g2 = factories.GeoGroupFactory.create(parent=g1)
     g3 = factories.GeoGroupFactory.create(parent=g2)
     g1.parent = g3
-    g1.save()
+    g1.save(force_write=True)
 
     with pytest.raises(ValidationError):
         business_rules.GA6().validate(g1)
@@ -131,11 +131,13 @@ def test_GA6():
 def test_GA7(date_ranges):
     """Geographic Areas with the same area id must not overlap."""
 
-    existing = factories.GeographicalAreaFactory(valid_between=date_ranges.normal)
+    existing = factories.GeographicalAreaFactory.create(
+        valid_between=date_ranges.normal
+    )
 
     with pytest.raises(ValidationError):
         business_rules.GA7().validate(
-            factories.GeographicalAreaFactory(
+            factories.GeographicalAreaFactory.create(
                 area_id=existing.area_id,
                 valid_between=date_ranges.overlap_normal,
             )
@@ -215,7 +217,9 @@ def test_GA14(reference_nonexistent_record):
 def test_GA15(date_ranges):
     """The membership start date must be less than or equal to the membership end date."""
     with pytest.raises(DataError):
-        factories.GeographicalMembershipFactory(valid_between=date_ranges.backwards)
+        factories.GeographicalMembershipFactory.create(
+            valid_between=date_ranges.backwards
+        )
 
 
 def test_GA16(date_ranges):
@@ -235,7 +239,7 @@ def test_GA17(date_ranges):
     """The validity range of the geographical area group must span all membership ranges
     of its members."""
 
-    membership = factories.GeographicalMembershipFactory(
+    membership = factories.GeographicalMembershipFactory.create(
         geo_group__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
     )
@@ -268,7 +272,9 @@ def test_GA19():
 
     with pytest.raises(ValidationError):
         business_rules.GA19().validate(
-            factories.GeographicalMembershipFactory(geo_group=child, member=member)
+            factories.GeographicalMembershipFactory.create(
+                geo_group=child, member=member
+            )
         )
 
     business_rules.GA19().validate(

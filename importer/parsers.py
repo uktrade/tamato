@@ -280,12 +280,24 @@ class Writable:
 
     def update(self, data: Mapping[str, Any], transaction_id: int):
         """Update a DB record with provided data"""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must implement `update` method"
-        )
+        data.update(update_type=UpdateType.UPDATE.value)
+
+        dispatch_object = {
+            "data": data,
+            "tag": self.tag.name,
+            "transaction_id": transaction_id,
+        }
+
+        self.nursery.submit(dispatch_object)
 
     def delete(self, data: Mapping[str, Any], transaction_id: int):
         """Delete a DB record with provided data"""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must implement `delete` method"
-        )
+        data.update(update_type=UpdateType.DELETE.value)
+
+        dispatch_object = {
+            "data": data,
+            "tag": self.tag.name,
+            "transaction_id": transaction_id,
+        }
+
+        self.nursery.submit(dispatch_object)

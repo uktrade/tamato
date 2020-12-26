@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 from django.db import models
+from psycopg2._range import DateTimeTZRange
 from treebeard.mp_tree import MP_Node
 
 from commodities import validators
 from common.models import NumericSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from common.validators import UpdateType
 
 
 class GoodsNomenclature(TrackedModel, ValidityMixin):
@@ -60,12 +64,16 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
     )
 
+    def save(self, *args, **kwargs):
+        return_value = super().save(*args, **kwargs)
+
+        if not hasattr(self, "version_group"):
+            self.version_group = self._get_version_group()
+
+        return return_value
+
     def __str__(self):
-        depth = "_"
-        first_node = self.nodes.first()
-        if first_node:
-            depth = first_node.depth
-        return f"{depth} - {self.indented_goods_nomenclature}"
+        return f"Goods Nomenclature Indent: {self.indent} - {self.indented_goods_nomenclature}"
 
 
 class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
@@ -129,6 +137,12 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         GoodsNomenclatureIndent, on_delete=models.PROTECT, related_name="nodes"
     )
 
+    creating_transaction = models.ForeignKey(
+        "common.Transaction",
+        on_delete=models.PROTECT,
+        related_name="goods_nomenclature_indent_nodes",
+    )
+
     def get_measures(self, **kwargs):
         if self.indent.measures.exists():
             return self.indent.measures.all()
@@ -153,6 +167,31 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
             or descendant_measures.exists()
         )
 
+    def copy_tree(
+        self, parent: GoodsNomenclatureIndentNode, valid_between, transaction
+    ):
+        new_valid_between = self.valid_between
+        if not new_valid_between.lower or (
+            valid_between.lower and new_valid_between.lower < valid_between.lower
+        ):
+            new_valid_between = DateTimeTZRange(
+                valid_between.lower, new_valid_between.upper
+            )
+        if not new_valid_between.upper or (
+            valid_between.upper and new_valid_between.upper > valid_between.upper
+        ):
+            new_valid_between = DateTimeTZRange(
+                new_valid_between.lower, valid_between.upper
+            )
+
+        new_node = parent.add_child(
+            indent=self.indent,
+            valid_between=new_valid_between,
+            creating_transaction=transaction,
+        )
+        for child in self.get_children():
+            child.copy_tree(new_node, valid_between, transaction)
+
     def __str__(self):
         return f"path={self.path}, indent=({self.indent})"
 
@@ -170,10 +209,6 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
         related_name="descriptions",
     )
     description = models.TextField()
-
-    def clean(self):
-        validators.validate_description_is_not_null(self)
-        return super().clean()
 
 
 class GoodsNomenclatureOrigin(TrackedModel):

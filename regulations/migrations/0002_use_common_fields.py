@@ -2,6 +2,7 @@
 import django.core.validators
 from django.db import migrations
 
+import common.fields
 import common.models
 
 
@@ -15,12 +16,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="group",
             name="description",
-            field=common.models.ShortDescription(blank=True, max_length=500, null=True),
+            field=common.fields.ShortDescription(blank=True, max_length=500, null=True),
         ),
         migrations.AlterField(
             model_name="regulation",
             name="information_text",
-            field=common.models.ShortDescription(
+            field=common.fields.ShortDescription(
                 blank=True,
                 max_length=500,
                 null=True,

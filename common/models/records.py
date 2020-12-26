@@ -1,30 +1,34 @@
 """TrackedModel and supporting manager."""
 import re
 from datetime import datetime
+from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import Optional
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
 from django.db.models import Case
-from django.db.models import CharField
 from django.db.models import F
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.query_utils import DeferredAttribute
+from django.db.transaction import atomic
 from django.template import loader
 from django.utils import timezone
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
-from treebeard.mp_tree import MP_NodeQuerySet
 
 from common import exceptions
 from common import validators
-from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+
+
+class IllegalSaveError(Exception):
+    pass
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet):
@@ -41,7 +45,20 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If done from the TrackedModel this will return the current objects for all tracked
         models.
         """
-        return self.filter(successor__isnull=True)
+        return self.filter(is_current__isnull=False)
+
+    def since_transaction(self, transaction_id: int) -> QuerySet:
+        """
+        Get all instances of an object since a certain transaction (i.e. since a particular
+        workbasket was accepted).
+
+        This will not include objects without a transaction ID - thus excluding rows which
+        have not been accepted yet.
+
+        If done from the TrackedModel this will return all objects from all transactions since
+        the given transaction.
+        """
+        return self.filter(transaction__id__gt=transaction_id)
 
     def as_at(self, date: datetime) -> QuerySet:
         """
@@ -61,31 +78,34 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.as_at(timezone.now())
 
-    def get_version(self, **kwargs):
+    def get_versions(self, **kwargs) -> QuerySet:
         for field in self.model.identifying_fields:
             if field not in kwargs:
                 raise exceptions.NoIdentifyingValuesGivenError(
                     f"Field {field} expected but not found."
                 )
-        return self.get(**kwargs)
+        return self.filter(**kwargs)
 
     def get_latest_version(self, **kwargs):
         """
         Gets the latest version of a specific object.
         """
-        return self.get_version(successor__isnull=True, **kwargs)
+        return self.get_versions(**kwargs).current().get()
 
     def get_current_version(self, **kwargs):
         """
         Gets the current version of a specific object.
         """
-        return self.active().get_version(**kwargs)
+        return self.get_versions(**kwargs).active().get()
 
     def get_first_version(self, **kwargs):
         """
         Get the original version of a specific object.
         """
-        return self.get_version(predecessor__isnull=True, **kwargs)
+        return self.get_versions(**kwargs).order_by("id").first()
+
+    def excluding_versions_of(self, version_group):
+        return self.exclude(version_group=version_group)
 
     def with_workbasket(self, workbasket):
         """
@@ -143,11 +163,11 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         return self.annotate(
             record_code=Case(
                 *(TrackedModelQuerySet._when_model_record_codes()),
-                output_field=CharField(),
+                output_field=models.CharField(),
             ),
             subrecord_code=Case(
                 *(TrackedModelQuerySet._when_model_subrecord_codes()),
-                output_field=CharField(),
+                output_field=models.CharField(),
             ),
         )
 
@@ -203,27 +223,30 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         ]
 
 
-class PolymorphicMPTreeQuerySet(TrackedModelQuerySet, MP_NodeQuerySet):
-    """
-    Combines QuerySets from the TrackedModel system and the MPTT QuerySet from django-treebeard.
+class TimestampedMixin(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    Treebeards QuerySet only overrides the `.delete` method, whereas the Polymorphic QuerySet
-    never changes `.delete` so they should work together well.
-    """
+    class Meta:
+        abstract = True
 
 
-class PolymorphicMPTreeManager(PolymorphicManager):
-    def get_queryset(self):
-        """
-        The only change the MP_NodeManager from django-treebeard adds to the manager is
-        to order the queryset by the path - effectively putting things in tree order.
+class ValidityMixin(models.Model):
+    valid_between = DateTimeRangeField()
 
-        This makes it easier to inherit the PolymorphicManager instead which does more work.
+    class Meta:
+        abstract = True
 
-        PolymorphicModel also requires the manager to inherit from PolymorphicManager.
-        """
-        qs = super().get_queryset()
-        return qs.order_by("path")
+
+class VersionGroup(models.Model):
+    current_version = models.ForeignKey(
+        "common.TrackedModel",
+        on_delete=models.SET_NULL,
+        unique=True,
+        null=True,
+        related_name="+",
+        related_query_name="is_current",
+    )
 
 
 class TrackedModel(PolymorphicModel):
@@ -234,22 +257,17 @@ class TrackedModel(PolymorphicModel):
         editable=False,
     )
 
-    predecessor = models.OneToOneField(
-        "self",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="successor",
-        related_query_name="successor",
-    )
-
     update_type = models.PositiveSmallIntegerField(
         choices=validators.UpdateType.choices
     )
 
+    version_group = models.ForeignKey(
+        VersionGroup, on_delete=models.PROTECT, related_name="versions"
+    )
+
     objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
 
-    business_rules: Iterable = []
+    business_rules: Iterable = ()
     identifying_fields = ("sid",)
     taric_template = None
 
@@ -285,29 +303,20 @@ class TrackedModel(PolymorphicModel):
                 "template."
             ) from e
 
-        print("got", template_name)
         return template_name
 
     def new_draft(self, workbasket, save=True, **kwargs):
-        if hasattr(self, "successor"):
-            raise exceptions.AlreadyHasSuccessorError(
-                f"Object with PK: {self.pk} already has a successor, cannot have "
-                "multiple successors. Use objects.get_latest_version to find the "
-                "latest instance of this object without a successor."
-            )
         cls = self.__class__
 
         new_object_kwargs = {
             field.name: getattr(self, field.name)
             for field in self._meta.fields
-            if field.name != "id"
+            if field.name
+            not in (self._meta.pk.name, "polymorphic_ctype", "trackedmodel_ptr", "id")
         }
 
         new_object_kwargs["transaction"] = workbasket.new_transaction()
-        new_object_kwargs.setdefault("update_type", validators.UpdateType.UPDATE)
-        new_object_kwargs["predecessor"] = self
-        new_object_kwargs.pop("polymorphic_ctype")
-        new_object_kwargs.pop("trackedmodel_ptr")
+        new_object_kwargs["update_type"] = validators.UpdateType.UPDATE
 
         new_object_kwargs.update(kwargs)
 
@@ -319,15 +328,17 @@ class TrackedModel(PolymorphicModel):
         return new_object
 
     def get_versions(self):
-        query = Q()
-        for field in self.identifying_fields:
-            query &= Q(**{field: getattr(self, field)})
-        return self.__class__.objects.filter(query).order_by("-created_at")
+        if hasattr(self, "version_group"):
+            return self.version_group.versions.all()
+
+        query = Q(**self.get_identifying_fields())
+        return self.__class__.objects.filter(query).order_by("-pk")
 
     def get_latest_version(self):
-        return self.__class__.objects.get_latest_version(
-            **{field: getattr(self, field) for field in self.identifying_fields}
-        )
+        current_version = self.version_group.current_version
+        if current_version is None:
+            raise self.__class__.DoesNotExist("Object has no current version")
+        return current_version
 
     def identifying_fields_unique(
         self, identifying_fields: Optional[Iterable[str]] = None
@@ -346,21 +357,57 @@ class TrackedModel(PolymorphicModel):
     def identifying_fields_to_string(
         self, identifying_fields: Optional[Iterable[str]] = None
     ) -> str:
-        if identifying_fields is None:
-            identifying_fields = self.identifying_fields
+        field_list = []
+        for field, value in self.get_identifying_fields(identifying_fields).items():
+            field_list.append(f"{field}={str(value)}")
 
-        fields = []
+        return ", ".join(field_list)
+
+    def _get_version_group(self) -> VersionGroup:
+        if self.update_type == validators.UpdateType.CREATE:
+            return VersionGroup.objects.create()
+        return self.get_versions().first().version_group
+
+    def _can_write(self):
+        return not (
+            self.pk
+            and self.transaction.workbasket.status in WorkflowStatus.approved_statuses()
+        )
+
+    def get_identifying_fields(
+        self, identifying_fields: Optional[Iterable[str]] = None
+    ) -> Dict[str, Any]:
+        identifying_fields = identifying_fields or self.identifying_fields
+        fields = {}
+
         for field in identifying_fields:
-            value = None
-            try:
-                value = getattr(self, field)
-            except ObjectDoesNotExist:
-                value = "(NOT FOUND)"
-            if isinstance(value, TrackedModel):
-                value = f"({str(value)})"
-            fields.append(f"{field}={str(value)}")
+            value = self
+            for layer in field.split("__"):
+                value = getattr(value, layer)
+            fields[field] = value
 
-        return ", ".join(fields)
+        return fields
+
+    @atomic
+    def save(self, *args, force_write=False, **kwargs):
+        if not force_write and not self._can_write():
+            raise IllegalSaveError(
+                "TrackedModels cannot be updated once written and approved. "
+                "If writing a new row, use `.new_draft` instead"
+            )
+
+        if not hasattr(self, "version_group"):
+            self.version_group = self._get_version_group()
+
+        return_value = super().save(*args, **kwargs)
+
+        if self.transaction.workbasket.status in WorkflowStatus.approved_statuses():
+            self.version_group.current_version = self
+            self.version_group.save()
+
+        return return_value
 
     def __str__(self):
-        return self.identifying_fields_to_string()
+        return ", ".join(
+            f"{field}={getattr(self, field, None)}" for field in self.identifying_fields
+        )

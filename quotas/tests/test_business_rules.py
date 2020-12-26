@@ -28,42 +28,44 @@ def test_ON1(make_duplicate_record):
         business_rules.ON1().validate(duplicate)
 
 
-def test_ON2(date_ranges, approved_transaction):
+def test_ON2(date_ranges, approved_transaction, unapproved_transaction):
     """There may be no overlap in time of two quota order numbers with the same quota
     order number id.
     """
 
-    existing = factories.QuotaOrderNumberFactory(
+    existing = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.normal, transaction=approved_transaction
     )
 
-    order_number = factories.QuotaOrderNumberFactory(
+    order_number = factories.QuotaOrderNumberFactory.create(
         order_number=existing.order_number,
         valid_between=date_ranges.overlap_normal,
+        transaction=unapproved_transaction,
     )
 
     with pytest.raises(ValidationError):
         business_rules.ON2().validate(order_number)
 
 
-def test_ON5(date_ranges, approved_transaction):
+def test_ON5(date_ranges, approved_transaction, unapproved_transaction):
     """There may be no overlap in time of two quota order number origins with the same
     quota order number SID and geographical area id.
     """
 
-    order_number = factories.QuotaOrderNumberFactory(
+    order_number = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.normal, transaction=approved_transaction
     )
-    existing = factories.QuotaOrderNumberOriginFactory(
+    existing = factories.QuotaOrderNumberOriginFactory.create(
         order_number=order_number,
         valid_between=date_ranges.starts_with_normal,
         transaction=approved_transaction,
     )
 
-    origin = factories.QuotaOrderNumberOriginFactory(
+    origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area=existing.geographical_area,
         order_number=order_number,
         valid_between=date_ranges.starts_with_normal,
+        transaction=unapproved_transaction,
     )
 
     with pytest.raises(ValidationError):
@@ -78,7 +80,7 @@ def test_ON6(date_ranges):
     Only applies to quota order numbers with a validity start date after 2006-12-31.
     """
 
-    origin = factories.QuotaOrderNumberOriginFactory(
+    origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area__valid_between=date_ranges.starts_with_normal,
         valid_between=date_ranges.normal,
     )
@@ -87,34 +89,36 @@ def test_ON6(date_ranges):
         business_rules.ON6().validate(origin)
 
 
-def test_ON7(date_ranges, approved_transaction):
+def test_ON7(date_ranges, approved_transaction, unapproved_transaction):
     """The validity period of the quota order number must span the validity period of
     the quota order number origin.
     """
 
-    order_number = factories.QuotaOrderNumberFactory(
+    order_number = factories.QuotaOrderNumberFactory.create(
         transaction=approved_transaction, valid_between=date_ranges.starts_with_normal
     )
-    origin = factories.QuotaOrderNumberOriginFactory(
+    origin = factories.QuotaOrderNumberOriginFactory.create(
         order_number=order_number,
         valid_between=date_ranges.normal,
+        transaction=unapproved_transaction,
     )
 
     with pytest.raises(ValidationError):
         business_rules.ON7().validate(origin)
 
 
-def test_ON8(date_ranges, approved_transaction):
+def test_ON8(date_ranges, approved_transaction, unapproved_transaction):
     """The validity period of the quota order number must span the validity period of
     the referencing quota definition.
     """
 
-    order_number = factories.QuotaOrderNumberFactory(
+    order_number = factories.QuotaOrderNumberFactory.create(
         transaction=approved_transaction, valid_between=date_ranges.starts_with_normal
     )
-    quota_def = factories.QuotaDefinitionFactory(
+    quota_def = factories.QuotaDefinitionFactory.create(
         order_number=order_number,
         valid_between=date_ranges.normal,
+        transaction=unapproved_transaction,
     )
 
     with pytest.raises(ValidationError):
@@ -251,7 +255,7 @@ def test_QD2(date_ranges):
     """The start date must be less than or equal to the end date"""
 
     with pytest.raises(DataError):
-        factories.QuotaDefinitionFactory(valid_between=date_ranges.backwards)
+        factories.QuotaDefinitionFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_QD7(date_ranges):
@@ -402,7 +406,9 @@ def test_QA4(coefficient, expect_error):
         kwargs["coefficient"] = coefficient
 
     try:
-        business_rules.QA4().validate(factories.QuotaAssociationFactory(**kwargs))
+        business_rules.QA4().validate(
+            factories.QuotaAssociationFactory.create(**kwargs)
+        )
 
     except ValidationError:
         if not expect_error:
@@ -442,27 +448,29 @@ def test_QA5_pt2():
         )
 
 
-def test_QA5_pt3():
+def test_QA5_pt3(unapproved_transaction):
     """A sub-quota defined with the 'normal' type must have a coefficient of 1"""
 
     with pytest.raises(ValidationError):
         business_rules.QA5().validate(
-            factories.QuotaAssociationFactory(
+            factories.QuotaAssociationFactory.create(
                 coefficient=Decimal("1.20000"),
                 sub_quota_relation_type=SubQuotaType.NORMAL,
+                transaction=unapproved_transaction,
             )
         )
 
 
-def test_QA6():
+def test_QA6(unapproved_transaction):
     """Sub-quotas associated with the same main quota must have the same relation type"""
 
-    existing = factories.QuotaAssociationFactory(
+    existing = factories.QuotaAssociationFactory.create(
         sub_quota_relation_type=SubQuotaType.NORMAL
     )
-    assoc = factories.QuotaAssociationFactory(
+    assoc = factories.QuotaAssociationFactory.create(
         main_quota=existing.main_quota,
         sub_quota_relation_type=SubQuotaType.EQUIVALENT,
+        transaction=unapproved_transaction,
     )
 
     with pytest.raises(ValidationError):
@@ -500,7 +508,7 @@ def test_QBP3(date_ranges):
     """
 
     with pytest.raises(DataError):
-        factories.QuotaBlockingFactory(valid_between=date_ranges.backwards)
+        factories.QuotaBlockingFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_suspension_of_fcfs_quotas_only():

@@ -221,9 +221,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         self.data = dispatched_object["data"]
         if not self.identifying_fields:
-            self.identifying_fields = (
-                self.serializer_class.Meta.model.identifying_fields
-            )
+            self.identifying_fields = self.model.identifying_fields
         self.transaction_id = dispatched_object["transaction_id"]
 
         self.key = generate_key(
@@ -388,7 +386,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         data = self.clean(self.data)
         data.update(transaction_id=self.transaction_id)
 
-        logger.debug(f"Creating {self.serializer_class.Meta.model}: {data}")
+        logger.debug(f"Creating {self.model}: {data}")
         data = self.pre_save(data, self.resolved_links)
         obj = self.save(data)
         self.post_save(obj)
@@ -420,3 +418,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
             cls.dependencies.append(dependant)
 
         return dependant
+
+    @property
+    def model(self):
+        return self.serializer_class.Meta.model

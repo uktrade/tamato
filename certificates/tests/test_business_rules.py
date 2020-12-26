@@ -5,7 +5,7 @@ from django.db import IntegrityError
 
 from certificates import business_rules
 from common.tests import factories
-
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -89,7 +89,7 @@ def test_CE6_first_description_must_have_same_start_date(date_ranges):
     the certificate.
     """
 
-    description = factories.CertificateDescriptionFactory(
+    description = factories.CertificateDescriptionFactory.create(
         described_certificate__valid_between=date_ranges.no_end,
         valid_between=date_ranges.later,
     )
@@ -104,7 +104,7 @@ def test_CE6_start_dates_cannot_match():
     """
 
     existing = factories.CertificateDescriptionFactory()
-    factories.CertificateDescriptionFactory(
+    factories.CertificateDescriptionFactory.create(
         described_certificate=existing.described_certificate,
         valid_between=existing.valid_between,
     )
@@ -118,7 +118,7 @@ def test_CE6_certificate_validity_period_must_span_description(date_ranges):
     certificate description.
     """
 
-    description = factories.CertificateDescriptionFactory(
+    description = factories.CertificateDescriptionFactory.create(
         described_certificate__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
     )
@@ -134,7 +134,7 @@ def test_CE7(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.CE7().validate(
-            factories.CertificateFactory(
+            factories.CertificateFactory.create(
                 certificate_type__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
             )
@@ -146,8 +146,10 @@ def test_certificate_description_periods_cannot_overlap(date_ranges):
     # XXX All versions of a description will have the same SID. Won't this prevent
     # updates and deletes?
 
-    existing = factories.CertificateDescriptionFactory(valid_between=date_ranges.normal)
-    description = factories.CertificateDescriptionFactory(
+    existing = factories.CertificateDescriptionFactory.create(
+        valid_between=date_ranges.normal
+    )
+    description = factories.CertificateDescriptionFactory.create(
         described_certificate=existing.described_certificate,
         sid=existing.sid,
         valid_between=date_ranges.overlap_normal,
@@ -155,27 +157,3 @@ def test_certificate_description_periods_cannot_overlap(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.NoOverlappingDescriptions().validate(description)
-
-
-def test_certificate_description_period_must_be_adjacent_to_predecessor(date_ranges):
-    """Ensure validity periods for successive descriptions must be adjacent."""
-
-    predecessor = factories.CertificateDescriptionFactory(
-        valid_between=date_ranges.normal,
-    )
-    predecessor = factories.CertificateDescriptionFactory(
-        sid=predecessor.sid,
-        predecessor=predecessor,
-        described_certificate=predecessor.described_certificate,
-        valid_between=date_ranges.adjacent_later,
-    )
-    assert business_rules.ContiguousDescriptions().validate(predecessor) is None
-
-    description = factories.CertificateDescriptionFactory(
-        sid=predecessor.sid,
-        predecessor=predecessor,
-        described_certificate=predecessor.described_certificate,
-        valid_between=date_ranges.adjacent_even_later,
-    )
-    with pytest.raises(ValidationError):
-        business_rules.ContiguousDescriptions().validate(description)

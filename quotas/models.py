@@ -4,8 +4,8 @@ from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from quotas import validators

@@ -3,6 +3,23 @@ import django.db.models.deletion
 from django.db import migrations
 from django.db import models
 
+from common.validators import UpdateType
+
+
+def setup_version_groups(apps, schema_editor):
+    TrackedModel = apps.get_model("common", "TrackedModel")
+    VersionGroup = apps.get_model("common", "VersionGroup")
+
+    for obj in TrackedModel.objects.filter(update_type=UpdateType.CREATE.value):
+        obj.version_group = VersionGroup.objects.create(current_version=obj)
+        obj.save()
+
+    for obj in TrackedModel.objects.exclude(update_type=UpdateType.CREATE.value):
+        obj.version_group = obj._get_version_group()
+        obj.version_group(current_version=obj)
+        obj.version_group.save()
+        obj.save()
+
 
 class Migration(migrations.Migration):
 
@@ -77,5 +94,54 @@ class Migration(migrations.Migration):
                 to="common.transaction",
             ),
             preserve_default=False,
+        ),
+        migrations.CreateModel(
+            name="VersionGroup",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "current_version",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        related_query_name="is_current",
+                        to="common.TrackedModel",
+                        unique=True,
+                    ),
+                ),
+            ],
+        ),
+        migrations.AddField(
+            model_name="trackedmodel",
+            name="version_group",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="versions",
+                to="common.VersionGroup",
+            ),
+        ),
+        migrations.RunPython(setup_version_groups),
+        migrations.AlterField(
+            model_name="trackedmodel",
+            name="version_group",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="versions",
+                to="common.VersionGroup",
+            ),
+        ),
+        migrations.RemoveField(
+            model_name="trackedmodel",
+            name="predecessor",
         ),
     ]

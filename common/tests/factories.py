@@ -68,6 +68,18 @@ class ApprovedWorkBasketFactory(WorkBasketFactory):
 
     approver = factory.SubFactory(UserFactory)
     status = WorkflowStatus.READY_FOR_EXPORT
+    transaction = factory.RelatedFactory(
+        "common.tests.factories.TransactionFactory",
+        factory_related_name="workbasket",
+    )
+
+
+class SimpleApprovedWorkBasketFactory(WorkBasketFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    approver = factory.SubFactory(UserFactory)
+    status = WorkflowStatus.READY_FOR_EXPORT
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
@@ -76,21 +88,37 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
     order = 1
     import_transaction_id = factory.Sequence(lambda x: x + 1)
-    workbasket = factory.SubFactory(WorkBasketFactory)
+    workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
 
 
-class ApprovedTransactionFactory(factory.django.DjangoModelFactory):
+ApprovedTransactionFactory = TransactionFactory
+
+
+class UnapprovedTransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "common.Transaction"
 
     order = 1
     import_transaction_id = factory.Sequence(lambda x: x + 1)
-    workbasket = factory.SubFactory(ApprovedWorkBasketFactory)
+    workbasket = factory.SubFactory(WorkBasketFactory)
+
+
+class VersionGroupFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "common.VersionGroup"
 
 
 class TrackedModelMixin(factory.django.DjangoModelFactory):
     transaction = factory.SubFactory(TransactionFactory)
-    update_type = UpdateType.UPDATE
+    update_type = UpdateType.CREATE.value
+    version_group = factory.SubFactory(VersionGroupFactory)
+
+    @classmethod
+    def _after_postgeneration(cls, instance, create, results=None):
+        """Save again the instance if creating and at least one hook ran."""
+        if create and results:
+            # Some post-generation hooks ran, and may have modified us.
+            instance.save(force_write=True)
 
 
 class FootnoteTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -167,6 +195,33 @@ class BaseRegulationFactory(RegulationFactory):
     regulation_group = factory.SubFactory(RegulationGroupFactory)
     role_type = 1
     valid_between = Dates().no_end
+
+
+class AmendmentFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Amendment"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+
+
+class SuspensionFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Suspension"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+
+
+class ReplacementFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Replacement"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+    measure_type_id = "AAAAAA"
+    geographical_area_id = "GB"
+    chapter_heading = "01"
 
 
 class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -358,6 +413,7 @@ class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
         "common.tests.factories.GoodsNomenclatureIndentNodeFactory",
         factory_related_name="indent",
         valid_between=factory.SelfAttribute("..valid_between"),
+        creating_transaction=factory.SelfAttribute("..transaction"),
     )
 
     indent = 0
@@ -386,6 +442,8 @@ class GoodsNomenclatureIndentNodeFactory(ValidityFactoryMixin):
     depth = factory.LazyAttribute(lambda o: len(o.path) // 4)
 
     indent = factory.SubFactory(SimpleGoodsNomenclatureIndentFactory)
+
+    creating_transaction = factory.SubFactory(ApprovedTransactionFactory)
 
 
 class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -468,7 +526,7 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
     order_number = string_sequence(6, characters=string.digits)
     mechanism = 0
-    category = 0
+    category = 1
 
     origin = factory.RelatedFactory(
         "common.tests.factories.QuotaOrderNumberOriginFactory",
@@ -566,9 +624,9 @@ class QuotaEventFactory(TrackedModelMixin):
         now = "{:%Y-%m-%d}".format(Dates().now)
         if self.subrecord_code == "00":
             return {
-                "old.balance": 0.0,
-                "new.balance": 0.0,
-                "imported.amount": 0.0,
+                "old.balance": "0.0",
+                "new.balance": "0.0",
+                "imported.amount": "0.0",
                 "last.import.date.in.allocation": now,
             }
         if self.subrecord_code == "05":
@@ -596,8 +654,8 @@ class QuotaEventFactory(TrackedModelMixin):
             return {
                 "transfer.date": now,
                 "quota.closed": "Y",
-                "transferred.amount": 0.0,
-                "target.quota.definition.sid": 1,
+                "transferred.amount": "0.0",
+                "target.quota.definition.sid": "1",
             }
 
 

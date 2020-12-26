@@ -1,7 +1,7 @@
 from django.db import models
 
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas import validators
@@ -78,7 +78,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         GeographicalArea, related_name="groups", on_delete=models.PROTECT
     )
 
-    identifying_fields = ("geo_group", "member")
+    identifying_fields = ("geo_group_id", "member_id")
 
     def member_used_in_measure_exclusion(self):
         # TODO handle deletes

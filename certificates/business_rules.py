@@ -4,6 +4,7 @@ from common.business_rules import find_duplicate_start_dates
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.models import TrackedModel
 
 
 class CET1(UniqueIdentifyingFields):
@@ -112,15 +113,17 @@ class ContiguousDescriptions(BusinessRule):
     description's validity period.
     """
 
-    def validate(self, description):
+    def validate(self, description: TrackedModel):
         # XXX Predecessor is previous version of the same description. Shouldn't this
         # check that all current descriptions are adjacent to each other?
 
-        if not description.predecessor:
-            return
-
         if (
-            description.predecessor.valid_between.upper
-            != description.valid_between.lower
+            type(description)
+            .objects.filter(
+                version_group=description.version_group,
+                valid_between__startswith=description.valid_between.lower,
+            )
+            .exclude(pk=description.pk)
+            .exists()
         ):
             raise self.violation(description)

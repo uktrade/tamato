@@ -19,6 +19,7 @@ def make_child(parent: GoodsNomenclature, **kwargs) -> GoodsNomenclature:
     g = GoodsNomenclatureFactory(indent__node=None, **kwargs)
     data = GoodsNomenclatureIndentNodeFactory.stub(
         indent=g.indents.get(),
+        creating_transaction=parent.transaction,
     ).__dict__
     parent.indents.get().nodes.get().add_child(**data)
     return g

@@ -3,9 +3,8 @@ from typing import Type
 from django.db import models
 from django.urls import reverse
 
-from common.models import ShortDescription
-from common.models import SignedIntSID
-from common.models import TimestampedMixin
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from footnotes import business_rules
@@ -50,7 +49,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
         ).exists()
 
 
-class Footnote(TrackedModel, TimestampedMixin, ValidityMixin):
+class Footnote(TrackedModel, ValidityMixin):
     """A footnote relates to a piece of text, and either clarifies it (in the case of
     nomenclature) or limits its application (as in the case of measures).
     """

@@ -149,8 +149,9 @@ def validate_taric_xml(
                     "Either a factory or an object instance need to be provided - not both."
                 )
 
-            if not instance:
-                factory(transaction=approved_transaction, **factory_kwargs or {})
+            current_instance = instance or factory.create(
+                transaction=approved_transaction, **factory_kwargs or {}
+            )
 
             response = api_client.get(
                 reverse(
@@ -162,7 +163,9 @@ def validate_taric_xml(
 
             assert response.status_code == 200
 
-            xml = etree.XML(response.content)
+            content = response.content
+
+            xml = etree.XML(content)
 
             taric_schema.validate(xml)
 
@@ -295,6 +298,13 @@ class Dates:
         return DateTimeTZRange(
             self.now + relativedelta(months=+1),
             self.now + relativedelta(months=+2),
+        )
+
+    @property
+    def adjacent_no_end(self):
+        return DateTimeTZRange(
+            self.now + relativedelta(months=+1),
+            None,
         )
 
     @property

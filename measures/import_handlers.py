@@ -207,8 +207,7 @@ class MeasureHandler(BaseHandler):
         # XXX This seems like it might get the wrong object sometimes. Maybe we should
         # just store the order number string on the measure, rather than link it to a
         # QuotaOrderNumber instance?
-        return model.objects.get(
-            successor__isnull=True,
+        return model.objects.current().get(
             order_number=kwargs.pop("order_number"),
         )
 
@@ -247,9 +246,8 @@ class MeasureComponentHandler(BaseHandler):
     tag = parsers.MeasureComponentParser.tag.name
 
     def get_component_measure_link(self, model, kwargs):
-        return model.objects.get(
+        return model.objects.current().get(
             sid=kwargs.pop("sid"),
-            successor__isnull=True,
         )
 
     def get_component_measurement_link(self, model, kwargs):
@@ -304,9 +302,8 @@ class MeasureConditionHandler(BaseHandler):
     tag = parsers.MeasureConditionParser.tag.name
 
     def get_dependent_measure_link(self, model, kwargs):
-        return model.objects.get(
+        return model.objects.current().get(
             sid=kwargs.pop("sid"),
-            successor__isnull=True,
         )
 
     def get_condition_measurement_link(self, model, kwargs):
@@ -382,9 +379,8 @@ class MeasureExcludedGeographicalAreaHandler(BaseHandler):
     tag = parsers.MeasureExcludedGeographicalAreaParser.tag.name
 
     def get_modified_measure_link(self, model, kwargs):
-        return model.objects.get(
+        return model.objects.current().get(
             sid=kwargs.pop("sid"),
-            successor__isnull=True,
         )
 
 
@@ -413,9 +409,8 @@ class FootnoteAssociationMeasureHandler(BaseHandler):
     tag = parsers.FootnoteAssociationMeasureParser.tag.name
 
     def get_footnoted_measure_link(self, model, kwargs):
-        return model.objects.get(
+        return model.objects.current().get(
             sid=kwargs.pop("sid"),
-            successor__isnull=True,
         )
 
     def get_associated_footnote_link(self, model, kwargs):

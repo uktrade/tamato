@@ -1,9 +1,9 @@
 from django.db import models
 from psycopg2.extras import DateTimeTZRange
 
-from common.models import ApplicabilityCode
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ApplicabilityCode
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from measures import validators
@@ -322,14 +322,7 @@ class Measure(TrackedModel, ValidityMixin):
     stopped = models.BooleanField(default=False)
     export_refund_nomenclature_sid = SignedIntSID(null=True, blank=True, default=None)
 
-    identifying_fields = (
-        "measure_type",
-        "geographical_area",
-        "goods_nomenclature",
-        "additional_code",
-        "order_number",
-        "reduction",
-    )
+    identifying_fields = ("sid",)
 
     footnotes = models.ManyToManyField(
         "footnotes.Footnote", through="FootnoteAssociationMeasure"

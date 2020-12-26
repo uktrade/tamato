@@ -215,14 +215,17 @@ def test_NIG12_start_dates_cannot_match():
         business_rules.NIG12().validate(goods_nomenclature)
 
 
-def test_NIG12_description_start_before_nomenclature_end(date_ranges):
+def test_NIG12_description_start_before_nomenclature_end(
+    date_ranges, unapproved_transaction
+):
     """The start date must be less than or equal to the end date of the nomenclature."""
 
-    goods_nomenclature = factories.GoodsNomenclatureFactory(
+    goods_nomenclature = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.normal,
         description__valid_between=date_ranges.starts_with_normal,
+        transaction=unapproved_transaction,
     )
-    factories.GoodsNomenclatureDescriptionFactory(
+    factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=goods_nomenclature, valid_between=date_ranges.later
     )
 
@@ -248,7 +251,7 @@ def test_NIG22(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.NIG22().validate(
-            factories.FootnoteAssociationGoodsNomenclatureFactory(
+            factories.FootnoteAssociationGoodsNomenclatureFactory.create(
                 goods_nomenclature__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
             )

@@ -12,12 +12,14 @@ from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
 from common.validators import ApplicabilityCode
+from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from measures import business_rules
 from measures.validators import DutyExpressionId
 from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -47,7 +49,7 @@ def test_MTS3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.MeasureTypeSeriesFactory(valid_between=date_ranges.backwards)
+        factories.MeasureTypeSeriesFactory.create(valid_between=date_ranges.backwards)
 
 
 # 235 - MEASURE TYPE
@@ -66,7 +68,7 @@ def test_MT2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.MeasureTypeFactory(valid_between=date_ranges.backwards)
+        factories.MeasureTypeFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_MT3(date_ranges):
@@ -132,7 +134,9 @@ def test_MC2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
-        factories.MeasureConditionCodeFactory(valid_between=date_ranges.backwards)
+        factories.MeasureConditionCodeFactory.create(
+            valid_between=date_ranges.backwards
+        )
 
 
 def test_MC3(date_ranges):
@@ -142,7 +146,7 @@ def test_MC3(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.MC3().validate(
-            factories.MeasureConditionFactory(
+            factories.MeasureConditionFactory.create(
                 condition_code__valid_between=date_ranges.normal,
                 dependent_measure__valid_between=date_ranges.overlap_normal,
             )
@@ -197,7 +201,7 @@ def test_MA4(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.MA4().validate(
-            factories.MeasureConditionFactory(
+            factories.MeasureConditionFactory.create(
                 action__valid_between=date_ranges.starts_with_normal,
                 dependent_measure__valid_between=date_ranges.normal,
             )
@@ -304,11 +308,11 @@ def test_ME7():
 
     with pytest.raises(ValidationError):
         business_rules.ME7().validate(
-            factories.MeasureFactory(goods_nomenclature__suffix="00")
+            factories.MeasureFactory.create(goods_nomenclature__suffix="00")
         )
 
     business_rules.ME7().validate(
-        factories.MeasureFactory(goods_nomenclature__suffix="80")
+        factories.MeasureFactory.create(goods_nomenclature__suffix="80")
     )
 
 
@@ -319,7 +323,7 @@ def test_ME8(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.ME8().validate(
-            factories.MeasureFactory(
+            factories.MeasureFactory.create(
                 goods_nomenclature__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
             )
@@ -348,12 +352,12 @@ def test_ME16():
     forbidden.
     """
 
-    existing = factories.MeasureFactory(additional_code=None)
-    additional_code = factories.AdditionalCodeFactory()
+    existing = factories.MeasureFactory.create(additional_code=None)
+    additional_code = factories.AdditionalCodeFactory.create()
 
     with pytest.raises(ValidationError):
         business_rules.ME16().validate(
-            factories.MeasureFactory(
+            factories.MeasureFactory.create(
                 measure_type=existing.measure_type,
                 geographical_area=existing.geographical_area,
                 goods_nomenclature=existing.goods_nomenclature,
@@ -364,11 +368,11 @@ def test_ME16():
         )
 
     existing.additional_code = additional_code
-    existing.save()
+    existing.save(force_write=True)
 
     with pytest.raises(ValidationError):
         business_rules.ME16().validate(
-            factories.MeasureFactory(
+            factories.MeasureFactory.create(
                 measure_type=existing.measure_type,
                 geographical_area=existing.geographical_area,
                 goods_nomenclature=existing.goods_nomenclature,
@@ -441,7 +445,7 @@ def test_ME10():
 
     with pytest.raises(ValidationError):
         business_rules.ME10().validate(
-            factories.MeasureFactory(
+            factories.MeasureFactory.create(
                 measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
                 order_number=None,
             )
@@ -586,13 +590,15 @@ def test_ME12():
 
     with pytest.raises(ValidationError):
         business_rules.ME12().validate(
-            factories.MeasureFactory(additional_code=factories.AdditionalCodeFactory())
+            factories.MeasureFactory.create(
+                additional_code=factories.AdditionalCodeFactory.create()
+            )
         )
 
-    rel = factories.AdditionalCodeTypeMeasureTypeFactory()
+    rel = factories.AdditionalCodeTypeMeasureTypeFactory.create()
 
     business_rules.ME12().validate(
-        factories.MeasureFactory(
+        factories.MeasureFactory.create(
             measure_type=rel.measure_type,
             additional_code__type=rel.additional_code_type,
         )
@@ -753,7 +759,7 @@ def test_ME87(date_ranges):
     # measure:         s---i----x       i = implicit end date
     with pytest.raises(ValidationError):
         business_rules.ME87().validate(
-            factories.MeasureFactory(
+            factories.MeasureFactory.create(
                 generating_regulation__valid_between=date_ranges.starts_with_normal,
                 valid_between=date_ranges.normal,
             )
@@ -825,7 +831,7 @@ def test_ME34(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.ME34().validate(
-            factories.MeasureFactory(
+            factories.MeasureFactory.create(
                 valid_between=date_ranges.normal,
                 terminating_regulation=None,
             )
@@ -890,7 +896,7 @@ def test_ME42(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.ME42().validate(
-            factories.MeasureComponentFactory(
+            factories.MeasureComponentFactory.create(
                 duty_expression__valid_between=date_ranges.normal,
                 component_measure__valid_between=date_ranges.overlap_normal,
             )
@@ -1113,7 +1119,7 @@ def test_ME58():
     existing = factories.MeasureConditionFactory(
         required_certificate=factories.CertificateFactory(),
     )
-    factories.MeasureConditionFactory(
+    factories.MeasureConditionFactory.create(
         condition_code=existing.condition_code,
         dependent_measure=existing.dependent_measure,
         required_certificate=existing.required_certificate,
@@ -1318,7 +1324,7 @@ def test_ME111(applicability_code, measurement):
     """
 
     if measurement:
-        measurement = factories.MeasurementFactory()
+        measurement = factories.MeasurementFactory.create()
 
     measure = factories.MeasureFactory()
     factories.MeasureConditionComponentWithMeasurementFactory(
@@ -1349,8 +1355,8 @@ def test_ME65():
 def test_ME66():
     """The excluded geographical area must be a member of the geographical area group."""
 
-    membership = factories.GeographicalMembershipFactory()
-    measure = factories.MeasureFactory(geographical_area=membership.geo_group)
+    membership = factories.GeographicalMembershipFactory.create()
+    measure = factories.MeasureFactory.create(geographical_area=membership.geo_group)
 
     factories.MeasureExcludedGeographicalAreaFactory(
         modified_measure=measure,
@@ -1359,7 +1365,7 @@ def test_ME66():
 
     business_rules.ME66().validate(measure)
 
-    factories.MeasureExcludedGeographicalAreaFactory(
+    factories.MeasureExcludedGeographicalAreaFactory.create(
         modified_measure=measure,
         excluded_geographical_area=factories.GeographicalAreaFactory(),
     )
@@ -1372,10 +1378,10 @@ def test_ME67(date_ranges):
     """The membership period of the excluded geographical area must span the validity
     period of the measure."""
 
-    membership = factories.GeographicalMembershipFactory(
+    membership = factories.GeographicalMembershipFactory.create(
         valid_between=date_ranges.normal
     )
-    exclusion = factories.MeasureExcludedGeographicalAreaFactory(
+    exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         excluded_geographical_area=membership.member,
         modified_measure__geographical_area=membership.geo_group,
         modified_measure__valid_between=date_ranges.overlap_normal,
@@ -1455,7 +1461,7 @@ def test_ME73(date_ranges):
 
     with pytest.raises(ValidationError):
         business_rules.ME73().validate(
-            factories.FootnoteAssociationMeasureFactory(
+            factories.FootnoteAssociationMeasureFactory.create(
                 associated_footnote__valid_between=date_ranges.normal,
                 footnoted_measure__valid_between=date_ranges.overlap_normal,
             )
@@ -1512,7 +1518,7 @@ def test_ME79():
 # -- Justification regulation
 
 
-def test_ME104(date_ranges):
+def test_ME104(date_ranges, unapproved_transaction):
     """The justification regulation must be either:
         - the measure’s measure-generating regulation, or
         - a measure-generating regulation, valid on the day after the measure’s
@@ -1521,7 +1527,9 @@ def test_ME104(date_ranges):
     justification regulation.
     """
 
-    measure = factories.MeasureFactory(valid_between=date_ranges.normal)
+    measure = factories.MeasureFactory.create(
+        valid_between=date_ranges.normal, transaction=unapproved_transaction
+    )
     generating = measure.generating_regulation
     terminating = measure.terminating_regulation
 
@@ -1530,7 +1538,7 @@ def test_ME104(date_ranges):
         and terminating.role_type == generating.role_type
     )
 
-    measure.terminating_regulation = factories.RegulationFactory(
+    measure.terminating_regulation = factories.RegulationFactory.create(
         valid_between=DateTimeTZRange(
             measure.valid_between.upper + relativedelta(days=+1),
             None,
@@ -1538,7 +1546,7 @@ def test_ME104(date_ranges):
     )
     business_rules.ME104().validate(measure)
 
-    measure.terminating_regulation = factories.RegulationFactory()
+    measure.terminating_regulation = factories.RegulationFactory.create()
     with pytest.raises(ValidationError):
         business_rules.ME104().validate(measure)
 
@@ -1546,4 +1554,4 @@ def test_ME104(date_ranges):
 def test_measurement_unit_qualifier_is_optional():
     """In TARIC measurement unit qualifiers do not have to be used on every
     measure."""
-    factories.MeasurementFactory(measurement_unit_qualifier=None)
+    factories.MeasurementFactory.create(measurement_unit_qualifier=None)

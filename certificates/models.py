@@ -1,8 +1,8 @@
 from django.db import models
 
 from certificates import validators
-from common.models import ShortDescription
-from common.models import SignedIntSID
+from common.fields import ShortDescription
+from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 
@@ -19,12 +19,12 @@ class CertificateType(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    # def clean(self):
-    #     validators.validate_description_is_not_null(self)
-
     def in_use(self):
         # TODO handle deletes
         return Certificate.objects.filter(certificate_type__sid=self.sid).exists()
+
+    def __str__(self):
+        return self.sid
 
 
 class Certificate(TrackedModel, ValidityMixin):
@@ -41,11 +41,6 @@ class Certificate(TrackedModel, ValidityMixin):
     @property
     def code(self):
         return self.certificate_type.sid + self.sid
-
-    # def clean(self):
-    #     validators.validate_certificate_type_validity_includes_certificate_validity(
-    #         self
-    #     )
 
     def __str__(self):
         return self.code
@@ -70,15 +65,6 @@ class CertificateDescription(TrackedModel, ValidityMixin):
     described_certificate = models.ForeignKey(
         Certificate, related_name="descriptions", on_delete=models.PROTECT
     )
-
-    def clean(self):
-        validators.validate_description_is_not_null(self)
-
-    #     validators.validate_first_certificate_description_has_certificate_start_date(
-    #         self
-    #     )
-    #     validators.validate_certificate_description_dont_have_same_start_date(self)
-    #     validators.validate_previous_certificate_description_is_adjacent(self)
 
     def __str__(self):
         return self.identifying_fields_to_string(

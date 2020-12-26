@@ -9,6 +9,7 @@ import django.db.models.deletion
 from django.db import migrations
 from django.db import models
 
+import common.fields
 import common.models
 import quotas.validators
 
@@ -81,7 +82,7 @@ class Migration(migrations.Migration):
                     "valid_between",
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(),
                 ),
-                ("sid", common.models.NumericSID()),
+                ("sid", common.fields.NumericSID()),
                 ("volume", models.DecimalField(decimal_places=3, max_digits=14)),
                 (
                     "initial_volume",
@@ -102,7 +103,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "description",
-                    common.models.ShortDescription(
+                    common.fields.ShortDescription(
                         blank=True, max_length=500, null=True
                     ),
                 ),
@@ -131,7 +132,7 @@ class Migration(migrations.Migration):
                     "valid_between",
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(),
                 ),
-                ("sid", common.models.NumericSID()),
+                ("sid", common.fields.NumericSID()),
                 (
                     "order_number",
                     models.CharField(
@@ -183,7 +184,7 @@ class Migration(migrations.Migration):
                     "valid_between",
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(),
                 ),
-                ("sid", common.models.NumericSID()),
+                ("sid", common.fields.NumericSID()),
             ],
             options={
                 "abstract": False,
@@ -209,10 +210,10 @@ class Migration(migrations.Migration):
                     "valid_between",
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(),
                 ),
-                ("sid", common.models.NumericSID()),
+                ("sid", common.fields.NumericSID()),
                 (
                     "description",
-                    common.models.ShortDescription(
+                    common.fields.ShortDescription(
                         blank=True, max_length=500, null=True
                     ),
                 ),
@@ -385,7 +386,7 @@ class Migration(migrations.Migration):
                     "valid_between",
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(),
                 ),
-                ("sid", common.models.NumericSID()),
+                ("sid", common.fields.NumericSID()),
                 (
                     "blocking_period_type",
                     models.PositiveSmallIntegerField(
@@ -427,7 +428,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "description",
-                    common.models.ShortDescription(
+                    common.fields.ShortDescription(
                         blank=True, max_length=500, null=True
                     ),
                 ),

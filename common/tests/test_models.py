@@ -8,6 +8,7 @@ from common.models import TrackedModel
 from common.tests import factories
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from common.validators import UpdateType
 from footnotes.models import FootnoteType
 from regulations.models import Group
 from regulations.models import Regulation
@@ -17,10 +18,12 @@ pytestmark = pytest.mark.django_db
 
 def generate_model_history(factory, number=5, **kwargs) -> List:
     objects = []
+    kwargs["update_type"] = kwargs.get("update_type", UpdateType.CREATE)
     current = factory(**kwargs)
     objects.append(current)
+    kwargs["update_type"] = UpdateType.UPDATE
+    kwargs["version_group"] = kwargs.get("version_group", current.version_group)
     for _ in range(number - 1):
-        kwargs["predecessor"] = current
         current = factory(**kwargs)
         objects.append(current)
 
@@ -44,7 +47,7 @@ def model_with_history(factory, date_ranges, **kwargs):
         )
 
         active_model = factory(
-            predecessor=all_models[-1], valid_between=date_ranges.current, **kwargs
+            valid_between=date_ranges.current, update_type=UpdateType.UPDATE, **kwargs
         )
 
         all_models.append(active_model)
@@ -52,8 +55,8 @@ def model_with_history(factory, date_ranges, **kwargs):
         all_models.extend(
             generate_model_history(
                 factory,
-                predecessor=active_model,
                 valid_between=date_ranges.future,
+                update_type=UpdateType.UPDATE,
                 **kwargs,
             )
         )
@@ -63,12 +66,22 @@ def model_with_history(factory, date_ranges, **kwargs):
 
 @pytest.fixture
 def model1_with_history(date_ranges):
-    return model_with_history(factories.TestModel1Factory, date_ranges, sid=1)
+    return model_with_history(
+        factories.TestModel1Factory,
+        date_ranges,
+        version_group=factories.VersionGroupFactory.create(),
+        sid=1,
+    )
 
 
 @pytest.fixture
 def model2_with_history(date_ranges):
-    return model_with_history(factories.TestModel2Factory, date_ranges, custom_sid=1)
+    return model_with_history(
+        factories.TestModel2Factory,
+        date_ranges,
+        version_group=factories.VersionGroupFactory.create(),
+        custom_sid=1,
+    )
 
 
 def test_get_current(model1_with_history, model2_with_history):
@@ -115,10 +128,10 @@ def test_get_version_raises_error():
     Ensure that trying to get a specific version raises an error if no identifiers given.
     """
     with pytest.raises(NoIdentifyingValuesGivenError):
-        TestModel1.objects.get_version()
+        TestModel1.objects.get_versions()
 
     with pytest.raises(NoIdentifyingValuesGivenError):
-        TestModel2.objects.get_version(sid=1)
+        TestModel2.objects.get_versions(sid=1)
 
 
 def test_get_current_version(model1_with_history):
