@@ -1,19 +1,10 @@
-from datetime import datetime
-from datetime import timezone
-
-from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
-from django.shortcuts import get_object_or_404
-from django.shortcuts import redirect
-from django.shortcuts import render
-from django.views import generic
+from django.views.generic import DetailView
+from django.views.generic import ListView
 from rest_framework import permissions
-from rest_framework import renderers
 from rest_framework import viewsets
-from rest_framework.decorators import action
 from rest_framework.reverse import reverse
 
-from common.validators import UpdateType
 from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilterBackend
@@ -40,7 +31,7 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
-class FootnoteList(WithCurrentWorkBasket, generic.ListView):
+class FootnoteList(WithCurrentWorkBasket, ListView):
     queryset = models.Footnote.objects.current()
     template_name = "footnotes/list.jinja"
 
@@ -70,7 +61,7 @@ class FootnoteMixin:
             raise Http404(f"No footnote matching the query {self.kwargs}")
 
 
-class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, generic.DetailView):
+class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, DetailView):
     template_name = "footnotes/detail.jinja"
     queryset = models.Footnote.objects.current()
 
@@ -129,7 +120,7 @@ class FootnoteDescriptionUpdate(FootnoteDescriptionMixin, DraftUpdateView):
 
 
 class FootnoteDescriptionConfirmUpdate(
-    WithCurrentWorkBasket, FootnoteDescriptionMixin, generic.DetailView
+    WithCurrentWorkBasket, FootnoteDescriptionMixin, DetailView
 ):
     queryset = models.FootnoteDescription.objects.current()
     template_name = "footnotes/confirm_update_description.jinja"

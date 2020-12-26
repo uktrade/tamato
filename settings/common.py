@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "measures.apps.MeasuresConfig",
     "quotas.apps.QuotasConfig",
     "regulations.apps.RegulationsConfig",
+    # XXX need to keep this for migrations. delete later.
     "taric",
     "workbaskets",
     "exporter",

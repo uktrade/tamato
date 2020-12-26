@@ -56,7 +56,7 @@ jobs:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         DJANGO_SETTINGS_MODULE: settings.test
       run: |
-        python manage.py test -- --cov --cov-report=xml --alluredir=allure-results
+        python manage.py test -- --cov --cov-report=xml --alluredir=allure-results -m "not bdd"
 
     - name: Run Linter
       run: |

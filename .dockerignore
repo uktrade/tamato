@@ -6,3 +6,5 @@
 node_modules/
 static/
 venv/
+seed.xml
+*.gz

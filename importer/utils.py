@@ -34,12 +34,12 @@ class DispatchedObjectType(TypedDict):
     This constitutes:
         - data - a dictionary with objects data
         - tag - the type of record it reflects
-        - workbasket_id - the workbasket to attach the object to.
+        - transaction_id - the transaction to attach the object to.
     """
 
     data: dict
     tag: str
-    workbasket_id: int
+    transaction_id: int
 
 
 def generate_key(

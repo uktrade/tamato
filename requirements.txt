@@ -12,6 +12,7 @@ django-fsm
 django-health-check
 django-polymorphic
 django-rest-polymorphic
+django-sequences
 django-storages
 django-treebeard
 django-webpack-loader

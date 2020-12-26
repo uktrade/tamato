@@ -6,13 +6,13 @@ from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
 logger = logging.getLogger(__name__)
 
 
-@Record.register_child("geographical_area")
+@RecordParser.register_child("geographical_area")
 class GeographicalAreaParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="geographical.area" substitutionGroup="abstract.record">
@@ -37,7 +37,7 @@ class GeographicalAreaParser(ValidityMixin, Writable, ElementParser):
     parent__sid = TextElement(Tag("parent.geographical.area.group.sid"))
 
 
-@Record.register_child("geographical_area_description")
+@RecordParser.register_child("geographical_area_description")
 class GeographicalAreaDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="geographical.area.description" substitutionGroup="abstract.record">
@@ -61,7 +61,7 @@ class GeographicalAreaDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("geographical_area_description_period")
+@RecordParser.register_child("geographical_area_description_period")
 class GeographicalAreaDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="geographical.area.description.period" substitutionGroup="abstract.record">
@@ -83,7 +83,7 @@ class GeographicalAreaDescriptionPeriodParser(ValidityMixin, Writable, ElementPa
     area__area_id = TextElement(Tag("geographical.area.id"))
 
 
-@Record.register_child("geographical_area_membership")
+@RecordParser.register_child("geographical_area_membership")
 class GeographicalAreaMembershipParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="geographical.area.membership" substitutionGroup="abstract.record">

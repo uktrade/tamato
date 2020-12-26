@@ -1,3 +1,4 @@
+@bdd
 Feature: Geographical areas
 
 

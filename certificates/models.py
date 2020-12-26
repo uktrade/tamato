@@ -1,5 +1,3 @@
-from django.contrib.postgres.constraints import ExclusionConstraint
-from django.contrib.postgres.fields import RangeOperators
 from django.db import models
 
 from certificates import validators
@@ -21,22 +19,12 @@ class CertificateType(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    def clean(self):
-        validators.validate_description_is_not_null(self)
+    # def clean(self):
+    #     validators.validate_description_is_not_null(self)
 
-    def __str__(self):
-        return f"Certificate Type: {self.sid} - {self.description}"
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_certificate_types",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
-        )
+    def in_use(self):
+        # TODO handle deletes
+        return Certificate.objects.filter(certificate_type__sid=self.sid).exists()
 
 
 class Certificate(TrackedModel, ValidityMixin):
@@ -54,28 +42,19 @@ class Certificate(TrackedModel, ValidityMixin):
     def code(self):
         return self.certificate_type.sid + self.sid
 
-    def clean(self):
-        validators.validate_certificate_type_validity_includes_certificate_validity(
-            self
-        )
-
-    def validate_workbasket(self):
-        validators.validate_at_least_one_description(self)
+    # def clean(self):
+    #     validators.validate_certificate_type_validity_includes_certificate_validity(
+    #         self
+    #     )
 
     def __str__(self):
-        return f"Certificate {self.code}"
+        return self.code
 
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_certificates",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                    ("certificate_type", RangeOperators.EQUAL),
-                ],
-            ),
-        )
+    def in_use(self):
+        # TODO handle deletes
+        return self.measurecondition_set.model.objects.filter(
+            required_certificate__sid=self.sid,
+        ).exists()
 
 
 class CertificateDescription(TrackedModel, ValidityMixin):
@@ -94,22 +73,14 @@ class CertificateDescription(TrackedModel, ValidityMixin):
 
     def clean(self):
         validators.validate_description_is_not_null(self)
-        validators.validate_first_certificate_description_has_certificate_start_date(
-            self
-        )
-        validators.validate_certificate_description_dont_have_same_start_date(self)
-        validators.validate_previous_certificate_description_is_adjacent(self)
+
+    #     validators.validate_first_certificate_description_has_certificate_start_date(
+    #         self
+    #     )
+    #     validators.validate_certificate_description_dont_have_same_start_date(self)
+    #     validators.validate_previous_certificate_description_is_adjacent(self)
 
     def __str__(self):
-        return f"Certificate Description for {self.described_certificate}: {self.description}"
-
-    class Meta:
-        constraints = (
-            ExclusionConstraint(
-                name="exclude_overlapping_certificate_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("sid", RangeOperators.EQUAL),
-                ],
-            ),
+        return self.identifying_fields_to_string(
+            identifying_fields=("described_certificate", "valid_between")
         )

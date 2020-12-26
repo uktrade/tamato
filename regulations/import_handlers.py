@@ -66,7 +66,7 @@ class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
                 "target_regulation": target_regulation,
                 "enacting_regulation": enacting_regulation,
                 "update_type": data["update_type"],
-                "workbasket_id": data["workbasket_id"],
+                "transaction_id": data["transaction_id"],
             }
         )
 
@@ -88,7 +88,7 @@ class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
                 "target_regulation": target_regulation,
                 "enacting_regulation": enacting_regulation,
                 "update_type": data["update_type"],
-                "workbasket_id": data["workbasket_id"],
+                "transaction_id": data["transaction_id"],
                 **self.suspension_data,
             }
         )

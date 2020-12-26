@@ -1,10 +1,8 @@
 import json
 import os
-import uuid
 from hashlib import md5
 from unittest.mock import Mock
 
-import dotenv
 import pytest
 
 from common.tests import factories

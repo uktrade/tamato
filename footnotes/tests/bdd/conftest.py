@@ -5,23 +5,23 @@ from common.tests import factories
 
 
 @given("footnote NC000", target_fixture="footnote_NC000")
-def footnote_NC000(approved_workbasket, date_ranges):
-    footnote = factories.FootnoteFactory(
+def footnote_NC000(date_ranges, approved_transaction):
+    footnote = factories.FootnoteFactory.create(
         footnote_id="000",
-        footnote_type=factories.FootnoteTypeFactory(
+        footnote_type=factories.FootnoteTypeFactory.create(
             footnote_type_id="NC",
             valid_between=date_ranges.no_end,
-            workbasket=approved_workbasket,
+            transaction=approved_transaction,
         ),
         valid_between=date_ranges.normal,
-        workbasket=approved_workbasket,
+        transaction=approved_transaction,
         description__description="This is NC000",
         description__valid_between=date_ranges.starts_with_normal,
     )
-    factories.FootnoteDescriptionFactory(
+    factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,
         valid_between=date_ranges.ends_with_normal,
-        workbasket=approved_workbasket,
+        transaction=approved_transaction,
     )
     return footnote
 

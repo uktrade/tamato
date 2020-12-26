@@ -1,6 +1,10 @@
+import contextlib
 from datetime import datetime
 from datetime import timezone
 from functools import lru_cache
+from typing import Any
+from typing import Callable
+from typing import Optional
 from unittest.mock import patch
 from unittest.mock import PropertyMock
 
@@ -15,8 +19,9 @@ from pytest_bdd import given
 from rest_framework.test import APIClient
 
 from common.tests import factories
-from common.tests.factories import WorkBasketFactory
 from common.tests.util import Dates
+from common.util import get_field_tuple
+from common.validators import UpdateType
 from exporter.storages import HMRCStorage
 
 
@@ -112,12 +117,17 @@ def taric_schema(settings) -> etree.XMLSchema:
 
 @pytest.fixture
 def approved_workbasket():
-    return factories.TransactionFactory().workbasket
+    return factories.ApprovedWorkBasketFactory.create()
+
+
+@pytest.fixture
+def approved_transaction():
+    return factories.ApprovedTransactionFactory.create()
 
 
 @pytest.fixture
 def workbasket():
-    return WorkBasketFactory.create()
+    return factories.WorkBasketFactory.create()
 
 
 @pytest.fixture
@@ -214,7 +224,7 @@ def validity_period_contained(date_ranges, approved_workbasket):
     return check
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def s3():
     with mock_s3():
         s3 = boto3.client("s3")
@@ -243,7 +253,7 @@ def s3_object_exists(s3):
     return check
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def hmrc_storage():
     """Patch HMRCStorage with moto so that nothing is really uploaded to s3"""
     with mock_s3():
@@ -279,3 +289,71 @@ def hmrc_storage():
             mock_connection_property.side_effect = get_connection
             mock_bucket_property.side_effect = get_bucket
             yield storage
+
+
+@pytest.fixture
+def make_duplicate_record():
+    """Provides a function for making a duplicate record to test a UniqueIdentifyingFields BusinessRule."""
+
+    def make_dupe(factory, identifying_fields=None):
+        existing = factory.create()
+
+        # allow overriding identifying_fields
+        if identifying_fields is None:
+            identifying_fields = list(factory._meta.model.identifying_fields)
+
+            if hasattr(existing, "valid_between"):
+                identifying_fields.append("valid_between")
+
+        return factory.create(
+            **dict(get_field_tuple(existing, field) for field in identifying_fields)
+        )
+
+    return make_dupe
+
+
+@pytest.fixture
+def delete_record():
+    """Provides a function for deleting a record."""
+
+    def delete(model):
+        return model.new_draft(
+            factories.WorkBasketFactory(),
+            update_type=UpdateType.DELETE,
+        )
+
+    return delete
+
+
+@pytest.fixture
+def reference_nonexistent_record():
+    """Provides a context manager for creating a record with a reference to a
+    non-existent record to test a MustExist BusinessRule.
+    """
+
+    @contextlib.contextmanager
+    def make_record(
+        factory,
+        reference_field_name: str,
+        teardown: Optional[Callable[[Any], Any]] = None,
+    ):
+        # XXX relies on private API
+        dependency_factory = factory._meta.declarations[
+            reference_field_name
+        ].get_factory()
+
+        dependency = dependency_factory.create()
+        non_existent_id = dependency.pk
+        if teardown:
+            teardown(dependency)
+        else:
+            dependency.delete()
+
+        record = factory.create(**{f"{reference_field_name}_id": non_existent_id})
+
+        try:
+            yield record
+        finally:
+            record.delete()
+
+    return make_record

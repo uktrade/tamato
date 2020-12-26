@@ -4,10 +4,10 @@ from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
-@Record.register_child("measure_type_series")
+@RecordParser.register_child("measure_type_series")
 class MeasureTypeSeriesParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measure.type.series" substitutionGroup="abstract.record">
@@ -28,7 +28,7 @@ class MeasureTypeSeriesParser(ValidityMixin, Writable, ElementParser):
     measure_type_combination = IntElement(Tag("measure.type.combination"))
 
 
-@Record.register_child("measure.type.series.description")
+@RecordParser.register_child("measure.type.series.description")
 class MeasureTypeSeriesDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="measure.type.series.description" substitutionGroup="abstract.record">
@@ -48,7 +48,7 @@ class MeasureTypeSeriesDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("measurement_unit")
+@RecordParser.register_child("measurement_unit")
 class MeasurementUnitParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measurement.unit" substitutionGroup="abstract.record">
@@ -67,7 +67,7 @@ class MeasurementUnitParser(ValidityMixin, Writable, ElementParser):
     code = TextElement(Tag("measurement.unit.code"))
 
 
-@Record.register_child("measurement_unit_description")
+@RecordParser.register_child("measurement_unit_description")
 class MeasurementUnitDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="measurement.unit.description" substitutionGroup="abstract.record">
@@ -87,7 +87,7 @@ class MeasurementUnitDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("measurement_unit_qualifier")
+@RecordParser.register_child("measurement_unit_qualifier")
 class MeasurementUnitQualifierParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measurement.unit.qualifier" substitutionGroup="abstract.record">
@@ -106,7 +106,7 @@ class MeasurementUnitQualifierParser(ValidityMixin, Writable, ElementParser):
     code = TextElement(Tag("measurement.unit.qualifier.code"))
 
 
-@Record.register_child("measurement_unit_qualifier_description")
+@RecordParser.register_child("measurement_unit_qualifier_description")
 class MeasurementUnitQualifierDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="measurement.unit.qualifier.description" substitutionGroup="abstract.record">
@@ -126,7 +126,7 @@ class MeasurementUnitQualifierDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("measurement")
+@RecordParser.register_child("measurement")
 class MeasurementParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measurement" substitutionGroup="abstract.record">
@@ -149,7 +149,7 @@ class MeasurementParser(ValidityMixin, Writable, ElementParser):
     )
 
 
-@Record.register_child("monetary_unit")
+@RecordParser.register_child("monetary_unit")
 class MonetaryUnitParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="monetary.unit" substitutionGroup="abstract.record">
@@ -168,7 +168,7 @@ class MonetaryUnitParser(ValidityMixin, Writable, ElementParser):
     code = TextElement(Tag("monetary.unit.code"))
 
 
-@Record.register_child("monetary_unit_description")
+@RecordParser.register_child("monetary_unit_description")
 class MonetaryUnitDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="monetary.unit.description" substitutionGroup="abstract.record">
@@ -188,7 +188,7 @@ class MonetaryUnitDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("duty_expression")
+@RecordParser.register_child("duty_expression")
 class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="duty.expression" substitutionGroup="abstract.record">
@@ -217,7 +217,7 @@ class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
     )
 
 
-@Record.register_child("duty_expression_description")
+@RecordParser.register_child("duty_expression_description")
 class DutyExpressionDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="duty.expression.description" substitutionGroup="abstract.record">
@@ -237,7 +237,7 @@ class DutyExpressionDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("measure_type")
+@RecordParser.register_child("measure_type")
 class MeasureTypeParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measure.type" substitutionGroup="abstract.record">
@@ -272,7 +272,7 @@ class MeasureTypeParser(ValidityMixin, Writable, ElementParser):
     measure_type_series__sid = TextElement(Tag("measure.type.series.id"))
 
 
-@Record.register_child("measure_type_description")
+@RecordParser.register_child("measure_type_description")
 class MeasureTypeDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="measure.type.description" substitutionGroup="abstract.record">
@@ -292,7 +292,7 @@ class MeasureTypeDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("additional_code_type_measure_type")
+@RecordParser.register_child("additional_code_type_measure_type")
 class AdditionalCodeTypeMeasureTypeParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="additional.code.type.measure.type" substitutionGroup="abstract.record">
@@ -313,7 +313,7 @@ class AdditionalCodeTypeMeasureTypeParser(ValidityMixin, Writable, ElementParser
     additional_code_type__sid = TextElement(Tag("additional.code.type.id"))
 
 
-@Record.register_child("measure_condition_code")
+@RecordParser.register_child("measure_condition_code")
 class MeasureConditionCodeParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measure.condition.code" substitutionGroup="abstract.record">
@@ -332,7 +332,7 @@ class MeasureConditionCodeParser(ValidityMixin, Writable, ElementParser):
     code = TextElement(Tag("condition.code"))
 
 
-@Record.register_child("measure_condition_code_description")
+@RecordParser.register_child("measure_condition_code_description")
 class MeasureConditionCodeDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="measure.condition.code.description" substitutionGroup="abstract.record">
@@ -352,7 +352,7 @@ class MeasureConditionCodeDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("measure_action")
+@RecordParser.register_child("measure_action")
 class MeasureActionParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measure.action" substitutionGroup="abstract.record">
@@ -371,7 +371,7 @@ class MeasureActionParser(ValidityMixin, Writable, ElementParser):
     code = TextElement(Tag("action.code"))
 
 
-@Record.register_child("measure_action_description")
+@RecordParser.register_child("measure_action_description")
 class MeasureActionDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="measure.action.description" substitutionGroup="abstract.record">
@@ -391,7 +391,7 @@ class MeasureActionDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("measure")
+@RecordParser.register_child("measure")
 class MeasureParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="measure" substitutionGroup="abstract.record">
@@ -447,7 +447,7 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
     additional_code__sid = TextElement(Tag("additional.code.sid"))
 
 
-@Record.register_child("measure_component")
+@RecordParser.register_child("measure_component")
 class MeasureComponentParser(Writable, ElementParser):
     """
     <xs:element name="measure.component" substitutionGroup="abstract.record">
@@ -478,7 +478,7 @@ class MeasureComponentParser(Writable, ElementParser):
     )
 
 
-@Record.register_child("measure_condition")
+@RecordParser.register_child("measure_condition")
 class MeasureConditionParser(Writable, ElementParser):
     """
     <xs:element name="measure.condition" substitutionGroup="abstract.record">
@@ -521,7 +521,7 @@ class MeasureConditionParser(Writable, ElementParser):
     required_certificate__sid = TextElement(Tag("certificate.code"))
 
 
-@Record.register_child("measure_condition_component")
+@RecordParser.register_child("measure_condition_component")
 class MeasureConditionComponentParser(Writable, ElementParser):
     """
     <xs:element name="measure.condition.component" substitutionGroup="abstract.record">
@@ -552,7 +552,7 @@ class MeasureConditionComponentParser(Writable, ElementParser):
     )
 
 
-@Record.register_child("measure_excluded_geographical_area")
+@RecordParser.register_child("measure_excluded_geographical_area")
 class MeasureExcludedGeographicalAreaParser(Writable, ElementParser):
     """
     <xs:element name="measure.excluded.geographical.area" substitutionGroup="abstract.record">
@@ -573,7 +573,7 @@ class MeasureExcludedGeographicalAreaParser(Writable, ElementParser):
     excluded_geographical_area__sid = TextElement(Tag("geographical.area.sid"))
 
 
-@Record.register_child("footnote_association_measure")
+@RecordParser.register_child("footnote_association_measure")
 class FootnoteAssociationMeasureParser(Writable, ElementParser):
     """
     <xs:element name="footnote.association.measure" substitutionGroup="abstract.record">

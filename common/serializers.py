@@ -4,6 +4,8 @@ from drf_extra_fields.fields import DateTimeRangeField
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 
+from common.models import Transaction
+
 
 class TARIC3DateTimeRangeField(DateTimeRangeField):
     child = serializers.DateTimeField(
@@ -90,3 +92,25 @@ class TrackedModelSerializer(PolymorphicSerializer):
     def register_polymorphic_model(cls, serializer):
         cls.model_serializer_mapping[serializer.Meta.model] = serializer
         return serializer
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    tracked_models = serializers.SerializerMethodField()
+
+    def get_tracked_models(self, obj):
+        return TrackedModelSerializer(
+            obj.tracked_models.annotate_record_codes().order_by(
+                "record_code", "subrecord_code"
+            ),
+            many=True,
+            read_only=True,
+            context=self.context,
+        ).data
+
+    class Meta:
+        model = Transaction
+        fields = [
+            "import_transaction_id",
+            "tracked_models",
+            "order",
+        ]

@@ -1,18 +1,8 @@
-import json
-
-from django.core.serializers.json import DjangoJSONEncoder
+# XXX need to keep this file for migrations to work. delete later.
 from django.db import models
 
-from common.models import TimestampedMixin
+from common.models.transactions import Transaction
 from taric import validators
-
-
-class Transaction(TimestampedMixin):
-    def to_json(self):
-        """Used for serializing to the session"""
-
-        data = {key: val for key, val in self.__dict__.items() if key != "_state"}
-        return json.dumps(data, cls=DjangoJSONEncoder)
 
 
 class EnvelopeId(models.CharField):
@@ -40,25 +30,18 @@ class Envelope(models.Model):
     tariff in the sequence defined by the transaction IDs.
     """
 
-    # Max size is 50 megabytes
-    MAX_FILE_SIZE = 50 * 1024 * 1024
-
     envelope_id = EnvelopeId()
     transactions = models.ManyToManyField(
         Transaction, related_name="envelopes", through="EnvelopeTransaction"
     )
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"DIT{self.envelope_id}"
-
 
 class EnvelopeTransaction(models.Model):
     """Applies a sequence to Transactions contained in an Envelope."""
 
-    index = models.IntegerField()
-    transaction = models.ForeignKey(Transaction, on_delete=models.PROTECT)
-    envelope = models.ForeignKey(Envelope, on_delete=models.PROTECT)
+    order = models.IntegerField()
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    envelope = models.ForeignKey(Envelope, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ("order",)

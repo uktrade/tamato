@@ -1,3 +1,4 @@
+@bdd
 Feature: Regulations
     Legal Acts which generate measures or affect applicability of existing regulations
 

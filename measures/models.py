@@ -29,11 +29,11 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    def __str__(self):
-        return f"{self.sid} - {self.description}"
-
-    def clean(self):
-        validators.validate_unique_measure_type_series(self)
+    def in_use(self):
+        # TODO handle deletes
+        return MeasureType.objects.filter(
+            measure_type_series__sid=self.sid,
+        ).exists()
 
 
 class MeasurementUnit(TrackedModel, ValidityMixin):
@@ -52,9 +52,6 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
     abbreviation = models.CharField(max_length=32, blank=True)
 
     identifying_fields = ("code",)
-
-    def __str__(self):
-        return f"{self.code} - {self.description} ({self.abbreviation})"
 
 
 class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
@@ -75,9 +72,6 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
     abbreviation = models.CharField(max_length=32, blank=True)
 
     identifying_fields = ("code",)
-
-    def __str__(self):
-        return f"{self.code} - {self.description} ({self.abbreviation})"
 
 
 class Measurement(TrackedModel, ValidityMixin):
@@ -101,9 +95,6 @@ class Measurement(TrackedModel, ValidityMixin):
 
     identifying_fields = ("measurement_unit", "measurement_unit_qualifier")
 
-    def __str__(self):
-        return f"{self.measurement_unit} {self.measurement_unit_qualifier}"
-
 
 class MonetaryUnit(TrackedModel, ValidityMixin):
     """The monetary unit identifies the currency code used in the system."""
@@ -120,9 +111,6 @@ class MonetaryUnit(TrackedModel, ValidityMixin):
     description = ShortDescription()
 
     identifying_fields = ("code",)
-
-    def __str__(self):
-        return f"{self.code} - {self.description}"
 
 
 class DutyExpression(TrackedModel, ValidityMixin):
@@ -184,14 +172,9 @@ class MeasureType(TrackedModel, ValidityMixin):
         "additional_codes.AdditionalCodeType", through="AdditionalCodeTypeMeasureType"
     )
 
-    def __str__(self):
-        return self.sid
-
-    def clean(self):
-        validators.validate_unique_measure_type(self)
-        validators.validate_measure_type_series_validity_spans_measure_type_validity(
-            self
-        )
+    def in_use(self):
+        # TODO handle deletes
+        return Measure.objects.filter(measure_type__sid=self.sid).exists()
 
     @property
     def components_mandatory(self):
@@ -252,11 +235,12 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
 
     identifying_fields = ("code",)
 
-    def __str__(self):
-        return f"{self.code} - {self.description}"
-
-    def clean(self):
-        validators.validate_unique_measure_condition_code(self)
+    def used_in_component(self):
+        # TODO handle deletes
+        # TODO handle MeasureConditionCode versions
+        return MeasureConditionComponent.objects.filter(
+            condition__condition_code__code=self.code,
+        ).exists()
 
 
 class MeasureAction(TrackedModel, ValidityMixin):
@@ -275,11 +259,11 @@ class MeasureAction(TrackedModel, ValidityMixin):
 
     identifying_fields = ("code",)
 
-    def __str__(self):
-        return f"{self.code} - {self.description}"
-
-    def clean(self):
-        validators.validate_unique_measure_action_code(self)
+    def in_use(self):
+        # TODO handle deletes
+        return MeasureConditionComponent.objects.filter(
+            condition__action__code=self.code,
+        ).exists()
 
 
 class Measure(TrackedModel, ValidityMixin):
@@ -302,7 +286,9 @@ class Measure(TrackedModel, ValidityMixin):
     sid = SignedIntSID()
     measure_type = models.ForeignKey(MeasureType, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
-        "geo_areas.GeographicalArea", on_delete=models.PROTECT
+        "geo_areas.GeographicalArea",
+        on_delete=models.PROTECT,
+        related_name="measures",
     )
     goods_nomenclature = models.ForeignKey(
         "commodities.GoodsNomenclature",
@@ -345,6 +331,10 @@ class Measure(TrackedModel, ValidityMixin):
         "reduction",
     )
 
+    footnotes = models.ManyToManyField(
+        "footnotes.Footnote", through="FootnoteAssociationMeasure"
+    )
+
     @property
     def effective_end_date(self):
         """Measure end dates may be overridden by regulations"""
@@ -372,49 +362,15 @@ class Measure(TrackedModel, ValidityMixin):
     def effective_valid_between(self):
         return DateTimeTZRange(self.valid_between.lower, self.effective_end_date)
 
-    def clean(self):
-        validators.must_exist(self, "additional_code")
-        validators.validate_additional_code_validity_spans_measure_validity(self)
-        validators.validate_geo_area_validity_spans_measure_validity(self)
-        validators.validate_goods_code_level_within_measure_type_explosion_level(self)
-        validators.validate_goods_nomenclature_is_a_product_code(self)
-        validators.validate_goods_nomenclature_validity_spans_measure_validity(self)
-        validators.validate_measure_type_validity_spans_measure_validity(self)
-        validators.validate_order_number_validity_spans_measure_validity(self)
-        validators.validate_order_number_origin_validity_spans_measure_validity(self)
-        validators.validate_unique_measure(self)
-        validators.validate_goods_code_present_if_no_additional_code(self)
-        validators.validate_additional_code_associated_with_measure_type(self)
-        validators.validate_order_number_capture(self)
-        validators.validate_measure_unique_except_additional_code(self)
-        validators.must_exist(self, "generating_regulation")
-        validators.validate_regulation_validity_spans_measure_validity(self)
-        validators.validate_no_terminating_regulation_if_no_end_date(self)
-        validators.validate_terminating_regulation_if_end_date(self)
-        validators.validate_terminating_regulation(self)
-        validators.validate_quota_measure_origin_must_be_order_number_origin(self)
-
-    def validate_workbasket(self):
-        validators.validate_measure_has_required_components(self)
-        validators.validate_no_overlapping_measures_in_same_goods_hierarchy(self)
-
     def has_components(self):
-        return (
-            self.measurecomponent_set.approved()
-            | self.measurecomponent_set.filter(workbasket=self.workbasket)
+        return MeasureComponent.objects.filter(
+            component_measure__sid=self.sid,
         ).exists()
 
     def has_condition_components(self):
-        return (
-            (
-                MeasureConditionComponent.objects.approved()
-                | MeasureConditionComponent.objects.filter(workbasket=self.workbasket)
-            )
-            .filter(
-                condition__dependent_measure__sid=self.sid,
-            )
-            .exists()
-        )
+        return MeasureConditionComponent.objects.filter(
+            condition__dependent_measure__sid=self.sid,
+        ).exists()
 
 
 class MeasureComponent(TrackedModel):
@@ -423,7 +379,9 @@ class MeasureComponent(TrackedModel):
     record_code = "430"
     subrecord_code = "05"
 
-    component_measure = models.ForeignKey(Measure, on_delete=models.PROTECT)
+    component_measure = models.ForeignKey(
+        Measure, on_delete=models.PROTECT, related_name="components"
+    )
     duty_expression = models.ForeignKey(DutyExpression, on_delete=models.PROTECT)
     duty_amount = models.DecimalField(
         max_digits=10, decimal_places=3, null=True, blank=True
@@ -437,36 +395,6 @@ class MeasureComponent(TrackedModel):
 
     identifying_fields = ("component_measure", "duty_expression")
 
-    def clean(self):
-        validators.must_exist(self, "duty_expression")
-        validators.must_exist(self, "monetary_unit")
-        validators.must_exist(self, "component_measurement")
-
-        validators.validate_duty_expression_validity_spans_measure_validity(
-            self.duty_expression, self.component_measure
-        )
-        validators.validate_measure_component_duty_expression_only_used_once_per_measure(
-            self
-        )
-        validators.validate_component_duty_amount(
-            self.duty_expression, self.duty_amount
-        )
-        validators.validate_component_monetary_unit(
-            self.duty_expression, self.monetary_unit
-        )
-        validators.validate_component_measurement_unit(
-            self.duty_expression, self.component_measurement
-        )
-        validators.validate_measure_component_monetary_unit_validity_spans_measure_validity(
-            self
-        )
-        validators.validate_measurement_unit_validity_spans_measure_validity(
-            self.component_measurement, self.component_measure
-        )
-        validators.validate_measurement_unit_qualifier_validity_spans_measure_validity(
-            self.component_measurement, self.component_measure
-        )
-
 
 class MeasureCondition(TrackedModel):
     """A measure may be dependent on conditions. These are expressed in a series of
@@ -478,8 +406,12 @@ class MeasureCondition(TrackedModel):
     subrecord_code = "10"
 
     sid = SignedIntSID()
-    dependent_measure = models.ForeignKey(Measure, on_delete=models.PROTECT)
-    condition_code = models.ForeignKey(MeasureConditionCode, on_delete=models.PROTECT)
+    dependent_measure = models.ForeignKey(
+        Measure, on_delete=models.PROTECT, related_name="conditions"
+    )
+    condition_code = models.ForeignKey(
+        MeasureConditionCode, on_delete=models.PROTECT, related_name="conditions"
+    )
     component_sequence_number = models.PositiveSmallIntegerField(
         validators=[validators.validate_component_sequence_number]
     )
@@ -498,30 +430,6 @@ class MeasureCondition(TrackedModel):
     required_certificate = models.ForeignKey(
         "certificates.Certificate", on_delete=models.PROTECT, null=True, blank=True
     )
-
-    def clean(self):
-        validators.validate_measure_condition_code_validity_spans_measure_validity(self)
-        validators.must_exist(self, "action")
-        validators.must_exist(self, "required_certificate")
-        validators.must_exist(self, "monetary_unit")
-
-        validators.validate_measure_action_validity_spans_measure_validity(self)
-        validators.validate_measure_condition_certificate_validity_spans_measure_validity(
-            self
-        )
-        validators.validate_measure_condition_certificate_only_used_once_per_measure(
-            self
-        )
-        validators.validate_measure_condition_monetary_unit_validity_spans_measure_validity(
-            self
-        )
-        validators.must_exist(self, "condition_measurement")
-        validators.validate_measurement_unit_validity_spans_measure_validity(
-            self.condition_measurement, self.dependent_measure
-        )
-        validators.validate_measurement_unit_qualifier_validity_spans_measure_validity(
-            self.condition_measurement, self.dependent_measure
-        )
 
 
 class MeasureConditionComponent(TrackedModel):
@@ -548,26 +456,6 @@ class MeasureConditionComponent(TrackedModel):
 
     identifying_fields = ("condition", "duty_expression")
 
-    def clean(self):
-        validators.must_exist(self, "condition")
-        validators.must_exist(self, "duty_expression")
-        validators.validate_duty_expression_validity_spans_measure_validity(
-            self.duty_expression,
-            self.condition.dependent_measure,
-        )
-        validators.validate_component_duty_amount(
-            self.duty_expression, self.duty_amount
-        )
-        validators.validate_component_monetary_unit(
-            self.duty_expression, self.monetary_unit
-        )
-        validators.validate_component_measurement_unit(
-            self.duty_expression, self.condition_component_measurement
-        )
-        validators.validate_measure_condition_component_duty_expression_only_used_once_per_condition(
-            self
-        )
-
 
 class MeasureExcludedGeographicalArea(TrackedModel):
     """The measure excluded geographical area modifies the applicable geographical area
@@ -579,19 +467,12 @@ class MeasureExcludedGeographicalArea(TrackedModel):
 
     identifying_fields = ("modified_measure", "excluded_geographical_area")
 
-    modified_measure = models.ForeignKey(Measure, on_delete=models.PROTECT)
+    modified_measure = models.ForeignKey(
+        Measure, on_delete=models.PROTECT, related_name="exclusions"
+    )
     excluded_geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea", on_delete=models.PROTECT
     )
-
-    def clean(self):
-        validators.validate_geo_area_only_excluded_from_groups(self)
-        validators.validate_excluded_geo_area_must_be_member_of_group(self)
-        validators.validate_excluded_geo_area_membership_spans_measure_validity_period(
-            self
-        )
-        validators.validate_excluded_geo_area_only_once(self)
-        validators.validate_excluded_geo_area_validity_spans_measure_validity(self)
 
 
 class FootnoteAssociationMeasure(TrackedModel):
@@ -608,9 +489,3 @@ class FootnoteAssociationMeasure(TrackedModel):
     )
 
     identifying_fields = ("footnoted_measure", "associated_footnote")
-
-    def clean(self):
-        validators.must_exist(self, "associated_footnote")
-        validators.validate_footnote_only_associated_with_measure_once(self)
-        validators.validate_footnote_validity_spans_measure_validity(self)
-        validators.validate_cn_measures_footnote_not_used_with_taric_code(self)

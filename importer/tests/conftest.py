@@ -66,8 +66,8 @@ def handler_class_with_links(mock_serializer) -> Type[BaseHandler]:
 
 
 @pytest.fixture
-def handler_test_data(approved_workbasket, date_ranges) -> DispatchedObjectType:
-    data = {
+def handler_test_data(approved_transaction, date_ranges) -> DispatchedObjectType:
+    return {
         "data": {
             "sid": 99999,
             "name": "test_handlers",
@@ -76,13 +76,11 @@ def handler_test_data(approved_workbasket, date_ranges) -> DispatchedObjectType:
                 "upper": date_ranges.normal.upper,
                 "lower": date_ranges.normal.lower,
             },
-            "workbasket": approved_workbasket.pk,
+            "transaction_id": approved_transaction.pk,
         },
         "tag": "",
-        "workbasket_id": approved_workbasket.pk,
+        "transaction_id": approved_transaction.pk,
     }
-
-    return data
 
 
 @pytest.fixture

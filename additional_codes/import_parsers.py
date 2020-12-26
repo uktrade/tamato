@@ -4,10 +4,10 @@ from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
-from importer.taric import Record
+from importer.taric import RecordParser
 
 
-@Record.register_child("additional_code")
+@RecordParser.register_child("additional_code")
 class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="additional.code" substitutionGroup="abstract.record">
@@ -32,7 +32,7 @@ class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
     valid_between_upper = TextElement(Tag("validity.end.date"))
 
 
-@Record.register_child("additional_code_description_period")
+@RecordParser.register_child("additional_code_description_period")
 class AdditionalCodeDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="additional.code.description.period" substitutionGroup="abstract.record">
@@ -57,7 +57,7 @@ class AdditionalCodeDescriptionPeriodParser(ValidityMixin, Writable, ElementPars
     valid_between_lower = TextElement(Tag("validity.start.date"))
 
 
-@Record.register_child("additional_code_description")
+@RecordParser.register_child("additional_code_description")
 class AdditionalCodeDescriptionParser(Writable, ElementParser):
     """
     <xs:element name="additional.code.description" substitutionGroup="abstract.record">
@@ -83,7 +83,7 @@ class AdditionalCodeDescriptionParser(Writable, ElementParser):
     description = TextElement(Tag("description"))
 
 
-@Record.register_child("additional_code_type")
+@RecordParser.register_child("additional_code_type")
 class AdditionalCodeTypeParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="additional.code.type" substitutionGroup="abstract.record">
@@ -107,7 +107,7 @@ class AdditionalCodeTypeParser(ValidityMixin, Writable, ElementParser):
     valid_between_upper = TextElement(Tag("validity.end.date"))
 
 
-@Record.register_child("additional_code_type_description")
+@RecordParser.register_child("additional_code_type_description")
 class AdditionalCodeTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
     """
     <xs:element name="additional.code.type.description" substitutionGroup="abstract.record">

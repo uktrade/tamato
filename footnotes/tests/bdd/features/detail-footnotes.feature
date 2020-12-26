@@ -1,4 +1,4 @@
-
+@bdd
 Feature: Footnotes
     Notes on commodities or measures
 

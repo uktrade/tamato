@@ -3,7 +3,6 @@ import pytest
 from pytest_bdd import scenarios
 from pytest_bdd import then
 from pytest_bdd import when
-from rest_framework.reverse import reverse
 
 pytestmark = pytest.mark.django_db
 

@@ -4,12 +4,9 @@ Validators for regulations
 from datetime import datetime
 from datetime import timezone
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-
-from common.util import validity_range_contains_range
 
 
 class RoleType(models.IntegerChoices):
@@ -86,32 +83,6 @@ regulation_id_validator = RegexValidator(
 no_information_text_delimiters = RegexValidator(r"^[^|]*$", "Must not contain '|'")
 
 
-def validate_approved(regulation):
-    """ROIMB44
-
-    A draft regulation (regulation id starts with a 'C') can have its "Regulation
-    Approved Flag" set to 0='Not Approved' or 1='Approved'.  Any other regulation must
-    have its "Regulation Approved Flag" set to 1='Approved'.
-    """
-
-    if not regulation.is_draft_regulation and not regulation.approved:
-        raise ValidationError("Only draft regulations can be 'Not Approved'")
-
-
-def validate_approved_from_not_approved(regulation):
-    """ROIMB44
-
-    (A draft regulation's) flag can only change from 0='Not Approved' to 1='Approved'.
-    """
-
-    if not regulation.approved and regulation.values_from_db["approved"]:
-        raise ValidationError(
-            {
-                "approved": "Cannot change from Approved to Not Approved",
-            }
-        )
-
-
 def validate_official_journal(regulation):
     """Official Journal number and page must both be set, or must both be NULL"""
     if regulation.valid_between.lower and regulation.valid_between.lower < datetime(
@@ -129,34 +100,12 @@ def validate_official_journal(regulation):
         )
 
 
-def unique_regulation_id_for_role_type(regulation):
-    """ROIMB1
-
-    The (regulation id + role id) must be unique.
-    """
-
-    Regulation = regulation.__class__
-    # TODO depends on TrackedModel and Workbasket implementation
-    # existing = Regulation.live_objects.filter(
-    #     regulation_id=regulation.regulation_id,
-    #     role_type=regulation.role_type,
-    # )
-    existing = Regulation.objects.filter(
-        regulation_id=regulation.regulation_id, role_type=regulation.role_type
-    )
-    if regulation.id:
-        existing = existing.exclude(id=regulation.id)
-    if len(existing) > 0:
-        raise ValidationError(
-            {"regulation_id": "The (regulation id + role id) must be unique."}
-        )
-
-
 def validate_information_text(regulation):
     """Information text has a max length of 500 chars, but public_identifier and URL are
     passed in the same field in the XML, so the total combined length must be less than
     or equal to 500 chars.
     """
+    # TODO public identifier and URL are optional fields?
 
     if (
         len(regulation.public_identifier or "")
@@ -174,77 +123,23 @@ def validate_information_text(regulation):
 
 
 def validate_base_regulations_have_start_date(regulation):
-    if regulation.role_type == RoleType.BASE:
-        if not regulation.valid_between or not regulation.valid_between.lower:
-            raise ValidationError(
-                {"valid_between": "Base regulations must have a start date."}
-            )
-
-
-def validate_base_regulations_have_community_code(regulation):
-    if regulation.role_type == RoleType.BASE:
-        if not regulation.community_code:
-            raise ValidationError(
-                {"community_code": "Base regulations must have a community code."}
-            )
-
-
-def validate_base_regulations_have_group(regulation):
-    if regulation.role_type == RoleType.BASE:
-        if not regulation.regulation_group:
-            raise ValidationError(
-                {"regulation_group": "Base regulations must have a group."}
-            )
-
-
-def validate_regulation_validity_spans_measures_validity(regulation):
-    """ROIMB8
-
-    Explicit dates of related measures must be within the validity period of the base
-    regulation.
-
-    Only applicable for measures with start date after 31/12/2003.
-    """
-    # XXX this is covered by ME87, but ME87 does not have the cutoff date
-
-    for measure in regulation.measure_set.all():
-
-        if measure.valid_between.lower < datetime(2004, 1, 1, tzinfo=timezone.utc):
-            continue
-
-        if not validity_range_contains_range(
-            regulation.valid_between,
-            measure.valid_between,
-        ):
-            raise ValidationError(
-                "Explicit dates of related measures must be within the validity "
-                "period of the base regulation."
-            )
-
-
-def validate_regulation_group_exists(regulation):
-    """ROIMB4"""
-
-    try:
-        if regulation.regulation_group is None:
-            return
-    except ObjectDoesNotExist as e:
+    if regulation.role_type == RoleType.BASE and (
+        not regulation.valid_between or not regulation.valid_between.lower
+    ):
         raise ValidationError(
-            {"regulation_group": "The referenced regulation group must exist."}
+            {"valid_between": "Base regulations must have a start date."}
         )
 
 
-def validate_group_validity_spans_regulation_validity(regulation):
-    """ROIMB47"""
-
-    if regulation.regulation_group is None:
-        return
-
-    if not validity_range_contains_range(
-        regulation.regulation_group.valid_between,
-        regulation.valid_between,
-    ):
+def validate_base_regulations_have_community_code(regulation):
+    if regulation.role_type == RoleType.BASE and not regulation.community_code:
         raise ValidationError(
-            "The validity period of the regulation group must span the validity "
-            "period of the base regulation."
+            {"community_code": "Base regulations must have a community code."}
+        )
+
+
+def validate_base_regulations_have_group(regulation):
+    if regulation.role_type == RoleType.BASE and not regulation.regulation_group:
+        raise ValidationError(
+            {"regulation_group": "Base regulations must have a group."}
         )

@@ -1,11 +1,18 @@
+"""TrackedModel and supporting manager."""
 import re
 from datetime import datetime
+from typing import Iterable
+from typing import Optional
 
-from django.contrib.postgres.fields import DateTimeRangeField
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import CharField, Case
-from django.db.models import F, Q, Value, When
+from django.db.models import Case
+from django.db.models import CharField
+from django.db.models import F
+from django.db.models import Q
 from django.db.models import QuerySet
+from django.db.models import Value
+from django.db.models import When
 from django.db.models.query_utils import DeferredAttribute
 from django.template import loader
 from django.utils import timezone
@@ -16,6 +23,7 @@ from treebeard.mp_tree import MP_NodeQuerySet
 
 from common import exceptions
 from common import validators
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
@@ -34,19 +42,6 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         models.
         """
         return self.filter(successor__isnull=True)
-
-    def since_transaction(self, transaction_id: int) -> QuerySet:
-        """
-        Get all instances of an object since a certain transaction (i.e. since a particular
-        workbasket was accepted).
-
-        This will not include objects without a transaction ID - thus excluding rows which
-        have not been accepted yet.
-
-        If done from the TrackedModel this will return all objects from all transactions since
-        the given transaction.
-        """
-        return self.filter(workbasket__transaction__id__gt=transaction_id)
 
     def as_at(self, date: datetime) -> QuerySet:
         """
@@ -103,7 +98,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         query = Q()
 
         # get models in the workbasket
-        in_workbasket = self.filter(workbasket=workbasket)
+        in_workbasket = self.filter(transaction__workbasket=workbasket)
 
         # remove matching models from the queryset
         for instance in in_workbasket:
@@ -121,9 +116,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         Get objects which have been approved/sent-to-cds/published
         """
+
         return self.filter(
-            workbasket__status__in=WorkflowStatus.approved_statuses(),
-            workbasket__approver__isnull=False,
+            transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
+            transaction__workbasket__approver__isnull=False,
         )
 
     def approved_or_in_workbasket(self, workbasket):
@@ -132,10 +128,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
 
         return self.filter(
-            Q(workbasket=workbasket)
+            Q(transaction__workbasket=workbasket)
             | Q(
-                workbasket__status__in=WorkflowStatus.approved_statuses(),
-                workbasket__approver__isnull=False,
+                transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
+                transaction__workbasket__approver__isnull=False,
             )
         )
 
@@ -144,7 +140,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         :return: Query annotated with record_code and subrecord_code.
         """
         # Generates case statements to do the mapping from model to record_code and subrecord_code.
-        q = self.annotate(
+        return self.annotate(
             record_code=Case(
                 *(TrackedModelQuerySet._when_model_record_codes()),
                 output_field=CharField(),
@@ -154,7 +150,9 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 output_field=CharField(),
             ),
         )
-        return q
+
+    def get_queryset(self):
+        return self.annotate_record_codes().order_by("record_code", "subrecord_code")
 
     @staticmethod
     def _when_model_record_codes():
@@ -228,27 +226,14 @@ class PolymorphicMPTreeManager(PolymorphicManager):
         return qs.order_by("path")
 
 
-class TimestampedMixin(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-
-
-class ValidityMixin(models.Model):
-    valid_between = DateTimeRangeField()
-
-    class Meta:
-        abstract = True
-
-
 class TrackedModel(PolymorphicModel):
-    workbasket = models.ForeignKey(
-        "workbaskets.WorkBasket",
+    transaction = models.ForeignKey(
+        "common.Transaction",
         on_delete=models.PROTECT,
         related_name="tracked_models",
+        editable=False,
     )
+
     predecessor = models.OneToOneField(
         "self",
         on_delete=models.PROTECT,
@@ -264,8 +249,8 @@ class TrackedModel(PolymorphicModel):
 
     objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
 
+    business_rules: Iterable = []
     identifying_fields = ("sid",)
-
     taric_template = None
 
     def get_taric_template(self):
@@ -290,22 +275,25 @@ class TrackedModel(PolymorphicModel):
             loader.get_template(template_name)
         except loader.TemplateDoesNotExist as e:
             raise loader.TemplateDoesNotExist(
-                f"""Taric template does not exist for {class_name}. All classes that \
-inherit TrackedModel must either:
-    1) Have a matching taric template with a snake_case name matching the class at \
-"taric/{{snake_case_class_name}}.xml". In this case it should be: "{template_name}".
-    2) A taric_template attribute, pointing to the correct template.
-    3) Override the get_taric_template method, returning an existing template."""
+                f"Taric template does not exist for {class_name}. All classes that "
+                "inherit TrackedModel must either:\n"
+                "    1) Have a matching taric template with a snake_case name matching "
+                'the class at "taric/{snake_case_class_name}.xml". In this case it '
+                f'should be: "{template_name}".\n'
+                "    2) A taric_template attribute, pointing to the correct template.\n"
+                "    3) Override the get_taric_template method, returning an existing "
+                "template."
             ) from e
 
+        print("got", template_name)
         return template_name
 
     def new_draft(self, workbasket, save=True, **kwargs):
         if hasattr(self, "successor"):
             raise exceptions.AlreadyHasSuccessorError(
-                f"Object with PK: {self.pk} already has a successor, can't have multiple successors. "
-                f"Use objects.get_latest_version to find the latest instance of this object without a "
-                f"successor."
+                f"Object with PK: {self.pk} already has a successor, cannot have "
+                "multiple successors. Use objects.get_latest_version to find the "
+                "latest instance of this object without a successor."
             )
         cls = self.__class__
 
@@ -315,7 +303,7 @@ inherit TrackedModel must either:
             if field.name != "id"
         }
 
-        new_object_kwargs["workbasket"] = workbasket
+        new_object_kwargs["transaction"] = workbasket.new_transaction()
         new_object_kwargs.setdefault("update_type", validators.UpdateType.UPDATE)
         new_object_kwargs["predecessor"] = self
         new_object_kwargs.pop("polymorphic_ctype")
@@ -341,71 +329,38 @@ inherit TrackedModel must either:
             **{field: getattr(self, field) for field in self.identifying_fields}
         )
 
-    def validate_workbasket(self):
-        pass
+    def identifying_fields_unique(
+        self, identifying_fields: Optional[Iterable[str]] = None
+    ) -> bool:
+        if identifying_fields is None:
+            identifying_fields = self.identifying_fields
 
-    def add_to_workbasket(self, workbasket):
-        if workbasket == self.workbasket:
-            self.save()
-            return self
-
-        return self.new_draft(workbasket=workbasket)
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
-    def __str__(self):
-        return ", ".join(
-            f"{field}={getattr(self, field, None)}" for field in self.identifying_fields
+        # TODO this needs to handle deleted trackedmodels
+        return (
+            self.__class__.objects.filter(
+                **{field: getattr(self, field) for field in identifying_fields}
+            ).count()
+            <= 1
         )
 
+    def identifying_fields_to_string(
+        self, identifying_fields: Optional[Iterable[str]] = None
+    ) -> str:
+        if identifying_fields is None:
+            identifying_fields = self.identifying_fields
 
-class NumericSID(models.PositiveIntegerField):
-    def __init__(self, *args, **kwargs):
-        kwargs["editable"] = False
-        kwargs["validators"] = [validators.NumericSIDValidator()]
-        super().__init__(*args, **kwargs)
+        fields = []
+        for field in identifying_fields:
+            value = None
+            try:
+                value = getattr(self, field)
+            except ObjectDoesNotExist:
+                value = "(NOT FOUND)"
+            if isinstance(value, TrackedModel):
+                value = f"({str(value)})"
+            fields.append(f"{field}={str(value)}")
 
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        del kwargs["editable"]
-        del kwargs["validators"]
-        return name, path, args, kwargs
+        return ", ".join(fields)
 
-
-class SignedIntSID(models.IntegerField):
-    def __init__(self, *args, **kwargs):
-        kwargs["editable"] = False
-        super().__init__(*args, **kwargs)
-
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        del kwargs["editable"]
-        return name, path, args, kwargs
-
-
-class ShortDescription(models.CharField):
-    def __init__(self, *args, **kwargs):
-        kwargs["max_length"] = 500
-        kwargs["blank"] = True
-        kwargs["null"] = True
-        super().__init__(*args, **kwargs)
-
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        del kwargs["max_length"]
-        del kwargs["blank"]
-        del kwargs["null"]
-        return name, path, args, kwargs
-
-
-class ApplicabilityCode(models.PositiveSmallIntegerField):
-    def __init__(self, *args, **kwargs):
-        kwargs["choices"] = validators.ApplicabilityCode.choices
-        super().__init__(*args, **kwargs)
-
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        del kwargs["choices"]
-        return name, path, args, kwargs
+    def __str__(self):
+        return self.identifying_fields_to_string()

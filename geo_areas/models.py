@@ -1,9 +1,4 @@
-from django.contrib.postgres.constraints import ExclusionConstraint
-from django.contrib.postgres.fields import RangeOperators
 from django.db import models
-from django.db.models import CheckConstraint
-from django.db.models import F
-from django.db.models import Q
 
 from common.models import ShortDescription
 from common.models import SignedIntSID
@@ -46,27 +41,20 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     def get_description(self):
         return self.geographicalareadescription_set.last()
 
-    def validate_workbasket(self):
-        validators.validate_at_least_one_description(self)
+    def in_use(self):
+        # TODO handle deletes
+        return self.measures.model.objects.filter(
+            geographical_area__sid=self.sid,
+        ).exists()
+
+    def is_a_parent(self):
+        # TODO handle deletes
+        return GeographicalArea.objects.filter(
+            parent__sid=self.sid,
+        ).exists()
 
     def __str__(self):
-        return f'"{self.get_area_code_display()}" SID:{self.sid}'
-
-    class Meta:
-        constraints = (
-            # GA1 and GA7
-            ExclusionConstraint(
-                name="exclude_overlapping_areas",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("area_id", RangeOperators.EQUAL),
-                ],
-            ),
-            CheckConstraint(
-                name="only_groups_have_parents",
-                check=Q(area_code=1) | Q(parent__isnull=True),
-            ),
-        )
+        return f"{self.get_area_code_display()} {self.area_id}"
 
 
 class GeographicalMembership(TrackedModel, ValidityMixin):
@@ -92,27 +80,11 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
 
     identifying_fields = ("geo_group", "member")
 
-    def clean(self):
-        validators.validate_group_is_group(self)
-        validators.validate_member_is_country_or_region(self)
-        validators.validate_group_validity_includes_membership_validity(self)
-        validators.validate_members_of_child_group_are_in_parent_group(self)
-
-    def __str__(self):
-        return f"<{self.member}> -> <{self.geo_group}>"
-
-    class Meta:
-        constraints = (
-            # GA18
-            ExclusionConstraint(
-                name="exclude_overlapping_memberships",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    (F("geo_group"), RangeOperators.EQUAL),
-                    (F("member"), RangeOperators.EQUAL),
-                ],
-            ),
-        )
+    def member_used_in_measure_exclusion(self):
+        # TODO handle deletes
+        return self.member.measureexcludedgeographicalarea_set.model.objects.filter(
+            excluded_geographical_area__sid=self.member.sid,
+        ).exists()
 
 
 class GeographicalAreaDescription(TrackedModel, ValidityMixin):
@@ -122,30 +94,8 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     period_record_code = "250"
     period_subrecord_code = "05"
 
-    area = models.ForeignKey(GeographicalArea, on_delete=models.CASCADE)
+    area = models.ForeignKey(
+        GeographicalArea, on_delete=models.CASCADE, related_name="descriptions"
+    )
     description = ShortDescription()
     sid = SignedIntSID()
-
-    class Meta:
-        constraints = [
-            ExclusionConstraint(
-                name="exclude_overlapping_area_descriptions",
-                expressions=[
-                    ("valid_between", RangeOperators.OVERLAPS),
-                    ("area", RangeOperators.EQUAL),
-                ],
-            ),
-        ]
-
-    def clean(self):
-        validators.validate_description_is_not_null(self)
-        validators.validate_geographical_area_description_have_unique_start_date(self)
-        validators.validate_geographical_area_description_start_date_before_geographical_area_end_date(
-            self
-        )
-        validators.validate_first_geographical_area_description_has_geographical_area_start_date(
-            self
-        )
-
-    def __str__(self):
-        return f'description ({self.sid}) - "{self.description}" for {self.area}'

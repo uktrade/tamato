@@ -52,7 +52,7 @@ class BaseHandlerMeta(type):
         if not isinstance(dct.get("tag"), str):
             raise AttributeError(f'{name} requires attribute "tag" to be a str.')
 
-        if not issubclass(dct.get("serializer_class"), ModelSerializer):
+        if not issubclass(dct.get("serializer_class", type), ModelSerializer):
             raise AttributeError(
                 f'{name} requires attribute "serializer_class" to be a subclass of "ModelSerializer".'
             )
@@ -224,7 +224,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
             self.identifying_fields = (
                 self.serializer_class.Meta.model.identifying_fields
             )
-        self.workbasket_id = dispatched_object["workbasket_id"]
+        self.transaction_id = dispatched_object["transaction_id"]
 
         self.key = generate_key(
             tag=self.tag, identifying_fields=self.identifying_fields, data=self.data
@@ -386,7 +386,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         some pre-processing before saving. Once saved an opportunity is given for post-processing.
         """
         data = self.clean(self.data)
-        data.update(workbasket_id=self.workbasket_id)
+        data.update(transaction_id=self.transaction_id)
 
         logger.debug(f"Creating {self.serializer_class.Meta.model}: {data}")
         data = self.pre_save(data, self.resolved_links)
@@ -403,7 +403,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         return {
             "data": self.data,
             "tag": self.tag,
-            "workbasket_id": self.workbasket_id,
+            "transaction_id": self.transaction_id,
         }
 
     @classmethod

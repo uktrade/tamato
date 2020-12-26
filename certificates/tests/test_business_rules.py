@@ -1,181 +1,167 @@
-from datetime import datetime
-from datetime import timezone
-
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
 from django.db import IntegrityError
-from psycopg2._range import DateTimeTZRange
 
+from certificates import business_rules
 from common.tests import factories
 
 
 pytestmark = pytest.mark.django_db
 
 
-def test_cet1():
-    """
-    The type of the Certificate must be unique
-    """
-    t = factories.CertificateTypeFactory.create()
+def test_CET1(make_duplicate_record):
+    """The type of the Certificate must be unique."""
 
-    with pytest.raises(IntegrityError):
-        factories.CertificateTypeFactory.create(sid=t.sid)
+    duplicate = make_duplicate_record(factories.CertificateTypeFactory)
 
-
-def test_cet2():
-    """
-    The Certificate type cannot be deleted if it is used in a Certificate
-    """
-    t = factories.CertificateTypeFactory.create()
-    factories.CertificateFactory.create(certificate_type=t)
-
-    with pytest.raises(IntegrityError):
-        t.delete()
+    with pytest.raises(ValidationError):
+        business_rules.CET1().validate(duplicate)
 
 
-def test_cet3(date_ranges):
-    """
-    The start date must be less than or equal to the end date
-    """
+def test_CET2(delete_record):
+    """The Certificate type cannot be deleted if it is used in a Certificate."""
+
+    certificate = factories.CertificateFactory()
+
+    with pytest.raises(ValidationError):
+        business_rules.CET2().validate(delete_record(certificate.certificate_type))
+
+
+def test_CET3(date_ranges):
+    """The start date must be less than or equal to the end date."""
+
     with pytest.raises(DataError):
         factories.CertificateTypeFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_ce2():
-    """
-    The combination certificate type and code must be unique.
-    """
-    t = factories.CertificateTypeFactory.create()
-    certificate = factories.CertificateFactory.create(certificate_type=t)
-    factories.CertificateFactory.create(sid=certificate.sid)
+def test_CE2(make_duplicate_record):
+    """The combination certificate type and code must be unique."""
 
-    with pytest.raises(IntegrityError):
-        factories.CertificateFactory.create(sid=certificate.sid, certificate_type=t)
+    duplicate = make_duplicate_record(
+        factories.CertificateFactory, identifying_fields=("sid", "certificate_type")
+    )
+
+    with pytest.raises(ValidationError):
+        business_rules.CE2().validate(duplicate)
 
 
-def test_ce3(date_ranges):
-    """
-    The start date must be less than or equal to the end date
-    """
+def test_CE3(date_ranges):
+    """The start date must be less than or equal to the end date."""
+
     with pytest.raises(DataError):
         factories.CertificateFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_ce4(date_ranges):
-    """
-    If a certificate is used in a measure condition then the validity period of the certificate
-    must span the validity period of the measure
-    """
-
-    with pytest.raises(ValidationError):
-        factories.MeasureConditionFactory(
-            required_certificate=factories.CertificateFactory(
-                valid_between=date_ranges.starts_with_normal,
-            ),
-            dependent_measure__valid_between=date_ranges.normal,
-        )
-
-
-def test_ce5(approved_workbasket):
-    """
-    When a certificate cannot be deleted if it is used in a measure condition
+def test_CE4(date_ranges):
+    """If a certificate is used in a measure condition then the validity period of the certificate
+    must span the validity period of the measure.
     """
 
-    condition = factories.MeasureConditionFactory(
-        required_certificate=factories.CertificateFactory(),
-        workbasket=approved_workbasket,
+    condition = factories.MeasureConditionWithCertificateFactory(
+        required_certificate__valid_between=date_ranges.starts_with_normal,
+        dependent_measure__valid_between=date_ranges.normal,
     )
 
-    with pytest.raises(IntegrityError):
-        condition.required_certificate.delete()
+    with pytest.raises(ValidationError):
+        business_rules.CE4().validate(condition.required_certificate)
 
 
-def test_ce6_one_description_mandatory():
-    """
-    At least one description record is mandatory
-    """
+def test_CE5(delete_record):
+    """The certificate cannot be deleted if it is used in a measure condition."""
 
-    workbasket = factories.WorkBasketFactory()
-    factories.CertificateFactory(workbasket=workbasket)
+    condition = factories.MeasureConditionWithCertificateFactory()
 
     with pytest.raises(ValidationError):
-        workbasket.submit_for_approval()
+        business_rules.CE5().validate(delete_record(condition.required_certificate))
 
 
-def test_ce6_first_description_must_have_same_start_date(date_ranges):
-    """
-    The start date of the first description period must be equal to the start date of the certificate
-    """
-    certificate = factories.CertificateFactory(valid_between=date_ranges.no_end)
+def test_CE6_one_description_mandatory():
+    """At least one description record is mandatory."""
 
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
-            described_certificate=certificate, valid_between=date_ranges.later
-        )
+        # certificate created without description
+        business_rules.CE6().validate(factories.CertificateFactory())
 
 
-def test_ce6_start_dates_cannot_match(date_ranges):
+def test_CE6_first_description_must_have_same_start_date(date_ranges):
+    """The start date of the first description period must be equal to the start date of
+    the certificate.
     """
-    No two associated description periods for the same certificate and language may have the same start date
-    """
-    certificate = factories.CertificateFactory(valid_between=date_ranges.no_end)
 
+    description = factories.CertificateDescriptionFactory(
+        described_certificate__valid_between=date_ranges.no_end,
+        valid_between=date_ranges.later,
+    )
+
+    with pytest.raises(ValidationError):
+        business_rules.CE6().validate(description.described_certificate)
+
+
+def test_CE6_start_dates_cannot_match():
+    """No two associated description periods for the same certificate and language may
+    have the same start date.
+    """
+
+    existing = factories.CertificateDescriptionFactory()
     factories.CertificateDescriptionFactory(
-        described_certificate=certificate, valid_between=date_ranges.no_end
+        described_certificate=existing.described_certificate,
+        valid_between=existing.valid_between,
     )
+
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
-            described_certificate=certificate, valid_between=date_ranges.no_end
-        )
+        business_rules.CE6().validate(existing.described_certificate)
 
 
-def test_ce6_certificate_validity_period_must_span_description(date_ranges):
+def test_CE6_certificate_validity_period_must_span_description(date_ranges):
+    """The validity period of the certificate must span the validity period of the
+    certificate description.
     """
-    The validity period of the certificate must span the validity period of the certificate description
-    """
-    certificate = factories.CertificateFactory(valid_between=date_ranges.normal)
+
+    description = factories.CertificateDescriptionFactory(
+        described_certificate__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
+
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
-            described_certificate=certificate, valid_between=date_ranges.overlap_normal
-        )
+        business_rules.CE6().validate(description.described_certificate)
 
 
-def test_ce7(date_ranges):
+def test_CE7(date_ranges):
+    """The validity period of the certificate type must span the validity period of the
+    certificate.
     """
-    The validity period of the certificate type must span the validity period of the certificate.
-    """
-    t = factories.CertificateTypeFactory(valid_between=date_ranges.normal)
+
     with pytest.raises(ValidationError):
-        factories.CertificateFactory(
-            certificate_type=t, valid_between=date_ranges.overlap_normal
+        business_rules.CE7().validate(
+            factories.CertificateFactory(
+                certificate_type__valid_between=date_ranges.normal,
+                valid_between=date_ranges.overlap_normal,
+            )
         )
 
 
 def test_certificate_description_periods_cannot_overlap(date_ranges):
-    """
-    Ensure validity periods for descriptions with a given SID cannot overlap.
-    """
-    first = factories.CertificateDescriptionFactory(
-        sid=10000,
-        valid_between=date_ranges.normal,
-        described_certificate__valid_between=date_ranges.no_end,
+    """Ensure validity periods for descriptions with a given SID cannot overlap."""
+    # XXX All versions of a description will have the same SID. Won't this prevent
+    # updates and deletes?
+
+    existing = factories.CertificateDescriptionFactory(valid_between=date_ranges.normal)
+    description = factories.CertificateDescriptionFactory(
+        described_certificate=existing.described_certificate,
+        sid=existing.sid,
+        valid_between=date_ranges.overlap_normal,
     )
-    with pytest.raises(IntegrityError):
-        factories.CertificateDescriptionFactory(
-            sid=10000,
-            valid_between=date_ranges.overlap_normal,
-            described_certificate=first.described_certificate,
-        )
+
+    with pytest.raises(ValidationError):
+        business_rules.NoOverlappingDescriptions().validate(description)
 
 
 def test_certificate_description_period_must_be_adjacent_to_predecessor(date_ranges):
-    """
-    Ensure validity periods for successive descriptions must be adjacent.
-    """
+    """Ensure validity periods for successive descriptions must be adjacent."""
+
     predecessor = factories.CertificateDescriptionFactory(
         valid_between=date_ranges.normal,
-        described_certificate__valid_between=date_ranges.no_end,
     )
     predecessor = factories.CertificateDescriptionFactory(
         sid=predecessor.sid,
@@ -183,10 +169,13 @@ def test_certificate_description_period_must_be_adjacent_to_predecessor(date_ran
         described_certificate=predecessor.described_certificate,
         valid_between=date_ranges.adjacent_later,
     )
+    assert business_rules.ContiguousDescriptions().validate(predecessor) is None
+
+    description = factories.CertificateDescriptionFactory(
+        sid=predecessor.sid,
+        predecessor=predecessor,
+        described_certificate=predecessor.described_certificate,
+        valid_between=date_ranges.adjacent_even_later,
+    )
     with pytest.raises(ValidationError):
-        factories.CertificateDescriptionFactory(
-            sid=predecessor.sid,
-            predecessor=predecessor,
-            described_certificate=predecessor.described_certificate,
-            valid_between=date_ranges.adjacent_even_later,
-        )
+        business_rules.ContiguousDescriptions().validate(description)

@@ -182,20 +182,40 @@ class Regulation(TrackedModel):
     def is_draft_regulation(self):
         return self.regulation_id.startswith("C")
 
-    def clean(self):
-        validators.unique_regulation_id_for_role_type(self)
-        validators.validate_regulation_group_exists(self)
-        validators.validate_group_validity_spans_regulation_validity(self)
-        validators.validate_approved(self)
-        validators.validate_official_journal(self)
-        validators.validate_information_text(self)
-        validators.validate_approved(self)
-        validators.validate_base_regulations_have_start_date(self)
-        validators.validate_base_regulations_have_community_code(self)
-        validators.validate_base_regulations_have_group(self)
+    # def clean(self):
+    #     validators.unique_regulation_id_for_role_type(self)
+    #     validators.validate_regulation_group_exists(self)
+    #     validators.validate_group_validity_spans_regulation_validity(self)
+    #     validators.validate_approved(self)
+    #     validators.validate_official_journal(self)
+    #     validators.validate_information_text(self)
+    #     validators.validate_approved(self)
+    #     validators.validate_base_regulations_have_start_date(self)
+    #     validators.validate_base_regulations_have_community_code(self)
+    #     validators.validate_base_regulations_have_group(self)
 
     def __str__(self):
         return f"{self.regulation_id} ({self.get_role_type_display()})"
+
+    def used_as_terminating_regulation_or_draft_generating_and_terminating_regulation(
+        self,
+    ):
+        if self.role_type != validators.RoleType.BASE:
+            return
+
+        # TODO handle deletes
+        return (
+            self.measure_set.model.objects.filter(
+                terminating_regulation__regulation_id=self.regulation_id,
+                terminating_regulation__role_type=self.role_type,
+            )
+            .exclude(
+                generating_regulation__regulation_id__startswith="C",
+                generating_regulation__regulation_id=self.regulation_id,
+                generating_regulation__role_type=self.role_type,
+            )
+            .exists()
+        )
 
 
 class Amendment(TrackedModel):

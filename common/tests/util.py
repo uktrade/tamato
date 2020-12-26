@@ -93,6 +93,7 @@ def generate_test_import_xml(obj: dict) -> StringIO:
     xml = render_to_string(
         template_name="workbaskets/taric/transaction_detail.xml",
         context={
+            "envelope_id": 1,
             "tracked_models": [obj],
             "transaction_id": 1,
             "message_counter": counter_generator(),
@@ -132,7 +133,13 @@ def validate_taric_xml(
     factory=None, instance=None, factory_kwargs=None, check_order=True
 ):
     def decorator(func):
-        def wraps(api_client, taric_schema, approved_workbasket, *args, **kwargs):
+        def wraps(
+            api_client,
+            taric_schema,
+            approved_transaction,
+            *args,
+            **kwargs,
+        ):
             if not factory and not instance:
                 raise AssertionError(
                     "Either a factory or an object instance need to be provided"
@@ -143,10 +150,13 @@ def validate_taric_xml(
                 )
 
             if not instance:
-                factory(workbasket=approved_workbasket, **factory_kwargs or {})
+                factory(transaction=approved_transaction, **factory_kwargs or {})
 
             response = api_client.get(
-                reverse("workbasket-detail", kwargs={"pk": approved_workbasket.pk}),
+                reverse(
+                    "workbasket-detail",
+                    kwargs={"pk": approved_transaction.workbasket.pk},
+                ),
                 {"format": "xml"},
             )
 
@@ -160,8 +170,18 @@ def validate_taric_xml(
 
             if check_order:
                 validate_taric_xml_record_order(xml)
+
+            args = (
+                api_client,
+                taric_schema,
+                approved_transaction,
+                *args,
+            )
+            kwargs = {"xml": xml, **kwargs}
+
             func(
-                api_client, taric_schema, approved_workbasket, *args, xml=xml, **kwargs
+                *args,
+                **kwargs,
             )
 
         return wraps
@@ -423,7 +443,7 @@ def only_applicable_after(cutoff):
                     raise
 
                 else:
-                    pytest.fail(f"Rule applied before {cutoff:%d/%m/%Y}")
+                    pytest.fail(f"Rule applied before {cutoff:%Y-%m-%d}")
 
             return True
 
