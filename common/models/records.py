@@ -1,15 +1,20 @@
-"""TrackedModel and supporting manager."""
+from __future__ import annotations
+
 import re
 from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
+from typing import Tuple
+from typing import Type
 
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
 from django.db.models import Case
 from django.db.models import F
+from django.db.models import Field
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Value
@@ -169,6 +174,38 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 *(TrackedModelQuerySet._when_model_subrecord_codes()),
                 output_field=models.CharField(),
             ),
+        )
+
+    def _get_related_lookups(
+        self, model, *lookups, prefix="", recurse_level=0
+    ) -> List[str]:
+        related_lookups = []
+        for relation, _ in model.get_relations():
+            if lookups and relation.name not in lookups:
+                continue
+            related_lookups.append(f"{prefix}{relation.name}")
+            related_lookups.append(f"{prefix}{relation.name}__version_group")
+            related_lookups.append(
+                f"{prefix}{relation.name}__version_group__current_version"
+            )
+
+            if recurse_level:
+                related_lookups.extend(
+                    self._get_related_lookups(
+                        model,
+                        *lookups,
+                        prefix=f"{prefix}{relation.name}__version_group__current_version__",
+                        recurse_level=recurse_level - 1,
+                    )
+                )
+        return related_lookups
+
+    def with_latest_links(self, *lookups, recurse_level=0) -> QuerySet:
+        related_lookups = self._get_related_lookups(
+            self.model, *lookups, recurse_level=recurse_level
+        )
+        return self.select_related(
+            "version_group", "version_group__current_version", *related_lookups
         )
 
     def get_queryset(self):
@@ -406,6 +443,58 @@ class TrackedModel(PolymorphicModel):
             self.version_group.save()
 
         return return_value
+
+    @property
+    def current_version(self) -> TrackedModel:
+        current_version = self.version_group.current_version
+        if current_version is None:
+            raise self.__class__.DoesNotExist("Object has no current version")
+        return current_version
+
+    @classmethod
+    def get_relations(cls) -> List[Tuple[Field, Type[TrackedModel]]]:
+        """
+        Find all foreign key and one-to-one relations on an object and return a list containing
+        tuples of the field instance and the related model it links to.
+        """
+        return [
+            (f, f.related_model)
+            for f in cls._meta.get_fields()
+            if (f.many_to_one or f.one_to_one)
+            and not f.auto_created
+            and f.concrete
+            and f.model == cls
+            and issubclass(f.related_model, TrackedModel)
+        ]
+
+    def __getattr__(self, item: str):
+        """
+        Add the ability to get the current instance of a related object through an attribute.
+        For example if a model is like so:
+
+        .. code:: python
+            class ExampleModel(TrackedModel):
+                # must be a TrackedModel
+                other_model = models.ForeignKey(OtherModel, on_delete=models.PROTECT)
+
+        The latest version of the relation can be accessed via:
+
+        .. code:: python
+            example_model = ExampleModel.objects.first()
+            example_model.other_model_current  # Gets the latest version
+        """
+        relations = {
+            f"{relation.name}_current": relation.name
+            for relation, model in self.get_relations()
+        }
+        if item not in relations:
+            try:
+                return super().__getattr__(item)
+            except AttributeError as e:
+                raise AttributeError(
+                    f"{item} does not exist on {self.__class__.__name__}"
+                ) from e
+        return getattr(self, relations[item]).current_version
 
     def __str__(self):
         return ", ".join(

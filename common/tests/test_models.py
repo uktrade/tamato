@@ -8,6 +8,7 @@ from common.models import TrackedModel
 from common.tests import factories
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
+from common.tests.models import TestModel3
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
 from regulations.models import Group
@@ -19,12 +20,12 @@ pytestmark = pytest.mark.django_db
 def generate_model_history(factory, number=5, **kwargs) -> List:
     objects = []
     kwargs["update_type"] = kwargs.get("update_type", UpdateType.CREATE)
-    current = factory(**kwargs)
+    current = factory.create(**kwargs)
     objects.append(current)
     kwargs["update_type"] = UpdateType.UPDATE
     kwargs["version_group"] = kwargs.get("version_group", current.version_group)
     for _ in range(number - 1):
-        current = factory(**kwargs)
+        current = factory.create(**kwargs)
         objects.append(current)
 
     return objects
@@ -46,7 +47,7 @@ def model_with_history(factory, date_ranges, **kwargs):
             factory, valid_between=date_ranges.earlier, **kwargs
         )
 
-        active_model = factory(
+        active_model = factory.create(
             valid_between=date_ranges.current, update_type=UpdateType.UPDATE, **kwargs
         )
 
@@ -219,3 +220,37 @@ def test_trackedmodel_can_attach_record_codes(workbasket):
         ),
         ordered=False,
     )
+
+
+def test_get_latest_relation_with_latest_links(
+    model1_with_history, django_assert_num_queries
+):
+    oldest_link = model1_with_history.all_models[0]
+    latest_link = model1_with_history.all_models[-1]
+
+    factories.TestModel3Factory.create(linked_model=oldest_link)
+
+    with django_assert_num_queries(1):
+        instance = TestModel3.objects.all().with_latest_links()[0]
+        fetched_oldest_link = instance.linked_model
+        fetched_latest_link = instance.linked_model_current
+
+    assert oldest_link.pk == fetched_oldest_link.pk
+    assert latest_link.pk == fetched_latest_link.pk
+
+
+def test_get_latest_relation_without_latest_links(
+    model1_with_history, django_assert_num_queries
+):
+    oldest_link = model1_with_history.all_models[0]
+    latest_link = model1_with_history.all_models[-1]
+
+    factories.TestModel3Factory.create(linked_model=oldest_link)
+
+    with django_assert_num_queries(4):
+        instance = TestModel3.objects.all().select_related("linked_model")[0]
+        fetched_oldest_link = instance.linked_model
+        fetched_latest_link = instance.linked_model_current
+
+    assert oldest_link == fetched_oldest_link
+    assert latest_link == fetched_latest_link

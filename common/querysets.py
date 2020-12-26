@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import List
 
 from django.db.models import Q
 from django.db.models import QuerySet
@@ -109,6 +112,38 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
         # add latest version of models from the current workbasket
         return self.filter(query) | in_workbasket.current()
+
+    def _get_related_lookups(
+        self, model, *lookups, prefix="", recurse_level=0
+    ) -> List[str]:
+        related_lookups = []
+        for relation, _ in model.get_relations():
+            if lookups and relation.name not in lookups:
+                continue
+            related_lookups.append(f"{prefix}{relation.name}")
+            related_lookups.append(f"{prefix}{relation.name}__version_group")
+            related_lookups.append(
+                f"{prefix}{relation.name}__version_group__current_version"
+            )
+
+            if recurse_level:
+                related_lookups.extend(
+                    self._get_related_lookups(
+                        model,
+                        *lookups,
+                        prefix=f"{prefix}{relation.name}__version_group__current_version__",
+                        recurse_level=recurse_level - 1,
+                    )
+                )
+        return related_lookups
+
+    def with_latest_links(self, *lookups, recurse_level=0) -> QuerySet:
+        related_lookups = self._get_related_lookups(
+            self.model, *lookups, recurse_level=recurse_level
+        )
+        return self.select_related(
+            "version_group", "version_group__current_version", *related_lookups
+        )
 
     def approved(self):
         """

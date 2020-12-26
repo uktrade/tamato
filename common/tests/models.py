@@ -26,3 +26,12 @@ class TestModel2(TrackedModel, ValidityMixin):
     description = models.CharField(max_length=24, null=True)
 
     identifying_fields = ("custom_sid",)
+
+
+class TestModel3(TrackedModel, ValidityMixin):
+    __test__ = False
+    record_code = "03"
+    subrecord_code = "01"
+
+    sid = models.PositiveIntegerField()
+    linked_model = models.ForeignKey(TestModel1, on_delete=models.PROTECT)
