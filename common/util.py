@@ -11,6 +11,13 @@ def is_truthy(value: str) -> bool:
     return str(value).lower() not in ("", "n", "no", "off", "f", "false", "0")
 
 
+class TaricDateTimeRange(DateTimeTZRange):
+    def __init__(self, lower=None, upper=None, bounds="[]", empty=False):
+        if not upper:
+            bounds = "[)"
+        super().__init__(lower, upper, bounds, empty)
+
+
 def validity_range_contains_range(
     overall_range: DateTimeTZRange, contained_range: DateTimeTZRange
 ) -> bool:
@@ -20,7 +27,7 @@ def validity_range_contains_range(
 
     If either end is unbounded in the contained range,it must also be unbounded in the overall range.
     """
-    # XXX assumes both ranges are [) (inclusive-lower, exclusive-upper)
+    # XXX assumes both ranges are [] (inclusive-lower, inclusive-upper)
 
     if overall_range.lower_inf and overall_range.upper_inf:
         return True
@@ -33,7 +40,7 @@ def validity_range_contains_range(
     if not overall_range.lower_inf:
         if (
             not contained_range.upper_inf
-            and contained_range.upper <= overall_range.lower
+            and contained_range.upper < overall_range.lower
         ):
             return False
 
@@ -43,7 +50,7 @@ def validity_range_contains_range(
     if not overall_range.upper_inf:
         if (
             not contained_range.lower_inf
-            and contained_range.lower >= overall_range.upper
+            and contained_range.lower > overall_range.upper
         ):
             return False
 

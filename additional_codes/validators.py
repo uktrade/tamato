@@ -121,7 +121,7 @@ def validate_additional_code_description_start_date_before_additional_code_end_d
     if (
         additional_code.valid_between.upper is not None
         and additional_code_description.valid_between.lower
-        >= additional_code.valid_between.upper
+        > additional_code.valid_between.upper
     ):
         raise ValidationError(
             {

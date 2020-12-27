@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 
 from common.models import Transaction
+from common.util import TaricDateTimeRange
 
 
 class TARIC3DateTimeRangeField(DateTimeRangeField):
@@ -14,6 +15,7 @@ class TARIC3DateTimeRangeField(DateTimeRangeField):
             "%Y-%m-%d",
         ]  # default  # TARIC3 date format
     )
+    range_type = TaricDateTimeRange
 
 
 class TrackedModelSerializerMixin(serializers.ModelSerializer):

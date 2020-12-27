@@ -1,8 +1,4 @@
-from datetime import datetime
-from datetime import timezone
-
 import pytest
-from psycopg2._range import DateTimeTZRange
 
 from common import util
 from common.tests.util import Dates

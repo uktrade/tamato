@@ -28,6 +28,7 @@ from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import generate_test_import_xml
 from common.util import get_field_tuple
+from common.util import TaricDateTimeRange
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
 from importer.management.commands.import_taric import import_taric
@@ -74,7 +75,7 @@ def celery_config():
 def validity_range(request):
     start, end, expect_error = request.param
     return (
-        DateTimeTZRange(
+        TaricDateTimeRange(
             datetime.fromisoformat(start).replace(tzinfo=timezone.utc),
             datetime.fromisoformat(end).replace(tzinfo=timezone.utc),
         ),

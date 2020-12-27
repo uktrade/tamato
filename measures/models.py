@@ -1,11 +1,11 @@
 from django.db import models
-from psycopg2.extras import DateTimeTZRange
 
 from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from common.util import TaricDateTimeRange
 from measures import validators
 
 
@@ -353,7 +353,7 @@ class Measure(TrackedModel, ValidityMixin):
 
     @property
     def effective_valid_between(self):
-        return DateTimeTZRange(self.valid_between.lower, self.effective_end_date)
+        return TaricDateTimeRange(self.valid_between.lower, self.effective_end_date)
 
     def has_components(self):
         return MeasureComponent.objects.filter(

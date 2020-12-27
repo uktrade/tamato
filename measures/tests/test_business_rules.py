@@ -4,6 +4,7 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.db import DataError
+from django.db import IntegrityError
 from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
@@ -11,6 +12,7 @@ from common.tests.util import only_applicable_after
 from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
+from common.util import TaricDateTimeRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
@@ -1539,7 +1541,7 @@ def test_ME104(date_ranges, unapproved_transaction):
     )
 
     measure.terminating_regulation = factories.RegulationFactory.create(
-        valid_between=DateTimeTZRange(
+        valid_between=TaricDateTimeRange(
             measure.valid_between.upper + relativedelta(days=+1),
             None,
         ),
