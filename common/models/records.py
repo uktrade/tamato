@@ -421,6 +421,8 @@ class TrackedModel(PolymorphicModel):
             value = self
             for layer in field.split("__"):
                 value = getattr(value, layer)
+                if value is None:
+                    break
             fields[field] = value
 
         return fields

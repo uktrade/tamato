@@ -138,3 +138,5 @@ webpack-stats.json
 
 # PyCharm
 .idea/
+
+*.gz
