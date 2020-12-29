@@ -9,6 +9,7 @@ from django.db import transaction
 from commodities import import_parsers as parsers
 from commodities import models
 from commodities import serializers
+from commodities.exceptions import InvalidIndentError
 from common.util import TaricDateTimeRange
 from common.validators import UpdateType
 from footnotes.models import Footnote
@@ -16,10 +17,6 @@ from footnotes.models import FootnoteType
 from importer.handlers import BaseHandler
 
 logger = logging.getLogger(__name__)
-
-
-class InvalidIndentError(Exception):
-    pass
 
 
 def maybe_min(*objs: Optional[Any]) -> Optional[Any]:
@@ -63,9 +60,13 @@ class GoodsNomenclatureOriginHandler(BaseHandler):
         must_be_active_on_date = self.resolved_links[
             "new_goods_nomenclature"
         ].valid_between.lower - timedelta(days=1)
-        return model.objects.get(
-            valid_between__contains=must_be_active_on_date,
-            **kwargs,
+        return (
+            model.objects.filter(
+                valid_between__contains=must_be_active_on_date,
+                **kwargs,
+            )
+            .current()
+            .get()
         )
 
 
@@ -94,19 +95,24 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
     )
 
     def get_absorbed_into_goods_nomenclature_link(self, model, kwargs):
+        if "replaced_goods_nomenclature" not in self.resolved_links:
+            raise model.DoesNotExist
         must_be_active_on_date = self.resolved_links[
             "replaced_goods_nomenclature"
         ].valid_between.upper + timedelta(days=1)
-        return model.objects.get(
-            valid_between__contains=must_be_active_on_date,
-            **kwargs,
+        return (
+            model.objects.filter(
+                valid_between__contains=must_be_active_on_date,
+                **kwargs,
+            )
+            .current()
+            .get()
         )
 
 
 class BaseGoodsNomenclatureDescriptionHandler(BaseHandler):
     links = (
         {
-            "identifying_fields": ("sid", "item_id"),
             "model": models.GoodsNomenclature,
             "name": "described_goods_nomenclature",
         },
@@ -163,7 +169,10 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
     def save(self, data: dict):
         depth = self.extra_data.pop("indent")
         data.update(**self.extra_data)
-
+        if "indented_goods_nomenclature_id" in data:
+            data["indented_goods_nomenclature"] = models.GoodsNomenclature.objects.get(
+                pk=data.pop("indented_goods_nomenclature_id")
+            )
         item_id = data["indented_goods_nomenclature"].item_id
 
         indent = super().save(data)
@@ -294,7 +303,7 @@ class FootnoteAssociationGoodsNomenclatureHandler(BaseHandler):
     identifying_fields = (
         "goods_nomenclature__sid",
         "associated_footnote__footnote_id",
-        "associated_footnote__footnote_type_id",
+        "associated_footnote__footnote_type__footnote_type_id",
     )
 
     links = (
@@ -307,14 +316,8 @@ class FootnoteAssociationGoodsNomenclatureHandler(BaseHandler):
             "model": Footnote,
             "name": "associated_footnote",
             "optional": False,
-            "identifying_fields": ("footnote_id", "footnote_type_id"),
+            "identifying_fields": ("footnote_id", "footnote_type__footnote_type_id"),
         },
     )
     serializer_class = serializers.FootnoteAssociationGoodsNomenclatureSerializer
     tag = parsers.FootnoteAssociationGoodsNomenclatureParser.tag.name
-
-    def get_associated_footnote_link(self, model, kwargs):
-        kwargs["footnote_type"] = FootnoteType.objects.get_latest_version(
-            footnote_type_id=kwargs.pop("footnote_type_id")
-        )
-        return model.objects.get_latest_version(**kwargs)

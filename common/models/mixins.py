@@ -1,7 +1,7 @@
 """Mixins for models."""
 from django.db import models
 
-from common.models.fields import TaricDateTimeRangeField
+from common.fields import TaricDateTimeRangeField
 
 
 class TimestampedMixin(models.Model):
@@ -17,7 +17,7 @@ class TimestampedMixin(models.Model):
 class ValidityMixin(models.Model):
     """Mixin for models with validity periods."""
 
-    valid_between = TaricDateTimeRangeField()
+    valid_between = TaricDateTimeRangeField(db_index=True)
 
     class Meta:
         abstract = True

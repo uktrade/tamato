@@ -1,6 +1,7 @@
 """Transaction model and manager"""
 import json
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
@@ -42,10 +43,15 @@ class Transaction(models.Model):
         models.IntegerField()
     )  # The order this transaction appears within the workbasket
 
+    composite_key = models.CharField(max_length=16, unique=True)
+
     objects = TransactionManager()
 
     def clean(self):
         """Validate business rules against contained TrackedModels."""
+
+        if settings.SKIP_VALIDATION:
+            return
 
         self.errors = []
         for model in self.tracked_models.all():

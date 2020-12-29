@@ -5,6 +5,7 @@ from typing import Dict
 from typing import Type
 from typing import TYPE_CHECKING
 
+from commodities.exceptions import InvalidIndentError
 from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
 
@@ -66,18 +67,50 @@ class TariffObjectNursery:
         Handles whether an object can be dispatched to the database or, if some pieces of data
         are missing, cached to await new data.
         """
-
-        handler_class = self.get_handler(obj["tag"])
-        handler = handler_class(obj, self)
-        result = handler.build()
-        if not result:
+        try:
+            handler_class = self.get_handler(obj["tag"])
+            handler = handler_class(obj, self)
+            result = handler.build()
+            if not result:
+                self._cache_object(handler)
+            else:
+                for key in result:
+                    self.cache.pop(key)
+        except InvalidIndentError:
+            logger.warning("Parent not found for %s, caching indent", obj)
             self._cache_object(handler)
-        else:
-            for key in result:
-                self.cache.pop(key)
+        except Exception:
+            logger.error("obj errored: %s", obj)
+            logger.info("cache size: %d", len(self.cache.keys()))
+            self.clear_cache()
+            self.cache.dump()
+            raise
 
     def _cache_object(self, handler):
         self.cache.put(handler.key, handler.serialize())
+
+    def clear_cache(self):
+        index = 0
+        while index < 2 and len(self.cache.keys()) > 0:
+            for key in list(self.cache.keys()):
+                try:
+                    handler = self.get_handler_from_cache(key)
+                    if handler is None:
+                        self.cache.pop(key)
+                        continue
+                    result = handler.build()
+                    if not result:
+                        self._cache_object(handler)
+                    else:
+                        for key in result:
+                            self.cache.pop(key)
+                except InvalidIndentError:
+                    self._cache_object(handler)
+            index += 1
+        if self.cache.keys():
+            logger.warning(
+                "cache not cleared %d records left to do", len(self.cache.keys())
+            )
 
     def get_handler_from_cache(self, key):
         match = self.cache.get(key)

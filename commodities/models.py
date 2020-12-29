@@ -58,7 +58,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
 
     sid = NumericSID()
 
-    indent = models.PositiveIntegerField()
+    indent = models.PositiveIntegerField(db_index=True)
 
     indented_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
@@ -208,7 +208,7 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
         on_delete=models.PROTECT,
         related_name="descriptions",
     )
-    description = models.TextField()
+    description = models.TextField(blank=True)
 
 
 class GoodsNomenclatureOrigin(TrackedModel):
@@ -229,6 +229,11 @@ class GoodsNomenclatureOrigin(TrackedModel):
     derived_from_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature,
         on_delete=models.PROTECT,
+    )
+
+    identifying_fields = (
+        "new_goods_nomenclature__sid",
+        "derived_from_goods_nomenclature__sid",
     )
 
     def __str__(self):

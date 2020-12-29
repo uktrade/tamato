@@ -4,8 +4,6 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.db import DataError
-from django.db import IntegrityError
-from psycopg2.extras import DateTimeTZRange
 
 from common.tests import factories
 from common.tests.util import only_applicable_after
@@ -14,14 +12,12 @@ from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
 from common.util import TaricDateTimeRange
 from common.validators import ApplicabilityCode
-from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from measures import business_rules
 from measures.validators import DutyExpressionId
 from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -337,13 +333,14 @@ def test_ME88():
     measure type.
     """
 
-    indent = factories.GoodsNomenclatureIndentFactory(node__depth=2)
+    good = factories.GoodsNomenclatureFactory.create(item_id="9999999900")
 
     with pytest.raises(ValidationError):
         business_rules.ME88().validate(
-            factories.MeasureFactory(
+            factories.MeasureFactory.create(
                 measure_type__measure_explosion_level=2,
-                goods_nomenclature=indent.indented_goods_nomenclature,
+                goods_nomenclature=good,
+                leave_measure=True,
             )
         )
 
@@ -450,6 +447,7 @@ def test_ME10():
             factories.MeasureFactory.create(
                 measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
                 order_number=None,
+                dead_order_number=None,
             )
         )
 
@@ -603,6 +601,7 @@ def test_ME12():
         factories.MeasureFactory.create(
             measure_type=rel.measure_type,
             additional_code__type=rel.additional_code_type,
+            goods_nomenclature__item_id="7700000000",
         )
     )
 
@@ -1376,6 +1375,7 @@ def test_ME66():
         business_rules.ME66().validate(measure)
 
 
+@pytest.mark.xfail(reason="ME67 disabled")
 def test_ME67(date_ranges):
     """The membership period of the excluded geographical area must span the validity
     period of the measure."""

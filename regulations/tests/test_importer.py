@@ -7,7 +7,7 @@ import pytest
 from common.tests import factories
 from common.tests.util import generate_test_import_xml
 from common.validators import UpdateType
-from importer.management.commands.import_taric import import_taric
+from importer.management.commands.import_taric import import_taric_file
 from regulations import models
 from regulations import serializers
 from regulations.validators import RoleType
@@ -68,7 +68,7 @@ def create_and_test_m2m_regulation(
     }
 
     xml = generate_test_import_xml(data)
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+    import_taric_file(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
     through_table_instance = through_model.objects.get(
         enacting_regulation__regulation_id=test_regulation.regulation_id,
@@ -230,7 +230,7 @@ def test_replacement_importer_create(valid_user):
     }
 
     xml = generate_test_import_xml(data)
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+    import_taric_file(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
     replacement = models.Replacement.objects.get(
         enacting_regulation__regulation_id=enacting_regulation.regulation_id,
@@ -264,7 +264,7 @@ def test_replacement_importer_update(valid_user):
     }
 
     xml = generate_test_import_xml(data)
-    import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
+    import_taric_file(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
 
     replacements = models.Replacement.objects.filter(
         enacting_regulation__regulation_id=replacement.enacting_regulation.regulation_id,

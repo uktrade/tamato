@@ -3,7 +3,7 @@ import django.db.models.deletion
 from django.db import migrations
 from django.db import models
 
-import common.models.fields
+import common.fields
 
 
 class Migration(migrations.Migration):
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                         to="common.trackedmodel",
                     ),
                 ),
-                ("valid_between", common.models.fields.TaricDateTimeRangeField()),
+                ("valid_between", common.fields.TaricDateTimeRangeField()),
                 ("sid", models.PositiveIntegerField()),
                 ("name", models.CharField(max_length=24, null=True)),
             ],
@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
                         to="common.trackedmodel",
                     ),
                 ),
-                ("valid_between", common.models.fields.TaricDateTimeRangeField()),
+                ("valid_between", common.fields.TaricDateTimeRangeField()),
                 ("custom_sid", models.PositiveIntegerField()),
                 ("description", models.CharField(max_length=24, null=True)),
             ],
@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
                         to="common.trackedmodel",
                     ),
                 ),
-                ("valid_between", common.models.fields.TaricDateTimeRangeField()),
+                ("valid_between", common.fields.TaricDateTimeRangeField()),
                 ("sid", models.PositiveIntegerField()),
                 (
                     "linked_model",

@@ -4,13 +4,14 @@ black>=20.8b1
 boto3
 celery[redis]>=5.0.2
 dj-database-url
-django>=3.0,<3.1
+django==3.1
 django-dotenv
 django-extra-fields
 django-filter
 django-fsm
 django-health-check
 django-polymorphic
+django-redis
 django-rest-polymorphic
 django-sequences
 django-storages

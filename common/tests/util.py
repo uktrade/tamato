@@ -2,7 +2,8 @@ import contextlib
 from datetime import datetime
 from datetime import timezone
 from functools import wraps
-from io import StringIO
+from io import BytesIO
+from itertools import count
 from typing import Any
 from typing import Dict
 from typing import Type
@@ -89,19 +90,23 @@ def check_validator(validate, value, expected_valid):
             pytest.fail(f'Expected validation error for value "{value}"')
 
 
-def generate_test_import_xml(obj: dict, transaction_id=1) -> StringIO:
+_transaction_counter = count(start=1)
+
+
+def generate_test_import_xml(obj: dict) -> BytesIO:
+
     xml = render_to_string(
         template_name="workbaskets/taric/transaction_detail.xml",
         context={
-            "envelope_id": 1,
+            "envelope_id": next(_transaction_counter),
             "tracked_models": [obj],
-            "transaction_id": transaction_id,
+            "transaction_id": next(_transaction_counter),
             "message_counter": counter_generator(),
             "counter_generator": counter_generator,
         },
     )
 
-    return StringIO(xml)
+    return BytesIO(xml.encode())
 
 
 def validate_taric_xml_record_order(xml):

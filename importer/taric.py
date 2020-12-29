@@ -1,22 +1,35 @@
 """Parsers for TARIC envelope entities."""
 import logging
+import os
+import time
+import xml.etree.ElementTree as etree
 from typing import Any
 from typing import Mapping
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import connection
+from django.db import IntegrityError
+from django.db.transaction import atomic
 
 from common import models
 from common.validators import UpdateType
 from importer.namespaces import ENVELOPE
 from importer.namespaces import Tag
+from importer.nursery import get_nursery
 from importer.parsers import ElementParser
 from importer.parsers import ParserError
 from importer.parsers import TextElement
 from taric.models import Envelope
+from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+
+
+now = time.time()
+
+START_TRANSACTION = int(os.getenv("STARTING_TRANSACTION", 0))
 
 
 class RecordParser(ElementParser):
@@ -35,7 +48,6 @@ class RecordParser(ElementParser):
         :param data: A dict of the parsed element, mapping field names to values
         :param transaction_id: The primary key of the transaction to add the record to
         """
-        print(f"RecordParser.save({data})")
         method_name = {
             str(UpdateType.UPDATE): "update",
             str(UpdateType.DELETE): "delete",
@@ -70,11 +82,13 @@ class TransactionParser(ElementParser):
     tag = Tag("transaction", prefix=ENVELOPE)
     message = MessageParser(many=True)
 
+    workbasket_status = None
+    tamato_username = None
+
     def save(
         self,
         data: Mapping[str, Any],
         envelope: Envelope,
-        workbasket: WorkBasket,
     ):
         """Save the transaction and the contained records to the database.
 
@@ -84,13 +98,54 @@ class TransactionParser(ElementParser):
         :param workbasket_id: The primary key of the workbasket to add transactions to
         """
         logging.debug(f"Saving transaction {self.data['id']}")
-        transaction = workbasket.get_transaction(
-            import_transaction_id=int(data["id"]),
+
+        composite_key = str(envelope.id) + self.data["id"]
+        try:
+            cursor = connection.cursor()
+            while 1:
+                try:
+                    transaction = models.Transaction.objects.create(
+                        composite_key=composite_key,
+                        workbasket=self.parent.workbasket,
+                        order=int(self.data["id"]),
+                        import_transaction_id=int(self.data["id"]),
+                    )
+                    break
+                except IntegrityError as e:
+                    if "workbaskets_transaction_pkey" not in str(e):
+                        raise
+                    cursor.execute(
+                        f"select nextval('{models.Transaction._meta.db_table}_id_seq')"
+                    )
+                    cursor.fetchone()
+
+            cursor.close()
+        except IntegrityError as e:
+            return
+
+        EnvelopeTransaction.objects.create(
+            envelope=envelope, transaction=transaction, order=int(self.data["id"])
         )
-        transaction.envelopes.add(envelope, through_defaults={"order": int(data["id"])})
 
         for message_data in data["message"]:
             self.message.save(message_data, transaction.id)
+
+    def end(self, element: etree.Element):
+        super().end(element)
+        if element.tag == self.tag:
+            logging.debug(f"Saving import {self.data['id']}")
+            if int(self.data["id"]) % 1000 == 0:
+                print(
+                    f"{self.data['id']} transactions done in {int(time.time() - now)} seconds"
+                )
+            if int(self.data["id"]) < START_TRANSACTION:
+                return True
+            with atomic():
+                self.save(
+                    self.data,
+                    envelope=self.parent.envelope,
+                )
+            return True
 
 
 class EnvelopeError(ParserError):
@@ -109,32 +164,33 @@ class EnvelopeParser(ElementParser):
         self.workbasket_status = workbasket_status
         self.tamato_username = tamato_username
         self.save = save
+        self.envelope: Optional[Envelope] = None
+        self.workbasket: Optional[WorkBasket] = None
+
+    def start(self, element: etree.Element, parent: ElementParser = None):
+        super().start(element, parent)
+
+        if element.tag == self.tag:
+            self.envelope_id = element.get("id")
+            workbasket_status = self.workbasket_status or WorkflowStatus.PUBLISHED.value
+
+            user = get_user_model().objects.get(
+                username=(self.tamato_username or settings.DATA_IMPORT_USERNAME)
+            )
+            self.workbasket, _ = WorkBasket.objects.get_or_create(
+                title=f"Data Import {self.envelope_id}",
+                author=user,
+                approver=user,
+                status=workbasket_status,
+            )
+            self.envelope, _ = Envelope.objects.get_or_create(
+                envelope_id=self.envelope_id
+            )
 
     def end(self, element):
         super().end(element)
 
-        if element.tag == self.transaction.tag:
-            tx_id = int(self.transaction.data["id"])
-            if tx_id <= self.last_transaction_id:
-                raise EnvelopeError(f"Transaction ID {tx_id} is out of order")
-            self.last_transaction_id = tx_id
-
-        if element.tag == self.tag and self.save:
-            logging.debug(f"Saving import %d", self.data["id"])
-            envelope = Envelope.objects.create(envelope_id=self.data["id"])
-
-            workbasket, _ = WorkBasket.objects.get_or_create(
-                title=f"Data Import {self.data['id']}",
-                author=get_user_model().objects.get(
-                    username=self.tamato_username or settings.DATA_IMPORT_USERNAME
-                ),
-                status=self.workbasket_status or WorkflowStatus.AWAITING_APPROVAL,
-            )
-            logging.debug(f"WorkBasket {workbasket.id}: {workbasket.title}")
-
-            for transaction_data in self.data["transaction"]:
-                self.transaction.save(
-                    transaction_data,
-                    envelope=envelope,
-                    workbasket=workbasket,
-                )
+        if element.tag == self.tag:
+            nursery = get_nursery()
+            print("cache size", len(nursery.cache.keys()))
+            nursery.clear_cache()

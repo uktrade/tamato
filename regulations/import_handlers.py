@@ -30,11 +30,11 @@ class RegulationHandler(BaseHandler):
     tag = parsers.BaseRegulationParser.tag.name
 
     def clean(self, data: dict) -> dict:
-        if "information_text" in data and "|" in data["information_text"]:
-            text, pid, url = data["information_text"].split("|")
-            data["information_text"] = text
-            data["public_identifier"] = pid
-            data["url"] = url
+        if "|" in data.get("information_text", ""):
+            data["information_text"], data["public_identifier"], data["url"] = data[
+                "information_text"
+            ].split("|")
+
         return super().clean(data)
 
 
@@ -44,11 +44,11 @@ class BaseRegulationThroughTableHandler(BaseHandler):
     tag = "BaseRegulationThroughTableHandler"
 
     def clean(self, data: dict) -> dict:
-        if "information_text" in data and "|" in data["information_text"]:
-            text, pid, url = data["information_text"].split("|")
-            data["information_text"] = text
-            data["public_identifier"] = pid
-            data["url"] = url
+        if "|" in data.get("information_text", ""):
+            data["information_text"], data["public_identifier"], data["url"] = data[
+                "information_text"
+            ].split("|")
+
         return super().clean(data)
 
 
@@ -76,7 +76,9 @@ class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
     tag = "BaseSuspensionRegulationHandler"
 
     def clean(self, data: dict) -> dict:
-        self.suspension_data = {"effective_end_date": data.pop("effective_end_date")}
+        self.suspension_data = {}
+        if "effective_end_date" in data:
+            self.suspension_data["effective_end_date"] = data.pop("effective_end_date")
         return super().clean(data)
 
     @transaction.atomic

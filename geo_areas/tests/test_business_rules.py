@@ -17,6 +17,7 @@ def child():
     )
 
 
+@pytest.mark.xfail(reason="GA1 disabled")
 def test_GA1(make_duplicate_record):
     """The combination geographical area id + validity start date must be unique."""
 
@@ -46,9 +47,9 @@ def test_description_not_empty():
         )
 
 
+@pytest.mark.xfail(reason="GA3 disabled")
 def test_GA3_one_description_mandatory():
     """At least one description record is mandatory."""
-
     with pytest.raises(ValidationError):
         business_rules.GA3().validate(
             factories.GeographicalAreaFactory(description=None)
@@ -128,6 +129,7 @@ def test_GA6():
         business_rules.GA6().validate(g1)
 
 
+@pytest.mark.xfail(reason="GA7 disabled")
 def test_GA7(date_ranges):
     """Geographic Areas with the same area id must not overlap."""
 
@@ -235,6 +237,7 @@ def test_GA16(date_ranges):
         business_rules.GA16().validate(membership)
 
 
+@pytest.mark.xfail(reason="GA18_20 disabled")
 def test_GA17(date_ranges):
     """The validity range of the geographical area group must span all membership ranges
     of its members."""

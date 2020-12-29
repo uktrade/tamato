@@ -5,11 +5,19 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
-      - tamato-data-volume:/var/lib/postgresql/data
+      - tamato-seed2-volume:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
   redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - .:/redis.conf
+
+  redis2:
     image: redis
     restart: always
     ports:
@@ -28,60 +36,35 @@ services:
     command: server --address 0.0.0.0:9003 /data
 
   tamato:
-    build:
-      context: .
+    build: .
     image: tamato
     ports:
       - "8000:8000"
     depends_on:
       - db
       - s3
+      - redis
+      - redis2
     links:
       - db
       - s3
-    volumes:
-      - ".:/home/tamato/app"
-      - ".empty:/home/tamato/app/.env"
+      - redis
+      - redis2
     environment:
-      AWS_S3_ENDPOINT_URL: "http://s3:9003"
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       DATABASE_URL: "postgres://postgres@db/postgres"
       DJANGO_SETTINGS_MODULE: "settings.dev"
       ENABLE_DJANGO_DEBUG_TOOLBAR: "False"
       PYTHONUNBUFFERED: "1"
+      STARTING_TRANSACTION: "0"
+      NURSERY_CACHE_ENGINE: "importer.cache.redis.RedisCacheEngine"
     command:
       - python
       - manage.py
       - runserver
       - 0.0.0.0:8000
 
-  celery_worker:
-    image: tamato
-    restart: always
-    env_file: .env
-    entrypoint: /home/tamato/.local/bin/celery
-    command: -A common.celery worker --loglevel=INFO
-    links:
-      - redis
-      - db
-      - s3
-    depends_on:
-      - tamato
-
-  celery_beat:
-    image: tamato
-    restart: always
-    env_file: .env
-    entrypoint: /home/tamato/.local/bin/celery
-    command: -A common.celery beat -l info
-    links:
-      - celery_worker
-      - redis
-    depends_on:
-      - redis
-      - tamato
-
 volumes:
   tamato-data-volume:
   tamato-s3-volume:
+#  tamato-data-volume:
+  tamato-seed2-volume:

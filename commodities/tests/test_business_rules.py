@@ -4,12 +4,12 @@ from django.db import DataError
 
 from commodities import business_rules
 from common.tests import factories
-from common.tests.util import Dates
 
 
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.xfail(reason="NIG1 disabled")
 def test_NIG1():
     """The validity period of the goods nomenclature must not overlap any other goods
     nomenclature with the same SID.
@@ -272,6 +272,7 @@ def test_NIG23(date_ranges):
         )
 
 
+@pytest.mark.xfail(reason="NIG24 disabled")
 @pytest.mark.parametrize(
     "valid_between, expect_error",
     [

@@ -7,6 +7,7 @@ from itertools import product
 import factory
 from factory.fuzzy import FuzzyChoice
 
+from common.models import TrackedModel
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
@@ -27,7 +28,7 @@ def short_description():
 
 def string_generator(length=1, characters=string.ascii_uppercase + string.digits):
     g = cycle(product(characters, repeat=length))
-    return lambda *_: "".join(next(g))
+    return lambda *_: "".join(next(g))[::-1]
 
 
 def string_sequence(length=1, characters=string.ascii_uppercase + string.digits):
@@ -90,6 +91,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
     order = 1
     import_transaction_id = factory.Sequence(lambda x: x + 1)
     workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+    composite_key = factory.Sequence(str)
 
 
 ApprovedTransactionFactory = TransactionFactory
@@ -115,7 +117,7 @@ class TrackedModelMixin(factory.django.DjangoModelFactory):
     version_group = factory.SubFactory(VersionGroupFactory)
 
     @classmethod
-    def _after_postgeneration(cls, instance, create, results=None):
+    def _after_postgeneration(cls, instance: TrackedModel, create, results=None):
         """Save again the instance if creating and at least one hook ran."""
         if create and results:
             # Some post-generation hooks ran, and may have modified us.
@@ -392,6 +394,9 @@ class GoodsNomenclatureFactory(SimpleGoodsNomenclatureFactory):
         factory_related_name="new_goods_nomenclature",
         transaction=factory.SelfAttribute("..transaction"),
     )
+
+
+SimpleGoodsNomenclatureFactory.reset_sequence(1)
 
 
 class GoodsNomenclatureWithSuccessorFactory(GoodsNomenclatureFactory):
@@ -698,7 +703,7 @@ class MeasureTypeFactory(TrackedModelMixin, ValidityFactoryMixin):
     measure_component_applicability_code = FuzzyChoice(ApplicabilityCode.values)
     origin_destination_code = FuzzyChoice(ImportExportCode.values)
     order_number_capture_code = OrderNumberCaptureCode.NOT_PERMITTED
-    measure_explosion_level = FuzzyChoice(range(2, 11, 2))
+    measure_explosion_level = 2
     description = short_description()
     measure_type_series = factory.SubFactory(MeasureTypeSeriesFactory)
 
@@ -732,9 +737,9 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "measures.Measure"
 
     sid = numeric_sid()
-    measure_type = factory.SubFactory(MeasureTypeFactory)
     geographical_area = factory.SubFactory(GeographicalAreaFactory)
     goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
+    measure_type = factory.SubFactory(MeasureTypeFactory)
     additional_code = None
     order_number = None
     reduction = factory.Faker("random_int", min=1, max=3)
@@ -748,6 +753,31 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
             return None
         return self.generating_regulation
 
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        leave_measure = kwargs.pop("leave_measure", False)
+        if "measure_type" in kwargs and not leave_measure:
+            kwargs["measure_type"] = cls.measure_type_explosion(
+                kwargs["measure_type"], kwargs.get("goods_nomenclature")
+            )
+        obj = model_class(*args, **kwargs)
+        obj.save()
+        return obj
+
+    @staticmethod
+    def measure_type_explosion(measure_type, goods_nomenclature):
+        if not goods_nomenclature:
+            return measure_type
+        item_id = goods_nomenclature.item_id
+        explosion_level = 10
+        while item_id.endswith("00"):
+            explosion_level -= 2
+            item_id = item_id[:-2]
+
+        measure_type.measure_explosion_level = explosion_level
+        measure_type.save(force_write=True)
+        return measure_type
+
 
 class MeasureWithAdditionalCodeFactory(MeasureFactory):
     additional_code = factory.SubFactory(AdditionalCodeFactory)
@@ -755,8 +785,7 @@ class MeasureWithAdditionalCodeFactory(MeasureFactory):
 
 class MeasureWithQuotaFactory(MeasureFactory):
     measure_type = factory.SubFactory(
-        MeasureTypeFactory,
-        order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+        MeasureTypeFactory, order_number_capture_code=OrderNumberCaptureCode.MANDATORY
     )
     order_number = factory.SubFactory(
         QuotaOrderNumberFactory,

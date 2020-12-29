@@ -8,10 +8,14 @@ from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import F
+from django.db.models import Manager
+from django.db.models import Prefetch
+from django.db.models import QuerySet
 from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
+from common.models import TrackedModel
 from workbaskets.validators import WorkflowStatus
 
 
@@ -22,7 +26,9 @@ class WorkBasket(TimestampedMixin):
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
 
-    title = models.CharField(max_length=255, help_text="Short name for this workbasket")
+    title = models.CharField(
+        max_length=255, help_text="Short name for this workbasket", db_index=True
+    )
     reason = models.TextField(
         blank=True, help_text="Reason for the changes to the tariff"
     )
@@ -41,6 +47,7 @@ class WorkBasket(TimestampedMixin):
     status = FSMField(
         default=WorkflowStatus.NEW_IN_PROGRESS,
         choices=WorkflowStatus.choices,
+        db_index=True,
     )
 
     def __str__(self):
@@ -164,6 +171,9 @@ class WorkBasket(TimestampedMixin):
         """Create a new transaction in this workbasket."""
         if "order" not in kwargs:
             kwargs["order"] = self.transactions.count() + 1
+
+        if "composite_key" not in kwargs:
+            kwargs["composite_key"] = f"{self.pk}-{kwargs['order']}"
         transaction = self.transactions.model.objects.create(workbasket=self, **kwargs)
         return transaction
 

@@ -181,22 +181,15 @@ class ME88(BusinessRule):
 
         goods = type(measure.goods_nomenclature).objects.filter(
             sid=measure.goods_nomenclature.sid,
-            valid_between__overlap=measure.valid_between,
+            valid_between__overlap=measure.effective_valid_between,
         )
 
-        for good in goods:
-            indents = good.indents.filter(
-                valid_between__overlap=measure.valid_between,
-            ).prefetch_related()
+        explosion_level = measure.measure_type.measure_explosion_level
 
-            depths = [indent.nodes.first().depth for indent in indents]
-
-            # one level of tree depth corresponds to an increment of 2 in explosion level
-            if any(
-                depth * 2 > measure.measure_type.measure_explosion_level
-                for depth in depths
-            ):
-                raise self.violation(measure)
+        if any(
+            not good.item_id.endswith("0" * (10 - explosion_level)) for good in goods
+        ):
+            raise self.violation(measure)
 
 
 class ME16(BusinessRule):

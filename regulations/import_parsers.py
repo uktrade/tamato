@@ -90,6 +90,7 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
     stopped = TextElement(Tag("stopped.flag"))
     information_text = TextElement(Tag("information.text"))
     approved = TextElement(Tag("approved.flag"))
+    effective_end_date = TextElement(Tag("effective.end.date"))
 
 
 @RecordParser.register_child("modification_regulation")

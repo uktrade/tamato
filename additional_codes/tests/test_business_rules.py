@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import DataError
 
 from additional_codes import business_rules
+from additional_codes import models
 from additional_codes.validators import ApplicationCode
 from common.tests import factories
 from common.tests.util import requires_meursing_tables
@@ -14,6 +15,7 @@ pytestmark = pytest.mark.django_db
 # Additional Code Type
 
 
+@pytest.mark.xfail(reason="CT1 disabled")
 def test_CT1(make_duplicate_record):
     """The additional code type must be unique."""
 
@@ -66,11 +68,9 @@ def test_ACN1(make_duplicate_record):
 def test_ACN2_type_must_exist(reference_nonexistent_record):
     """The referenced additional code type must exist."""
 
-    with reference_nonexistent_record(
-        factories.AdditionalCodeFactory, "type"
-    ) as additional_code:
-        with pytest.raises(ValidationError):
-            business_rules.ACN2().validate(additional_code)
+    with pytest.raises(models.AdditionalCodeType.DoesNotExist):
+        with reference_nonexistent_record(factories.AdditionalCodeFactory, "type"):
+            pass
 
 
 @pytest.mark.parametrize(
@@ -146,7 +146,7 @@ def test_ACN13(date_ranges):
     """
     # covered by ME115
 
-    measure = factories.MeasureWithAdditionalCodeFactory(
+    measure = factories.MeasureWithAdditionalCodeFactory.create(
         additional_code__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
     )
@@ -295,7 +295,9 @@ def test_ACN14(delete_record):
     assoc = factories.AdditionalCodeTypeMeasureTypeFactory()
     additional_code = factories.AdditionalCodeFactory(type=assoc.additional_code_type)
     factories.MeasureFactory(
-        measure_type=assoc.measure_type, additional_code=additional_code
+        measure_type=assoc.measure_type,
+        additional_code=additional_code,
+        goods_nomenclature__item_id="2000000000",
     )
 
     with pytest.raises(ValidationError):

@@ -1,5 +1,4 @@
 from django.contrib.postgres.fields import DateTimeRangeField
-from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
@@ -36,6 +35,7 @@ class Group(TrackedModel, ValidityMixin):
         max_length=3,
         editable=False,
         validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")],
+        db_index=True,
     )
     description = ShortDescription()
 
@@ -58,12 +58,14 @@ class Regulation(TrackedModel):
         choices=validators.RoleType.choices,
         default=validators.RoleType.BASE,
         editable=False,
+        db_index=True,
     )
     regulation_id = models.CharField(
         max_length=8,
         editable=False,
         validators=[validators.regulation_id_validator],
         help_text="The regulation number",
+        db_index=True,
     )
     official_journal_number = models.CharField(
         max_length=5, null=True, blank=True, editable=False, default="1"
@@ -255,7 +257,7 @@ class Extension(TrackedModel):
     target_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="extensions"
     )
-    effective_end_date = models.DateField(null=True)
+    effective_end_date = models.DateField(null=True, blank=True)
 
     identifying_fields = ("enacting_regulation_id", "target_regulation_id")
 
@@ -278,7 +280,7 @@ class Suspension(TrackedModel):
     target_regulation = models.ForeignKey(
         Regulation, on_delete=models.PROTECT, related_name="suspensions"
     )
-    effective_end_date = models.DateField(null=True)
+    effective_end_date = models.DateField(null=True, blank=True)
 
     identifying_fields = (
         "enacting_regulation__regulation_id",
@@ -332,11 +334,14 @@ class Replacement(TrackedModel):
     )
 
     measure_type_id = models.CharField(
-        max_length=6, validators=[measure_type_id_validator], null=True
+        max_length=6, validators=[measure_type_id_validator], null=True, blank=True
     )
     geographical_area_id = models.CharField(
-        max_length=4, validators=[area_id_validator], null=True
+        max_length=4,
+        validators=[area_id_validator],
+        null=True,
+        blank=True,
     )
-    chapter_heading = models.CharField(max_length=2, null=True)
+    chapter_heading = models.CharField(max_length=2, null=True, blank=True)
 
     identifying_fields = ("enacting_regulation_id", "target_regulation_id")

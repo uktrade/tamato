@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from itertools import chain
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -11,6 +12,7 @@ from typing import Tuple
 from typing import Type
 
 from django.contrib.postgres.fields import DateTimeRangeField
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Case
 from django.db.models import F
@@ -29,6 +31,9 @@ from polymorphic.query import PolymorphicQuerySet
 
 from common import exceptions
 from common import validators
+from common.validators import UpdateType
+from importer.nursery import get_nursery
+from importer.utils import generate_key
 from workbaskets.validators import WorkflowStatus
 
 
@@ -50,7 +55,9 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If done from the TrackedModel this will return the current objects for all tracked
         models.
         """
-        return self.filter(is_current__isnull=False)
+        return self.filter(is_current__isnull=False).exclude(
+            update_type=UpdateType.DELETE
+        )
 
     def since_transaction(self, transaction_id: int) -> QuerySet:
         """
@@ -124,18 +131,8 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
         # get models in the workbasket
         in_workbasket = self.filter(transaction__workbasket=workbasket)
-
-        # remove matching models from the queryset
-        for instance in in_workbasket:
-            query &= ~Q(
-                **{
-                    field: getattr(instance, field)
-                    for field in self.model.identifying_fields
-                }
-            )
-
         # add latest version of models from the current workbasket
-        return self.filter(query) | in_workbasket.filter(successor__isnull=True)
+        return self.filter(query) | in_workbasket.current()
 
     def approved(self):
         """
@@ -269,13 +266,13 @@ class TimestampedMixin(models.Model):
 
 
 class ValidityMixin(models.Model):
-    valid_between = DateTimeRangeField()
+    valid_between = DateTimeRangeField(db_index=True)
 
     class Meta:
         abstract = True
 
 
-class VersionGroup(models.Model):
+class VersionGroup(TimestampedMixin):
     current_version = models.ForeignKey(
         "common.TrackedModel",
         on_delete=models.SET_NULL,
@@ -295,7 +292,7 @@ class TrackedModel(PolymorphicModel):
     )
 
     update_type = models.PositiveSmallIntegerField(
-        choices=validators.UpdateType.choices
+        choices=validators.UpdateType.choices, db_index=True
     )
 
     version_group = models.ForeignKey(
@@ -367,9 +364,8 @@ class TrackedModel(PolymorphicModel):
     def get_versions(self):
         if hasattr(self, "version_group"):
             return self.version_group.versions.all()
-
         query = Q(**self.get_identifying_fields())
-        return self.__class__.objects.filter(query).order_by("-pk")
+        return self.__class__.objects.filter(query)
 
     def get_latest_version(self):
         current_version = self.version_group.current_version
@@ -403,7 +399,7 @@ class TrackedModel(PolymorphicModel):
     def _get_version_group(self) -> VersionGroup:
         if self.update_type == validators.UpdateType.CREATE:
             return VersionGroup.objects.create()
-        return self.get_versions().first().version_group
+        return self.get_versions().last().version_group
 
     def _can_write(self):
         return not (
@@ -443,6 +439,7 @@ class TrackedModel(PolymorphicModel):
         if self.transaction.workbasket.status in WorkflowStatus.approved_statuses():
             self.version_group.current_version = self
             self.version_group.save()
+            self.cache_self()
 
         return return_value
 
@@ -498,7 +495,63 @@ class TrackedModel(PolymorphicModel):
                 ) from e
         return getattr(self, relations[item]).current_version
 
+    @classmethod
+    def get_handler_link_fields(cls, link_fields=None):
+        link_fields = link_fields or set()
+        for handler in filter(lambda x: x.links, get_nursery().handlers.values()):
+            for link in filter(lambda x: x["model"] == cls, handler.links):
+                link_fields.add(
+                    tuple(
+                        sorted(link.get("identifying_fields", cls.identifying_fields))
+                    )
+                )
+        return link_fields
+
+    @classmethod
+    def generate_cache_key(cls, identifying_fields, obj):
+        return "object_cache_" + generate_key(cls.__name__, identifying_fields, obj)
+
+    @classmethod
+    def cache_current_instances(cls):
+        link_fields = cls.get_handler_link_fields()
+
+        if not link_fields:
+            return
+
+        values_list = set(chain.from_iterable(link_fields))
+        values_list.add("pk")
+
+        for obj in cls.objects.current().values(*values_list):
+            for identifying_fields in link_fields:
+                cache_key = cls.generate_cache_key(identifying_fields, obj)
+                cache.set(cache_key, (obj["pk"], cls.__name__), timeout=None)
+
+    @classmethod
+    def get_id_from_cache(cls, identifying_fields, obj):
+        key = cls.generate_cache_key(identifying_fields, obj)
+        return cache.get(key)
+
+    def cache_self(self):
+        link_fields = self.get_handler_link_fields()
+
+        for link in link_fields:
+            identifying_data = {}
+            for field in link:
+                datum = self
+                for sub_field in field.split("__"):
+                    datum = getattr(datum, sub_field)
+                    if datum is None:
+                        break
+                identifying_data[field] = datum
+            cache_key = generate_key(
+                f"link_cache_{self.__class__.__name__}", link, identifying_data
+            )
+            cache.set(cache_key, (self.pk, self.__class__.__name__), timeout=None)
+
     def __str__(self):
         return ", ".join(
             f"{field}={getattr(self, field, None)}" for field in self.identifying_fields
         )
+
+    def __hash__(self):
+        return hash(f"{__name__}.{self.__class__.__name__}")

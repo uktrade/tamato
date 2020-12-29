@@ -3,7 +3,7 @@ import django.db.models.deletion
 from django.db import migrations
 from django.db import models
 
-import common.models.fields
+import common.fields
 
 
 class Migration(migrations.Migration):
@@ -44,12 +44,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="goodsnomenclature",
             name="sid",
-            field=common.models.fields.NumericSID(),
+            field=common.fields.NumericSID(),
         ),
         migrations.AlterField(
             model_name="goodsnomenclaturedescription",
             name="sid",
-            field=common.models.fields.NumericSID(),
+            field=common.fields.NumericSID(),
         ),
         migrations.AlterField(
             model_name="goodsnomenclatureindent",
@@ -59,6 +59,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="goodsnomenclatureindent",
             name="sid",
-            field=common.models.fields.NumericSID(),
+            field=common.fields.NumericSID(),
         ),
     ]

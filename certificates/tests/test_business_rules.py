@@ -1,11 +1,9 @@
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
-from django.db import IntegrityError
 
 from certificates import business_rules
 from common.tests import factories
-from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -35,6 +33,7 @@ def test_CET3(date_ranges):
         factories.CertificateTypeFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.xfail(reason="CE2 disabled")
 def test_CE2(make_duplicate_record):
     """The combination certificate type and code must be unique."""
 
@@ -141,6 +140,7 @@ def test_CE7(date_ranges):
         )
 
 
+@pytest.mark.xfail(reason="rule disabled")
 def test_certificate_description_periods_cannot_overlap(date_ranges):
     """Ensure validity periods for descriptions with a given SID cannot overlap."""
     # XXX All versions of a description will have the same SID. Won't this prevent

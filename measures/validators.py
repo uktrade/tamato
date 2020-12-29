@@ -93,7 +93,7 @@ def validate_action_code(value):
     NumberRangeValidator(1, 999)(index)
 
 
-validate_reduction_indicator = NumberRangeValidator(1, 3)
+validate_reduction_indicator = NumberRangeValidator(1, 9)
 
 validate_component_sequence_number = NumberRangeValidator(1, 999)
 

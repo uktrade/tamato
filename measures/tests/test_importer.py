@@ -6,7 +6,6 @@ from measures import serializers
 from measures import unit_serializers
 from measures.validators import OrderNumberCaptureCode
 from quotas.validators import AdministrationMechanism
-from workbaskets.validators import WorkflowStatus
 
 
 pytestmark = pytest.mark.django_db
@@ -155,15 +154,16 @@ def test_measure_importer_create(
         order_number__mechanism=AdministrationMechanism.FCFS,
         transaction=approved_transaction,
     )
+    ac = factories.AdditionalCodeFactory.create(type=rel.additional_code_type)
 
     assert imported_fields_match(
         factories.MeasureFactory.build(
             measure_type=rel.measure_type,
             geographical_area=origin.geographical_area,
-            goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
-            additional_code=factories.AdditionalCodeFactory.create(
-                type=rel.additional_code_type
+            goods_nomenclature=factories.GoodsNomenclatureFactory.create(
+                item_id="7600000000"
             ),
+            additional_code=ac,
             order_number=origin.order_number,
             generating_regulation=factories.RegulationFactory.create(),
             update_type=UpdateType.CREATE,

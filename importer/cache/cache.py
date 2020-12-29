@@ -1,3 +1,8 @@
+from importlib import import_module
+
+import settings
+
+
 class ObjectCacheFacade:
     """
     Stores objects in a cache to be fetched for later use.
@@ -12,13 +17,27 @@ class ObjectCacheFacade:
     Redis or similar.
     """
 
-    CACHE = {}
+    DEFAULT_ENGINE = "importer.cache.memory.MemoryCacheEngine"
+
+    def __init__(self, engine=None):
+        if not engine:
+            engine = getattr(settings, "NURSERY_CACHE_ENGINE", self.DEFAULT_ENGINE)
+
+        engine_module_str, engine_str = engine.rsplit(".", 1)
+        engine_module = import_module(engine_module_str)
+        self.engine = getattr(engine_module, engine_str)()
 
     def get(self, key, default=None):
-        return self.CACHE.get(key, default)
+        return self.engine.get(key, default)
 
     def pop(self, key, default=None):
-        return self.CACHE.pop(key, default)
+        return self.engine.pop(key, default)
 
     def put(self, key, obj):
-        self.CACHE[key] = obj
+        self.engine.put(key, obj)
+
+    def keys(self):
+        return self.engine.keys()
+
+    def dump(self):
+        self.engine.dump()

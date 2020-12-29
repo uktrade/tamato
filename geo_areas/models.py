@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import CheckConstraint
+from django.db.models import Q
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -28,7 +30,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     record_code = "250"
     subrecord_code = "00"
 
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)
     area_id = models.CharField(max_length=4, validators=[validators.area_id_validator])
     area_code = models.PositiveSmallIntegerField(choices=validators.AreaCode.choices)
 
@@ -55,6 +57,14 @@ class GeographicalArea(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return f"{self.get_area_code_display()} {self.area_id}"
+
+    class Meta:
+        constraints = (
+            CheckConstraint(
+                name="only_groups_have_parents",
+                check=Q(area_code=1) | Q(parent__isnull=True),
+            ),
+        )
 
 
 class GeographicalMembership(TrackedModel, ValidityMixin):
@@ -98,4 +108,4 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
         GeographicalArea, on_delete=models.CASCADE, related_name="descriptions"
     )
     description = ShortDescription()
-    sid = SignedIntSID()
+    sid = SignedIntSID(db_index=True)

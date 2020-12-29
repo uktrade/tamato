@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 from hashlib import sha256
 from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import Optional
 from typing import TypedDict
-
-from common.models import TrackedModel
 
 
 class LinksType(TypedDict):
@@ -44,7 +44,7 @@ class DispatchedObjectType(TypedDict):
 
 def generate_key(
     tag: str, identifying_fields: Iterable[str], data: Dict[str, Any]
-) -> bytes:
+) -> str:
     """
     Generate a unique hash key for each object.
 
@@ -56,4 +56,4 @@ def generate_key(
     for key in identifying_fields:
         hash_input += str(data[key])
 
-    return sha256(hash_input.encode()).digest()
+    return sha256(hash_input.encode()).hexdigest()

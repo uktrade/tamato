@@ -9,7 +9,6 @@ from typing import Type
 
 from rest_framework.serializers import ModelSerializer
 
-from common.models import TrackedModel
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
 from importer.utils import generate_key
@@ -48,6 +47,11 @@ class BaseHandlerMeta(type):
         if not bases:
             # This is a top level class, we only want to register and validate subclasses
             return handler_class
+
+        if dct.get("abstract"):
+            return handler_class
+
+        handler_class.abstract = False
 
         if not isinstance(dct.get("tag"), str):
             raise AttributeError(f'{name} requires attribute "tag" to be a str.')
@@ -288,7 +292,36 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         Fallback method if no specific method is found for fetching a link.
         """
-        return model.objects.get_latest_version(**kwargs)
+        if not any(kwargs.values()):
+            raise model.DoesNotExist
+
+        cached_object = model.get_id_from_cache(kwargs.keys(), kwargs)
+        if cached_object and cached_object[1] == model.__name__:
+            return cached_object[0], True
+        return model.objects.get_latest_version(**kwargs), False
+
+    def load_link(self, name, model, identifying_fields=None, optional=False):
+        identifying_fields = identifying_fields or model.identifying_fields
+        try:
+            linked_object_identifiers = {
+                key: self.data.get(f"{name}__{key}") for key in identifying_fields
+            }
+
+            get_link_func = getattr(self, f"get_{name}_link", self.get_generic_link)
+
+            linked_object = get_link_func(model, linked_object_identifiers)
+
+            if isinstance(linked_object, tuple) and len(linked_object) > 1:
+                if linked_object[1]:
+                    self.resolved_links[f"{name}_id"] = linked_object[0]
+                else:
+                    self.resolved_links[name] = linked_object[0]
+            else:
+                self.resolved_links[name] = linked_object
+        except model.DoesNotExist:
+            if not optional:
+                return False
+        return True
 
     def resolve_links(self) -> bool:
         """
@@ -302,27 +335,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         if not self.links:
             return True
         for link in self.links:
-            link_name = link["name"]
-            model = link["model"]
-            identifying_fields = link.get(
-                "identifying_fields", model.identifying_fields
-            )
-            try:
-                linked_object_identifiers = {
-                    key: self.data.get(f"{link_name}__{key}")
-                    for key in identifying_fields
-                }
-
-                get_link_func = getattr(
-                    self, f"get_{link_name}_link", self.get_generic_link
-                )
-
-                linked_object = get_link_func(model, linked_object_identifiers)
-
-                self.resolved_links[link["name"]] = linked_object
-            except model.DoesNotExist:
-                if not link.get("optional", False):
-                    return False
+            if not self.load_link(**link):
+                return False
         return True
 
     def clean(self, data: dict) -> dict:
@@ -388,8 +402,14 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         logger.debug(f"Creating {self.model}: {data}")
         data = self.pre_save(data, self.resolved_links)
-        obj = self.save(data)
-        self.post_save(obj)
+        try:
+            obj = self.save(data)
+            self.post_save(obj)
+        except AttributeError as e:
+            print("Attribute error raised", e)
+            print("model", self.model)
+            print("data", data)
+            raise
 
         return obj
 

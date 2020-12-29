@@ -5,7 +5,6 @@ from datetime import datetime
 from datetime import time
 from datetime import timezone
 from functools import wraps
-from typing import Any
 from typing import Iterable
 from typing import Mapping
 from typing import Optional
@@ -158,10 +157,7 @@ class ValidityPeriodContained(BusinessRule):
         # TODO this should respect deletes
         if (
             not container.__class__.objects.filter(
-                **{
-                    field: getattr(container, field)
-                    for field in container.identifying_fields
-                },
+                **container.get_identifying_fields(),
             )
             .filter(
                 valid_between__contains=contained.valid_between,

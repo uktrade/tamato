@@ -165,6 +165,22 @@ DATABASES = {
     "default": dj_database_url.config(default="postgres://localhost:5432/tamato"),
 }
 
+# -- Cache
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "TIMEOUT": None,
+        },
+    }
+}
+
+NURSERY_CACHE_ENGINE = os.getenv(
+    "NURSERY_CACHE_ENGINE", "importer.cache.memory.MemoryCacheEngine"
+)
+
 # Wrap each request in a transaction
 ATOMIC_REQUESTS = True
 
@@ -312,3 +328,5 @@ HMRC = {
     "service_reference_number": os.environ.get("HMRC_API_SERVICE_REFERENCE_NUMBER"),
     "device_id": str(uuid.uuid4()),
 }
+
+SKIP_VALIDATION = is_truthy(os.getenv("SKIP_VALIDATION", False))

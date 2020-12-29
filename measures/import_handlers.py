@@ -1,9 +1,14 @@
+from datetime import datetime
+from datetime import timezone
+from decimal import Decimal
+
+from django.core.exceptions import ObjectDoesNotExist
+
 from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeType
 from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from footnotes.models import Footnote
-from footnotes.models import FootnoteType
 from geo_areas.models import GeographicalArea
 from importer.handlers import BaseHandler
 from measures import import_parsers as parsers
@@ -12,6 +17,47 @@ from measures import serializers
 from measures import unit_serializers
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
+
+
+class RegulationDoesNotExist(Exception):
+    pass
+
+
+class HandlerWithDutyAmount(BaseHandler):
+    abstract = True
+
+    def clean(self, data: dict) -> dict:
+        if data.get("duty_amount"):
+            data["duty_amount"] = Decimal(data["duty_amount"]).quantize(
+                Decimal("1.000")
+            )
+
+        return super().clean(data)
+
+
+def get_measurement_link(model, kwargs):
+    measurement_unit_code = kwargs.pop("measurement_unit__code", None)
+    measurement_unit_qualifier_code = kwargs.pop(
+        "measurement_unit_qualifier__code", None
+    )
+
+    kwargs["measurement_unit"] = (
+        models.MeasurementUnit.objects.get_latest_version(code=measurement_unit_code)
+        if measurement_unit_code
+        else None
+    )
+    kwargs["measurement_unit_qualifier"] = (
+        models.MeasurementUnitQualifier.objects.get_latest_version(
+            code=measurement_unit_qualifier_code
+        )
+        if measurement_unit_qualifier_code
+        else None
+    )
+
+    if not any(kwargs.values()):
+        raise model.DoesNotExist
+
+    return model.objects.current().get(**kwargs)
 
 
 class MeasureTypeSeriesHandler(BaseHandler):
@@ -155,12 +201,9 @@ class MeasureActionDescriptionHandler(BaseHandler):
 
 class MeasureHandler(BaseHandler):
     identifying_fields = (
+        "sid",
         "measure_type__sid",
         "geographical_area__sid",
-        "goods_nomenclature__sid",
-        "additional_code__sid",
-        "order_number__order_number",
-        "reduction",
     )
     links = (
         {
@@ -177,6 +220,7 @@ class MeasureHandler(BaseHandler):
             "optional": True,
         },
         {
+            "identifying_fields": ("sid", "code", "type__sid"),
             "model": AdditionalCode,
             "name": "additional_code",
             "optional": True,
@@ -203,16 +247,46 @@ class MeasureHandler(BaseHandler):
     serializer_class = serializers.MeasureSerializer
     tag = parsers.MeasureParser.tag.name
 
+    def load_link(self, name, model, identifying_fields=None, optional=False):
+        if name == "terminating_regulation" and self.data.get(
+            "terminating_regulation__regulation_id"
+        ):
+            optional = False
+        return super().load_link(name, model, identifying_fields, optional)
+
     def get_order_number_link(self, model, kwargs):
         # XXX This seems like it might get the wrong object sometimes. Maybe we should
         # just store the order number string on the measure, rather than link it to a
         # QuotaOrderNumber instance?
-        return model.objects.current().get(
-            order_number=kwargs.pop("order_number"),
-        )
+        order_number = kwargs.pop("order_number")
+        try:
+            return model.objects.current().get(
+                order_number=order_number,
+                valid_between__contains=datetime.strptime(
+                    self.data["valid_between"]["lower"],
+                    "%Y-%m-%d",
+                ).replace(tzinfo=timezone.utc),
+            )
+        except ObjectDoesNotExist:
+            if order_number:
+                self.data["dead_order_number"] = order_number
+
+    def get_additional_code_link(self, model, kwargs):
+        try:
+            return self.get_generic_link(model, kwargs)
+        except model.DoesNotExist:
+            if any(kwargs.values()):
+                self.data["dead_additional_code"] = "|".join(
+                    [
+                        kwargs.get("sid") or "",
+                        kwargs.get("code") or "",
+                        kwargs.get("type__sid") or "",
+                    ]
+                )
+            raise
 
 
-class MeasureComponentHandler(BaseHandler):
+class MeasureComponentHandler(HandlerWithDutyAmount):
     identifying_fields = (
         "component_measure__sid",
         "duty_expression__sid",
@@ -251,18 +325,10 @@ class MeasureComponentHandler(BaseHandler):
         )
 
     def get_component_measurement_link(self, model, kwargs):
-        return model.objects.get_latest_version(
-            measurement_unit=models.MeasurementUnit.objects.get_latest_version(
-                code=kwargs.pop("measurement_unit__code")
-            ),
-            measurement_unit_qualifier=models.MeasurementUnitQualifier.objects.get_latest_version(
-                code=kwargs.pop("measurement_unit_qualifier__code")
-            ),
-            **kwargs,
-        )
+        return get_measurement_link(model, kwargs)
 
 
-class MeasureConditionHandler(BaseHandler):
+class MeasureConditionHandler(HandlerWithDutyAmount):
     links = (
         {
             "identifying_fields": ("sid",),
@@ -293,6 +359,10 @@ class MeasureConditionHandler(BaseHandler):
             "optional": True,
         },
         {
+            "identifying_fields": (
+                "sid",
+                "certificate_type__sid",
+            ),
             "model": Certificate,
             "name": "required_certificate",
             "optional": True,
@@ -307,18 +377,12 @@ class MeasureConditionHandler(BaseHandler):
         )
 
     def get_condition_measurement_link(self, model, kwargs):
-        return model.objects.get_latest_version(
-            measurement_unit=models.MeasurementUnit.objects.get_latest_version(
-                code=kwargs.pop("measurement_unit__code")
-            ),
-            measurement_unit_qualifier=models.MeasurementUnitQualifier.objects.get_latest_version(
-                code=kwargs.pop("measurement_unit_qualifier__code")
-            ),
-            **kwargs,
-        )
+        if not any(kwargs.values()):
+            raise model.DoesNotExist
+        return get_measurement_link(model, kwargs)
 
 
-class MeasureConditionComponentHandler(BaseHandler):
+class MeasureConditionComponentHandler(HandlerWithDutyAmount):
     identifying_fields = ("condition__sid", "duty_expression__sid")
     links = (
         {
@@ -348,15 +412,7 @@ class MeasureConditionComponentHandler(BaseHandler):
     tag = parsers.MeasureConditionComponentParser.tag.name
 
     def get_condition_component_measurement_link(self, model, kwargs):
-        return model.objects.get_latest_version(
-            measurement_unit=models.MeasurementUnit.objects.get_latest_version(
-                code=kwargs.pop("measurement_unit__code")
-            ),
-            measurement_unit_qualifier=models.MeasurementUnitQualifier.objects.get_latest_version(
-                code=kwargs.pop("measurement_unit_qualifier__code")
-            ),
-            **kwargs,
-        )
+        return get_measurement_link(model, kwargs)
 
 
 class MeasureExcludedGeographicalAreaHandler(BaseHandler):
@@ -407,17 +463,3 @@ class FootnoteAssociationMeasureHandler(BaseHandler):
     )
     serializer_class = serializers.FootnoteAssociationMeasureSerializer
     tag = parsers.FootnoteAssociationMeasureParser.tag.name
-
-    def get_footnoted_measure_link(self, model, kwargs):
-        return model.objects.current().get(
-            sid=kwargs.pop("sid"),
-        )
-
-    def get_associated_footnote_link(self, model, kwargs):
-        return model.objects.get_latest_version(
-            footnote_type=FootnoteType.objects.get_latest_version(
-                footnote_type_id=kwargs.pop("footnote_type__footnote_type_id"),
-            ),
-            footnote_id=kwargs.pop("footnote_id"),
-            **kwargs,
-        )
