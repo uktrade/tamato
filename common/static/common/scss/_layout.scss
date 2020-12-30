@@ -9,3 +9,8 @@
 .filter-layout__content {
   @extend .govuk-grid-column-three-quarters;
 }
+@media screen and (min-width: 769px) {
+  .govuk-header__content nav {
+    float: right;
+  }
+}
