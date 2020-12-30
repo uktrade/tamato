@@ -8,6 +8,7 @@ from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeType
 from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
+from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.handlers import BaseHandler
@@ -72,15 +73,30 @@ class MeasureTypeSeriesDescriptionHandler(BaseHandler):
     tag = parsers.MeasureTypeSeriesDescriptionParser.tag.name
 
 
-class MeasurementUnitHandler(BaseHandler):
+class BaseMeasurementUnitHandler(BaseHandler):
+    abstract = True
     serializer_class = unit_serializers.MeasurementUnitSerializer
+
+    def post_save(self, obj: models.MeasurementUnit):
+        if obj.update_type == UpdateType.CREATE:
+            models.Measurement.objects.create(
+                measurement_unit=obj,
+                measurement_unit_qualifier=None,
+                update_type=UpdateType.CREATE,
+                valid_between=obj.valid_between,
+                transaction=obj.transaction,
+            )
+
+        return super().post_save(obj)
+
+
+class MeasurementUnitHandler(BaseMeasurementUnitHandler):
     tag = parsers.MeasurementUnitParser.tag.name
 
 
 @MeasurementUnitHandler.register_dependant
-class MeasurementUnitDescriptionHandler(BaseHandler):
+class MeasurementUnitDescriptionHandler(BaseMeasurementUnitHandler):
     dependencies = [MeasurementUnitHandler]
-    serializer_class = unit_serializers.MeasurementUnitSerializer
     tag = parsers.MeasurementUnitDescriptionParser.tag.name
 
 
@@ -293,7 +309,6 @@ class MeasureComponentHandler(HandlerWithDutyAmount):
     )
     links = (
         {
-            "identifying_fields": ("sid",),
             "model": models.Measure,
             "name": "component_measure",
         },
@@ -319,11 +334,6 @@ class MeasureComponentHandler(HandlerWithDutyAmount):
     serializer_class = serializers.MeasureComponentSerializer
     tag = parsers.MeasureComponentParser.tag.name
 
-    def get_component_measure_link(self, model, kwargs):
-        return model.objects.current().get(
-            sid=kwargs.pop("sid"),
-        )
-
     def get_component_measurement_link(self, model, kwargs):
         return get_measurement_link(model, kwargs)
 
@@ -331,7 +341,6 @@ class MeasureComponentHandler(HandlerWithDutyAmount):
 class MeasureConditionHandler(HandlerWithDutyAmount):
     links = (
         {
-            "identifying_fields": ("sid",),
             "model": models.Measure,
             "name": "dependent_measure",
         },
@@ -370,11 +379,6 @@ class MeasureConditionHandler(HandlerWithDutyAmount):
     )
     serializer_class = serializers.MeasureConditionSerializer
     tag = parsers.MeasureConditionParser.tag.name
-
-    def get_dependent_measure_link(self, model, kwargs):
-        return model.objects.current().get(
-            sid=kwargs.pop("sid"),
-        )
 
     def get_condition_measurement_link(self, model, kwargs):
         if not any(kwargs.values()):
@@ -422,7 +426,6 @@ class MeasureExcludedGeographicalAreaHandler(BaseHandler):
     )
     links = (
         {
-            "identifying_fields": ("sid",),
             "model": models.Measure,
             "name": "modified_measure",
         },
@@ -433,11 +436,6 @@ class MeasureExcludedGeographicalAreaHandler(BaseHandler):
     )
     serializer_class = serializers.MeasureExcludedGeographicalAreaSerializer
     tag = parsers.MeasureExcludedGeographicalAreaParser.tag.name
-
-    def get_modified_measure_link(self, model, kwargs):
-        return model.objects.current().get(
-            sid=kwargs.pop("sid"),
-        )
 
 
 class FootnoteAssociationMeasureHandler(BaseHandler):

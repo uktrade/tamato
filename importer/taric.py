@@ -9,13 +9,14 @@ from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import connection
 from django.db import IntegrityError
 from django.db.transaction import atomic
+from lxml import etree
 
 from common import models
 from common.validators import UpdateType
 from importer.namespaces import ENVELOPE
+from importer.namespaces import nsmap
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
 from importer.parsers import ElementParser
@@ -24,8 +25,9 @@ from importer.parsers import TextElement
 from taric.models import Envelope
 from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
 
+
+logger = logging.getLogger(__name__)
 
 now = time.time()
 
@@ -101,26 +103,14 @@ class TransactionParser(ElementParser):
 
         composite_key = str(envelope.id) + self.data["id"]
         try:
-            cursor = connection.cursor()
-            while 1:
-                try:
-                    transaction = models.Transaction.objects.create(
-                        composite_key=composite_key,
-                        workbasket=self.parent.workbasket,
-                        order=int(self.data["id"]),
-                        import_transaction_id=int(self.data["id"]),
-                    )
-                    break
-                except IntegrityError as e:
-                    if "workbaskets_transaction_pkey" not in str(e):
-                        raise
-                    cursor.execute(
-                        f"select nextval('{models.Transaction._meta.db_table}_id_seq')"
-                    )
-                    cursor.fetchone()
+            transaction = models.Transaction.objects.create(
+                composite_key=composite_key,
+                workbasket=self.parent.workbasket,
+                order=int(self.data["id"]),
+                import_transaction_id=int(self.data["id"]),
+            )
 
-            cursor.close()
-        except IntegrityError as e:
+        except IntegrityError:
             return
 
         EnvelopeTransaction.objects.create(
@@ -129,14 +119,17 @@ class TransactionParser(ElementParser):
 
         for message_data in data["message"]:
             self.message.save(message_data, transaction.id)
+        self.parent.workbasket.clean()
 
     def end(self, element: etree.Element):
         super().end(element)
         if element.tag == self.tag:
             logging.debug(f"Saving import {self.data['id']}")
             if int(self.data["id"]) % 1000 == 0:
-                print(
-                    f"{self.data['id']} transactions done in {int(time.time() - now)} seconds"
+                logger.info(
+                    "%s transactions done in %d seconds",
+                    self.data["id"],
+                    int(time.time() - now),
                 )
             if int(self.data["id"]) < START_TRANSACTION:
                 return True
@@ -161,8 +154,10 @@ class EnvelopeParser(ElementParser):
     ):
         super().__init__(**kwargs)
         self.last_transaction_id = -1
-        self.workbasket_status = workbasket_status
-        self.tamato_username = tamato_username
+        self.workbasket_status = (
+            workbasket_status or models.WorkflowStatus.PUBLISHED.value
+        )
+        self.tamato_username = tamato_username or settings.DATA_IMPORT_USERNAME
         self.save = save
         self.envelope: Optional[Envelope] = None
         self.workbasket: Optional[WorkBasket] = None
@@ -172,16 +167,13 @@ class EnvelopeParser(ElementParser):
 
         if element.tag == self.tag:
             self.envelope_id = element.get("id")
-            workbasket_status = self.workbasket_status or WorkflowStatus.PUBLISHED.value
 
-            user = get_user_model().objects.get(
-                username=(self.tamato_username or settings.DATA_IMPORT_USERNAME)
-            )
+            user = get_user_model().objects.get(username=self.tamato_username)
             self.workbasket, _ = WorkBasket.objects.get_or_create(
                 title=f"Data Import {self.envelope_id}",
                 author=user,
                 approver=user,
-                status=workbasket_status,
+                status=self.workbasket_status,
             )
             self.envelope, _ = Envelope.objects.get_or_create(
                 envelope_id=self.envelope_id
@@ -192,5 +184,28 @@ class EnvelopeParser(ElementParser):
 
         if element.tag == self.tag:
             nursery = get_nursery()
-            print("cache size", len(nursery.cache.keys()))
+            logger.info("cache size: %d", len(nursery.cache.keys()))
             nursery.clear_cache()
+
+
+def process_taric_xml_stream(taric_stream, status, username):
+    """
+    Parse a TARIC XML stream through the import handlers
+
+    This will load the data from the stream into the database.
+    """
+    xmlparser = etree.iterparse(taric_stream, ["start", "end", "start-ns"])
+    handler = EnvelopeParser(
+        workbasket_status=status,
+        tamato_username=username,
+    )
+    for event, elem in xmlparser:
+        if event == "start":
+            handler.start(elem)
+
+        if event == "start_ns":
+            nsmap.update([elem])
+
+        if event == "end":
+            if handler.end(elem):
+                elem.clear()

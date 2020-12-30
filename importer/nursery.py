@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import logging
+from itertools import chain
 from typing import Dict
+from typing import Iterable
+from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 
+from django.core.cache import cache
+
 from commodities.exceptions import InvalidIndentError
+from common.models import TrackedModel
 from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
+from importer.utils import generate_key
 
 if TYPE_CHECKING:
     from importer.handlers import BaseHandler
@@ -67,18 +74,18 @@ class TariffObjectNursery:
         Handles whether an object can be dispatched to the database or, if some pieces of data
         are missing, cached to await new data.
         """
+        handler_class = self.get_handler(obj["tag"])
+        handler = handler_class(obj, self)
         try:
-            handler_class = self.get_handler(obj["tag"])
-            handler = handler_class(obj, self)
             result = handler.build()
             if not result:
-                self._cache_object(handler)
+                self._cache_handler(handler)
             else:
                 for key in result:
                     self.cache.pop(key)
         except InvalidIndentError:
             logger.warning("Parent not found for %s, caching indent", obj)
-            self._cache_object(handler)
+            self._cache_handler(handler)
         except Exception:
             logger.error("obj errored: %s", obj)
             logger.info("cache size: %d", len(self.cache.keys()))
@@ -86,31 +93,34 @@ class TariffObjectNursery:
             self.cache.dump()
             raise
 
-    def _cache_object(self, handler):
+    def _cache_handler(self, handler):
         self.cache.put(handler.key, handler.serialize())
 
-    def clear_cache(self):
-        index = 0
-        while index < 2 and len(self.cache.keys()) > 0:
-            for key in list(self.cache.keys()):
-                try:
-                    handler = self.get_handler_from_cache(key)
-                    if handler is None:
+    def clear_cache(self, repeats=2):
+        for key in list(self.cache.keys()):
+            handler = self.get_handler_from_cache(key)
+            try:
+                if handler is None:
+                    self.cache.pop(key)
+                    continue
+                result = handler.build()
+                if not result:
+                    self._cache_handler(handler)
+                else:
+                    for key in result:
                         self.cache.pop(key)
-                        continue
-                    result = handler.build()
-                    if not result:
-                        self._cache_object(handler)
-                    else:
-                        for key in result:
-                            self.cache.pop(key)
-                except InvalidIndentError:
-                    self._cache_object(handler)
-            index += 1
-        if self.cache.keys():
-            logger.warning(
-                "cache not cleared %d records left to do", len(self.cache.keys())
-            )
+            except InvalidIndentError:
+                self._cache_handler(handler)
+
+        repeats -= 1
+        if repeats <= 0:
+            if self.cache.keys():
+                logger.warning(
+                    "cache not cleared, %d records remaining", len(self.cache.keys())
+                )
+            return
+
+        self.clear_cache(repeats)
 
     def get_handler_from_cache(self, key):
         match = self.cache.get(key)
@@ -120,10 +130,80 @@ class TariffObjectNursery:
         handler = self.get_handler(match["tag"])
         return handler(match, self)
 
+    def get_handler_link_fields(self, model, link_fields=None):
+        """
+        Find all the unique link fields for a given model.
 
-def get_nursery(cache=None) -> TariffObjectNursery:
+        This gives all the combinations of fields used to identify a model.
+        """
+        link_fields = link_fields or set()
+        for handler in filter(lambda x: x.links, self.handlers.values()):
+            for link in filter(lambda x: x["model"] == model, handler.links):
+                link_fields.add(
+                    tuple(
+                        sorted(link.get("identifying_fields", model.identifying_fields))
+                    )
+                )
+        return link_fields
+
+    def cache_current_instances(self):
+        """
+        Take all current instances of all TrackedModels in the data and cache them.
+        """
+        models = {handler.model for handler in self.handlers.values()}
+
+        for model in models:
+            logger.info("Caching all current instances of %s", model)
+            link_fields = self.get_handler_link_fields(model)
+            if not link_fields:
+                continue
+
+            values_list = set(chain.from_iterable(link_fields))
+            values_list.add("pk")
+
+            for obj in model.objects.current().select_related():
+                self.cache_object(obj)
+
+    def cache_object(self, obj: TrackedModel):
+        """
+        Caches an objects primary key and model name in the cache.
+
+        Key is generated based on the model name and the identifying fields used to find it.
+        """
+        model = obj.__class__
+        link_fields = self.get_handler_link_fields(model)
+
+        for identifying_fields in link_fields:
+            cache_key = self.generate_cache_key(
+                model,
+                identifying_fields,
+                obj.get_identifying_fields(identifying_fields),
+            )
+            cache.set(cache_key, (obj.pk, model.__name__), timeout=None)
+
+    @classmethod
+    def generate_cache_key(
+        cls, model: Type[TrackedModel], identifying_fields: Iterable, obj: dict
+    ) -> str:
+        """
+        Generate a cache key based on the model name and the identifying values used to find it.
+        """
+        return "object_cache_" + generate_key(model.__name__, identifying_fields, obj)
+
+    @classmethod
+    def get_obj_from_cache(
+        cls, model: Type[TrackedModel], identifying_fields: Iterable, obj: dict
+    ) -> Tuple[int, str]:
+        """
+        Fetches an object PK and model name from the cache if it exists.
+        """
+        key = cls.generate_cache_key(model, identifying_fields, obj)
+        return cache.get(key)
+
+
+def get_nursery(object_cache=None) -> TariffObjectNursery:
     """
     Convenience function for building a nursery object.
     """
-    cache = cache or ObjectCacheFacade()
-    return TariffObjectNursery(cache)
+    object_cache = object_cache or ObjectCacheFacade()
+    return TariffObjectNursery(object_cache)

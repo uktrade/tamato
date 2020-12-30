@@ -69,8 +69,10 @@ def test_ACN2_type_must_exist(reference_nonexistent_record):
     """The referenced additional code type must exist."""
 
     with pytest.raises(models.AdditionalCodeType.DoesNotExist):
-        with reference_nonexistent_record(factories.AdditionalCodeFactory, "type"):
-            pass
+        with reference_nonexistent_record(
+            factories.AdditionalCodeFactory, "type"
+        ) as ac:
+            assert ac.type is None
 
 
 @pytest.mark.parametrize(
