@@ -262,6 +262,11 @@ class GoodsNomenclatureSuccessor(TrackedModel):
         on_delete=models.PROTECT,
     )
 
+    identifying_fields = (
+        "replaced_goods_nomenclature__sid",
+        "absorbed_into_goods_nomenclature__sid",
+    )
+
     def __str__(self):
         return (
             f"replaced=({self.replaced_goods_nomenclature}), "
@@ -278,4 +283,8 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
         "footnotes.Footnote", on_delete=models.PROTECT
     )
 
-    identifying_fields = "goods_nomenclature", "associated_footnote"
+    identifying_fields = (
+        "goods_nomenclature__sid",
+        "associated_footnote__footnote_id",
+        "associated_footnote__footnote_type__footnote_type_id",
+    )

@@ -31,7 +31,7 @@ from common.util import get_field_tuple
 from common.util import TaricDateTimeRange
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
-from importer.management.commands.import_taric import import_taric_file
+from importer.taric import process_taric_xml_stream
 from workbaskets.validators import WorkflowStatus
 
 
@@ -238,7 +238,7 @@ def validity_period_contained(date_ranges):
 
 
 @pytest.fixture
-def imported_fields_match(valid_user):
+def imported_fields_match(valid_user, settings):
     """Provides a function for checking a model can be imported correctly.
 
     The function takes the following parameters:
@@ -258,6 +258,7 @@ def imported_fields_match(valid_user):
         model: Union[TrackedModel, Type[DjangoModelFactory]],
         serializer: Type[TrackedModelSerializer],
     ) -> TrackedModel:
+        settings.SKIP_WORKBASKET_VALIDATION = True
         if isinstance(model, type) and issubclass(model, DjangoModelFactory):
             model = model.build(update_type=UpdateType.CREATE)
 
@@ -269,10 +270,10 @@ def imported_fields_match(valid_user):
             serializer(model, context={"format": "xml"}).data
         )
 
-        import_taric_file(
+        process_taric_xml_stream(
             xml,
-            valid_user.username,
-            WorkflowStatus.PUBLISHED,
+            username=valid_user.username,
+            status=WorkflowStatus.PUBLISHED,
         )
 
         db_kwargs = model.get_identifying_fields()

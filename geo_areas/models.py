@@ -109,3 +109,6 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
     sid = SignedIntSID(db_index=True)
+
+    def __str__(self):
+        return f'description ({self.sid}) - "{self.description}" for {self.area}'

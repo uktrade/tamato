@@ -7,9 +7,7 @@ from importer.cache.base import BaseEngine
 def prefix_key_decorator(func):
     def wrapped_func(self, key, *args, **kwargs):
         prefix = getattr(settings, "IMPORTER_CACHE_PREFIX", "__IMPORTER_CACHE")
-        if isinstance(key, bytes):
-            key = f"{prefix}__".encode() + key
-        else:
+        if not key.startswith(prefix):
             key = f"{prefix}__{key}"
         return func(self, key, *args, **kwargs)
 

@@ -223,9 +223,6 @@ class NIG24(BusinessRule):
         )
 
         if overlapping.exists():
-            print(overlapping)
-            print(association.valid_between)
-            print(overlapping.first().valid_between)
             raise self.violation(association)
 
 

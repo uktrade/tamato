@@ -7,7 +7,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import F
 from django.db.models import Manager
 from django.db.models import Prefetch
 from django.db.models import QuerySet
@@ -19,12 +18,30 @@ from common.models import TrackedModel
 from workbaskets.validators import WorkflowStatus
 
 
+class WorkBasketManager(Manager):
+    def prefetch_ordered_tracked_models(self) -> QuerySet:
+        """
+        Sort tracked_models by record_number, subrecord_number by
+        using prefetch and imposing the order there.
+        """
+        q = self.get_queryset()
+
+        q_annotate_record_code = TrackedModel.objects.annotate_record_codes().order_by(
+            "record_code", "subrecord_code"
+        )
+        return q.prefetch_related(
+            Prefetch("tracked_models", queryset=q_annotate_record_code)
+        )
+
+
 class WorkBasket(TimestampedMixin):
     """A WorkBasket groups tariff edits which will be applied at the same time.
 
     WorkBasket status is controlled by a state machine:
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
+
+    objects = WorkBasketManager()
 
     title = models.CharField(
         max_length=255, help_text="Short name for this workbasket", db_index=True
@@ -119,12 +136,22 @@ class WorkBasket(TimestampedMixin):
         pass
 
     def clean(self):
+        if settings.SKIP_WORKBASKET_VALIDATION:
+            return
         self.errors = []
-        for model in self.transactions.all():
+        types = set(
+            tracked_model.polymorphic_ctype.model_class()
+            for tracked_model in self.transactions.non_polymorphic().select_related(
+                "polymorphic_ctype"
+            )
+        )
+        for model_type in types:
             try:
-                model.validate_workbasket()
+                self.tracked_models.instance_of(model_type).first().validate_workbasket(
+                    self
+                )
             except ValidationError as error:
-                self.errors.append((model, error))
+                self.errors.append((model_type, error))
         if self.errors:
             raise ValidationError(self.errors)
 

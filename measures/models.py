@@ -401,14 +401,22 @@ class Measure(TrackedModel, ValidityMixin):
         return TaricDateTimeRange(self.valid_between.lower, self.effective_end_date)
 
     def has_components(self):
-        return MeasureComponent.objects.filter(
-            component_measure__sid=self.sid,
-        ).exists()
+        return (
+            MeasureComponent.objects.approved_or_in_transaction(
+                transaction=self.transaction
+            )
+            .filter(component_measure__sid=self.sid)
+            .exists()
+        )
 
     def has_condition_components(self):
-        return MeasureConditionComponent.objects.filter(
-            condition__dependent_measure__sid=self.sid,
-        ).exists()
+        return (
+            MeasureConditionComponent.objects.approved_or_in_transaction(
+                transaction=self.transaction
+            )
+            .filter(condition__dependent_measure__sid=self.sid)
+            .exists()
+        )
 
 
 class MeasureComponent(TrackedModel):

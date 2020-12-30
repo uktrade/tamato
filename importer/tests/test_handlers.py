@@ -110,7 +110,7 @@ def test_resolve_dependencies_returns_true(
     prepped_handler_with_dependencies1, prepped_handler_with_dependencies2
 ):
     nursery = prepped_handler_with_dependencies1.nursery
-    nursery._cache_object(prepped_handler_with_dependencies2)
+    nursery._cache_handler(prepped_handler_with_dependencies2)
 
     assert prepped_handler_with_dependencies1.resolve_dependencies()
 

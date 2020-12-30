@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from itertools import chain
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -12,7 +11,6 @@ from typing import Tuple
 from typing import Type
 
 from django.contrib.postgres.fields import DateTimeRangeField
-from django.core.cache import cache
 from django.db import models
 from django.db.models import Case
 from django.db.models import F
@@ -32,8 +30,6 @@ from polymorphic.query import PolymorphicQuerySet
 from common import exceptions
 from common import validators
 from common.validators import UpdateType
-from importer.nursery import get_nursery
-from importer.utils import generate_key
 from workbaskets.validators import WorkflowStatus
 
 
@@ -47,6 +43,25 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         Get all the current versions of the model being queried.
 
         Current is defined as the last row relating to the history of an object.
+        This may include current operationally live rows, it will often also mean
+        rows that are not operationally live yet but may be soon. It could also include
+        rows which were operationally live, are no longer operationally live, but have
+        no new row to supercede them, as long as they were set as deleted.
+
+        Any row marked as deleted will not be fetched.
+
+        If done from the TrackedModel this will return the current objects for all tracked
+        models.
+        """
+        return self.filter(is_current__isnull=False).exclude(
+            update_type=UpdateType.DELETE
+        )
+
+    def current_deleted(self) -> QuerySet:
+        """
+        Get all the current versions of the model being queried which have been deleted
+
+        Current is defined as the last row relating to the history of an object.
         this may include current operationally live rows, it will often also mean
         rows that are not operationally live yet but may be soon. It could also include
         rows which were operationally live, are no longer operationally live, but have
@@ -55,9 +70,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If done from the TrackedModel this will return the current objects for all tracked
         models.
         """
-        return self.filter(is_current__isnull=False).exclude(
-            update_type=UpdateType.DELETE
-        )
+        return self.filter(is_current__isnull=False, update_type=UpdateType.DELETE)
 
     def since_transaction(self, transaction_id: int) -> QuerySet:
         """
@@ -130,7 +143,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         query = Q()
 
         # get models in the workbasket
-        in_workbasket = self.filter(transaction__workbasket=workbasket)
+        in_workbasket = self.model.objects.filter(transaction__workbasket=workbasket)
         # add latest version of models from the current workbasket
         return self.filter(query) | in_workbasket.current()
 
@@ -144,13 +157,13 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             transaction__workbasket__approver__isnull=False,
         )
 
-    def approved_or_in_workbasket(self, workbasket):
+    def approved_or_in_transaction(self, transaction):
         """
-        Get objects which have been approved or are in the specified workbasket.
+        Get objects which have been approved or are in the specified transaction.
         """
 
         return self.filter(
-            Q(transaction__workbasket=workbasket)
+            Q(transaction=transaction)
             | Q(
                 transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
                 transaction__workbasket__approver__isnull=False,
@@ -273,12 +286,10 @@ class ValidityMixin(models.Model):
 
 
 class VersionGroup(TimestampedMixin):
-    current_version = models.ForeignKey(
+    current_version = models.OneToOneField(
         "common.TrackedModel",
         on_delete=models.SET_NULL,
-        unique=True,
         null=True,
-        related_name="+",
         related_query_name="is_current",
     )
 
@@ -376,13 +387,11 @@ class TrackedModel(PolymorphicModel):
     def identifying_fields_unique(
         self, identifying_fields: Optional[Iterable[str]] = None
     ) -> bool:
-        if identifying_fields is None:
-            identifying_fields = self.identifying_fields
 
         # TODO this needs to handle deleted trackedmodels
         return (
             self.__class__.objects.filter(
-                **{field: getattr(self, field) for field in identifying_fields}
+                **self.get_identifying_fields(identifying_fields)
             ).count()
             <= 1
         )
@@ -412,6 +421,8 @@ class TrackedModel(PolymorphicModel):
     ) -> Dict[str, Any]:
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
+
+        identifying_fields = identifying_fields or self.identifying_fields
 
         for field in identifying_fields:
             value = self
@@ -495,58 +506,24 @@ class TrackedModel(PolymorphicModel):
                 ) from e
         return getattr(self, relations[item]).current_version
 
-    @classmethod
-    def get_handler_link_fields(cls, link_fields=None):
-        link_fields = link_fields or set()
-        for handler in filter(lambda x: x.links, get_nursery().handlers.values()):
-            for link in filter(lambda x: x["model"] == cls, handler.links):
-                link_fields.add(
-                    tuple(
-                        sorted(link.get("identifying_fields", cls.identifying_fields))
-                    )
-                )
-        return link_fields
-
-    @classmethod
-    def generate_cache_key(cls, identifying_fields, obj):
-        return "object_cache_" + generate_key(cls.__name__, identifying_fields, obj)
-
-    @classmethod
-    def cache_current_instances(cls):
-        link_fields = cls.get_handler_link_fields()
-
-        if not link_fields:
-            return
-
-        values_list = set(chain.from_iterable(link_fields))
-        values_list.add("pk")
-
-        for obj in cls.objects.current().values(*values_list):
-            for identifying_fields in link_fields:
-                cache_key = cls.generate_cache_key(identifying_fields, obj)
-                cache.set(cache_key, (obj["pk"], cls.__name__), timeout=None)
-
-    @classmethod
-    def get_id_from_cache(cls, identifying_fields, obj):
-        key = cls.generate_cache_key(identifying_fields, obj)
-        return cache.get(key)
-
-    def cache_self(self):
-        link_fields = self.get_handler_link_fields()
-
-        for link in link_fields:
-            identifying_data = {}
-            for field in link:
-                datum = self
-                for sub_field in field.split("__"):
-                    datum = getattr(datum, sub_field)
-                    if datum is None:
-                        break
-                identifying_data[field] = datum
-            cache_key = generate_key(
-                f"link_cache_{self.__class__.__name__}", link, identifying_data
+    @atomic
+    def save(self, *args, force_write=False, **kwargs):
+        if not force_write and not self._can_write():
+            raise IllegalSaveError(
+                "TrackedModels cannot be updated once written and approved. "
+                "If writing a new row, use `.new_draft` instead"
             )
-            cache.set(cache_key, (self.pk, self.__class__.__name__), timeout=None)
+
+        if not hasattr(self, "version_group"):
+            self.version_group = self._get_version_group()
+
+        return_value = super().save(*args, **kwargs)
+
+        if self.transaction.workbasket.status in WorkflowStatus.approved_statuses():
+            self.version_group.current_version = self
+            self.version_group.save()
+
+        return return_value
 
     def __str__(self):
         return ", ".join(

@@ -21,7 +21,7 @@ def test_nursery_caches_object(object_nursery, handler_class):
         },
         object_nursery,
     )
-    object_nursery._cache_object(handler)
+    object_nursery._cache_handler(handler)
 
     cached_handler = object_nursery.get_handler_from_cache(handler.key)
 
