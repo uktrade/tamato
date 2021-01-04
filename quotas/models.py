@@ -8,6 +8,7 @@ from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from quotas import business_rules
 from quotas import validators
 
 
@@ -41,6 +42,13 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         related_name="quotas",
     )
 
+    business_rules = (
+        business_rules.ON1,
+        business_rules.ON2,
+        business_rules.ON9,
+        business_rules.ON11,
+    )
+
     def __str__(self):
         return self.order_number
 
@@ -71,6 +79,14 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         related_name="+",
     )
 
+    business_rules = (
+        business_rules.ON5,
+        business_rules.ON6,
+        business_rules.ON7,
+        business_rules.ON10,
+        business_rules.ON12,
+    )
+
     def in_use(self):
         # TODO this should respect deletes
         return self.order_number.measure_set.model.objects.filter(
@@ -92,6 +108,11 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
     )
 
     identifying_fields = "origin__sid", "excluded_geographical_area__sid"
+
+    business_rules = (
+        business_rules.ON13,
+        business_rules.ON14,
+    )
 
 
 class QuotaDefinition(TrackedModel, ValidityMixin):
@@ -142,6 +163,15 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         "self", through="QuotaAssociation", through_fields=("main_quota", "sub_quota")
     )
 
+    business_rules = (
+        business_rules.ON8,
+        business_rules.QD1,
+        business_rules.QD7,
+        business_rules.QD8,
+        business_rules.QD10,
+        business_rules.QD11,
+    )
+
     def __str__(self):
         return str(self.sid)
 
@@ -171,6 +201,15 @@ class QuotaAssociation(TrackedModel):
     )
     identifying_fields = ("main_quota__sid", "sub_quota__sid")
 
+    business_rules = (
+        business_rules.QA1,
+        business_rules.QA2,
+        business_rules.QA3,
+        business_rules.QA4,
+        business_rules.QA5,
+        business_rules.QA6,
+    )
+
 
 class QuotaSuspension(TrackedModel, ValidityMixin):
     """Defines a suspension period for a quota."""
@@ -181,6 +220,8 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
+
+    business_rules = (business_rules.QSP2,)
 
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
@@ -195,6 +236,8 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
         choices=validators.BlockingPeriodType.choices
     )
     description = ShortDescription()
+
+    business_rules = (business_rules.QBP2,)
 
 
 class QuotaEvent(TrackedModel):

@@ -36,7 +36,9 @@ class BusinessRule:
         raise NotImplementedError()
 
     def violation(
-        self, model: Optional[TrackedModel] = None, msg: Optional[str] = None
+        self,
+        model: Optional[Union[TrackedModel, str]] = None,
+        msg: Optional[str] = None,
     ) -> BusinessRuleViolation:
         """Create a violation exception object"""
 
@@ -96,8 +98,7 @@ class UniqueIdentifyingFields(BusinessRule):
         identifying_fields = self.identifying_fields or model.identifying_fields
         query = dict(get_field_tuple(model, field) for field in identifying_fields)
 
-        # TODO need to handle DELETE update type
-        if model.__class__.objects.filter(**query).count() > 1:
+        if model.__class__.objects.filter(**query).current().exists():
             raise self.violation(model)
 
 
@@ -111,8 +112,12 @@ class NoOverlapping(BusinessRule):
         query = dict(get_field_tuple(model, field) for field in identifying_fields)
         query["valid_between__overlap"] = model.valid_between
 
-        # TODO need to handle deletes
-        if model.__class__.objects.filter(**query).exclude(id=model.id).exists():
+        if (
+            model.__class__.objects.filter(**query)
+            .current()
+            .exclude(id=model.id)
+            .exists()
+        ):
             raise self.violation(model)
 
 
@@ -139,6 +144,19 @@ class ValidityPeriodContained(BusinessRule):
     container_field_name: Optional[str] = None
     contained_field_name: Optional[str] = None
 
+    def query_contains_validity(self, container, contained, model):
+        if (
+            not container.__class__.objects.filter(
+                **container.get_identifying_fields(),
+            )
+            .current()
+            .filter(
+                valid_between__contains=contained.valid_between,
+            )
+            .exists()
+        ):
+            raise self.violation(model)
+
     def validate(self, model):
         _, container = get_field_tuple(model, self.container_field_name)
         contained = model
@@ -154,17 +172,7 @@ class ValidityPeriodContained(BusinessRule):
             )
             return
 
-        # TODO this should respect deletes
-        if (
-            not container.__class__.objects.filter(
-                **container.get_identifying_fields(),
-            )
-            .filter(
-                valid_between__contains=contained.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(model)
+        self.query_contains_validity(container, contained, model)
 
 
 class MustExist(BusinessRule):
@@ -215,27 +223,30 @@ class DescriptionsRules(BusinessRule):
     model_name: str
     item_name: str = "description"
 
-    def violation(self, model, message_key: str):
+    def generate_violation(self, model, message_key: str):
         msg = self.messages[message_key].format(
             model=self.model_name,
             item=self.item_name,
         )
-        return super().violation(f"{model.__class__.__name__} {model}: {msg}")
+
+        return self.violation(model, msg)
 
     def get_descriptions(self, model) -> QuerySet:
-        return model.descriptions
+        return model.get_descriptions(workbasket=model.transaction.workbasket)
 
     def validate(self, model):
         descriptions = self.get_descriptions(model).order_by("valid_between")
 
         if descriptions.count() < 1:
-            raise self.violation(model, "at least one")
+            raise self.generate_violation(model, "at least one")
 
-        if descriptions.first().valid_between.lower != model.valid_between.lower:
-            raise self.violation(model, "first start date")
+        if not descriptions.filter(
+            valid_between__startswith=model.valid_between.lower
+        ).exists():
+            raise self.generate_violation(model, "first start date")
 
         if find_duplicate_start_dates(descriptions).exists():
-            raise self.violation(model, "duplicate start dates")
+            raise self.generate_violation(model, "duplicate start dates")
 
         if descriptions.filter(valid_between__fully_gt=model.valid_between).exists():
-            raise self.violation(model, "start after end")
+            raise self.generate_violation(model, "start after end")

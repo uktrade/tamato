@@ -26,12 +26,12 @@ class ROIMB8(BusinessRule):
     """Explicit dates of related measures must be within the validity period of the base regulation."""
 
     def validate(self, regulation):
-        # TODO handle deletes
         if (
             regulation.measure_set.model.objects.filter(
                 generating_regulation__regulation_id=regulation.regulation_id,
                 generating_regulation__role_type=regulation.role_type,
             )
+            .current()
             .exclude(
                 valid_between__contained_by=regulation.valid_between,
             )
@@ -57,8 +57,8 @@ class ROIMB44(BusinessRule):
             if (
                 type(regulation)
                 .objects.filter(
-                    version_group=regulation.version_group,
-                    approved=not regulation.approved,
+                    **regulation.get_identifying_fields(),
+                    approved=True,
                 )
                 .exclude(pk=regulation.pk)
                 .exists()

@@ -4,6 +4,7 @@ from datetime import timedelta
 from datetime import timezone
 
 from common.business_rules import BusinessRule
+from common.business_rules import DescriptionsRules
 from common.business_rules import find_duplicate_start_dates
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
@@ -23,6 +24,7 @@ class NIG1(BusinessRule):
                 sid=good.sid,
                 valid_between__overlap=good.valid_between,
             )
+            .current()
             .exists()
         ):
             raise self.violation(good)
@@ -62,12 +64,18 @@ class NIG5(BusinessRule):
         Therefore check for these two conditions, and if neither are met ensure an origin exists.
         """
 
+        from commodities.models import GoodsNomenclatureOrigin
+
         lower_bound = datetime(2010, 1, 1).replace(tzinfo=timezone.utc)
 
         if not (
             good.valid_between.lower <= lower_bound
             or good.indents.filter(nodes__depth=1).exists()
-            or good.origins.exists()
+            or GoodsNomenclatureOrigin.objects.filter(
+                new_goods_nomenclature__sid=good.sid
+            )
+            .current()
+            .exists()
         ):
             raise self.violation("Non top-level goods must have an origin specified.")
 
@@ -126,14 +134,20 @@ class NIG11(BusinessRule):
     """
 
     def validate(self, good):
-        indents = good.indents.order_by("valid_between")
+        GoodsNomenclatureIndent = good.indents.model
+
+        indents = GoodsNomenclatureIndent.objects.filter(
+            indented_goods_nomenclature__sid=good.sid
+        ).current()
 
         if indents.count() < 1:
             raise self.violation(
                 f"GoodsNomenclature {good}: At least one indent record is mandatory."
             )
 
-        if indents.first().valid_between.lower != good.valid_between.lower:
+        if not indents.filter(
+            valid_between__startswith=good.valid_between.lower
+        ).exists():
             raise self.violation(
                 f"GoodsNomenclature {good}: The start date of the first indentation must "
                 "be equal to the start date of the nomenclature."
@@ -152,38 +166,14 @@ class NIG11(BusinessRule):
             )
 
 
-class NIG12(BusinessRule):
+class NIG12(DescriptionsRules):
     """At least one description is mandatory. The start date of the first description
     period must be equal to the start date of the nomenclature. No two associated
     description periods may have the same start date. The start date must be less than
     or equal to the end date of the nomenclature.
     """
 
-    def validate(self, good):
-        descriptions = good.descriptions.order_by("valid_between")
-
-        if descriptions.count() < 1:
-            raise self.violation(
-                f"GoodsNomenclature {good}: At least one description record is mandatory."
-            )
-
-        if descriptions.first().valid_between.lower != good.valid_between.lower:
-            raise self.violation(
-                f"GoodsNomenclature {good}: The start date of the first description must "
-                "be equal to the start date of the nomenclature."
-            )
-
-        if find_duplicate_start_dates(descriptions).exists():
-            raise self.violation(
-                f"GoodsNomenclature {good}: No two associated descriptions may have the "
-                "same start date"
-            )
-
-        if descriptions.filter(valid_between__fully_gt=good.valid_between).exists():
-            raise self.violation(
-                f"GoodsNomenclature {good}: The start date of a description must be less "
-                "than or equal to the end date of the nomenclature."
-            )
+    model_name = "goods nomenclature"
 
 
 class NIG22(ValidityPeriodContained):
@@ -217,6 +207,7 @@ class NIG24(BusinessRule):
                 goods_nomenclature__sid=association.goods_nomenclature.sid,
                 valid_between__overlap=association.valid_between,
             )
+            .current()
             .exclude(
                 id=association.pk,
             )
@@ -234,7 +225,9 @@ class NIG30(BusinessRule):
     def validate(self, good):
         if (
             good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
-            .exclude(valid_between__contained_by=good.valid_between)
+            .with_effective_valid_between()
+            .current()
+            .exclude(db_effective_valid_between__contained_by=good.valid_between)
             .exists()
         ):
             raise self.violation(good)
@@ -272,8 +265,12 @@ class NIG35(BusinessRule):
         if good.update_type != UpdateType.DELETE:
             return
 
-        if good.measures.model.objects.filter(
-            goods_nomenclature__sid=good.sid,
-            additional_code__isnull=False,
-        ).exists():
+        if (
+            good.measures.model.objects.filter(
+                goods_nomenclature__sid=good.sid,
+                additional_code__isnull=False,
+            )
+            .current()
+            .exists()
+        ):
             raise self.violation(good)

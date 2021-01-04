@@ -223,9 +223,6 @@ def validity_period_contained(date_ranges):
         except ValidationError:
             pass
 
-        except Exception as exc:
-            raise
-
         else:
             pytest.fail(
                 f"{dependency_factory._meta.get_model_class().__name__} validity must "

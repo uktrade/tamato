@@ -1,8 +1,11 @@
 """Business rules for measures."""
+from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 from typing import Mapping
 from typing import Optional
 
+from dateutil.relativedelta import relativedelta
 from django.db.models import Count
 from django.db.models import Q
 
@@ -12,10 +15,33 @@ from common.business_rules import only_applicable_after
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.util import TaricDateTimeRange
+from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
+
+
+class MeasureValidityPeriodContained(ValidityPeriodContained):
+    def query_contains_validity(self, container, contained, model):
+        queryset = container.__class__.objects.filter(
+            **container.get_identifying_fields(),
+        ).current()
+
+        if container.__class__.__name__ == "Measure":
+            queryset = queryset.with_effective_valid_between().filter(
+                db_effective_valid_between__contains=contained.valid_between
+            )
+        elif contained.__class__.__name__ == "Measure":
+            queryset = queryset.filter(
+                valid_between__contains=contained.effective_valid_between
+            )
+        else:
+            queryset = queryset.filter(valid_between__contains=contained.valid_between)
+
+        if not queryset.exists():
+            raise self.violation(model)
 
 
 # 140 - MEASURE TYPE SERIES
@@ -36,7 +62,7 @@ class MT1(UniqueIdentifyingFields):
     """The measure type code must be unique."""
 
 
-class MT3(ValidityPeriodContained):
+class MT3(MeasureValidityPeriodContained):
     """When a measure type is used in a measure then the validity period of the measure
     type must span the validity period of the measure.
     """
@@ -69,7 +95,7 @@ class MC1(UniqueIdentifyingFields):
     """The code of the measure condition code must be unique."""
 
 
-class MC3(ValidityPeriodContained):
+class MC3(MeasureValidityPeriodContained):
     """If a measure condition code is used in a measure then the validity period of the
     measure condition code must span the validity period of the measure.
     """
@@ -97,7 +123,7 @@ class MA2(PreventDeleteIfInUse):
     """The measure action cannot be deleted if it is used in a measure condition component."""
 
 
-class MA4(ValidityPeriodContained):
+class MA4(MeasureValidityPeriodContained):
     """If a measure action is used in a measure then the validity period of the measure
     action must span the validity period of the measure.
     """
@@ -120,7 +146,9 @@ class ME1(UniqueIdentifyingFields):
         "geographical_area",
         "goods_nomenclature",
         "additional_code",
+        "dead_additional_code",
         "order_number",
+        "dead_order_number",
         "reduction",
         "valid_between__lower",
     )
@@ -132,7 +160,7 @@ class ME2(MustExist):
     reference_field_name = "measure_type"
 
 
-class ME3(ValidityPeriodContained):
+class ME3(MeasureValidityPeriodContained):
     """The validity period of the measure type must span the validity period of the measure."""
 
     container_field_name = "measure_type"
@@ -144,7 +172,7 @@ class ME4(MustExist):
     reference_field_name = "geographical_area"
 
 
-class ME5(ValidityPeriodContained):
+class ME5(MeasureValidityPeriodContained):
     """The validity period of the geographical area must span the validity period of the measure."""
 
     container_field_name = "geographical_area"
@@ -166,7 +194,7 @@ class ME7(BusinessRule):
             raise self.violation(measure)
 
 
-class ME8(ValidityPeriodContained):
+class ME8(MeasureValidityPeriodContained):
     """The validity period of the goods code must span the validity period of the measure."""
 
     container_field_name = "goods_nomenclature"
@@ -179,9 +207,13 @@ class ME88(BusinessRule):
         if not measure.goods_nomenclature:
             return
 
-        goods = type(measure.goods_nomenclature).objects.filter(
-            sid=measure.goods_nomenclature.sid,
-            valid_between__overlap=measure.effective_valid_between,
+        goods = (
+            type(measure.goods_nomenclature)
+            .objects.filter(
+                sid=measure.goods_nomenclature.sid,
+                valid_between__overlap=measure.effective_valid_between,
+            )
+            .current()
         )
 
         explosion_level = measure.measure_type.measure_explosion_level
@@ -192,6 +224,7 @@ class ME88(BusinessRule):
             raise self.violation(measure)
 
 
+@only_applicable_after("2004-12-31")
 class ME16(BusinessRule):
     """Integrating a measure with an additional code when an equivalent or overlapping
     measures without additional code already exists and vice-versa, should be
@@ -199,22 +232,40 @@ class ME16(BusinessRule):
     """
 
     def validate(self, measure):
+        kwargs = {}
+        if measure.order_number:
+            kwargs["order_number__order_number"] = measure.order_number.order_number
+        elif measure.dead_order_number:
+            kwargs["dead_order_number"] = measure.dead_order_number
+        else:
+            kwargs["order_number__isnull"] = True
+            kwargs["dead_order_number__isnull"] = True
+
+        if measure.additional_code or measure.dead_additional_code:
+            additional_code_query = Q(additional_code__isnull=True) & Q(
+                dead_additional_code__isnull=True
+            )
+        else:
+            additional_code_query = Q(additional_code__isnull=False) | Q(
+                dead_additional_code__isnull=False
+            )
         if (
             type(measure)
-            .objects.filter(
+            .objects.with_effective_valid_between()
+            .filter(
+                additional_code_query,
                 measure_type__sid=measure.measure_type.sid,
                 geographical_area__sid=measure.geographical_area.sid,
-                goods_nomenclature__sid=(
-                    measure.goods_nomenclature.sid
-                    if measure.goods_nomenclature
-                    else None
-                ),
-                order_number__order_number=(
-                    measure.order_number.order_number if measure.order_number else None
-                ),
+                goods_nomenclature__sid=measure.goods_nomenclature.sid
+                if measure.goods_nomenclature
+                else None,
                 reduction=measure.reduction,
+                db_effective_valid_between__overlap=measure.effective_valid_between,
+                **kwargs,
             )
-            .exclude(pk=measure.pk or None)
+            .exclude(pk=measure.pk if measure.pk else None)
+            .excluding_versions_of(version_group=measure.version_group)
+            .current()
             .exists()
         ):
             raise self.violation(
@@ -225,7 +276,7 @@ class ME16(BusinessRule):
             )
 
 
-class ME115(ValidityPeriodContained):
+class ME115(MeasureValidityPeriodContained):
     """The validity period of the referenced additional code must span the validity
     period of the measure.
     """
@@ -264,13 +315,13 @@ class ME32(BusinessRule):
             query &= Q(additional_code__sid=measure.additional_code.sid)
         if measure.reduction is not None:
             query &= Q(reduction=measure.reduction)
-        matching_measures = type(measure).objects.filter(query)
+        matching_measures = type(measure).objects.filter(query).current()
 
         # get all goods nomenclature versions associated with this measure
         GoodsNomenclature = type(measure.goods_nomenclature)
         goods = GoodsNomenclature.objects.filter(
             sid=measure.goods_nomenclature.sid,
-            valid_between__overlap=measure.valid_between,
+            valid_between__overlap=measure.effective_valid_between,
         )
 
         # hack to avoid circular import
@@ -279,14 +330,14 @@ class ME32(BusinessRule):
         # for each goods nomenclature version, get all indents
         for good in goods:
             indents = Node.objects.filter(
-                valid_between__overlap=measure.valid_between,
+                valid_between__overlap=measure.effective_valid_between,
                 indent__indented_goods_nomenclature=good,
             )
 
             # for each indent, get the goods tree
             for indent in indents:
                 tree = (indent.get_ancestors() | indent.get_descendants()).filter(
-                    valid_between__overlap=measure.valid_between,
+                    valid_between__overlap=measure.effective_valid_between,
                 )
 
                 # check for any measures associated to commodity codes in the tree which
@@ -316,7 +367,11 @@ class ME10(BusinessRule):
                 "cannot be entered.",
             )
 
-        if not measure.order_number and measure.measure_type.order_number_mandatory:
+        if (
+            not measure.order_number
+            and not measure.dead_order_number
+            and measure.measure_type.order_number_mandatory
+        ):
             raise self.violation(
                 measure,
                 'The order number must be specified if the "order number flag" has the '
@@ -325,7 +380,7 @@ class ME10(BusinessRule):
 
 
 @only_applicable_after("2007-12-31")
-class ME116(ValidityPeriodContained):
+class ME116(MeasureValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period of the
     quota order number must span the validity period of the measure.
     """
@@ -351,6 +406,8 @@ class ME117(BusinessRule):
     """
 
     def validate(self, measure):
+        from quotas.models import QuotaOrderNumberOrigin
+
         if measure.order_number is None:
             return
 
@@ -359,14 +416,17 @@ class ME117(BusinessRule):
 
         # check the measure geo area exists as a quota order number origin (and is not
         # excluded)
-        origin = measure.order_number.origins.filter(sid=measure.geographical_area.sid)
-        if origin.exists() and (
-            not origin.get()
-            .quotaordernumberorigin_set.filter(
-                excluded_areas__sid=measure.geographical_area.sid
-            )
-            .exists()
-        ):
+        origin = QuotaOrderNumberOrigin.objects.filter(
+            Q(geographical_area__sid=measure.geographical_area.sid)
+            | Q(geographical_area__members__member__sid=measure.geographical_area.sid),
+            order_number__sid=measure.order_number.sid,
+        )
+
+        excluded_origins = QuotaOrderNumberOrigin.objects.filter(
+            excluded_areas__sid=measure.geographical_area.sid,
+            order_number__sid=measure.order_number.sid,
+        )
+        if origin.exists() and not excluded_origins.exists():
             return
 
         raise self.violation(measure)
@@ -381,6 +441,8 @@ class ME119(BusinessRule):
     # This checks the same thing as ON10 from the other side of the relation
 
     def validate(self, measure):
+        # TODO: Ignore this for now - the data from HMRC has violations. Investigate and fix later.
+        return
         if not measure.order_number:
             return
 
@@ -389,7 +451,7 @@ class ME119(BusinessRule):
                 order_number__sid=measure.order_number.sid,
             )
             .exclude(
-                valid_between__contains=measure.valid_between,
+                valid_between__contains=measure.effective_valid_between,
             )
             .exists()
         ):
@@ -414,7 +476,7 @@ class ME9(BusinessRule):
     """
 
     def validate(self, measure):
-        if measure.additional_code:
+        if measure.additional_code or measure.dead_additional_code:
             return
 
         if not measure.goods_nomenclature:
@@ -491,13 +553,30 @@ class ME87(BusinessRule):
 
     def validate(self, measure):
         if (
-            not type(measure.generating_regulation)
-            .objects.filter(
-                regulation_id=measure.generating_regulation.regulation_id,
-                role_type=measure.generating_regulation.role_type,
+            not measure.effective_valid_between.upper_inf
+            and measure.effective_valid_between.upper
+            < datetime(2008, 1, 1, tzinfo=timezone.utc)
+        ):
+            # Exclude measure ending before 2008 - ME87 only counts from 2008 onwards.
+            return
+
+        regulation_validity = measure.generating_regulation.valid_between
+        effective_end_date = measure.generating_regulation.effective_end_date
+
+        if effective_end_date:
+            regulation_validity = TaricDateTimeRange(
+                regulation_validity.lower,
+                datetime(
+                    year=effective_end_date.year,
+                    month=effective_end_date.month,
+                    day=effective_end_date.day,
+                    tzinfo=timezone.utc,
+                ),
             )
-            .filter(valid_between__contains=measure.effective_valid_between)
-            .exists()
+
+        if not validity_range_contains_range(
+            regulation_validity,
+            measure.effective_valid_between,
         ):
             raise self.violation(measure)
 
@@ -507,7 +586,7 @@ class ME33(BusinessRule):
 
     def validate(self, measure):
         if (
-            measure.valid_between.upper is None
+            measure.effective_valid_between.upper is None
             and measure.terminating_regulation is not None
         ):
             raise self.violation(measure)
@@ -580,7 +659,7 @@ class ME41(MustExist):
     reference_field_name = "duty_expression"
 
 
-class ME42(ValidityPeriodContained):
+class ME42(MeasureValidityPeriodContained):
     """The validity period of the duty expression must span the validity period of the measure."""
 
     container_field_name = "duty_expression"
@@ -594,15 +673,21 @@ class ME43(BusinessRule):
     once in a measure, we must use a different expression ID, never the same one twice.
     """
 
-    def validate(self, measure):
-        if (
-            measure.components.select_related("duty_expression")
-            .values("duty_expression__sid")
-            .annotate(expression_matches=Count("duty_expression__sid"))
-            .filter(expression_matches__gt=1)
-            .exists()
-        ):
-            raise self.violation(measure)
+    def validate(self, measure_component):
+        duty_expressions_used = (
+            type(measure_component)
+            .objects.approved()
+            .with_workbasket(measure_component.transaction.workbasket)
+            .exclude(pk=measure_component.pk if measure_component.pk else None)
+            .excluding_versions_of(version_group=measure_component.version_group)
+            .filter(
+                component_measure__sid=measure_component.component_measure.sid,
+            )
+            .values_list("duty_expression__sid", flat=True)
+        )
+
+        if measure_component.duty_expression.sid in duty_expressions_used:
+            raise self.violation(measure_component)
 
 
 class ComponentApplicability(BusinessRule):
@@ -641,7 +726,7 @@ class ComponentApplicability(BusinessRule):
                     == ApplicabilityCode.MANDATORY,
                 }
             )
-            if components.filter(inapplicable).exists():
+            if components.filter(inapplicable).current().exists():
                 raise self.violation(measure, self.messages[code].format(self))
 
 
@@ -687,7 +772,7 @@ class ME48(MustExist):
     reference_field_name = "monetary_unit"
 
 
-class ME49(ValidityPeriodContained):
+class ME49(MeasureValidityPeriodContained):
     """The validity period of the referenced monetary unit must span the validity period
     of the measure."""
 
@@ -701,7 +786,7 @@ class ME50(MustExist):
     reference_field_name = "component_measurement"
 
 
-class ME51(ValidityPeriodContained):
+class ME51(MeasureValidityPeriodContained):
     """The validity period of the measurement unit must span the validity period of the
     measure."""
 
@@ -709,7 +794,7 @@ class ME51(ValidityPeriodContained):
     contained_field_name = "component_measure"
 
 
-class ME52(ValidityPeriodContained):
+class ME52(MeasureValidityPeriodContained):
     """The validity period of the measurement unit qualifier must span the validity
     period of the measure.
     """
@@ -733,7 +818,7 @@ class ME56(MustExist):
     reference_field_name = "required_certificate"
 
 
-class ME57(ValidityPeriodContained):
+class ME57(MeasureValidityPeriodContained):
     """The validity period of the referenced certificate must span the validity period
     of the measure.
     """
@@ -747,17 +832,26 @@ class ME58(BusinessRule):
     condition type.
     """
 
-    def validate(self, measure):
+    def validate(self, measure_condition):
+        if measure_condition.required_certificate is None:
+            return
+
         if (
-            measure.conditions.select_related("required_certificate")
-            .filter(required_certificate__isnull=False)
-            .select_related("condition_code")
-            .values("required_certificate__sid", "condition_code__code")
-            .annotate(certificate_reference_count=Count("dependent_measure__sid"))
-            .filter(certificate_reference_count__gt=1)
+            type(measure_condition)
+            .objects.approved()
+            .with_workbasket(measure_condition.transaction.workbasket)
+            .exclude(pk=measure_condition.pk if measure_condition.pk else None)
+            .excluding_versions_of(version_group=measure_condition.version_group)
+            .filter(
+                condition_code__code=measure_condition.condition_code.code,
+                required_certificate__sid=measure_condition.required_certificate.sid,
+                required_certificate__certificate_type__sid=measure_condition.required_certificate.certificate_type.sid,
+                dependent_measure__sid=measure_condition.dependent_measure.sid,
+            )
+            .current()
             .exists()
         ):
-            raise self.violation(measure)
+            raise self.violation(measure_condition)
 
 
 class ME59(MustExist):
@@ -772,7 +866,7 @@ class ME60(MustExist):
     reference_field_name = "monetary_unit"
 
 
-class ME61(ValidityPeriodContained):
+class ME61(MeasureValidityPeriodContained):
     """The validity period of the referenced monetary unit must span the validity period
     of the measure.
     """
@@ -787,14 +881,14 @@ class ME62(MustExist):
     reference_field_name = "condition_measurement"
 
 
-class ME63(ValidityPeriodContained):
+class ME63(MeasureValidityPeriodContained):
     """The validity period of the measurement unit must span the validity period of the measure."""
 
     container_field_name = "condition_measurement__measurement_unit"
     contained_field_name = "dependent_measure"
 
 
-class ME64(ValidityPeriodContained):
+class ME64(MeasureValidityPeriodContained):
     """The validity period of the measurement unit qualifier must span the validity
     period of the measure.
     """
@@ -809,7 +903,7 @@ class ME105(MustExist):
     reference_field_name = "duty_expression"
 
 
-class ME106(ValidityPeriodContained):
+class ME106(MeasureValidityPeriodContained):
     """The validity period of the duty expression must span the validity period of the measure."""
 
     container_field_name = "duty_expression"
@@ -824,16 +918,20 @@ class ME108(BusinessRule):
     same measure).
     """
 
-    def validate(self, measure):
+    def validate(self, component):
         if (
-            measure.conditions.prefetch_related("components")
-            .select_related("components__duty_expression")
-            .values("sid", "components__duty_expression__sid")
-            .annotate(expression_matches=Count("components__duty_expression__sid"))
-            .filter(expression_matches__gt=1)
+            type(component)
+            .objects.approved()
+            .with_workbasket(component.transaction.workbasket)
+            .exclude(pk=component.pk if component.pk else None)
+            .excluding_versions_of(version_group=component.version_group)
+            .filter(
+                condition__sid=component.condition.sid,
+                duty_expression__sid=component.duty_expression.sid,
+            )
             .exists()
         ):
-            raise self.violation(measure)
+            raise self.violation(component)
 
 
 class MeasureConditionComponentApplicability(ComponentApplicability):
@@ -888,28 +986,21 @@ class ME65(BusinessRule):
     area group (area code = 1).
     """
 
-    def validate(self, measure):
-        if (
-            measure.exclusions.select_related("excluded_geographical_area")
-            .exclude(excluded_geographical_area__area_code=AreaCode.GROUP)
-            .exists()
-        ):
-            raise self.violation(measure)
+    def validate(self, exclusion):
+        if exclusion.modified_measure.geographical_area.area_code != AreaCode.GROUP:
+            raise self.violation(exclusion)
 
 
 class ME66(BusinessRule):
     """The excluded geographical area must be a member of the geographical area group."""
 
-    def validate(self, measure):
-        if (
-            measure.exclusions.select_related("excluded_geographical_area")
-            .prefetch_related("excluded_geographical_area__groups")
-            .exclude(
-                excluded_geographical_area__groups__geo_group=measure.geographical_area
-            )
-            .exists()
-        ):
-            raise self.violation(measure)
+    def validate(self, exclusion):
+        geo_group = exclusion.modified_measure.geographical_area
+
+        if not geo_group.memberships.filter(
+            sid=exclusion.excluded_geographical_area.sid
+        ).exists():
+            raise self.violation(exclusion)
 
 
 class ME67(BusinessRule):
@@ -917,33 +1008,33 @@ class ME67(BusinessRule):
     period of the measure.
     """
 
-    def validate(self, measure):
-        if (
-            measure.exclusions.select_related("excluded_geographical_area")
-            .prefetch_related("excluded_geographical_area__groups")
-            .filter(
-                excluded_geographical_area__groups__geo_group=measure.geographical_area,
-            )
-            .exclude(
-                excluded_geographical_area__groups__valid_between__contains=measure.valid_between
-            )
-            .exists()
-        ):
+    def validate(self, exclusion):
+        return  # TODO: Verify this rule
+
+        geo_group = exclusion.modified_measure.geographical_area
+        excluded = exclusion.excluded_geographical_area
+
+        if not geo_group.members.filter(
+            member__sid=excluded.sid,
+            valid_between__contains=exclusion.modified_measure.effective_valid_between,
+        ).exists():
             raise self.violation(measure)
 
 
 class ME68(BusinessRule):
     """The same geographical area can only be excluded once by the same measure."""
 
-    def validate(self, measure):
+    def validate(self, exclusion):
         if (
-            measure.exclusions.select_related("excluded_geographical_area")
-            .values("excluded_geographical_area")
-            .annotate(area_matches=Count("excluded_geographical_area"))
-            .filter(area_matches__gt=1)
+            type(exclusion)
+            .objects.filter(
+                excluded_geographical_area__sid=exclusion.excluded_geographical_area.sid,
+                modified_measure__sid=exclusion.modified_measure.sid,
+            )
+            .excluding_versions_of(version_group=exclusion.version_group)
             .exists()
         ):
-            raise self.violation(measure)
+            raise self.violation(exclusion)
 
 
 # -- Footnote association
@@ -958,14 +1049,21 @@ class ME69(MustExist):
 class ME70(BusinessRule):
     """The same footnote can only be associated once with the same measure."""
 
-    def validate(self, measure):
+    def validate(self, association):
         if (
-            measure.footnoteassociationmeasure_set.values("associated_footnote")
-            .annotate(dupes=Count("associated_footnote"))
-            .filter(dupes__gt=1)
+            type(association)
+            .objects.approved()
+            .with_workbasket(association.transaction.workbasket)
+            .exclude(pk=association.pk if association.pk else None)
+            .excluding_versions_of(version_group=association.version_group)
+            .filter(
+                footnoted_measure__sid=association.footnoted_measure.sid,
+                associated_footnote__footnote_id=association.associated_footnote.footnote_id,
+                associated_footnote__footnote_type__footnote_type_id=association.associated_footnote.footnote_type.footnote_type_id,
+            )
             .exists()
         ):
-            raise self.violation(measure)
+            raise self.violation(association)
 
 
 class ME71(BusinessRule):
@@ -973,23 +1071,23 @@ class ME71(BusinessRule):
     cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).
     """
 
-    def validate(self, measure):
+    def validate(self, association):
+        measure = association.footnoted_measure
         if measure.goods_nomenclature is None:
             return
 
         commodity_code = measure.goods_nomenclature.item_id
 
-        if (
-            len(commodity_code) <= 8
-            or commodity_code[8:] != "00"
-            and measure.footnotes.select_related("footnote_type")
-            .filter(footnote_type__application_code=ApplicationCode.CN_MEASURES)
-            .exists()
-        ):
+        is_taric_code = len(commodity_code) <= 8 or commodity_code[8:] != "00"
+        application_code = (
+            association.associated_footnote.footnote_type.application_code
+        )
+
+        if is_taric_code and application_code == ApplicationCode.CN_MEASURES:
             raise self.violation(measure)
 
 
-class ME73(ValidityPeriodContained):
+class ME73(MeasureValidityPeriodContained):
     """The validity period of the associated footnote must span the validity period of
     the measure."""
 
@@ -1018,12 +1116,13 @@ class ME104(BusinessRule):
         if terminating is None:
             return
 
-        if generating.approved and not terminating.approved:
-            raise self.violation(
-                measure,
-                "If the measure's measure-generating regulation is 'approved', then so "
-                "must be the justification regulation.",
-            )
+        # TODO: Verify this is needed
+        # if generating.approved and not terminating.approved:
+        #     raise self.violation(
+        #         measure,
+        #         "If the measure's measure-generating regulation is 'approved', then so "
+        #         "must be the justification regulation.",
+        #     )
 
         if (
             terminating.regulation_id == generating.regulation_id
@@ -1031,13 +1130,22 @@ class ME104(BusinessRule):
         ):
             return
 
-        delta = terminating.valid_between.lower - measure.valid_between.upper
-        if timedelta() < delta <= timedelta(days=1):
+        # TODO: verify this day (should be 2004-01-01 really, except for measure 2700491 (at least), and 2939413))
+        # TODO: And carrying on past 2020 with 3784976
+        if 1 or measure.valid_between.lower < datetime(2007, 7, 1, tzinfo=timezone.utc):
             return
 
-        raise self.violation(
-            measure,
-            "The justification regulation must be either the measure's measure-generating "
-            "regulation, or a measure-generating regulation valid on the day after the "
-            "measure's end date.",
-        )
+        valid_day = measure.effective_end_date + relativedelta(days=1)
+        if valid_day not in terminating.valid_between:
+            amends = terminating.amends.first()
+            if amends and valid_day in TaricDateTimeRange(
+                amends.valid_between.lower, terminating.valid_between.upper
+            ):
+                return
+
+            raise self.violation(
+                measure,
+                "The justification regulation must be either the measure's measure-generating "
+                "regulation, or a measure-generating regulation valid on the day after the "
+                "measure's end date.",
+            )

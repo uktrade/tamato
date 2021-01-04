@@ -77,12 +77,10 @@ class ON7(ValidityPeriodContained):
     container_field_name = "order_number"
 
 
-class ON8(ValidityPeriodContained):
+class ON8(ON7):
     """The validity period of the quota order number must span the validity period of
     the referencing quota definition.
     """
-
-    container_field_name = "order_number"
 
 
 @only_applicable_after("2007-12-31")
@@ -96,8 +94,9 @@ class ON9(BusinessRule):
             order_number.measure_set.model.objects.filter(
                 order_number__sid=order_number.sid,
             )
+            .with_effective_valid_between()
             .exclude(
-                valid_between__contained_by=order_number.valid_between,
+                db_effective_valid_between__contained_by=order_number.valid_between,
             )
             .exists()
         ):
@@ -117,8 +116,9 @@ class ON10(BusinessRule):
             origin.order_number.measure_set.model.objects.filter(
                 order_number__sid=origin.order_number.sid,
             )
+            .with_effective_valid_between()
             .exclude(
-                valid_between__contained_by=origin.valid_between,
+                db_effective_valid_between__contained_by=origin.valid_between,
             )
             .exists()
         ):
@@ -159,7 +159,7 @@ class ON14(BusinessRule):
 class QD1(UniqueIdentifyingFields):
     """Quota order number id + start date must be unique."""
 
-    identifying_fields = ("order_number", "valid_between__lower")
+    identifying_fields = ("order_number__sid", "valid_between__lower")
 
 
 class QD7(ValidityPeriodContained):

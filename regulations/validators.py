@@ -1,10 +1,6 @@
 """
 Validators for regulations
 """
-from datetime import datetime
-from datetime import timezone
-
-from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -81,67 +77,3 @@ regulation_id_validator = RegexValidator(
 )
 
 no_information_text_delimiters = RegexValidator(r"^[^|]*$", "Must not contain '|'")
-
-
-def validate_official_journal(regulation):
-    """Official Journal number and page must both be set, or must both be NULL"""
-    if (
-        regulation.role_type == RoleType.BASE
-        and regulation.valid_between.lower
-        and regulation.valid_between.lower < datetime(2021, 1, 1, tzinfo=timezone.utc)
-    ):
-        return
-
-    is_oj_num_set = bool(regulation.official_journal_number)
-    is_oj_page_set = regulation.official_journal_page is not None
-    if is_oj_num_set != is_oj_page_set:
-        raise ValidationError(
-            {
-                "official_journal_number": "Both official journal number and page must be set, or both must be unset",
-            }
-        )
-
-
-def validate_information_text(regulation):
-    """Information text has a max length of 500 chars, but public_identifier and URL are
-    passed in the same field in the XML, so the total combined length must be less than
-    or equal to 500 chars.
-    """
-    # TODO public identifier and URL are optional fields?
-
-    if (
-        len(regulation.public_identifier or "")
-        + len(regulation.url or "")
-        + len(regulation.information_text or "")
-        + 2  # delimiter characters '|'
-        > 500
-    ):
-        raise ValidationError(
-            {
-                "information_text": "Information text is prepended with the Public Identifier and URL, "
-                "and the total length must not be more than 500 characters."
-            }
-        )
-
-
-def validate_base_regulations_have_start_date(regulation):
-    if regulation.role_type == RoleType.BASE and (
-        not regulation.valid_between or not regulation.valid_between.lower
-    ):
-        raise ValidationError(
-            {"valid_between": "Base regulations must have a start date."}
-        )
-
-
-def validate_base_regulations_have_community_code(regulation):
-    if regulation.role_type == RoleType.BASE and not regulation.community_code:
-        raise ValidationError(
-            {"community_code": "Base regulations must have a community code."}
-        )
-
-
-def validate_base_regulations_have_group(regulation):
-    if regulation.role_type == RoleType.BASE and not regulation.regulation_group:
-        raise ValidationError(
-            {"regulation_group": "Base regulations must have a group."}
-        )

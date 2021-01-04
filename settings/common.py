@@ -331,3 +331,4 @@ HMRC = {
 
 SKIP_VALIDATION = is_truthy(os.getenv("SKIP_VALIDATION", False))
 SKIP_WORKBASKET_VALIDATION = is_truthy(os.getenv("SKIP_WORKBASKET_VALIDATION", False))
+USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", True))

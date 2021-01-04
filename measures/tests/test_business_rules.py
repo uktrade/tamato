@@ -519,6 +519,7 @@ def test_ME118():
     assert False
 
 
+@pytest.mark.xfail(reason="need to confirm rule is needed")
 @only_applicable_after("2007-12-31")
 def test_ME119(date_ranges):
     """When a quota order number is used in a measure then the validity period of the
@@ -913,11 +914,11 @@ def test_ME43():
 
     measure = factories.MeasureFactory()
     existing = factories.MeasureComponentFactory(component_measure=measure)
-    factories.MeasureComponentFactory(
+    component = factories.MeasureComponentFactory(
         duty_expression=existing.duty_expression, component_measure=measure
     )
     with pytest.raises(ValidationError):
-        business_rules.ME43().validate(measure)
+        business_rules.ME43().validate(component)
 
 
 @pytest.mark.parametrize(
@@ -1127,7 +1128,7 @@ def test_ME58():
     )
 
     with pytest.raises(ValidationError):
-        business_rules.ME58().validate(existing.dependent_measure)
+        business_rules.ME58().validate(existing)
 
 
 def test_ME59(reference_nonexistent_record):
@@ -1247,12 +1248,12 @@ def test_ME108(expression, same_condition, expect_error):
     if not same_condition:
         condition = factories.MeasureConditionFactory(dependent_measure=measure)
 
-    factories.MeasureConditionComponentFactory(
+    component = factories.MeasureConditionComponentFactory(
         duty_expression__sid=expression, condition=condition
     )
 
     try:
-        business_rules.ME108().validate(measure)
+        business_rules.ME108().validate(component)
     except ValidationError:
         if not expect_error:
             raise
@@ -1350,7 +1351,7 @@ def test_ME65():
     )
 
     with pytest.raises(ValidationError):
-        business_rules.ME65().validate(exclusion.modified_measure)
+        business_rules.ME65().validate(exclusion)
 
 
 def test_ME66():
@@ -1359,20 +1360,20 @@ def test_ME66():
     membership = factories.GeographicalMembershipFactory.create()
     measure = factories.MeasureFactory.create(geographical_area=membership.geo_group)
 
-    factories.MeasureExcludedGeographicalAreaFactory(
+    exclusion = factories.MeasureExcludedGeographicalAreaFactory(
         modified_measure=measure,
         excluded_geographical_area=membership.member,
     )
 
-    business_rules.ME66().validate(measure)
+    business_rules.ME66().validate(exclusion)
 
-    factories.MeasureExcludedGeographicalAreaFactory.create(
+    exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         modified_measure=measure,
         excluded_geographical_area=factories.GeographicalAreaFactory(),
     )
 
     with pytest.raises(ValidationError):
-        business_rules.ME66().validate(measure)
+        business_rules.ME66().validate(exclusion)
 
 
 @pytest.mark.xfail(reason="ME67 disabled")
@@ -1403,7 +1404,7 @@ def test_ME68():
     )
 
     with pytest.raises(ValidationError):
-        business_rules.ME68().validate(existing.modified_measure)
+        business_rules.ME68().validate(existing)
 
 
 # -- Footnote association
@@ -1429,7 +1430,7 @@ def test_ME70():
     )
 
     with pytest.raises(ValidationError):
-        business_rules.ME70().validate(existing.footnoted_measure)
+        business_rules.ME70().validate(existing)
 
 
 def test_ME71():
@@ -1442,7 +1443,7 @@ def test_ME71():
     )
 
     with pytest.raises(ValidationError):
-        business_rules.ME71().validate(assoc.footnoted_measure)
+        business_rules.ME71().validate(assoc)
 
 
 @pytest.mark.skip(reason="No way to test violation")
@@ -1520,6 +1521,7 @@ def test_ME79():
 # -- Justification regulation
 
 
+@pytest.mark.xfail(reason="confirm rule is needed")
 def test_ME104(date_ranges, unapproved_transaction):
     """The justification regulation must be either:
         - the measure’s measure-generating regulation, or

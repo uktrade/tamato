@@ -3,6 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from additional_codes.validators import ApplicationCode
 from common.business_rules import BusinessRule
+from common.business_rules import DescriptionsRules
 from common.business_rules import find_duplicate_start_dates
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
@@ -28,10 +29,10 @@ class ACN2(BusinessRule):
 
     def validate(self, additional_code):
         try:
-            if additional_code.type.application_code not in [
+            if additional_code.type.application_code not in {
                 ApplicationCode.ADDITIONAL_CODES,
                 ApplicationCode.EXPORT_REFUND_AGRI,
-            ]:
+            }:
                 raise self.violation(
                     f"AdditionalCode {additional_code}: The referenced additional code "
                     'type must have as application code "non-Meursing" or "Export Refund '
@@ -59,6 +60,7 @@ class ACN4(BusinessRule):
                 valid_between__startswith=additional_code.valid_between.lower,
                 valid_between__overlap=additional_code.valid_between,
             )
+            .current()
             .exists()
         ):
             raise self.violation(additional_code)
@@ -71,12 +73,15 @@ class ACN13(BusinessRule):
     """
 
     def validate(self, additional_code):
+        Measure = additional_code.measure_set.model
         if (
-            additional_code.measure_set.model.objects.filter(
+            Measure.objects.filter(
                 additional_code__sid=additional_code.sid,
             )
+            .with_effective_valid_between()
+            .current()
             .exclude(
-                valid_between__contained_by=additional_code.valid_between,
+                db_effective_valid_between__contained_by=additional_code.valid_between,
             )
             .exists()
         ):
@@ -91,43 +96,14 @@ class ACN17(ValidityPeriodContained):
     container_field_name = "type"
 
 
-class ACN5(BusinessRule):
+class ACN5(DescriptionsRules):
     """At least one description is mandatory. The start date of the first description
     period must be equal to the start date of the additional code. No two associated
     description periods may have the same start date. The start date must be less than
     or equal to the end date of the additional code.
     """
 
-    def validate(self, additional_code):
-        descriptions = additional_code.descriptions.order_by("valid_between")
-
-        if descriptions.count() < 1:
-            raise self.violation(
-                f"AdditionalCode {additional_code}: At least one description is mandatory."
-            )
-
-        if (
-            descriptions.first().valid_between.lower
-            != additional_code.valid_between.lower
-        ):
-            raise self.violation(
-                f"AdditionalCode {additional_code}: The start date of the first description must "
-                "be equal to the same start date of the additional code."
-            )
-
-        if find_duplicate_start_dates(descriptions).exists():
-            raise self.violation(
-                f"AdditionalCode {additional_code}: No two associated descriptions may "
-                "have the same start date."
-            )
-
-        if descriptions.filter(
-            valid_between__fully_gt=additional_code.valid_between
-        ).exists():
-            raise self.violation(
-                f"AdditionalCode {additional_code}: The start date must be less than or equal to "
-                "the end date of the additional code."
-            )
+    model_name = "additional code"
 
 
 class ACN14(PreventDeleteIfInUse):

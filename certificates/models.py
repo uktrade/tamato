@@ -1,5 +1,6 @@
 from django.db import models
 
+from certificates import business_rules
 from certificates import validators
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -21,6 +22,11 @@ class CertificateType(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
+    business_rules = (
+        business_rules.CET1,
+        business_rules.CET2,
+    )
+
     def in_use(self):
         # TODO handle deletes
         return Certificate.objects.filter(certificate_type__sid=self.sid).exists()
@@ -40,9 +46,24 @@ class Certificate(TrackedModel, ValidityMixin):
         CertificateType, related_name="certificates", on_delete=models.PROTECT
     )
 
+    business_rules = (
+        business_rules.CE2,
+        business_rules.CE4,
+        business_rules.CE5,
+        business_rules.CE6,
+        business_rules.CE7,
+    )
+
     @property
     def code(self):
         return self.certificate_type.sid + self.sid
+
+    def get_descriptions(self, workbasket=None):
+        return (
+            CertificateDescription.objects.current()
+            .filter(described_certificate__sid=self.sid)
+            .with_workbasket(workbasket)
+        )
 
     def __str__(self):
         return self.code
@@ -66,6 +87,11 @@ class CertificateDescription(TrackedModel, ValidityMixin):
     description = ShortDescription()
     described_certificate = models.ForeignKey(
         Certificate, related_name="descriptions", on_delete=models.PROTECT
+    )
+
+    business_rules = (
+        business_rules.NoOverlappingDescriptions,
+        business_rules.ContiguousDescriptions,
     )
 
     def __str__(self):

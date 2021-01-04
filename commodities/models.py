@@ -3,12 +3,12 @@ from __future__ import annotations
 from django.db import models
 from treebeard.mp_tree import MP_Node
 
+from commodities import business_rules
 from commodities import validators
 from common.models import NumericSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from common.util import TaricDateTimeRange
-from common.validators import UpdateType
 
 
 class GoodsNomenclature(TrackedModel, ValidityMixin):
@@ -42,14 +42,33 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         ),
     )
 
+    business_rules = (
+        business_rules.NIG1,
+        business_rules.NIG5,
+        business_rules.NIG30,
+        business_rules.NIG31,
+        business_rules.NIG34,
+        business_rules.NIG35,
+    )
+
+    def get_descriptions(self, workbasket=None):
+        return (
+            GoodsNomenclatureDescription.objects.current()
+            .filter(described_goods_nomenclature__sid=self.sid)
+            .with_workbasket(workbasket)
+        )
+
     def __str__(self):
         return self.item_id
 
     def in_use(self):
-        # TODO handle deletes
-        return self.measures.model.objects.filter(
-            goods_nomenclature__sid=self.sid,
-        ).exists()
+        return (
+            self.measures.model.objects.filter(
+                goods_nomenclature__sid=self.sid,
+            )
+            .current()
+            .exists()
+        )
 
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
@@ -63,6 +82,8 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
     indented_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
     )
+
+    business_rules = (business_rules.NIG2,)
 
     def save(self, *args, **kwargs):
         return_value = super().save(*args, **kwargs)
@@ -236,6 +257,8 @@ class GoodsNomenclatureOrigin(TrackedModel):
         "derived_from_goods_nomenclature__sid",
     )
 
+    business_rules = (business_rules.NIG7,)
+
     def __str__(self):
         return (
             f"derived_from=({self.derived_from_goods_nomenclature}), "
@@ -267,6 +290,8 @@ class GoodsNomenclatureSuccessor(TrackedModel):
         "absorbed_into_goods_nomenclature__sid",
     )
 
+    business_rules = (business_rules.NIG10,)
+
     def __str__(self):
         return (
             f"replaced=({self.replaced_goods_nomenclature}), "
@@ -287,4 +312,10 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
         "goods_nomenclature__sid",
         "associated_footnote__footnote_id",
         "associated_footnote__footnote_type__footnote_type_id",
+    )
+
+    business_rules = (
+        business_rules.NIG22,
+        business_rules.NIG23,
+        business_rules.NIG24,
     )
