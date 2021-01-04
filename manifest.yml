@@ -1,7 +1,7 @@
 ---
 applications:
 - name: tamato-dev
-  memory: 128M
+  memory: 1G
   services:
     - tamato-dev-db
   buildpacks:
