@@ -110,7 +110,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         GeographicalArea, related_name="groups", on_delete=models.PROTECT
     )
 
-    identifying_fields = ("geo_group_id", "member_id")
+    identifying_fields = ("geo_group__sid", "member__sid")
 
     business_rules = (
         business_rules.GA13,

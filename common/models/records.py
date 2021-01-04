@@ -408,7 +408,7 @@ class TrackedModel(PolymorphicModel):
     def _get_version_group(self) -> VersionGroup:
         if self.update_type == validators.UpdateType.CREATE:
             return VersionGroup.objects.create()
-        return self.get_versions().last().version_group
+        return self.get_versions().current().last().version_group
 
     def _can_write(self):
         return not (

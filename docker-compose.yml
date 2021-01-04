@@ -5,15 +5,23 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
-      - tamato-seed2-volume:/var/lib/postgresql/data
+      - tamato-data-volume:/var/lib/postgresql/data
     ports:
       - "5431:5432"
 
-  redis:
+  cache-redis:
     image: redis
     restart: always
     ports:
       - "6379:6379"
+    volumes:
+      - .:/redis.conf
+
+  celery-redis:
+    image: redis
+    restart: always
+    ports:
+      - "6378:6379"
     volumes:
       - .:/redis.conf
 
@@ -35,11 +43,13 @@ services:
     depends_on:
       - db
       - s3
-      - redis
+      - cache-redis
+      - celery-redis
     links:
       - db
       - s3
-      - redis
+      - cache-redis
+      - celery-redis
     environment:
       DATABASE_URL: "postgres://postgres@db/postgres"
       DJANGO_SETTINGS_MODULE: "settings.dev"
@@ -47,6 +57,8 @@ services:
       PYTHONUNBUFFERED: "1"
       STARTING_TRANSACTION: "0"
       NURSERY_CACHE_ENGINE: "importer.cache.redis.RedisCacheEngine"
+      CACHE_URL: "redis://cache-redis:6378/1"
+      CELERY_BROKER_URL: "redis://celery-redis:6378/1"
     command:
       - python
       - manage.py
@@ -56,5 +68,3 @@ services:
 volumes:
   tamato-data-volume:
   tamato-s3-volume:
-#  tamato-data-volume:
-  tamato-seed2-volume:

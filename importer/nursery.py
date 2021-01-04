@@ -96,7 +96,20 @@ class TariffObjectNursery:
     def _cache_handler(self, handler):
         self.cache.put(handler.key, handler.serialize())
 
-    def clear_cache(self, repeats=2):
+    def clear_cache(self, repeats: int = 2):
+        """
+        Iterate over the cache and handle any objects which can be resolved.
+
+        As the importer runs many objects are created before their proper
+        relationships can be found. In some cases these will be cleared by
+        interdependent handlers. However in some cases (foreign key links)
+        the objects are left dangling in the cache.
+
+        This method runs through the cache and tries to resolve all objects
+        that it can. As some of the objects often depend on other objects
+        which are also in the cache, but appear later, this method runs
+        recursively based on the `repeats` argument
+        """
         for key in list(self.cache.keys()):
             handler = self.get_handler_from_cache(key)
             try:
@@ -180,6 +193,24 @@ class TariffObjectNursery:
                 obj.get_identifying_fields(identifying_fields),
             )
             cache.set(cache_key, (obj.pk, model.__name__), timeout=None)
+
+    def remove_object_from_cache(self, obj: TrackedModel):
+        """
+        Removes an object from the importer cache. If an object has to be deleted (generally
+        done in dev only) then it is problematic to keep the ID in the cache as well.
+
+        Key is generated based on the model name and the identifying fields used to find it.
+        """
+        model = obj.__class__
+        link_fields = self.get_handler_link_fields(model)
+
+        for identifying_fields in link_fields:
+            cache_key = self.generate_cache_key(
+                model,
+                identifying_fields,
+                obj.get_identifying_fields(identifying_fields),
+            )
+            cache.delete(cache_key)
 
     @classmethod
     def generate_cache_key(

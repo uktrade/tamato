@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import Prefetch
 
 from common.business_rules import BusinessRuleViolation
+from common.models.mixins import TimestampedMixin
 
 
 class TransactionManager(models.Manager):
@@ -25,7 +26,7 @@ class TransactionManager(models.Manager):
         )
 
 
-class Transaction(models.Model):
+class Transaction(TimestampedMixin):
     """Contains a group of one or more TrackedModel instances that must be applied
     atomically.
 
@@ -39,9 +40,9 @@ class Transaction(models.Model):
     workbasket = models.ForeignKey(
         "workbaskets.WorkBasket", on_delete=models.PROTECT, related_name="transactions"
     )
-    order = (
-        models.IntegerField()
-    )  # The order this transaction appears within the workbasket
+
+    # The order this transaction appears within the workbasket
+    order = models.IntegerField()
 
     composite_key = models.CharField(max_length=16, unique=True)
 

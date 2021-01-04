@@ -4,7 +4,6 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import Manager
@@ -44,7 +43,10 @@ class WorkBasket(TimestampedMixin):
     objects = WorkBasketManager()
 
     title = models.CharField(
-        max_length=255, help_text="Short name for this workbasket", db_index=True
+        max_length=255,
+        help_text="Short name for this workbasket",
+        db_index=True,
+        unique=True,
     )
     reason = models.TextField(
         blank=True, help_text="Reason for the changes to the tariff"
@@ -135,26 +137,6 @@ class WorkBasket(TimestampedMixin):
     def cds_error(self):
         pass
 
-    def clean(self):
-        if settings.SKIP_WORKBASKET_VALIDATION:
-            return
-        self.errors = []
-        types = set(
-            tracked_model.polymorphic_ctype.model_class()
-            for tracked_model in self.transactions.non_polymorphic().select_related(
-                "polymorphic_ctype"
-            )
-        )
-        for model_type in types:
-            try:
-                self.tracked_models.instance_of(model_type).first().validate_workbasket(
-                    self
-                )
-            except ValidationError as error:
-                self.errors.append((model_type, error))
-        if self.errors:
-            raise ValidationError(self.errors)
-
     def to_json(self):
         """Used for serializing the workbasket to the session"""
 
@@ -166,6 +148,10 @@ class WorkBasket(TimestampedMixin):
 
         # return a dict for convenient access to fields
         return json.loads(json.dumps(data, cls=DjangoJSONEncoder))
+
+    @property
+    def tracked_models(self):
+        return TrackedModel.objects.filter(transaction__workbasket=self)
 
     @classmethod
     def from_json(cls, data):
