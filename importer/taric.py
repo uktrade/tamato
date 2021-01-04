@@ -25,7 +25,7 @@ from importer.parsers import TextElement
 from taric.models import Envelope
 from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
-
+from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ class TransactionParser(ElementParser):
         """
         logging.debug(f"Saving transaction {self.data['id']}")
 
-        composite_key = str(envelope.id) + self.data["id"]
+        composite_key = str(envelope.envelope_id) + self.data["id"]
         try:
             transaction = models.Transaction.objects.create(
                 composite_key=composite_key,
@@ -154,9 +154,7 @@ class EnvelopeParser(ElementParser):
     ):
         super().__init__(**kwargs)
         self.last_transaction_id = -1
-        self.workbasket_status = (
-            workbasket_status or models.WorkflowStatus.PUBLISHED.value
-        )
+        self.workbasket_status = workbasket_status or WorkflowStatus.PUBLISHED.value
         self.tamato_username = tamato_username or settings.DATA_IMPORT_USERNAME
         self.save = save
         self.envelope: Optional[Envelope] = None

@@ -105,8 +105,23 @@ def find_and_run_next_batch_chunks(
     2) Measures from split files are assumed to be able to run completely
        asynchronously and so all chunks are setup as tasks once unblocked.
     """
-    if not batch.ready_chunks.exists():  # The job is finished in this case.
+    if batch.dependencies.still_running().exists():
         return
+
+    if not batch.ready_chunks.exists():  # The job is finished in this case.
+        logger.info("finished")
+        if (
+            batch.chunks.exclude(status=models.ImporterChunkStatus.DONE)
+            .defer("chunk_text")
+            .exists()
+        ):
+            logger.info("Batch %s errored", batch)
+            return
+        for dependent_batch in models.ImportBatch.objects.depends_on(
+            batch
+        ).dependencies_finished():
+            logger.info("setting up tasks for %s", dependent_batch)
+            find_and_run_next_batch_chunks(dependent_batch, status, username)
 
     if not batch.split_job:  # We only run one chunk at a time when the job isn't split
         setup_chunk_task(batch, status, username)

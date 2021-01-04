@@ -5,9 +5,11 @@ from importer.management.commands.run_import_batch import run_batch
 from workbaskets.validators import WorkflowStatus
 
 
-def import_taric(taric3_file, username, status, split_codes: bool = False):
+def import_taric(
+    taric3_file, username, status, split_codes: bool = False, dependencies=None
+):
     with open(taric3_file, "rb") as seed_file:
-        batch = chunk_taric(seed_file, split_codes)
+        batch = chunk_taric(seed_file, split_codes, dependencies)
 
     run_batch(batch.name, username, status)
 
@@ -45,6 +47,12 @@ class Command(BaseCommand):
             help="Split the file based on record codes",
             action="store_true",
         )
+        parser.add_argument(
+            "-d",
+            "--dependencies",
+            help="List of batches that need to finish before the current batch can run",
+            action="append",
+        )
 
     def handle(self, *args, **options):
         import_taric(
@@ -52,4 +60,5 @@ class Command(BaseCommand):
             username=options["username"],
             status=options["status"],
             split_codes=options["split_codes"],
+            dependencies=options["dependencies"],
         )

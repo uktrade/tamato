@@ -1,4 +1,6 @@
 import logging
+import random
+import time
 from datetime import timedelta
 from typing import Any
 from typing import Optional
@@ -13,7 +15,6 @@ from commodities.exceptions import InvalidIndentError
 from common.util import TaricDateTimeRange
 from common.validators import UpdateType
 from footnotes.models import Footnote
-from footnotes.models import FootnoteType
 from importer.handlers import BaseHandler
 
 logger = logging.getLogger(__name__)
@@ -57,9 +58,15 @@ class GoodsNomenclatureOriginHandler(BaseHandler):
     )
 
     def get_derived_from_goods_nomenclature_link(self, model, kwargs):
-        must_be_active_on_date = self.resolved_links[
-            "new_goods_nomenclature"
-        ].valid_between.lower - timedelta(days=1)
+        if "new_goods_nomenclature_id" in self.resolved_links:
+            good = models.GoodsNomenclature.objects.get(
+                pk=self.resolved_links["new_goods_nomenclature_id"]
+            )
+        else:
+            good = self.resolved_links["new_goods_nomenclature"]
+
+        must_be_active_on_date = good.valid_between.lower - timedelta(days=1)
+
         return (
             model.objects.filter(
                 valid_between__contains=must_be_active_on_date,
@@ -95,11 +102,15 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
     )
 
     def get_absorbed_into_goods_nomenclature_link(self, model, kwargs):
-        if "replaced_goods_nomenclature" not in self.resolved_links:
-            raise model.DoesNotExist
-        must_be_active_on_date = self.resolved_links[
-            "replaced_goods_nomenclature"
-        ].valid_between.upper + timedelta(days=1)
+        if "replaced_goods_nomenclature_id" in self.resolved_links:
+            good = models.GoodsNomenclature.objects.get(
+                pk=self.resolved_links["replaced_goods_nomenclature_id"]
+            )
+        else:
+            good = self.resolved_links["replaced_goods_nomenclature"]
+
+        must_be_active_on_date = good.valid_between.upper + timedelta(days=1)
+
         return (
             model.objects.filter(
                 valid_between__contains=must_be_active_on_date,
@@ -184,6 +195,8 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         if depth == 0 and item_id[2:] == "00000000":
             # This is a root indent (i.e. a chapter heading)
+            # Race conditions are common, so reduce the chance of it.
+            time.sleep(random.choice([x * 0.05 for x in range(0, 200)]))
             models.GoodsNomenclatureIndentNode.add_root(**node_data)
             return indent
 

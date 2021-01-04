@@ -30,7 +30,7 @@ class Envelope(models.Model):
     tariff in the sequence defined by the transaction IDs.
     """
 
-    envelope_id = EnvelopeId()
+    envelope_id = EnvelopeId(unique=True)
     transactions = models.ManyToManyField(
         Transaction, related_name="envelopes", through="EnvelopeTransaction"
     )

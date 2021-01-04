@@ -230,6 +230,8 @@ def write_transaction_to_chunk(
         .replace(b"<ns1:", b"<ns2:")
         .replace(b"</ns0:", b"</env:")
         .replace(b"</ns1:", b"</ns2:")
+        .replace(b"xmlns:ns0=", b"xmlns:env=")
+        .replace(b"xmlns:ns1=", b"xmlns:ns2=")
     )
 
     if chunk.tell() > MAX_FILE_SIZE:
@@ -238,7 +240,9 @@ def write_transaction_to_chunk(
         chunks_in_progress.pop(key)
 
 
-def chunk_taric(taric3_file, split_on_code: bool = False) -> models.ImportBatch:
+def chunk_taric(
+    taric3_file, split_on_code: bool = False, dependencies=None
+) -> models.ImportBatch:
     """
     Parses a TARIC3 XML stream and breaks it into a batch of chunks. All chunks are written to
     the database. If the batch is intended to be split on record code then the commodity codes
@@ -254,6 +258,12 @@ def chunk_taric(taric3_file, split_on_code: bool = False) -> models.ImportBatch:
             batch = models.ImportBatch.objects.create(
                 name=elem.get("id", taric3_file.name), split_job=split_on_code
             )
+
+    for dependency in dependencies or []:
+        models.BatchDependencies.objects.create(
+            depends_on=models.ImportBatch.objects.get(name=dependency),
+            dependent_batch=batch,
+        )
 
     element_counter = 0
     for event, elem in xmlparser:
@@ -292,7 +302,17 @@ class Command(BaseCommand):
             help="Split the file based on record codes",
             action="store_true",
         )
+        parser.add_argument(
+            "-d",
+            "--dependencies",
+            help="List of batches that need to finish before the current batch can run",
+            action="append",
+        )
 
     def handle(self, *args, **options):
         with open(options["taric3_file"], "rb") as taric3_file:
-            chunk_taric(taric3_file=taric3_file, split_on_code=options["split_codes"])
+            chunk_taric(
+                taric3_file=taric3_file,
+                split_on_code=options["split_codes"],
+                dependencies=options["dependencies"],
+            )
