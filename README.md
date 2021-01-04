@@ -54,7 +54,7 @@ The app requires an s3 bucket on AWS or a compatible implementation, such as Min
 
 ### Running locally
 
-This app requires Python 3.8.x and Node 12.18.x
+This app requires Python 3.8.x and Node 14.15.x
 
 Create a Python virtualenv and install the dependencies:
 
