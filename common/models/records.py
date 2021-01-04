@@ -145,7 +145,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         # get models in the workbasket
         in_workbasket = self.model.objects.filter(transaction__workbasket=workbasket)
         # add latest version of models from the current workbasket
-        return self.filter(query) | in_workbasket.current()
+        return self.filter(query) | in_workbasket
 
     def approved(self):
         """

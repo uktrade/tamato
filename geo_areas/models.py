@@ -6,6 +6,7 @@ from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from geo_areas import business_rules
 from geo_areas import validators
 
 
@@ -40,8 +41,29 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     # This deals with subgroups of other groups
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
 
+    business_rules = (
+        business_rules.GA1,
+        business_rules.GA3,
+        business_rules.GA4,
+        business_rules.GA5,
+        business_rules.GA6,
+        business_rules.GA7,
+        business_rules.GA10,
+        business_rules.GA11,
+        business_rules.GA12,
+        business_rules.GA21,
+        business_rules.GA22,
+    )
+
     def get_description(self):
         return self.geographicalareadescription_set.last()
+
+    def get_descriptions(self, workbasket=None):
+        return (
+            GeographicalAreaDescription.objects.current()
+            .filter(area__sid=self.sid)
+            .with_workbasket(workbasket)
+        )
 
     def in_use(self):
         # TODO handle deletes
@@ -89,6 +111,15 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     )
 
     identifying_fields = ("geo_group_id", "member_id")
+
+    business_rules = (
+        business_rules.GA13,
+        business_rules.GA16,
+        business_rules.GA17,
+        business_rules.GA18,
+        business_rules.GA20,
+        business_rules.GA23,
+    )
 
     def member_used_in_measure_exclusion(self):
         # TODO handle deletes

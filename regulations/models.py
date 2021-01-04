@@ -8,8 +8,8 @@ from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas.validators import area_id_validator
 from measures.validators import measure_type_id_validator
+from regulations import business_rules
 from regulations import validators
-from regulations.validators import CommunityCode
 
 
 class Group(TrackedModel, ValidityMixin):
@@ -129,7 +129,7 @@ class Regulation(TrackedModel):
         choices=validators.CommunityCode.choices,
         blank=True,
         null=True,
-        default=CommunityCode.ECONOMIC,
+        default=validators.CommunityCode.ECONOMIC,
     )
     regulation_group = models.ForeignKey(
         Group,
@@ -171,6 +171,15 @@ class Regulation(TrackedModel):
         through="Replacement",
         related_name="+",
         through_fields=("enacting_regulation", "target_regulation"),
+    )
+
+    business_rules = (
+        business_rules.ROIMB1,
+        business_rules.ROIMB4,
+        business_rules.ROIMB8,
+        business_rules.ROIMB44,
+        business_rules.ROIMB46,
+        business_rules.ROIMB47,
     )
 
     @classmethod

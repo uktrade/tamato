@@ -67,6 +67,12 @@ class Footnote(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.FO2,
         business_rules.FO4,
+        business_rules.FO5,
+        business_rules.FO6,
+        business_rules.FO9,
+        business_rules.FO11,
+        business_rules.FO12,
+        business_rules.FO15,
         business_rules.FO17,
     )
 

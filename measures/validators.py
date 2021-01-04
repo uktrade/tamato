@@ -1,4 +1,3 @@
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -64,6 +63,14 @@ class MeasureTypeCombination(models.IntegerChoices):
     ALL_MEASURES = 1, "All measure types in the series to be considered"
 
 
+class MeasureExplosionLevel(models.IntegerChoices):
+    HARMONISED_SYSTEM_CHAPTER = 2, "Harmonised System Chapter"
+    HARMONISED_SYSTEM_HEADING = 4, "Harmonised System Heading"
+    HARMONISED_SYSTEM_SUBHEADING = 6, "Harmonised System Subheading"
+    COMBINED_NOMENCLATURE = 8, "Combined Nomenclature"
+    TARIC = 10, "TARIC"
+
+
 class ImportExportCode(models.IntegerChoices):
     IMPORT = 0, "Import"
     EXPORT = 1, "Export"
@@ -79,16 +86,17 @@ class OrderNumberCaptureCode(models.IntegerChoices):
 
 
 def validate_measure_explosion_level(value):
-    explosion_levels = [2, 4, 6, 8, 10]
-    if value not in explosion_levels:
-        raise ValidationError(f"Explosion level must be one of {explosion_levels}")
+    if value not in MeasureExplosionLevel.values:
+        raise ValidationError(
+            f"Explosion level must be one of {MeasureExplosionLevel.values}"
+        )
 
 
 def validate_action_code(value):
     try:
         index = int(value)
     except ValueError as e:
-        raise ValidationError(f"Action code must be a number")
+        raise ValidationError(f"Action code must be a number") from e
 
     NumberRangeValidator(1, 999)(index)
 
@@ -96,18 +104,3 @@ def validate_action_code(value):
 validate_reduction_indicator = NumberRangeValidator(1, 9)
 
 validate_component_sequence_number = NumberRangeValidator(1, 999)
-
-
-def must_exist(obj, field_name, message=None):
-    """Check that a foreign key links to an existing object unless nullable."""
-    # TODO does an object need to exist in the database AND be
-    # approved/published/active?
-
-    if message is None:
-        message = f"{obj.__class__.__name__} {field_name} must exist."
-
-    try:
-        if getattr(obj, field_name) is None:
-            return
-    except ObjectDoesNotExist as e:
-        raise ValidationError({field_name: message}) from e

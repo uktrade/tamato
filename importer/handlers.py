@@ -7,6 +7,7 @@ from typing import List
 from typing import Set
 from typing import Type
 
+from django.conf import settings
 from django.utils.functional import classproperty
 from rest_framework.serializers import ModelSerializer
 
@@ -305,9 +306,12 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         if not any(kwargs.values()):
             raise model.DoesNotExist
 
-        cached_object = self.nursery.get_obj_from_cache(model, kwargs.keys(), kwargs)
-        if cached_object and cached_object[1] == model.__name__:
-            return cached_object[0], True
+        if settings.USE_IMPORTER_CACHE:
+            cached_object = self.nursery.get_obj_from_cache(
+                model, kwargs.keys(), kwargs
+            )
+            if cached_object and cached_object[1] == model.__name__:
+                return cached_object[0], True
 
         try:
             if self.data["update_type"] == UpdateType.DELETE:

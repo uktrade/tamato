@@ -1,5 +1,6 @@
 from django.db import models
 
+from additional_codes import business_rules
 from additional_codes import validators
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -32,6 +33,8 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         choices=validators.ApplicationCode.choices,
     )
 
+    business_rules = (business_rules.CT1,)
+
     def __str__(self):
         return f"AdditionalcodeType {self.sid}: {self.description}"
 
@@ -50,14 +53,34 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         max_length=3, validators=[validators.additional_code_validator]
     )
 
+    business_rules = (
+        business_rules.ACN1,
+        business_rules.ACN2,
+        business_rules.ACN4,
+        business_rules.ACN5,
+        business_rules.ACN13,
+        business_rules.ACN14,
+        business_rules.ACN17,
+    )
+
     def get_description(self):
         return self.descriptions.last()
 
+    def get_descriptions(self, workbasket=None):
+        return (
+            AdditionalCodeDescription.objects.current()
+            .filter(described_additional_code__sid=self.sid)
+            .with_workbasket(workbasket)
+        )
+
     def in_use(self):
-        # TODO handle deletes
-        return self.measure_set.model.objects.filter(
-            additional_code__sid=self.sid,
-        ).exists()
+        return (
+            self.measure_set.model.objects.filter(
+                additional_code__sid=self.sid,
+            )
+            .current()
+            .exists()
+        )
 
 
 class AdditionalCodeDescription(TrackedModel, ValidityMixin):

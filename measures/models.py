@@ -10,6 +10,7 @@ from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from common.util import TaricDateTimeRange
+from measures import business_rules
 from measures import validators
 from measures.querysets import MeasuresQuerySet
 from quotas.validators import quota_order_number_validator
@@ -37,6 +38,11 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
+    business_rules = (
+        business_rules.MTS1,
+        business_rules.MTS2,
+    )
+
     def in_use(self):
         # TODO handle deletes
         return MeasureType.objects.filter(
@@ -62,6 +68,13 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
     abbreviation = models.CharField(max_length=32, blank=True)
 
     identifying_fields = ("code",)
+    business_rules = (
+        business_rules.MT1,
+        business_rules.MT3,
+        business_rules.MT4,
+        business_rules.MT7,
+        business_rules.MT10,
+    )
 
 
 class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
@@ -179,7 +192,8 @@ class MeasureType(TrackedModel, ValidityMixin):
         choices=validators.OrderNumberCaptureCode.choices
     )
     measure_explosion_level = models.PositiveSmallIntegerField(
-        validators=[validators.validate_measure_explosion_level]
+        choices=validators.MeasureExplosionLevel.choices,
+        validators=[validators.validate_measure_explosion_level],
     )
     description = ShortDescription()
     measure_type_series = models.ForeignKey(MeasureTypeSeries, on_delete=models.PROTECT)
@@ -253,6 +267,11 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
 
     identifying_fields = ("code",)
 
+    business_rules = (
+        business_rules.MC1,
+        business_rules.MC4,
+    )
+
     def used_in_component(self):
         # TODO handle deletes
         # TODO handle MeasureConditionCode versions
@@ -278,6 +297,11 @@ class MeasureAction(TrackedModel, ValidityMixin):
     description = ShortDescription()
 
     identifying_fields = ("code",)
+
+    business_rules = (
+        business_rules.MA1,
+        business_rules.MA2,
+    )
 
     def in_use(self):
         # TODO handle deletes
@@ -361,6 +385,40 @@ class Measure(TrackedModel, ValidityMixin):
 
     identifying_fields = ("sid",)
 
+    business_rules = (
+        business_rules.ME1,
+        business_rules.ME2,
+        business_rules.ME3,
+        business_rules.ME4,
+        business_rules.ME5,
+        business_rules.ME6,
+        business_rules.ME7,
+        business_rules.ME8,
+        business_rules.ME88,
+        business_rules.ME16,
+        business_rules.ME115,
+        business_rules.ME25,
+        business_rules.ME32,
+        business_rules.ME10,
+        business_rules.ME116,
+        business_rules.ME119,
+        business_rules.ME9,
+        business_rules.ME12,
+        business_rules.ME17,
+        business_rules.ME24,
+        business_rules.ME87,
+        business_rules.ME33,
+        business_rules.ME34,
+        business_rules.ME40,
+        business_rules.ME45,
+        business_rules.ME46,
+        business_rules.ME47,
+        business_rules.ME109,
+        business_rules.ME110,
+        business_rules.ME111,
+        business_rules.ME104,
+    )
+
     objects = PolymorphicManager.from_queryset(MeasuresQuerySet)()
 
     @property
@@ -441,6 +499,18 @@ class MeasureComponent(TrackedModel):
 
     identifying_fields = ("component_measure__sid", "duty_expression__sid")
 
+    business_rules = (
+        business_rules.ME41,
+        business_rules.ME42,
+        business_rules.ME43,
+        business_rules.ME48,
+        business_rules.ME49,
+        business_rules.ME50,
+        business_rules.ME51,
+        business_rules.ME52,
+        business_rules.ME108,
+    )
+
 
 class MeasureCondition(TrackedModel):
     """A measure may be dependent on conditions. These are expressed in a series of
@@ -477,6 +547,21 @@ class MeasureCondition(TrackedModel):
         "certificates.Certificate", on_delete=models.PROTECT, null=True, blank=True
     )
 
+    business_rules = (
+        business_rules.MC3,
+        business_rules.MA4,
+        business_rules.ME56,
+        business_rules.ME57,
+        business_rules.ME58,
+        business_rules.ME59,
+        business_rules.ME60,
+        business_rules.ME61,
+        business_rules.ME62,
+        business_rules.ME62,
+        business_rules.ME63,
+        business_rules.ME64,
+    )
+
 
 class MeasureConditionComponent(TrackedModel):
     """Contains the duty information or part of the duty information of the measure
@@ -502,6 +587,12 @@ class MeasureConditionComponent(TrackedModel):
 
     identifying_fields = ("condition__sid", "duty_expression__sid")
 
+    business_rules = (
+        business_rules.ME53,
+        business_rules.ME105,
+        business_rules.ME106,
+    )
+
 
 class MeasureExcludedGeographicalArea(TrackedModel):
     """The measure excluded geographical area modifies the applicable geographical area
@@ -518,6 +609,13 @@ class MeasureExcludedGeographicalArea(TrackedModel):
     )
     excluded_geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea", on_delete=models.PROTECT
+    )
+
+    business_rules = (
+        business_rules.ME65,
+        business_rules.ME66,
+        business_rules.ME67,
+        business_rules.ME68,
     )
 
 
@@ -538,4 +636,11 @@ class FootnoteAssociationMeasure(TrackedModel):
         "footnoted_measure__sid",
         "associated_footnote__footnote_id",
         "associated_footnote__footnote_type__footnote_type_id",
+    )
+
+    business_rules = (
+        business_rules.ME69,
+        business_rules.ME70,
+        business_rules.ME71,
+        business_rules.ME73,
     )

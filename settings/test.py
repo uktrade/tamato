@@ -33,3 +33,4 @@ CACHES = {
 NURSERY_CACHE_ENGINE = "importer.cache.memory.MemoryCacheEngine"
 
 SKIP_WORKBASKET_VALIDATION = is_truthy(os.getenv("SKIP_WORKBASKET_VALIDATION", True))
+USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", False))

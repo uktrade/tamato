@@ -1,6 +1,7 @@
 """Business rules for geographical areas."""
 from django.db import connection
 from django.db.models import F
+from django.db.models import QuerySet
 
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
@@ -67,6 +68,7 @@ class GA5(BusinessRule):
                 parent__isnull=False,
                 sid=geo_area.sid,
             )
+            .current()
             .exclude(
                 parent__valid_between__contains=F("valid_between"),
             )
@@ -129,8 +131,10 @@ class GA10(BusinessRule):
             geo_area.measures.model.objects.filter(
                 geographical_area__sid=geo_area.sid,
             )
+            .current()
+            .with_effective_valid_between()
             .exclude(
-                valid_between__contained_by=geo_area.valid_between,
+                db_effective_valid_between__contained_by=geo_area.valid_between,
             )
             .exists()
         ):
@@ -144,13 +148,14 @@ class GA11(BusinessRule):
     """
 
     def validate(self, geo_area):
+        Measure = (
+            geo_area.measureexcludedgeographicalarea_set.model.modified_measure.field.related_model
+        )
         if (
-            geo_area.measureexcludedgeographicalarea_set.model.objects.filter(
-                excluded_geographical_area__sid=geo_area.sid
-            )
-            .exclude(
-                modified_measure__valid_between__contained_by=geo_area.valid_between,
-            )
+            Measure.objects.with_effective_valid_between()
+            .current()
+            .filter(exclusions__excluded_geographical_area__sid=geo_area.sid)
+            .exclude(db_effective_valid_between__contained_by=geo_area.valid_between)
             .exists()
         ):
             raise self.violation(geo_area)
@@ -187,6 +192,7 @@ class GA16(BusinessRule):
             .objects.filter(
                 geo_group=membership.geo_group,
             )
+            .current()
             .exclude(
                 member__valid_between__contained_by=membership.geo_group.valid_between,
             )
@@ -207,6 +213,7 @@ class GA17(BusinessRule):
             .objects.filter(
                 geo_group=membership.geo_group,
             )
+            .current()
             .exclude(
                 valid_between__contained_by=membership.geo_group.valid_between,
             )
@@ -228,6 +235,7 @@ class GA18(BusinessRule):
                 member=membership.member,
                 valid_between__overlap=membership.valid_between,
             )
+            .current()
             .exclude(
                 id=membership.id,
             )
@@ -256,13 +264,14 @@ class GA20(BusinessRule):
     """
 
     def validate(self, membership):
-        parent = membership.geo_group.parent
+        parent = membership.geo_group.parent_current
 
         if (
             parent
             and parent.members.filter(
-                member=membership.member,
+                member__sid=membership.member.sid,
             )
+            .current()
             .exclude(
                 valid_between__contains=membership.valid_between,
             )
