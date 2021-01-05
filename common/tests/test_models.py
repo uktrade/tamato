@@ -225,6 +225,10 @@ def test_trackedmodel_can_attach_record_codes(workbasket):
 def test_get_latest_relation_with_latest_links(
     model1_with_history, django_assert_num_queries
 ):
+    """
+    Assert that using `.with_latest_links` should allow a TrackedModel
+    to retrieve the current version of a relation without any extra queries.
+    """
     oldest_link = model1_with_history.all_models[0]
     latest_link = model1_with_history.all_models[-1]
 
@@ -242,6 +246,17 @@ def test_get_latest_relation_with_latest_links(
 def test_get_latest_relation_without_latest_links(
     model1_with_history, django_assert_num_queries
 ):
+    """
+    Assert that without using `.with_latest_link` requires a Tracked Model
+    to use 4 queries to get the current version of a relation.
+
+    Finding the current version of an object requires 4 queries:
+
+    - Get the originating object as a starting point (e.g. start = TrackedModel.objects.get(pk=1))
+    - Get the related object (e.g. related = start.link)
+    - Get the related objects version group (e.g. group = related.version_group)
+    - Get the current version (e.g. current = group.current_version)
+    """
     oldest_link = model1_with_history.all_models[0]
     latest_link = model1_with_history.all_models[-1]
 

@@ -248,7 +248,8 @@ def imported_fields_match(valid_user, settings):
     The function serializes the model to TARIC XML, inputs this to the importer, then
     fetches the newly created model from the database and compares the fields.
 
-    It returns True if there are no discrepancies, allowing it to be used with `assert`.
+    It returns the imported object if there are no discrepancies, allowing it to be
+    further tested.
     """
 
     def check(
@@ -300,6 +301,14 @@ def update_imported_fields_match(
     date_ranges,
     request,
 ):
+    """
+    Provides much the same functionality as imported_fields_match, however
+    makes some adjustments for updates and deletes.
+
+    In addition to imported_fields_match a previously created object
+    is generated. The data around version groups is also tested.
+    """
+
     def check(
         model: Union[TrackedModel, Type[DjangoModelFactory]],
         serializer: Type[TrackedModelSerializer],

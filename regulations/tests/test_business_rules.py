@@ -1,7 +1,7 @@
 import pytest
-from django.core.exceptions import ValidationError
 from django.db import DataError
 
+from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
 from regulations import business_rules
@@ -18,7 +18,7 @@ def test_ROIMB1(make_duplicate_record):
 
     duplicate = make_duplicate_record(factories.BaseRegulationFactory)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.ROIMB1().validate(duplicate)
 
 
@@ -27,7 +27,7 @@ def test_ROIMB3(date_ranges):
     # In the UK, legislation will be rarely end-dated.
 
     with pytest.raises(DataError):
-        factories.BaseRegulationFactory(valid_between=date_ranges.backwards)
+        factories.BaseRegulationFactory.create(valid_between=date_ranges.backwards)
 
 
 def test_ROIMB4(reference_nonexistent_record):
@@ -36,7 +36,7 @@ def test_ROIMB4(reference_nonexistent_record):
     with reference_nonexistent_record(
         factories.BaseRegulationFactory, "regulation_group"
     ) as regulation:
-        with pytest.raises(ValidationError):
+        with pytest.raises(BusinessRuleViolation):
             business_rules.ROIMB4().validate(regulation)
 
 
@@ -75,12 +75,12 @@ def test_ROIMB8(date_ranges):
     Only applicable for measures with start date after 31/12/2003."""
 
     measure = factories.MeasureFactory.create(
-        generating_regulation=factories.BaseRegulationFactory(
+        generating_regulation=factories.BaseRegulationFactory.create(
             valid_between=date_ranges.normal,
         ),
         valid_between=date_ranges.overlap_normal,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.ROIMB8().validate(measure.generating_regulation)
 
 
@@ -128,7 +128,7 @@ def test_ROIMB44(id, approved, change_flag, expect_error):
         )
 
     if expect_error:
-        with pytest.raises(ValidationError):
+        with pytest.raises(BusinessRuleViolation):
             business_rules.ROIMB44().validate(regulation)
 
     else:
@@ -143,21 +143,23 @@ def test_ROIMB46(delete_record):
     # justification regulation field, though there will be a lot of EU regulations where
     # the justification regulation field is set.
 
-    regulation = factories.BaseRegulationFactory()
-    factories.MeasureFactory(terminating_regulation=regulation)
+    regulation = factories.BaseRegulationFactory.create()
+    factories.MeasureFactory.create(terminating_regulation=regulation)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.ROIMB46().validate(delete_record(regulation))
 
-    draft_regulation = factories.BaseRegulationFactory(regulation_id="C2000000")
-    factories.MeasureFactory(
+    draft_regulation = factories.BaseRegulationFactory.create(regulation_id="C2000000")
+    factories.MeasureFactory.create(
         generating_regulation=draft_regulation, terminating_regulation=draft_regulation
     )
 
     business_rules.ROIMB46().validate(delete_record(draft_regulation))
 
-    not_base_regulation = factories.RegulationFactory(role_type=RoleType.MODIFICATION)
-    factories.MeasureFactory(terminating_regulation=not_base_regulation)
+    not_base_regulation = factories.RegulationFactory.create(
+        role_type=RoleType.MODIFICATION
+    )
+    factories.MeasureFactory.create(terminating_regulation=not_base_regulation)
 
     business_rules.ROIMB46().validate(delete_record(not_base_regulation))
 
@@ -168,9 +170,9 @@ def test_ROIMB47(date_ranges):
     # But we will be ensuring that the regulation groups are not end dated, therefore we
     # will not get hit by this
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.ROIMB47().validate(
-            factories.BaseRegulationFactory(
+            factories.BaseRegulationFactory.create(
                 regulation_group__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
             )

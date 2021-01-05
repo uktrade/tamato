@@ -264,6 +264,11 @@ def test_goods_nomenclature_indent_importer_update_with_parent_low_indent(
 
 
 def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid_user):
+    """
+    Ensure Goods Nomenclature Indent importers can appropriately handle importing
+    indents into the hierarchy when receiving codes which have already used up
+    all 10 digits of the code.
+    """
     parent_indent = None
     for idx in range(1, 6):
         parent_indent = factories.GoodsNomenclatureIndentNodeFactory.create(
@@ -280,14 +285,21 @@ def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid
 
     db_indent = make_and_get_indent(indent, valid_user, depth=4)
 
-    compare_indent(indent, db_indent, 4, 1, 6)
+    compare_indent(indent, db_indent, indent_level=4, count=1, depth=6)
 
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_with_parent_high_indent(
     valid_user, update_type, date_ranges
 ):
+    """
+    Ensure Goods Nomenclature Indent importers can appropriately handle importing
+    indents into the hierarchy when receiving codes which have already used up
+    all 10 digits of the code.
+    """
     parent_indent = None
+    # Make enough of a hierarchy to ensure we're beyond indent 5, meaning we're dependent
+    # on suffix, indent and code and not just the goods code to figure out the hierarchy.
     for idx in range(1, 6):
         parent_indent = factories.GoodsNomenclatureIndentNodeFactory.create(
             indent__indented_goods_nomenclature__item_id=("12" * idx).ljust(10, "0"),
@@ -310,7 +322,7 @@ def test_goods_nomenclature_indent_importer_update_with_parent_high_indent(
 
     db_indent = make_and_get_indent(updated_indent, valid_user, depth=4)
 
-    compare_indent(updated_indent, db_indent, 4, 1, 6)
+    compare_indent(updated_indent, db_indent, indent_level=4, count=1, depth=6)
 
 
 def test_goods_nomenclature_indent_importer_create_multiple_parents(
@@ -401,7 +413,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
     first_indent = make_and_get_indent(indent, valid_user, depth=0)
     first_parents = [node.get_parent() for node in first_indent.nodes.all()]
 
-    assert first_parents == [parent1, parent2, parent3]
+    assert set(first_parents) == {parent1, parent2, parent3}
 
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=first_indent.sid,
@@ -417,7 +429,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
     assert second_indent.sid == first_indent.sid
     assert second_indent.indent == 0
     assert len(second_parents) == 2
-    assert second_parents == [parent2, parent3]
+    assert set(second_parents) == {parent2, parent3}
     assert (
         second_indent.indented_goods_nomenclature.sid
         == indent.indented_goods_nomenclature.sid
@@ -549,7 +561,7 @@ def test_goods_nomenclature_indent_importer_update_with_children(
 
     db_indent = make_and_get_indent(updated_indent, valid_user, depth=0)
 
-    compare_indent(updated_indent, db_indent, 0, 1, 2)
+    compare_indent(updated_indent, db_indent, indent_level=0, count=1, depth=2)
 
     db_indent_node = db_indent.nodes.first()
     children = db_indent_node.get_children()
