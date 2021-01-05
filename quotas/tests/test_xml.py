@@ -70,6 +70,12 @@ def test_quota_event_xml(
     subrecord_code,
     event_type_name,
 ):
+    """
+    Ensure Quota Events of all types output appropriate XML.
+
+    Quota Events are a bit special and very dynamic. As a result this test allows
+    all the various event types to be tested individually.
+    """
     event_type_name = event_type_name.lower()
     if event_type_name == "closed":
         event_type_name = "closed.and.transferred"

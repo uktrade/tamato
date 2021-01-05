@@ -1,8 +1,8 @@
 import pytest
-from django.core.exceptions import ValidationError
 from django.db import DataError
 
 from commodities import business_rules
+from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 
 
@@ -17,7 +17,7 @@ def test_NIG1():
 
     good = factories.GoodsNomenclatureFactory.create()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG1().validate(
             factories.GoodsNomenclatureFactory.create(
                 sid=good.sid, valid_between=good.valid_between
@@ -39,7 +39,7 @@ def test_NIG2(date_ranges):
         node__parent=parent.nodes.first(),
         indented_goods_nomenclature__valid_between=date_ranges.adjacent_later_big,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG2().validate(child)
 
 
@@ -59,7 +59,7 @@ def test_NIG5():
     origin = factories.GoodsNomenclatureFactory.create()
     parent_node = factories.GoodsNomenclatureIndentFactory.create().nodes.first()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG5().validate(
             factories.GoodsNomenclatureFactory.create(
                 origin=None,
@@ -98,12 +98,12 @@ def test_NIG7(date_ranges, valid_between, expect_error):
                 ),
             )
         )
-    except ValidationError:
+    except BusinessRuleViolation:
         if not expect_error:
             raise
     else:
         if expect_error:
-            pytest.fail("DID NOT RAISE ValidationError")
+            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 @pytest.mark.parametrize(
@@ -128,19 +128,21 @@ def test_NIG10(date_ranges, valid_between, expect_error):
                 ),
             )
         )
-    except ValidationError:
+    except BusinessRuleViolation:
         if not expect_error:
             raise
     else:
         if expect_error:
-            pytest.fail("DID NOT RAISE ValidationError")
+            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 def test_NIG11_one_indent_mandatory():
     """At least one indent record is mandatory."""
 
-    with pytest.raises(ValidationError):
-        business_rules.NIG11().validate(factories.GoodsNomenclatureFactory(indent=None))
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.NIG11().validate(
+            factories.GoodsNomenclatureFactory.create(indent=None)
+        )
 
 
 def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
@@ -148,12 +150,12 @@ def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
     nomenclature.
     """
 
-    indent = factories.GoodsNomenclatureIndentFactory(
+    indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG11().validate(indent.indented_goods_nomenclature)
 
 
@@ -161,11 +163,11 @@ def test_NIG11_no_overlapping_indents():
     """No two associated indentations may have the same start date."""
 
     existing = factories.GoodsNomenclatureIndentFactory.create()
-    factories.GoodsNomenclatureIndentFactory(
+    factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=existing.indented_goods_nomenclature,
         valid_between=existing.valid_between,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG11().validate(existing.indented_goods_nomenclature)
 
 
@@ -177,16 +179,16 @@ def test_NIG11_start_date_less_than_end_date(date_ranges):
         valid_between=date_ranges.later,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG11().validate(indent.indented_goods_nomenclature)
 
 
 def test_NIG12_one_description_mandatory():
     """At least one description record is mandatory."""
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG12().validate(
-            factories.GoodsNomenclatureFactory(description=None)
+            factories.GoodsNomenclatureFactory.create(description=None)
         )
 
 
@@ -195,9 +197,9 @@ def test_NIG12_first_description_must_have_same_start_date(date_ranges):
     the nomenclature.
     """
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG12().validate(
-            factories.GoodsNomenclatureFactory(
+            factories.GoodsNomenclatureFactory.create(
                 description__valid_between=date_ranges.later
             )
         )
@@ -206,12 +208,12 @@ def test_NIG12_first_description_must_have_same_start_date(date_ranges):
 def test_NIG12_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
-    goods_nomenclature = factories.GoodsNomenclatureFactory()
-    factories.GoodsNomenclatureDescriptionFactory(
+    goods_nomenclature = factories.GoodsNomenclatureFactory.create()
+    factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=goods_nomenclature,
         valid_between=goods_nomenclature.valid_between,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG12().validate(goods_nomenclature)
 
 
@@ -229,7 +231,7 @@ def test_NIG12_description_start_before_nomenclature_end(
         described_goods_nomenclature=goods_nomenclature, valid_between=date_ranges.later
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG12().validate(goods_nomenclature)
 
 
@@ -249,7 +251,7 @@ def test_NIG22(date_ranges):
     of the nomenclature.
     """
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG22().validate(
             factories.FootnoteAssociationGoodsNomenclatureFactory.create(
                 goods_nomenclature__valid_between=date_ranges.normal,
@@ -263,9 +265,9 @@ def test_NIG23(date_ranges):
     of the footnote.
     """
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG23().validate(
-            factories.FootnoteAssociationGoodsNomenclatureFactory(
+            factories.FootnoteAssociationGoodsNomenclatureFactory.create(
                 associated_footnote__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
             )
@@ -297,12 +299,12 @@ def test_NIG24(date_ranges, valid_between, expect_error):
                 valid_between=getattr(date_ranges, valid_between),
             )
         )
-    except ValidationError:
+    except BusinessRuleViolation:
         if not expect_error:
             raise
     else:
         if expect_error:
-            pytest.fail("DID NOT RAISE ValidationError")
+            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 def test_NIG30(date_ranges):
@@ -310,12 +312,12 @@ def test_NIG30(date_ranges):
     the goods nomenclature must span the validity period of the goods measure.
     """
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         goods_nomenclature__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG30().validate(measure.goods_nomenclature)
 
 
@@ -325,22 +327,22 @@ def test_NIG31(date_ranges):
     additional nomenclature measure.
     """
 
-    measure = factories.MeasureWithAdditionalCodeFactory(
+    measure = factories.MeasureWithAdditionalCodeFactory.create(
         additional_code__valid_between=date_ranges.overlap_normal,
         goods_nomenclature__valid_between=date_ranges.normal,
         valid_between=date_ranges.normal,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG31().validate(measure.goods_nomenclature)
 
 
 def test_NIG34(delete_record):
     """A goods nomenclature cannot be deleted if it is used in a goods measure."""
 
-    measure = factories.MeasureFactory()
+    measure = factories.MeasureFactory.create()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG34().validate(delete_record(measure.goods_nomenclature))
 
 
@@ -349,9 +351,9 @@ def test_NIG35(delete_record):
     nomenclature measure.
     """
 
-    measure = factories.MeasureWithAdditionalCodeFactory()
+    measure = factories.MeasureWithAdditionalCodeFactory.create()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NIG35().validate(delete_record(measure.goods_nomenclature))
 
 

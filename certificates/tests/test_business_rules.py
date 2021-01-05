@@ -1,8 +1,8 @@
 import pytest
-from django.core.exceptions import ValidationError
 from django.db import DataError
 
 from certificates import business_rules
+from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -13,16 +13,16 @@ def test_CET1(make_duplicate_record):
 
     duplicate = make_duplicate_record(factories.CertificateTypeFactory)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CET1().validate(duplicate)
 
 
 def test_CET2(delete_record):
     """The Certificate type cannot be deleted if it is used in a Certificate."""
 
-    certificate = factories.CertificateFactory()
+    certificate = factories.CertificateFactory.create()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CET2().validate(delete_record(certificate.certificate_type))
 
 
@@ -41,7 +41,7 @@ def test_CE2(make_duplicate_record):
         factories.CertificateFactory, identifying_fields=("sid", "certificate_type")
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CE2().validate(duplicate)
 
 
@@ -57,30 +57,30 @@ def test_CE4(date_ranges):
     must span the validity period of the measure.
     """
 
-    condition = factories.MeasureConditionWithCertificateFactory(
+    condition = factories.MeasureConditionWithCertificateFactory.create(
         required_certificate__valid_between=date_ranges.starts_with_normal,
         dependent_measure__valid_between=date_ranges.normal,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CE4().validate(condition.required_certificate)
 
 
 def test_CE5(delete_record):
     """The certificate cannot be deleted if it is used in a measure condition."""
 
-    condition = factories.MeasureConditionWithCertificateFactory()
+    condition = factories.MeasureConditionWithCertificateFactory.create()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CE5().validate(delete_record(condition.required_certificate))
 
 
 def test_CE6_one_description_mandatory():
     """At least one description record is mandatory."""
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         # certificate created without description
-        business_rules.CE6().validate(factories.CertificateFactory())
+        business_rules.CE6().validate(factories.CertificateFactory.create())
 
 
 def test_CE6_first_description_must_have_same_start_date(date_ranges):
@@ -93,7 +93,7 @@ def test_CE6_first_description_must_have_same_start_date(date_ranges):
         valid_between=date_ranges.later,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CE6().validate(description.described_certificate)
 
 
@@ -102,13 +102,13 @@ def test_CE6_start_dates_cannot_match():
     have the same start date.
     """
 
-    existing = factories.CertificateDescriptionFactory()
+    existing = factories.CertificateDescriptionFactory.create()
     factories.CertificateDescriptionFactory.create(
         described_certificate=existing.described_certificate,
         valid_between=existing.valid_between,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CE6().validate(existing.described_certificate)
 
 
@@ -122,7 +122,7 @@ def test_CE6_certificate_validity_period_must_span_description(date_ranges):
         valid_between=date_ranges.overlap_normal,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CE6().validate(description.described_certificate)
 
 
@@ -131,7 +131,7 @@ def test_CE7(date_ranges):
     certificate.
     """
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.CE7().validate(
             factories.CertificateFactory.create(
                 certificate_type__valid_between=date_ranges.normal,
@@ -155,5 +155,5 @@ def test_certificate_description_periods_cannot_overlap(date_ranges):
         valid_between=date_ranges.overlap_normal,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.NoOverlappingDescriptions().validate(description)

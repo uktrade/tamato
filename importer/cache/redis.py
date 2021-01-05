@@ -38,7 +38,7 @@ class RedisCacheEngine(BaseEngine):
 
     def keys(self):
         prefix = getattr(settings, "IMPORTER_CACHE_PREFIX", "__IMPORTER_CACHE")
-        return cache.keys(f"{prefix}*") + cache.keys(f"'b{prefix}*")
+        return cache.keys(f"{prefix}*")
 
     def dump(self):
         pass

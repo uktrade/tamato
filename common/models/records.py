@@ -186,9 +186,23 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             ),
         )
 
-    def _get_related_lookups(
+    def _get_current_related_lookups(
         self, model, *lookups, prefix="", recurse_level=0
     ) -> List[str]:
+        """
+        Build a list of lookups for the current versions of related objects.
+
+        Many Tracked Models will have relationships to other Tracked Models through
+        Foreign Keys. However as this system implements an append-only log, and
+        Foreign Keys attach directly to a specific row, oftentimes relations will
+        show objects which won't be the "current" or most recent version of that
+        relation.
+
+        Normally the most current version of a Tracked Model can be accessed through the
+        models Version Group. This method builds up a list of related lookups which
+        connects all of a models relations to their "current" version via their Version
+        Group.
+        """
         related_lookups = []
         for relation, _ in model.get_relations():
             if lookups and relation.name not in lookups:
@@ -201,7 +215,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
             if recurse_level:
                 related_lookups.extend(
-                    self._get_related_lookups(
+                    self._get_current_related_lookups(
                         model,
                         *lookups,
                         prefix=f"{prefix}{relation.name}__version_group__current_version__",
@@ -211,7 +225,16 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         return related_lookups
 
     def with_latest_links(self, *lookups, recurse_level=0) -> QuerySet:
-        related_lookups = self._get_related_lookups(
+        """
+        Runs a `.select_related` operation for all relations, or given relations,
+        joining them with the "current" version of the relation as defined by their
+        Version Group.
+
+        As many objects will often want to access the current version of a relation,
+        instead of the actual linked object, this saves on having to run multiple
+        queries for every current relation.
+        """
+        related_lookups = self._get_current_related_lookups(
             self.model, *lookups, recurse_level=recurse_level
         )
         return self.select_related(

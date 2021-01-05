@@ -116,6 +116,9 @@ def sort_commodity_codes(transactions):
         indents = transaction.findall("*/*/*/*/ns2:number.indents", nsmap)
         suffixes = transaction.findall("*/*/*/*/ns2:producline.suffix", nsmap)
 
+        # Find the item ID, indent and suffix. If one of these isn't found then it is
+        # replaced with the largest possible number of equivalent size so that it is
+        # sorted to the end.
         item_id = min(item.text for item in item_ids) if item_ids else "999999999999"
         indent = min(indent_obj.text for indent_obj in indents) if indents else "99"
 
@@ -142,6 +145,10 @@ def sort_comm_code_messages(message):
     """
     code = message.find("*/*/ns2:subrecord.code", nsmap).text
     indent = message.find("*/*/*/ns2:number.indents", nsmap)
+
+    # If no indent found then sort the message to the front by giving the indent "00"
+    # This guarantees objects not related to indents get done first (as nothing has
+    # a relationship to indents).
     indent = indent.text if indent is not None else "00"
     return code, indent
 

@@ -1,7 +1,7 @@
 import pytest
-from django.core.exceptions import ValidationError
 from django.db import DataError
 
+from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
 from geo_areas import business_rules
@@ -13,7 +13,7 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture()
 def child():
     return factories.GeographicalAreaFactory.create(
-        area_code=1, parent=factories.GeoGroupFactory()
+        area_code=1, parent=factories.GeoGroupFactory.create()
     )
 
 
@@ -26,7 +26,7 @@ def test_GA1(make_duplicate_record):
         identifying_fields=("area_id", "valid_between__lower"),
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA1().validate(duplicate)
 
 
@@ -41,7 +41,7 @@ def test_GA2(date_ranges):
 def test_description_not_empty():
     """The area must have a description."""
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.DescriptionNotEmpty().validate(
             factories.GeographicalAreaDescriptionFactory.create(description="")
         )
@@ -50,9 +50,9 @@ def test_description_not_empty():
 @pytest.mark.xfail(reason="GA3 disabled")
 def test_GA3_one_description_mandatory():
     """At least one description record is mandatory."""
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA3().validate(
-            factories.GeographicalAreaFactory(description=None)
+            factories.GeographicalAreaFactory.create(description=None)
         )
 
 
@@ -61,9 +61,9 @@ def test_GA3_first_description_must_have_same_start_date(date_ranges):
     the geographical_area.
     """
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA3().validate(
-            factories.GeographicalAreaFactory(
+            factories.GeographicalAreaFactory.create(
                 description__valid_between=date_ranges.later
             )
         )
@@ -72,23 +72,23 @@ def test_GA3_first_description_must_have_same_start_date(date_ranges):
 def test_GA3_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
-    existing = factories.GeographicalAreaDescriptionFactory()
-    factories.GeographicalAreaDescriptionFactory(
+    existing = factories.GeographicalAreaDescriptionFactory.create()
+    factories.GeographicalAreaDescriptionFactory.create(
         area=existing.area,
         valid_between=existing.valid_between,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA3().validate(existing.area)
 
 
 def test_GA3_description_start_before_geographical_area_end(date_ranges):
     """The start date must be less than or equal to the end date of the geographical_area."""
 
-    geographical_area = factories.GeographicalAreaFactory(
+    geographical_area = factories.GeographicalAreaFactory.create(
         valid_between=date_ranges.normal,
         description__valid_between=date_ranges.later,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA3().validate(geographical_area)
 
 
@@ -97,7 +97,7 @@ def test_GA4():
 
     parent = factories.GeographicalAreaFactory.create(area_code=0)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA4().validate(
             factories.GeographicalAreaFactory.create(area_code=1, parent=parent)
         )
@@ -106,11 +106,11 @@ def test_GA4():
 def test_GA5(date_ranges):
     """A parent geographical areas validity period must span a childs validity period"""
 
-    parent = factories.GeoGroupFactory(valid_between=date_ranges.normal)
+    parent = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA5().validate(
-            factories.GeoGroupFactory(
+            factories.GeoGroupFactory.create(
                 parent=parent,
                 valid_between=date_ranges.overlap_normal,
             )
@@ -125,7 +125,7 @@ def test_GA6():
     g1.parent = g3
     g1.save(force_write=True)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA6().validate(g1)
 
 
@@ -137,7 +137,7 @@ def test_GA7(date_ranges):
         valid_between=date_ranges.normal
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA7().validate(
             factories.GeographicalAreaFactory.create(
                 area_id=existing.area_id,
@@ -151,11 +151,11 @@ def test_GA10(date_ranges):
     measure validity range.
     """
 
-    measure = factories.MeasureFactory(
+    measure = factories.MeasureFactory.create(
         geographical_area__valid_between=date_ranges.starts_with_normal,
         valid_between=date_ranges.normal,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA10().validate(measure.geographical_area)
 
 
@@ -164,11 +164,11 @@ def test_GA11(date_ranges):
     measure.
     """
 
-    exclusion = factories.MeasureExcludedGeographicalAreaFactory(
+    exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         excluded_geographical_area__valid_between=date_ranges.normal,
         modified_measure__valid_between=date_ranges.overlap_normal,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA11().validate(exclusion.excluded_geographical_area)
 
 
@@ -178,7 +178,7 @@ def test_GA12(reference_nonexistent_record):
     with reference_nonexistent_record(
         factories.GeographicalMembershipFactory, "member"
     ) as membership:
-        with pytest.raises(ValidationError):
+        with pytest.raises(BusinessRuleViolation):
             business_rules.GA12().validate(membership)
 
 
@@ -196,14 +196,14 @@ def test_GA13(area_code, expect_error):
 
     try:
         business_rules.GA13().validate(
-            factories.GeographicalMembershipFactory(member__area_code=area_code)
+            factories.GeographicalMembershipFactory.create(member__area_code=area_code)
         )
-    except ValidationError:
+    except BusinessRuleViolation:
         if not expect_error:
             raise
     else:
         if expect_error:
-            pytest.fail("DID NOT RAISE ValidationError")
+            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 def test_GA14(reference_nonexistent_record):
@@ -212,7 +212,7 @@ def test_GA14(reference_nonexistent_record):
     with reference_nonexistent_record(
         factories.GeographicalMembershipFactory, "geo_group"
     ) as membership:
-        with pytest.raises(ValidationError):
+        with pytest.raises(BusinessRuleViolation):
             business_rules.GA14().validate(membership)
 
 
@@ -229,11 +229,11 @@ def test_GA16(date_ranges):
     periods of its members.
     """
 
-    membership = factories.GeographicalMembershipFactory(
+    membership = factories.GeographicalMembershipFactory.create(
         geo_group__valid_between=date_ranges.normal,
         member__valid_between=date_ranges.overlap_normal,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA16().validate(membership)
 
 
@@ -246,7 +246,7 @@ def test_GA17(date_ranges):
         geo_group__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA17().validate(membership)
 
 
@@ -255,10 +255,12 @@ def test_GA18(date_ranges):
     may be no overlap in their membership periods.
     """
 
-    existing = factories.GeographicalMembershipFactory(valid_between=date_ranges.normal)
-    with pytest.raises(ValidationError):
+    existing = factories.GeographicalMembershipFactory.create(
+        valid_between=date_ranges.normal
+    )
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA18().validate(
-            factories.GeographicalMembershipFactory(
+            factories.GeographicalMembershipFactory.create(
                 geo_group=existing.geo_group,
                 member=existing.member,
                 valid_between=date_ranges.overlap_normal,
@@ -269,11 +271,11 @@ def test_GA18(date_ranges):
 def test_GA19():
     """If the group has a parent the members must also be members of the parent."""
 
-    parent = factories.GeoGroupFactory()
-    child = factories.GeoGroupFactory(parent=parent)
-    member = factories.CountryFactory()
+    parent = factories.GeoGroupFactory.create()
+    child = factories.GeoGroupFactory.create(parent=parent)
+    member = factories.CountryFactory.create()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA19().validate(
             factories.GeographicalMembershipFactory.create(
                 geo_group=child, member=member
@@ -281,11 +283,11 @@ def test_GA19():
         )
 
     business_rules.GA19().validate(
-        factories.GeographicalMembershipFactory(geo_group=parent, member=member)
+        factories.GeographicalMembershipFactory.create(geo_group=parent, member=member)
     )
 
     business_rules.GA19().validate(
-        factories.GeographicalMembershipFactory(geo_group=child, member=member)
+        factories.GeographicalMembershipFactory.create(geo_group=child, member=member)
     )
 
 
@@ -295,15 +297,15 @@ def test_GA20(date_ranges):
     membership period of the same geographical area in the geographical area group.
     """
 
-    parent = factories.GeoGroupFactory()
-    child = factories.GeoGroupFactory(parent=parent)
-    membership = factories.GeographicalMembershipFactory(
+    parent = factories.GeoGroupFactory.create()
+    child = factories.GeoGroupFactory.create(parent=parent)
+    membership = factories.GeographicalMembershipFactory.create(
         geo_group=parent,
         valid_between=date_ranges.normal,
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA20().validate(
-            factories.GeographicalMembershipFactory(
+            factories.GeographicalMembershipFactory.create(
                 geo_group=child,
                 member=membership.member,
                 valid_between=date_ranges.overlap_normal,
@@ -314,11 +316,11 @@ def test_GA20(date_ranges):
 def test_GA21(delete_record):
     """If a geographical area is referenced in a measure then it may not be deleted."""
 
-    measure = factories.MeasureFactory(
-        geographical_area=factories.GeographicalAreaFactory()
+    measure = factories.MeasureFactory.create(
+        geographical_area=factories.GeographicalAreaFactory.create()
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA21().validate(delete_record(measure.geographical_area))
 
 
@@ -329,7 +331,7 @@ def test_GA22(delete_record):
 
     child = factories.GeoGroupFactory.create(parent=factories.GeoGroupFactory.create())
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA22().validate(delete_record(child.parent))
 
 
@@ -339,13 +341,15 @@ def test_GA23(delete_record):
     be deleted.
     """
 
-    measure = factories.MeasureFactory(geographical_area=factories.GeoGroupFactory())
-    membership = factories.GeographicalMembershipFactory(
+    measure = factories.MeasureFactory.create(
+        geographical_area=factories.GeoGroupFactory.create()
+    )
+    membership = factories.GeographicalMembershipFactory.create(
         geo_group=measure.geographical_area
     )
-    factories.MeasureExcludedGeographicalAreaFactory(
+    factories.MeasureExcludedGeographicalAreaFactory.create(
         excluded_geographical_area=membership.member
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(BusinessRuleViolation):
         business_rules.GA23().validate(delete_record(membership))

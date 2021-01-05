@@ -4,7 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from additional_codes.validators import ApplicationCode
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
-from common.business_rules import find_duplicate_start_dates
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained

@@ -3,6 +3,8 @@
 .github/
 .python-version
 .pytest_cache
+__pycache__/
+*.py[cod]
 node_modules/
 static/
 venv/

@@ -442,14 +442,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         logger.debug(f"Creating {self.model}: {data}")
         data = self.pre_save(data, self.resolved_links)
-        try:
-            obj = self.save(data)
-            self.post_save(obj)
-        except AttributeError:
-            logger.error(
-                "Attribute error raised for model %s with data %s", self.model, data
-            )
-            raise
+        obj = self.save(data)
+        self.post_save(obj)
 
         return obj
 

@@ -6,7 +6,6 @@ from typing import Dict
 from typing import Iterable
 from typing import Tuple
 from typing import Type
-from typing import TYPE_CHECKING
 
 from django.core.cache import cache
 
@@ -15,9 +14,6 @@ from common.models import TrackedModel
 from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
 from importer.utils import generate_key
-
-if TYPE_CHECKING:
-    from importer.handlers import BaseHandler
 
 logger = logging.getLogger(__name__)
 

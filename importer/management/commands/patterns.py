@@ -281,7 +281,7 @@ class MeasureCreatingPattern:
 
             yield from self.get_measure_footnotes(new_measure, footnotes)
 
-            # If this is a measure under authorised use, we need to add
+            # If this is a measure under authorised use, add
             # some measure conditions with the N990 certificate.
             if authorised_use:
                 yield from self.get_default_measure_conditions(new_measure)
@@ -320,7 +320,7 @@ class MeasureEndingPattern:
             raise Exception(f"Measure appears more than once: {old_row.measure_sid}")
         self.old_sids.add(old_row.measure_sid)
 
-        # Make sure we have loaded the types and areas we need
+        # Make sure the needed types and areas are loaded
         if old_row.measure_type not in self.measure_types:
             self.measure_types[old_row.measure_type] = MeasureType.objects.get(
                 sid=old_row.measure_type
@@ -330,9 +330,9 @@ class MeasureEndingPattern:
                 sid=old_row.geo_sid
             )
 
-        # Look up the quota this measure should have
-        # If this measure has a licensed quota, we'll need to create it
-        # because it won't be in the source data. We assume this isn't saved.
+        # Look up the quota this measure should have.
+        # If this measure has a licensed quota, create it
+        # because it won't be in the source data. This isn't saved.
         if old_row.order_number and old_row.order_number.startswith("094"):
             quota, _ = QuotaOrderNumber.objects.get_or_create(
                 order_number=old_row.order_number,
@@ -361,9 +361,8 @@ class MeasureEndingPattern:
                 else None
             )
 
-        # If the old measure starts after the start date, we instead
-        # need to delete it and it will never come into force
-        # If it ends before the start date, we don't need to do anything!
+        # If the old measure starts after the start date, delete it so it
+        # will never come into force. If it ends before the start date do nothing.
         starts_after_date = old_row.measure_start_date >= new_start_date
         ends_before_date = (
             old_row.measure_end_date and old_row.measure_end_date < new_start_date
@@ -375,19 +374,18 @@ class MeasureEndingPattern:
         )
 
         if old_row.justification_regulation_id and starts_after_date:
-            # We are going to delete the measure, but we still need the
-            # regulation to be correct if it has already been end-dated
+            # Delete the measure, but the regulation still needs to be
+            # correct if it has already been end-dated
             assert old_row.measure_end_date
             justification_regulation = Regulation.objects.get(
                 role_type=old_row.regulation_role,
                 regulation_id=old_row.regulation_id,
             )
         elif not starts_after_date:
-            # We are going to end-date the measure, and terminate it with
-            # the UKGT SI.
+            # end-date the measure, and terminate it with the UKGT SI.
             justification_regulation = terminating_regulation
         else:
-            # We are going to delete the measure but it has not been end-dated.
+            # delete the measure but it don't end-date.
             assert old_row.measure_end_date is None
             justification_regulation = None
 
@@ -490,7 +488,7 @@ class DualRowRunner(Generic[OldRow, NewRow]):
             else None,
         )
 
-        # Push the new row into the tree, but only if we found a CC for it
+        # Push the new row into the tree, but only if a CC is found for it
         # Initialize the old row tree with the same subtree if it is not yet set
         if new_row is not None and new_row.goods_nomenclature is not None:
             new_waiting = not self.add_new_row(self.new_rows, new_row)
@@ -512,7 +510,7 @@ class DualRowRunner(Generic[OldRow, NewRow]):
 
         if old_waiting or new_waiting:
             # A row was rejected by the collector
-            # The collector is full and we should process it
+            # The collector is full and the row should be processed
             logger.debug(
                 f"Collector full with {len(self.old_rows.roots)} old (waiting {old_waiting})"
                 f" and {len(self.new_rows.roots)} new (waiting {new_waiting})"
