@@ -3,7 +3,6 @@ import django.contrib.postgres.constraints
 import django.contrib.postgres.fields.ranges
 import django.core.validators
 import django.db.models.deletion
-from django.contrib.postgres.operations import BtreeGistExtension
 from django.db import migrations
 from django.db import models
 
@@ -17,7 +16,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        BtreeGistExtension(),
         migrations.CreateModel(
             name="Certificate",
             fields=[
