@@ -160,6 +160,19 @@ Output defaults to stdout if filename is - or is not supplied.
 
 ## How to deploy
 
+### Staging environment
+
+The staging environment is hosted in GOV.UK PaaS org `dit-staging`, space
+`tariffs-dev`, app `tamato-dev`.
+The staging database is a postgres tiny-unencrypted-12 service named
+`tamato-dev-db`, with the `btree_gist` extension. This can be created with the command
+```shell
+cf create-service postgres tiny-unencrypted-12 tamato-dev-db -c '{"enable_extensions": ["btree_gist"]}'
+```
+
+The `master` branch is deployed to the staging environment with Github Actions
+on merge. See [.github/workflow/django.yml].
+
 ## How to write tests
 
 Tests are written with Pytest

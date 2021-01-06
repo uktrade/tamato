@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("common", "0005_auto_20201226_1001"),
+        ("common", "0001_initial"),
     ]
 
     operations = [
