@@ -46,6 +46,11 @@ jobs:
         pip install -r requirements.txt
         npm install
 
+    - name: Check code quality
+      uses: ricardochaves/python-lint@v1.3.0
+      with:
+        python-root-list: "additional_codes certificates commodities common exporter footnotes geo_areas hmrc_sdes importer measures quotas regulations settings taric workbaskets"
+
     - name: Collect static assets
       run: |
         npm run build
