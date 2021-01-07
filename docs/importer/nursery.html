@@ -54,7 +54,7 @@
 
 <dl class="class">
 <dt id="importer.nursery.TariffObjectNursery">
-<em class="property">class </em><code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">TariffObjectNursery</code><span class="sig-paren">(</span><em class="sig-param">cache: importer.cache.ObjectCacheFacade</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">TariffObjectNursery</code><span class="sig-paren">(</span><em class="sig-param">cache: importer.cache.cache.ObjectCacheFacade</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides an interface between raw data and the Django modelling system for the tariff.</p>
 <p>The primary function is to take a raw python object (generally a dictionary) and convert
 it into a row in the database via the Django models.</p>
@@ -63,9 +63,55 @@ will receive incomplete data objects which depend on data received later. As a r
 this “Nursery” is designed to store and look after incomplete data objects until it can
 be matched with the rest of the data and then dispatched to the database.</p>
 <dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.cache_current_instances">
+<code class="sig-name descname">cache_current_instances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.cache_current_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take all current instances of all TrackedModels in the data and cache them.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.cache_object">
+<code class="sig-name descname">cache_object</code><span class="sig-paren">(</span><em class="sig-param">obj: common.models.records.TrackedModel</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.cache_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Caches an objects primary key and model name in the cache.</p>
+<p>Key is generated based on the model name and the identifying fields used to find it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.clear_cache">
+<code class="sig-name descname">clear_cache</code><span class="sig-paren">(</span><em class="sig-param">repeats: int = 2</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.clear_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over the cache and handle any objects which can be resolved.</p>
+<p>As the importer runs many objects are created before their proper
+relationships can be found. In some cases these will be cleared by
+interdependent handlers. However in some cases (foreign key links)
+the objects are left dangling in the cache.</p>
+<p>This method runs through the cache and tries to resolve all objects
+that it can. As some of the objects often depend on other objects
+which are also in the cache, but appear later, this method runs
+recursively based on the <cite>repeats</cite> argument</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.generate_cache_key">
+<em class="property">classmethod </em><code class="sig-name descname">generate_cache_key</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.generate_cache_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a cache key based on the model name and the identifying values used to find it.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="importer.nursery.TariffObjectNursery.get_handler">
 <code class="sig-name descname">get_handler</code><span class="sig-paren">(</span><em class="sig-param">tag: str</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find a handler which matches the given tag. If one is not found throw an error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.get_handler_link_fields">
+<code class="sig-name descname">get_handler_link_fields</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">link_fields=None</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_handler_link_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all the unique link fields for a given model.</p>
+<p>This gives all the combinations of fields used to identify a model.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.get_obj_from_cache">
+<em class="property">classmethod </em><code class="sig-name descname">get_obj_from_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_obj_from_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches an object PK and model name from the cache if it exists.</p>
 </dd></dl>
 
 <dl class="method">
@@ -75,6 +121,14 @@ be matched with the rest of the data and then dispatched to the database.</p>
 <p>The nursery needs to be able to map all handlers against incoming data. To do this the
 nursery needs a map of handlers. This method allows handlers to register themselves so
 that they can be added to the internal nursery map - to be used when processing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.nursery.TariffObjectNursery.remove_object_from_cache">
+<code class="sig-name descname">remove_object_from_cache</code><span class="sig-paren">(</span><em class="sig-param">obj: common.models.records.TrackedModel</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.nursery.TariffObjectNursery.remove_object_from_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes an object from the importer cache. If an object has to be deleted (generally
+done in dev only) then it is problematic to keep the ID in the cache as well.</p>
+<p>Key is generated based on the model name and the identifying fields used to find it.</p>
 </dd></dl>
 
 <dl class="method">
@@ -89,7 +143,7 @@ are missing, cached to await new data.</p>
 
 <dl class="function">
 <dt id="importer.nursery.get_nursery">
-<code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">get_nursery</code><span class="sig-paren">(</span><em class="sig-param">cache=None</em><span class="sig-paren">)</span> &#x2192; importer.nursery.TariffObjectNursery<a class="headerlink" href="#importer.nursery.get_nursery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">get_nursery</code><span class="sig-paren">(</span><em class="sig-param">object_cache=None</em><span class="sig-paren">)</span> &#x2192; importer.nursery.TariffObjectNursery<a class="headerlink" href="#importer.nursery.get_nursery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for building a nursery object.</p>
 </dd></dl>
 

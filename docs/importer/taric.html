@@ -43,30 +43,104 @@
             
   <div class="section" id="module-importer.taric">
 <span id="the-importer-taric"></span><h1>The Importer - Taric<a class="headerlink" href="#module-importer.taric" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="importer.taric.Envelope">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">Envelope</code><span class="sig-paren">(</span><em class="sig-param">workbasket_status=None</em>, <em class="sig-param">tamato_username=None</em>, <em class="sig-param">save: bool = True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.Envelope" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<p>Parsers for TARIC envelope entities.</p>
 <dl class="exception">
 <dt id="importer.taric.EnvelopeError">
 <em class="property">exception </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">EnvelopeError</code><a class="headerlink" href="#importer.taric.EnvelopeError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="class">
-<dt id="importer.taric.Message">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">Message</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.Message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="importer.taric.EnvelopeParser">
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">EnvelopeParser</code><span class="sig-paren">(</span><em class="sig-param">workbasket_status=None</em>, <em class="sig-param">tamato_username=None</em>, <em class="sig-param">save: bool = True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.EnvelopeParser" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="importer.taric.EnvelopeParser.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param">element: lxml.etree.Element</em>, <em class="sig-param">parent: importer.parsers.ElementParser = None</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.EnvelopeParser.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle the start of an XML tag. The tag may not yet have all of its
+children.</p>
+<p>We have a few cases where there are tags nested within a tag of the same name.</p>
+<p>Example:</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;oub:additional.code&gt;</span>
+    <span class="nt">&lt;oub:additional.code.sid&gt;</span>00000001<span class="nt">&lt;/oub:additional.code.sid&gt;</span>
+    <span class="nt">&lt;oub:additional.code.type.id&gt;</span>A<span class="nt">&lt;/oub:additional.code.type.id&gt;</span>
+    <span class="nt">&lt;oub:additional.code&gt;</span>AAA<span class="nt">&lt;/oub:additional.code&gt;</span>
+    <span class="nt">&lt;oub:validity.start.date&gt;</span>2021-01-01<span class="nt">&lt;/oub:validity.start.date&gt;</span>
+<span class="nt">&lt;/oub:additional.code&gt;</span>
+</pre></div>
+</div>
+<p>In this case matching on tags is not enough and so we also need to keep
+track of whether this parser is already parsing an element. If it is, we
+don’t want to select any child parsers. If it is not, we know that this
+is an element that this parser should be parsing.</p>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
-<dt id="importer.taric.Record">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">Record</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.Record" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="importer.taric.MessageParser">
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">MessageParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.MessageParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parser for TARIC3 <cite>message</cite> element.</p>
+<dl class="method">
+<dt id="importer.taric.MessageParser.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.MessageParser.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the contained records to the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – A dict of parsed element, mapping field names to values</p></li>
+<li><p><strong>transaction_id</strong> – The primary key of the transaction to add records to</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
-<dt id="importer.taric.Transaction">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">Transaction</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.Transaction" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="importer.taric.RecordParser">
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">RecordParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.RecordParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parser for TARIC3 <cite>record</cite> element.</p>
+<dl class="method">
+<dt id="importer.taric.RecordParser.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.RecordParser.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the Record to the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – A dict of the parsed element, mapping field names to values</p></li>
+<li><p><strong>transaction_id</strong> – The primary key of the transaction to add the record to</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="importer.taric.TransactionParser">
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">TransactionParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.TransactionParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parser for TARIC3 <cite>transaction</cite> element.</p>
+<dl class="method">
+<dt id="importer.taric.TransactionParser.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.TransactionParser.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the transaction and the contained records to the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – A dict of the parsed element, containing at least an “id” and list</p>
+</dd>
+</dl>
+<p>of “message” dicts
+:param envelope_id: The ID of the containing Envelope
+:param workbasket_id: The primary key of the workbasket to add transactions to</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="importer.taric.process_taric_xml_stream">
+<code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">process_taric_xml_stream</code><span class="sig-paren">(</span><em class="sig-param">taric_stream</em>, <em class="sig-param">status</em>, <em class="sig-param">username</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.process_taric_xml_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a TARIC XML stream through the import handlers</p>
+<p>This will load the data from the stream into the database.</p>
+</dd></dl>
 
 </div>
 

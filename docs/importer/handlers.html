@@ -182,7 +182,7 @@ On success a set of all the keys for any objects used which may be in the cache 
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.dispatch">
-<code class="sig-name descname">dispatch</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; common.models.TrackedModel<a class="headerlink" href="#importer.handlers.BaseHandler.dispatch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dispatch</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; common.models.records.TrackedModel<a class="headerlink" href="#importer.handlers.BaseHandler.dispatch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the data into the database.</p>
 <p>This method initially validates all collected data. If valid it then runs
 some pre-processing before saving. Once saved an opportunity is given for post-processing.</p>
@@ -192,12 +192,30 @@ some pre-processing before saving. Once saved an opportunity is given for post-p
 <dt id="importer.handlers.BaseHandler.get_generic_link">
 <code class="sig-name descname">get_generic_link</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.get_generic_link" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fallback method if no specific method is found for fetching a link.</p>
+<p>Raises DoesNotExist if no kwargs passed.</p>
+<p>First attempts to retrieve the object PK from the cache (saves queries). If this
+is not found a database query is made to find the object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="importer.handlers.BaseHandler.load_link">
+<code class="sig-name descname">load_link</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">model</em>, <em class="sig-param">identifying_fields=None</em>, <em class="sig-param">optional=False</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.load_link" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a given link for a handler.</p>
+<p>This method first attempts to find any custom method existing on the handler
+for finding the specific link. The custom method must be named:</p>
+<blockquote>
+<div><p>get_{LINK_NAME}_link</p>
+</div></blockquote>
+<p>If no custom method is found then <a class="reference internal" href="#importer.handlers.BaseHandler.get_generic_link" title="importer.handlers.BaseHandler.get_generic_link"><code class="xref py py-meth docutils literal notranslate"><span class="pre">BaseHandler.get_generic_link()</span></code></a> is used.</p>
+<p>If no object matching the given link is found and the link is non-optional then a
+DoesNotExist error is raised.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.post_save">
 <code class="sig-name descname">post_save</code><span class="sig-paren">(</span><em class="sig-param">obj</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.post_save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Post-processing after the object has been saved to the database.</p>
+<p>By default this caches any new saved object.</p>
 </dd></dl>
 
 <dl class="method">
