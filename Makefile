@@ -68,12 +68,6 @@ run: collectstatic migrate
 	@echo "> Running webapp..."
 	@${PYTHON} manage.py runserver_plus 0.0.0.0:8000
 
-run-cf: export DJANGO_SETTINGS_MODULE=settings
-run-cf: collectstatic migrate
-	@echo
-	@echo "> Running webapp..."
-	@gunicorn -b 0.0.0.0:8080 wsgi:application
-
 ## test: Run tests
 test:
 	@echo

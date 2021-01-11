@@ -29,6 +29,8 @@
   "scripts": {
     "dev": "webpack --config webpack.config.js --watch",
     "build": "webpack --config webpack.config.js",
-    "clean": "rm -f ./run/static/webpack_bundles/*"
+    "clean": "rm -f ./run/static/webpack_bundles/*",
+    "heroku-prebuild": "",
+    "heroku-postbuild": "npm run build"
   }
 }
