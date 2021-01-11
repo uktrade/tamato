@@ -27,9 +27,9 @@
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="TransactionId">
-        <xs:restriction base="xs:integer">
+        <xs:restriction base="xs:int">
             <xs:minInclusive value="1"/>
-            <xs:maxInclusive value="9999999999"/>
+            <xs:maxInclusive value="99999999"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="UpdateType">
@@ -246,7 +246,7 @@
     </xs:simpleType>
     <xs:simpleType name="FootnoteTypeId">
         <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Z]{2}|[A-Z]{3}|[0-9]{2}"/>
+            <xs:pattern value="[A-Z]{2}|[A-Z]{3}"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="GeographicalAreaId">
@@ -589,8 +589,8 @@
     </xs:simpleType>
     <xs:simpleType name="SID">
         <xs:restriction base="xs:int">
-            <xs:minInclusive value="-2147483648"/>
-            <xs:maxInclusive value="2147483647"/>
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="99999999"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="StatisticalIndicator">
