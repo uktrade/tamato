@@ -9,6 +9,7 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
@@ -27,6 +28,7 @@ from common.renderers import counter_generator
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
 from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.utils import blank
@@ -89,6 +91,7 @@ class OldMeasureRow:
         assert not self.inherited_measure, "Old row should not be an inherited measure"
         self.measure_sid = int(old_row[7].value)
         self.measure_type = str(int(old_row[8].value))
+        self.duty_expression = str(old_row[10].value)
         self.geo_sid = int(old_row[13].value)
         self.measure_start_date = parse_date(old_row[16])
         self.measure_end_date = blank(old_row[17], parse_date)
@@ -201,6 +204,7 @@ class MeasureCreatingPattern:
         measure_sid_counter: Counter = counter_generator(),
         measure_condition_sid_counter: Counter = counter_generator(),
     ) -> None:
+        self.base_date = base_date
         self.seasonal_rate_parser = SeasonalRateParser(
             base_date=base_date, timezone=timezone
         )
@@ -306,13 +310,40 @@ class MeasureCreatingPattern:
         self,
         measure: Measure,
         exclusion: GeographicalArea,
-    ) -> MeasureExcludedGeographicalArea:
-        return MeasureExcludedGeographicalArea(
-            modified_measure=measure,
-            excluded_geographical_area=exclusion,
-            update_type=UpdateType.CREATE,
-            workbasket=self.workbasket,
-        )
+    ) -> Iterator[MeasureExcludedGeographicalArea]:
+        if exclusion.area_code == AreaCode.GROUP:
+            measure_origins = set(
+                m.member
+                for m in GeographicalMembership.objects.as_at(
+                    self.base_date + relativedelta(days=1)
+                )
+                .filter(
+                    geo_group=measure.geographical_area,
+                )
+                .all()
+            )
+            for membership in (
+                GeographicalMembership.objects.as_at(self.base_date)
+                .filter(geo_group=exclusion)
+                .all()
+            ):
+                member = membership.member
+                assert (
+                    member in measure_origins
+                ), f"{member.area_id} not in {list(x.area_id for x in measure_origins)}"
+                yield MeasureExcludedGeographicalArea(
+                    modified_measure=measure,
+                    excluded_geographical_area=member,
+                    update_type=UpdateType.CREATE,
+                    workbasket=self.workbasket,
+                )
+        else:
+            yield MeasureExcludedGeographicalArea(
+                modified_measure=measure,
+                excluded_geographical_area=exclusion,
+                update_type=UpdateType.CREATE,
+                workbasket=self.workbasket,
+            )
 
     def get_measure_footnotes(
         self, measure: Measure, footnotes: List[Footnote]
@@ -392,9 +423,10 @@ class MeasureCreatingPattern:
                 exclusions.append(self.exclusion_areas[geo_exclusion.strip()])
 
             for exclusion in exclusions:
-                yield self.get_measure_excluded_geographical_areas(
+                for exclusion_model in self.get_measure_excluded_geographical_areas(
                     new_measure, exclusion
-                )
+                ):
+                    yield exclusion_model
 
             for footnote in self.get_measure_footnotes(new_measure, footnotes):
                 yield footnote
@@ -607,7 +639,12 @@ class QuotaCreatingPattern:
             main_origins = quota_origin.geographical_area.memberships.as_at(
                 self.start_date
             ).all()
-            for member in origin.memberships.as_at(self.start_date).all():
+            for membership in (
+                GeographicalMembership.objects.as_at(self.start_date)
+                .filter(geo_group=origin)
+                .all()
+            ):
+                member = membership.member
                 assert (
                     member in main_origins
                 ), f"{member.area_id} not in {list(x.area_id for x in main_origins)}"
@@ -654,9 +691,101 @@ class QuotaCreatingPattern:
             update_type=UpdateType.CREATE,
         )
 
+    def get_period_dates(
+        self,
+        period_start_date: datetime,
+        period_end_date: datetime,
+        period_type: QuotaType,
+    ) -> Tuple[Tuple[datetime, datetime], Optional[Tuple[datetime, datetime]]]:
+        if period_type == QuotaType.CALENDAR:
+            noncalendar, seasonal = False, False
+        elif period_type == QuotaType.NON_CALENDAR:
+            noncalendar, seasonal = True, False
+        else:
+            assert period_type == QuotaType.SEASONAL
+            noncalendar, seasonal = False, True
+
+        # If this is a seasonal quota that would normally have already started,
+        # start it on 1 Jan and use the interim volume to set up the quota
+        start_date = period_start_date
+        end_date = period_end_date
+        if (seasonal or noncalendar) and (
+            start_date.year < self.start_date.year
+            or end_date.year < self.start_date.year
+        ):
+            # Dates in the sheet are not reliable – only days/months are correct
+            # So assume that all the dates are for year 2021
+            # If the end date comes before, it must be for 2022
+            start_date = start_date.replace(year=self.start_date.year)
+            end_date = end_date.replace(year=self.start_date.year)
+            if end_date < start_date:
+                end_date = end_date.replace(year=self.start_date.year + 1)
+            assert end_date >= start_date
+            logger.debug("Set dates to be %s, %s", start_date, end_date)
+
+        normal_dates = (start_date, end_date)
+        interim_dates = None
+
+        noncalendar_unaligned = noncalendar and start_date > self.start_date
+        seasonal_straddles_year = seasonal and end_date.year > self.start_date.year
+        if noncalendar_unaligned or seasonal_straddles_year:
+            if noncalendar_unaligned:
+                interim_end = start_date - timedelta(days=1)
+            else:
+                assert seasonal_straddles_year
+                interim_end = period_end_date.replace(year=self.start_date.year)
+
+            assert interim_end >= self.start_date
+            interim_dates = (self.start_date, interim_end)
+
+        return (normal_dates, interim_dates)
+
+    def define_quota_with_interim(
+        self,
+        quota: QuotaOrderNumber,
+        volume: int,
+        interim_volume: Optional[int],
+        unit: Measurement,
+        period_start_date: datetime,
+        period_end_date: datetime,
+        period_type: QuotaType,
+    ) -> Tuple[QuotaDefinition, Optional[QuotaDefinition]]:
+        normal_dates, interim_dates = self.get_period_dates(
+            period_start_date, period_end_date, period_type
+        )
+
+        # 3. Create a defn for 2021 from normal volume and start date to end date
+        start_date, end_date = normal_dates
+        logger.info("Defining normal definition %s, %s", start_date, end_date)
+        normal_qd = self.define_quota(quota, volume, unit, start_date, end_date)
+        normal_qd.save()
+
+        # 4. Create a defn for 2021 from interim volume and Jan 01 to start date
+        interim_qd = None
+        if interim_dates:
+            interim_start, interim_end = interim_dates
+            logger.info(
+                "Defining interim definition %s, %s", interim_start, interim_end
+            )
+            assert interim_volume is not None
+            interim_qd = self.define_quota(
+                quota,
+                interim_volume,
+                unit,
+                interim_start,
+                interim_end,
+                critical=self.critical_interim,
+            )
+            interim_qd.save()
+
+        return (normal_qd, interim_qd)
+
     def associate_to_parent(
         self, definition: QuotaDefinition, parent: str, coefficient: str
     ) -> QuotaAssociation:
+        logger.debug(
+            f"""order_number__order_number={parent}, valid_between={definition.valid_between}"""
+        )
         main_quota = QuotaDefinition.objects.get(
             order_number__order_number=parent,
             valid_between=definition.valid_between,
@@ -707,13 +836,6 @@ class QuotaCreatingPattern:
         suspension_end_date: Optional[datetime] = None,
     ) -> Iterator[List[TrackedModel]]:
         logger.debug("Processing quota order number %s", order_number)
-        if period_type == QuotaType.CALENDAR:
-            calendar, noncalendar, seasonal = True, False, False
-        elif period_type == QuotaType.NON_CALENDAR:
-            calendar, noncalendar, seasonal = False, True, False
-        else:
-            assert period_type == QuotaType.SEASONAL
-            calendar, noncalendar, seasonal = False, False, True
 
         # 1. Create a quota order number
         to_output = []
@@ -750,47 +872,21 @@ class QuotaCreatingPattern:
 
         yield to_output
 
-        # If this is a seasonal quota that would normally have already started,
-        # start it on 1 Jan and use the interim volume to set up the quota
-        start_date = period_start_date
-        end_date = period_end_date
-        if (seasonal or noncalendar) and (
-            start_date.year < self.start_date.year
-            or end_date.year < self.start_date.year
-        ):
-            # Dates in the sheet are not reliable – only days/months are correct
-            # So assume that all the dates are for year 2021
-            # If the end date comes before, it must be for 2022
-            start_date = start_date.replace(year=self.start_date.year)
-            end_date = end_date.replace(year=self.start_date.year)
-            if end_date < start_date:
-                end_date = end_date.replace(year=self.start_date.year + 1)
-            assert end_date >= start_date
-            logger.info("%s, %s", start_date, end_date)
-
-        # 3. Create a defn for 2021 from normal volume and start date to end date
-        normal_qd = self.define_quota(quota, volume, unit, start_date, end_date)
-        normal_qd.save()
+        # 3. Define quotas
+        normal_qd, interim_qd = self.define_quota_with_interim(
+            quota,
+            volume,
+            interim_volume,
+            unit,
+            period_start_date,
+            period_end_date,
+            period_type,
+        )
         yield [normal_qd]
-
-        # 4. Create a defn for 2021 from interim volume and Jan 01 to start date
-        interim_qd = None
-        if noncalendar and start_date > self.start_date:
-            interim_end = start_date - timedelta(days=1)
-            assert interim_volume is not None
-            assert interim_end >= self.start_date
-
-            interim_qd = self.define_quota(
-                quota,
-                interim_volume,
-                unit,
-                BREXIT,
-                interim_end,
-                critical=self.critical_interim,
-            )
-            interim_qd.save()
+        if interim_qd:
             yield [interim_qd]
 
+        # 4. Associate
         if parent_order_number:
             assert coefficient
             association = self.associate_to_parent(
@@ -806,8 +902,9 @@ class QuotaCreatingPattern:
                 association.save()
                 yield [association]
 
+        # 5. Suspend
         if suspension_start_date and suspension_end_date:
-            assert not noncalendar, "Need to handle both QDs"
+            assert interim_qd is None, "Need to handle both QDs"
             start = suspension_start_date.replace(year=self.start_date.year)
             end = suspension_end_date.replace(year=self.start_date.year)
             if start < normal_qd.valid_between.lower:

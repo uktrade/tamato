@@ -800,7 +800,7 @@ class EnvelopeSerializer:
             self.output.write(string_data)
             self.envelope_size_in_mb = os.stat(self.output.name).st_size / (1024 * 1024)
 
-    def render_transaction(self, models: List[TrackedModel]) -> None:
+    def render_transaction(self, models: Iterable[TrackedModel]) -> None:
         if any(models):
             if (
                 self.max_envelope_size_in_mb

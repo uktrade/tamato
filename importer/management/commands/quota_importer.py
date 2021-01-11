@@ -117,6 +117,7 @@ class QuotaImporter(RowsImporter):
         super().__init__(*args, **kwargs)
         self.category = category
         self.critical_interim = critical_interim
+        self.quotas = {}
 
     def setup(self) -> Iterator[TrackedModel]:
         self.quota_creator = QuotaCreatingPattern(
@@ -128,7 +129,6 @@ class QuotaImporter(RowsImporter):
             start_date=BREXIT,
             critical_interim=self.critical_interim,
         )
-        self.quotas = {}
         return iter([])
 
     def compare_rows(self, new_row: Optional[QuotaRow], old_row: None) -> int:
