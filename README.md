@@ -111,14 +111,18 @@ When running tests the settings module defaults to settings.test
 | LOG_LEVEL                | The level of logging messages in the web app. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                     |
 | CELERY_LOG_LEVEL         | The level of logging for the celery worker. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                       |
 | TAMATO_IMPORT_USERNAME   | The TAMATO username to use for the owner of the workbaskets created.                                                                    |
-| CELERY_BROKER_URL        | Connection details for Celery to store running tasks.                                                                                   |
-| CELERY_RESULT_BACKEND    | Connection details for Celery to store task results.                                                                                    |
+| NURSERY_CACHE_ENGINE     | The engine to use the the Importer Nursery Cache. Defaults to importer.cache.memory.MemoryCacheEngine.                                  |
+| CACHE_URL                | The URL for the Django cache. Defaults to redis://0.0.0.0:6379/1.                                                                       |
+| SKIP_VALIDATION          | Whether Transaction level validations should be skipped or not. Defaults to False.                                                      |
+| USE_IMPORTER_CACHE       | Whether to cache records for the importer (caches all current records as they are made). Defaults to True.                              |
+| CELERY_BROKER_URL        | Connection details for Celery to store running tasks, defaults to the CACHE_URL.                                                        |
+| CELERY_RESULT_BACKEND    | Connection details for Celery to store task results, defaults to CELERY_BROKER_URL.                                                     |
 | HMRC_STORAGE_BUCKET_NAME | Name of s3 bucket used for uploads by the exporter                                                                                      |
 | HMRC_STORAGE_DIRECTORY   | Destination directory in s3 bucket for the exporter                                                                                     |
 | AWS_ACCESS_KEY_ID        | AWS key id, used for s3                                                                                                                 |
 | AWS_SECRET_ACCESS_KEY    | AWS secret key, used for s3                                                                                                             |
 | AWS_STORAGE_BUCKET_NAME  | Default bucket [unused]                                                                                                                 |
-| AWS_S3_ENDPOINT_URL      | AWS s3 endpoint url                                                                                                                     |
+| AWS_S3_ENDPOINT_URL      | AWS s3 endpoint url                                                                                                                     |                                                                                                                   |
 
 
 ## Using the importer
@@ -132,6 +136,14 @@ TAMATO database.
 Run the script to see the command line arguments:
 
     ./manage.py import_taric --help
+
+This command is broken into two stages:
+
+1) Chunking the file and loading into the DB. If a file is greater than 50MB it is broken into chunks and those chunks
+   saved into the database. This can be run in isolation using the command `./manage.py chunk_taric`.
+
+2) Passing the chunks through the importer system into TrackedModels. This can be run in isolation using the
+   command `./manage.py run_import_batch`.
 
 ## Using the exporter
 
@@ -160,18 +172,7 @@ Output defaults to stdout if filename is - or is not supplied.
 
 ## How to deploy
 
-### Staging environment
-
-The staging environment is hosted in GOV.UK PaaS org `dit-staging`, space
-`tariffs-dev`, app `tamato-dev`.
-The staging database is a postgres tiny-unencrypted-12 service named
-`tamato-dev-db`, with the `btree_gist` extension. This can be created with the command
-```shell
-cf create-service postgres tiny-unencrypted-12 tamato-dev-db -c '{"enable_extensions": ["btree_gist"]}'
-```
-
-The `master` branch is deployed to the staging environment with Github Actions
-on merge. See [.github/workflow/django.yml].
+The app is hosted using GOV.UK PaaS and is deployed with Jenkins.
 
 ## How to write tests
 

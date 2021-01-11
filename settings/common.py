@@ -1,6 +1,7 @@
 """
 Django settings for tamato project.
 """
+import json
 import os
 import sys
 import uuid
@@ -16,6 +17,8 @@ from common.util import is_truthy
 # Name of the deployment environment (dev/alpha)
 ENV = os.environ.get("ENV", "dev")
 
+# Global variables
+VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 
 # -- Paths
 
@@ -37,6 +40,12 @@ STATICFILES_DIRS = [
     join(BASE_DIR, "node_modules", "govuk-frontend", "govuk", "assets"),
 ]
 
+STATICFILES_FINDERS = [
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+]
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 # -- Application
 
@@ -46,7 +55,6 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     "django_extensions",
     "django_filters",
@@ -161,15 +169,28 @@ DEBUG = is_truthy(os.environ.get("DEBUG", False))
 
 # -- Database
 
+if VCAP_SERVICES.get("postgres"):
+    DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
+else:
+    DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
+
 DATABASES = {
-    "default": dj_database_url.config(default="postgres://localhost:5432/tamato"),
+    "default": dj_database_url.parse(DB_URL),
 }
 
 # -- Cache
+
+CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
+
+if VCAP_SERVICES.get("redis"):
+    for redis_instance in VCAP_SERVICES["redis"]:
+        if redis_instance["name"] == "DJANGO_CACHE":
+            CACHE_URL = redis_instance["credentials"]["uri"]
+            break
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1"),
+        "LOCATION": CACHE_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "TIMEOUT": None,
@@ -217,7 +238,15 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_REGION_NAME = "eu-west-2"
 
 # Pickle could be used as a serializer here, as this always runs in a DMZ
+
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
+
+if VCAP_SERVICES.get("redis"):
+    for redis_instance in VCAP_SERVICES["redis"]:
+        if redis_instance["name"] == "CELERY_BROKER":
+            CELERY_BROKER_URL = redis_instance["credentials"]["uri"]
+            break
+
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 CELERY_TRACK_STARTED = True
 CELERY_ACCEPT_CONTENT = ["json"]
