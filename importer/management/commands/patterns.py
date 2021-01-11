@@ -63,18 +63,18 @@ from workbaskets.models import WorkBasket
 logger = logging.getLogger(__name__)
 
 # The timezone of GB.
-LONDON = pytz.timezone("Europe/London")
+LONDON = pytz.utc  # timezone("Europe/London")
 
 # The date of the end of the transition period,
 # localized to the Europe/London timezone.
-BREXIT = LONDON.localize(datetime(2021, 1, 1))
+BREXIT = pytz.utc.localize(datetime(2021, 1, 1))
 
 
 def parse_date(cell: Cell) -> datetime:
     if cell.ctype == xlrd.XL_CELL_DATE:
-        return LONDON.localize(xlrd.xldate.xldate_as_datetime(cell.value, datemode=0))
+        return pytz.utc.localize(xlrd.xldate.xldate_as_datetime(cell.value, datemode=0))
     else:
-        return LONDON.localize(datetime.strptime(cell.value, r"%Y-%m-%d"))
+        return pytz.utc.localize(datetime.strptime(cell.value, r"%Y-%m-%d"))
 
 
 def parse_list(value: str) -> List[str]:
@@ -599,6 +599,7 @@ class QuotaType(Enum):
     CALENDAR = "Calendar year"
     NON_CALENDAR = "Non-calendar year"
     SEASONAL = "Seasonal"
+    SAFEGUARD = "Safeguard quota"
 
 
 class QuotaCreatingPattern:

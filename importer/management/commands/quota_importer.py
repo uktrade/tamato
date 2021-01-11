@@ -36,6 +36,7 @@ class QuotaSource(Enum):
     PREFERENTIAL = "Pref"
     ORIGIN = "Origin"
     WTO = "WTO"
+    SAFEGUARD = "Safeguard"
 
 
 class QuotaRow:
