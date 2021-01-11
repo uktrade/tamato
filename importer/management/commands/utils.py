@@ -709,7 +709,7 @@ class SeasonalRateParser:
 
         if end is None:
             # Non-seasonal rate!
-            yield (self.base, None)
+            yield (maybe_max(self.base, start), None)
         elif start > end:
             # This straddles a year boundary so
             # we need to make one measure for BREXIT to end

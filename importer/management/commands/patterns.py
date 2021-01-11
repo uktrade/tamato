@@ -108,13 +108,69 @@ class OldMeasureRow:
             self.real_end_date = self.measure_end_date
 
     @cached_property
+    def measure_type_object(self) -> MeasureType:
+        return MeasureType.objects.get(sid=self.measure_type)
+
+    @cached_property
     def goods_nomenclature(self) -> GoodsNomenclature:
         return GoodsNomenclature.objects.get(sid=self.goods_nomenclature_sid)
+
+    @cached_property
+    def geographical_area(self) -> GeographicalArea:
+        return GeographicalArea.objects.get(sid=self.geo_sid)
 
     @cached_property
     def additional_code(self) -> Optional[AdditionalCode]:
         codes = AdditionalCode.objects.filter(sid=self.additional_code_sid).all()
         return codes[0] if any(codes) else None
+
+    @cached_property
+    def quota(self) -> Optional[QuotaOrderNumber]:
+        return (
+            QuotaOrderNumber.objects.get(
+                order_number=self.order_number,
+                valid_between__contains=self.measure_start_date,
+            )
+            if self.order_number
+            else None
+        )
+
+    @cached_property
+    def measure_generating_regulation(self) -> Regulation:
+        return Regulation.objects.get(
+            regulation_id=self.regulation_id,
+            role_type=self.regulation_role,
+        )
+
+    @cached_property
+    def justification_regulation(self) -> Optional[Regulation]:
+        return (
+            Regulation.objects.get(
+                regulation_id=self.justification_regulation_id,
+                role_type=self.justification_regulation_role,
+            )
+            if self.justification_regulation_id
+            else None
+        )
+
+    @cached_property
+    def as_measure(self) -> Measure:
+        return Measure(
+            sid=self.measure_sid,
+            measure_type=self.measure_type_object,
+            geographical_area=self.geographical_area,
+            goods_nomenclature=self.goods_nomenclature,
+            additional_code=self.additional_code,
+            valid_between=DateTimeTZRange(
+                self.measure_start_date, self.measure_end_date
+            ),
+            order_number=self.quota,
+            generating_regulation=self.measure_generating_regulation,
+            terminating_regulation=self.justification_regulation,
+            stopped=self.stopped,
+            reduction=self.reduction,
+            export_refund_nomenclature_sid=self.export_refund_sid,
+        )
 
     @cached_property
     def measure_context(self) -> MeasureContext:

@@ -3,27 +3,28 @@ from collections import defaultdict
 from enum import Enum
 from functools import cached_property
 from itertools import chain
-from itertools import islice
 from typing import Iterator
 from typing import List
 from typing import Optional
 
 import xlrd
 from dateutil.relativedelta import relativedelta
-from django.core.management import BaseCommand
-from django.db import transaction
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
 
 from certificates.models import Certificate
+from certificates.models import CertificateDescription
+from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
+from common.renderers import counter_generator
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.models import GeographicalMembership
+from geo_areas.models import GeographicalAreaDescription
 from importer.management.commands.doc_importer import RowsImporter
+from importer.management.commands.import_command import ImportCommand
 from importer.management.commands.patterns import add_single_row
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import DualRowRunner
@@ -40,7 +41,6 @@ from importer.management.commands.utils import clean_duty_sentence
 from importer.management.commands.utils import clean_item_id
 from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
-from importer.management.commands.utils import get_author
 from importer.management.commands.utils import id_argument
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
@@ -48,7 +48,6 @@ from importer.management.commands.utils import output_argument
 from importer.management.commands.utils import SeasonalRateParser
 from importer.management.commands.utils import spreadsheet_argument
 from importer.management.commands.utils import strint
-from importer.management.commands.utils import write_summary
 from measures.models import MeasureType
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
@@ -57,7 +56,6 @@ from quotas.validators import QuotaCategory
 from regulations.models import Group
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
@@ -126,14 +124,10 @@ class TransitionStaging(Enum):
 
 
 class MainMeasureRow:
-    def __init__(self, row: List[Cell], origin: GeographicalArea) -> None:
+    def __init__(self, row: List[Cell], origin: GeographicalArea = None) -> None:
         self.category = TransitionCategory(str(row[col("AF")].value).split(":")[0])
         self.origin_id = str(row[col("K")].value)
-        self.origin = origin
-        if (
-            self.category == TransitionCategory.COUNTRY_NOT_IN_SCOPE
-            or self.origin.area_id != self.origin_id
-        ):
+        if self.category == TransitionCategory.COUNTRY_NOT_IN_SCOPE:
             return
         self.row_id = strint(row[col("A")])
         self.item_id = clean_item_id(row[col("B")])
@@ -150,6 +144,10 @@ class MainMeasureRow:
         self.end_date = blank(row[col("P")].value, lambda _: parse_date(row[col("P")]))
         self.duty_exp = clean_duty_sentence(row[col("AM")])
         self.staging = TransitionStaging(str(row[col("AO")].value).split(" - ")[0])
+
+    @cached_property
+    def origin(self) -> GeographicalArea:
+        return GeographicalArea.objects.get(area_id=self.origin_id)
 
     @cached_property
     def goods_nomenclature(self) -> GoodsNomenclature:
@@ -251,6 +249,7 @@ class FTAMeasuresImporter(RowsImporter):
             "143": MeasureType.objects.get(sid="143"),
             "145": MeasureType.objects.get(sid="145"),
             "146": MeasureType.objects.get(sid="146"),
+            "147": MeasureType.objects.get(sid="147"),
         }
         self.old_rows = MeasureTreeCollector[OldMeasureRow](BREXIT)
         self.new_rows = MeasureTreeCollector[MainMeasureRow](BREXIT)
@@ -288,8 +287,10 @@ class FTAMeasuresImporter(RowsImporter):
             generating_regulation=self.preferential_si,
             workbasket=self.workbasket,
             duty_sentence_parser=self.duty_sentence_parser,
-            measure_sid_counter=self.counters["measure_id"],
-            measure_condition_sid_counter=self.counters["measure_condition_id"],
+            measure_sid_counter=self.counters.get("measure_id", counter_generator()),
+            measure_condition_sid_counter=self.counters.get(
+                "measure_condition_id", counter_generator()
+            ),
             exclusion_areas={
                 "Haiti": GeographicalArea.objects.as_at(BREXIT).get(area_id="HT"),
                 "Panama": GeographicalArea.objects.as_at(BREXIT).get(area_id="PA"),
@@ -385,11 +386,7 @@ class FTAMeasuresImporter(RowsImporter):
 
         # Turkey: Where the measure type is currently "Customs Union" use
         # instead of the normal type.
-        if row.measure_type_id in CUSTOMS_UNION_EQUIVALENT_TYPES:
-            measure_type_id = CUSTOMS_UNION_EQUIVALENT_TYPES[row.measure_type_id]
-        else:
-            measure_type_id = row.measure_type_id
-        measure_type = self.measure_types[measure_type_id]
+        measure_type = self.measure_types[row.measure_type_id]
 
         # `old_rows` is all the rows with the same item id but not necessarily
         # the same measure context
@@ -480,7 +477,7 @@ class FTAMeasuresImporter(RowsImporter):
                     goods_nomenclature=goods_nomenclature,
                     geo_exclusion=row.excluded_origin_description,
                     new_measure_type=measure_type,
-                    authorised_use=(measure_type_id in {"146", "145"}),
+                    authorised_use=(row.measure_type_id in {"146", "145"}),
                     order_number=quota,
                     validity_start=start,
                     validity_end=end,
@@ -508,8 +505,9 @@ class FTAMeasuresImporter(RowsImporter):
                 )
 
 
-class Command(BaseCommand):
+class Command(ImportCommand):
     help = "Import spreadsheets of quotas and measures for trade agreements."
+    title = "Preferential data"
 
     def add_arguments(self, p):
         spreadsheet_argument(p, "new")
@@ -531,139 +529,112 @@ class Command(BaseCommand):
         id_argument(p, "transaction", 140)
         output_argument(p)
 
-    @transaction.atomic
-    def handle(self, *args, **options):
-        author = get_author()
+    def run(self, workbasket: WorkBasket, env: EnvelopeSerializer) -> None:
+        all_origins = GeographicalArea.objects.filter(
+            area_id__in=self.options["geographical_area"]
+        ).all()
+        workbasket.title = f"Trade agreements for {', '.join(o.get_description().description for o in all_origins)}"
 
-        logger.info("Opening workbooks…")
-        quota_workbook = xlrd.open_workbook(options["quota-spreadsheet"])
-        quota_sheet = quota_workbook.sheet_by_name("ALL")
-        new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
-        schedule_sheet = new_workbook.sheet_by_name("MAIN")
-        old_workbook = xlrd.open_workbook(options["old-spreadsheet"])
-        old_worksheet = old_workbook.sheet_by_name("Sheet")
+        if self.options["quota-spreadsheet"] != "-":
+            quota_importer = QuotaImporter(
+                workbasket,
+                env,
+                category=QuotaCategory.PREFERENTIAL,
+                counters=self.options["counters"],
+            )
+        else:
+            quota_importer = None
 
-        with open(options["output"], mode="w", encoding="UTF8") as output:
-            with EnvelopeSerializer(
-                output,
-                options["counters"]["envelope_id"](),
-                options["counters"]["transaction_id"],
-                max_envelope_size_in_mb=40,
-            ) as env:
-                for country in options["geographical_area"]:
-                    logger.info("Loading data for %s", country)
-                    origin = GeographicalArea.objects.as_at(BREXIT).get(area_id=country)
+        for country in self.options["geographical_area"]:
+            logger.info("Loading data for %s", country)
+            new_rows = self.get_sheet("new", "MAIN")
+            old_rows = self.get_sheet("old", "Sheet")
+            origin = GeographicalArea.objects.as_at(BREXIT).get(area_id=country)
 
-                    workbasket, _ = WorkBasket.objects.get_or_create(
-                        title=f"Preferential data for {country}",
-                        author=author,
-                        status=WorkflowStatus.PUBLISHED,
-                    )
-
-                    if country == "1013":
-                        membership = GeographicalMembership.objects.get(
-                            geo_group=origin, member__area_id="GB"
-                        )
-                        m = GeographicalMembership(
-                            geo_group=membership.geo_group,
-                            member=membership.member,
-                            valid_between=DateTimeTZRange(
-                                membership.valid_between.lower,
-                                BREXIT - relativedelta(days=1),
-                            ),
-                            update_type=UpdateType.UPDATE,
+            if country == "1013":
+                env.render_transaction(
+                    [
+                        GeographicalAreaDescription.objects.create(
+                            area=origin,
+                            description="European Union",
+                            sid=1427,
+                            valid_between=DateTimeTZRange(BREXIT, None),
+                            update_type=UpdateType.CREATE,
                             workbasket=workbasket,
                         )
-                        env.render_transaction([m])
+                    ]
+                )
 
-                    quota_rows = islice(
-                        quota_sheet.get_rows(), options["quota_skip_rows"], None
-                    )
+                cert = Certificate.objects.create(
+                    sid="178",
+                    certificate_type=CertificateType.objects.get(sid="U"),
+                    valid_between=DateTimeTZRange(BREXIT, None),
+                    update_type=UpdateType.CREATE,
+                    workbasket=workbasket,
+                )
+                desc = CertificateDescription.objects.create(
+                    sid=4500,
+                    described_certificate=cert,
+                    description='Proof of origin containing the following statement in English: "Product originating in accordance with Section 1 of Annex II-A"',
+                    valid_between=DateTimeTZRange(BREXIT, None),
+                    update_type=UpdateType.CREATE,
+                    workbasket=workbasket,
+                )
+                env.render_transaction([cert, desc])
+
+            staging_dict = {}
+            if country in STAGED_COUNTRIES:
+                logger.info("Loading staging information for %s", country)
+                StagedRowClass = STAGED_COUNTRIES[country]
+                sheet_rows = self.get_sheet("new", StagedRowClass.sheet)
+                staging_rows = (StagedRowClass(row) for row in sheet_rows)
+                staging_dict = {row.row_id: row for row in staging_rows}
+
+            if quota_importer:
+                quota_rows = self.get_sheet("quota", "ALL")
+                country_quota_rows = (
+                    row
+                    for row in (QuotaRow(row, origin) for row in quota_rows)
+                    if country in row.origin_ids
+                    and row.source in [QuotaSource.ORIGIN, QuotaSource.PREFERENTIAL]
+                )
+
+                if country == "LI":
+                    quota_importer.setup()
+                    for quota_origin in (
+                        QuotaOrderNumberOrigin.objects.as_at(BREXIT)
+                        .filter(geographical_area__area_id="CH")
+                        .all()
+                    ):
+                        env.render_transaction(
+                            [
+                                quota_importer.quota_creator.add_origin(
+                                    quota_origin.order_number, origin
+                                )
+                            ]
+                        )
                     country_quota_rows = (
-                        row
-                        for row in (QuotaRow(row, origin) for row in quota_rows)
-                        if country in row.origin_ids
-                        and row.source in [QuotaSource.ORIGIN, QuotaSource.PREFERENTIAL]
+                        r for r in country_quota_rows if r.order_number[0:3] == "054"
                     )
 
-                    staging_dict = {}
-                    if country in STAGED_COUNTRIES:
-                        logger.info("Loading staging information for %s", country)
-                        StagedRowClass = STAGED_COUNTRIES[country]
-                        staging_worksheet = new_workbook.sheet_by_name(
-                            StagedRowClass.sheet
-                        )
-                        sheet_rows = islice(
-                            staging_worksheet.get_rows(), options["new_skip_rows"], None
-                        )
-                        staging_rows = (StagedRowClass(row) for row in sheet_rows)
-                        staging_dict = {row.row_id: row for row in staging_rows}
+                quota_importer.import_sheets(country_quota_rows, iter([None]))
 
-                    quota_importer = QuotaImporter(
-                        workbasket,
-                        env,
-                        category=QuotaCategory.PREFERENTIAL,
-                        counters=options["counters"],
-                    )
+            country_new_rows = (
+                row
+                for row in (MainMeasureRow(row, origin) for row in new_rows)
+                if row.origin_id == country
+            )
+            country_old_rows = (
+                row
+                for row in (OldMeasureRow(row) for row in old_rows)
+                if row.geo_sid == origin.sid
+            )
 
-                    if country == "LI":
-                        quota_importer.setup()
-                        for quota_origin in (
-                            QuotaOrderNumberOrigin.objects.as_at(BREXIT)
-                            .filter(geographical_area__area_id="CH")
-                            .all()
-                        ):
-                            env.render_transaction(
-                                [
-                                    quota_importer.quota_creator.add_origin(
-                                        quota_origin.order_number, origin
-                                    )
-                                ]
-                            )
-                        country_quota_rows = (
-                            r
-                            for r in country_quota_rows
-                            if r.order_number[0:3] == "054"
-                        )
-
-                    quota_importer.import_sheets(country_quota_rows, iter([None]))
-
-                    new_rows = islice(
-                        schedule_sheet.get_rows(), options["new_skip_rows"], None
-                    )
-                    country_new_rows = (
-                        row
-                        for row in (MainMeasureRow(row, origin) for row in new_rows)
-                        if row.origin_id == country
-                    )
-
-                    old_rows = islice(
-                        old_worksheet.get_rows(), options["old_skip_rows"], None
-                    )
-                    country_old_rows = (
-                        row
-                        for row in (OldMeasureRow(row) for row in old_rows)
-                        if row.geo_sid == origin.sid
-                    )
-
-                    importer = FTAMeasuresImporter(
-                        workbasket,
-                        env,
-                        counters=options["counters"],
-                        staged_rows=staging_dict,
-                        quotas=quota_importer.quotas,
-                    )
-                    importer.import_sheets(country_new_rows, country_old_rows)
-
-        all_origins = GeographicalArea.objects.filter(
-            area_id__in=options["geographical_area"]
-        ).all()
-
-        write_summary(
-            options["output"],
-            f"Trade agreements for {', '.join(o.get_description().description for o in all_origins)}",
-            options["counters"],
-            options["counters__original"],
-        )
-
-        transaction.set_rollback(True)
+            importer = FTAMeasuresImporter(
+                workbasket,
+                env,
+                counters=self.options["counters"],
+                staged_rows=staging_dict,
+                quotas=(quota_importer.quotas if quota_importer else {}),
+            )
+            importer.import_sheets(country_new_rows, country_old_rows)
