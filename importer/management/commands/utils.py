@@ -63,7 +63,9 @@ class CountersAction(argparse.Action):
         setattr(namespace, "counters__original", {self.dest: values, **originals})
 
 
-def id_argument(parser: Any, name: str, default: Optional[int] = None) -> None:
+def id_argument(
+    parser: argparse.ArgumentParser, name: str, default: Optional[int] = None
+) -> None:
     parser.add_argument(
         f"--{name}-id",
         help=f"The ID value to use for the first new {(name.replace('-',''))}.",
@@ -73,7 +75,7 @@ def id_argument(parser: Any, name: str, default: Optional[int] = None) -> None:
     )
 
 
-def spreadsheet_argument(parser: Any, name: str) -> None:
+def spreadsheet_argument(parser: argparse.ArgumentParser, name: str) -> None:
     parser.add_argument(
         f"{name}-spreadsheet",
         help=f"The XLSX file containing new {name}s to be parsed.",
@@ -87,7 +89,7 @@ def spreadsheet_argument(parser: Any, name: str) -> None:
     )
 
 
-def output_argument(parser: Any) -> None:
+def output_argument(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--output", help="The filename to output to.", type=str, default="out.xml"
     )

@@ -1,10 +1,8 @@
 import logging
 import re
-import sys
 from datetime import date
 from datetime import datetime
-from datetime import timedelta
-from itertools import islice
+from distutils.util import strtobool
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -14,20 +12,17 @@ from typing import List
 from typing import Optional
 from typing import Type
 
-import django.db
 import pytz
 import xlrd
 from django.apps import apps
-from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.postgres.fields.ranges import DateTimeRangeField
 from django.core.exceptions import ValidationError
-from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 from django.db.models.fields import BooleanField
 from django.db.models.fields import CharField
 from django.db.models.fields import DateField
+from django.db.models.fields import DecimalField
 from django.db.models.fields import Field
 from django.db.models.fields import IntegerField
 from django.db.models.fields import TextField
@@ -37,9 +32,11 @@ from xlrd.sheet import Cell
 from common.models import ShortDescription
 from common.models import TrackedModel
 from common.validators import UpdateType
-from importer.management.commands.patterns import parse_date
+from importer.management.commands.import_command import ImportCommand
+from importer.management.commands.utils import EnvelopeSerializer
+from importer.management.commands.utils import spreadsheet_argument
+from importer.management.commands.utils import strint
 from workbaskets.models import WorkBasket
-from workbaskets.models import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +55,13 @@ def to_date(value: str) -> date:
     return pytz.utc.localize(datetime.strptime(value, "%Y-%m-%d")).date()
 
 
+def parse_date(cell: Cell) -> datetime:
+    if cell.ctype == xlrd.XL_CELL_DATE:
+        return pytz.utc.localize(xlrd.xldate.xldate_as_datetime(cell.value, datemode=0))
+    else:
+        return pytz.utc.localize(datetime.strptime(cell.value, r"%Y-%m-%d"))
+
+
 def blank(blank: bool, transformer: Transformer) -> Transformer:
     def transform(cell: Cell) -> Any:
         if blank and cell.value == "":
@@ -68,7 +72,7 @@ def blank(blank: bool, transformer: Transformer) -> Transformer:
     return transform
 
 
-def val(t: Transformer) -> Transformer:
+def val(t: Callable[[Any], Any]) -> Transformer:
     return lambda cell: t(cell.value)
 
 
@@ -83,9 +87,11 @@ def get_type_transformer(
     if issubclass(type(field), (CharField, TextField)):
         return blank(field.blank, val(str))
     if issubclass(type(field), IntegerField):
-        return blank(field.blank, val(int))
+        return blank(field.blank, strint)
+    if issubclass(type(field), DecimalField):
+        return blank(field.blank, lambda cell: str(cell.value))
     if issubclass(type(field), BooleanField):
-        return blank(field.blank, val(bool))
+        return blank(field.blank, val(strtobool))
     if issubclass(type(field), DateTimeRangeField):
         return blank(True, parse_date)
     if issubclass(type(field), DateField):
@@ -99,7 +105,9 @@ def get_type_transformer(
         if num_values == 1:
 
             def transform(value: Cell) -> Any:
-                return related_model.objects.get(**{id_field_name: transformer(value)})
+                data = {id_field_name: transformer(value)}
+                logger.debug("Looking up %s using values %s", related_model, data)
+                return related_model.objects.get(**data)
 
             return blank(field.blank, transform)
         else:
@@ -122,8 +130,6 @@ def get_type_setter(field: Optional[Field], index: Optional[int]) -> Setter:
         def setter(data: Dict, value: Any):
             if field.name not in data:
                 data[field.name] = [None, None]
-            if index == 1 and value:
-                value += timedelta(days=1)
             data[field.name][index] = value
 
         return setter
@@ -196,20 +202,17 @@ class SheetImporter:
             yield instance
 
 
-class Command(BaseCommand):
+class Command(ImportCommand):
     help = "Imports a single table of reference data from one sheet."
+    title = "Data import from spreadsheet"
 
     def add_arguments(self, parser: CommandParser):
-        parser.add_argument(
-            "spreadsheet",
-            help="The XLSX file to be parsed",
-            type=str,
-        )
+        spreadsheet_argument(parser, "import")
         parser.add_argument(
             "--sheet",
             help="The sheet name in the XLSX containing the data",
             type=str,
-            default="Sheet1",
+            default="Sheet",
         )
         parser.add_argument(
             "app",
@@ -227,61 +230,28 @@ class Command(BaseCommand):
             type=str,
             nargs="+",
         )
-        parser.add_argument(
-            "--skip-rows",
-            help="The number of rows from the spreadsheet to skip before importing data",
-            type=int,
-            default=0,
-        )
-        parser.add_argument(
-            "--dry-run",
-            help="Don't commit the import run",
-            action="store_const",
-            const=True,
-            default=False,
-        )
+        super().add_arguments(parser)
 
-    def handle(self, *args, **options):
-        workbook = xlrd.open_workbook(options["spreadsheet"])
-        worksheet = workbook.sheet_by_name(options["sheet"])
-
-        config = apps.get_app_config(options["app"])
-        ModelClass = config.get_model(options["model"])
+    def run(self, workbasket: WorkBasket, env: EnvelopeSerializer) -> None:
+        config = apps.get_app_config(self.options["app"])
+        ModelClass = config.get_model(self.options["model"])
         logger.info(
-            "Importing into model %s from sheet %s", ModelClass.__name__, worksheet.name
+            "Importing into model %s from sheet %s",
+            ModelClass.__name__,
+            self.options["sheet"],
         )
 
-        workbasket_status = WorkflowStatus.PUBLISHED
-        username = settings.DATA_IMPORT_USERNAME
-        try:
-            author = User.objects.get(username=username)
-        except User.DoesNotExist:
-            sys.exit(
-                f"Author does not exist, create user '{username}'"
-                " or edit settings.DATA_IMPORT_USERNAME"
-            )
-
-        workbasket, _ = WorkBasket.objects.get_or_create(
-            title=f"Data import from spreadsheet of {ModelClass.__name__}",
-            author=author,
-            status=workbasket_status,
-        )
-
-        importer = SheetImporter(ModelClass, workbasket, *options["columns"])
+        importer = SheetImporter(ModelClass, workbasket, *self.options["columns"])
 
         num_rows = 0
-        with django.db.transaction.atomic():
-            rows = islice(worksheet.get_rows(), options["skip_rows"], None)
-            for instance in importer.import_rows(rows):
-                num_rows += 1
-                try:
-                    instance.save()
-                except ValidationError as ex:
-                    logger.error("Validation error creating %s", instance.__dict__)
-                    raise ex
-
-            if options["dry_run"]:
-                logger.info("Rolling back transaction...")
-                raise django.db.transaction.set_rollback(True)
+        rows = self.get_sheet("import", self.options["sheet"])
+        for instance in importer.import_rows(rows):
+            num_rows += 1
+            try:
+                instance.save()
+                env.render_transaction([instance])
+            except ValidationError as ex:
+                logger.error("Validation error creating %s", instance.__dict__)
+                raise ex
 
         logger.info("Completed import of %d rows", num_rows)
