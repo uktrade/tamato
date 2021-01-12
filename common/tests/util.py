@@ -142,6 +142,7 @@ def validate_taric_xml(
             api_client,
             taric_schema,
             approved_transaction,
+            valid_user,
             *args,
             **kwargs,
         ):
@@ -158,6 +159,7 @@ def validate_taric_xml(
                 transaction=approved_transaction, **factory_kwargs or {}
             )
 
+            api_client.force_login(user=valid_user)
             response = api_client.get(
                 reverse(
                     "workbasket-detail",

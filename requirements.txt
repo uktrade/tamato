@@ -14,6 +14,7 @@ django-polymorphic
 django-redis
 django-rest-polymorphic
 django-sequences
+django-staff-sso-client
 django-storages
 django-treebeard
 django-webpack-loader

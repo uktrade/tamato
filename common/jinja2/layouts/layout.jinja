@@ -15,7 +15,7 @@
     "serviceUrl": "#",
     "navigation": [
       {
-        "href": url("logout") if request.user.is_authenticated else url("login"),
+        "href": url("logout") if request.user.is_authenticated else url("authbroker_client:login"),
         "text": "Sign out" if request.user.is_authenticated else "Sign In"
       }
     ]
