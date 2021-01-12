@@ -14,7 +14,11 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows additional codes to be viewed.
     """
 
-    queryset = AdditionalCode.objects.all().prefetch_related("descriptions")
+    queryset = (
+        AdditionalCode.objects.current()
+        .select_related("type")
+        .prefetch_related("descriptions")
+    )
     serializer_class = AdditionalCodeSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [AdditionalCodeFilterBackend]

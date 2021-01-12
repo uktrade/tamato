@@ -2,7 +2,6 @@ from django.shortcuts import render
 from rest_framework import filters
 from rest_framework import permissions
 from rest_framework import renderers
-from rest_framework import response
 from rest_framework import viewsets
 
 from regulations.models import Regulation
@@ -14,7 +13,7 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows regulations to be viewed.
     """
 
-    queryset = Regulation.objects.all()
+    queryset = Regulation.objects.current().select_related("regulation_group")
     serializer_class = RegulationSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]

@@ -99,6 +99,12 @@ class Footnote(TrackedModel, ValidityMixin):
         )
 
     def get_description(self):
+        if (
+            hasattr(self, "_prefetched_objects_cache")
+            and "descriptions" in self._prefetched_objects_cache
+        ):
+            descriptions = list(self.descriptions.all())
+            return descriptions[-1] if descriptions else None
         return self.get_descriptions().last()
 
     def _used_in(self, dependent_type: Type[TrackedModel]):
