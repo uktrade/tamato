@@ -13,9 +13,7 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows geographical areas to be viewed.
     """
 
-    queryset = GeographicalArea.objects.all().prefetch_related(
-        "geographicalareadescription_set"
-    )
+    queryset = GeographicalArea.objects.current().prefetch_related("descriptions")
     serializer_class = GeographicalAreaSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = GeographicalAreaFilter

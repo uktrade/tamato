@@ -19,7 +19,11 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     API endpoint that allows footnotes to be viewed and edited.
     """
 
-    queryset = models.Footnote.objects.all().prefetch_related("descriptions")
+    queryset = (
+        models.Footnote.objects.current()
+        .select_related("footnote_type")
+        .prefetch_related("descriptions")
+    )
     serializer_class = FootnoteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [FootnoteFilterBackend]
@@ -32,7 +36,11 @@ class FootnoteViewSet(viewsets.ModelViewSet):
 
 
 class FootnoteList(WithCurrentWorkBasket, ListView):
-    queryset = models.Footnote.objects.current()
+    queryset = (
+        models.Footnote.objects.current()
+        .select_related("footnote_type")
+        .prefetch_related("descriptions")
+    )
     template_name = "footnotes/list.jinja"
 
 
@@ -63,12 +71,20 @@ class FootnoteMixin:
 
 class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, DetailView):
     template_name = "footnotes/detail.jinja"
-    queryset = models.Footnote.objects.current()
+    queryset = (
+        models.Footnote.objects.current()
+        .select_related("footnote_type")
+        .prefetch_related("descriptions")
+    )
 
 
 class FootnoteUpdate(FootnoteMixin, DraftUpdateView):
     form_class = forms.FootnoteForm
-    queryset = models.Footnote.objects.current()
+    queryset = (
+        models.Footnote.objects.current()
+        .select_related("footnote_type")
+        .prefetch_related("descriptions")
+    )
     template_name = "footnotes/edit.jinja"
 
     def get_form(self, form_class=None):
@@ -131,8 +147,6 @@ class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows footnote types to be viewed or edited.
     """
 
-    queryset = models.FootnoteType.objects.all().prefetch_related(
-        "footnotetypedescription_set"
-    )
+    queryset = models.FootnoteType.objects.current()
     serializer_class = FootnoteTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
