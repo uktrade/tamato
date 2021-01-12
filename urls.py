@@ -19,6 +19,12 @@ from django.urls import include
 from django.urls import path
 
 urlpatterns = [
+    path(
+        "auth/",
+        include(
+            "authbroker_client.urls",
+        ),
+    ),
     path("", include("common.urls")),
     path("", include("additional_codes.urls")),
     path("", include("certificates.urls")),

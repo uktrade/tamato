@@ -107,6 +107,9 @@ When running tests the settings module defaults to settings.test
 
 | Name | Description |
 | ---- | ----------- | 
+| AUTHBROKER_URL           | Base URL of the OAuth2 authentication broker (default https://sso.trade.gov.uk) |
+| AUTHBROKER_CLIENT_ID     | Client ID used to connect to the OAuth2 authentication broker |
+| AUTHBROKER_CLIENT_SECRET | Client secret used to connect to the OAuth2 authentication broker |
 | DATABASE_URL             | Connection details for the database, formatted per the [dj-database-url schema](https://github.com/jacobian/dj-database-url#url-schema) |
 | LOG_LEVEL                | The level of logging messages in the web app. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                     |
 | CELERY_LOG_LEVEL         | The level of logging for the celery worker. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                       |

@@ -67,6 +67,7 @@ def test_quota_event_xml(
     api_client,
     taric_schema,
     approved_transaction,
+    valid_user,
     subrecord_code,
     event_type_name,
 ):
@@ -90,4 +91,4 @@ def test_quota_event_xml(
         element = xml.find(f".//{tag}", xml.nsmap)
         assert element is not None
 
-    test_event_type(api_client, taric_schema, approved_transaction)
+    test_event_type(api_client, taric_schema, approved_transaction, valid_user)

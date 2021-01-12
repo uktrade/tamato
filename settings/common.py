@@ -10,6 +10,7 @@ from os.path import dirname
 from os.path import join
 
 import dj_database_url
+from django.urls import reverse_lazy
 
 from common.util import is_truthy
 
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     # "health_check.db",
     # "health_check.cache",
     # "health_check.storage",
+    "authbroker_client",
     "polymorphic",
     "rest_framework",
     "webpack_loader",
@@ -91,6 +93,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "authbroker_client.middleware.ProtectAllViewsMiddleware",
 ]
 
 TEMPLATES = [
@@ -119,10 +122,17 @@ TEMPLATES = [
 
 
 # -- Auth
+LOGIN_URL = reverse_lazy("authbroker_client:login")
+LOGIN_REDIRECT_URL = reverse_lazy("home")
 
-# TODO - tie in to DIT SSO?
-LOGIN_REDIRECT_URL = "index"
+AUTHBROKER_URL = os.environ.get("AUTHBROKER_URL", "https://sso.trade.gov.uk")
+AUTHBROKER_CLIENT_ID = os.environ.get("AUTHBROKER_CLIENT_ID")
+AUTHBROKER_CLIENT_SECRET = os.environ.get("AUTHBROKER_CLIENT_SECRET")
 
+AUTHENTICATION_BACKENDS = (
+    "authbroker_client.backends.AuthbrokerBackend",
+    "django.contrib.auth.backends.ModelBackend",
+)
 
 # -- Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
