@@ -41,7 +41,7 @@ def geo_area_core_data(geo_area_detail, geographical_area_1001):
 
 @then("the descriptions against the geographical_area should be presented")
 def geo_area_description_data(geo_area_detail, geographical_area_1001):
-    descriptions = geographical_area_1001.geographicalareadescription_set.all()
+    descriptions = geographical_area_1001.descriptions.all()
 
     content = geo_area_detail.content.decode()
 

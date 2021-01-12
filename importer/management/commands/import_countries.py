@@ -98,7 +98,7 @@ class GeoAreaImporter:
             else:
                 new_description = new_descriptions[0]
 
-            description = area.geographicalareadescription_set.as_at(start_date).get()
+            description = area.descriptions.as_at(start_date).get()
             if description.description != new_description:
                 # TODO: update end date of previous description
                 # TODO: assert there are no future description changes
