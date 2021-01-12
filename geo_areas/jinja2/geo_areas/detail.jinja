@@ -68,7 +68,7 @@
 
   {% set description_data_html %}
     {% set description_rows = [] %}
-    {% for description in area.geographicalareadescription_set.all() %}
+    {% for description in area.get_descriptions().order_by("valid_between") %}
       {{ description_rows.append([
         {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
         {"text": description.description},

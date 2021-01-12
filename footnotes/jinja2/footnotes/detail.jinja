@@ -76,7 +76,7 @@
 
   {% set description_data_html %}
     {% set description_rows = [] %}
-    {% for description in object.get_descriptions() %}
+    {% for description in object.get_descriptions().order_by("valid_between") %}
       {{ description_rows.append([
         {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
         {"text": description.description},
@@ -118,10 +118,10 @@
     {% for version in object.get_versions() %}
       {{ version_rows.append([
         {"text": version.get_update_type_display()},
-        {"text": "{:%d %b %Y}".format(version.workbasket.updated_at)},
+        {"text": "{:%d %b %Y}".format(version.transaction.workbasket.updated_at)},
         {"text": "{:%d %b %Y}".format(version.valid_between.lower)},
         {"text": "{:%d %b %Y}".format(version.valid_between.upper) if version.valid_between.upper else "-"},
-        {"html": status(version.workbasket)},
+        {"html": status(version.transaction.workbasket)},
         {"text": version.get_description().description},
       ]) or ""}}
     {% endfor %}

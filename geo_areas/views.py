@@ -43,6 +43,6 @@ class GeoAreaUIViewSet(GeoAreaViewSet):
             context={
                 "area": area,
                 "is_group": is_group,
-                "members": GeographicalMembership.objects.filter(**kwargs),
+                "members": GeographicalMembership.objects.current().filter(**kwargs),
             },
         )
