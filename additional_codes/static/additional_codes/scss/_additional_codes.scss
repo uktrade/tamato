@@ -1,16 +1,20 @@
-.additional_code__core-data {
+.additional_code__details {
   @extend .govuk-grid-row;
 }
 
-.additional_code__core-data__content {
+.additional_code__details__content {
   @extend .govuk-grid-column-three-quarters;
 }
 
-.additional_code__core-data__actions {
+.additional_code__details__actions {
   @extend .govuk-grid-column-one-quarter;
 
   h2 {
     border-top: 2px solid $govuk-brand-colour;
-    padding-top: govuk-spacing(4);
+    padding-top: govuk-spacing(2);
+  }
+
+  .govuk-list > li {
+    margin-bottom: govuk-spacing(2);
   }
 }
