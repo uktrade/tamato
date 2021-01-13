@@ -1,33 +1,41 @@
 import logging
 from enum import Enum
 from functools import cached_property
+from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Optional
 
 from xlrd.sheet import Cell
 
+from common.models import TrackedModel
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
+from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.import_command import ImportCommand
 from importer.management.commands.import_fta import FTAMeasuresImporter
 from importer.management.commands.import_fta import MainMeasureRow
 from importer.management.commands.import_wto import WTOMeasureImporter
 from importer.management.commands.import_wto import WTOMeasureRow
-from importer.management.commands.import_wto import add_members_to_group
 from importer.management.commands.patterns import BREXIT
+from importer.management.commands.patterns import MeasureCreatingPattern
+from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.patterns import QuotaCreatingPattern
 from importer.management.commands.quota_importer import QuotaRow
-from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import col
+from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import id_argument
 from importer.management.commands.utils import spreadsheet_argument
+from measures.models import MeasureExcludedGeographicalArea
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaOrderNumberOrigin
 from quotas.models import QuotaOrderNumberOriginExclusion
 from quotas.validators import QuotaCategory
+from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
@@ -57,6 +65,58 @@ class QuotaUpdateVerb(Enum):
     UPDATE_QON = "Update quota order number"
     # WTO_MEASURES – add measures from the WTO file
     WTO_MEASURES = "Add non-pref measures"
+
+
+class ChangeMeasureImporter(RowsImporter):
+    def __init__(
+        self, *args, generating_regulation: Regulation, changes: Dict, **kwargs
+    ) -> None:
+        self.generating_regulation = generating_regulation
+        self.changes = changes
+        super().__init__(*args, **kwargs)
+
+    def setup(self) -> Iterator[TrackedModel]:
+        self.measure_ender = MeasureEndingPattern(
+            workbasket=self.workbasket,
+        )
+
+        self.measure_creator = MeasureCreatingPattern(
+            generating_regulation=self.generating_regulation,
+            workbasket=self.workbasket,
+            duty_sentence_parser=self.duty_sentence_parser,
+            measure_sid_counter=self.counters["measure_id"],
+            measure_condition_sid_counter=self.counters["measure_condition_id"],
+        )
+
+        return iter([])
+
+    def handle_row(
+        self, row: Optional[OldMeasureRow], old_row: Optional[OldMeasureRow]
+    ) -> Iterator[List[TrackedModel]]:
+        if old_row:
+            endings = self.measure_ender.end_date_measure(
+                old_row, self.generating_regulation
+            )
+            yield from ([m] for m in endings)
+
+        if row:
+            defaults = {
+                "duty_sentence": row.duty_expression,
+                "geography": row.geographical_area,
+                "goods_nomenclature": row.goods_nomenclature,
+                "new_measure_type": row.measure_type_object,
+                "order_number": row.quota,
+                "authorised_use": (
+                    row.measure_type
+                    in ("105", "123", "115", "117", "119", "145", "146")
+                ),
+                "additional_code": row.additional_code,
+                "validity_start": row.measure_start_date,
+                "validity_end": row.measure_end_date,
+            }
+            defaults.update(self.changes)
+            beginnings = self.measure_creator.create(**defaults)
+            yield list(beginnings)
 
 
 class QuotaUpdateRow:
@@ -97,7 +157,9 @@ class Command(ImportCommand):
         return (r for r in rows if r.order_number == f"05{quota.order_number[2:]}")
 
     def get_wto_measures(self, quota: QuotaOrderNumber) -> Iterator[WTOMeasureRow]:
-        rows = (WTOMeasureRow(r) for r in self.get_sheet("wto", self.options["changes"], 1))
+        rows = (
+            WTOMeasureRow(r) for r in self.get_sheet("wto", self.options["changes"], 1)
+        )
         return (r for r in rows if r.quota_number == quota.order_number)
 
     def run(self, workbasket: WorkBasket, env: EnvelopeSerializer) -> None:
@@ -122,57 +184,92 @@ class Command(ImportCommand):
             env,
             counters=self.options["counters"],
             staged_rows={},
-            quotas={}
+            quotas={},
         )
+
+        if env.envelope_id == 210002:  # hack
+            eu_group = GeographicalArea.objects.get(area_id="1013")
+            safeguard_group = GeographicalArea.objects.get(area_id="5050")
+            measures = (
+                r.as_measure
+                for r in (OldMeasureRow(r) for r in self.get_sheet("old", "Sheet", 1))
+                if r.geo_sid == safeguard_group.sid and "European Union" in r.excluded_areas
+            )
+            areas = list(
+                GeographicalMembership.objects
+                .as_at(BREXIT)
+                .filter(geo_group=eu_group)
+                .exclude(member__area_id="EU")
+            )
+            for measure in measures:
+                logger.debug("Exclude from %s", measure.sid)
+                env.render_transaction(
+                    [
+                        MeasureExcludedGeographicalArea(
+                            modified_measure=measure,
+                            excluded_geographical_area=membership.member,
+                            workbasket=workbasket,
+                            update_type=UpdateType.CREATE,
+                        )
+                        for membership in areas
+                    ]
+                )
 
         updates = (
             QuotaUpdateRow(r)
             for r in self.get_sheet("quota", self.options["changes"], 1)
         )
 
-        #for model in add_members_to_group(
-        #    GeographicalArea.objects.get(area_id="1013"),
-        #    GeographicalArea.objects.get(area_id="5050"),
-        #    workbasket
-        #):
-        #    env.render_transaction([model])
-
         for row in updates:
             new = self.quotas.get(row.quota_order_number, None)
             logger.info("%s %s", row.verb, row.quota_order_number)
 
             if row.verb == QuotaUpdateVerb.DELETE:
-                exists = QuotaOrderNumber.objects.filter(order_number=row.quota_order_number).exists()
+                exists = QuotaOrderNumber.objects.filter(
+                    order_number=row.quota_order_number
+                ).exists()
                 logger.info("Exists %s", exists)
                 if not exists:
-                    list(quota_creator.create(
-                        order_number=new.order_number,
-                        mechanism=new.mechanism,
-                        origins=new.origins,
-                        category=QuotaCategory.PREFERENTIAL,
-                        period_start_date=new.period_start,
-                        period_end_date=new.period_end,
-                        period_type=new.type,
-                        unit=new.measurement,
-                        volume=new.volume,
-                        interim_volume=new.interim_volume,
-                        parent_order_number=new.parent_order_number,
-                        coefficient=new.coefficient,
-                        excluded_origins=new.excluded_origins,
-                    ))
+                    list(
+                        quota_creator.create(
+                            order_number=new.order_number,
+                            mechanism=new.mechanism,
+                            origins=new.origins,
+                            category=QuotaCategory.PREFERENTIAL,
+                            period_start_date=new.period_start,
+                            period_end_date=new.period_end,
+                            period_type=new.type,
+                            unit=new.measurement,
+                            volume=new.volume,
+                            interim_volume=new.interim_volume,
+                            parent_order_number=new.parent_order_number,
+                            coefficient=new.coefficient,
+                            excluded_origins=new.excluded_origins,
+                        )
+                    )
 
                 fta_importer.import_sheets(
                     iter([None]), self.get_existing_measures(row.quota_order_number)
                 )
 
                 if exists:
-                    for defn in QuotaDefinition.objects.filter(order_number__order_number=row.quota_order_number):
+                    for defn in QuotaDefinition.objects.filter(
+                        order_number__order_number=row.quota_order_number
+                    ):
                         logger.info("Deleting defn %s", defn)
                         for assoc in QuotaAssociation.objects.filter(sub_quota=defn):
                             logger.info("Deleting assoc %s", assoc)
-                            env.render_transaction([assoc.new_draft(workbasket, update_type=UpdateType.DELETE)])
-                        env.render_transaction([defn.new_draft(workbasket, update_type=UpdateType.DELETE)])
-                    #for quota in QuotaOrderNumber.objects.filter(order_number=row.quota_order_number):
+                            env.render_transaction(
+                                [
+                                    assoc.new_draft(
+                                        workbasket, update_type=UpdateType.DELETE
+                                    )
+                                ]
+                            )
+                        env.render_transaction(
+                            [defn.new_draft(workbasket, update_type=UpdateType.DELETE)]
+                        )
+                    # for quota in QuotaOrderNumber.objects.filter(order_number=row.quota_order_number):
                     #    env.render_transaction([quota.new_draft(workbasket, update_type=UpdateType.DELETE)])
 
             elif row.verb == QuotaUpdateVerb.ADD:
@@ -195,6 +292,7 @@ class Command(ImportCommand):
                 ):
                     env.render_transaction(transaction)
 
+                fta_importer.quotas[new.order_number] = new
                 fta_importer.import_sheets(
                     self.get_new_measures(row.quota), iter([None])
                 )
@@ -216,22 +314,18 @@ class Command(ImportCommand):
                 ).exists()
                 new_end_date = new.period_end.replace(year=BREXIT.year)
                 qd = quota_creator.define_quota(
-                            quota=row.quota,
-                            volume=new.interim_volume,
-                            unit=new.measurement,
-                            start_date=BREXIT,
-                            end_date=new_end_date,
-                        )
-                qd.save()
-                env.render_transaction(
-                    [qd]
+                    quota=row.quota,
+                    volume=new.interim_volume,
+                    unit=new.measurement,
+                    start_date=BREXIT,
+                    end_date=new_end_date,
                 )
+                qd.save()
+                env.render_transaction([qd])
 
             elif row.verb == QuotaUpdateVerb.REDEFINE:
                 normal_dates, interim_dates = quota_creator.get_period_dates(
-                    new.period_start,
-                    new.period_end,
-                    new.type
+                    new.period_start, new.period_end, new.type
                 )
 
                 interim_qd = None
@@ -243,7 +337,8 @@ class Command(ImportCommand):
                         order_number=row.quota,
                         valid_between__contains=interim_start,
                     )
-                    interim_qd = old_qd.new_draft(workbasket,
+                    interim_qd = old_qd.new_draft(
+                        workbasket,
                         valid_between=interim_dates,
                         volume=new.interim_volume,
                         initial_volume=new.interim_volume,
@@ -251,12 +346,20 @@ class Command(ImportCommand):
                     )
                     env.render_transaction([interim_qd])
 
-                    for old_qd in QuotaDefinition.objects.filter(order_number=row.quota).exclude(id__in=[old_qd.id, interim_qd.id]):
-                        deletion = old_qd.new_draft(workbasket, update_type=UpdateType.DELETE)
+                    for old_qd in QuotaDefinition.objects.filter(
+                        order_number=row.quota
+                    ).exclude(id__in=[old_qd.id, interim_qd.id]):
+                        deletion = old_qd.new_draft(
+                            workbasket, update_type=UpdateType.DELETE
+                        )
                         env.render_transaction([deletion])
                 else:
-                    for old_qd in QuotaDefinition.objects.filter(order_number=row.quota):
-                        deletion = old_qd.new_draft(workbasket, update_type=UpdateType.DELETE)
+                    for old_qd in QuotaDefinition.objects.filter(
+                        order_number=row.quota
+                    ):
+                        deletion = old_qd.new_draft(
+                            workbasket, update_type=UpdateType.DELETE
+                        )
                         env.render_transaction([deletion])
 
                 normal_qd = quota_creator.define_quota(
@@ -289,13 +392,24 @@ class Command(ImportCommand):
             elif row.verb == QuotaUpdateVerb.REPLACE_ORIGIN:
                 geo_id = row.notes.strip()
                 if geo_id != "":
-                    replacing = [GeographicalArea.objects.get(area_id=row.notes.strip())]
+                    replacing = [
+                        GeographicalArea.objects.get(area_id=row.notes.strip())
+                    ]
                 else:
-                    replacing = [q.geographical_area for q in QuotaOrderNumberOrigin.objects.filter(order_number=row.quota)]
+                    replacing = [
+                        q.geographical_area
+                        for q in QuotaOrderNumberOrigin.objects.filter(
+                            order_number=row.quota
+                        )
+                    ]
 
                 logger.info("Replacing %s with %s", replacing, new.origins)
-                matching = [r for r in self.get_existing_measures(row.quota_order_number) if r in replacing]
-                for measure_row in matching:
+                matching = lambda: (
+                    r
+                    for r in self.get_existing_measures(row.quota_order_number)
+                    if r.geographical_area in replacing
+                )
+                for measure_row in matching():
                     measure = measure_row.as_measure
                     measure.workbasket = workbasket
                     measure.update_type = UpdateType.DELETE
@@ -306,17 +420,24 @@ class Command(ImportCommand):
                     order_number=row.quota,
                     geographical_area__in=replacing,
                 ):
-                    models.append(origin.new_draft(workbasket, update_type=UpdateType.DELETE))
+                    models.append(
+                        origin.new_draft(workbasket, update_type=UpdateType.DELETE)
+                    )
                 env.render_transaction(models)
 
-                for measure_row in matching:
-                    for origin in new.origins:
-                        measure = measure_row.as_measure
-                        measure.sid = self.options["counters"]["measure_id"]()
-                        measure.geographical_area = origin
-                        measure.workbasket = workbasket
-                        measure.update_type = UpdateType.CREATE
-                        env.render_transaction([measure])
+                for origin in new.origins:
+                    ChangeMeasureImporter(
+                        workbasket,
+                        env,
+                        generating_regulation=Regulation.objects.get(
+                            regulation_id="C2100007"
+                        ),
+                        changes={"geography": origin},
+                        counters=self.options["counters"],
+                    ).import_sheets(
+                        matching(),
+                        iter([None]),
+                    )
 
             # UNEXCLUDE – delete quota origin exclusion
             elif row.verb == QuotaUpdateVerb.UNEXCLUDE:
@@ -333,23 +454,32 @@ class Command(ImportCommand):
                     exclusion = QuotaOrderNumberOriginExclusion.objects.get(
                         origin=origin, excluded_geographical_area=deletion
                     )
-                    models.append(exclusion.new_draft(workbasket, update_type=UpdateType.DELETE))
+                    models.append(
+                        exclusion.new_draft(workbasket, update_type=UpdateType.DELETE)
+                    )
                 env.render_transaction(models)
 
             # UPDATE – find the quota definitions and update the volumes
             elif row.verb == QuotaUpdateVerb.UPDATE:
-                logger.debug("New period: %s -> %s @ %s (int. @ %s)", new.period_start, new.period_end, new.volume, new.interim_volume)
+                logger.debug(
+                    "New period: %s -> %s @ %s (int. @ %s)",
+                    new.period_start,
+                    new.period_end,
+                    new.volume,
+                    new.interim_volume,
+                )
                 updated = False
                 for defn in QuotaDefinition.objects.filter(order_number=row.quota):
                     defn.workbasket = workbasket
                     defn.update_type = UpdateType.UPDATE
                     defn_start = defn.valid_between.lower
-                    logger.debug("Considering defn: %s @ %s", defn.valid_between, defn.volume)
+                    logger.debug(
+                        "Considering defn: %s @ %s", defn.valid_between, defn.volume
+                    )
                     if (
-                        (defn_start.month != new.period_start.month
-                        or defn_start.day != new.period_start.day)
-                        and defn.volume != new.interim_volume
-                    ):
+                        defn_start.month != new.period_start.month
+                        or defn_start.day != new.period_start.day
+                    ) and defn.volume != new.interim_volume:
                         # update interim
                         updated = True
                         defn.volume = new.interim_volume
@@ -367,7 +497,9 @@ class Command(ImportCommand):
                         env.render_transaction([defn])
 
                 if not updated:
-                    logger.warning("Nothing to UPDATE for quota %s?", row.quota_order_number)
+                    logger.warning(
+                        "Nothing to UPDATE for quota %s?", row.quota_order_number
+                    )
 
             # WTO_MEASURES – import WTO measures to a pre-existing quota
             elif row.verb == QuotaUpdateVerb.WTO_MEASURES:
@@ -399,24 +531,35 @@ class Command(ImportCommand):
                     measure.update_type = UpdateType.DELETE
                     env.render_transaction([measure])
 
-                models = [row.quota.new_draft(
-                    order_number=new_qon,
-                    workbasket=workbasket,
-                    update_type=UpdateType.UPDATE,
-                )]
-
-                for defn in QuotaDefinition.objects.filter(order_number__order_number=row.quota):
-                    models.append(defn.new_draft(
-                        order_number=models[0],
+                models = [
+                    row.quota.new_draft(
+                        order_number=new_qon,
                         workbasket=workbasket,
                         update_type=UpdateType.UPDATE,
-                    ))
+                    )
+                ]
+
+                for defn in QuotaDefinition.objects.filter(
+                    order_number__order_number=row.quota
+                ):
+                    models.append(
+                        defn.new_draft(
+                            order_number=models[0],
+                            workbasket=workbasket,
+                            update_type=UpdateType.UPDATE,
+                        )
+                    )
                 env.render_transaction(models)
 
-                for measure_row in self.get_existing_measures(row.quota_order_number):
-                    measure = measure_row.as_measure
-                    measure.sid = self.options["counters"]["measure_id"]()
-                    measure.order_number = models[0]
-                    measure.workbasket = workbasket
-                    measure.update_type = UpdateType.CREATE
-                    env.render_transaction([measure])
+                importer = ChangeMeasureImporter(
+                    workbasket,
+                    env,
+                    generating_regulation=Regulation.objects.get(
+                        regulation_id="C2100006"
+                    ),
+                    changes={"order_number": models[0]},
+                    counters=self.options["counters"],
+                )
+                importer.import_sheets(
+                    self.get_existing_measures(row.quota_order_number), iter([None])
+                )

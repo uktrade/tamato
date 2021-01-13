@@ -698,14 +698,20 @@ class SeasonalRateParser:
     def correct_dates(
         self, start_date: datetime, end_date: Optional[datetime]
     ) -> Iterable:
-        start = start_date + relativedelta(years=self.base.year - start_date.year)
-        end = (
-            (end_date + relativedelta(years=self.base.year - end_date.year))
-            if end_date
-            else None
-        )
-        assert start.year == self.base.year
-        assert end is None or end.year == self.base.year
+        if end_date.year - start_date.year <= 1:
+            start = start_date + relativedelta(years=self.base.year - start_date.year)
+            end = (
+                (end_date + relativedelta(years=self.base.year - end_date.year))
+                if end_date
+                else None
+            )
+            assert start.year == self.base.year
+            assert end is None or end.year == self.base.year
+        else:
+            start = start_date
+            end = end_date
+            assert start.year >= self.base.year
+            assert end.year >= self.base.year
 
         if end is None:
             # Non-seasonal rate!
