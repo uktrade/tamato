@@ -123,7 +123,7 @@ TEMPLATES = [
 
 # -- Auth
 LOGIN_URL = reverse_lazy("authbroker_client:login")
-LOGIN_REDIRECT_URL = reverse_lazy("home")
+LOGIN_REDIRECT_URL = reverse_lazy("index")
 
 AUTHBROKER_URL = os.environ.get("AUTHBROKER_URL", "https://sso.trade.gov.uk")
 AUTHBROKER_CLIENT_ID = os.environ.get("AUTHBROKER_CLIENT_ID")
