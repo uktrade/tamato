@@ -1,5 +1,3 @@
-import sys
-
 from exporter.management.commands.util import get_envelope_of_active_workbaskets
 from exporter.management.commands.util import WorkBasketBaseCommand
 from workbaskets.models import WorkBasket
@@ -15,6 +13,11 @@ class Command(WorkBasketBaseCommand):
     help = "Output workbaskets ready for export to a file or stdout"
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "envelope_id",
+            help="The 6-digit envelope ID to use on the generated envelope.",
+            type=int,
+        )
         parser.add_argument(
             "-o",
             "--output",
@@ -32,7 +35,9 @@ class Command(WorkBasketBaseCommand):
     def handle(self, *args, **options):
         workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
 
-        envelope = get_envelope_of_active_workbaskets(workbaskets)
+        envelope = get_envelope_of_active_workbaskets(
+            options["envelope_id"], workbaskets
+        )
 
         f = self.get_output_file(options["filename"])
         f.write(envelope.decode("utf-8"))
