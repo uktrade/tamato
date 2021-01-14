@@ -13,6 +13,7 @@ from exporter.tasks import upload_workbaskets
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.skip
 def test_upload_task_uploads_approved_workbasket_to_s3(
     approved_transaction,
     hmrc_storage,
