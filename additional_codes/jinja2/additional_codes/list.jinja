@@ -39,7 +39,53 @@
     </form>
 
     <div class="filter-layout__content">
+      <p class="govuk-body">{{object_list.paginator.count}} additional codes</p>
       {% include "includes/additional_codes_list.jinja" %}
+      {% if object_list.has_other_pages() %}
+        <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
+          <div class="govuk-body">  
+            Showing 20 of {{object_list.paginator.count}} additional codes
+          </div>
+          <div class="govuk-body pagination__summary"> 
+            Page {{object_list.number}} of {{ object_list.paginator.num_pages}}
+          </div>
+          <ul class="govuk-list pagination__links"> 
+            {% if object_list.has_previous() %}
+              <li>
+                <a 
+                  class="govuk-link govuk-!-margin-right-1" 
+                  href="?page={{ object_list.previous_page_number() }}" 
+                  rel="prev" 
+                  aria-label="Goto Page {{ object_list.previous_page_number() }}"
+                >
+                  Prev
+                </a>
+              </li>
+            {% endif %}
+            {% for page_link in object_list.page_links %}
+              {% set isCurrent = page_link == object_list.number %}
+              <li class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}" {% if isCurrent %}aria-current="true"{% endif %}>
+                {% if page_link == '...' or page_link == object_list.number|string %}
+                  {{ page_link }}
+                {% else %}
+                  <a class="govuk-link" href="?page={{ page_link }}" aria-label="Goto Page {{ page_link }}">{{ page_link }}</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+            {% if object_list.has_next() %}
+              <li>
+                <a 
+                  href="?page={{ object_list.next_page_number() }}" 
+                  rel="next" 
+                  aria-label="Goto Page {{ object_list.next_page_number() }}"
+                >
+                  Next
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

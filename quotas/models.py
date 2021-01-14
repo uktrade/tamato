@@ -251,6 +251,6 @@ class QuotaEvent(TrackedModel):
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     occurrence_timestamp = models.DateTimeField()
     # store the event-type specific data in a JSON object
-    data = JSONField(default=dict, encoder=DjangoJSONEncoder)
+    data = models.JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     identifying_fields = ("subrecord_code", "quota_definition__sid")

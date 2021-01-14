@@ -12,6 +12,7 @@ from common.tests.util import validate_taric_xml_record_order
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.skip()
 def test_upload_command_uploads_approved_workbasket_to_s3(
     approved_transaction, hmrc_storage, s3, s3_object_exists, settings
 ):
