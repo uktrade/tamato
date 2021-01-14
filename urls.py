@@ -19,12 +19,6 @@ from django.urls import include
 from django.urls import path
 
 urlpatterns = [
-    path(
-        "auth/",
-        include(
-            "authbroker_client.urls",
-        ),
-    ),
     path("", include("common.urls")),
     path("", include("additional_codes.urls")),
     path("", include("certificates.urls")),
@@ -37,6 +31,17 @@ urlpatterns = [
     path("", include("workbaskets.urls")),
     path("admin/", admin.site.urls),
 ]
+
+if settings.SSO_ENABLED:
+    urlpatterns = [
+        path(
+            "auth/",
+            include(
+                "authbroker_client.urls",
+            ),
+        ),
+        *urlpatterns,
+    ]
 
 if "debug_toolbar" in settings.INSTALLED_APPS:
     import debug_toolbar

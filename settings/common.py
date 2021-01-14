@@ -19,6 +19,7 @@ from common.util import is_truthy
 ENV = os.environ.get("ENV", "dev")
 
 # Global variables
+SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 
 # -- Paths
@@ -50,23 +51,28 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 # -- Application
 
-INSTALLED_APPS = [
+DJANGO_CORE_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+]
+
+THIRD_PARTY_APPS = [
     "django_extensions",
     "django_filters",
-    # "health_check",
-    # "health_check.db",
-    # "health_check.cache",
-    # "health_check.storage",
-    "authbroker_client",
     "polymorphic",
     "rest_framework",
     "webpack_loader",
+]
+if SSO_ENABLED:
+    THIRD_PARTY_APPS += [
+        "authbroker_client",
+    ]
+
+TAMATO_APPS = [
     "common",
     "additional_codes.apps.AdditionalCodesConfig",
     "certificates.apps.CertificatesConfig",
@@ -84,6 +90,8 @@ INSTALLED_APPS = [
     "exporter",
 ]
 
+INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS]
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -93,8 +101,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "authbroker_client.middleware.ProtectAllViewsMiddleware",
 ]
+if SSO_ENABLED:
+    MIDDLEWARE += [
+        "authbroker_client.middleware.ProtectAllViewsMiddleware",
+    ]
 
 TEMPLATES = [
     {
@@ -122,17 +133,21 @@ TEMPLATES = [
 
 
 # -- Auth
-LOGIN_URL = reverse_lazy("authbroker_client:login")
+LOGIN_URL = reverse_lazy("login")
+if SSO_ENABLED:
+    LOGIN_URL = reverse_lazy("authbroker_client:login")
+
 LOGIN_REDIRECT_URL = reverse_lazy("index")
 
 AUTHBROKER_URL = os.environ.get("AUTHBROKER_URL", "https://sso.trade.gov.uk")
 AUTHBROKER_CLIENT_ID = os.environ.get("AUTHBROKER_CLIENT_ID")
 AUTHBROKER_CLIENT_SECRET = os.environ.get("AUTHBROKER_CLIENT_SECRET")
 
-AUTHENTICATION_BACKENDS = (
-    "authbroker_client.backends.AuthbrokerBackend",
-    "django.contrib.auth.backends.ModelBackend",
-)
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+if SSO_ENABLED:
+    AUTHENTICATION_BACKENDS += [
+        "authbroker_client.backends.AuthbrokerBackend",
+    ]
 
 # -- Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")

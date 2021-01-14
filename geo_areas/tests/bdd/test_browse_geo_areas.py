@@ -19,7 +19,7 @@ def geo_area_search(search_term, client):
 
 @then("the search result should contain the geographical_area searched for")
 def geo_area_list(geo_area_search):
-    results = geo_area_search.json()
+    results = geo_area_search.json()["results"]
     assert len(results) == 1
     result = results[0]
     assert result["area_id"] == "1001"

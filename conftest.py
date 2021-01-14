@@ -56,6 +56,16 @@ def pytest_runtest_setup(item):
         pytest.skip("Not calling live HMRC Sandbox API. Use --hmrc-live-api to do so.")
 
 
+def pytest_bdd_apply_tag(tag, function):
+    if tag == "todo":
+        marker = pytest.mark.skip(reason="Not implemented yet")
+        marker(function)
+        return True
+    else:
+        # Fall back to pytest-bdd's default behavior
+        return None
+
+
 @pytest.fixture(scope="session")
 def celery_config():
     return {
