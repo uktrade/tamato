@@ -64,7 +64,7 @@
             {% endif %}
             {% for page_link in object_list.page_links %}
               {% set isCurrent = page_link == object_list.number %}
-              <li class="{% 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'%}" {% if isCurrent %}aria-current="true"{% endif %}>
+              <li class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}" {% if isCurrent %}aria-current="true"{% endif %}>
                 {% if page_link == '...' or page_link == object_list.number|string %}
                   {{ page_link }}
                 {% else %}

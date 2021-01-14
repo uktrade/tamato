@@ -42,7 +42,7 @@ class AdditionalCodeUIViewSet(AdditionalCodeViewSet):
 
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
-        paginator = Paginator(queryset, settings.REST_FRAMEWORK.PAGE_SIZE)
+        paginator = Paginator(queryset, settings.REST_FRAMEWORK["PAGE_SIZE"])
 
         page_number = request.GET.get("page", 1)
         page_obj = paginator.get_page(page_number)
