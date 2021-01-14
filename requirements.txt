@@ -3,6 +3,7 @@ api-client
 black>=20.8b1
 boto3
 celery[redis]>=5.0.2
+crispy-forms-gds
 dj-database-url
 django==3.1
 django-dotenv

@@ -1,11 +1,31 @@
 import re
+from collections import OrderedDict
 from typing import Optional
 
+from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Layout
+from django import forms
 from django.contrib.postgres.search import SearchVector
 from django_filters import CharFilter
 from django_filters import FilterSet
 from rest_framework import filters
 from rest_framework.settings import api_settings
+
+
+class TamatoFilterForm(forms.Form):
+    """
+    Generic Filtering form which adds submit and clear buttons.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            *self.fields,
+            Button("submit", "Search and Filter"),
+            Button.secondary("clear", "Clear"),
+        )
 
 
 class TamatoFilterMixin:
@@ -56,7 +76,20 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
     over the given `search_fields` - defaulting to SID only.
     """
 
-    search = CharFilter(method="filter_search")
+    search = CharFilter(method="filter_search", label="Search")
 
     def filter_search(self, queryset, name, value):
         return self.search_queryset(queryset, value)
+
+    def get_form_class(self):
+        """
+        Direct copy of the super function, which replaces the default form
+        with the TamatoFilterForm.
+        """
+        fields = OrderedDict(
+            [(name, filter_.field) for name, filter_ in self.filters.items()]
+        )
+
+        form = TamatoFilterForm if self._meta.form == forms.Form else self._meta.form
+
+        return type(str("%sForm" % self.__class__.__name__), (form,), fields)
