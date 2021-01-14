@@ -1,6 +1,7 @@
 import os
 import re
 
+from django.conf import settings
 from django.contrib import messages
 from django.template.defaultfilters import pluralize
 from django.templatetags.static import static
@@ -70,6 +71,7 @@ def environment(**kwargs):
             "get_current_workbasket": WorkBasket.current,
             "pluralize": pluralize,
             "render_bundle": render_bundle,
+            "settings": settings,
             "static": static,
             "url": reverse,
             "webpack_static": webpack_static,

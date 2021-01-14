@@ -107,6 +107,7 @@ When running tests the settings module defaults to settings.test
 
 | Name | Description |
 | ---- | ----------- | 
+| SSO_ENABLED              | Use DIT staff SSO for authentication. You may want to set this to `"false"` for local development. If `"false"`, Django's ModelBackend authentication is used instead. (default `"true"`) |
 | AUTHBROKER_URL           | Base URL of the OAuth2 authentication broker (default https://sso.trade.gov.uk) |
 | AUTHBROKER_CLIENT_ID     | Client ID used to connect to the OAuth2 authentication broker |
 | AUTHBROKER_CLIENT_SECRET | Client secret used to connect to the OAuth2 authentication broker |
