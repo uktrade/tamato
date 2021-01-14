@@ -1,12 +1,13 @@
 from django.http import Http404
 from django.views.generic import DetailView
-from django.views.generic import ListView
+from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
 from footnotes import forms
 from footnotes import models
+from footnotes.filters import FootnoteFilter
 from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
@@ -35,13 +36,20 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
-class FootnoteList(WithCurrentWorkBasket, ListView):
+class FootnoteList(WithCurrentWorkBasket, FilterView):
     queryset = (
         models.Footnote.objects.current()
         .select_related("footnote_type")
         .prefetch_related("descriptions")
     )
     template_name = "footnotes/list.jinja"
+    filterset_class = FootnoteFilter
+    search_fields = [
+        "footnote_id",
+        "footnote_type__footnote_type_id",
+        "descriptions__description",
+        "footnote_type__description",
+    ]
 
 
 class FootnoteMixin:

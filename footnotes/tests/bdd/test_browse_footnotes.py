@@ -19,7 +19,7 @@ def footnotes_search(client):
 
 @then("the search result should contain the footnote searched for")
 def footnotes_list(footnotes_search):
-    results = footnotes_search.json()
+    results = footnotes_search.json()["results"]
     assert len(results) == 1
     result = results[0]
     assert (

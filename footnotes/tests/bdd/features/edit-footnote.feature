@@ -1,4 +1,4 @@
-@bdd
+@bdd @todo
 Feature: Edit Footnote
 
 Background:

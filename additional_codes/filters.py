@@ -1,23 +1,41 @@
 import re
 
-from common.filters import TamatoFilterBackend
+from django.contrib.postgres.aggregates import StringAgg
 
+from additional_codes.models import AdditionalCode
+from common.filters import TamatoFilter
+from common.filters import TamatoFilterBackend
+from common.filters import TamatoFilterMixin
 
 COMBINED_ADDITIONAL_CODE_AND_TYPE_ID = re.compile(
     r"^(?P<additional_code_type_id>[A-Z0-9])(?P<additional_code_id>[A-Z0-9]{3})$"
 )
 
 
-class AdditionalCodeFilterBackend(TamatoFilterBackend):
+class AdditionalCodeFilterMixin(TamatoFilterMixin):
     """
-    Filter that combines additional code type ID and additional code ID
+    Filter mixin to allow custom filtering on type__sid, sid,
+    code and description.
+
+    Also provides a regex to split combined type__sid and code.
+    e.g. "8001" -> "8", "001"
     """
 
-    search_fields = "type__sid", "code"  # XXX order is significant
+    search_fields = (
+        StringAgg("type__sid", delimiter=" "),
+        "code",
+        "sid",
+        StringAgg("descriptions__description", delimiter=" "),
+    )  # XXX order is significant
 
-    def get_search_term(self, request):
-        search_term = super().get_search_term(request)
-        match = COMBINED_ADDITIONAL_CODE_AND_TYPE_ID.match(search_term.strip())
-        if match:
-            return " ".join(match.groups())
-        return search_term
+    search_regex = COMBINED_ADDITIONAL_CODE_AND_TYPE_ID
+
+
+class AdditionalCodeFilterBackend(TamatoFilterBackend, AdditionalCodeFilterMixin):
+    pass
+
+
+class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
+    class Meta:
+        model = AdditionalCode
+        fields = ["sid", "code", "type__sid"]

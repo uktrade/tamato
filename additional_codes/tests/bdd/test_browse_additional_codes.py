@@ -19,7 +19,7 @@ def additional_code_search(search_term, client):
 
 @then("the search result should contain the additional code searched for")
 def additional_code_list(additional_code_search):
-    results = additional_code_search.json()
+    results = additional_code_search.json()["results"]
     assert len(results) == 1
     result = results[0]
     assert result["code"] == "000"
