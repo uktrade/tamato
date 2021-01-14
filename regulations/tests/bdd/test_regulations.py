@@ -32,7 +32,7 @@ def regulations_search(client):
 
 @then("the search result should contain the regulation searched for")
 def regulations_list(regulations_search):
-    results = regulations_search.json()
+    results = regulations_search.json()["results"]
     assert len(results) == 1
     result = results[0]
     assert result["regulation_id"] == "C2000000"

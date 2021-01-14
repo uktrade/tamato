@@ -1,9 +1,9 @@
 from django.shortcuts import render
-from rest_framework import filters
 from rest_framework import permissions
 from rest_framework import renderers
 from rest_framework import viewsets
 
+from regulations.filters import RegulationFilterBackend
 from regulations.models import Regulation
 from regulations.serializers import RegulationSerializer
 
@@ -16,7 +16,7 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Regulation.objects.current().select_related("regulation_group")
     serializer_class = RegulationSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [RegulationFilterBackend]
     search_fields = ["regulation_id"]
 
 
