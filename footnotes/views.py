@@ -5,6 +5,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
+from common.views import TamatoListView
 from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilter
@@ -36,7 +37,7 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
-class FootnoteList(WithCurrentWorkBasket, FilterView):
+class FootnoteList(TamatoListView):
     queryset = (
         models.Footnote.objects.current()
         .select_related("footnote_type")

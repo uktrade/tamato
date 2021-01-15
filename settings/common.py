@@ -82,8 +82,8 @@ INSTALLED_APPS = [
     "taric",
     "workbaskets",
     "exporter",
-    'crispy_forms',
-    'crispy_forms_gds',
+    "crispy_forms",
+    "crispy_forms_gds",
 ]
 
 MIDDLEWARE = [

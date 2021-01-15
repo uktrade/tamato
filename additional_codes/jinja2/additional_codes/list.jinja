@@ -24,46 +24,36 @@
 
   <div class="filter-layout">
     <form class="filter-layout__filters" method="get" action="{{ url("additional_code-ui-list") }}">
-      {{ govukInput({
-        "id": "search",
-        "name": "search",
-        "label": {
-          "text": "Search",
-          "classes": "govuk-label--m",
-          "attributes": {}
-        },
-        "formGroup": {}
-      }) }}
-
-      {{ govukButton({"text": "Filter"}) }}
+        <input class="govuk-button" type="submit" />
+        {{ crispy(filter.form) }}
     </form>
 
     <div class="filter-layout__content">
-      <p class="govuk-body">{{object_list.paginator.count}} additional codes</p>
+      <p class="govuk-body">{{paginator.count}} additional codes</p>
       {% include "includes/additional_codes_list.jinja" %}
-      {% if object_list.has_other_pages() %}
+      {% if page_obj.has_other_pages() %}
         <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
           <div class="govuk-body">  
-            Showing 20 of {{object_list.paginator.count}} additional codes
+            Showing 20 of {{paginator.count}} additional codes
           </div>
           <div class="govuk-body pagination__summary"> 
-            Page {{object_list.number}} of {{ object_list.paginator.num_pages}}
+            Page {{page_obj.number}} of {{ paginator.num_pages}}
           </div>
           <ul class="govuk-list pagination__links"> 
-            {% if object_list.has_previous() %}
+            {% if page_obj.has_previous() %}
               <li>
                 <a 
                   class="govuk-link govuk-!-margin-right-1" 
-                  href="?page={{ object_list.previous_page_number() }}" 
+                  href="?page={{ page_obj.previous_page_number() }}"
                   rel="prev" 
-                  aria-label="Goto Page {{ object_list.previous_page_number() }}"
+                  aria-label="Goto Page {{ page_obj.previous_page_number() }}"
                 >
                   Prev
                 </a>
               </li>
             {% endif %}
-            {% for page_link in object_list.page_links %}
-              {% set isCurrent = page_link == object_list.number %}
+            {% for page_link in page_links %}
+              {% set isCurrent = page_link == page_obj.number %}
               <li class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}" {% if isCurrent %}aria-current="true"{% endif %}>
                 {% if page_link == '...' or page_link == object_list.number|string %}
                   {{ page_link }}
@@ -72,12 +62,12 @@
                 {% endif %}
               </li>
             {% endfor %}
-            {% if object_list.has_next() %}
+            {% if page_obj.has_next() %}
               <li>
                 <a 
-                  href="?page={{ object_list.next_page_number() }}" 
+                  href="?page={{ page_obj.next_page_number() }}"
                   rel="next" 
-                  aria-label="Goto Page {{ object_list.next_page_number() }}"
+                  aria-label="Goto Page {{ page_obj.next_page_number() }}"
                 >
                   Next
                 </a>

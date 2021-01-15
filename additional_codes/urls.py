@@ -9,12 +9,11 @@ api_router = routers.DefaultRouter()
 api_router.register(r"additional_codes", views.AdditionalCodeViewSet)
 api_router.register(r"additional_code_types", views.AdditionalCodeTypeViewSet)
 
-ui_router = routers.DefaultRouter()
-ui_router.register(
-    r"additional_codes", views.AdditionalCodeUIViewSet, basename="additional_code-ui"
-)
-
 urlpatterns = [
-    path("", include(ui_router.urls)),
+    path(
+        "additional_codes/",
+        views.AdditionalCodeList.as_view(),
+        name="additional_code-ui-list",
+    ),
     path("api/", include(api_router.urls)),
 ]

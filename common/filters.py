@@ -56,7 +56,7 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
     over the given `search_fields` - defaulting to SID only.
     """
 
-    search = CharFilter(method="filter_search")
+    search = CharFilter(method="filter_search", label="Search")
 
     def filter_search(self, queryset, name, value):
         return self.search_queryset(queryset, value)
