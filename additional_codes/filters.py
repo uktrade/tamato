@@ -18,7 +18,7 @@ from common.filters import TamatoFilterMixin
 from common.util import TaricDateTimeRange
 
 COMBINED_ADDITIONAL_CODE_AND_TYPE_ID = re.compile(
-    r"^(?P<additional_code_type_id>[A-Z0-9])(?P<additional_code_id>[A-Z0-9]{3})$"
+    r"^(?P<type__sid>[A-Z0-9])(?P<code>[A-Z0-9]{3})$"
 )
 
 

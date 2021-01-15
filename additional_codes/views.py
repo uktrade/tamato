@@ -9,6 +9,7 @@ from additional_codes.models import AdditionalCodeType
 from additional_codes.serializers import AdditionalCodeSerializer
 from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.views import TamatoListView
+from common.views import TrackedModelDetailView
 
 
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -59,3 +60,13 @@ class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AdditionalCodeType.objects.current()
     serializer_class = AdditionalCodeTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class AdditionalCodeDetail(TrackedModelDetailView):
+    model = models.AdditionalCode
+    template_name = "additional_codes/detail.jinja"
+    queryset = (
+        models.AdditionalCode.objects.current()
+        .select_related("type")
+        .prefetch_related("descriptions")
+    )

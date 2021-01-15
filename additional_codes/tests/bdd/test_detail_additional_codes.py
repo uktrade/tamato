@@ -16,7 +16,7 @@ scenarios("features/detail_additional_codes.feature")
 @when("I select the additional code X000")
 def additional_code_detail(client, additional_code_X000):
     return client.get(
-        reverse("additional_code-ui-detail", args=(additional_code_X000.pk,))
+        reverse("additional_code-ui-detail", args=(additional_code_X000.sid,))
     )
 
 

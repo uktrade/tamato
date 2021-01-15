@@ -1,9 +1,11 @@
 import django.contrib.auth.views
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views import generic
+from django.views.generic import DetailView
 from django_filters.views import FilterView
 
 from common.models import Transaction
@@ -81,3 +83,36 @@ class TamatoListView(WithCurrentWorkBasket, FilterView):
             page_number, page_obj.paginator.num_pages
         )
         return data
+
+
+class TrackedModelDetailMixin:
+    """
+    Allows detail URLs to use <Identifying-Fields> instead of <pk>
+    """
+
+    model = None
+    required_url_kwargs = None
+
+    def get_object(self, queryset=None):
+        if queryset is None:
+            queryset = self.get_queryset()
+
+        required_url_kwargs = self.required_url_kwargs or self.model.identifying_fields
+
+        if not all(key in self.kwargs for key in required_url_kwargs):
+            raise AttributeError(
+                f"{self.__class__.__name__} must be called with {', '.join(required_url_kwargs)} in the URLconf."
+            )
+
+        queryset = queryset.filter(**self.kwargs)
+
+        try:
+            return queryset.get()
+        except queryset.model.DoesNotExist:
+            raise Http404(f"No {self.model.__name__} matching the query {self.kwargs}")
+
+
+class TrackedModelDetailView(
+    WithCurrentWorkBasket, TrackedModelDetailMixin, DetailView
+):
+    pass
