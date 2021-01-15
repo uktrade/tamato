@@ -174,6 +174,53 @@ def test_goods_nomenclature_successor_importer_create(valid_user, date_ranges):
     assert db_good.successors.get() == successor
 
 
+def test_goods_nomenclature_successor_importer_delete(valid_user, date_ranges):
+    good = factories.GoodsNomenclatureFactory(
+        update_type=UpdateType.CREATE.value,
+        valid_between=date_ranges.normal,
+    )
+    successor = factories.GoodsNomenclatureFactory(
+        update_type=UpdateType.CREATE.value,
+        valid_between=date_ranges.adjacent_later,
+    )
+    factories.GoodsNomenclatureSuccessorFactory(
+        replaced_goods_nomenclature=good,
+        absorbed_into_goods_nomenclature=successor,
+        update_type=UpdateType.CREATE.value,
+    )
+
+    updated_good = factories.GoodsNomenclatureFactory(
+        sid=good.sid,
+        item_id=good.item_id,
+        suffix=good.suffix,
+        version_group=good.version_group,
+        update_type=UpdateType.UPDATE.value,
+        valid_between=date_ranges.no_end,
+    )
+
+    successor_link = factories.GoodsNomenclatureSuccessorFactory.build(
+        replaced_goods_nomenclature=updated_good,
+        absorbed_into_goods_nomenclature=successor,
+        update_type=UpdateType.DELETE.value,
+    )
+
+    xml = generate_test_import_xml(
+        serializers.GoodsNomenclatureSuccessorSerializer(
+            successor_link, context={"format": "xml"}
+        ).data
+    )
+
+    process_taric_xml_stream(
+        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+    )
+
+    db_link = models.GoodsNomenclatureSuccessor.objects.filter(
+        replaced_goods_nomenclature__sid=good.sid
+    )
+    assert not db_link.current().exists()
+    assert db_link.current_deleted().exists()
+
+
 def test_goods_nomenclature_indent_importer_create(valid_user):
     indent = factories.GoodsNomenclatureIndentFactory.build(
         update_type=UpdateType.CREATE.value,

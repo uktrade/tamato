@@ -109,16 +109,32 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
         else:
             good = self.resolved_links["replaced_goods_nomenclature"]
 
-        must_be_active_on_date = good.valid_between.upper + timedelta(days=1)
-
-        return (
-            model.objects.filter(
-                valid_between__contains=must_be_active_on_date,
-                **kwargs,
+        # If this successor is being deleted, the replaced goods nomenclature
+        # will no longer have an end date, so we can't use that to look up the
+        # correct absorbing goods nomenclature. Instead, we retrieve that
+        # link from the previous version of the successor.
+        if (
+            good.valid_between.upper is None
+            and self.data["update_type"] == UpdateType.DELETE
+        ):
+            previous = (
+                models.GoodsNomenclatureSuccessor.objects.filter(
+                    **{key: self.data[key] for key in self.identifying_fields}
+                )
+                .current()
+                .get()
             )
-            .current()
-            .get()
-        )
+            return previous.absorbed_into_goods_nomenclature
+        else:
+            must_be_active_on_date = good.valid_between.upper + timedelta(days=1)
+            return (
+                model.objects.filter(
+                    valid_between__contains=must_be_active_on_date,
+                    **kwargs,
+                )
+                .current()
+                .get()
+            )
 
 
 class BaseGoodsNomenclatureDescriptionHandler(BaseHandler):
