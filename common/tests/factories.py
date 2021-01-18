@@ -63,6 +63,14 @@ class WorkBasketFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(UserFactory)
     title = factory.Faker("text", max_nb_chars=255)
 
+    @factory.post_generation
+    def transactions(self, create, transactions, **kwargs):
+        if not create:
+            return
+
+        if transactions:
+            self.transactions.add(*transactions)
+
 
 class ApprovedWorkBasketFactory(WorkBasketFactory):
     class Meta:

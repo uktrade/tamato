@@ -136,6 +136,40 @@ def taric_schema(settings) -> etree.XMLSchema:
 
 
 @pytest.fixture
+def footnote():
+    return factories.FootnoteFactory.create()
+
+
+@pytest.fixture
+def regulation():
+    return factories.RegulationFactory.create()
+
+
+@pytest.fixture
+def regulation_group():
+    return factories.RegulationGroupFactory.create()
+
+
+@pytest.fixture
+def populate_regulation_group():
+    def populate(workbasket):
+        regulation_group = factories.RegulationGroupFactory.create(
+            transaction__workbasket=workbasket
+        )
+
+        regulations_transaction = factories.TransactionFactory.create(
+            workbasket=workbasket
+        )
+        regulations = factories.RegulationFactory.build_batch(
+            2, transaction=regulations_transaction
+        )
+
+        regulation_group.regulations.add(*regulations)
+
+    return populate
+
+
+@pytest.fixture
 def approved_workbasket():
     return factories.ApprovedWorkBasketFactory.create()
 
@@ -153,6 +187,24 @@ def unapproved_transaction():
 @pytest.fixture
 def workbasket():
     return factories.WorkBasketFactory.create()
+
+
+@pytest.fixture
+def populate_workbasket(populate_regulation_group):
+    """
+    :return: function to populate a workbasket with a realistic set of transactions.
+    """
+
+    def populate(workbasket):
+        footnote_type = factories.FootnoteTypeFactory.create(transaction__workbasket=workbasket)
+        factories.FootnoteFactory.create(
+            transaction__workbasket=workbasket,
+            footnote_type=footnote_type,
+        )
+        factories.RegulationFactory.create(transaction__workbasket=workbasket)
+        populate_regulation_group(workbasket)
+
+    return populate
 
 
 @pytest.fixture
