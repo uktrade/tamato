@@ -76,4 +76,6 @@ regulation_id_validator = RegexValidator(
 """
 )
 
-no_information_text_delimiters = RegexValidator(r"^[^|]*$", "Must not contain '|'")
+no_information_text_delimiters = RegexValidator(
+    r"^[^|\xA0]*$", "Must not contain '|' or 0xA0"
+)
