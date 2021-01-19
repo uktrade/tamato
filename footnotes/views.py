@@ -1,10 +1,12 @@
 from django.http import Http404
 from django.views.generic import DetailView
-from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
+from common.views import TrackedModelDetailView
 from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilter
@@ -36,7 +38,7 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
-class FootnoteList(WithCurrentWorkBasket, FilterView):
+class FootnoteList(TamatoListView):
     queryset = (
         models.Footnote.objects.current()
         .select_related("footnote_type")
@@ -52,32 +54,8 @@ class FootnoteList(WithCurrentWorkBasket, FilterView):
     ]
 
 
-class FootnoteMixin:
-    """
-    Allows footnote detail URLs to use <footnote_type><footnote_id> instead of <pk>
-    """
-
-    required_url_kwargs = ["footnote_type__footnote_type_id", "footnote_id"]
-
-    def get_object(self, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
-
-        if not all(key in self.kwargs for key in self.required_url_kwargs):
-            raise AttributeError(
-                f"{self.__class__.__name__} must be called with a footnote type id and "
-                f"footnote id in the URLconf."
-            )
-
-        queryset = queryset.filter(**self.kwargs)
-
-        try:
-            return queryset.get()
-        except queryset.model.DoesNotExist:
-            raise Http404(f"No footnote matching the query {self.kwargs}")
-
-
-class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, DetailView):
+class FootnoteDetail(TrackedModelDetailView):
+    model = models.Footnote
     template_name = "footnotes/detail.jinja"
     queryset = (
         models.Footnote.objects.current()
@@ -86,7 +64,7 @@ class FootnoteDetail(WithCurrentWorkBasket, FootnoteMixin, DetailView):
     )
 
 
-class FootnoteUpdate(FootnoteMixin, DraftUpdateView):
+class FootnoteUpdate(TrackedModelDetailMixin, DraftUpdateView):
     form_class = forms.FootnoteForm
     queryset = (
         models.Footnote.objects.current()

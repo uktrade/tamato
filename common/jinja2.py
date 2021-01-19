@@ -2,6 +2,8 @@ import os
 import re
 
 from django.conf import settings
+from crispy_forms.utils import render_crispy_form
+from django.conf import settings
 from django.contrib import messages
 from django.template.defaultfilters import pluralize
 from django.templatetags.static import static
@@ -61,11 +63,20 @@ class GovukFrontendEnvironment(Environment):
         super().__init__(*args, **kwargs)
 
 
+def query_transform(request, **kwargs):
+    updated = request.GET.copy()
+    for key, value in kwargs.items():
+        updated[key] = value
+    return updated.urlencode()
+
+
 def environment(**kwargs):
     env = GovukFrontendEnvironment(**kwargs)
 
     env.globals.update(
         {
+            "query_transform": query_transform,
+            "crispy": render_crispy_form,
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
             "get_current_workbasket": WorkBasket.current,

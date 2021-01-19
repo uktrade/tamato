@@ -88,6 +88,8 @@ TAMATO_APPS = [
     "taric",
     "workbaskets",
     "exporter",
+    "crispy_forms",
+    "crispy_forms_gds",
 ]
 
 INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS]
@@ -388,3 +390,6 @@ HMRC = {
 SKIP_VALIDATION = is_truthy(os.getenv("SKIP_VALIDATION", False))
 SKIP_WORKBASKET_VALIDATION = is_truthy(os.getenv("SKIP_WORKBASKET_VALIDATION", False))
 USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", True))
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["gds"]
+CRISPY_TEMPLATE_PACK = "gds"

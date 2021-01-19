@@ -1,7 +1,7 @@
 {% set table_rows = [] %}
 {% for object in object_list %}
   {% set object_link -%}
-  <a href="{{ url("additional_code-ui-detail", kwargs={"pk": object.pk}) }}">{{ object.type.sid ~ object.code }}</a>
+  <a href="{{ url("additional_code-ui-detail", kwargs={"sid": object.sid}) }}">{{ object.type.sid ~ object.code }}</a>
   {%- endset %}
   {{ table_rows.append([
     {"html": object_link},

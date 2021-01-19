@@ -4,6 +4,7 @@
 
 .filter-layout__filters {
   @extend .govuk-grid-column-one-quarter;
+  background: govuk-colour("light-grey");
 }
 
 .filter-layout__content {
