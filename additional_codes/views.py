@@ -1,15 +1,15 @@
-from django.conf import settings
-from django.core.paginator import Paginator
-from django.shortcuts import render
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from additional_codes import models
+from additional_codes.filters import AdditionalCodeFilter
 from additional_codes.filters import AdditionalCodeFilterBackend
 from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeType
 from additional_codes.serializers import AdditionalCodeSerializer
 from additional_codes.serializers import AdditionalCodeTypeSerializer
-from common.pagination import build_pagination_list
+from common.views import TamatoListView
+from common.views import TrackedModelDetailView
 
 
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -32,32 +32,24 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
     ]
 
 
-class AdditionalCodeUIViewSet(AdditionalCodeViewSet):
+class AdditionalCodeList(TamatoListView):
     """
-    UI endpoint that allows additional codes to be viewed.
+    UI endpoint for viewing and filtering Additional Codes
     """
 
-    def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
-        paginator = Paginator(queryset, settings.REST_FRAMEWORK["PAGE_SIZE"])
-
-        page_number = request.GET.get("page", 1)
-        page_obj = paginator.get_page(page_number)
-
-        page_obj.page_links = build_pagination_list(
-            int(page_number), page_obj.paginator.num_pages
-        )
-
-        return render(
-            request, "additional_codes/list.jinja", context={"object_list": page_obj}
-        )
-
-    def retrieve(self, request, *args, **kwargs):
-        return render(
-            request,
-            "additional_codes/detail.jinja",
-            context={"object": self.get_object()},
-        )
+    queryset = (
+        models.AdditionalCode.objects.current()
+        .select_related("type")
+        .prefetch_related("descriptions")
+    )
+    template_name = "additional_codes/list.jinja"
+    filterset_class = AdditionalCodeFilter
+    search_fields = [
+        "type__sid",
+        "code",
+        "sid",
+        "descriptions__description",
+    ]
 
 
 class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,3 +60,13 @@ class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AdditionalCodeType.objects.current()
     serializer_class = AdditionalCodeTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class AdditionalCodeDetail(TrackedModelDetailView):
+    model = models.AdditionalCode
+    template_name = "additional_codes/detail.jinja"
+    queryset = (
+        models.AdditionalCode.objects.current()
+        .select_related("type")
+        .prefetch_related("descriptions")
+    )
