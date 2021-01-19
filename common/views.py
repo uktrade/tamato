@@ -47,7 +47,7 @@ class CreateView(generic.CreateView):
         return Transaction()
 
 
-class UpdateView(CreateView):
+class UpdateView(generic.UpdateView):
     """Create an updated version of a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.UPDATE
