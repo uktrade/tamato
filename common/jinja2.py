@@ -1,7 +1,6 @@
 import os
 import re
 
-from django.conf import settings
 from crispy_forms.utils import render_crispy_form
 from django.conf import settings
 from django.contrib import messages

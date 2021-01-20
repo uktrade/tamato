@@ -1,5 +1,6 @@
 import django.contrib.auth.views
 from django.conf import settings
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.paginator import Paginator
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -66,9 +67,9 @@ class DeleteView(CreateView):
     UPDATE_TYPE = UpdateType.DELETE
 
 
-class TamatoListView(WithCurrentWorkBasket, FilterView):
+class WithPaginationListView(FilterView):
     """
-    Generic list view for Tamato models. Enables pagination and
+    Generic list view enabling pagination and
     adds a page link list to the context.
     """
 
@@ -83,6 +84,19 @@ class TamatoListView(WithCurrentWorkBasket, FilterView):
             page_number, page_obj.paginator.num_pages
         )
         return data
+
+
+class RequiresSuperuserMixin(UserPassesTestMixin):
+    """
+    Only allow superusers to see this view.
+    """
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+
+class TamatoListView(WithCurrentWorkBasket, WithPaginationListView):
+    pass
 
 
 class TrackedModelDetailMixin:

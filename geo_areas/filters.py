@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.postgres.aggregates import StringAgg
+from django.urls import reverse_lazy
 from django_filters import rest_framework as filters
 
 from common.filters import TamatoFilter
@@ -32,6 +33,7 @@ class GeographicalAreaFilterBackend(TamatoFilterBackend, GeographicalAreaFilterM
 
 class GeographicalAreaFilter(TamatoFilter, GeographicalAreaFilterMixin):
     area_code = filters.TypedMultipleChoiceFilter(choices=AreaCode.choices, coerce=int)
+    clear_url = reverse_lazy("geoarea-ui-list")
 
     class Meta:
         model = GeographicalArea

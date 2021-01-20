@@ -1,15 +1,19 @@
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
+from importer.management.commands.chunk_taric import setup_batch
 from importer.management.commands.run_import_batch import run_batch
 from workbaskets.validators import WorkflowStatus
 
 
 def import_taric(
-    taric3_file, username, status, split_codes: bool = False, dependencies=None
+    taric3_file, username, status, name, split_codes: bool = False, dependencies=None
 ):
+    batch = setup_batch(
+        batch_name=name, dependencies=dependencies, split_on_code=split_codes
+    )
     with open(taric3_file, "rb") as seed_file:
-        batch = chunk_taric(seed_file, split_codes, dependencies)
+        batch = chunk_taric(seed_file, batch)
 
     run_batch(batch.name, username, status)
 
@@ -21,6 +25,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "taric3_file",
             help="The TARIC3 file to be parsed.",
+            type=str,
+        )
+        parser.add_argument(
+            "name",
+            help="The name of the batch, the Envelope ID is recommended.",
             type=str,
         )
         parser.add_argument(
@@ -58,6 +67,7 @@ class Command(BaseCommand):
         import_taric(
             taric3_file=options["taric3_file"],
             username=options["username"],
+            name=options["name"],
             status=options["status"],
             split_codes=options["split_codes"],
             dependencies=options["dependencies"],

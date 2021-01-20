@@ -10,5 +10,6 @@ static/
 venv/
 *.xml
 *.gz
+*.sql
 seed_files/
 _split_seed_import_files/

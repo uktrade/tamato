@@ -1,0 +1,99 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set object_type_plural = object_type_plural or object_type + "s" %}
+{% set create_url = create_url or "create" %}
+
+{% set page_title = "Find and edit " + (object_type_plural or object_type + "s") %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    Enter criteria to help find an {{ object_type }}.
+    Alternatively, <a href="{{ create_url }}">create a new {{ object_type }}</a>.
+  </p>
+
+  <div class="filter-layout">
+    <div class="filter-layout__filters">
+      <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
+      <form method="get" action="{{ url(form_url) }}">
+          {{ crispy(filter.form) }}
+      </form>
+    </div>
+
+    <div class="filter-layout__content">
+      {% if paginator.count > 0 %}
+        <p class="govuk-body">{{paginator.count}} {{ object_type_plural if paginator.count > 1 else object_type }}</p>
+      {% endif %}
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no results for your search, please:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>check the spelling of your keywords</li>
+          <li>use more general keywords</li>
+          <li>select or deselect different filters</li>
+          <li>get help via our <a class="govuk-link" href="#">support and feedback form</a></li>
+        </ul>
+      {% endif %}
+      {% if page_obj.has_other_pages() %}
+        <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
+          <div class="govuk-body">
+            Showing 20 of {{paginator.count}} {{ object_type_plural if paginator.count > 1 else object_type }}
+          </div>
+          <div class="govuk-body pagination__summary">
+            Page {{page_obj.number}} of {{ paginator.num_pages}}
+          </div>
+          <ul class="govuk-list pagination__links">
+            {% if page_obj.has_previous() %}
+              <li>
+                <a
+                  class="govuk-link govuk-!-margin-right-1"
+                  href="?{{ query_transform(request, page=page_obj.previous_page_number())}}"
+                  rel="prev"
+                  aria-label="Goto Page {{ page_obj.previous_page_number() }}"
+                >
+                  Prev
+                </a>
+              </li>
+            {% endif %}
+            {% for page_link in page_links %}
+              {% set isCurrent = page_link == page_obj.number %}
+              <li class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}" {% if isCurrent %}aria-current="true"{% endif %}>
+                {% if page_link == '...' or page_link == object_list.number|string %}
+                  {{ page_link }}
+                {% else %}
+                  <a class="govuk-link" href="?{{ query_transform(request, page=page_link) }}" aria-label="Goto Page {{ page_link }}">{{ page_link }}</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+            {% if page_obj.has_next() %}
+              <li>
+                <a
+                  href="?{{ query_transform(request, page=page_obj.next_page_number()) }}"
+                  rel="next"
+                  aria-label="Goto Page {{ page_obj.next_page_number() }}"
+                >
+                  Next
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+

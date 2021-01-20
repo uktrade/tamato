@@ -4,27 +4,54 @@ from typing import Optional
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Size
 from django import forms
 from django.contrib.postgres.search import SearchVector
+from django.urls import reverse
 from django_filters import CharFilter
 from django_filters import FilterSet
 from rest_framework import filters
 from rest_framework.settings import api_settings
 
 
+def field_to_layout(field_name, field):
+    """
+    Converts fields into their GDS styled counterparts.
+
+    If the counterpart is unknown, return the field_name as default
+    """
+    if isinstance(field, forms.CharField):
+        return Field.text(field_name, label_size=Size.SMALL)
+    if isinstance(field, forms.ChoiceField):
+        return Field.checkboxes(field_name, legend_size=Size.SMALL)
+
+    return field_name
+
+
 class TamatoFilterForm(forms.Form):
     """
-    Generic Filtering form which adds submit and clear buttons.
+    Generic Filtering form which adds submit and clear buttons, and adds
+    GDS formatting to field types.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+
+        field_layout = (
+            field_to_layout(field_name, field)
+            for field_name, field in self.fields.items()
+        )
+
         self.helper.layout = Layout(
-            *self.fields,
+            *field_layout,
             Button("submit", "Search and Filter"),
-            Button.secondary("clear", "Clear"),
+            HTML(
+                f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>'
+            ),
         )
 
 
@@ -77,6 +104,7 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
     """
 
     search = CharFilter(method="filter_search", label="Search")
+    clear_url = None
 
     def filter_search(self, queryset, name, value):
         return self.search_queryset(queryset, value)
@@ -89,6 +117,12 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
         fields = OrderedDict(
             [(name, filter_.field) for name, filter_ in self.filters.items()]
         )
+
+        if not self.clear_url:
+            raise NotImplementedError(
+                f"clear_url must be defined on {self.__class__.__name__}"
+            )
+        fields["clear_url"] = self.clear_url
 
         form = TamatoFilterForm if self._meta.form == forms.Form else self._meta.form
 
