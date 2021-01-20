@@ -1,0 +1,36 @@
+{% set description_rows = [] %}
+{% for description in object.descriptions.all() %}
+    {{ description_rows.append([
+    {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
+    {"text": description.description},
+    {
+        "html": '<a href="#" class="govuk-link govuk-!-font-size-16">Edit description</a>'
+    }
+    ]) or ""}}
+{% endfor %}
+<div class="additional_code__description-data">
+    <div class="additional_code__description-data__content">
+    {{ govukTable({
+        "firstCellIsHeader": false,
+        "head": [
+        {
+            "text": "Start Date",
+            "classes": "govuk-!-width-one-quarter"
+        },
+        {
+            "text": "Description",
+            "classes": "govuk-!-width-two-thirds"
+        },
+        {
+            "text": "Actions"
+        },
+        ],
+        "rows": description_rows
+    }) }}
+    </div>
+    <div class="additional_code__description-data__actions">
+    <ul class="govuk-list">
+        <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new additional code description</a></li>
+    </ul>
+    </div>
+</div>
