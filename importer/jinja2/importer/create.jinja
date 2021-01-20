@@ -1,0 +1,22 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Create a new import batch" %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Find and edit import batches", "href": url("import_batch-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+      {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+{% endblock %}

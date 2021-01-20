@@ -1,27 +1,24 @@
 import re
 from datetime import date
 from datetime import datetime
-from datetime import timezone
+from typing import Callable
 
 from crispy_forms_gds.choices import Choice
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Q, DateTimeField
-from django.db.models.functions import Extract, Lower
-from django_filters import CharFilter
+from django.db.models import DateTimeField
+from django.db.models import Q
+from django.db.models.functions import Extract
+from django.db.models.functions import Lower
+from django.urls import reverse_lazy
 from django_filters import MultipleChoiceFilter
-from django_filters import ChoiceFilter
-
 
 from additional_codes.models import AdditionalCode
-from additional_codes.forms import SearchFilterForm
 from additional_codes.validators import TypeChoices
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
 from common.util import TaricDateTimeRange
-
-from typing import Callable
 
 
 COMBINED_ADDITIONAL_CODE_AND_TYPE_ID = re.compile(
@@ -115,6 +112,8 @@ class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
         required=False,
     )
 
+    clear_url = reverse_lazy("additional_code-ui-list")
+
     def filter_start_year(self, queryset, name, value):
         if value:
             queryset = queryset.annotate(
@@ -139,6 +138,5 @@ class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
 
     class Meta:
         model = AdditionalCode
-        form = SearchFilterForm
         # Defines the order shown in the form.
         fields = ["search", "additional_code_type", "start_year"]

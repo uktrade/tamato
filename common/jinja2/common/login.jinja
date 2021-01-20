@@ -8,7 +8,11 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
+  {% if next %}
+  <form method="post" action="{{ url("login") }}?next={{ next }}">
+  {% else %}
   <form method="post" action="{{ url("login") }}">
+  {% endif %}
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     {{ govukInput({
       "id": "username",

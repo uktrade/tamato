@@ -6,10 +6,10 @@ from common.models import TimestampedMixin
 
 
 class ImporterChunkStatus(models.IntegerChoices):
-    WAITING = 1, "WAITING"
-    RUNNING = 2, "RUNNING"
-    DONE = 3, "DONE"
-    ERRORED = 4, "ERRORED"
+    WAITING = 1, "Waiting"
+    RUNNING = 2, "Running"
+    DONE = 3, "Done"
+    ERRORED = 4, "Errored"
 
 
 running_statuses = (

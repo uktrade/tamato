@@ -25,6 +25,7 @@ urlpatterns = [
     path("", include("commodities.urls")),
     path("", include("footnotes.urls")),
     path("", include("geo_areas.urls")),
+    path("", include("importer.urls")),
     path("measures/", include("measures.urls")),
     path("", include("quotas.urls")),
     path("", include("regulations.urls")),
