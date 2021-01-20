@@ -6,7 +6,7 @@
 
 {% set page_title = "Find and edit additional codes" %}
 
-{% block beforeContent %}
+{% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
@@ -19,7 +19,6 @@
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
     Enter criteria to help find an additional code.
-    Alternatively, <a href="">create a new additional code</a>.
   </p>
 
   <div class="filter-layout">
@@ -69,7 +68,7 @@
             {% for page_link in page_links %}
               {% set isCurrent = page_link == page_obj.number %}
               <li class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}" {% if isCurrent %}aria-current="true"{% endif %}>
-                {% if page_link == '...' or page_link == object_list.number|string %}
+                {% if page_link == '...' or page_link == page_obj.number|string %}
                   {{ page_link }}
                 {% else %}
                   <a class="govuk-link" href="?{{ query_transform(request, page=page_link) }}" aria-label="Goto Page {{ page_link }}">{{ page_link }}</a>
