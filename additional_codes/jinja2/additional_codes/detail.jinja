@@ -7,10 +7,10 @@
 
 {% set page_title = "Additional code: " ~ object.type.sid ~ object.code %}
 
-{% set details_tab_html %}{% include "includes/tabs/details.jinja" %}{% endset %}
+{% set core_data_tab_html %}{% include "includes/tabs/core_data.jinja" %}{% endset %}
 {% set description_tab_html %}{% include "includes/tabs/descriptions.jinja" %}{% endset %}
 
-{% block beforeContent %}
+{% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
@@ -31,9 +31,9 @@
     "items": [
       {
         "label": "Details",
-        "id": "details",
+        "id": "core-data",
         "panel": {
-          "html": details_tab_html
+          "html": core_data_tab_html
         }
       },
       {
