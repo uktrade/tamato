@@ -3,122 +3,44 @@
 {% from "components/tabs/macro.njk" import govukTabs %}
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
 
-{% set page_title = "Additional Code " ~ object.type.sid ~ object.code %}
+{% set page_title = "Additional code: " ~ object.type.sid ~ object.code %}
 
-{% block beforeContent %}
+{% set core_data_tab_html %}{% include "includes/tabs/core_data.jinja" %}{% endset %}
+{% set description_tab_html %}{% include "includes/tabs/descriptions.jinja" %}{% endset %}
+
+{% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
-      {"text": "Additional Codes", "href": url("additional_code-ui-list")},
+      {"text": "Find and edit additional codes", "href": url("additional_code-ui-list")},
       {"text": page_title}
     ]
   }) }}
 {% endblock %}
 
 {% block content %}
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-  <p class="govuk-body">
-    You are viewing this additional code in read-only mode.
-  </p>
-
-  {% set core_data_html %}
-    <div class="additional_code__core-data">
-      <div class="additional_code__core-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": true,
-          "rows": [
-            [
-              {"text": "Additional code Type ID"},
-              {"text": object.type.sid ~ " - " ~ object.type.description}
-            ],
-            [
-              {"text": "Additional code"},
-              {"text": object.type.sid ~ object.code}
-            ],
-            [
-              {"text": "Current description"},
-              {"text": object.get_description().description}
-            ],
-            [
-              {"text": "Start date"},
-              {"text": "{:%d %b %Y}".format(object.valid_between.lower)}
-            ],
-            [
-              {"text": "End date"},
-              {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"}
-            ]
-          ]
-        }) }}
-      </div>
-      <div class="additional_code__core-data__actions">
-        <h2 class="govuk-heading-s">Actions</h2>
-        <ul class="icon-action-list govuk-list">
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Edit this additional code</a></li>
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Delete this additional code</a></li>
-        </ul>
-        <p class="govuk-body-s">
-          Please note that you are unable to modify descriptions on this tab.
-          Please select the "<a href="#descriptions">Descriptions</a>" tab to create and
-          modify descriptions.
-        </p>
-      </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
     </div>
-  {% endset %}
-
-  {% set description_data_html %}
-    {% set description_rows = [] %}
-    {% for description in object.descriptions.all() %}
-      {{ description_rows.append([
-        {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
-        {"text": description.description},
-        {
-            "html": '<a href="#" class="govuk-link govuk-!-font-size-16">Edit description</a>'
-        }
-      ]) or ""}}
-    {% endfor %}
-    <div class="additional_code__description-data">
-      <div class="additional_code__description-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": false,
-          "head": [
-            {
-              "text": "Start Date",
-              "classes": "govuk-!-width-one-quarter"
-            },
-            {
-              "text": "Description",
-              "classes": "govuk-!-width-two-thirds"
-            },
-            {
-              "text": "Actions"
-            },
-          ],
-          "rows": description_rows
-        }) }}
-      </div>
-      <div class="additional_code__description-data__actions">
-        <ul class="icon-action-list govuk-list">
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new additional code description</a></li>
-        </ul>
-      </div>
-    </div>
-  {% endset %}
+  </div>
 
   {{ govukTabs({
     "items": [
       {
-        "label": "Core additional code data",
+        "label": "Details",
         "id": "core-data",
         "panel": {
-          "html": core_data_html
+          "html": core_data_tab_html
         }
       },
       {
         "label": "Descriptions",
         "id": "descriptions",
         "panel": {
-          "html": description_data_html
+          "html": description_tab_html
         }
       }
     ]
