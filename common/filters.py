@@ -66,13 +66,19 @@ class TamatoFilterMixin:
     search_regex: Optional[re.Pattern] = None
 
     def get_search_term(self, value):
+        value = value.strip()
         if self.search_regex:
-            match = self.search_regex.match(value.strip())
+            match = self.search_regex.search(value)
             if match:
-                return " ".join(match.groups())
+                terms = list(match.groups())
+                terms.extend(
+                    [value[: match.start()].strip(), value[match.end() :].strip()]
+                )
+                return " ".join(terms)
         return value
 
     def search_queryset(self, queryset, search_term):
+        search_term = self.get_search_term(search_term)
         return queryset.annotate(search=SearchVector(*self.search_fields)).filter(
             search=search_term
         )
@@ -87,9 +93,7 @@ class TamatoFilterBackend(filters.BaseFilterBackend, TamatoFilterMixin):
     """
 
     def filter_queryset(self, request, queryset, view):
-        search_term = self.get_search_term(
-            request.query_params.get(api_settings.SEARCH_PARAM, "")
-        )
+        search_term = request.query_params.get(api_settings.SEARCH_PARAM, "")
         if search_term:
             return self.search_queryset(queryset, search_term)
         return filters.SearchFilter().filter_queryset(request, queryset, view)
