@@ -72,7 +72,7 @@
             {% for page_link in page_links %}
               {% set isCurrent = page_link == page_obj.number %}
               <li class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}" {% if isCurrent %}aria-current="true"{% endif %}>
-                {% if page_link == '...' or page_link == object_list.number|string %}
+                {% if page_link == '...' or page_link == page_obj.number|string %}
                   {{ page_link }}
                 {% else %}
                   <a class="govuk-link" href="?{{ query_transform(request, page=page_link) }}" aria-label="Goto Page {{ page_link }}">{{ page_link }}</a>
@@ -82,6 +82,7 @@
             {% if page_obj.has_next() %}
               <li>
                 <a
+                  class="govuk-link"
                   href="?{{ query_transform(request, page=page_obj.next_page_number()) }}"
                   rel="next"
                   aria-label="Goto Page {{ page_obj.next_page_number() }}"
