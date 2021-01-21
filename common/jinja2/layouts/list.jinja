@@ -21,8 +21,8 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
-    Enter criteria to help find an {{ object_type }}.
-    Alternatively, <a href="{{ create_url }}">create a new {{ object_type }}</a>.
+    Search for {{object_type_plural}}.
+    Alternatively, <a class="govuk-link" href="{{ create_url }}">create a new {{ object_type }}</a>.
   </p>
 
   <div class="filter-layout">
