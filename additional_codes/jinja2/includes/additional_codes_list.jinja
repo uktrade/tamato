@@ -1,7 +1,7 @@
 {% set table_rows = [] %}
 {% for object in object_list %}
   {% set object_link -%}
-  <a href="{{ url("additional_code-ui-detail", kwargs={"sid": object.sid}) }}">{{ object.type.sid ~ object.code }}</a>
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("additional_code-ui-detail", kwargs={"sid": object.sid}) }}">{{ object.type.sid ~ object.code }}</a>
   {%- endset %}
   {{ table_rows.append([
     {"html": object_link},
@@ -9,7 +9,7 @@
     {"text": object.type.sid ~ " - " ~ object.type.description},
     {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
-    {"text": ""},
+    {"text": object.transaction.workbasket.get_status_display()},
   ]) or "" }}
 {% endfor %}
 {{ govukTable({
