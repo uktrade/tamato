@@ -16,7 +16,7 @@ from common.business_rules import ValidityPeriodContained
 from common.util import TaricDateTimeRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
-from footnotes.validators import ApplicationCode
+from footnotes.validators import TypeChoices
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
 
@@ -1086,7 +1086,7 @@ class ME71(BusinessRule):
             association.associated_footnote.footnote_type.application_code
         )
 
-        if is_taric_code and application_code == ApplicationCode.CN_MEASURES:
+        if is_taric_code and application_code == TypeChoices.CN_MEASURES:
             raise self.violation(measure)
 
 

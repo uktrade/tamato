@@ -15,9 +15,10 @@ from django_filters import MultipleChoiceFilter
 
 from additional_codes.models import AdditionalCode
 from additional_codes.validators import TypeChoices
-from common.filters import TamatoFilter
+from common.filters import TamatoFilter, ACTIVE_STATE_CHOICES, last_10_years
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
+from common.filters import LazyMultipleChoiceFilter
 from common.util import TaricDateTimeRange
 
 
@@ -45,37 +46,8 @@ class AdditionalCodeFilterMixin(TamatoFilterMixin):
     search_regex = COMBINED_ADDITIONAL_CODE_AND_TYPE_ID
 
 
-class LazyMultipleChoiceFilter(MultipleChoiceFilter):
-    def get_field_choices(self):
-        choices = self.extra.get("choices", [])
-        if isinstance(choices, Callable):
-            choices = choices()
-        return choices
-
-    @property
-    def field(self):
-        if not hasattr(self, "_field"):
-            field_kwargs = self.extra.copy()
-
-            field_kwargs.update(choices=self.get_field_choices())
-
-            self._field = self.field_class(label=self.label, **field_kwargs)
-        return self._field
-
-
 class AdditionalCodeFilterBackend(TamatoFilterBackend, AdditionalCodeFilterMixin):
     pass
-
-
-ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
-
-
-def last_10_years():
-    current_year = date.today().year
-    return [
-        Choice(str(year), str(year))
-        for year in range(current_year, current_year - 10, -1)
-    ]
 
 
 class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
@@ -94,6 +66,7 @@ class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
         help_text="Select all that apply",
         required=False,
     )
+
     start_year = LazyMultipleChoiceFilter(
         choices=last_10_years,
         widget=forms.CheckboxSelectMultiple,
@@ -139,4 +112,4 @@ class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
     class Meta:
         model = AdditionalCode
         # Defines the order shown in the form.
-        fields = ["search", "additional_code_type", "start_year"]
+        fields = ["search"]

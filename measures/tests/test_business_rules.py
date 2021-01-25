@@ -12,7 +12,7 @@ from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
 from common.util import TaricDateTimeRange
 from common.validators import ApplicabilityCode
-from footnotes.validators import ApplicationCode
+from footnotes.validators import TypeChoices
 from geo_areas.validators import AreaCode
 from measures import business_rules
 from measures.validators import DutyExpressionId
@@ -1470,7 +1470,7 @@ def test_ME71():
     cannot be associated with TARIC codes (codes with pos. 9-10 different from 00)"""
 
     assoc = factories.FootnoteAssociationMeasureFactory.create(
-        associated_footnote__footnote_type__application_code=ApplicationCode.CN_MEASURES,
+        associated_footnote__footnote_type__application_code=TypeChoices.CN_MEASURES,
         footnoted_measure__goods_nomenclature__item_id="0123456789",
     )
 

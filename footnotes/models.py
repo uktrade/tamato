@@ -29,9 +29,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
     footnote_type_id = models.CharField(
         max_length=3, validators=[validators.footnote_type_id_validator], db_index=True
     )
-    application_code = models.PositiveIntegerField(
-        choices=validators.ApplicationCode.choices
-    )
+    application_code = models.TextField(choices=validators.TypeChoices.choices)
     description = ShortDescription()
 
     business_rules = (

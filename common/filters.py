@@ -1,6 +1,7 @@
 import re
 from collections import OrderedDict
-from typing import Optional
+from datetime import date, datetime
+from typing import Optional, Callable
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Button
@@ -8,13 +9,22 @@ from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
+from crispy_forms_gds.choices import Choice
+
+from common.util import TaricDateTimeRange
+
 from django import forms
 from django.contrib.postgres.search import SearchVector
 from django.urls import reverse
 from django_filters import CharFilter
 from django_filters import FilterSet
+from django_filters import MultipleChoiceFilter
+from django.db.models import DateTimeField
+from django.db.models import Q
 from rest_framework import filters
 from rest_framework.settings import api_settings
+
+ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
 
 
 def field_to_layout(field_name, field):
@@ -29,6 +39,32 @@ def field_to_layout(field_name, field):
         return Field.checkboxes(field_name, legend_size=Size.SMALL)
 
     return field_name
+
+
+def last_10_years():
+    current_year = date.today().year
+    return [
+        Choice(str(year), str(year))
+        for year in range(current_year, current_year - 10, -1)
+    ]
+
+
+class LazyMultipleChoiceFilter(MultipleChoiceFilter):
+    def get_field_choices(self):
+        choices = self.extra.get("choices", [])
+        if isinstance(choices, Callable):
+            choices = choices()
+        return choices
+
+    @property
+    def field(self):
+        if not hasattr(self, "_field"):
+            field_kwargs = self.extra.copy()
+
+            field_kwargs.update(choices=self.get_field_choices())
+
+            self._field = self.field_class(label=self.label, **field_kwargs)
+        return self._field
 
 
 class TamatoFilterForm(forms.Form):
@@ -108,6 +144,7 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
     """
 
     search = CharFilter(method="filter_search", label="Search")
+
     clear_url = None
 
     def filter_search(self, queryset, name, value):

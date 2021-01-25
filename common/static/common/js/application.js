@@ -2,5 +2,7 @@ const images = require.context('../../../../node_modules/govuk-frontend/govuk/as
 const imagePath = (name) => images(name, true)
 
 require.context('govuk-frontend/govuk/assets');
+import showHideCheckboxes from './showHideCheckboxes';
 import { initAll } from 'govuk-frontend';
+showHideCheckboxes();
 initAll();
