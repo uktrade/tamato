@@ -2,23 +2,23 @@
       {% set table_rows = [] %}
       {% for footnote in object_list %}
         {% set footnote_link -%}
-        <a href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
         {%- endset %}
         {{ table_rows.append([
           {"html": footnote_link},
           {"text": footnote.get_description().description|default("")},
-          {"text": footnote.footnote_type.description},
-          {"text": ""},
+          {"text": footnote.footnote_type.footnote_type_id ~ " - " ~ break_words(footnote.footnote_type.description)},
+          {"text": footnote.footnote_type.get_application_code_display()},
           {"text": "{:%d %b %Y}".format(footnote.valid_between.lower)},
           {"text": "{:%d %b %Y}".format(footnote.valid_between.upper) if footnote.valid_between.upper else "-"},
-          {"text": ""},
+          {"text": footnote.transaction.workbasket.get_status_display()},
         ]) or "" }}
       {% endfor %}
       {{ govukTable({
         "head": [
           {"text": "ID"},
           {"text": "Description"},
-          {"text": "Type"},
+          {"text": "Type", "classes":  "govuk-!-width-one-eighth"},
           {"text": "Usage"},
           {"text": "Start date"},
           {"text": "End date"},
