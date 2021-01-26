@@ -1,9 +1,13 @@
 import itertools
+from typing import Callable
 
 from rest_framework.renderers import TemplateHTMLRenderer
 
 
-def counter_generator(start=1):
+Counter = Callable[[], int]
+
+
+def counter_generator(start=1) -> Counter:
     counter = itertools.count(start=start)
     return lambda: next(counter)
 

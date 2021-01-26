@@ -1,9 +1,14 @@
+from __future__ import annotations
+
+import re
+from datetime import datetime
 from decimal import Decimal
 from functools import reduce
 from itertools import chain
 from typing import Iterable
 from typing import Union
 
+import pytz
 from parsec import choice
 from parsec import joint
 from parsec import optional
@@ -220,3 +225,51 @@ class DutySentenceParser:
         a list of the parsed measure components. Throws an error
         if the string cannot be successfully parsed."""
         return self.sentence_parser.parse_strict(s)
+
+    @classmethod
+    def get(cls, forward_time: datetime) -> DutySentenceParser:
+        """Return a DutySentenceParser loaded with expressions and measurements
+        that are valid on the passed date."""
+        duty_expressions = (
+            DutyExpression.objects.as_at(forward_time)
+            # Exclude anything which will match all strings
+            .exclude(prefix__isnull=True).order_by("sid")
+        )
+        monetary_units = MonetaryUnit.objects.as_at(forward_time)
+        permitted_measurements = (
+            Measurement.objects.as_at(forward_time)
+            .exclude(measurement_unit__abbreviation__exact="")
+            .exclude(
+                measurement_unit_qualifier__abbreviation__exact="",
+            )
+        )
+
+        return DutySentenceParser(
+            duty_expressions, monetary_units, permitted_measurements
+        )
+
+
+class SeasonalRateParser:
+    """A seasonal rate defines a simple ad valorem duty sentence along with a
+    day and month range for which the seasonal rate should be applied."""
+
+    SEASONAL_RATE = re.compile(r"([\d\.]+%) *\((\d\d [A-Z]{3}) *- *(\d\d [A-Z]{3})\)")
+
+    def __init__(self) -> None:
+        self.timezone = pytz.utc
+
+    def detect_seasons(self, duty_exp: str) -> Iterable:
+        if SeasonalRateParser.SEASONAL_RATE.search(duty_exp):
+            for match in SeasonalRateParser.SEASONAL_RATE.finditer(duty_exp):
+                rate, start, end = match.groups()
+                validity_start = self.timezone.localize(
+                    datetime.strptime(start, r"%d %b")
+                )
+                validity_end = self.timezone.localize(datetime.strptime(end, r"%d %b"))
+                yield (
+                    rate,
+                    validity_start.day,
+                    validity_start.month,
+                    validity_end.day,
+                    validity_end.month,
+                )

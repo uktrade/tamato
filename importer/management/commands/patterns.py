@@ -23,18 +23,16 @@ from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.models import Transaction
 from common.renderers import counter_generator
+from common.util import maybe_max
+from common.util import maybe_min
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from importer.duty_sentence_parser import DutySentenceParser
 from importer.management.commands.utils import blank
 from importer.management.commands.utils import clean_item_id
 from importer.management.commands.utils import Counter
-from importer.management.commands.utils import maybe_max
-from importer.management.commands.utils import maybe_min
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import NomenclatureTreeCollector
-from importer.management.commands.utils import SeasonalRateParser
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureAction
@@ -43,6 +41,8 @@ from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
+from measures.parsers import DutySentenceParser
+from measures.parsers import SeasonalRateParser
 from quotas.models import QuotaOrderNumber
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
@@ -114,178 +114,6 @@ class OldMeasureRow:
             self.measure_start_date,
             self.measure_end_date,
         )
-
-
-class MeasureCreatingPattern:
-    """A pattern used for creating measures. This pattern will create a new
-    measure along with any associated models such as components and conditions."""
-
-    def __init__(
-        self,
-        generating_regulation: Regulation,
-        transaction: Transaction,
-        duty_sentence_parser: DutySentenceParser,
-        base_date: datetime = BREXIT,
-        timezone=LONDON,
-        exclusion_areas: Optional[Dict[str, GeographicalArea]] = None,
-        measure_sid_counter: Counter = counter_generator(),
-        measure_condition_sid_counter: Counter = counter_generator(),
-    ) -> None:
-        self.seasonal_rate_parser = SeasonalRateParser(
-            base_date=base_date, timezone=timezone
-        )
-        self.exclusion_areas = exclusion_areas or {}
-        self.generating_regulation = generating_regulation
-        self.transaction = transaction
-        self.duty_sentence_parser = duty_sentence_parser
-        self.measure_sid_counter = measure_sid_counter
-        self.measure_condition_sid_counter = measure_condition_sid_counter
-
-    def get_default_measure_conditions(
-        self, measure: Measure
-    ) -> List[MeasureCondition]:
-        presentation_of_certificate = MeasureConditionCode.objects.get(
-            code="B",
-        )
-        certificate = Certificate.objects.get(
-            sid="990",
-            certificate_type=CertificateType.objects.get(sid="N"),
-        )
-        apply_mentioned_duty = MeasureAction.objects.get(
-            code="27",
-        )
-        subheading_not_allowed = MeasureAction.objects.get(
-            code="08",
-        )
-        return [
-            MeasureCondition(
-                sid=self.measure_condition_sid_counter(),
-                dependent_measure=measure,
-                component_sequence_number=1,
-                condition_code=presentation_of_certificate,
-                required_certificate=certificate,
-                action=apply_mentioned_duty,
-                update_type=UpdateType.CREATE,
-                transaction=self.transaction,
-            ),
-            MeasureCondition(
-                sid=self.measure_condition_sid_counter(),
-                dependent_measure=measure,
-                component_sequence_number=2,
-                condition_code=presentation_of_certificate,
-                action=subheading_not_allowed,
-                update_type=UpdateType.CREATE,
-                transaction=self.transaction,
-            ),
-        ]
-
-    def get_measure_components_from_duty_rate(
-        self, measure: Measure, rate: str
-    ) -> List[MeasureComponent]:
-        try:
-            components = []
-            for component in self.duty_sentence_parser.parse(rate):
-                component.component_measure = measure
-                component.update_type = UpdateType.CREATE
-                component.transaction = self.transaction
-                components.append(component)
-            return components
-        except RuntimeError as ex:
-            logger.error(f"Explosion parsing {rate}")
-            raise ex
-
-    def get_measure_excluded_geographical_areas(
-        self, measure: Measure, geo_exclusion: Optional[str] = None
-    ) -> MeasureExcludedGeographicalArea:
-        exclusion = self.exclusion_areas[geo_exclusion.strip()]
-        return MeasureExcludedGeographicalArea(
-            modified_measure=measure,
-            excluded_geographical_area=exclusion,
-            update_type=UpdateType.CREATE,
-            transaction=self.transaction,
-        )
-
-    def get_measure_footnotes(
-        self, measure: Measure, footnotes: List[Footnote]
-    ) -> List[FootnoteAssociationMeasure]:
-        return [
-            FootnoteAssociationMeasure(
-                footnoted_measure=measure,
-                associated_footnote=footnote,
-                update_type=UpdateType.CREATE,
-                transaction=self.transaction,
-            )
-            for footnote in footnotes
-        ]
-
-    def create(
-        self,
-        duty_sentence: str,
-        geography: GeographicalArea,
-        goods_nomenclature: GoodsNomenclature,
-        new_measure_type: MeasureType,
-        geo_exclusion: Optional[str] = None,
-        order_number: Optional[QuotaOrderNumber] = None,
-        authorised_use: bool = False,
-        additional_code: AdditionalCode = None,
-        validity_start: datetime = None,
-        validity_end: datetime = None,
-        footnotes: List[Footnote] = [],
-    ) -> Iterator[TrackedModel]:
-        assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
-
-        for rate, start, end in self.seasonal_rate_parser.detect_seasonal_rates(
-            duty_sentence
-        ):
-            actual_start = maybe_max(
-                start, validity_start, goods_nomenclature.valid_between.lower
-            )
-            actual_end = maybe_min(
-                end, goods_nomenclature.valid_between.upper, validity_end
-            )
-            new_measure_sid = self.measure_sid_counter()
-
-            if actual_end not in [validity_end, end]:
-                logger.warning(
-                    "Measure {} end date capped by {} end date: {:%Y-%m-%d}".format(
-                        new_measure_sid, goods_nomenclature.item_id, actual_end
-                    )
-                )
-
-            assert actual_start
-            assert (
-                actual_end is None or actual_start <= actual_end
-            ), f"actual_start: {actual_start}, actual_end: {actual_end}"
-
-            new_measure = Measure(
-                sid=new_measure_sid,
-                measure_type=new_measure_type,
-                geographical_area=geography,
-                goods_nomenclature=goods_nomenclature,
-                valid_between=DateTimeTZRange(actual_start, actual_end),
-                generating_regulation=self.generating_regulation,
-                terminating_regulation=(
-                    self.generating_regulation if actual_end is not None else None
-                ),
-                order_number=order_number,
-                additional_code=additional_code,
-                update_type=UpdateType.CREATE,
-                transaction=self.transaction,
-            )
-            yield new_measure
-
-            if geo_exclusion:
-                yield self.get_measure_exluded_geographical_areas(
-                    new_measure, geo_exclusion
-                )
-
-            yield from self.get_measure_footnotes(new_measure, footnotes)
-
-            # If this is a measure under authorised use, add
-            # some measure conditions with the N990 certificate.
-            if authorised_use:
-                yield from self.get_default_measure_conditions(new_measure)
-            yield from self.get_measure_components_from_duty_rate(new_measure, rate)
 
 
 class MeasureEndingPattern:
