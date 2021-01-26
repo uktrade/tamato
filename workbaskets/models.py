@@ -6,31 +6,45 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Manager
 from django.db.models import Prefetch
 from django.db.models import QuerySet
 from django_fsm import FSMField
 from django_fsm import transition
 
-from common.models import TimestampedMixin
+from common.models import TimestampedMixin, Transaction
 from common.models import TrackedModel
+from taric.models import Envelope, EnvelopeTransaction
 from workbaskets.validators import WorkflowStatus
 
 
-class WorkBasketManager(Manager):
+class WorkBasketQuerySet(QuerySet):
     def prefetch_ordered_tracked_models(self) -> QuerySet:
         """
         Sort tracked_models by record_number, subrecord_number by
         using prefetch and imposing the order there.
         """
-        q = self.get_queryset()
-
         q_annotate_record_code = TrackedModel.objects.annotate_record_codes().order_by(
             "record_code", "subrecord_code"
         )
-        return q.prefetch_related(
+        return self.prefetch_related(
             Prefetch("tracked_models", queryset=q_annotate_record_code)
         )
+
+    def envelope_of_transactions(self) -> Envelope:
+        """Return an Envelope populated with the transactions from this queryset."""
+        envelope = Envelope()
+        envelope.save()
+
+        workbasket_pks = self.values_list("pk", flat=True)
+        transactions = Transaction.objects.filter(workbasket__pk__in=workbasket_pks)
+
+        envelope_transactions = [
+            EnvelopeTransaction(order=order, envelope=envelope, transaction=transaction)
+            for order, transaction in enumerate(transactions)
+        ]
+
+        EnvelopeTransaction.objects.bulk_create(envelope_transactions)
+        return envelope
 
 
 class WorkBasket(TimestampedMixin):
@@ -40,7 +54,7 @@ class WorkBasket(TimestampedMixin):
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
 
-    objects = WorkBasketManager()
+    objects = WorkBasketQuerySet.as_manager()
 
     title = models.CharField(
         max_length=255,

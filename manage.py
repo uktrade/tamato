@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import colored_traceback.always
+
 """Django's command-line utility for administrative tasks."""
 import os
 import sys

@@ -153,18 +153,12 @@ def regulation_group():
 @pytest.fixture
 def populate_regulation_group():
     def populate(workbasket):
-        regulation_group = factories.RegulationGroupFactory.create(
-            transaction__workbasket=workbasket
-        )
+        tx = workbasket.new_transaction()
 
-        regulations_transaction = factories.TransactionFactory.create(
-            workbasket=workbasket
-        )
-        regulations = factories.RegulationFactory.build_batch(
-            2, transaction=regulations_transaction
-        )
-
-        regulation_group.regulations.add(*regulations)
+        with tx:
+            # Note:  regulation.Regulation implicitly creates a regulation.Group
+            factories.RegulationFactory.create()
+            factories.FootnoteTypeFactory.create()
 
     return populate
 
@@ -196,12 +190,14 @@ def populate_workbasket(populate_regulation_group):
     """
 
     def populate(workbasket):
-        footnote_type = factories.FootnoteTypeFactory.create(transaction__workbasket=workbasket)
+        footnote_type = factories.FootnoteTypeFactory.create(
+            transaction__workbasket=workbasket
+        )
         factories.FootnoteFactory.create(
             transaction__workbasket=workbasket,
             footnote_type=footnote_type,
         )
-        factories.RegulationFactory.create(transaction__workbasket=workbasket)
+        factories.BaseRegulationFactory.create(transaction__workbasket=workbasket)
         populate_regulation_group(workbasket)
 
     return populate

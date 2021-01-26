@@ -8,7 +8,6 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.reverse import reverse
 
-from common.models import Transaction
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.serializers import WorkBasketSerializer

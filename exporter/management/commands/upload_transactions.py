@@ -27,10 +27,10 @@ def run_task_or_exit(task, local=False, *args, **kwargs):
         if local:
             return task.apply(args=args, kwargs=kwargs).get()
         return task.apply_async(args=args, kwargs=kwargs).get()
-    except kombu.exceptions.OperationalError as e:
+    except kombu.exceptions.OperationalError:
         # OperationalError here usually indicate that it was not possible to
         # connect to the celery backend, e.g. redis is not accessible/up.
-        sys.exit(e.args[0])
+        sys.exit("Timeout connecting to celery.")
 
 
 class Command(BaseCommand):
@@ -51,10 +51,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         local = options["local"]
-        destination, exc = run_task_or_exit(upload_workbaskets, local=local)
-        if exc:
-            if isinstance(exc, (DocumentInvalid, TaricDataAssertionError)):
-                sys.exit(1)
-            raise exc
+        try:
+            destination = run_task_or_exit(upload_workbaskets, local=local)
+        except (DocumentInvalid, TaricDataAssertionError) as e:
+            sys.exit(f"Error {e}")
 
         self.stdout.write(f"Uploaded: {destination}")
