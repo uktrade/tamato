@@ -10,6 +10,7 @@ from django.test import override_settings
 from psycopg2._range import DateTimeTZRange
 from xmldiff import main
 
+from certificates.models import CertificateType
 from common.tests import factories
 from common.validators import ApplicabilityCode
 from geo_areas.models import GeographicalArea, GeographicalAreaDescription
@@ -37,51 +38,18 @@ def output():
 
 class TestQuotaExclusions:
     def setup(self):
-        # Add user
-        factories.UserFactory.create(username="Alice")
-
-        # Setup measures
-        factories.MeasureTypeFactory.create(
-            sid='112',
-        )
-        factories.MeasureTypeFactory.create(
-            sid='115',
-        )
-        factories.MeasureConditionCodeFactory.create(code="B")
-        factories.MeasureActionFactory.create(code="27")
-        factories.MeasureActionFactory.create(code="08")
-
-        factories.DutyExpressionFactory.create(
-            sid=1,
-            prefix="",
-            duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
-            measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
-            monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
-        )
-
-        # Setup good nomenclature
-        root_cc = factories.GoodsNomenclatureFactory.create(
-            sid="1000",
-            item_id="1000000000",
-            suffix="80",
-            valid_between=DateTimeTZRange(START_TIME, None),
-        )
-
-        # Setup geographical area's
-        factories.GeographicalAreaFactory.create(
-            sid=400, area_id="1011", area_code=1
-        )
-        # Setup geographical area's
-        factories.GeographicalAreaFactory.create(
-            sid=400, area_id="1013", area_code=1
-        )
+        certificate_type_C = factories.CertificateTypeFactory.create(sid="9")
 
     @override_settings(DATA_IMPORT_USERNAME="Alice")
-    def test_import_ttr(self):
+    def test_quota_exclusions(self):
         """
         Expected output:
 
         """
+        CertificateType.objects.get(
+            sid=9
+        )
+        print("ok")
         args = [
             fixture_path + "import_ttr/existing_measures.xlsx"
         ]

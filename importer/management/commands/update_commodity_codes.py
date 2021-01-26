@@ -14,6 +14,7 @@ from xlrd.sheet import Cell
 
 from commodities.models import GoodsNomenclature, GoodsNomenclatureIndent, GoodsNomenclatureDescription, \
     GoodsNomenclatureOrigin, GoodsNomenclatureSuccessor, FootnoteAssociationGoodsNomenclature
+from common.models import Transaction
 from common.renderers import counter_generator
 from common.validators import UpdateType
 from footnotes.models import Footnote
@@ -149,65 +150,68 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        username = settings.DATA_IMPORT_USERNAME
-        try:
-            author = User.objects.get(username=username)
-        except User.DoesNotExist:
-            sys.exit(
-                f"Author does not exist, create user '{username}'"
-                " or edit settings.DATA_IMPORT_USERNAME"
+        with django.db.transaction.atomic():
+            username = settings.DATA_IMPORT_USERNAME
+            try:
+                author = User.objects.get(username=username)
+            except User.DoesNotExist:
+                sys.exit(
+                    f"Author does not exist, create user '{username}'"
+                    " or edit settings.DATA_IMPORT_USERNAME"
+                )
+            workbasket, _ = WorkBasket.objects.get_or_create(
+                title=f"Update Commodity Codes",
+                author=author,
+                status=WorkflowStatus.PUBLISHED,
             )
-        workbasket, _ = WorkBasket.objects.get_or_create(
-            title=f"Update Commodity Codes",
-            author=author,
-            status=WorkflowStatus.PUBLISHED,
-        )
-        workbook = xlrd.open_workbook(options["spreadsheet"])
-        cc_operations = workbook.sheet_by_name("cc_operations")
-        cc_measures = workbook.sheet_by_name("cc_measures")
+            transaction, _ = Transaction.objects.get_or_create(workbasket=workbasket, order=1, composite_key='x')
+            workbook = xlrd.open_workbook(options["spreadsheet"])
+            cc_operations = workbook.sheet_by_name("cc_operations")
+            cc_measures = workbook.sheet_by_name("cc_measures")
+            new_measures = workbook.sheet_by_name("new_measures")
 
-        cc_operations = cc_operations.get_rows()
-        cc_measures = cc_measures.get_rows()
+            cc_operations = cc_operations.get_rows()
+            cc_measures = cc_measures.get_rows()
 
-        for _ in range(1):
-            next(cc_operations)
-            next(cc_measures)
+            for _ in range(1):
+                next(cc_operations)
+                next(cc_measures)
+                next(new_measures)
 
-        mc = MeasureCreatingPatternWithExpression(
-            duty_sentence_parser=None,
-            generating_regulation=None,
-            workbasket=workbasket,
-            measure_sid_counter=counter_generator(options["measure_sid"]),
-            measure_condition_sid_counter=counter_generator(
-                options["measure_condition_sid"]
+            mc = MeasureCreatingPatternWithExpression(
+                duty_sentence_parser=None,
+                generating_regulation=None,
+                transaction=transaction,
+                measure_sid_counter=counter_generator(options["measure_sid"]),
+                measure_condition_sid_counter=counter_generator(
+                    options["measure_condition_sid"]
+                )
             )
-        )
-        me = MeasureEndingPattern(
-            workbasket=workbasket,
-        )
-        with open(options["output"], mode="wb") as output:
-            with EnvelopeSerializer(
-                output,
-                envelope_id=options["envelope_id"],
-                transaction_counter=counter_generator(options["transaction_id"]),
-                message_counter=counter_generator(start=1),
-                max_envelope_size_in_mb=30,
-            ) as env:
-                try:
-                    with django.db.transaction.atomic():
-                            for transaction in self.create_transactions(
-                                    mc,
-                                    me,
-                                    cc_operations,
-                                    cc_measures,
-                                    workbasket
-                            ):
-                                for model in transaction:
-                                    #model.save()
-                                    pass
-                                env.render_transaction(transaction)
-                finally:
-                    django.db.transaction.rollback()
+            me = MeasureEndingPattern(
+                transaction=transaction,
+            )
+            with open(options["output"], mode="wb") as output:
+                with EnvelopeSerializer(
+                    output,
+                    envelope_id=options["envelope_id"],
+                    transaction_counter=counter_generator(options["transaction_id"]),
+                    message_counter=counter_generator(start=1),
+                    max_envelope_size_in_mb=30,
+                ) as env:
+                    for transaction in self.create_transactions(
+                            mc,
+                            me,
+                            cc_operations,
+                            cc_measures,
+                            new_measures,
+                            transaction
+                    ):
+                        for model in transaction:
+                            #model.save()
+                            pass
+                        env.render_transaction(transaction)
+
+            django.db.transaction.set_rollback(True)
 
     def end_measures(self, measure_ender, measures, end_date, type):
         for old_row in measures:
@@ -307,7 +311,7 @@ class Command(BaseCommand):
                     )
                 )
 
-    def create_transactions(self, measure_creator, measure_ender, cc_operations, cc_measures, workbasket):
+    def create_transactions(self, measure_creator, measure_ender, cc_operations, cc_measures, transaction_model, auto_migrate=True):
 
         # measure map
         cc_measure_groups = defaultdict(list)
@@ -317,27 +321,29 @@ class Command(BaseCommand):
 
         # group operations together by cc
         cc_operation_groups = defaultdict(list)
-        counter, previous_sid = 0, None
+        counter, previous_sid, previous_operation = 0, None, None
         for row in cc_operations:
             cc_operation_row = CCOperationRow(row)
             sid = cc_operation_row.goods_nomenclature_sid
-            if sid != previous_sid:
+            if sid != previous_sid or (cc_operation_row.update_type == UpdateType.DELETE and cc_operation_row.update_type != previous_update_type):
                 counter += 1
             key = f'{counter}|{cc_operation_row.goods_nomenclature_sid}'
             cc_operation_groups[key].append(cc_operation_row)
             previous_sid = cc_operation_row.goods_nomenclature_sid
+            previous_update_type = cc_operation_row.update_type
 
         # process groups
         transfer_queue = defaultdict(list)     # old_gn:list(new_gn)
         for _, operations in cc_operation_groups.items():
             transaction = []
+            gn = None
             for operation in operations:
-                gn = None
                 if operation.type == OperationType.GN:
+                    transfer = False
                     # if we update the date of a GN we need to update the measures as well
                     if operation.update_type == UpdateType.UPDATE or \
                             operation.update_type == UpdateType.DELETE:
-                        gn = GoodsNomenclature.objects.get(
+                        gn = GoodsNomenclature.objects.current().get(
                             sid=operation.goods_nomenclature_sid,
                         )
                         if (
@@ -354,21 +360,41 @@ class Command(BaseCommand):
                                 end_date=operation.gn_validity_end_date,
                                 type=operation.update_type
                             )
+                        elif (
+                                operation.update_type == UpdateType.UPDATE
+                                and operation.gn_validity_start_date > gn.valid_between.lower.replace(tzinfo=None)
+                        ):
+                            logger.debug(
+                                f'recreating {len(cc_measure_groups[gn.sid])} '
+                                f'measures for {gn.item_id}'
+                            )
+                            # delete the measure
+                            yield from self.end_measures(
+                                measure_ender,
+                                cc_measure_groups[operation.goods_nomenclature_sid],
+                                end_date=operation.gn_validity_end_date,
+                                type=UpdateType.DELETE
+                            )
+                            # recreate later
+                            transfer = True
 
-                    gn, _ = GoodsNomenclature.objects.update_or_create(
+                    gn = GoodsNomenclature(
                         sid=operation.goods_nomenclature_sid,
-                        defaults={
-                            'item_id': operation.goods_nomenclature_item_id,
-                            'suffix': operation.productline_suffix,
-                            'statistical': operation.statistical_indicator,
-                            'valid_between': DateTimeTZRange(
-                                operation.gn_validity_start_date,
-                                operation.gn_validity_end_date,
-                            ),
-                            'workbasket': workbasket,
-                            'update_type': operation.update_type,
-                        }
+
+                        item_id=operation.goods_nomenclature_item_id,
+                        suffix=operation.productline_suffix,
+                        statistical=operation.statistical_indicator,
+                        valid_between=DateTimeTZRange(
+                            operation.gn_validity_start_date,
+                            operation.gn_validity_end_date,
+                        ),
+                        transaction=transaction_model,
+                        update_type=operation.update_type,
+
                     )
+                    gn.save()
+                    if transfer:
+                        transfer_queue[gn].append(gn)
                     logger.debug(
                         f'{"update" if operation.update_type == UpdateType.UPDATE else "create" if operation.update_type == UpdateType.CREATE else "delete"} '
                         f'commodity code {gn.item_id}: validity ({gn.valid_between}), '
@@ -388,7 +414,7 @@ class Command(BaseCommand):
                             operation.indent_validity_start_date,
                             None
                         ),
-                        workbasket=workbasket,
+                        transaction=transaction_model,
                         update_type=operation.update_type,
                     )
                     logger.debug(
@@ -408,7 +434,7 @@ class Command(BaseCommand):
                             None
                         ),
                         described_goods_nomenclature=gn,
-                        workbasket=workbasket,
+                        transaction=transaction_model,
                         update_type=operation.update_type,
                     )
                     logger.debug(
@@ -420,23 +446,23 @@ class Command(BaseCommand):
                     gn = gn or GoodsNomenclature.objects.get(
                         sid=operation.goods_nomenclature_sid,
                     )
-                    gn_derived_from = GoodsNomenclature.objects.get(
+                    gn_derived_from = GoodsNomenclature.objects.current().get(
                         sid=operation.derived_goods_nomenclature_sid,
                     )
                     if operation.measure_transfer_candidate \
-                            and operation.derived_goods_nomenclature_sid in cc_measure_groups:
+                            and operation.derived_goods_nomenclature_sid in cc_measure_groups and auto_migrate:
                         transfer_queue[gn_derived_from].append(gn)
 
                     gn_origin = GoodsNomenclatureOrigin(
                         new_goods_nomenclature=gn,
                         derived_from_goods_nomenclature=gn_derived_from,
-                        workbasket=workbasket,
+                        transaction=transaction_model,
                         update_type=operation.update_type,
                     )
                     logger.debug(
                         f'{"update" if operation.update_type == UpdateType.UPDATE else "create" if operation.update_type == UpdateType.CREATE else "delete"} '
-                        f'origin: derived from ({gn_origin.new_goods_nomenclature.item_id}), '
-                        f'new ({gn_origin.derived_from_goods_nomenclature.item_id})'
+                        f'origin: derived from ({gn_origin.derived_from_goods_nomenclature.item_id}), '
+                        f'new ({gn_origin.new_goods_nomenclature.item_id})'
                     )
                     transaction.append(gn_origin)
 
@@ -453,7 +479,7 @@ class Command(BaseCommand):
                             operation.fn_validity_start_date,
                             operation.fn_validity_end_date
                         ),
-                        workbasket=workbasket,
+                        transaction=transaction_model,
                         update_type=operation.update_type,
                     )
                     logger.debug(
@@ -464,14 +490,16 @@ class Command(BaseCommand):
                     transaction.append(gn_footnote)
 
                 if operation.type == OperationType.SUCCESSOR:
+                    logger.debug(operation.goods_nomenclature_sid)
+                    logger.debug(operation.absorbed_goods_nomenclature_sid)
                     gn_successor = GoodsNomenclatureSuccessor(
-                        replaced_goods_nomenclature=GoodsNomenclature.objects.get(
+                        replaced_goods_nomenclature=GoodsNomenclature.objects.current().get(
                             sid=operation.goods_nomenclature_sid
                         ),
-                        absorbed_into_goods_nomenclature=GoodsNomenclature.objects.get(
+                        absorbed_into_goods_nomenclature=GoodsNomenclature.objects.current().get(
                             sid=operation.absorbed_goods_nomenclature_sid
                         ),
-                        workbasket=workbasket,
+                        transaction=transaction_model,
                         update_type=operation.update_type,
 
                     )

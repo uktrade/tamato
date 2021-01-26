@@ -26,6 +26,7 @@ from typing import Union
 import xlrd
 from django.contrib.auth.models import User
 from django.core.management.base import CommandError
+from django.db.models.functions import Lower
 from django.template.loader import render_to_string
 from psycopg2._range import DateTimeTZRange
 from xlrd.sheet import Cell
@@ -47,6 +48,7 @@ ItemIdGetter = Callable[[Row], GoodsNomenclature]
 
 logger = logging.getLogger(__name__)
 
+BREXIT = datetime(2021, 1, 1)
 
 class CountersAction(argparse.Action):
     def __call__(
@@ -228,7 +230,7 @@ def parse_trade_remedies_duty_expression(
     def create_component(match):
         return Component(
             duty_expression_id="37" if match.group("m1") == "NIHIL" else "01",
-            duty_amount=convert_eur_to_gbp(match.group("m2"), eur_gbp_conversion_rate)
+            duty_amount=convert_eur_to_gbp_tr(match.group("m2"), eur_gbp_conversion_rate)
             if match.group("m3") == "EUR" and eur_gbp_conversion_rate
             else match.group("m2"),
             monetary_unit_code="GBP"
@@ -271,72 +273,14 @@ def parse_trade_remedies_duty_expression(
         entry = value.strip()
         match = re.match(regex, entry)
         if match:
-            expression = Expression(
-                condition=None,
-                component=create_component(match) if match.group("component") else None,
-            )
-            parsed_expressions.append(expression)
+            component = create_component(match) if match.group("component") else None
+            parsed_expressions.append(component)
         else:
             raise ValueError(f"Could not parse duty expression: {value}")
     return parsed_expressions
 
 
-def parse_duty_parts(duty_parts_json, eur_gbp_conversion_rate):
-    """ Parse duty parts from JSON
-
-    """
-    def create_component(component_json):
-        if all(component_json[v] is None for v in
-            [
-                'duty_expression_id',
-                'duty_amount',
-                'monetary_unit_code',
-                'measurement_unit_code',
-                'measurement_unit_qualifier_code'
-            ]
-        ):
-            return None
-        return Component(
-            duty_expression_id=component_json['duty_expression_id'],
-            duty_amount=convert_eur_to_gbp_ukgt(component_json['duty_amount'], eur_gbp_conversion_rate)
-            if component_json['monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
-            else component_json['duty_amount'],
-            monetary_unit_code="GBP"
-            if component_json['monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
-            else component_json['monetary_unit_code'],
-            measurement_unit_code=component_json['measurement_unit_code'],
-            measurement_unit_qualifier_code=component_json['measurement_unit_qualifier_code'],
-        )
-    parsed_expressions = []
-    # measure_conditions as list
-    for entry in duty_parts_json:
-        if 'condition_code' in entry:
-            condition = Condition(
-                condition_code=entry['condition_code'],
-                certificate=entry['certificate_type_code'] is not None,
-                certificate_type_code=entry['certificate_type_code'],
-                certificate_code=entry['certificate_code'],
-                condition_duty_amount=convert_eur_to_gbp_ukgt(entry['condition_duty_amount'], eur_gbp_conversion_rate)
-                if entry['condition_monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
-                else entry['condition_duty_amount'],
-                condition_monetary_unit_code="GBP"
-                if entry['condition_monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
-                else entry['condition_monetary_unit_code'],
-                condition_measurement_unit_code=entry['condition_measurement_unit_code'],
-                condition_measurement_unit_qualifier_code=entry['condition_measurement_unit_qualifier_code'],
-                action_code=entry['action_code'],
-            )
-            expression = Expression(
-                condition=condition,
-                component=create_component(entry),
-            )
-            parsed_expressions.append(expression)
-        else:
-            parsed_expressions.append(create_component(entry))
-    return parsed_expressions
-
-
-def convert_eur_to_gbp(amount: str, conversion_rate: float) -> str:
+def convert_eur_to_gbp_tr(amount: str, conversion_rate: float) -> str:
     """Convert EUR amount to GBP and round down to nearest pence"""
     converted_amount = (
         floor(int(Decimal(amount) * Decimal(conversion_rate) * 100)) / 100
@@ -359,6 +303,62 @@ def convert_eur_to_gbp_ukgt(amount: str, conversion_rate: float) -> str:
                 floor(int(converted_amount * 10)) / 10
         )
     return "{0:.3f}".format(converted_amount_rounded)
+
+
+def parse_duty_parts(duty_parts_json, eur_gbp_conversion_rate, conversion=convert_eur_to_gbp_ukgt):
+    """ Parse duty parts from JSON
+
+    """
+
+    def create_component(component_json):
+        if all(component_json[v] is None for v in
+            [
+                'duty_expression_id',
+                'duty_amount',
+                'monetary_unit_code',
+                'measurement_unit_code',
+                'measurement_unit_qualifier_code'
+            ]
+        ):
+            return None
+        return Component(
+            duty_expression_id=component_json['duty_expression_id'],
+            duty_amount=conversion(component_json['duty_amount'], eur_gbp_conversion_rate)
+            if component_json['monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+            else component_json['duty_amount'],
+            monetary_unit_code="GBP"
+            if component_json['monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+            else component_json['monetary_unit_code'],
+            measurement_unit_code=component_json['measurement_unit_code'],
+            measurement_unit_qualifier_code=component_json['measurement_unit_qualifier_code'],
+        )
+    parsed_expressions = []
+    # measure_conditions as list
+    for entry in duty_parts_json:
+        if 'condition_code' in entry:
+            condition = Condition(
+                condition_code=entry['condition_code'],
+                certificate=entry['certificate_type_code'] is not None,
+                certificate_type_code=entry['certificate_type_code'],
+                certificate_code=entry['certificate_code'],
+                condition_duty_amount=conversion(entry['condition_duty_amount'], eur_gbp_conversion_rate)
+                if entry['condition_monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+                else entry['condition_duty_amount'],
+                condition_monetary_unit_code="GBP"
+                if entry['condition_monetary_unit_code'] == "EUR" and eur_gbp_conversion_rate
+                else entry['condition_monetary_unit_code'],
+                condition_measurement_unit_code=entry['condition_measurement_unit_code'],
+                condition_measurement_unit_qualifier_code=entry['condition_measurement_unit_qualifier_code'],
+                action_code=entry['action_code'],
+            )
+            expression = Expression(
+                condition=condition,
+                component=create_component(entry),
+            )
+            parsed_expressions.append(expression)
+        else:
+            parsed_expressions.append(create_component(entry))
+    return parsed_expressions
 
 
 def clean_item_id(cell: Cell) -> str:
@@ -561,7 +561,7 @@ class NomenclatureTreeCollector(Generic[Row]):
             set(
                 node.indent.indented_goods_nomenclature.sid
                 for node in cc.indents.as_at(self.date)
-                .get()
+                .latest(Lower('valid_between'))
                 .nodes.get(valid_between__contains=self.date)
                 .get_descendants()
                 .filter(valid_between__contains=self.date)
@@ -839,7 +839,6 @@ class EnvelopeSerializer:
                 > self.envelope_count * self.max_envelope_size_in_mb
             ):
                 self.new_envelope()
-
             self.write(
                 render_to_string(
                     template_name="workbaskets/taric/transaction.xml",
@@ -958,36 +957,36 @@ def create_geo_area(
 
 def update_geo_area_description(
     valid_between,
-    workbasket,
+    transaction,
     group_area_sid,
     old_area_description_sid,
     new_area_description_sid,
     description,
 ):
-    group_area = GeographicalArea.objects.get(
+    group_area = GeographicalArea.objects.current().get(
         sid=group_area_sid
     )
-    old_description = GeographicalAreaDescription.objects.get(
-        sid=old_area_description_sid,
-    )
-    old_description.valid_between = DateTimeTZRange(
-        old_description.valid_between.lower,
-        valid_between.lower - timedelta(days=1),
-    )
-    old_description.save()
+    # old_description = GeographicalAreaDescription.objects.current().get(
+    #     sid=old_area_description_sid,
+    # )
+    # old_description.valid_between = DateTimeTZRange(
+    #     old_description.valid_between.lower,
+    #     valid_between.lower - timedelta(days=1),
+    # )
+    # old_description.new_draft(workbasket=transaction.workbasket)
     yield GeographicalAreaDescription(
         sid=new_area_description_sid,
         description=description,
         valid_between=valid_between,
         area=group_area,
-        workbasket=workbasket,
+        transaction=transaction,
         update_type=UpdateType.CREATE,
     )
 
 
 def add_geo_area_members(
     valid_between,
-    workbasket,
+    transaction,
     member_area_sids,
     group_area,
 ):
@@ -1001,7 +1000,7 @@ def add_geo_area_members(
         member_area = GeographicalArea.objects.get(
             sid=member_area_sid
         )
-        existing_membership = GeographicalMembership.objects.filter(
+        existing_membership = GeographicalMembership.objects.current().filter(
             geo_group=group_area,
             member=member_area,
             valid_between__contains=DateTimeTZRange(
@@ -1014,7 +1013,7 @@ def add_geo_area_members(
                 geo_group=group_area,
                 member=member_area,
                 valid_between=valid_between,
-                workbasket=workbasket,
+                transaction=transaction,
                 update_type=UpdateType.CREATE,
             )
         else:
@@ -1023,7 +1022,7 @@ def add_geo_area_members(
 
 def terminate_geo_area_members(
     end_date,
-    workbasket,
+    transaction,
     member_area_sids,
     group_area_sid,
     delete=False,
@@ -1034,14 +1033,14 @@ def terminate_geo_area_members(
     member_sids_list = list(member_area_sids)
     member_sids_list.sort()
     for member_area_sid in member_sids_list:
-        member_area = GeographicalArea.objects.get(
+        member_area = GeographicalArea.objects.as_at(BREXIT).get(
             sid=member_area_sid
         )
-        membership = GeographicalMembership.objects.get(
+        membership = GeographicalMembership.objects.as_at(BREXIT).get(
             geo_group=group_area,
             member=member_area,
         )
-        if not delete and membership.valid_between.lower >= end_date or (
+        if not delete and membership.valid_between.lower.replace(tzinfo=None) >= end_date or (
             membership.valid_between.upper is not None
             and membership.valid_between.upper <= end_date
         ):
@@ -1055,7 +1054,7 @@ def terminate_geo_area_members(
                 lower=membership.valid_between.lower,
                 upper=membership.valid_between.upper,
         )
-        membership.workbasket = workbasket
+        membership.transaction = transaction
         membership.update_type = UpdateType.UPDATE if not delete else UpdateType.DELETE
         yield membership
 

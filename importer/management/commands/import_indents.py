@@ -18,7 +18,7 @@ from commodities.import_handlers import GoodsNomenclatureIndentHandler
 from commodities.models import GoodsNomenclature
 from commodities.models import GoodsNomenclatureIndent
 from commodities.models import GoodsNomenclatureIndentNode
-from common.models import TrackedModel
+from common.models import TrackedModel, Transaction
 from common.validators import UpdateType
 from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.utils import EnvelopeSerializer
@@ -81,7 +81,7 @@ class IndentImporter(RowsImporter):
         assert new_row
 
         indent = new_row.indent
-        child = GoodsNomenclature.objects.get(sid=new_row.sid)
+        child = GoodsNomenclature.objects.current().get(sid=new_row.sid)
         item_id = child.item_id
         suffix = child.suffix
 
@@ -90,7 +90,7 @@ class IndentImporter(RowsImporter):
             indented_goods_nomenclature=child,
             indent=max(indent, 0),
             valid_between=DateTimeTZRange(new_row.start_date, new_row.end_date),
-            workbasket=self.workbasket,
+            transaction=self.transaction,
             update_type=UpdateType.CREATE,
         )
         indent_model.save()
@@ -102,6 +102,7 @@ class IndentImporter(RowsImporter):
             GoodsNomenclatureIndentNode.add_root(
                 indent=indent_model,
                 valid_between=DateTimeTZRange(new_row.start_date, new_row.end_date),
+                creating_transaction=self.transaction
             )
         else:
             # The indent is now too deep to use the item ID directly. Instead the code that is:
@@ -167,12 +168,16 @@ class IndentImporter(RowsImporter):
                 )
 
                 if defn in GoodsNomenclatureIndentHandler.overrides:
-                    next_indent = GoodsNomenclatureIndent.objects.get(
-                        sid=GoodsNomenclatureIndentHandler.overrides[defn]
-                    )
-                    next_parent = next_indent.nodes.get(
-                        valid_between__contains=start_date
-                    )
+                    try:
+                        next_indent = GoodsNomenclatureIndent.objects.current().filter(
+                            sid=GoodsNomenclatureIndentHandler.overrides[defn]
+                        ).last()
+                        next_parent = next_indent.nodes.get(
+                            valid_between__contains=start_date
+                        )
+                    except Exception as e:
+                        logger.debug(str(e))
+                        break
                     logger.info("Using manual override for indent %s", defn)
                 else:
                     next_parent = (
@@ -189,9 +194,10 @@ class IndentImporter(RowsImporter):
                     )
 
                 if not next_parent:
-                    raise Exception(
+                    logger.debug(
                         f"Parent at depth {parent_depth} not found for {item_id} (sid {child.sid}) for date {start_date}"
                     )
+                    break
 
                 indent_start = start_date
                 indent_end = maybe_min(
@@ -216,6 +222,7 @@ class IndentImporter(RowsImporter):
                 next_parent.add_child(
                     indent=indent_model,
                     valid_between=DateTimeTZRange(indent_start, indent_end),
+                    creating_transaction=self.transaction
                 )
 
                 start_date = indent_end
@@ -258,6 +265,7 @@ class Command(BaseCommand):
             author=author,
             status=WorkflowStatus.PUBLISHED,
         )
+        transaction_model, _ = Transaction.objects.get_or_create(workbasket=workbasket, order=1)
 
         workbook = xlrd.open_workbook(options["spreadsheet"])
         worksheet = workbook.sheet_by_name(options["sheet"])
@@ -270,7 +278,7 @@ class Command(BaseCommand):
             open(os.devnull, "w"),
             0,
         ) as env:
-            importer = IndentImporter(workbasket, env)
+            importer = IndentImporter(transaction=transaction_model, serializer=env)
             importer.import_sheets(
                 (Row(row) for row in new_rows),
                 iter([None]),

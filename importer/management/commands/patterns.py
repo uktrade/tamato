@@ -76,6 +76,8 @@ def parse_list(value: str) -> List[str]:
 class OldMeasureRow:
     def __init__(self, old_row: List[Cell]) -> None:
         assert old_row is not None
+        logger.debug(f'xxx {old_row[1].value}')
+
         self.goods_nomenclature_sid = int(old_row[0].value) if old_row[0].value else None
         self.item_id = clean_item_id(old_row[1])
         self.inherited_measure = str(old_row[6].value).lower() == 'true'
@@ -100,12 +102,15 @@ class OldMeasureRow:
         self.justification_regulation_id = blank(old_row[21].value, str)
         self.stopped = bool(old_row[24].value)
         self.additional_code_sid = blank(old_row[23].value, int)
+        logger.debug("addional code")
+        logger.debug(self.additional_code_sid)
         self.export_refund_sid = blank(old_row[25].value, int)
         self.reduction = blank(old_row[26].value, int)
         self.footnotes = parse_list(old_row[27].value)
-        self.goods_nomenclature = GoodsNomenclature.objects.get(
+        logger.debug(self.item_id)
+        self.goods_nomenclature = GoodsNomenclature.objects.current().as_at(self.measure_start_date).get(
             sid=self.goods_nomenclature_sid
-        ) if self.goods_nomenclature_sid else GoodsNomenclature.objects.as_at(BREXIT).get(
+        ) if self.goods_nomenclature_sid else GoodsNomenclature.objects.current().as_at(self.measure_start_date).get(
             item_id=self.item_id, suffix="80"
         )
 
@@ -117,6 +122,7 @@ class OldMeasureRow:
         if len(old_row) >= 31:
             self.duty_condition_parts = blank(old_row[30].value, json.loads)
         if len(old_row) >= 32:
+            logger.debug(f'xx {old_row[31].value}')
             self.duty_component_parts = blank(old_row[31].value, json.loads)
 
     @cached_property
@@ -224,7 +230,7 @@ class MeasureCreatingPattern:
                 modified_measure=measure,
                 excluded_geographical_area=geo_area,
                 update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+                transaction=self.transaction,
             )
 
     def get_measure_footnotes(
@@ -350,11 +356,11 @@ class MeasureEndingPattern:
 
         # Make sure the needed types and areas are loaded
         if old_row.measure_type not in self.measure_types:
-            self.measure_types[old_row.measure_type] = MeasureType.objects.get(
+            self.measure_types[old_row.measure_type] = MeasureType.objects.current().get(
                 sid=old_row.measure_type
             )
         if old_row.geo_sid not in self.geo_areas:
-            self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.get(
+            self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.current().get(
                 sid=old_row.geo_sid
             )
 
@@ -378,7 +384,7 @@ class MeasureEndingPattern:
             )
         else:
             quota = (
-                QuotaOrderNumber.objects.get(
+                QuotaOrderNumber.objects.current().get(
                     order_number=old_row.order_number,
                     valid_between__contains=DateTimeTZRange(
                         lower=old_row.measure_start_date,
@@ -395,19 +401,20 @@ class MeasureEndingPattern:
         ends_before_date = (
             old_row.measure_end_date and old_row.measure_end_date < new_start_date
         )
-
-        generating_regulation = Regulation.objects.get(
+        generating_regulation = Regulation.objects.current().get(
             role_type=old_row.regulation_role,
             regulation_id=old_row.regulation_id,
+            approved=True,
         )
 
         if old_row.justification_regulation_id and starts_after_date:
             # Delete the measure, but the regulation still needs to be
             # correct if it has already been end-dated
             assert old_row.measure_end_date
-            justification_regulation = Regulation.objects.get(
+            justification_regulation = Regulation.objects.current().get(
                 role_type=old_row.regulation_role,
                 regulation_id=old_row.regulation_id,
+                approved=True,
             )
         elif not starts_after_date:
             # end-date the measure, and terminate it with the UKGT SI.
@@ -605,7 +612,7 @@ class MeasureCreatingPatternWithExpression(MeasureCreatingPattern):
             order_number=order_number,
             additional_code=additional_code,
             update_type=UpdateType.CREATE,
-            workbasket=self.workbasket,
+            transaction=self.transaction,
         )
         yield new_measure
 
@@ -659,7 +666,7 @@ class MeasureCreatingPatternWithExpression(MeasureCreatingPattern):
                     condition_measurement=condition_measurement,
                     action=action,
                     update_type=UpdateType.CREATE,
-                    workbasket=self.workbasket,
+                    transaction=self.transaction,
                 )
                 component_sequence_number += 1
                 yield condition
@@ -705,7 +712,7 @@ class MeasureCreatingPatternWithExpression(MeasureCreatingPattern):
                 monetary_unit=monetary_unit,
                 condition_component_measurement=measurement,
                 update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+                transaction=self.transaction,
             )
         else:
             yield MeasureComponent(
@@ -715,5 +722,5 @@ class MeasureCreatingPatternWithExpression(MeasureCreatingPattern):
                 component_measure=new_measure,
                 component_measurement=measurement,
                 update_type=UpdateType.CREATE,
-                workbasket=self.workbasket,
+                transaction=self.transaction,
             )

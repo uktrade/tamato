@@ -7,7 +7,7 @@ from commodities.models import GoodsNomenclature
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import GoodsNomenclatureIndentNodeFactory
 from common.tests.util import Dates
-from importer.management.commands.utils import convert_eur_to_gbp, parse_duty_parts, Expression, Condition, Component, \
+from importer.management.commands.utils import convert_eur_to_gbp_tr, parse_duty_parts, Expression, Condition, Component, \
     convert_eur_to_gbp_ukgt
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
@@ -672,8 +672,8 @@ def test_parse_duty_parts(parts_json, eur_gbp_conversion_rate, expected_expressi
 
 
 def test_eur_to_gbp_conversion():
-    assert convert_eur_to_gbp("20.000", conversion_rate=2) == "40.000"
-    assert convert_eur_to_gbp("1.000", conversion_rate=0.83687) == "0.830"
+    assert convert_eur_to_gbp_tr("20.000", conversion_rate=2) == "40.000"
+    assert convert_eur_to_gbp_tr("1.000", conversion_rate=0.83687) == "0.830"
 
 
 def test_eur_to_gbp_conversion_ukgt():

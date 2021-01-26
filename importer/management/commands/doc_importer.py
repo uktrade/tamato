@@ -33,14 +33,14 @@ class RowsOutOfOrderException(Exception):
 class RowsImporter(metaclass=ABCMeta):
     def __init__(
         self,
-        workbasket: WorkBasket,
+        transaction: transaction,
         serializer: EnvelopeSerializer,
         forward_time: datetime = BREXIT,
         counters: Dict[str, Counter] = {},
         first_run: bool = True,
         default_measure_type: MeasureType = None,
     ) -> None:
-        self.workbasket = workbasket
+        self.transaction = transaction
         self.serializer = serializer
         self.first_run = first_run
         self.default_measure_type = default_measure_type
