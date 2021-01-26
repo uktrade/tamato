@@ -20,11 +20,6 @@ class Command(TransactionsBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "envelope_id",
-            help="The 6-digit envelope ID to use on the generated envelope.",
-            type=int,
-        )
-        parser.add_argument(
             "-o",
             "--output",
             dest="filename",
