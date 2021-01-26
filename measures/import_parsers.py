@@ -427,7 +427,7 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
     measure_type__sid = TextElement(Tag("measure.type"))
     geographical_area__area_id = TextElement(Tag("geographical.area"))
     goods_nomenclature__item_id = TextElement(Tag("goods.nomenclature.item.id"))
-    additional_code__type__sid = TextElement(Tag("additional.code.type.id"))
+    additional_code__type__sid = TextElement(Tag("additional.code.type"))
     additional_code__code = TextElement(Tag("additional.code"))
     order_number__order_number = TextElement(Tag("ordernumber"))
     reduction = IntElement(Tag("reduction.indicator"))
