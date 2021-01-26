@@ -7,7 +7,7 @@
       <oub:geographical.area>{{ record.geographical_area.area_id }}</oub:geographical.area>
       <oub:goods.nomenclature.item.id>{{ record.goods_nomenclature.item_id }}</oub:goods.nomenclature.item.id>
       {%- if record.additional_code %}
-      <oub:additional.code.type.id>{{ record.additional_code.type.sid }}</oub:additional.code.type.id>
+      <oub:additional.code.type>{{ record.additional_code.type.sid }}</oub:additional.code.type>
       <oub:additional.code>{{ record.additional_code.code }}</oub:additional.code>
       {%- endif -%}
       {%- if record.order_number %}
