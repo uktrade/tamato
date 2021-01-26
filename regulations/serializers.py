@@ -54,7 +54,7 @@ class AmendmentSerializer(
 
 
 class NestedAmendmentSerializer(serializers.HyperlinkedModelSerializer):
-    regulation = NestedRegulationSerializer()
+    enacting_regulation = NestedRegulationSerializer()
 
     class Meta:
         model = models.Amendment
@@ -81,7 +81,7 @@ class ReplacementSerializer(
 
 
 class NestedReplacementSerializer(serializers.HyperlinkedModelSerializer):
-    regulation = NestedRegulationSerializer()
+    enacting_regulation = NestedRegulationSerializer()
 
     class Meta:
         model = models.Replacement
@@ -106,7 +106,7 @@ class ExtensionSerializer(
 
 
 class NestedExtensionSerializer(serializers.HyperlinkedModelSerializer):
-    regulation = NestedRegulationSerializer()
+    enacting_regulation = NestedRegulationSerializer()
 
     class Meta:
         model = models.Extension
@@ -131,7 +131,7 @@ class SuspensionSerializer(
 
 
 class NestedSuspensionSerializer(serializers.HyperlinkedModelSerializer):
-    regulation = NestedRegulationSerializer()
+    enacting_regulation = NestedRegulationSerializer()
 
     class Meta:
         model = models.Suspension
@@ -156,7 +156,7 @@ class TerminationSerializer(
 
 
 class NestedTerminationSerializer(serializers.HyperlinkedModelSerializer):
-    regulation = NestedRegulationSerializer()
+    enacting_regulation = NestedRegulationSerializer()
 
     class Meta:
         model = models.Termination
