@@ -39,7 +39,6 @@ from importer.management.commands.utils import Expression
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import parse_trade_remedies_duty_expression
-from importer.management.commands.utils import SeasonalRateParser
 from measures.models import DutyExpression
 from measures.models import Measure
 from measures.models import MeasureAction
@@ -52,6 +51,7 @@ from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
 from measures.models import MeasureType
 from measures.models import MonetaryUnit
+from measures.parsers import SeasonalRateParser
 from quotas.models import QuotaOrderNumber
 from regulations.models import Group
 from regulations.models import Regulation

@@ -2,6 +2,8 @@
 Miscellaneous utility functions
 """
 from typing import Optional
+from typing import TypeVar
+from typing import Union
 
 from django.db import connection
 from psycopg2.extras import DateTimeTZRange
@@ -9,6 +11,34 @@ from psycopg2.extras import DateTimeTZRange
 
 def is_truthy(value: str) -> bool:
     return str(value).lower() not in ("", "n", "no", "off", "f", "false", "0")
+
+
+def strint(value: Union[int, str, float]) -> str:
+    """If the passed value is a number type, return the
+    number as a string with no deciaml point or places.
+    Else just return the string."""
+    if type(value) in (int, float):
+        return str(int(value))
+    else:
+        return str(value)
+
+
+def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
+    """Return the lowest out of the passed objects that are not None,
+    or return None if all of the passed objects are None."""
+    try:
+        return min(d for d in objs if d is not None)
+    except ValueError:
+        return None
+
+
+def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
+    """Return the highest out of the passed objects that are not None,
+    or return None if all of the passed objects are None."""
+    try:
+        return max(d for d in objs if d is not None)
+    except ValueError:
+        return None
 
 
 class TaricDateTimeRange(DateTimeTZRange):

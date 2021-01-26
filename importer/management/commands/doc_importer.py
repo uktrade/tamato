@@ -12,7 +12,7 @@ from typing import TypeVar
 from django.db import transaction
 
 from common.models import TrackedModel
-from importer.duty_sentence_parser import DutySentenceParser
+from measures.parsers import DutySentenceParser
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import Counter
 from importer.management.commands.utils import EnvelopeSerializer

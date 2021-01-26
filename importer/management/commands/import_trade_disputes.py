@@ -30,8 +30,8 @@ from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
-from importer.management.commands.utils import SeasonalRateParser
 from measures.models import MeasureType
+from measures.parsers import SeasonalRateParser
 from regulations.models import Group
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket

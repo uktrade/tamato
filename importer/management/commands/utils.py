@@ -4,7 +4,6 @@ import os
 import re
 from collections import namedtuple
 from datetime import datetime
-from datetime import timedelta
 from decimal import Decimal
 from itertools import combinations
 from math import floor
@@ -32,6 +31,7 @@ from xlrd.sheet import Cell
 import settings
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
+from common.renderers import Counter
 from common.renderers import counter_generator
 from common.serializers import TrackedModelSerializer
 from measures.models import MeasureType
@@ -84,22 +84,6 @@ def output_argument(parser: Any) -> None:
     parser.add_argument(
         "--output", help="The filename to output to.", type=str, default="out.xml"
     )
-
-
-def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
-    present = [d for d in objs if d is not None]
-    if any(present):
-        return min(present)
-    else:
-        return None
-
-
-def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
-    present = [d for d in objs if d is not None]
-    if any(present):
-        return max(present)
-    else:
-        return None
 
 
 def blank(value: Any, convert: Callable[[Any], TypeVar("T")]) -> Optional[TypeVar("T")]:
@@ -634,48 +618,6 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
             return self.default_measure_type
         else:
             raise Exception("No measure types found and no default set")
-
-
-class SeasonalRateParser:
-    SEASONAL_RATE = re.compile(r"([\d\.]+%) *\((\d\d [A-Z]{3}) *- *(\d\d [A-Z]{3})\)")
-
-    def __init__(self, base_date: datetime, timezone) -> None:
-        assert base_date.day == 1
-        assert base_date.month == 1
-        self.base = base_date
-        self.timezone = timezone
-
-    def detect_seasonal_rates(self, duty_exp: str) -> Iterable:
-        if SeasonalRateParser.SEASONAL_RATE.search(duty_exp):
-            for match in SeasonalRateParser.SEASONAL_RATE.finditer(duty_exp):
-                rate, start, end = match.groups()
-                validity_start = self.timezone.localize(
-                    datetime.strptime(start, r"%d %b")
-                )
-                validity_end = self.timezone.localize(datetime.strptime(end, r"%d %b"))
-                if validity_start.month > validity_end.month:
-                    # This straddles a year boundary so
-                    # we need to make one measure for BREXIT to end
-                    # and then another for start to BREXIT+1
-                    yield (rate, self.base, validity_end.replace(year=self.base.year))
-                    yield (
-                        rate,
-                        validity_start.replace(year=self.base.year),
-                        self.base.replace(year=self.base.year + 1) + timedelta(days=-1),
-                    )
-                else:
-                    # Both months are in one year, hence make them 2021
-                    yield (
-                        rate,
-                        validity_start.replace(year=self.base.year),
-                        validity_end.replace(year=self.base.year),
-                    )
-        else:
-            # Non-seasonal rate!
-            yield (duty_exp, self.base, None)
-
-
-Counter = Callable[[], int]
 
 
 class EnvelopeSerializer:

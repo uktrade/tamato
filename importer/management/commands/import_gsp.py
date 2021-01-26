@@ -20,6 +20,7 @@ from xlrd.sheet import Sheet
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.renderers import counter_generator
+from common.util import maybe_min
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from footnotes.models import FootnoteDescription
@@ -38,12 +39,11 @@ from importer.management.commands.utils import clean_duty_sentence
 from importer.management.commands.utils import clean_item_id
 from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
-from importer.management.commands.utils import maybe_min
 from importer.management.commands.utils import MeasureDefn
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
-from importer.management.commands.utils import SeasonalRateParser
 from measures.models import MeasureType
+from measures.parsers import SeasonalRateParser
 from regulations.models import Group
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket

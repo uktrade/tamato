@@ -427,6 +427,20 @@ class Dates:
         )
 
     @classmethod
+    def short_after(cls, dt):
+        return TaricDateTimeRange(
+            dt + relativedelta(days=+14),
+            dt + relativedelta(months=+1),
+        )
+
+    @classmethod
+    def short_overlap(cls, dt):
+        return TaricDateTimeRange(
+            dt + relativedelta(months=-1),
+            dt + relativedelta(months=+1),
+        )
+
+    @classmethod
     def no_end_before(cls, dt):
         return TaricDateTimeRange(
             dt + relativedelta(months=-1),
