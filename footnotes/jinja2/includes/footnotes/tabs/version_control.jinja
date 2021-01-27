@@ -1,0 +1,49 @@
+{% macro status(obj) %}
+  <span class="status {{ obj.status|lower() }}">{{ obj.get_status_display() }}</span>
+{% endmacro %}
+
+{% set version_rows = [] %}
+{% for version in object.get_versions() %}
+    {{ version_rows.append([
+    {"text": version.get_update_type_display()},
+    {"text": "{:%d %b %Y}".format(version.transaction.workbasket.updated_at)},
+    {"text": "{:%d %b %Y}".format(version.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(version.valid_between.upper) if version.valid_between.upper else "-"},
+    {"html": status(version.transaction.workbasket)},
+    {"text": version.get_description().description},
+    ]) or ""}}
+{% endfor %}
+<div class="footnote__version-data">
+    <div class="footnote__version-data__content">
+        {{ govukTable({
+            "firstCellIsHeader": false,
+            "head": [
+            {
+                "text": "Activity",
+                "classes": "version-activity",
+            },
+            {
+                "text": "Activity date",
+                "classes": "version-activity-date",
+            },
+            {
+                "text": "Start Date",
+                "classes": "version-start-date"
+            },
+            {
+                "text": "End Date",
+                "classes": "version-end-date"
+            },
+            {
+                "text": "Status",
+                "classes": "version-status"
+            },
+            {
+                "text": "Description",
+                "classes": "govuk-!-width-one-quarter"
+            },
+            ],
+            "rows": version_rows
+        }) }}
+    </div>
+</div>

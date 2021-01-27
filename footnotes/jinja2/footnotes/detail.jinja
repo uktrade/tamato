@@ -1,189 +1,38 @@
-{% extends "layouts/layout.jinja" %}
-
 {% from "components/tabs/macro.njk" import govukTabs %}
-{% from "components/input/macro.njk" import govukInput %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = "Footnote " ~ object|string %}
+{% set page_title = "Footnote: " ~ object.footnote_type|string %}
+{% set find_edit_url = url("footnote-ui-list") %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
-      {"text": "Footnotes", "href": url("footnote-ui-list")},
-      {"text": page_title}
-    ]
-  }) }}
-{% endblock %}
+{% set core_data_tab_html %}{% include "includes/footnotes/tabs/core_data.jinja" %}{% endset %}
+{% set description_tab_html %}{% include "includes/footnotes/tabs/descriptions.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/footnotes/tabs/version_control.jinja" %}{% endset %}
 
-{% macro status(obj) %}
-  <span class="status {{ obj.status|lower() }}">{{ obj.get_status_display() }}</span>
-{% endmacro %}
-
-{% block content %}
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-  <p class="govuk-body">
-    You are viewing this footnote in read-only mode.
-  </p>
-
-  {% set core_data_html %}
-    <div class="footnote__core-data">
-      <div class="footnote__core-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": true,
-          "rows": [
-            [
-              {"text": "Footnote type"},
-              {"text": object.footnote_type|string}
-            ],
-            [
-              {"text": "Application code"},
-              {"text": ""},
-            ],
-            [
-              {"text": "Footnote ID"},
-              {"text": object|string}
-            ],
-            [
-              {"text": "Current description"},
-              {"text": object.get_description().description}
-            ],
-            [
-              {"text": "Start date"},
-              {"text": "{:%d %b %Y}".format(object.valid_between.lower)}
-            ],
-            [
-              {"text": "End date"},
-              {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"}
-            ]
-          ]
-        }) }}
-      </div>
-      <div class="footnote__core-data__actions">
-        <h2 class="govuk-heading-s">Actions</h2>
-        <ul class="icon-action-list govuk-list">
-          <li><a href="{{ object.get_url("edit") }}" class="govuk-link govuk-!-font-size-16">Edit this footnote</a></li>
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Delete this footnote</a></li>
-        </ul>
-        <p class="govuk-body-s">
-          Please note that you are unable to modify descriptions on this tab.
-          Please select the "<a href="#descriptions">Descriptions</a>" tab to create and
-          modify descriptions.
-        </p>
-      </div>
-    </div>
-  {% endset %}
-
-  {% set description_data_html %}
-    {% set description_rows = [] %}
-    {% for description in object.get_descriptions().order_by("valid_between") %}
-      {{ description_rows.append([
-        {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
-        {"text": description.description},
-        {
-        "html": '<a href="' ~ description.get_url("edit") ~ '" class="govuk-link govuk-!-font-size-16">Edit description</a>'
-        }
-      ]) or ""}}
-    {% endfor %}
-    <div class="footnote__description-data">
-      <div class="footnote__description-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": false,
-          "head": [
-            {
-              "text": "Start Date",
-              "classes": "govuk-!-width-one-quarter"
-            },
-            {
-              "text": "Description",
-              "classes": "govuk-!-width-two-thirds"
-            },
-            {
-              "text": "Actions"
-            },
-          ],
-          "rows": description_rows
-        }) }}
-      </div>
-      <div class="footnote__description-data__actions">
-        <ul class="icon-action-list govuk-list">
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new footnote description</a></li>
-        </ul>
-      </div>
-    </div>
-  {% endset %}
-
-  {% set version_data_html %}
-    {% set version_rows = [] %}
-    {% for version in object.get_versions() %}
-      {{ version_rows.append([
-        {"text": version.get_update_type_display()},
-        {"text": "{:%d %b %Y}".format(version.transaction.workbasket.updated_at)},
-        {"text": "{:%d %b %Y}".format(version.valid_between.lower)},
-        {"text": "{:%d %b %Y}".format(version.valid_between.upper) if version.valid_between.upper else "-"},
-        {"html": status(version.transaction.workbasket)},
-        {"text": version.get_description().description},
-      ]) or ""}}
-    {% endfor %}
-    <div class="footnote__version-data">
-      <div class="footnote__version-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": false,
-          "head": [
-            {
-              "text": "Activity",
-              "classes": "version-activity",
-            },
-            {
-              "text": "Activity date",
-              "classes": "version-activity-date",
-            },
-            {
-              "text": "Start Date",
-              "classes": "version-start-date"
-            },
-            {
-              "text": "End Date",
-              "classes": "version-end-date"
-            },
-            {
-              "text": "Status",
-              "classes": "version-status"
-            },
-            {
-              "text": "Description",
-              "classes": "govuk-!-width-one-quarter"
-            },
-          ],
-          "rows": version_rows
-        }) }}
-      </div>
-    </div>
-  {% endset %}
-
-  {{ govukTabs({
+{% set tabs = {
     "items": [
       {
-        "label": "Core footnote data",
+        "label": "Details",
         "id": "core-data",
         "panel": {
-          "html": core_data_html
+          "html": core_data_tab_html
         }
       },
       {
         "label": "Descriptions",
         "id": "descriptions",
         "panel": {
-          "html": description_data_html
+          "html": description_tab_html
         }
       },
       {
         "label": "Version control",
-        "id": "versions",
+        "id": "version-control",
         "panel": {
-          "html": version_data_html
+          "html": version_control_tab_html
         }
       }
     ]
-  }) }}
-{% endblock %}
+  }%}
+
+{%- include "layouts/detail.jinja" -%}
