@@ -9,7 +9,7 @@
 
 {% set page_title = "Find and edit " + (object_type_plural or object_type + "s") %}
 
-{% block beforeContent %}
+{% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
