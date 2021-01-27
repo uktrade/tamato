@@ -9,6 +9,7 @@
 
 {% set core_data_tab_html %}{% include "includes/tabs/core_data.jinja" %}{% endset %}
 {% set description_tab_html %}{% include "includes/tabs/descriptions.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/tabs/version_control.jinja" %}{% endset %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -42,7 +43,14 @@
         "panel": {
           "html": description_tab_html
         }
-      }
+      },
+      {
+        "label": "Version Control",
+        "id": "version-control",
+        "panel": {
+          "html": version_control_tab_html
+        }
+      },
     ]
   }) }}
 {% endblock %}
