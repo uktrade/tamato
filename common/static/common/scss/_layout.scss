@@ -20,3 +20,10 @@
 .govuk-width-container {
   max-width: 1100px;
 }
+
+.govuk-\!-width-one-eighth {
+  width: 100% !important;
+  @media (min-width: 20.0312em) {
+    width: 12.5% !important;
+  }
+}
