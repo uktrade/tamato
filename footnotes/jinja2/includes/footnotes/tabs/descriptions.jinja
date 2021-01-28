@@ -1,15 +1,16 @@
 {% set description_rows = [] %}
 {% for description in object.get_descriptions().order_by("valid_between") %}
+    {% set valid_between %}
+		<span class='govuk-!-font-weight-bold'>{{"{:%d %b %Y}".format(description.valid_between.lower)}}</span>
+	{% endset %}
     {{ description_rows.append([
-    {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
-    {"text": description.description},
-    {
-    "html": '<a href="' ~ description.get_url("edit") ~ '" class="govuk-link govuk-!-font-size-16">Edit description</a>'
-    }
+        {"html": valid_between},
+        {"text": description.description},
     ]) or ""}}
 {% endfor %}
 <div class="footnote__description-data">
     <div class="footnote__description-data__content">
+        <h2 class="govuk-heading-l">Descriptions</h2>
         {{ govukTable({
             "firstCellIsHeader": false,
             "head": [
@@ -20,17 +21,9 @@
             {
                 "text": "Description",
                 "classes": "govuk-!-width-two-thirds"
-            },
-            {
-                "text": "Actions"
-            },
+            }
             ],
             "rows": description_rows
         }) }}
-    </div>
-    <div class="footnote__description-data__actions">
-        <ul class="icon-action-list govuk-list">
-            <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new footnote description</a></li>
-        </ul>
     </div>
 </div>
