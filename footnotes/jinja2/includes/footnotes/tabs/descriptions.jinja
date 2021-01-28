@@ -1,0 +1,36 @@
+{% set description_rows = [] %}
+{% for description in object.get_descriptions().order_by("valid_between") %}
+    {{ description_rows.append([
+    {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
+    {"text": description.description},
+    {
+    "html": '<a href="' ~ description.get_url("edit") ~ '" class="govuk-link govuk-!-font-size-16">Edit description</a>'
+    }
+    ]) or ""}}
+{% endfor %}
+<div class="footnote__description-data">
+    <div class="footnote__description-data__content">
+        {{ govukTable({
+            "firstCellIsHeader": false,
+            "head": [
+            {
+                "text": "Start Date",
+                "classes": "govuk-!-width-one-quarter"
+            },
+            {
+                "text": "Description",
+                "classes": "govuk-!-width-two-thirds"
+            },
+            {
+                "text": "Actions"
+            },
+            ],
+            "rows": description_rows
+        }) }}
+    </div>
+    <div class="footnote__description-data__actions">
+        <ul class="icon-action-list govuk-list">
+            <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new footnote description</a></li>
+        </ul>
+    </div>
+</div>

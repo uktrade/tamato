@@ -1,0 +1,20 @@
+{% extends "layouts/layout.jinja" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Find and edit footnotes", "href": find_edit_url},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+    </div>
+  </div>
+  {{ govukTabs(tabs) }}
+{% endblock %}
