@@ -1,6 +1,5 @@
 import logging
 from hashlib import md5
-
 from typing import Optional
 
 from celery import shared_task
@@ -9,7 +8,8 @@ from django.core.files.base import ContentFile
 from django.db.transaction import atomic
 from lxml import etree
 
-from common.tests.util import validate_taric_xml_record_order, TaricDataAssertionError
+from common.tests.util import TaricDataAssertionError
+from common.tests.util import validate_taric_xml_record_order
 from exporter.management.util import serialize_envelope_as_xml
 from exporter.models import Upload
 from workbaskets.models import WorkBasket
@@ -40,19 +40,19 @@ def validate_envelope(envelope):
 
 
 @shared_task
-def upload_workbaskets() -> (Optional[str], Optional[BaseException]):
+def upload_workbaskets() -> Optional[str]:
     """
     Upload workbaskets.
 
-    :return: upload_filename | None, validation_exception [if workbasket data did not verify].
-
-    Data validation errors are not raised as exceptions as that would cause the celery task
-    to fail (and possibly to be retried automatically).
+    :return: upload_filename | None
     """
     with atomic():
-        envelope = WorkBasket.objects.filter(
-            status=WorkflowStatus.READY_FOR_EXPORT
-        ).envelope_of_transactions()
+        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
+
+        if not workbaskets:
+            logger.info("No workbaskets with status READY_FOR_EXPORT")
+
+        envelope = workbaskets.envelope_of_transactions()
         envelope_data = serialize_envelope_as_xml(envelope)
         try:
             validate_envelope(envelope_data)
@@ -69,11 +69,13 @@ def upload_workbaskets() -> (Optional[str], Optional[BaseException]):
         upload = Upload()
         upload.envelope = envelope
         upload.file = content_file
-        upload.checksum = md5("".encode("utf-8")).hexdigest()
+        upload.checksum = md5(envelope_data).hexdigest()
 
+        upload.file.save(upload.filename, content_file)
         upload.notify_hmrc()
 
-        # destination = storage.save(full_filename, content_file)
+        workbaskets.update(status=WorkflowStatus.SENT_TO_CDS)
+
         logger.debug("Uploaded: %s", upload.filename)
 
         return upload.filename

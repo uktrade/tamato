@@ -1,6 +1,7 @@
 """WorkBasket models"""
 import json
 from datetime import datetime
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -30,10 +31,9 @@ class WorkBasketQuerySet(QuerySet):
             Prefetch("tracked_models", queryset=q_annotate_record_code)
         )
 
-    def envelope_of_transactions(self) -> Envelope:
+    def envelope_of_transactions(self) -> Optional[Envelope]:
         """Return an Envelope populated with the transactions from this queryset."""
-        envelope = Envelope()
-        envelope.save()
+        envelope = Envelope.new_envelope()
 
         workbasket_pks = self.values_list("pk", flat=True)
         transactions = Transaction.objects.filter(workbasket__pk__in=workbasket_pks)

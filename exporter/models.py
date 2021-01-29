@@ -12,16 +12,16 @@ from hmrc_sdes.api_client import HmrcSdesClient
 from taric.models import Envelope
 
 
-def to_hmrc(instance: "Upload"):
+def to_hmrc(instance: "Upload", filename: str):
     """Generate the filepath to upload to HMRC"""
-    full_filename = str(Path(settings.HMRC_STORAGE_DIRECTORY) / instance.filename)
+    full_filename = str(Path(settings.HMRC_STORAGE_DIRECTORY) / filename)
     return full_filename
 
 
 class Upload(models.Model):
     """Represents a TARIC differential update file upload to HMRC"""
 
-    file = models.FileField(storage=HMRCStorage)
+    file = models.FileField(storage=HMRCStorage, upload_to=to_hmrc)
     envelope = models.ForeignKey(Envelope, on_delete=models.PROTECT)
     correlation_id = models.UUIDField(default=uuid.uuid4, editable=False)
     checksum = models.CharField(max_length=32, editable=False)

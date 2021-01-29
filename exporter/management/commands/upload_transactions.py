@@ -1,6 +1,6 @@
-import kombu
 import sys
 
+import kombu
 from django.core.management import BaseCommand
 from lxml.etree import DocumentInvalid
 
@@ -55,5 +55,8 @@ class Command(BaseCommand):
             destination = run_task_or_exit(upload_workbaskets, local=local)
         except (DocumentInvalid, TaricDataAssertionError) as e:
             sys.exit(f"Error {e}")
+
+        if destination is None:
+            sys.exit("No workbaskets with status READY_FOR_EXPORT.")
 
         self.stdout.write(f"Uploaded: {destination}")

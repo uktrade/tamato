@@ -10,8 +10,6 @@ from exporter.serializers import EnvelopeSerializer
 class EnvelopeViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows envelopes to be viewed.
-
-    The API is for convenience, mostly used
     """
 
     queryset = Envelope.objects.prefetch_related("transactions")

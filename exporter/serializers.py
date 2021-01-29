@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from common.serializers import TransactionSerializer, TrackedModelSerializer
-from common.serializers import UserSerializer
+from common.serializers import TrackedModelSerializer
 from taric.models import EnvelopeTransaction
 from workbaskets import models
 

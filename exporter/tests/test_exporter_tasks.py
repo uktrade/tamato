@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-from django.core.management import call_command
 from lxml import etree
 
 from common.tests.factories import FootnoteTypeFactory
@@ -15,11 +14,11 @@ pytestmark = pytest.mark.django_db
 
 @pytest.mark.skip
 def test_upload_task_uploads_approved_workbasket_to_s3(
-    approved_transaction,
-    hmrc_storage,
-    s3,
-    s3_object_exists,
-    settings,
+        approved_transaction,
+        hmrc_storage,
+        s3,
+        s3_object_exists,
+        settings,
 ):
     """
     Exercise HMRCStorage and verify content is saved to bucket.
@@ -33,8 +32,8 @@ def test_upload_task_uploads_approved_workbasket_to_s3(
     FootnoteTypeFactory.create(transaction=approved_transaction)
 
     with mock.patch(
-        "exporter.storages.HMRCStorage.save",
-        wraps=mock.MagicMock(side_effect=hmrc_storage.save),
+            "exporter.storages.HMRCStorage.save",
+            wraps=mock.MagicMock(side_effect=hmrc_storage.save),
     ) as mock_save:
         upload_workbaskets.apply()
 

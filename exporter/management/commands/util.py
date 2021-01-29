@@ -1,7 +1,8 @@
 import sys
 
 from django.conf import settings
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
+from django.core.management import CommandError
 from lxml import etree
 
 from common.tests.util import validate_taric_xml_record_order
@@ -17,9 +18,8 @@ class TransactionsBaseCommand(BaseCommand):
             try:
                 schema.assertValid(xml)
             except etree.DocumentInvalid as err:
-                error_log = err.error_log
                 raise CommandError(
-                    f"Envelope did not validate against XSD:\n{error_log}"
+                    f"Envelope did not validate against XSD:\n{err.error_log}"
                 )
             try:
                 validate_taric_xml_record_order(xml)
