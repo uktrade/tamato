@@ -1,7 +1,6 @@
 from typing import List
 
 import pytest
-from pytest_django.asserts import assertQuerysetEqual
 
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel

@@ -12,7 +12,8 @@ from django.db.models import QuerySet
 from django_fsm import FSMField
 from django_fsm import transition
 
-from common.models import TimestampedMixin, Transaction
+from common.models import TimestampedMixin
+from common.models import Transaction
 from common.models import TrackedModel
 from taric.models import Envelope, EnvelopeTransaction
 from workbaskets.validators import WorkflowStatus
