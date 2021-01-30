@@ -287,7 +287,9 @@ class ME25(BusinessRule):
     date of the measure must be less than or equal to the end date.
     """
 
-    # TODO handle implicit end date?
+    def validate(self, measure):
+        if measure.valid_between.lower > measure.effective_end_date:
+            raise self.violation(measure)
 
 
 class ME32(BusinessRule):
