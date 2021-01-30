@@ -417,10 +417,14 @@ def test_ME32(date_ranges):
     upward hierarchy and all commodity codes in the downward hierarchy.
     """
 
-    existing = factories.MeasureFactory.create(valid_between=date_ranges.normal)
+    existing = factories.MeasureFactory.create(
+        valid_between=date_ranges.normal,
+        goods_nomenclature__valid_between=date_ranges.big,
+    )
 
-    measure = factories.MeasureFactory.create(
+    overlapping_child = factories.MeasureFactory.create(
         goods_nomenclature__indent__node__parent=existing.goods_nomenclature.indents.first().nodes.first(),
+        goods_nomenclature__valid_between=date_ranges.big,
         measure_type=existing.measure_type,
         geographical_area=existing.geographical_area,
         order_number=existing.order_number,
@@ -429,8 +433,21 @@ def test_ME32(date_ranges):
         valid_between=date_ranges.overlap_normal,
     )
 
+    non_overlapping_child = factories.MeasureFactory.create(
+        goods_nomenclature__indent__node__parent=existing.goods_nomenclature.indents.first().nodes.first(),
+        goods_nomenclature__valid_between=date_ranges.big,
+        measure_type=existing.measure_type,
+        geographical_area=existing.geographical_area,
+        order_number=existing.order_number,
+        additional_code=existing.additional_code,
+        reduction=existing.reduction,
+        valid_between=date_ranges.earlier,
+    )
+
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ME32().validate(measure)
+        business_rules.ME32().validate(overlapping_child)
+
+    business_rules.ME32().validate(non_overlapping_child)
 
 
 # -- Ceiling/quota definition existence
