@@ -1,12 +1,10 @@
 """Business rules for measures."""
 from datetime import datetime
-from datetime import timedelta
 from datetime import timezone
 from typing import Mapping
 from typing import Optional
 
 from dateutil.relativedelta import relativedelta
-from django.db.models import Count
 from django.db.models import Q
 
 from common.business_rules import BusinessRule
@@ -345,7 +343,8 @@ class ME32(BusinessRule):
                 if matching_measures.filter(
                     goods_nomenclature__indents__nodes__in=tree.values_list(
                         "pk", flat=True
-                    )
+                    ),
+                    valid_between__overlap=measure.effective_valid_between,
                 ).exists():
                     raise self.violation(measure)
 
