@@ -508,7 +508,6 @@ class MeasureComponent(TrackedModel):
         business_rules.ME50,
         business_rules.ME51,
         business_rules.ME52,
-        business_rules.ME108,
     )
 
 
@@ -557,7 +556,6 @@ class MeasureCondition(TrackedModel):
         business_rules.ME60,
         business_rules.ME61,
         business_rules.ME62,
-        business_rules.ME62,
         business_rules.ME63,
         business_rules.ME64,
     )
@@ -591,6 +589,7 @@ class MeasureConditionComponent(TrackedModel):
         business_rules.ME53,
         business_rules.ME105,
         business_rules.ME106,
+        business_rules.ME108,
     )
 
 
