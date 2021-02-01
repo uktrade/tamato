@@ -7,7 +7,7 @@ crispy-forms-gds
 dj-database-url
 django==3.1
 django-dotenv
-django-extra-fields
+drf-extra-fields
 django-filter
 django-fsm
 django-health-check

@@ -11,7 +11,7 @@ import xlrd
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from psycopg2._range import DateTimeTZRange
+from psycopg2._range import DateRange
 from xlrd.sheet import Cell
 
 from commodities.models import GoodsNomenclature
@@ -80,7 +80,7 @@ class AutonomousSuspensionImporter(RowsImporter):
         self.new_rows = NomenclatureTreeCollector[NewRow](BREXIT)
         self.row_runner = DualRowRunner(self.old_rows, self.new_rows)
 
-        self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.brexit_to_infinity = DateRange(BREXIT, None)
 
         self.erga_omnes = GeographicalArea.objects.as_at(BREXIT).get(area_id="1011")
         self.suspensions_si, _ = Regulation.objects.get_or_create(

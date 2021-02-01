@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode

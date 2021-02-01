@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from datetime import timezone
 
 import pytest
@@ -8,7 +8,7 @@ from commodities import serializers
 from common.tests import factories
 from common.tests.util import generate_test_import_xml
 from common.tests.util import requires_update_importer
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.taric import process_taric_xml_stream
 from workbaskets.validators import WorkflowStatus
@@ -380,7 +380,7 @@ def test_goods_nomenclature_indent_importer_create_multiple_parents(
     over its lifetime. Assert multiple indent nodes are generated in this scenario.
     """
 
-    indent_validity = TaricDateTimeRange(
+    indent_validity = TaricDateRange(
         date_ranges.adjacent_earlier.lower, date_ranges.adjacent_later.upper
     )
     parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
@@ -428,33 +428,31 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
     valid_user, date_ranges, update_type
 ):
     parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
-        valid_between=TaricDateTimeRange(datetime(2020, 1, 1), datetime(2020, 12, 1)),
-        indented_goods_nomenclature__valid_between=TaricDateTimeRange(
-            datetime(2020, 1, 1), datetime(2020, 12, 1)
+        valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 12, 1)),
+        indented_goods_nomenclature__valid_between=TaricDateRange(
+            date(2020, 1, 1), date(2020, 12, 1)
         ),
         indented_goods_nomenclature__item_id="1300000000",
     )
     parent1 = factories.GoodsNomenclatureIndentNodeFactory.create(
-        valid_between=TaricDateTimeRange(datetime(2020, 1, 1), datetime(2020, 4, 1)),
+        valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 4, 1)),
         indent=parent_indent,
     )
     parent2 = factories.GoodsNomenclatureIndentNodeFactory.create(
-        valid_between=TaricDateTimeRange(datetime(2020, 4, 2), datetime(2020, 8, 1)),
+        valid_between=TaricDateRange(date(2020, 4, 2), date(2020, 8, 1)),
         indent=parent_indent,
     )
     parent3 = factories.GoodsNomenclatureIndentNodeFactory.create(
-        valid_between=TaricDateTimeRange(datetime(2020, 8, 2), datetime(2020, 12, 1)),
+        valid_between=TaricDateRange(date(2020, 8, 2), date(2020, 12, 1)),
         indent=parent_indent,
     )
 
     indent = factories.GoodsNomenclatureIndentFactory.build(
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
             item_id="1301000000",
-            valid_between=TaricDateTimeRange(
-                datetime(2020, 1, 1), datetime(2020, 12, 1)
-            ),
+            valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 12, 1)),
         ),
-        valid_between=TaricDateTimeRange(datetime(2020, 1, 1), datetime(2020, 6, 1)),
+        valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 6, 1)),
     )
 
     first_indent = make_and_get_indent(indent, valid_user, depth=0)
@@ -465,9 +463,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=first_indent.sid,
         indented_goods_nomenclature=indent.indented_goods_nomenclature,
-        valid_between=TaricDateTimeRange(
-            datetime(2020, 6, 2, tzinfo=timezone.utc), datetime(2020, 12, 1)
-        ),
+        valid_between=TaricDateRange(date(2020, 6, 2), date(2020, 12, 1)),
         update_type=update_type,
     )
     second_indent = make_and_get_indent(updated_indent, valid_user, depth=0)

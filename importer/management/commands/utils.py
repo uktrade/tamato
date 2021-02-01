@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from collections import namedtuple
-from datetime import datetime
+from datetime import date
 from decimal import Decimal
 from itertools import combinations
 from math import floor
@@ -328,7 +328,7 @@ class NomenclatureTreeCollector(Generic[Row]):
     children will have the same measure information as their parent was
     specified with."""
 
-    def __init__(self, date: datetime) -> None:
+    def __init__(self, date: date) -> None:
         self.reset()
         self.date = date
 
@@ -475,8 +475,8 @@ class MeasureContext:
         additional_code_body: Optional[str],
         order_number: Optional[str],
         reduction_indicator: Optional[int],
-        start_date: datetime,
-        end_date: Optional[datetime],
+        start_date: date,
+        end_date: Optional[date],
     ) -> None:
         self.equal_fields = (
             measure_type,

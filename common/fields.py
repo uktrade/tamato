@@ -1,9 +1,9 @@
 """Common field types."""
-from django.contrib.postgres.fields import DateTimeRangeField
+from django.contrib.postgres.fields import DateRangeField
 from django.db import models
 
 from common import validators
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 
 
 class NumericSID(models.PositiveIntegerField):
@@ -60,5 +60,5 @@ class ApplicabilityCode(models.PositiveSmallIntegerField):
         return name, path, args, kwargs
 
 
-class TaricDateTimeRangeField(DateTimeRangeField):
-    range_type = TaricDateTimeRange
+class TaricDateRangeField(DateRangeField):
+    range_type = TaricDateRange

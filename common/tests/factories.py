@@ -631,7 +631,7 @@ class QuotaEventFactory(TrackedModelMixin):
 
     subrecord_code = FuzzyChoice(QuotaEventType.values)
     quota_definition = factory.SubFactory(QuotaDefinitionFactory)
-    occurrence_timestamp = factory.LazyFunction(lambda: Dates().now)
+    occurrence_timestamp = factory.LazyFunction(lambda: Dates().datetime_now)
 
     @factory.lazy_attribute
     def data(self):

@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                         to="common.trackedmodel",
                     ),
                 ),
-                ("valid_between", common.fields.TaricDateTimeRangeField(db_index=True)),
+                ("valid_between", common.fields.TaricDateRangeField(db_index=True)),
                 (
                     "group_id",
                     models.CharField(
@@ -212,7 +212,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "valid_between",
-                    django.contrib.postgres.fields.ranges.DateTimeRangeField(
+                    django.contrib.postgres.fields.ranges.DateRangeField(
                         blank=True, null=True
                     ),
                 ),

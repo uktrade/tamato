@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from datetime import timezone
 
 from django.db import models
@@ -9,7 +9,7 @@ from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from measures import business_rules
 from measures import validators
 from measures.querysets import MeasuresQuerySet
@@ -431,11 +431,10 @@ class Measure(TrackedModel, ValidityMixin):
 
         reg = self.generating_regulation
         effective_end_date = (
-            datetime(
+            date(
                 reg.effective_end_date.year,
                 reg.effective_end_date.month,
                 reg.effective_end_date.day,
-                tzinfo=timezone.utc,
             )
             if reg.effective_end_date
             else None
@@ -456,7 +455,7 @@ class Measure(TrackedModel, ValidityMixin):
 
     @property
     def effective_valid_between(self):
-        return TaricDateTimeRange(self.valid_between.lower, self.effective_end_date)
+        return TaricDateRange(self.valid_between.lower, self.effective_end_date)
 
     def has_components(self):
         return (

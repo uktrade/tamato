@@ -8,7 +8,7 @@ from commodities import validators
 from common.models import NumericSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 
 
 class GoodsNomenclature(TrackedModel, ValidityMixin):
@@ -195,13 +195,13 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         if not new_valid_between.lower or (
             valid_between.lower and new_valid_between.lower < valid_between.lower
         ):
-            new_valid_between = TaricDateTimeRange(
+            new_valid_between = TaricDateRange(
                 valid_between.lower, new_valid_between.upper
             )
         if not new_valid_between.upper or (
             valid_between.upper and new_valid_between.upper > valid_between.upper
         ):
-            new_valid_between = TaricDateTimeRange(
+            new_valid_between = TaricDateRange(
                 new_valid_between.lower, valid_between.upper
             )
 

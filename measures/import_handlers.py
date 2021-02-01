@@ -1,5 +1,4 @@
-from datetime import datetime
-from datetime import timezone
+from datetime import date
 from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -278,10 +277,9 @@ class MeasureHandler(BaseHandler):
         try:
             return model.objects.current().get(
                 order_number=order_number,
-                valid_between__contains=datetime.strptime(
+                valid_between__contains=date.fromisoformat(
                     self.data["valid_between"]["lower"],
-                    "%Y-%m-%d",
-                ).replace(tzinfo=timezone.utc),
+                ),
             )
         except ObjectDoesNotExist:
             if order_number:

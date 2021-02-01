@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import date
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -10,7 +10,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 
-from django.contrib.postgres.fields import DateTimeRangeField
+from django.contrib.postgres.fields import DateRangeField
 from django.db import models
 from django.db.models import Case
 from django.db.models import F
@@ -85,7 +85,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.filter(transaction__id__gt=transaction_id)
 
-    def as_at(self, date: datetime) -> QuerySet:
+    def as_at(self, date: date) -> QuerySet:
         """
         Return the instances of the model that were represented at a particular date.
 
@@ -101,7 +101,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If done from the TrackedModel this will return all instances of all tracked models
         as represented at the current date.
         """
-        return self.as_at(timezone.now())
+        return self.as_at(timezone.now().date())
 
     def get_versions(self, **kwargs) -> QuerySet:
         for field in self.model.identifying_fields:
@@ -302,7 +302,7 @@ class TimestampedMixin(models.Model):
 
 
 class ValidityMixin(models.Model):
-    valid_between = DateTimeRangeField(db_index=True)
+    valid_between = DateRangeField(db_index=True)
 
     class Meta:
         abstract = True

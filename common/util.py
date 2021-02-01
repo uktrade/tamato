@@ -6,7 +6,7 @@ from typing import TypeVar
 from typing import Union
 
 from django.db import connection
-from psycopg2.extras import DateTimeTZRange
+from psycopg2.extras import DateRange
 
 
 def is_truthy(value: str) -> bool:
@@ -41,7 +41,7 @@ def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return None
 
 
-class TaricDateTimeRange(DateTimeTZRange):
+class TaricDateRange(DateRange):
     def __init__(self, lower=None, upper=None, bounds="[]", empty=False):
         if not upper:
             bounds = "[)"
@@ -49,7 +49,7 @@ class TaricDateTimeRange(DateTimeTZRange):
 
 
 def validity_range_contains_range(
-    overall_range: DateTimeTZRange, contained_range: DateTimeTZRange
+    overall_range: DateRange, contained_range: DateRange
 ) -> bool:
     """
     If the contained_range has both an upper and lower bound, check they are both

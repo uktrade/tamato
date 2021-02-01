@@ -4,7 +4,7 @@ from django.db.models import Func
 from django.db.models import Value
 from django.db.models import When
 
-from common.fields import TaricDateTimeRangeField
+from common.fields import TaricDateRangeField
 from common.models.records import TrackedModelQuerySet
 
 
@@ -25,7 +25,7 @@ class MeasuresQuerySet(TrackedModelQuerySet):
                        "regulations_regulation"."effective_end_date" IS NOT NULL AND
                        "measures_measure"."valid_between" @> "regulations_regulation"."effective_end_date"::timestamp WITH time zone AND
                        NOT Upper_inf("measures_measure"."valid_between")
-                     ) THEN Tstzrange(Lower("measures_measure"."valid_between"), "regulations_regulation"."effective_end_date", [])
+                     ) THEN Daterange(Lower("measures_measure"."valid_between"), "regulations_regulation"."effective_end_date", [])
                      WHEN (
                        "regulations_regulation"."effective_end_date" IS NOT NULL AND
                        Upper_inf("measures_measure"."valid_between")
@@ -34,7 +34,7 @@ class MeasuresQuerySet(TrackedModelQuerySet):
                        "measures_measure"."terminating_regulation_id" IS NOT NULL AND
                        NOT Upper_inf("measures_measure"."valid_between")
                      ) THEN "measures_measure"."valid_between"
-                     WHEN "measures_measure"."generating_regulation_id" IS NOT NULL THEN Tstzrange(Lower("measures_measure"."valid_between"), "regulations_regulation"."effective_end_date", [])
+                     WHEN "measures_measure"."generating_regulation_id" IS NOT NULL THEN Daterange(Lower("measures_measure"."valid_between"), "regulations_regulation"."effective_end_date", [])
                      ELSE "measures_measure"."valid_between"
                    END AS "db_effective_valid_between"
               FROM "measures_measure"
@@ -55,7 +55,7 @@ class MeasuresQuerySet(TrackedModelQuerySet):
                         Func(F("valid_between"), function="LOWER"),
                         F("generating_regulation__effective_end_date"),
                         Value("[]"),
-                        function="TSTZRANGE",
+                        function="DATERANGE",
                     ),
                 ),
                 When(
@@ -74,10 +74,10 @@ class MeasuresQuerySet(TrackedModelQuerySet):
                         Func(F("valid_between"), function="LOWER"),
                         F("generating_regulation__effective_end_date"),
                         Value("[]"),
-                        function="TSTZRANGE",
+                        function="DATERANGE",
                     ),
                 ),
                 default=F("valid_between"),
-                output_field=TaricDateTimeRangeField(),
+                output_field=TaricDateRangeField(),
             )
         )

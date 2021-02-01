@@ -8,7 +8,7 @@ import xlrd
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from common.models import TrackedModel
@@ -46,7 +46,7 @@ class GeoAreaImporter:
         self.geo_description_counter = counter_generator(max_geo_sid + 1)
 
     def import_rows(
-        self, rows: List[NewRow], start_date: datetime = BREXIT
+        self, rows: List[NewRow], start_date: date = BREXIT
     ) -> Iterator[TrackedModel]:
         new_areas = {row.iso2: [row] for row in rows}
 
@@ -106,7 +106,7 @@ class GeoAreaImporter:
                     area=area,
                     description=new_description,
                     sid=self.geo_description_counter(),
-                    valid_between=DateTimeTZRange(start_date, None),
+                    valid_between=DateRange(start_date, None),
                     workbasket=self.workbasket,
                     update_type=UpdateType.CREATE,
                 )

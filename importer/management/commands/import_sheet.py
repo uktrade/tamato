@@ -15,7 +15,7 @@ import xlrd
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields.ranges import DateTimeRangeField
+from django.contrib.postgres.fields.ranges import DateRangeField
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
@@ -82,7 +82,7 @@ def get_type_transformer(field: Field, index: Optional[int] = None) -> Transform
         return blank(field.blank, int)
     if type(field) is BooleanField:
         return blank(field.blank, bool)
-    if type(field) is DateTimeRangeField:
+    if type(field) is DateRangeField:
         return blank(True, to_datetime)
     if type(field) is DateField:
         return blank(field.blank, to_date)
@@ -108,7 +108,7 @@ def get_type_setter(field: Field, index: Optional[int]) -> Setter:
     def default_setter(data: Dict, value: Any):
         data[field.name] = value
 
-    if type(field) is DateTimeRangeField:
+    if type(field) is DateRangeField:
         assert index is not None
         assert int(index) < 2 and int(index) >= 0
 
