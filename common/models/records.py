@@ -401,21 +401,15 @@ class TrackedModel(PolymorphicModel):
         query = Q(**self.get_identifying_fields())
         return self.__class__.objects.filter(query)
 
-    def get_latest_version(self):
-        current_version = self.version_group.current_version
-        if current_version is None:
-            raise self.__class__.DoesNotExist("Object has no current version")
-        return current_version
-
     def identifying_fields_unique(
         self, identifying_fields: Optional[Iterable[str]] = None
     ) -> bool:
-
-        # TODO this needs to handle deleted trackedmodels
         return (
             self.__class__.objects.filter(
                 **self.get_identifying_fields(identifying_fields)
-            ).count()
+            )
+            .current()
+            .count()
             <= 1
         )
 
@@ -456,26 +450,6 @@ class TrackedModel(PolymorphicModel):
             fields[field] = value
 
         return fields
-
-    @atomic
-    def save(self, *args, force_write=False, **kwargs):
-        if not force_write and not self._can_write():
-            raise IllegalSaveError(
-                "TrackedModels cannot be updated once written and approved. "
-                "If writing a new row, use `.new_draft` instead"
-            )
-
-        if not hasattr(self, "version_group"):
-            self.version_group = self._get_version_group()
-
-        return_value = super().save(*args, **kwargs)
-
-        if self.transaction.workbasket.status in WorkflowStatus.approved_statuses():
-            self.version_group.current_version = self
-            self.version_group.save()
-            self.cache_self()
-
-        return return_value
 
     @property
     def current_version(self) -> TrackedModel:

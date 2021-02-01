@@ -4,8 +4,10 @@ import pytest
 from pytest_django.asserts import assertQuerysetEqual
 
 from common.exceptions import NoIdentifyingValuesGivenError
+from common.models import records
 from common.models import TrackedModel
 from common.tests import factories
+from common.tests import models
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
@@ -85,6 +87,11 @@ def model2_with_history(date_ranges):
     )
 
 
+@pytest.fixture
+def sample_model() -> models.TestModel1:
+    return factories.TestModel1Factory.create()
+
+
 def test_get_current(model1_with_history, model2_with_history):
     """
     Ensure only the most recent records are fetched.
@@ -98,14 +105,19 @@ def test_get_current(model1_with_history, model2_with_history):
     }
 
 
+def test_since_transaction(model1_with_history):
+    transaction = model1_with_history.active_model.transaction
+    assert TrackedModel.objects.since_transaction(transaction.id).count() == 5
+
+
 def test_as_at(date_ranges):
     """
     Ensure only records active at a specific date are fetched.
     """
 
     pks = {
-        factories.TestModel1Factory(valid_between=date_ranges.later).pk,
-        factories.TestModel1Factory(valid_between=date_ranges.later).pk,
+        factories.TestModel1Factory.create(valid_between=date_ranges.later).pk,
+        factories.TestModel1Factory.create(valid_between=date_ranges.later).pk,
     }
 
     queryset = TestModel1.objects.as_at(date_ranges.later.lower)
@@ -269,3 +281,41 @@ def test_get_latest_relation_without_latest_links(
 
     assert oldest_link == fetched_oldest_link
     assert latest_link == fetched_latest_link
+
+
+def test_get_taric_template(sample_model):
+    assert sample_model.get_taric_template() == "test_template"
+
+
+def test_current_version(sample_model):
+    assert sample_model.current_version == sample_model
+
+    version_group = sample_model.version_group
+    version_group.current_version = None
+    version_group.save()
+
+    with pytest.raises(models.TestModel1.DoesNotExist):
+        sample_model.current_version
+
+
+def test_save(sample_model):
+    assert sample_model.current_version == sample_model
+
+    with pytest.raises(records.IllegalSaveError):
+        sample_model.name = "fails"
+        sample_model.save()
+
+    sample_model.name = "succeeds"
+    sample_model.save(force_write=True)
+
+
+def test_identifying_fields(sample_model):
+    assert sample_model.get_identifying_fields() == {"sid": sample_model.sid}
+
+
+def test_identifying_fields_unique(model1_with_history):
+    assert model1_with_history.active_model.identifying_fields_unique()
+
+
+def test_identifying_fields_to_string(sample_model):
+    assert sample_model.identifying_fields_to_string() == f"sid={sample_model.sid}"

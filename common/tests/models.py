@@ -13,6 +13,8 @@ class TestModel1(TrackedModel, ValidityMixin):
     record_code = "01"
     subrecord_code = "01"
 
+    taric_template = "test_template"
+
     sid = models.PositiveIntegerField()
     name = models.CharField(max_length=24, null=True)
 

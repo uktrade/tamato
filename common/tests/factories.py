@@ -910,3 +910,17 @@ class UploadFactory(factory.django.DjangoModelFactory):
     envelope = factory.SubFactory(EnvelopeFactory)
     correlation_id = factory.Faker("uuid4")
     checksum = factory.Faker("md5")
+
+
+class ImportBatchFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "importer.ImportBatch"
+
+    name = factory.sequence(str)
+
+
+class ImporterXMLChunk(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "importer.ImporterXMLChunk"
+
+    batch = factory.SubFactory(ImportBatchFactory)
