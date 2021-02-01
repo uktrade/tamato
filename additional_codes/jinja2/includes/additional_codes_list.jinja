@@ -6,7 +6,7 @@
   {{ table_rows.append([
     {"html": object_link},
     {"text": object.get_description().description},
-    {"text": object.type.sid ~ " - " ~ object.type.description},
+    {"text": object.type.sid ~ " - " ~ object.type.description, "classes": "govuk-!-width-one-eighth"},
     {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
     {"text": object.transaction.workbasket.get_status_display()},
@@ -17,7 +17,7 @@
   "head": [
     {"text": "ID"},
     {"text": "Description"},
-    {"text": "Type", "classes": "govuk-!-width-one-eighth"},
+    {"text": "Type"},
     {"text": "Start date"},
     {"text": "End date"},
     {"text": "Status"}
