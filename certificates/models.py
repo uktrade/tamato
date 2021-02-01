@@ -65,6 +65,16 @@ class Certificate(TrackedModel, ValidityMixin):
             .with_workbasket(workbasket)
         )
 
+    def get_description(self):
+        if (
+            hasattr(self, "_prefetched_objects_cache")
+            and "descriptions" in self._prefetched_objects_cache
+        ):
+            descriptions = list(self.descriptions.all())
+            return descriptions[-1] if descriptions else None
+
+        return self.get_descriptions().last()
+
     def __str__(self):
         return self.code
 

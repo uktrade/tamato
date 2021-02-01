@@ -15,10 +15,12 @@ from django_filters import MultipleChoiceFilter
 
 from additional_codes.models import AdditionalCode
 from additional_codes.validators import TypeChoices
-from common.filters import TamatoFilter, ACTIVE_STATE_CHOICES, last_10_years
+from common.filters import ACTIVE_STATE_CHOICES
+from common.filters import last_10_years
+from common.filters import LazyMultipleChoiceFilter
+from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
-from common.filters import LazyMultipleChoiceFilter
 from common.util import TaricDateTimeRange
 
 
