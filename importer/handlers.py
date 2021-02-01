@@ -34,8 +34,8 @@ class BaseHandlerMeta(type):
 
     Firstly there are two required attributes:
 
-    1) "tag" - a string which is what matches the handler against the incoming data.
-    2) "serializer_class" - a ModelSerializer which is used to validate and create the database object.
+    1. "tag" - a string which is what matches the handler against the incoming data.
+    2. "serializer_class" - a ModelSerializer which is used to validate and create the database object.
 
     Without these attributes the class cannot function properly. To ensure these are defined the metaclass
     checks for their existence and type. If they aren't properly defined then an error is raised at compile
@@ -79,9 +79,11 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     This effectively takes place in 8 stages:
 
     Init:
+
     1) The handler is initialised with the initial data.
 
     Build:
+
     2) The handler checks for dependencies and links. If there are none it goes to step 5.
     3) The handler searches for dependencies which may contain extra required data. If any can't be found it
        asks to be cached and resolved later, the process stops. If they are found it unifies the data.
@@ -89,6 +91,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
        cached and resolved later, the process stops. If they are found it stores them.
 
     Dispatch:
+
     5) The handler validates the complete data against the serializer.
     6) The handler runs any pre-save processing, including adding the foreign keys to the validated data.
     7) The handler saves the object to the database.
