@@ -3,7 +3,6 @@ import json
 from datetime import datetime
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import Manager
@@ -17,18 +16,17 @@ from common.models import TrackedModel
 from workbaskets.validators import WorkflowStatus
 
 
-class WorkBasketManager(Manager):
+class WorkBasketQueryset(QuerySet):
     def prefetch_ordered_tracked_models(self) -> QuerySet:
         """
         Sort tracked_models by record_number, subrecord_number by
         using prefetch and imposing the order there.
         """
-        q = self.get_queryset()
 
         q_annotate_record_code = TrackedModel.objects.annotate_record_codes().order_by(
             "record_code", "subrecord_code"
         )
-        return q.prefetch_related(
+        return self.prefetch_related(
             Prefetch("tracked_models", queryset=q_annotate_record_code)
         )
 
@@ -40,7 +38,7 @@ class WorkBasket(TimestampedMixin):
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
 
-    objects = WorkBasketManager()
+    objects = Manager.from_queryset(WorkBasketQueryset)
 
     title = models.CharField(
         max_length=255,
@@ -189,12 +187,3 @@ class WorkBasket(TimestampedMixin):
             kwargs["composite_key"] = f"{self.pk}-{kwargs['order']}"
         transaction = self.transactions.model.objects.create(workbasket=self, **kwargs)
         return transaction
-
-    def get_transaction(self, import_transaction_id=None):
-        if import_transaction_id is None:
-            return self.new_transaction()
-
-        try:
-            return self.transactions.get(import_transaction_id=import_transaction_id)
-        except ObjectDoesNotExist:
-            return self.new_transaction(import_transaction_id=import_transaction_id)
