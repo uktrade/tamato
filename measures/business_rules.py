@@ -466,6 +466,7 @@ class ME9(BusinessRule):
     """If no additional code is specified then the goods code is mandatory.
 
     A measure can be assigned to:
+
     - a commodity code only (most measures)
     - a commodity code plus an additional code (e.g. trade remedies, pharma duties,
       routes of ingress)
@@ -539,6 +540,7 @@ class ME87(BusinessRule):
     account extensions and abrogation.
 
     A regulation’s validity period is hugely complex in the EU’s world.
+
     - A regulation is initially assigned a start date. It may be assigned an end date as
       well at the point of creation but this is rare.
     - The EU then may choose to end date the regulation using its end date field – in
@@ -1103,9 +1105,11 @@ class ME73(MeasureValidityPeriodContained):
 
 class ME104(BusinessRule):
     """The justification regulation must be either:
+
         - the measure’s measure-generating regulation, or
         - a measure-generating regulation, valid on the day after the measure’s
           (explicit) end date.
+
     If the measure’s measure-generating regulation is ‘approved’, then so must be the
     justification regulation.
     """
