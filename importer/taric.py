@@ -95,9 +95,10 @@ class TransactionParser(ElementParser):
         """Save the transaction and the contained records to the database.
 
         :param data: A dict of the parsed element, containing at least an "id" and list
-        of "message" dicts
+            of "message" dicts
         :param envelope_id: The ID of the containing Envelope
         :param workbasket_id: The primary key of the workbasket to add transactions to
+
         """
         logging.debug(f"Saving transaction {self.data['id']}")
 
