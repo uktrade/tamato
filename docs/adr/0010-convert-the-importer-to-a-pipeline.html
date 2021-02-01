@@ -16,8 +16,8 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Code Documentation" href="../code.html" />
-    <link rel="prev" title="8. Simplify workflow states" href="0008-simplify-workflow-states.html" /> 
+    <link rel="next" title="Business Rules" href="../business_rules/index.html" />
+    <link rel="prev" title="9. Generate envelope files" href="0009-record-generated-envelopes.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -29,10 +29,10 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../code.html" title="Code Documentation"
+          <a href="../business_rules/index.html" title="Business Rules"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="0008-simplify-workflow-states.html" title="8. Simplify workflow states"
+          <a href="0009-record-generated-envelopes.html" title="9. Generate envelope files"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
@@ -181,12 +181,8 @@ itself does very little. But it is here where the handling of incomplete
 records and belated linked records is enabled (not handled, enabled).</p>
 <p>The Nursery has 4 core functions:</p>
 <ol class="arabic simple">
-<li><p>To receive a python dictionary with a workbasket ID and a unique identifier for the record type (in the case</p></li>
-</ol>
-<blockquote>
-<div><p>of the XML parser the unique identifier is the tag name).</p>
-</div></blockquote>
-<ol class="arabic simple" start="2">
+<li><p>To receive a python dictionary with a workbasket ID and a unique identifier for the record type (in the case
+of the XML parser the unique identifier is the tag name).</p></li>
 <li><p>To match these python dictionaries against the handlers responsible for building them into database records.</p></li>
 <li><p>To store any records that cannot yet be processed by a handler.</p></li>
 <li><p>To fetch a record when it is ready to be processed by a handler.</p></li>
@@ -413,11 +409,11 @@ importer to more closely match the business rules.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="0008-simplify-workflow-states.html"
-                        title="previous chapter">8. Simplify workflow states</a></p>
+  <p class="topless"><a href="0009-record-generated-envelopes.html"
+                        title="previous chapter">9. Generate envelope files</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../code.html"
-                        title="next chapter">Code Documentation</a></p>
+  <p class="topless"><a href="../business_rules/index.html"
+                        title="next chapter">Business Rules</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -449,10 +445,10 @@ importer to more closely match the business rules.</p>
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../code.html" title="Code Documentation"
+          <a href="../business_rules/index.html" title="Business Rules"
              >next</a> |</li>
         <li class="right" >
-          <a href="0008-simplify-workflow-states.html" title="8. Simplify workflow states"
+          <a href="0009-record-generated-envelopes.html" title="9. Generate envelope files"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>

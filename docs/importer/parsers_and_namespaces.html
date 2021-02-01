@@ -16,8 +16,8 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="The Importer - The Nursery" href="nursery.html" />
-    <link rel="prev" title="The Importer" href="index.html" /> 
+    <link rel="next" title="The Importer - Taric" href="taric.html" />
+    <link rel="prev" title="The Importer - The Nursery" href="nursery.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -29,10 +29,10 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="nursery.html" title="The Importer - The Nursery"
+          <a href="taric.html" title="The Importer - Taric"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="The Importer"
+          <a href="nursery.html" title="The Importer - The Nursery"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
@@ -49,7 +49,7 @@
 <span id="the-importer-parsers-and-namespaces"></span><h1>The Importer - Parsers and Namespaces<a class="headerlink" href="#module-importer.parsers" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="importer.parsers.ElementParser">
-<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">ElementParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.ElementParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">ElementParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ElementParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for element specific parsers.</p>
 <p>ElementParser classes uses introspection to build a lookup table of child element
 parsers to their output JSON field name.</p>
@@ -90,7 +90,7 @@ the following structure:</p>
 </div>
 <dl class="method">
 <dt id="importer.parsers.ElementParser.clean">
-<code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.ElementParser.clean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ElementParser.clean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clean up data</p>
 </dd></dl>
 
@@ -102,13 +102,13 @@ the following structure:</p>
 
 <dl class="method">
 <dt id="importer.parsers.ElementParser.is_parser_for_element">
-<code class="sig-name descname">is_parser_for_element</code><span class="sig-paren">(</span><em class="sig-param">parser: importer.parsers.ElementParser</em>, <em class="sig-param">element: xml.etree.ElementTree.Element</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#importer.parsers.ElementParser.is_parser_for_element" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">is_parser_for_element</code><span class="sig-paren">(</span><em class="sig-param">parser: importer.parsers.ElementParser</em>, <em class="sig-param">element: xml.etree.ElementTree.Element</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.is_parser_for_element"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ElementParser.is_parser_for_element" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if the parser matches the element.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.parsers.ElementParser.start">
-<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param">element: xml.etree.ElementTree.Element</em>, <em class="sig-param">parent: Optional[importer.parsers.ElementParser] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.ElementParser.start" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param">element: xml.etree.ElementTree.Element</em>, <em class="sig-param">parent: Optional[importer.parsers.ElementParser] = None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ElementParser.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle the start of an XML tag. The tag may not yet have all of its
 children.</p>
 <p>We have a few cases where there are tags nested within a tag of the same name.</p>
@@ -129,7 +129,7 @@ is an element that this parser should be parsing.</p>
 
 <dl class="method">
 <dt id="importer.parsers.ElementParser.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.ElementParser.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ElementParser.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Validate data</p>
 </dd></dl>
 
@@ -137,7 +137,7 @@ is an element that this parser should be parsing.</p>
 
 <dl class="class">
 <dt id="importer.parsers.IntElement">
-<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">IntElement</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.IntElement" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">IntElement</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#IntElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.IntElement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse elements which contain an integer value.</p>
 <p>This class provides a convenient way to define a parser for elements that contain
 only an integer value and have no attributes or children, eg:</p>
@@ -146,7 +146,7 @@ only an integer value and have no attributes or children, eg:</p>
 </div></blockquote>
 <dl class="method">
 <dt id="importer.parsers.IntElement.clean">
-<code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.IntElement.clean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#IntElement.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.IntElement.clean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clean up data</p>
 </dd></dl>
 
@@ -154,17 +154,17 @@ only an integer value and have no attributes or children, eg:</p>
 
 <dl class="exception">
 <dt id="importer.parsers.InvalidDataError">
-<em class="property">exception </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">InvalidDataError</code><a class="headerlink" href="#importer.parsers.InvalidDataError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">InvalidDataError</code><a class="reference internal" href="../../_modules/importer/parsers.html#InvalidDataError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.InvalidDataError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="exception">
 <dt id="importer.parsers.ParserError">
-<em class="property">exception </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">ParserError</code><a class="headerlink" href="#importer.parsers.ParserError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">ParserError</code><a class="reference internal" href="../../_modules/importer/parsers.html#ParserError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ParserError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="class">
 <dt id="importer.parsers.TextElement">
-<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">TextElement</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.TextElement" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">TextElement</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#TextElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.TextElement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse elements which contain a text value.</p>
 <p>This class provides a convenient way to define a parser for elements that contain
 only a text value and have no attributes or children, eg:</p>
@@ -173,7 +173,7 @@ only a text value and have no attributes or children, eg:</p>
 </div></blockquote>
 <dl class="method">
 <dt id="importer.parsers.TextElement.clean">
-<code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.TextElement.clean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#TextElement.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.TextElement.clean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clean up data</p>
 </dd></dl>
 
@@ -181,32 +181,32 @@ only a text value and have no attributes or children, eg:</p>
 
 <dl class="class">
 <dt id="importer.parsers.ValidityMixin">
-<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">ValidityMixin</code><a class="headerlink" href="#importer.parsers.ValidityMixin" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">ValidityMixin</code><a class="reference internal" href="../../_modules/importer/parsers.html#ValidityMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ValidityMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse validity start and end dates</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="importer.parsers.Writable">
-<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">Writable</code><a class="headerlink" href="#importer.parsers.Writable" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">Writable</code><a class="reference internal" href="../../_modules/importer/parsers.html#Writable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable" title="Permalink to this definition">¶</a></dt>
 <dd><p>A parser which implements the Writable interface can write its changes to the
 database.</p>
 <p>Not all TARIC3 elements correspond to database entities (particularly simple text
 elements, but also envelopes and app.messages).</p>
 <dl class="method">
 <dt id="importer.parsers.Writable.create">
-<code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.Writable.create" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#Writable.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Preps the given data as a create record and submits it to the nursery for processing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.parsers.Writable.delete">
-<code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.Writable.delete" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#Writable.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable.delete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete a DB record with provided data</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.parsers.Writable.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.parsers.Writable.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#Writable.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update a DB record with provided data</p>
 </dd></dl>
 
@@ -214,12 +214,12 @@ elements, but also envelopes and app.messages).</p>
 
 <span class="target" id="module-importer.namespaces"></span><dl class="class">
 <dt id="importer.namespaces.RegexTag">
-<em class="property">class </em><code class="sig-prename descclassname">importer.namespaces.</code><code class="sig-name descname">RegexTag</code><span class="sig-paren">(</span><em class="sig-param">pattern</em>, <em class="sig-param">prefix='ns2'</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.namespaces.RegexTag" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.namespaces.</code><code class="sig-name descname">RegexTag</code><span class="sig-paren">(</span><em class="sig-param">pattern</em>, <em class="sig-param">prefix='ns2'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/namespaces.html#RegexTag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.namespaces.RegexTag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="class">
 <dt id="importer.namespaces.Tag">
-<em class="property">class </em><code class="sig-prename descclassname">importer.namespaces.</code><code class="sig-name descname">Tag</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">prefix='ns2'</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.namespaces.Tag" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.namespaces.</code><code class="sig-name descname">Tag</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">prefix='ns2'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/namespaces.html#Tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.namespaces.Tag" title="Permalink to this definition">¶</a></dt>
 <dd><p>An XML element tag with a namespace mapping prefix.</p>
 </dd></dl>
 
@@ -232,11 +232,11 @@ elements, but also envelopes and app.messages).</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">The Importer</a></p>
-  <h4>Next topic</h4>
   <p class="topless"><a href="nursery.html"
-                        title="next chapter">The Importer - The Nursery</a></p>
+                        title="previous chapter">The Importer - The Nursery</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="taric.html"
+                        title="next chapter">The Importer - Taric</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -268,10 +268,10 @@ elements, but also envelopes and app.messages).</p>
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="nursery.html" title="The Importer - The Nursery"
+          <a href="taric.html" title="The Importer - Taric"
              >next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="The Importer"
+          <a href="nursery.html" title="The Importer - The Nursery"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>

@@ -53,8 +53,6 @@ records will even arrive in the same transaction.
 Consequentially there were two false assumptions made when designing the
 initial importer:
 
-::
-
 1) All records come complete and ready to insert into the database.
 2) All records come in the correct order.
 
@@ -69,8 +67,6 @@ Decision
 To be able to handle the incomplete data records being input the
 importer is being split into 3 components which work together as a
 pipeline. The three components are as follows:
-
-::
 
 1) XML Parser - parses XML data into a python dict.
 2) Object Nursery - Collects python dicts and stores them until a complete object can be made.
@@ -162,10 +158,8 @@ records and belated linked records is enabled (not handled, enabled).
 
 The Nursery has 4 core functions:
 
-::
-
 1) To receive a python dictionary with a workbasket ID and a unique identifier for the record type (in the case
-  of the XML parser the unique identifier is the tag name).
+   of the XML parser the unique identifier is the tag name).
 2) To match these python dictionaries against the handlers responsible for building them into database records.
 3) To store any records that cannot yet be processed by a handler.
 4) To fetch a record when it is ready to be processed by a handler.
@@ -297,8 +291,6 @@ This approach is similar to the one taken (store data until the
 dependencies are found). But everything is done within the parser. As a
 result there are 3 issues with this approach compared to the current
 solution:
-
-::
 
 1) There is no guarantee the dependent data is found within the same XML file being parsed.
 2) The system is tightly coupled, it would be far harder to adapt to varying model needs.

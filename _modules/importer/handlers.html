@@ -1,0 +1,560 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>importer.handlers &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for importer.handlers</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
+
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span> <span class="nn">rest_framework.serializers</span> <span class="kn">import</span> <span class="n">ModelSerializer</span>
+
+<span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
+<span class="kn">from</span> <span class="nn">importer.nursery</span> <span class="kn">import</span> <span class="n">TariffObjectNursery</span>
+<span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">DispatchedObjectType</span>
+<span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">generate_key</span>
+<span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">LinksType</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MismatchedSerializerError"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.MismatchedSerializerError">[docs]</a><span class="k">class</span> <span class="nc">MismatchedSerializerError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="BaseHandlerMeta"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandlerMeta">[docs]</a><span class="k">class</span> <span class="nc">BaseHandlerMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    BaseHandler Metaclass to add validation and registration of each new Handler class.</span>
+
+<span class="sd">    Handlers have relatively strict requirements for them to function.</span>
+
+<span class="sd">    Firstly there are two required attributes:</span>
+
+<span class="sd">    1. &quot;tag&quot; - a string which is what matches the handler against the incoming data.</span>
+<span class="sd">    2. &quot;serializer_class&quot; - a ModelSerializer which is used to validate and create the database object.</span>
+
+<span class="sd">    Without these attributes the class cannot function properly. To ensure these are defined the metaclass</span>
+<span class="sd">    checks for their existence and type. If they aren&#39;t properly defined then an error is raised at compile</span>
+<span class="sd">    time (i.e. on import).</span>
+
+<span class="sd">    The second requirement is that handlers need to be attached to the nursery. This is so that the nursery</span>
+<span class="sd">    can match them against the incoming data. To accommodate this all handlers are automatically registered</span>
+<span class="sd">    with the nursery class once validated. This reduces boilerplate code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">dct</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">handler_class</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">dct</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">bases</span><span class="p">:</span>
+            <span class="c1"># This is a top level class, we only want to register and validate subclasses</span>
+            <span class="k">return</span> <span class="n">handler_class</span>
+
+        <span class="k">if</span> <span class="n">dct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;abstract&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">handler_class</span>
+
+        <span class="n">handler_class</span><span class="o">.</span><span class="n">abstract</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">handler_class</span><span class="p">,</span> <span class="s2">&quot;tag&quot;</span><span class="p">),</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> requires attribute &quot;tag&quot; to be a str.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">handler_class</span><span class="p">,</span> <span class="s2">&quot;serializer_class&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">),</span> <span class="n">ModelSerializer</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> requires attribute &quot;serializer_class&quot; to be a subclass of &quot;ModelSerializer&quot;.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">TariffObjectNursery</span><span class="o">.</span><span class="n">register_handler</span><span class="p">(</span><span class="n">handler_class</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handler_class</span></div>
+
+
+<div class="viewcode-block" id="BaseHandler"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler">[docs]</a><span class="k">class</span> <span class="nc">BaseHandler</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">BaseHandlerMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Base class for import handlers.</span>
+
+<span class="sd">    Handlers are designed to build objects which are then ready to be entered into the database.</span>
+<span class="sd">    This effectively takes place in 8 stages:</span>
+
+<span class="sd">    Init:</span>
+
+<span class="sd">    1) The handler is initialised with the initial data.</span>
+
+<span class="sd">    Build:</span>
+
+<span class="sd">    2) The handler checks for dependencies and links. If there are none it goes to step 5.</span>
+<span class="sd">    3) The handler searches for dependencies which may contain extra required data. If any can&#39;t be found it</span>
+<span class="sd">       asks to be cached and resolved later, the process stops. If they are found it unifies the data.</span>
+<span class="sd">    4) The handler searches for any links (foreign keys) that it needs. If any can&#39;t be found it asks to be</span>
+<span class="sd">       cached and resolved later, the process stops. If they are found it stores them.</span>
+
+<span class="sd">    Dispatch:</span>
+
+<span class="sd">    5) The handler validates the complete data against the serializer.</span>
+<span class="sd">    6) The handler runs any pre-save processing, including adding the foreign keys to the validated data.</span>
+<span class="sd">    7) The handler saves the object to the database.</span>
+<span class="sd">    8) The handler runs any post-save processing.</span>
+
+<span class="sd">    Many models are likely to have some specific requirements and so customisation is a focus within this system.</span>
+<span class="sd">    But many use cases should also be workable with just the base.</span>
+<span class="sd">    Most steps within this process can be customised and overridden - every model is likely to have some</span>
+<span class="sd">    specific custom demands.</span>
+
+<span class="sd">    A few examples of different scenarios follow below.</span>
+
+<span class="sd">    Example 1</span>
+<span class="sd">    ---------</span>
+
+<span class="sd">    Simple object, no dependencies or links.</span>
+
+<span class="sd">    For very simple objects there should be almost no work to do, assuming the data comes in clean without</span>
+<span class="sd">    any need for editing. In this case it should be enough to simply define a handler like so:</span>
+
+<span class="sd">    .. code:: python</span>
+
+<span class="sd">        class SimpleObjectHandler(BaseHandler):</span>
+<span class="sd">            serializer_class = serializers.SimpleObjectSerializer</span>
+<span class="sd">            tag = parsers.SimpleObjectParser.tag.name</span>
+
+<span class="sd">    Any object like this would be immediately processed when run through the nursery as, without any dependencies</span>
+<span class="sd">    or links, there should be nothing it needs to wait on.</span>
+
+
+<span class="sd">    Example 2</span>
+<span class="sd">    ---------</span>
+<span class="sd">    An object with dependencies:</span>
+
+<span class="sd">    .. code:: python</span>
+
+<span class="sd">        class DependentModelAHandler(BaseHandler):</span>
+<span class="sd">            serializer_class = serializers.DependentModelSerializer</span>
+<span class="sd">            tag = parser.DependentModelAParser.tag.name</span>
+
+
+<span class="sd">        @DependentModelAHandler.register_dependant</span>
+<span class="sd">        class DependentModelBHandler(BaseHandler):</span>
+<span class="sd">            dependencies = [DependentModelAHandler]</span>
+<span class="sd">            serializer_class = serializers.DependentModelSerializer</span>
+<span class="sd">            tag = parser.DependentModelBParser.tag.name</span>
+
+<span class="sd">    Dependencies in this case means two pre-existing models have been merged into one. Sadly the data import</span>
+<span class="sd">    doesn&#39;t account for this and therefore it is expected to receive the complete set of data for this object</span>
+<span class="sd">    over several records. A handler must therefore be created for each expected record type. All records will</span>
+<span class="sd">    then be stored in the nursery cache until they can be collected together for processing.</span>
+
+<span class="sd">    As dependencies are supposed to all relate to the same model, they must all share the same serializer.</span>
+
+<span class="sd">    Dependencies cascade. Consequentially if object A depends on object B, but object B depends on object C,</span>
+<span class="sd">    then object A will also depend on object C. However, given the nature of the dependencies, it is more</span>
+<span class="sd">    desirable to have all handlers be explicit about all dependencies they may rely on.</span>
+
+<span class="sd">    Dependencies are assigned at class level. Due to the way compilation works this creates issues with</span>
+<span class="sd">    forward-referencing. To handle this there are two mechanisms for registering dependencies. The first</span>
+<span class="sd">    is simply a class level dependency list with the dependent classes within them. The latter is with a</span>
+<span class="sd">    decorator which allows a class to decorate itself - therefore inserting itself into the aforementioned</span>
+<span class="sd">    dependency list of a pre-existing class.</span>
+
+<span class="sd">    With this defined the nursery will collect the data for each dependency. The dependencies can then query</span>
+<span class="sd">    the nursery to collect all the data. If all the data is found the object is dispatched to the database</span>
+<span class="sd">    and the nursery removes the relevant data from the cache.</span>
+
+
+<span class="sd">    Example 3</span>
+<span class="sd">    ---------</span>
+
+<span class="sd">    An object with Foreign Key links.</span>
+
+<span class="sd">    .. code:: python</span>
+
+<span class="sd">        class LinkedObjectHandler(BaseHandler):</span>
+<span class="sd">            links = (</span>
+<span class="sd">                {</span>
+<span class="sd">                    &quot;model&quot;: models.LinkToModelA,</span>
+<span class="sd">                    &quot;name&quot;: &quot;link_to_model_a&quot;,</span>
+<span class="sd">                    &quot;optional&quot;: True,</span>
+<span class="sd">                },</span>
+<span class="sd">                {</span>
+<span class="sd">                    &quot;model&quot;: models.LinkToModelB,</span>
+<span class="sd">                    &quot;name&quot;: &quot;link_to_model_b&quot;,</span>
+<span class="sd">                    &quot;optional&quot;: False,</span>
+<span class="sd">                    &quot;identifying_fields&quot;: (&quot;some_field&quot;, &quot;some_other_model_id&quot;)</span>
+<span class="sd">                },</span>
+<span class="sd">            )</span>
+
+<span class="sd">            def get_link_to_model_b_link(self, model, kwargs):</span>
+<span class="sd">                other_model = models.SomeOtherModel(field2=kwargs.get(some_other_model_id)</span>
+<span class="sd">                return model.objects.get_latest_version(other_model=other_model, **kargs)</span>
+
+<span class="sd">    Foreign key links are more flexible than dependencies. Whilst dependencies denote records which hold</span>
+<span class="sd">    part of the data for an object, links denote pre-existing objects which the current object needs to link</span>
+<span class="sd">    to. The difficulty here is there is no guarantee that the pre-existing object has actually been created</span>
+<span class="sd">    yet, nor that the object necessarily _needs_ to exist (the foreign key could be nullable).</span>
+
+<span class="sd">    Therefore Handlers have the option of adding a `links` attribute, which should be an iterable of `LinksType`</span>
+<span class="sd">    style dictionaries. This must define two keys:</span>
+
+<span class="sd">    1) model - which is expected to be a `TrackedModel` instance</span>
+<span class="sd">    2) name - a string, which is how the link data will be differentiated from the object data, as well as</span>
+<span class="sd">       how it will be named in the data when saved to the database. More specifically incoming data for the</span>
+<span class="sd">       linked field (specifically the models identifying fields) is expected to be prefixed with this name.</span>
+<span class="sd">       So the parser must define fields with this prefix.</span>
+
+<span class="sd">    Two other optional keys exist:</span>
+
+<span class="sd">    3) optional - defines whether a link is optional. If it is optional the object will be saved even if the</span>
+<span class="sd">       link can&#39;t be found. If it is not optional then the object will be cached until the link can be found.</span>
+<span class="sd">    4) identifying_fields - On occasion the identifying fields from model.identifying_fields may not be</span>
+<span class="sd">       appropriate, in this case they can be overridden here.</span>
+
+<span class="sd">    With just these the Handler will automatically try to fetch the linked model with the identifying fields of</span>
+<span class="sd">    the model (or those given in the link dictionary). Once fetched it will store the data with the given name.</span>
+<span class="sd">    Once ready to save the links will be added to the object data with the given name and the object will be saved.</span>
+
+<span class="sd">    In some cases this is not enough and further customisation is needed when fetching links. An example is a link</span>
+<span class="sd">    where one of the identifying fields is a foreign key on that linked field (i.e. the linked field itself has</span>
+<span class="sd">    another link). To allow for this a method can be added to fetch the link appropriately. This method must be named</span>
+<span class="sd">    `get_{link_name}_link` and accept the arguments `model` and `kwargs`. This must then return whatever object is</span>
+<span class="sd">    intended to go into the data with the same name as that given to the link.</span>
+
+<span class="sd">    All of the above examples can be used together, e.g. a handler can have both dependencies and links.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dependencies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">BaseHandler</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">links</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">LinksType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">serializer_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">ModelSerializer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">dispatched_object</span><span class="p">:</span> <span class="n">DispatchedObjectType</span><span class="p">,</span> <span class="n">nursery</span><span class="p">:</span> <span class="n">TariffObjectNursery</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span> <span class="o">=</span> <span class="n">nursery</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">dispatched_object</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">identifying_fields</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transaction_id</span> <span class="o">=</span> <span class="n">dispatched_object</span><span class="p">[</span><span class="s2">&quot;transaction_id&quot;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">generate_key</span><span class="p">(</span>
+            <span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">identifying_fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_dependency_keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_links</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">_generate_dependency_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Objects are stored in the cache using unique but identifiable IDs. Any dependant object</span>
+<span class="sd">        must be able to figure out all the keys for its dependencies.</span>
+
+<span class="sd">        This method fetches all the dependencies, builds their keys and then returns the keys as a set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">depends_on</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">depends_on</span>
+        <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dependency</span><span class="o">.</span><span class="n">serializer_class</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MismatchedSerializerError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Dependent parsers must have the same serializer_class as their dependencies. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Dependency </span><span class="si">{</span><span class="n">dependency</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;serializer_class </span><span class="si">{</span><span class="n">dependency</span><span class="o">.</span><span class="n">serializer_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has serializer_class </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">depends_on</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                <span class="n">generate_key</span><span class="p">(</span>
+                    <span class="n">tag</span><span class="o">=</span><span class="n">dependency</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="n">identifying_fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">depends_on</span>
+
+<div class="viewcode-block" id="BaseHandler.resolve_dependencies"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.resolve_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Search the cache for all object dependencies and attempt to resolve them.</span>
+
+<span class="sd">        Previously found objects, which are dependent on the current object, should be</span>
+<span class="sd">        stored in the cache. This method loops over the current objects dependencies and</span>
+<span class="sd">        attempts to extract them from the cache. It then also searches for the dependencies</span>
+<span class="sd">        of the extracted objects.</span>
+
+<span class="sd">        All found dependencies are then merged into the current objects data. If at any point</span>
+<span class="sd">        a dependency is not found the method returns False - to signify the object cannot be resolved.</span>
+<span class="sd">        If all dependencies are found the method returns True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dependencies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">resolved_dependencies</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">}</span>
+
+        <span class="k">while</span> <span class="n">dependencies</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">dependencies</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="n">dependency</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span><span class="o">.</span><span class="n">get_handler_from_cache</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dependency</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dependency</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">resolved_dependencies</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">dependencies</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dependency</span><span class="o">.</span><span class="n">dependency_keys</span><span class="p">)</span> <span class="o">-</span> <span class="n">resolved_dependencies</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="BaseHandler.get_generic_link"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.get_generic_link">[docs]</a>    <span class="k">def</span> <span class="nf">get_generic_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fallback method if no specific method is found for fetching a link.</span>
+
+<span class="sd">        Raises DoesNotExist if no kwargs passed.</span>
+
+<span class="sd">        First attempts to retrieve the object PK from the cache (saves queries). If this</span>
+<span class="sd">        is not found a database query is made to find the object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="n">model</span><span class="o">.</span><span class="n">DoesNotExist</span>
+
+        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">USE_IMPORTER_CACHE</span><span class="p">:</span>
+            <span class="n">cached_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span><span class="o">.</span><span class="n">get_obj_from_cache</span><span class="p">(</span>
+                <span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">kwargs</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">cached_object</span> <span class="ow">and</span> <span class="n">cached_object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">model</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cached_object</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="kc">True</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_versions</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">current_deleted</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+                    <span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_latest_version</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="n">model</span><span class="o">.</span><span class="n">DoesNotExist</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_latest_version</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="kc">False</span>
+            <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="BaseHandler.load_link"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.load_link">[docs]</a>    <span class="k">def</span> <span class="nf">load_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">identifying_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load a given link for a handler.</span>
+
+<span class="sd">        This method first attempts to find any custom method existing on the handler</span>
+<span class="sd">        for finding the specific link. The custom method must be named:</span>
+
+<span class="sd">            get_{LINK_NAME}_link</span>
+
+<span class="sd">        If no custom method is found then :py:meth:`.BaseHandler.get_generic_link` is used.</span>
+
+<span class="sd">        If no object matching the given link is found and the link is non-optional then a</span>
+<span class="sd">        DoesNotExist error is raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">identifying_fields</span> <span class="o">=</span> <span class="n">identifying_fields</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">identifying_fields</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">linked_object_identifiers</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">identifying_fields</span>
+            <span class="p">}</span>
+
+            <span class="n">get_link_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;get_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_link&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_generic_link</span><span class="p">)</span>
+
+            <span class="n">linked_object</span> <span class="o">=</span> <span class="n">get_link_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">linked_object_identifiers</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">linked_object</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">linked_object</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">resolved_links</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">linked_object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">resolved_links</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">linked_object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolved_links</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">linked_object</span>
+        <span class="k">except</span> <span class="n">model</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">optional</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="BaseHandler.resolve_links"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.resolve_links">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_links</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract data specific to links and use this to search the database for the relevant objects.</span>
+
+<span class="sd">        Once found attach the object to the `resolved_links` dictionary.</span>
+
+<span class="sd">        If a non-optional object can&#39;t be found return False. This signifies the links cannot be resolved.</span>
+<span class="sd">        If all non-optional objects are found then return True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">links</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">links</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_link</span><span class="p">(</span><span class="o">**</span><span class="n">link</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="BaseHandler.clean"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate the data against the serializer and return the validated data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">serializer</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">raise_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">serializer</span><span class="o">.</span><span class="n">validated_data</span></div>
+
+<div class="viewcode-block" id="BaseHandler.pre_save"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.pre_save">[docs]</a>    <span class="k">def</span> <span class="nf">pre_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">links</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pre-processing before the object is saved to the database.</span>
+
+<span class="sd">        Generally this is used for adding the links to the object (as these cannot</span>
+<span class="sd">        be easily validated against the serializer).</span>
+
+<span class="sd">        Return the final dataset to be used when saving to the database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">links</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseHandler.post_save"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.post_save">[docs]</a>    <span class="k">def</span> <span class="nf">post_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Post-processing after the object has been saved to the database.</span>
+
+<span class="sd">        By default this caches any new saved object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span><span class="o">.</span><span class="n">cache_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseHandler.build"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build up all the data for the object.</span>
+
+<span class="sd">        This method co-ordinates the attempts to fetch the dependent data as well as the linked</span>
+<span class="sd">        data. If at any point one of these steps fails an empty set returns (signifying failure).</span>
+
+<span class="sd">        if all steps are deemed successful the object is dispatched to the database automatically.</span>
+<span class="sd">        On success a set of all the keys for any objects used which may be in the cache is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">links</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_dependencies</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_links</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span></div>
+
+<div class="viewcode-block" id="BaseHandler.dispatch"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModel</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the data into the database.</span>
+
+<span class="sd">        This method initially validates all collected data. If valid it then runs</span>
+<span class="sd">        some pre-processing before saving. Once saved an opportunity is given for post-processing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">transaction_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction_id</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_save</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved_links</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_save</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">obj</span></div>
+
+<div class="viewcode-block" id="BaseHandler.serialize"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.serialize">[docs]</a>    <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DispatchedObjectType</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides a serializable dict of the object to be stored in the cache. Should hold all the</span>
+<span class="sd">        necessary data required to rebuild the object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="s2">&quot;tag&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+            <span class="s2">&quot;transaction_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction_id</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="BaseHandler.register_dependant"><a class="viewcode-back" href="../../docs/importer/handlers.html#importer.handlers.BaseHandler.register_dependant">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">register_dependant</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dependant</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseHandler</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allow a handler to retrospectively assign itself to another handlers list of dependencies.</span>
+
+<span class="sd">        This solves the issue of forward referencing - where a class cannot reference another class</span>
+<span class="sd">        before that class has been defined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">dependencies</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">dependant</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">dependencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dependant</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dependant</span></div>
+
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">model</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,355 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>commodities.business_rules &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for commodities.business_rules</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Business rules for commodities/goods nomenclatures.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timezone</span>
+
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">find_duplicate_start_dates</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
+
+
+<div class="viewcode-block" id="NIG1"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG1">[docs]</a><span class="k">class</span> <span class="nc">NIG1</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must not overlap any other goods</span>
+<span class="sd">    nomenclature with the same SID.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG1.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG1.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">good</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG2"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG2">[docs]</a><span class="k">class</span> <span class="nc">NIG2</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must be within the validity period</span>
+<span class="sd">    of the product line above in the hierarchy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG2.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
+        <span class="n">goods_validity</span> <span class="o">=</span> <span class="n">indent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">indent</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get_parent</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">parent_validity</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">indent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">validity_range_contains_range</span><span class="p">(</span><span class="n">parent_validity</span><span class="p">,</span> <span class="n">goods_validity</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG5"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG5">[docs]</a><span class="k">class</span> <span class="nc">NIG5</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When creating a goods nomenclature code, an origin must exist. This rule is only</span>
+<span class="sd">    applicable to update extractions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG5.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG5.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Almost all goods nomenclatures must have an origin, excluding two scenarios:</span>
+
+<span class="sd">            1) They are a top level code (depth/indent of 1)</span>
+<span class="sd">            2) They were made before 2010-01-01 (legacy data)</span>
+
+<span class="sd">        Therefore check for these two conditions, and if neither are met ensure an origin exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="kn">from</span> <span class="nn">commodities.models</span> <span class="kn">import</span> <span class="n">GoodsNomenclatureOrigin</span>
+
+        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&lt;=</span> <span class="n">lower_bound</span>
+            <span class="ow">or</span> <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">nodes__depth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="ow">or</span> <span class="n">GoodsNomenclatureOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">new_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="s2">&quot;Non top-level goods must have an origin specified.&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG7"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG7">[docs]</a><span class="k">class</span> <span class="nc">NIG7</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The origin must be applicable the day before the start date of the new code</span>
+<span class="sd">    entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG7.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG7.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;By default the upper bound is exclusive whilst the lower bound is inclusive.</span>
+<span class="sd">        So we just need to make sure the bounds match.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">origin_range</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">derived_from_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span>
+        <span class="n">starts_on</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">new_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span>
+        <span class="n">day_before_start</span> <span class="o">=</span> <span class="n">starts_on</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">day_before_start</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">origin_range</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;GoodsNomenclatureOrigin </span><span class="si">{</span><span class="n">origin</span><span class="si">}</span><span class="s1">: The &quot;derived from&quot; code, if &#39;</span>
+                <span class="s2">&quot;entered, must be a goods nomenclature which exists and is applicable &quot;</span>
+                <span class="s2">&quot;the day before the start date of the new code entered. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Origin </span><span class="si">{</span><span class="n">origin_range</span><span class="si">}</span><span class="s2"> is not applicable on </span><span class="si">{</span><span class="n">day_before_start</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG10"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG10">[docs]</a><span class="k">class</span> <span class="nc">NIG10</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The successor must be applicable the day after the end date of the old code.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG10.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG10.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">successor</span><span class="p">):</span>
+        <span class="n">ends_on</span> <span class="o">=</span> <span class="n">successor</span><span class="o">.</span><span class="n">replaced_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span>
+        <span class="n">successor_range</span> <span class="o">=</span> <span class="n">successor</span><span class="o">.</span><span class="n">absorbed_into_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span>
+
+        <span class="k">if</span> <span class="n">ends_on</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclatureSuccessor </span><span class="si">{</span><span class="n">successor</span><span class="si">}</span><span class="s2">: A successor can only be added &quot;</span>
+                <span class="s2">&quot;for goods nomenclature codes with a closing date.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">day_after_end</span> <span class="o">=</span> <span class="n">ends_on</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">day_after_end</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">successor_range</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;GoodsNomenclatureSuccessor </span><span class="si">{</span><span class="n">successor</span><span class="si">}</span><span class="s1">: The &quot;absorbed by&quot; code, if &#39;</span>
+                <span class="s2">&quot;entered, must be a goods nomenclature which exists and is applicable &quot;</span>
+                <span class="s2">&quot;the day after the closing date.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Successor </span><span class="si">{</span><span class="n">successor_range</span><span class="si">}</span><span class="s2"> is not applicable on </span><span class="si">{</span><span class="n">day_after_end</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG11"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG11">[docs]</a><span class="k">class</span> <span class="nc">NIG11</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;At least one indent record is mandatory. The start date of the first indentation</span>
+<span class="sd">    must be equal to the start date of the nomenclature. No two associated indentations</span>
+<span class="sd">    may have the same start date. The start date must be less than or equal to the end</span>
+<span class="sd">    date of the nomenclature.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG11.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG11.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="n">GoodsNomenclatureIndent</span> <span class="o">=</span> <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="n">indents</span> <span class="o">=</span> <span class="n">GoodsNomenclatureIndent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">indented_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">indents</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: At least one indent record is mandatory.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">valid_between__startswith</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: The start date of the first indentation must &quot;</span>
+                <span class="s2">&quot;be equal to the start date of the nomenclature.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">find_duplicate_start_dates</span><span class="p">(</span><span class="n">indents</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: No two associated indentations may have the &quot;</span>
+                <span class="s2">&quot;same start date&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">valid_between__fully_gt</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: The start date of an associated indentation &quot;</span>
+                <span class="s2">&quot;must be less than or equal to the end date of the nomenclature.&quot;</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG12"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG12">[docs]</a><span class="k">class</span> <span class="nc">NIG12</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;At least one description is mandatory. The start date of the first description</span>
+<span class="sd">    period must be equal to the start date of the nomenclature. No two associated</span>
+<span class="sd">    description periods may have the same start date. The start date must be less than</span>
+<span class="sd">    or equal to the end date of the nomenclature.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;goods nomenclature&quot;</span></div>
+
+
+<div class="viewcode-block" id="NIG22"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG22">[docs]</a><span class="k">class</span> <span class="nc">NIG22</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The period of the association with a footnote must be within the validity period</span>
+<span class="sd">    of the nomenclature.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;goods_nomenclature&quot;</span></div>
+
+
+<div class="viewcode-block" id="NIG23"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG23">[docs]</a><span class="k">class</span> <span class="nc">NIG23</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The period of the association with a footnote must be within the validity period</span>
+<span class="sd">    of the footnote.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;associated_footnote&quot;</span></div>
+
+
+<div class="viewcode-block" id="NIG24"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG24">[docs]</a><span class="k">class</span> <span class="nc">NIG24</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When the same footnote is associated more than once with the same nomenclature</span>
+<span class="sd">    then there may be no overlap in their association periods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG24.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG24.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="c1"># XXX does this handle versions?</span>
+        <span class="n">overlapping</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">association</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">associated_footnote__footnote_id</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">associated_footnote</span><span class="o">.</span><span class="n">footnote_id</span><span class="p">,</span>
+                <span class="n">associated_footnote__footnote_type__footnote_type_id</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">associated_footnote</span><span class="o">.</span><span class="n">footnote_type</span><span class="o">.</span><span class="n">footnote_type_id</span><span class="p">,</span>
+                <span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">overlapping</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG30"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG30">[docs]</a><span class="k">class</span> <span class="nc">NIG30</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in a goods measure then the validity period of</span>
+<span class="sd">    the goods nomenclature must span the validity period of the goods measure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG30.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG30.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">good</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG31"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG31">[docs]</a><span class="k">class</span> <span class="nc">NIG31</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in an additional nomenclature measure then the</span>
+<span class="sd">    validity period of the goods nomenclature must span the validity period of the</span>
+<span class="sd">    additional nomenclature measure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG31.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG31.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="c1"># XXX is this the correct interpretation?</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">additional_code__valid_between__contained_by</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">good</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG34"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG34">[docs]</a><span class="k">class</span> <span class="nc">NIG34</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A goods nomenclature cannot be deleted if it is used in a goods measure.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="NIG35"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG35">[docs]</a><span class="k">class</span> <span class="nc">NIG35</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A goods nomenclature cannot be deleted if it is used in an additional</span>
+<span class="sd">    nomenclature measure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># XXX this is redundant - NIG34 will be violated first</span>
+
+<div class="viewcode-block" id="NIG35.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG35.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">good</span><span class="o">.</span><span class="n">update_type</span> <span class="o">!=</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">good</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

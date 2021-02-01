@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>additional_codes.business_rules &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for additional_codes.business_rules</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Business rules for Additional Codes.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
+
+<span class="kn">from</span> <span class="nn">additional_codes.validators</span> <span class="kn">import</span> <span class="n">ApplicationCode</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+
+
+<div class="viewcode-block" id="CT1"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.CT1">[docs]</a><span class="k">class</span> <span class="nc">CT1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The additional code type must be unique.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ACN1"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN1">[docs]</a><span class="k">class</span> <span class="nc">ACN1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The combination of additional code type + additional code + start date must be</span>
+<span class="sd">    unique.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ACN2"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN2">[docs]</a><span class="k">class</span> <span class="nc">ACN2</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced additional code type must exist and have as application code</span>
+<span class="sd">    &quot;non-Meursing&quot; or &quot;Export Refund for Processed Agricultural Goods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ACN2.validate"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_code</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">additional_code</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">application_code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                <span class="n">ApplicationCode</span><span class="o">.</span><span class="n">ADDITIONAL_CODES</span><span class="p">,</span>
+                <span class="n">ApplicationCode</span><span class="o">.</span><span class="n">EXPORT_REFUND_AGRI</span><span class="p">,</span>
+            <span class="p">}:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;AdditionalCode </span><span class="si">{</span><span class="n">additional_code</span><span class="si">}</span><span class="s2">: The referenced additional code &quot;</span>
+                    <span class="s1">&#39;type must have as application code &quot;non-Meursing&quot; or &quot;Export Refund &#39;</span>
+                    <span class="s1">&#39;for Processed Agricultural Goods&quot;.&#39;</span>
+                <span class="p">)</span>
+
+        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;AdditionalCode </span><span class="si">{</span><span class="n">additional_code</span><span class="si">}</span><span class="s2">: The referenced additional code type &quot;</span>
+                <span class="s2">&quot;must exist.&quot;</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ACN4"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN4">[docs]</a><span class="k">class</span> <span class="nc">ACN4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the additional code must not overlap any other additional</span>
+<span class="sd">    code with the same additional code type + additional code + start date.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ACN4.validate"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN4.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_code</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">additional_code</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">type__sid</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">code</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+                <span class="n">valid_between__startswith</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">additional_code</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ACN13"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN13">[docs]</a><span class="k">class</span> <span class="nc">ACN13</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When an additional code is used in an additional code nomenclature measure then</span>
+<span class="sd">    the validity period of the additional code must span the validity period of the</span>
+<span class="sd">    measure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ACN13.validate"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN13.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_code</span><span class="p">):</span>
+        <span class="n">Measure</span> <span class="o">=</span> <span class="n">additional_code</span><span class="o">.</span><span class="n">measure_set</span><span class="o">.</span><span class="n">model</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">Measure</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">additional_code__sid</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">additional_code</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ACN17"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN17">[docs]</a><span class="k">class</span> <span class="nc">ACN17</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the additional code type must span the validity period of</span>
+<span class="sd">    the additional code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;type&quot;</span></div>
+
+
+<div class="viewcode-block" id="ACN5"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN5">[docs]</a><span class="k">class</span> <span class="nc">ACN5</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;At least one description is mandatory. The start date of the first description</span>
+<span class="sd">    period must be equal to the start date of the additional code. No two associated</span>
+<span class="sd">    description periods may have the same start date. The start date must be less than</span>
+<span class="sd">    or equal to the end date of the additional code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;additional code&quot;</span></div>
+
+
+<div class="viewcode-block" id="ACN14"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN14">[docs]</a><span class="k">class</span> <span class="nc">ACN14</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An additional code cannot be deleted if it is used in an additional code</span>
+<span class="sd">    nomenclature measure.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

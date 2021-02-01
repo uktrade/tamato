@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Base classes &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Footnotes" href="footnotes.html" />
+    <link rel="prev" title="Goods Nomenclature" href="commodities.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="footnotes.html" title="Footnotes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="commodities.html" title="Goods Nomenclature"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Business Rules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-common.business_rules">
+<span id="base-classes"></span><h1>Base classes<a class="headerlink" href="#module-common.business_rules" title="Permalink to this headline">¶</a></h1>
+<p>Base classes for business rules and violations</p>
+<dl class="class">
+<dt id="common.business_rules.BusinessRule">
+<em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">BusinessRule</code><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a TARIC business rule.</p>
+<dl class="method">
+<dt id="common.business_rules.BusinessRule.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">*args</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRule.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="common.business_rules.BusinessRule.violation">
+<code class="sig-name descname">violation</code><span class="sig-paren">(</span><em class="sig-param">model: Union[common.models.records.TrackedModel</em>, <em class="sig-param">str</em>, <em class="sig-param">None] = None</em>, <em class="sig-param">msg: Optional[str] = None</em><span class="sig-paren">)</span> &#x2192; common.business_rules.BusinessRuleViolation<a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule.violation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRule.violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a violation exception object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="common.business_rules.BusinessRuleViolation">
+<em class="property">exception </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">BusinessRuleViolation</code><span class="sig-paren">(</span><em class="sig-param">message</em>, <em class="sig-param">code=None</em>, <em class="sig-param">params=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRuleViolation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRuleViolation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for business rule violations</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="common.business_rules.DescriptionsRules">
+<em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">DescriptionsRules</code><a class="reference internal" href="../../_modules/common/business_rules.html#DescriptionsRules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.DescriptionsRules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Repeated rule pattern for descriptions.</p>
+<dl class="method">
+<dt id="common.business_rules.DescriptionsRules.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#DescriptionsRules.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.DescriptionsRules.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="common.business_rules.MustExist">
+<em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">MustExist</code><a class="reference internal" href="../../_modules/common/business_rules.html#MustExist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.MustExist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rule enforcing a referenced record exists.</p>
+<dl class="method">
+<dt id="common.business_rules.MustExist.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#MustExist.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.MustExist.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="common.business_rules.NoOverlapping">
+<em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">NoOverlapping</code><a class="reference internal" href="../../_modules/common/business_rules.html#NoOverlapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.NoOverlapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rule enforcing no overlapping validity periods of instances of a model.</p>
+<dl class="method">
+<dt id="common.business_rules.NoOverlapping.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#NoOverlapping.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.NoOverlapping.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="common.business_rules.PreventDeleteIfInUse">
+<em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">PreventDeleteIfInUse</code><a class="reference internal" href="../../_modules/common/business_rules.html#PreventDeleteIfInUse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.PreventDeleteIfInUse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rule preventing deleting an in-use model.</p>
+<dl class="method">
+<dt id="common.business_rules.PreventDeleteIfInUse.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#PreventDeleteIfInUse.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.PreventDeleteIfInUse.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="common.business_rules.UniqueIdentifyingFields">
+<em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">UniqueIdentifyingFields</code><a class="reference internal" href="../../_modules/common/business_rules.html#UniqueIdentifyingFields"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.UniqueIdentifyingFields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rule enforcing identifying fields are unique.</p>
+<dl class="method">
+<dt id="common.business_rules.UniqueIdentifyingFields.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#UniqueIdentifyingFields.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.UniqueIdentifyingFields.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="common.business_rules.ValidityPeriodContained">
+<em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">ValidityPeriodContained</code><a class="reference internal" href="../../_modules/common/business_rules.html#ValidityPeriodContained"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rule enforcing validity period is contained by a dependency’s validity period.</p>
+<dl class="method">
+<dt id="common.business_rules.ValidityPeriodContained.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#ValidityPeriodContained.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="commodities.html"
+                        title="previous chapter">Goods Nomenclature</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="footnotes.html"
+                        title="next chapter">Footnotes</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/business_rules/common.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="footnotes.html" title="Footnotes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="commodities.html" title="Goods Nomenclature"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Business Rules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

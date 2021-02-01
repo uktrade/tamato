@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>quotas.business_rules &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for quotas.business_rules</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Business rules for quotas.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
+
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
+<span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
+<span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">SubQuotaType</span>
+
+
+<div class="viewcode-block" id="ON1"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON1">[docs]</a><span class="k">class</span> <span class="nc">ON1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Quota order number id + start date must be unique.&quot;&quot;&quot;</span>
+
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order_number&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ON2"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON2">[docs]</a><span class="k">class</span> <span class="nc">ON2</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;There may be no overlap in time of two quota order numbers with the same quota</span>
+<span class="sd">    order number id.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ON2.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">order_number</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number</span><span class="o">=</span><span class="n">order_number</span><span class="o">.</span><span class="n">order_number</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">order_number</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">sid</span><span class="o">=</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">order_number</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ON5"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON5">[docs]</a><span class="k">class</span> <span class="nc">ON5</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;There may be no overlap in time of two quota order number origins with the same</span>
+<span class="sd">    quota order number SID and geographical area id.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ON5.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON5.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number__sid</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">sid</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;QuotaOrderNumberOrigin </span><span class="si">{</span><span class="n">origin</span><span class="si">}</span><span class="s2">: There may be no overlap in time of &quot;</span>
+                <span class="s2">&quot;two quota order number origins with the same quota order number SID &quot;</span>
+                <span class="s2">&quot;and geographical area id.&quot;</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ON6"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON6">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2006-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ON6</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the geographical area must span the validity period of the</span>
+<span class="sd">    quota order number origin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;geographical_area&quot;</span></div>
+
+
+<div class="viewcode-block" id="ON7"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON7">[docs]</a><span class="k">class</span> <span class="nc">ON7</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the quota order number must span the validity period of</span>
+<span class="sd">    the quota order number origin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span></div>
+
+
+<div class="viewcode-block" id="ON8"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON8">[docs]</a><span class="k">class</span> <span class="nc">ON8</span><span class="p">(</span><span class="n">ON7</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the quota order number must span the validity period of</span>
+<span class="sd">    the referencing quota definition.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ON9"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON9">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ON9</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period of the</span>
+<span class="sd">    quota order number must span the validity period of the measure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">order_number</span><span class="o">.</span><span class="n">measure_set</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number__sid</span><span class="o">=</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">order_number</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">order_number</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ON10"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON10">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ON10</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period of the</span>
+<span class="sd">    quota order number origin must span the validity period of the measure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
+        <span class="c1"># XXX should this take a QuotaOrderNumber and check all related</span>
+        <span class="c1"># QuotaOrderNumberOrigins?</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">origin</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">measure_set</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number__sid</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ON11"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON11">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ON11</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The quota order number cannot be deleted if it is used in a measure.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ON12"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON12">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ON12</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The quota order number origin cannot be deleted if it is used in a measure.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ON13"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON13">[docs]</a><span class="k">class</span> <span class="nc">ON13</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An exclusion can only be entered if the order number origin is a geographical</span>
+<span class="sd">    area group (area code = 1).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ON13.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON13.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">area_code</span> <span class="o">!=</span> <span class="n">AreaCode</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ON14"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON14">[docs]</a><span class="k">class</span> <span class="nc">ON14</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The excluded geographical area must be a member of the geographical area group.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ON14.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON14.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">member__sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">geo_group__sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QD1"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QD1">[docs]</a><span class="k">class</span> <span class="nc">QD1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Quota order number id + start date must be unique.&quot;&quot;&quot;</span>
+
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order_number__sid&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QD7"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QD7">[docs]</a><span class="k">class</span> <span class="nc">QD7</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the quota definition must be spanned by one of the</span>
+<span class="sd">    validity periods of the referenced quota order number.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># &quot;one of the validity periods&quot; suggests an order number can have more than one</span>
+    <span class="c1"># validity period, but this is not true. QD7 mirrors ON8, to check the same</span>
+    <span class="c1"># constraint whether adding a quota definition or an order number.</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span></div>
+
+
+<div class="viewcode-block" id="QD8"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QD8">[docs]</a><span class="k">class</span> <span class="nc">QD8</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the monetary unit code must span the validity period of</span>
+<span class="sd">    the quota definition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;monetary_unit&quot;</span></div>
+
+
+<div class="viewcode-block" id="QD10"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QD10">[docs]</a><span class="k">class</span> <span class="nc">QD10</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period measurement unit code must span the validity period of the</span>
+<span class="sd">    quota definition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;measurement_unit&quot;</span></div>
+
+
+<div class="viewcode-block" id="QD11"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QD11">[docs]</a><span class="k">class</span> <span class="nc">QD11</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the measurement unit qualifier code must span the validity</span>
+<span class="sd">    period of the quota definition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;measurement_unit_qualifier&quot;</span></div>
+
+
+<div class="viewcode-block" id="QA1"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA1">[docs]</a><span class="k">class</span> <span class="nc">QA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The association between two quota definitions must be unique.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="QA2"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA2">[docs]</a><span class="k">class</span> <span class="nc">QA2</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The sub-quota&#39;s validity period must be entirely enclosed within the validity</span>
+<span class="sd">    period of the main quota.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;main_quota&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;sub_quota&quot;</span></div>
+
+
+<div class="viewcode-block" id="QA3"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA3">[docs]</a><span class="k">class</span> <span class="nc">QA3</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When converted to the measurement unit of the main quota, the volume of a</span>
+<span class="sd">    sub-quota must always be lower than or equal to the volume of the main quota.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="QA4"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA4">[docs]</a><span class="k">class</span> <span class="nc">QA4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Whenever a sub-quota receives a coefficient, this has to be a strictly positive</span>
+<span class="sd">    decimal number. When it is not specified a value 1 is always assumed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QA4.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA4.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">association</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QA5"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA5">[docs]</a><span class="k">class</span> <span class="nc">QA5</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Whenever a sub-quota is defined with the &#39;equivalent&#39; type, it must have the same</span>
+<span class="sd">    volume as the ones associated with the parent quota. Moreover it must be defined</span>
+<span class="sd">    with a coefficient not equal to 1. A sub-quota defined with the &#39;normal&#39; type must</span>
+<span class="sd">    have a coefficient of 1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QA5.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA5.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">sub_quota_relation_type</span> <span class="o">==</span> <span class="n">SubQuotaType</span><span class="o">.</span><span class="n">EQUIVALENT</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">==</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.00000&quot;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;QuotaAssociation </span><span class="si">{</span><span class="n">association</span><span class="si">}</span><span class="s2">: &quot;</span>
+                    <span class="s2">&quot;A sub-quota defined with the &#39;equivalent&#39; type must have a &quot;</span>
+                    <span class="s2">&quot;coefficient not equal to 1&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">association</span><span class="o">.</span><span class="n">main_quota</span><span class="o">.</span><span class="n">sub_quotas</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;QuotaAssociation </span><span class="si">{</span><span class="n">association</span><span class="si">}</span><span class="s2">: &quot;</span>
+                    <span class="s2">&quot;Whenever a sub-quota is defined with the &#39;equivalent&#39; type, it must have &quot;</span>
+                    <span class="s2">&quot;the same volume as the ones associated with the parent quota.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">association</span><span class="o">.</span><span class="n">sub_quota_relation_type</span> <span class="o">==</span> <span class="n">SubQuotaType</span><span class="o">.</span><span class="n">NORMAL</span>
+            <span class="ow">and</span> <span class="n">association</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">!=</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.00000&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;QuotaAssociation </span><span class="si">{</span><span class="n">association</span><span class="si">}</span><span class="s2">: &quot;</span>
+                <span class="s2">&quot;A sub-quota defined with the &#39;normal&#39; type must have a coefficient &quot;</span>
+                <span class="s2">&quot;equal to 1&quot;</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QA6"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA6">[docs]</a><span class="k">class</span> <span class="nc">QA6</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sub-quotas associated with the same main quota must have the same relation type.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QA6.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA6.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">association</span><span class="o">.</span><span class="n">main_quota</span><span class="o">.</span><span class="n">sub_quota_associations</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+                <span class="s2">&quot;sub_quota_relation_type&quot;</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;sub_quota_relation_type&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s2">&quot;sub_quota_relation_type&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BlockingOnlyOfFCFSQuotas"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.BlockingOnlyOfFCFSQuotas">[docs]</a><span class="k">class</span> <span class="nc">BlockingOnlyOfFCFSQuotas</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Blocking periods are only applicable to FCFS quotas.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BlockingOnlyOfFCFSQuotas.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.BlockingOnlyOfFCFSQuotas.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blocking</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">blocking</span><span class="o">.</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">mechanism</span>
+            <span class="o">!=</span> <span class="n">AdministrationMechanism</span><span class="o">.</span><span class="n">FCFS</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">blocking</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QBP2"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QBP2">[docs]</a><span class="k">class</span> <span class="nc">QBP2</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The start date of the quota blocking period must be later than or equal to the</span>
+<span class="sd">    start date of the quota validity period.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QBP2.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QBP2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blocking</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">blocking</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&lt;</span> <span class="n">blocking</span><span class="o">.</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">blocking</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SuspensionsOnlyToFCFSQuotas"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.SuspensionsOnlyToFCFSQuotas">[docs]</a><span class="k">class</span> <span class="nc">SuspensionsOnlyToFCFSQuotas</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Quota suspensions are only applicable to First Come First Served quotas.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SuspensionsOnlyToFCFSQuotas.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.SuspensionsOnlyToFCFSQuotas.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suspension</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">suspension</span><span class="o">.</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">mechanism</span>
+            <span class="o">!=</span> <span class="n">AdministrationMechanism</span><span class="o">.</span><span class="n">FCFS</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">suspension</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QSP2"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QSP2">[docs]</a><span class="k">class</span> <span class="nc">QSP2</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the quota must span the quota suspension period.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;quota_definition&quot;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

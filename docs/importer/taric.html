@@ -16,7 +16,7 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="prev" title="The Importer - Handlers" href="handlers.html" /> 
+    <link rel="prev" title="The Importer - Parsers and Namespaces" href="parsers_and_namespaces.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -28,7 +28,7 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="handlers.html" title="The Importer - Handlers"
+          <a href="parsers_and_namespaces.html" title="The Importer - Parsers and Namespaces"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
@@ -46,15 +46,15 @@
 <p>Parsers for TARIC envelope entities.</p>
 <dl class="exception">
 <dt id="importer.taric.EnvelopeError">
-<em class="property">exception </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">EnvelopeError</code><a class="headerlink" href="#importer.taric.EnvelopeError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">EnvelopeError</code><a class="reference internal" href="../../_modules/importer/taric.html#EnvelopeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.EnvelopeError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="class">
 <dt id="importer.taric.EnvelopeParser">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">EnvelopeParser</code><span class="sig-paren">(</span><em class="sig-param">workbasket_status=None</em>, <em class="sig-param">tamato_username=None</em>, <em class="sig-param">save: bool = True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.EnvelopeParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">EnvelopeParser</code><span class="sig-paren">(</span><em class="sig-param">workbasket_status=None</em>, <em class="sig-param">tamato_username=None</em>, <em class="sig-param">save: bool = True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#EnvelopeParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.EnvelopeParser" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="importer.taric.EnvelopeParser.start">
-<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param">element: lxml.etree.Element</em>, <em class="sig-param">parent: importer.parsers.ElementParser = None</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.EnvelopeParser.start" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param">element: lxml.etree.Element</em>, <em class="sig-param">parent: importer.parsers.ElementParser = None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#EnvelopeParser.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.EnvelopeParser.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle the start of an XML tag. The tag may not yet have all of its
 children.</p>
 <p>We have a few cases where there are tags nested within a tag of the same name.</p>
@@ -77,11 +77,11 @@ is an element that this parser should be parsing.</p>
 
 <dl class="class">
 <dt id="importer.taric.MessageParser">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">MessageParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.MessageParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">MessageParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#MessageParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.MessageParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parser for TARIC3 <cite>message</cite> element.</p>
 <dl class="method">
 <dt id="importer.taric.MessageParser.save">
-<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.MessageParser.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#MessageParser.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.MessageParser.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the contained records to the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -97,11 +97,11 @@ is an element that this parser should be parsing.</p>
 
 <dl class="class">
 <dt id="importer.taric.RecordParser">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">RecordParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.RecordParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">RecordParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#RecordParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.RecordParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parser for TARIC3 <cite>record</cite> element.</p>
 <dl class="method">
 <dt id="importer.taric.RecordParser.save">
-<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.RecordParser.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#RecordParser.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.RecordParser.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the Record to the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -117,27 +117,29 @@ is an element that this parser should be parsing.</p>
 
 <dl class="class">
 <dt id="importer.taric.TransactionParser">
-<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">TransactionParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.TransactionParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">TransactionParser</code><span class="sig-paren">(</span><em class="sig-param">tag: Optional[importer.namespaces.Tag] = None</em>, <em class="sig-param">many: bool = False</em>, <em class="sig-param">depth: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#TransactionParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.TransactionParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parser for TARIC3 <cite>transaction</cite> element.</p>
 <dl class="method">
 <dt id="importer.taric.TransactionParser.save">
-<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.TransactionParser.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#TransactionParser.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.TransactionParser.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the transaction and the contained records to the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>data</strong> – A dict of the parsed element, containing at least an “id” and list</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – A dict of the parsed element, containing at least an “id” and list
+of “message” dicts</p></li>
+<li><p><strong>envelope_id</strong> – The ID of the containing Envelope</p></li>
+<li><p><strong>workbasket_id</strong> – The primary key of the workbasket to add transactions to</p></li>
+</ul>
 </dd>
 </dl>
-<p>of “message” dicts
-:param envelope_id: The ID of the containing Envelope
-:param workbasket_id: The primary key of the workbasket to add transactions to</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="function">
 <dt id="importer.taric.process_taric_xml_stream">
-<code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">process_taric_xml_stream</code><span class="sig-paren">(</span><em class="sig-param">taric_stream</em>, <em class="sig-param">status</em>, <em class="sig-param">username</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.taric.process_taric_xml_stream" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">importer.taric.</code><code class="sig-name descname">process_taric_xml_stream</code><span class="sig-paren">(</span><em class="sig-param">taric_stream</em>, <em class="sig-param">status</em>, <em class="sig-param">username</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/taric.html#process_taric_xml_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.taric.process_taric_xml_stream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse a TARIC XML stream through the import handlers</p>
 <p>This will load the data from the stream into the database.</p>
 </dd></dl>
@@ -151,8 +153,8 @@ is an element that this parser should be parsing.</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="handlers.html"
-                        title="previous chapter">The Importer - Handlers</a></p>
+  <p class="topless"><a href="parsers_and_namespaces.html"
+                        title="previous chapter">The Importer - Parsers and Namespaces</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -184,7 +186,7 @@ is an element that this parser should be parsing.</p>
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="handlers.html" title="The Importer - Handlers"
+          <a href="parsers_and_namespaces.html" title="The Importer - Parsers and Namespaces"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>

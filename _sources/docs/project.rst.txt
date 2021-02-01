@@ -21,3 +21,4 @@ Contents
    :maxdepth: 5
 
    adr/index
+   business_rules/index

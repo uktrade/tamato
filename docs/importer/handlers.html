@@ -16,8 +16,8 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="The Importer - Taric" href="taric.html" />
-    <link rel="prev" title="The Importer - The Nursery" href="nursery.html" /> 
+    <link rel="next" title="The Importer - The Nursery" href="nursery.html" />
+    <link rel="prev" title="The Importer" href="index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -29,10 +29,10 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="taric.html" title="The Importer - Taric"
+          <a href="nursery.html" title="The Importer - The Nursery"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="nursery.html" title="The Importer - The Nursery"
+          <a href="index.html" title="The Importer"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
@@ -49,27 +49,29 @@
 <span id="the-importer-handlers"></span><h1>The Importer - Handlers<a class="headerlink" href="#module-importer.handlers" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="importer.handlers.BaseHandler">
-<em class="property">class </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">BaseHandler</code><span class="sig-paren">(</span><em class="sig-param">dispatched_object: importer.utils.DispatchedObjectType</em>, <em class="sig-param">nursery: importer.nursery.TariffObjectNursery</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">BaseHandler</code><span class="sig-paren">(</span><em class="sig-param">dispatched_object: importer.utils.DispatchedObjectType</em>, <em class="sig-param">nursery: importer.nursery.TariffObjectNursery</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Base class for import handlers.</p>
 <p>Handlers are designed to build objects which are then ready to be entered into the database.
 This effectively takes place in 8 stages:</p>
-<p>Init:
-1) The handler is initialised with the initial data.</p>
-<p>Build:
-2) The handler checks for dependencies and links. If there are none it goes to step 5.
-3) The handler searches for dependencies which may contain extra required data. If any can’t be found it</p>
-<blockquote>
-<div><p>asks to be cached and resolved later, the process stops. If they are found it unifies the data.</p>
-</div></blockquote>
-<ol class="arabic simple" start="4">
+<p>Init:</p>
+<ol class="arabic simple">
+<li><p>The handler is initialised with the initial data.</p></li>
+</ol>
+<p>Build:</p>
+<ol class="arabic simple" start="2">
+<li><p>The handler checks for dependencies and links. If there are none it goes to step 5.</p></li>
+<li><p>The handler searches for dependencies which may contain extra required data. If any can’t be found it
+asks to be cached and resolved later, the process stops. If they are found it unifies the data.</p></li>
 <li><p>The handler searches for any links (foreign keys) that it needs. If any can’t be found it asks to be
 cached and resolved later, the process stops. If they are found it stores them.</p></li>
 </ol>
-<p>Dispatch:
-5) The handler validates the complete data against the serializer.
-6) The handler runs any pre-save processing, including adding the foreign keys to the validated data.
-7) The handler saves the object to the database.
-8) The handler runs any post-save processing.</p>
+<p>Dispatch:</p>
+<ol class="arabic simple" start="5">
+<li><p>The handler validates the complete data against the serializer.</p></li>
+<li><p>The handler runs any pre-save processing, including adding the foreign keys to the validated data.</p></li>
+<li><p>The handler saves the object to the database.</p></li>
+<li><p>The handler runs any post-save processing.</p></li>
+</ol>
 <p>Many models are likely to have some specific requirements and so customisation is a focus within this system.
 But many use cases should also be workable with just the base.
 Most steps within this process can be customised and overridden - every model is likely to have some
@@ -166,7 +168,7 @@ intended to go into the data with the same name as that given to the link.</p>
 <p>All of the above examples can be used together, e.g. a handler can have both dependencies and links.</p>
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.build">
-<code class="sig-name descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.build" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.build" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build up all the data for the object.</p>
 <p>This method co-ordinates the attempts to fetch the dependent data as well as the linked
 data. If at any point one of these steps fails an empty set returns (signifying failure).</p>
@@ -176,13 +178,13 @@ On success a set of all the keys for any objects used which may be in the cache 
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.clean">
-<code class="sig-name descname">clean</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#importer.handlers.BaseHandler.clean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">clean</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.clean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Validate the data against the serializer and return the validated data.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.dispatch">
-<code class="sig-name descname">dispatch</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; common.models.records.TrackedModel<a class="headerlink" href="#importer.handlers.BaseHandler.dispatch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dispatch</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; common.models.records.TrackedModel<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.dispatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.dispatch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the data into the database.</p>
 <p>This method initially validates all collected data. If valid it then runs
 some pre-processing before saving. Once saved an opportunity is given for post-processing.</p>
@@ -190,7 +192,7 @@ some pre-processing before saving. Once saved an opportunity is given for post-p
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.get_generic_link">
-<code class="sig-name descname">get_generic_link</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.get_generic_link" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_generic_link</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.get_generic_link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.get_generic_link" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fallback method if no specific method is found for fetching a link.</p>
 <p>Raises DoesNotExist if no kwargs passed.</p>
 <p>First attempts to retrieve the object PK from the cache (saves queries). If this
@@ -199,7 +201,7 @@ is not found a database query is made to find the object.</p>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.load_link">
-<code class="sig-name descname">load_link</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">model</em>, <em class="sig-param">identifying_fields=None</em>, <em class="sig-param">optional=False</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.load_link" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">load_link</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">model</em>, <em class="sig-param">identifying_fields=None</em>, <em class="sig-param">optional=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.load_link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.load_link" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a given link for a handler.</p>
 <p>This method first attempts to find any custom method existing on the handler
 for finding the specific link. The custom method must be named:</p>
@@ -213,14 +215,14 @@ DoesNotExist error is raised.</p>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.post_save">
-<code class="sig-name descname">post_save</code><span class="sig-paren">(</span><em class="sig-param">obj</em><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.post_save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">post_save</code><span class="sig-paren">(</span><em class="sig-param">obj</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.post_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.post_save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Post-processing after the object has been saved to the database.</p>
 <p>By default this caches any new saved object.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.pre_save">
-<code class="sig-name descname">pre_save</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em>, <em class="sig-param">links: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#importer.handlers.BaseHandler.pre_save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pre_save</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em>, <em class="sig-param">links: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.pre_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.pre_save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pre-processing before the object is saved to the database.</p>
 <p>Generally this is used for adding the links to the object (as these cannot
 be easily validated against the serializer).</p>
@@ -229,7 +231,7 @@ be easily validated against the serializer).</p>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.register_dependant">
-<em class="property">classmethod </em><code class="sig-name descname">register_dependant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#importer.handlers.BaseHandler.register_dependant" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">register_dependant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.register_dependant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.register_dependant" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allow a handler to retrospectively assign itself to another handlers list of dependencies.</p>
 <p>This solves the issue of forward referencing - where a class cannot reference another class
 before that class has been defined.</p>
@@ -237,7 +239,7 @@ before that class has been defined.</p>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.resolve_dependencies">
-<code class="sig-name descname">resolve_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#importer.handlers.BaseHandler.resolve_dependencies" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resolve_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.resolve_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.resolve_dependencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Search the cache for all object dependencies and attempt to resolve them.</p>
 <p>Previously found objects, which are dependent on the current object, should be
 stored in the cache. This method loops over the current objects dependencies and
@@ -250,7 +252,7 @@ If all dependencies are found the method returns True.</p>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.resolve_links">
-<code class="sig-name descname">resolve_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#importer.handlers.BaseHandler.resolve_links" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resolve_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.resolve_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.resolve_links" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract data specific to links and use this to search the database for the relevant objects.</p>
 <p>Once found attach the object to the <cite>resolved_links</cite> dictionary.</p>
 <p>If a non-optional object can’t be found return False. This signifies the links cannot be resolved.
@@ -259,7 +261,7 @@ If all non-optional objects are found then return True.</p>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.serialize">
-<code class="sig-name descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; importer.utils.DispatchedObjectType<a class="headerlink" href="#importer.handlers.BaseHandler.serialize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; importer.utils.DispatchedObjectType<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.serialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides a serializable dict of the object to be stored in the cache. Should hold all the
 necessary data required to rebuild the object</p>
 </dd></dl>
@@ -268,7 +270,7 @@ necessary data required to rebuild the object</p>
 
 <dl class="class">
 <dt id="importer.handlers.BaseHandlerMeta">
-<em class="property">class </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">BaseHandlerMeta</code><a class="headerlink" href="#importer.handlers.BaseHandlerMeta" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">BaseHandlerMeta</code><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandlerMeta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandlerMeta" title="Permalink to this definition">¶</a></dt>
 <dd><p>BaseHandler Metaclass to add validation and registration of each new Handler class.</p>
 <p>Handlers have relatively strict requirements for them to function.</p>
 <p>Firstly there are two required attributes:</p>
@@ -286,7 +288,7 @@ with the nursery class once validated. This reduces boilerplate code.</p>
 
 <dl class="exception">
 <dt id="importer.handlers.MismatchedSerializerError">
-<em class="property">exception </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">MismatchedSerializerError</code><a class="headerlink" href="#importer.handlers.MismatchedSerializerError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">MismatchedSerializerError</code><a class="reference internal" href="../../_modules/importer/handlers.html#MismatchedSerializerError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.MismatchedSerializerError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -298,11 +300,11 @@ with the nursery class once validated. This reduces boilerplate code.</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="nursery.html"
-                        title="previous chapter">The Importer - The Nursery</a></p>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">The Importer</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="taric.html"
-                        title="next chapter">The Importer - Taric</a></p>
+  <p class="topless"><a href="nursery.html"
+                        title="next chapter">The Importer - The Nursery</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -334,10 +336,10 @@ with the nursery class once validated. This reduces boilerplate code.</p>
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="taric.html" title="The Importer - Taric"
+          <a href="nursery.html" title="The Importer - The Nursery"
              >next</a> |</li>
         <li class="right" >
-          <a href="nursery.html" title="The Importer - The Nursery"
+          <a href="index.html" title="The Importer"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
