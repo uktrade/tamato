@@ -22,6 +22,6 @@ def clean_item_id(value: Union[str, int, float]) -> str:
     # We need a full 10 digit code so padd with trailing zeroes
     if len(item_id) % 2 != 0:
         raise InvalidItemId(f"Item ID {item_id} contains an odd number of characters")
-    item_id += f"{item_id:010}"
+    item_id = f"{item_id:0<10}"
 
     return item_id
