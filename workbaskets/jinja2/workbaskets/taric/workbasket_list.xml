@@ -1,6 +1,6 @@
 {%- extends "common/taric/base.xml"  -%}
 {%- block transactions -%}
-{%- for workbasket in items -%}
+{%- for workbasket in results -%}
 <!-- workbasket {{workbasket.id}} -->
 {%- set transactions = workbasket.transactions -%}
 {%- include "workbaskets/taric/workbasket.xml" -%}
