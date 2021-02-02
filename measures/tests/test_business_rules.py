@@ -400,11 +400,30 @@ def test_ME25(date_ranges):
     """If the measure’s end date is specified (implicitly or explicitly) then the start
     date of the measure must be less than or equal to the end date.
 
-    End date will in almost all circumstances be explicit for measures.
+    End date will in almost all circumstances be explicit for measures. If it is
+    not, the implicit end date will come from the regulation. It is possible for
+    the regulation to have an end date and an optional "effective end date". If
+    the effective end date is present it should override the original end date.
     """
 
     business_rules.ME25().validate(
         factories.MeasureFactory.create(valid_between=date_ranges.normal)
+    )
+
+    business_rules.ME25().validate(
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.no_end,
+            generating_regulation__valid_between=date_ranges.earlier,
+            generating_regulation__effective_end_date=None,
+        )
+    )
+
+    business_rules.ME25().validate(
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.no_end,
+            generating_regulation__valid_between=date_ranges.no_end,
+            generating_regulation__effective_end_date=None,
+        )
     )
 
     with pytest.raises(DataError):

@@ -288,7 +288,12 @@ class ME25(BusinessRule):
     """
 
     def validate(self, measure):
-        if measure.valid_between.lower > measure.effective_end_date:
+        effective_end_date = measure.effective_end_date
+
+        if effective_end_date is None:
+            return
+
+        if measure.valid_between.lower > effective_end_date:
             raise self.violation(measure)
 
 
