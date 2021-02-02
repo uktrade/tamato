@@ -327,7 +327,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME25.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME25.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;</span> <span class="n">measure</span><span class="o">.</span><span class="n">effective_end_date</span><span class="p">:</span>
+        <span class="n">effective_end_date</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">effective_end_date</span>
+
+        <span class="k">if</span> <span class="n">effective_end_date</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;</span> <span class="n">effective_end_date</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
