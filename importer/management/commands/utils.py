@@ -696,9 +696,9 @@ class EnvelopeSerializer:
                 render_to_string(
                     template_name="workbaskets/taric/transaction.xml",
                     context={
-                        "tracked_models": map(
-                            self.serializer.to_representation, models
-                        ),
+                        "tracked_models": TrackedModelSerializer(
+                            models, many=True, read_only=True
+                        ).data,
                         "transaction_id": self.transaction_counter(),
                         "counter_generator": counter_generator,
                         "message_counter": self.message_counter,
