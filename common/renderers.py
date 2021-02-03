@@ -19,9 +19,7 @@ class TaricXMLRenderer(TemplateHTMLRenderer):
     def get_template_context(self, *args, **kwargs):
         context = super().get_template_context(*args, **kwargs)
 
-        if isinstance(context, list):
-            context = {"results": context, "envelope_id": f"{counter_generator()():06}"}
-
+        context["envelope_id"] = f"{counter_generator()():06}"
         context["message_counter"] = counter_generator()
         context["counter_generator"] = counter_generator
         return context
