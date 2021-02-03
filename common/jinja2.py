@@ -9,6 +9,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from govuk_frontend_jinja.templates import Environment
 from govuk_frontend_jinja.templates import NunjucksExtension
+from jinja2 import Markup
 from webpack_loader.templatetags.webpack_loader import render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
@@ -62,6 +63,18 @@ class GovukFrontendEnvironment(Environment):
         super().__init__(*args, **kwargs)
 
 
+def break_words(word):
+    """
+    Adds zero-width spaces around non-word characters to allow breaking lines when wrapping text.
+
+    For example:
+
+    >>> break_words("hello/goodbye")
+    "hello&8203;/&8203;goodbye"
+    """
+    return Markup(re.sub(r"([^\w]+)", r"&#8203;\1&#8203;", word))
+
+
 def query_transform(request, **kwargs):
     updated = request.GET.copy()
     for key, value in kwargs.items():
@@ -74,6 +87,7 @@ def environment(**kwargs):
 
     env.globals.update(
         {
+            "break_words": break_words,
             "query_transform": query_transform,
             "crispy": render_crispy_form,
             "env": os.environ.get("ENV", "dev"),
