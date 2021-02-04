@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
-
 # Footnote type application codes
 class ApplicationCode(models.IntegerChoices):
     CN_NOMENCLATURE = 1, "CN nomenclature"
