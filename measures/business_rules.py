@@ -320,7 +320,12 @@ class ME32(BusinessRule):
             query &= Q(additional_code__sid=measure.additional_code.sid)
         if measure.reduction is not None:
             query &= Q(reduction=measure.reduction)
-        matching_measures = type(measure).objects.filter(query).current()
+        matching_measures = (
+            type(measure)
+            .objects.filter(query)
+            .current()
+            .exclude(version_group=measure.version_group)
+        )
 
         # get all goods nomenclature versions associated with this measure
         GoodsNomenclature = type(measure.goods_nomenclature)
@@ -341,18 +346,23 @@ class ME32(BusinessRule):
 
             # for each indent, get the goods tree
             for indent in indents:
-                tree = (indent.get_ancestors() | indent.get_descendants()).filter(
+                tree = (
+                    indent.get_ancestors()
+                    | indent.get_descendants()
+                    | Node.objects.filter(pk=indent.pk)
+                ).filter(
                     valid_between__overlap=measure.effective_valid_between,
                 )
 
                 # check for any measures associated to commodity codes in the tree which
                 # clash with the specified measure
-                if matching_measures.filter(
+                clashing_measures = matching_measures.filter(
                     goods_nomenclature__indents__nodes__in=tree.values_list(
                         "pk", flat=True
                     ),
                     valid_between__overlap=measure.effective_valid_between,
-                ).exists():
+                )
+                if clashing_measures.exists():
                     raise self.violation(measure)
 
 
