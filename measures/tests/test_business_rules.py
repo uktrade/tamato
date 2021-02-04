@@ -439,7 +439,21 @@ def test_ME25(date_ranges):
         )
 
 
-def test_ME32(date_ranges):
+@pytest.mark.parametrize(
+    "get_goods_nomenclature",
+    [
+        lambda e: e.goods_nomenclature,
+        lambda e: factories.GoodsNomenclatureFactory(
+            indent__node__parent=e.goods_nomenclature.indents.first().nodes.first(),
+            valid_between=e.goods_nomenclature.valid_between,
+        ),
+    ],
+    ids=[
+        "self",
+        "child",
+    ],
+)
+def test_ME32(date_ranges, get_goods_nomenclature):
     """There may be no overlap in time with other measure occurrences with a goods code
     in the same nomenclature hierarchy which references the same measure type, geo area,
     order number, additional code and reduction indicator. This rule is not applicable
@@ -454,9 +468,8 @@ def test_ME32(date_ranges):
         goods_nomenclature__valid_between=date_ranges.big,
     )
 
-    overlapping_child = factories.MeasureFactory.create(
-        goods_nomenclature__indent__node__parent=existing.goods_nomenclature.indents.first().nodes.first(),
-        goods_nomenclature__valid_between=date_ranges.big,
+    overlapping = factories.MeasureFactory.create(
+        goods_nomenclature=get_goods_nomenclature(existing),
         measure_type=existing.measure_type,
         geographical_area=existing.geographical_area,
         order_number=existing.order_number,
@@ -465,9 +478,11 @@ def test_ME32(date_ranges):
         valid_between=date_ranges.overlap_normal,
     )
 
-    non_overlapping_child = factories.MeasureFactory.create(
-        goods_nomenclature__indent__node__parent=existing.goods_nomenclature.indents.first().nodes.first(),
-        goods_nomenclature__valid_between=date_ranges.big,
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ME32().validate(overlapping)
+
+    non_overlapping = factories.MeasureFactory.create(
+        goods_nomenclature=get_goods_nomenclature(existing),
         measure_type=existing.measure_type,
         geographical_area=existing.geographical_area,
         order_number=existing.order_number,
@@ -476,10 +491,7 @@ def test_ME32(date_ranges):
         valid_between=date_ranges.earlier,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME32().validate(overlapping_child)
-
-    business_rules.ME32().validate(non_overlapping_child)
+    business_rules.ME32().validate(non_overlapping)
 
 
 # -- Ceiling/quota definition existence
