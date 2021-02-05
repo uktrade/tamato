@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 from certificates import business_rules
 from certificates import validators
@@ -77,6 +78,14 @@ class Certificate(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return self.code
+
+    def get_url(self, action="detail"):
+        return reverse(
+            f"certificate-ui-{action}",
+            kwargs={
+                "sid": self.sid,
+            },
+        )
 
     def in_use(self):
         # TODO handle deletes
