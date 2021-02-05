@@ -1,10 +1,7 @@
 {% set description_rows = [] %}
 {% for description in object.descriptions.all() %}
-	{% set valid_between %}
-		<span class='govuk-!-font-weight-bold'>{{"{:%d %b %Y}".format(description.valid_between.lower)}}</span>
-	{% endset %}
 	{{ description_rows.append([
-		{"html": valid_between},
+		{"text": "{:%d %b %Y}".format(description.valid_between.lower)},
 		{"text": description.description},
 	]) or ""}}
 {% endfor %}
@@ -14,7 +11,7 @@
 		<h2 class="govuk-heading-l">Descriptions</h2>
 		{{ govukTable({
 			"head": [
-				{"text": "Start Date", "classes":  "govuk-!-width-one-eighth"},
+				{"text": "Start date", "classes":  "govuk-!-width-one-eighth"},
 				{"text": "Description"},
 			],
 			"rows": description_rows

@@ -8,7 +8,6 @@
           {"html": footnote_link},
           {"text": footnote.get_description().description|default("")},
           {"text": footnote.footnote_type.footnote_type_id ~ " - " ~ break_words(footnote.footnote_type.description)},
-          {"text": footnote.footnote_type.get_application_code_display()},
           {"text": "{:%d %b %Y}".format(footnote.valid_between.lower)},
           {"text": "{:%d %b %Y}".format(footnote.valid_between.upper) if footnote.valid_between.upper else "-"},
           {"text": footnote.transaction.workbasket.get_status_display()},
@@ -19,7 +18,6 @@
           {"text": "ID"},
           {"text": "Description"},
           {"text": "Type", "classes":  "govuk-!-width-one-eighth"},
-          {"text": "Usage"},
           {"text": "Start date"},
           {"text": "End date"},
           {"text": "Status"}
