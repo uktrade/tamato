@@ -7,6 +7,7 @@ from certificates.models import CertificateType
 from certificates.serializers import CertificateSerializer
 from certificates.serializers import CertificateTypeSerializer
 from common.views import TamatoListView
+from common.views import TrackedModelDetailView
 
 
 class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
@@ -48,3 +49,13 @@ class CertificatesList(TamatoListView):
         "sid",
         "descriptions__description",
     ]
+
+
+class CertificateDetail(TrackedModelDetailView):
+    model = Certificate
+    template_name = "certificates/detail.jinja"
+    queryset = (
+        Certificate.objects.current()
+        .select_related("certificate_type")
+        .prefetch_related("descriptions")
+    )

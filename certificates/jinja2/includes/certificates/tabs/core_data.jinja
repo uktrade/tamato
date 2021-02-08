@@ -1,0 +1,39 @@
+<div class="footnote__core-data">
+    <div class="footnote__core-data__content">
+        <h2 class="govuk-heading-l">Details</h2>
+        {{ govukSummaryList({
+            "rows": [
+            {
+                "key": {"text": "Certificate ID"},
+                "value": {"text": object.sid},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Certificate type"},
+                "value": {"text": object.certificate_type ~ " - " ~ object.certificate_type.description},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Description"},
+                "value": {"text": object.get_description().description},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Start date"},
+                "value": {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "End date"},
+                "value": {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Status"},
+                "value": {"text": object.transaction.workbasket.get_status_display()},
+                "actions": {"items": []}
+            },
+            ]
+        })}}
+    </div>
+</div>
