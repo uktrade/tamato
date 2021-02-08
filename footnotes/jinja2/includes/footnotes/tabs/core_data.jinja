@@ -10,7 +10,12 @@
             },
             {
                 "key": {"text": "Footnote type"},
-                "value": {"text": object.footnote_type|string},
+                "value": {"text": object.footnote_type|string ~ " - "  ~ object.footnote_type.description},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Usage"},
+                "value": {"text": object.footnote_type.get_application_code_display()},
                 "actions": {"items": []}
             },
             {

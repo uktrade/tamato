@@ -32,7 +32,7 @@ class FilterShowMore {
     revealChoices() {
         this.button.classList.add('js-hidden');
 
-        let choices = Array.from(this.module.getElementsByClassName('js-hidden'));
+        let choices = Array.from(this.module.getElementsByClassName('govuk-checkboxes__item js-hidden'));
         choices.forEach((choice) => {
             choice.style.display = 'block';
         });

@@ -2,12 +2,12 @@
 {% set version_rows = [] %}
 {% for version in object.version_group.versions.all() %}
     {{ version_rows.append([
-    {"text": version.get_update_type_display()},
-    {"text": "{:%d %b %Y}".format(object.version_group.created_at)},
-    {"text": object.transaction.workbasket.get_status_display()},
-    {"text": "{:%d %b %Y}".format(version.valid_between.lower)},
-    {"text": "{:%d %b %Y}".format(version.valid_between.upper) if version.valid_between.upper else "-"},
-    {"text": version.get_description().description},
+        {"text": version.get_update_type_display()},
+        {"text": "{:%d %b %Y}".format(object.version_group.created_at)},
+        {"text": object.transaction.workbasket.get_status_display()},
+        {"text": "{:%d %b %Y}".format(version.valid_between.lower)},
+        {"text": "{:%d %b %Y}".format(version.valid_between.upper) if version.valid_between.upper else "-"},
+        {"text": version.get_description().description},
     ]) or ""}}
 {% endfor %}
 {{ govukTable({
