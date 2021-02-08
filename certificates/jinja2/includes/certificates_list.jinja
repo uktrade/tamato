@@ -6,7 +6,7 @@
   {{ table_rows.append([
     {"html": object_link},
     {"text": certificate.get_description().description},
-    {"text": certificate.certificate_type ~ " - " ~ certificate.certificate_type.description, "classes": "govuk-!-width-one-quarter"},
+    {"text": certificate.certificate_type ~ " - " ~ break_words(certificate.certificate_type.description), "classes": "govuk-!-width-one-quarter"},
     {"text": "{:%d %b %Y}".format(certificate.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(certificate.valid_between.upper) if certificate.valid_between.upper else "-"},
     {"text": certificate.transaction.workbasket.get_status_display()},
