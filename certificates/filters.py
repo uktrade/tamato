@@ -12,6 +12,7 @@ from certificates import models
 from common.filters import ACTIVE_STATE_CHOICES
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import TamatoFilter
+from common.jinja2 import break_words
 from common.util import TaricDateTimeRange
 
 
@@ -20,7 +21,9 @@ def certificate_type_choices():
     return [
         Choice(
             certificate_type.sid,
-            "{0} - {1}".format(certificate_type.sid, certificate_type.description),
+            "{0} - {1}".format(
+                certificate_type.sid, break_words(certificate_type.description)
+            ),
         )
         for certificate_type in certificate_types
     ]
