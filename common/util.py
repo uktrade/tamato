@@ -142,7 +142,11 @@ def get_field_tuple(model, field):
 
     if "__" in field:
         child, child_field = field.split("__", 1)
-        _, value = get_field_tuple(getattr(model, child), child_field)
+        child_instance = getattr(model, child)
+        if not child_instance:
+            value = None
+        else:
+            _, value = get_field_tuple(getattr(model, child), child_field)
 
     else:
         value = getattr(model, field)

@@ -1,7 +1,11 @@
 import pytest
 
 from common import util
+from common.tests import factories
 from common.tests.util import Dates
+
+
+pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
@@ -138,3 +142,17 @@ def test_validity_range_contains_range(overall, contained, expected):
     overall = getattr(dates, overall)
     contained = getattr(dates, contained)
     assert util.validity_range_contains_range(overall, contained) == expected
+
+
+@pytest.mark.parametrize(
+    "model_data, field, expected",
+    (
+        ({"sid": 123}, "sid", 123),
+        ({"linked_model__sid": 456}, "linked_model__sid", 456),
+        ({"linked_model": None}, "linked_model", None),
+        ({"linked_model": None}, "linked_model__sid", None),
+    ),
+)
+def test_get_field_tuple(model_data, field, expected):
+    model = factories.TestModel3Factory(**model_data)
+    assert util.get_field_tuple(model, field) == (field, expected)
