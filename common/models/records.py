@@ -371,13 +371,21 @@ class TrackedModel(PolymorphicModel):
             field.name: getattr(self, field.name)
             for field in self._meta.fields
             if field.name
-            not in (self._meta.pk.name, "polymorphic_ctype", "trackedmodel_ptr", "id")
+            not in (
+                self._meta.pk.name,
+                "transaction",
+                "polymorphic_ctype",
+                "trackedmodel_ptr",
+                "id",
+            )
         }
 
-        new_object_kwargs["transaction"] = workbasket.new_transaction()
         new_object_kwargs["update_type"] = validators.UpdateType.UPDATE
-
         new_object_kwargs.update(kwargs)
+
+        if "transaction" not in new_object_kwargs:
+            # Only create a transaction if the user didn't specify one.
+            new_object_kwargs["transaction"] = workbasket.new_transaction()
 
         new_object = cls(**new_object_kwargs)
 

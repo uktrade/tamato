@@ -6,6 +6,7 @@ from pytest_django.asserts import assertQuerysetEqual
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import records
 from common.models import TrackedModel
+from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests import models
 from common.tests.models import TestModel1
@@ -307,6 +308,16 @@ def test_save(sample_model):
 
     sample_model.name = "succeeds"
     sample_model.save(force_write=True)
+
+
+def test_new_draft_uses_passed_transaction(sample_model):
+    transaction_count = Transaction.objects.count()
+    new_transaction = sample_model.transaction.workbasket.new_transaction()
+    new_model = sample_model.new_draft(
+        sample_model.transaction.workbasket, transaction=new_transaction
+    )
+    assert new_model.transaction == new_transaction
+    assert Transaction.objects.count() == transaction_count + 1
 
 
 def test_identifying_fields(sample_model):
