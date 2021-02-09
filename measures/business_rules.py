@@ -356,11 +356,11 @@ class ME32(BusinessRule):
 
                 # check for any measures associated to commodity codes in the tree which
                 # clash with the specified measure
-                clashing_measures = matching_measures.filter(
+                clashing_measures = matching_measures.with_effective_valid_between().filter(
                     goods_nomenclature__indents__nodes__in=tree.values_list(
                         "pk", flat=True
                     ),
-                    valid_between__overlap=measure.effective_valid_between,
+                    db_effective_valid_between__overlap=measure.effective_valid_between,
                 )
                 if clashing_measures.exists():
                     raise self.violation(measure)

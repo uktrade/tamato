@@ -6,6 +6,7 @@ from django.db import DataError
 
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
+from common.tests.util import Dates
 from common.tests.util import only_applicable_after
 from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
@@ -439,21 +440,89 @@ def test_ME25(date_ranges):
         )
 
 
-@pytest.mark.parametrize(
-    "get_goods_nomenclature",
-    [
-        lambda e: e.goods_nomenclature,
+@pytest.fixture
+def existing_goods_nomenclature(date_ranges):
+    return factories.GoodsNomenclatureFactory(
+        valid_between=date_ranges.big,
+    )
+
+
+@pytest.fixture(
+    params=(
+        lambda e: e,
         lambda e: factories.GoodsNomenclatureFactory(
-            indent__node__parent=e.goods_nomenclature.indents.first().nodes.first(),
-            valid_between=e.goods_nomenclature.valid_between,
+            indent__node__parent=e.indents.first().nodes.first(),
+            valid_between=e.valid_between,
         ),
-    ],
+    ),
     ids=[
         "self",
         "child",
     ],
 )
-def test_ME32(date_ranges, get_goods_nomenclature):
+def related_goods_nomenclature(request, existing_goods_nomenclature):
+    return request.param(existing_goods_nomenclature)
+
+
+@pytest.fixture(
+    params=(
+        lambda d: {"valid_between": d.normal},
+        lambda d: {
+            "valid_between": d.no_end,
+            "generating_regulation__valid_between": d.normal,
+            "generating_regulation__effective_end_date": d.normal.upper,
+        },
+    ),
+    ids=[
+        "explicit",
+        "implicit",
+    ],
+)
+def existing_measure_data(request, date_ranges, existing_goods_nomenclature):
+    return {
+        "goods_nomenclature": existing_goods_nomenclature,
+        **request.param(date_ranges),
+    }
+
+
+@pytest.fixture(
+    params=(
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+            },
+            True,
+        ),
+        (
+            lambda d: {
+                "valid_between": Dates.no_end_before(d.adjacent_earlier.lower),
+                "generating_regulation__valid_between": d.adjacent_earlier,
+                "generating_regulation__effective_end_date": d.adjacent_earlier.upper,
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.later,
+            },
+            False,
+        ),
+    ),
+    ids=[
+        "explicit:overlapping",
+        "implicit:not-overlapping",
+        "explicit:not-overlapping",
+    ],
+)
+def related_measure_data(request, date_ranges, related_goods_nomenclature):
+    callable, expected = request.param
+    return {
+        "goods_nomenclature": related_goods_nomenclature,
+        **callable(date_ranges),
+    }, expected
+
+
+def test_ME32(existing_measure_data, related_measure_data):
     """There may be no overlap in time with other measure occurrences with a goods code
     in the same nomenclature hierarchy which references the same measure type, geo area,
     order number, additional code and reduction indicator. This rule is not applicable
@@ -463,35 +532,23 @@ def test_ME32(date_ranges, get_goods_nomenclature):
     upward hierarchy and all commodity codes in the downward hierarchy.
     """
 
-    existing = factories.MeasureFactory.create(
-        valid_between=date_ranges.normal,
-        goods_nomenclature__valid_between=date_ranges.big,
-    )
+    existing = factories.MeasureFactory.create(**existing_measure_data)
 
-    overlapping = factories.MeasureFactory.create(
-        goods_nomenclature=get_goods_nomenclature(existing),
+    related_data, error_expected = related_measure_data
+    related = factories.MeasureFactory.create(
         measure_type=existing.measure_type,
         geographical_area=existing.geographical_area,
         order_number=existing.order_number,
         additional_code=existing.additional_code,
         reduction=existing.reduction,
-        valid_between=date_ranges.overlap_normal,
+        **related_data,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME32().validate(overlapping)
-
-    non_overlapping = factories.MeasureFactory.create(
-        goods_nomenclature=get_goods_nomenclature(existing),
-        measure_type=existing.measure_type,
-        geographical_area=existing.geographical_area,
-        order_number=existing.order_number,
-        additional_code=existing.additional_code,
-        reduction=existing.reduction,
-        valid_between=date_ranges.earlier,
-    )
-
-    business_rules.ME32().validate(non_overlapping)
+    if error_expected:
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.ME32().validate(related)
+    else:
+        business_rules.ME32().validate(related)
 
 
 # -- Ceiling/quota definition existence
