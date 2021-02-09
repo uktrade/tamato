@@ -42,3 +42,7 @@ class RedisCacheEngine(BaseEngine):
 
     def dump(self):
         pass
+
+    def clear(self):
+        prefix = getattr(settings, "IMPORTER_CACHE_PREFIX", "__IMPORTER_CACHE")
+        cache.delete(f"{prefix}*")

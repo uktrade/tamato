@@ -31,6 +31,7 @@ from common.util import get_field_tuple
 from common.util import TaricDateTimeRange
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
+from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.validators import WorkflowStatus
 
@@ -266,6 +267,7 @@ def imported_fields_match(valid_user, settings):
         model: Union[TrackedModel, Type[DjangoModelFactory]],
         serializer: Type[TrackedModelSerializer],
     ) -> TrackedModel:
+        get_nursery().cache.clear()
         settings.SKIP_WORKBASKET_VALIDATION = True
         if isinstance(model, type) and issubclass(model, DjangoModelFactory):
             model = model.build(update_type=UpdateType.CREATE)

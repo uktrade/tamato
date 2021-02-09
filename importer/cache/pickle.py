@@ -34,3 +34,6 @@ class PickleCacheEngine(BaseEngine):
     def dump(self):
         with open(self.CACHE_FILE, "wb") as dump_file:
             pickle.dump(self.CACHE, dump_file)
+
+    def clear(self):
+        self.CACHE.clear()

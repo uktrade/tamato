@@ -41,3 +41,6 @@ class ObjectCacheFacade:
 
     def dump(self):
         self.engine.dump()
+
+    def clear(self):
+        self.engine.clear()

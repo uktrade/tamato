@@ -13,3 +13,6 @@ class BaseEngine:
 
     def dump(self):
         raise NotImplementedError
+
+    def clear(self):
+        raise NotImplementedError
