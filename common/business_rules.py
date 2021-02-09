@@ -6,6 +6,7 @@ from functools import wraps
 from typing import Iterable
 from typing import Mapping
 from typing import Optional
+from typing import Type
 from typing import Union
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -85,6 +86,8 @@ class BusinessRuleBase(type):
 
 class BusinessRule(metaclass=BusinessRuleBase):
     """Represents a TARIC business rule."""
+
+    Violation: Type[BusinessRuleViolation]
 
     @classmethod
     def get_linked_models(cls, model: TrackedModel) -> Iterable[TrackedModel]:
@@ -174,6 +177,7 @@ class UniqueIdentifyingFields(BusinessRule):
         if (
             model.__class__.objects.filter(**query)
             .approved_up_to_transaction(model.transaction)
+            .exclude(id=model.id)
             .exists()
         ):
             raise self.violation(model)
