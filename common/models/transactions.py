@@ -58,9 +58,9 @@ class Transaction(TimestampedMixin):
         for model in self.tracked_models.all():
             for rule in model.business_rules:
                 try:
-                    rule.validate(model)
+                    rule().validate(model)
                 except BusinessRuleViolation as violation:
-                    self.errors.append((model, violation))
+                    self.errors.append(violation)
 
         if self.errors:
             raise ValidationError(self.errors)
