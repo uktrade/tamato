@@ -395,11 +395,11 @@
 
                 <span class="c1"># check for any measures associated to commodity codes in the tree which</span>
                 <span class="c1"># clash with the specified measure</span>
-                <span class="n">clashing_measures</span> <span class="o">=</span> <span class="n">matching_measures</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">clashing_measures</span> <span class="o">=</span> <span class="n">matching_measures</span><span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                     <span class="n">goods_nomenclature__indents__nodes__in</span><span class="o">=</span><span class="n">tree</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
                         <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
                     <span class="p">),</span>
-                    <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                    <span class="n">db_effective_valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">clashing_measures</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                     <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
