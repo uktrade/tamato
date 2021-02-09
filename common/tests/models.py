@@ -36,4 +36,4 @@ class TestModel3(TrackedModel, ValidityMixin):
     subrecord_code = "01"
 
     sid = models.PositiveIntegerField()
-    linked_model = models.ForeignKey(TestModel1, on_delete=models.PROTECT)
+    linked_model = models.ForeignKey(TestModel1, null=True, on_delete=models.PROTECT)
