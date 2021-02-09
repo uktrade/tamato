@@ -23,6 +23,7 @@ urlpatterns = [
     path("", include("additional_codes.urls")),
     path("", include("certificates.urls")),
     path("", include("commodities.urls")),
+    path("", include("exporter.urls")),
     path("", include("footnotes.urls")),
     path("", include("geo_areas.urls")),
     path("", include("importer.urls")),

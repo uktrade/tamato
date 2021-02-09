@@ -4,11 +4,9 @@ import re
 import pytest
 from dateutil.relativedelta import relativedelta
 from pytest_bdd import given
-from pytest_bdd import parsers
 from pytest_bdd import scenarios
 from pytest_bdd import then
 from pytest_bdd import when
-from rest_framework.reverse import reverse
 
 from common.tests import factories
 

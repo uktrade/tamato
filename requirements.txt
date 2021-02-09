@@ -21,6 +21,7 @@ django-treebeard
 django-webpack-loader
 django_extensions
 djangorestframework
+drf-flex-fields==0.8.8
 factory-boy
 freezegun
 git+https://github.com/alphagov/govuk-frontend-jinja.git

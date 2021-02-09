@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from drf_extra_fields.fields import DateTimeRangeField
+from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 
@@ -18,7 +19,7 @@ class TARIC3DateTimeRangeField(DateTimeRangeField):
     range_type = TaricDateTimeRange
 
 
-class TrackedModelSerializerMixin(serializers.ModelSerializer):
+class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
     taric_template = serializers.SerializerMethodField()
 
     formats_with_template = {"xml"}
@@ -94,6 +95,32 @@ class TrackedModelSerializer(PolymorphicSerializer):
     def register_polymorphic_model(cls, serializer):
         cls.model_serializer_mapping[serializer.Meta.model] = serializer
         return serializer
+
+    def __init__(self, *args, child_kwargs=None, **kwargs):
+        """
+        This is a near direct copy from the base class - however it adds in
+        the `child_kwargs` argument, allowing the serializer to pass certain
+        kwargs to the child serializers and not use them itself.
+
+        This is important for more custom serializers - such as using
+        the `omit` keyword from rest_flex_fields.
+        """
+        super(PolymorphicSerializer, self).__init__(*args, **kwargs)
+
+        model_serializer_mapping = self.model_serializer_mapping
+        self.model_serializer_mapping = {}
+        self.resource_type_model_mapping = {}
+
+        kwargs.update(**(child_kwargs or {}))
+
+        for model, serializer in model_serializer_mapping.items():
+            resource_type = self.to_resource_type(model)
+            if callable(serializer):
+                serializer = serializer(*args, **kwargs)
+                serializer.parent = self
+
+            self.resource_type_model_mapping[resource_type] = model
+            self.model_serializer_mapping[model] = serializer
 
 
 class TransactionSerializer(serializers.ModelSerializer):
