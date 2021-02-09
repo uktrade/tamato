@@ -6,6 +6,9 @@ import pytest
 
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleChecker
+from common.business_rules import BusinessRuleViolation
+from common.business_rules import NoOverlapping
+from common.business_rules import UniqueIdentifyingFields
 from common.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -64,3 +67,50 @@ def test_indirect_business_rule_validation():
         BusinessRuleChecker([model.linked_model]).validate()
 
     assert TestRule.validate.called_with(model)
+
+
+@pytest.fixture(
+    params=[
+        UniqueIdentifyingFields,
+        NoOverlapping,
+    ],
+)
+def rule(request):
+    return request.param
+
+
+def test_rule_with_no_other_models(rule):
+    model = factories.TestModel1Factory()
+    rule().validate(model)
+
+
+def test_rule_with_no_overlaps(rule):
+    model = factories.TestModel1Factory()
+    other = factories.TestModel1Factory()
+    rule().validate(model)
+    rule().validate(other)
+
+
+def test_rule_with_versions(rule, workbasket):
+    version1 = factories.TestModel1Factory()
+    version2 = version1.new_draft(workbasket)
+    rule().validate(version1)
+    rule().validate(version2)
+
+
+def test_unique_identifying_fields_with_overlaps():
+    model = factories.TestModel1Factory()
+    other = factories.TestModel1Factory(sid=model.sid)
+    with pytest.raises(BusinessRuleViolation):
+        UniqueIdentifyingFields().validate(model)
+    with pytest.raises(BusinessRuleViolation):
+        UniqueIdentifyingFields().validate(other)
+
+
+def test_unique_identifying_fields_with_custom_fields():
+    model = factories.TestModel2Factory()
+    UniqueIdentifyingFields().validate(model)
+
+    other = factories.TestModel2Factory(custom_sid=model.custom_sid)
+    with pytest.raises(BusinessRuleViolation):
+        UniqueIdentifyingFields().validate(other)
