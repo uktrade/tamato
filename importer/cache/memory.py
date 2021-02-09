@@ -18,3 +18,6 @@ class MemoryCacheEngine(BaseEngine):
 
     def dump(self):
         pass
+
+    def clear(self):
+        self.CACHE.clear()
