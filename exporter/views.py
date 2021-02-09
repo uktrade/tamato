@@ -82,9 +82,10 @@ def tracked_model_to_activity_stream_item(obj: TrackedModel):
     extra_data = {}
     for relation, _ in obj.get_relations():
         exclusions.append(relation.name)
-        if hasattr(obj, relation.name):
+        relation_obj = getattr(obj, relation.name, None)
+        if relation_obj:
             extra_data[f"{item_type}:{relation.name}"] = get_activity_stream_item_id(
-                getattr(obj, relation.name)
+                relation_obj
             )
 
     obj_data = {
