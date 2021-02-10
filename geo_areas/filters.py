@@ -1,9 +1,11 @@
 import logging
 
+from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.urls import reverse_lazy
-from django_filters import rest_framework as filters
+from django_filters import MultipleChoiceFilter
 
+from common.filters import ActiveStateMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
@@ -20,8 +22,6 @@ class GeographicalAreaFilterMixin(TamatoFilterMixin):
     """
 
     search_fields = (
-        "sid",
-        "area_code",
         "area_id",
         StringAgg("descriptions__description", delimiter=" "),
     )
@@ -31,10 +31,20 @@ class GeographicalAreaFilterBackend(TamatoFilterBackend, GeographicalAreaFilterM
     pass
 
 
-class GeographicalAreaFilter(TamatoFilter, GeographicalAreaFilterMixin):
-    area_code = filters.TypedMultipleChoiceFilter(choices=AreaCode.choices, coerce=int)
+class GeographicalAreaFilter(
+    TamatoFilter, GeographicalAreaFilterMixin, ActiveStateMixin
+):
+
+    area_code = MultipleChoiceFilter(
+        choices=AreaCode.choices,
+        widget=forms.CheckboxSelectMultiple,
+        label="Area code",
+        help_text="Select all that apply",
+        required=False,
+    )
+
     clear_url = reverse_lazy("geoarea-ui-list")
 
     class Meta:
         model = GeographicalArea
-        fields = ["area_id", "sid", "area_code"]
+        fields = ["search", "area_code", "active_state"]

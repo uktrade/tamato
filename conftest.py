@@ -1,37 +1,27 @@
 import contextlib
 from datetime import date
 from functools import lru_cache
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Optional
-from typing import Type
-from typing import Union
-from unittest.mock import patch
-from unittest.mock import PropertyMock
+from typing import Any, Callable, Dict, Optional, Type, Union
+from unittest.mock import PropertyMock, patch
 
 import boto3
 import pytest
+from common.models import TrackedModel
+from common.serializers import TrackedModelSerializer
+from common.tests import factories
+from common.tests.util import Dates, generate_test_import_xml
+from common.util import TaricDateRange, get_field_tuple
+from common.validators import UpdateType
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from exporter.storages import HMRCStorage
 from factory.django import DjangoModelFactory
+from importer.nursery import get_nursery
+from importer.taric import process_taric_xml_stream
 from lxml import etree
 from moto import mock_s3
 from pytest_bdd import given
 from rest_framework.test import APIClient
-
-from common.models import TrackedModel
-from common.serializers import TrackedModelSerializer
-from common.tests import factories
-from common.tests.util import Dates
-from common.tests.util import generate_test_import_xml
-from common.util import get_field_tuple
-from common.util import TaricDateRange
-from common.validators import UpdateType
-from exporter.storages import HMRCStorage
-from importer.nursery import get_nursery
-from importer.taric import process_taric_xml_stream
 from workbaskets.validators import WorkflowStatus
 
 
@@ -59,6 +49,10 @@ def pytest_runtest_setup(item):
 def pytest_bdd_apply_tag(tag, function):
     if tag == "todo":
         marker = pytest.mark.skip(reason="Not implemented yet")
+        marker(function)
+        return True
+    if tag == "xfail":
+        marker = pytest.mark.xfail()
         marker(function)
         return True
 
