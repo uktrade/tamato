@@ -16,10 +16,8 @@ log = logging.getLogger(__name__)
 
 
 class GeographicalAreaFilterMixin(TamatoFilterMixin):
-    """
-    Filter mixin to allow custom filtering on descriptions,
-    SIDs and area_codes, area_id.
-    """
+    """Filter mixin to allow custom filtering on descriptions, SIDs and
+    area_codes, area_id."""
 
     search_fields = (
         "area_id",
@@ -32,7 +30,9 @@ class GeographicalAreaFilterBackend(TamatoFilterBackend, GeographicalAreaFilterM
 
 
 class GeographicalAreaFilter(
-    TamatoFilter, GeographicalAreaFilterMixin, ActiveStateMixin
+    TamatoFilter,
+    GeographicalAreaFilterMixin,
+    ActiveStateMixin,
 ):
 
     area_code = MultipleChoiceFilter(
