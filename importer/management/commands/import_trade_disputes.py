@@ -8,7 +8,7 @@ import xlrd
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from commodities.models import GoodsNomenclature
@@ -68,7 +68,7 @@ class TradeDisputesImporter(RowsImporter):
         self.old_rows = NomenclatureTreeCollector[List[OldMeasureRow]](BREXIT)
         self.new_rows = NomenclatureTreeCollector[NewRow](BREXIT)
         self.row_runner = DualRowRunner(self.old_rows, self.new_rows)
-        self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.brexit_to_infinity = DateRange(BREXIT, None)
         self.geo_area = GeographicalArea.objects.as_at(BREXIT).get(sid=103)
         self.generating_regulation, _ = Regulation.objects.get_or_create(
             regulation_id="C2100004",

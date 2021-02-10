@@ -1,6 +1,5 @@
 """Business rules for measures."""
-from datetime import datetime
-from datetime import timezone
+from datetime import date
 from typing import Mapping
 from typing import Optional
 
@@ -13,7 +12,7 @@ from common.business_rules import only_applicable_after
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from footnotes.validators import ApplicationCode
@@ -572,8 +571,7 @@ class ME87(BusinessRule):
     def validate(self, measure):
         if (
             not measure.effective_valid_between.upper_inf
-            and measure.effective_valid_between.upper
-            < datetime(2008, 1, 1, tzinfo=timezone.utc)
+            and measure.effective_valid_between.upper < date(2008, 1, 1)
         ):
             # Exclude measure ending before 2008 - ME87 only counts from 2008 onwards.
             return
@@ -582,13 +580,12 @@ class ME87(BusinessRule):
         effective_end_date = measure.generating_regulation.effective_end_date
 
         if effective_end_date:
-            regulation_validity = TaricDateTimeRange(
+            regulation_validity = TaricDateRange(
                 regulation_validity.lower,
-                datetime(
+                date(
                     year=effective_end_date.year,
                     month=effective_end_date.month,
                     day=effective_end_date.day,
-                    tzinfo=timezone.utc,
                 ),
             )
 
@@ -1152,13 +1149,13 @@ class ME104(BusinessRule):
 
         # TODO: verify this day (should be 2004-01-01 really, except for measure 2700491 (at least), and 2939413))
         # TODO: And carrying on past 2020 with 3784976
-        if 1 or measure.valid_between.lower < datetime(2007, 7, 1, tzinfo=timezone.utc):
+        if 1 or measure.valid_between.lower < date(2007, 7, 1):
             return
 
         valid_day = measure.effective_end_date + relativedelta(days=1)
         if valid_day not in terminating.valid_between:
             amends = terminating.amends.first()
-            if amends and valid_day in TaricDateTimeRange(
+            if amends and valid_day in TaricDateRange(
                 amends.valid_between.lower, terminating.valid_between.upper
             ):
                 return

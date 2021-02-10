@@ -11,7 +11,7 @@ import xlrd
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from commodities.import_handlers import GoodsNomenclatureIndentHandler
@@ -89,7 +89,7 @@ class IndentImporter(RowsImporter):
             sid=new_row.indent_sid,
             indented_goods_nomenclature=child,
             indent=max(indent, 0),
-            valid_between=DateTimeTZRange(new_row.start_date, new_row.end_date),
+            valid_between=DateRange(new_row.start_date, new_row.end_date),
             workbasket=self.workbasket,
             update_type=UpdateType.CREATE,
         )
@@ -101,7 +101,7 @@ class IndentImporter(RowsImporter):
         ):  # This is a root indent (i.e. a chapter heading)
             GoodsNomenclatureIndentNode.add_root(
                 indent=indent_model,
-                valid_between=DateTimeTZRange(new_row.start_date, new_row.end_date),
+                valid_between=DateRange(new_row.start_date, new_row.end_date),
             )
         else:
             # The indent is now too deep to use the item ID directly. Instead the code that is:
@@ -215,7 +215,7 @@ class IndentImporter(RowsImporter):
 
                 next_parent.add_child(
                     indent=indent_model,
-                    valid_between=DateTimeTZRange(indent_start, indent_end),
+                    valid_between=DateRange(indent_start, indent_end),
                 )
 
                 start_date = indent_end

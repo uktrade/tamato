@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import date
 from datetime import timedelta
 from functools import cached_property
 from typing import Dict
@@ -13,7 +13,7 @@ from typing import Union
 
 import pytz
 import xlrd
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from additional_codes.models import AdditionalCode
@@ -55,14 +55,15 @@ LONDON = pytz.timezone("Europe/London")
 
 # The date of the end of the transition period,
 # localized to the Europe/London timezone.
-BREXIT = LONDON.localize(datetime(2021, 1, 1))
+BREXIT = date(2021, 1, 1)
 
 
-def parse_date(cell: Cell) -> datetime:
+def parse_date(cell: Cell) -> date:
     if cell.ctype == xlrd.XL_CELL_DATE:
-        return LONDON.localize(xlrd.xldate.xldate_as_datetime(cell.value, datemode=0))
-    else:
-        return LONDON.localize(datetime.strptime(cell.value, r"%Y-%m-%d"))
+        return LONDON.localize(
+            xlrd.xldate.xldate_as_datetime(cell.value, datemode=0)
+        ).date()
+    return date.fromisoformat(cell.value)
 
 
 def parse_list(value: str) -> List[str]:
@@ -134,13 +135,13 @@ class MeasureEndingPattern:
         self.ensure_unique = ensure_unique
         self.old_sids: Set[int] = set()
         self.fake_quota_sids = counter_generator(start=10000)
-        self.start_of_time = LONDON.localize(datetime(1970, 1, 1, 0, 0, 0))
+        self.start_of_time = date(1970, 1, 1)
 
     def end_date_measure(
         self,
         old_row: OldMeasureRow,
         terminating_regulation: Regulation,
-        new_start_date: datetime = BREXIT,
+        new_start_date: date = BREXIT,
     ) -> Iterator[TrackedModel]:
         if old_row.inherited_measure:
             return
@@ -166,7 +167,7 @@ class MeasureEndingPattern:
                 order_number=old_row.order_number,
                 defaults={
                     "sid": self.fake_quota_sids(),
-                    "valid_between": DateTimeTZRange(
+                    "valid_between": DateRange(
                         lower=self.start_of_time,
                         upper=None,
                     ),
@@ -180,7 +181,7 @@ class MeasureEndingPattern:
             quota = (
                 QuotaOrderNumber.objects.get(
                     order_number=old_row.order_number,
-                    valid_between__contains=DateTimeTZRange(
+                    valid_between__contains=DateRange(
                         lower=old_row.measure_start_date,
                         upper=old_row.measure_end_date,
                     ),
@@ -228,7 +229,7 @@ class MeasureEndingPattern:
                     if old_row.additional_code_sid
                     else None
                 ),
-                valid_between=DateTimeTZRange(
+                valid_between=DateRange(
                     old_row.measure_start_date,
                     (
                         old_row.measure_end_date

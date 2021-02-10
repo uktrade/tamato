@@ -12,7 +12,7 @@ from typing import Optional
 import xlrd
 from django.core.management import BaseCommand
 from django.db import transaction
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from commodities.models import GoodsNomenclature
@@ -91,7 +91,7 @@ class NewQuotaRow:
 
 class FTAQuotaImporter(RowsImporter):
     def setup(self) -> Iterator[TrackedModel]:
-        self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.brexit_to_infinity = DateRange(BREXIT, None)
         self.units = {
             "Kilograms": Measurement.objects.get(
                 measurement_unit__code="KGM",
@@ -173,7 +173,7 @@ class FTAQuotaImporter(RowsImporter):
             initial_volume=volume,
             measurement_unit=self.units[row.unit].measurement_unit,
             maximum_precision=3,
-            valid_between=DateTimeTZRange(
+            valid_between=DateRange(
                 lower=start_date,
                 upper=end_date,
             ),
@@ -197,7 +197,7 @@ class FTAQuotaImporter(RowsImporter):
                 initial_volume=row.interim_volume,
                 measurement_unit=self.units[row.unit].measurement_unit,
                 maximum_precision=3,
-                valid_between=DateTimeTZRange(
+                valid_between=DateRange(
                     lower=BREXIT,
                     upper=interim_end,
                 ),
@@ -396,7 +396,7 @@ class FTAMeasuresImporter(RowsImporter):
             add_new_row=add_single_row,
         )
 
-        self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.brexit_to_infinity = DateRange(BREXIT, None)
 
         self.preferential_si, created = Regulation.objects.get_or_create(
             regulation_id="C2100005",
@@ -529,7 +529,7 @@ class FTAMeasuresImporter(RowsImporter):
                 )
             if quota:
                 assert validity_range_contains_range(
-                    quota.valid_between, DateTimeTZRange(start_date, end_date)
+                    quota.valid_between, DateRange(start_date, end_date)
                 )
 
         # Turkey: Where the measure type is currently "Customs Union" use

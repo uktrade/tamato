@@ -11,7 +11,7 @@ from common.tests.util import only_applicable_after
 from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
@@ -1663,7 +1663,7 @@ def test_ME104(date_ranges, unapproved_transaction):
     )
 
     measure.terminating_regulation = factories.RegulationFactory.create(
-        valid_between=TaricDateTimeRange(
+        valid_between=TaricDateRange(
             measure.valid_between.upper + relativedelta(days=+1),
             None,
         ),

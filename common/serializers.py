@@ -1,22 +1,22 @@
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
-from drf_extra_fields.fields import DateTimeRangeField
+from drf_extra_fields.fields import DateRangeField
 from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 
 from common.models import Transaction
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 
 
-class TARIC3DateTimeRangeField(DateTimeRangeField):
-    child = serializers.DateTimeField(
+class TARIC3DateRangeField(DateRangeField):
+    child = serializers.DateField(
         input_formats=[
             "iso-8601",
             "%Y-%m-%d",
         ]  # default  # TARIC3 date format
     )
-    range_type = TaricDateTimeRange
+    range_type = TaricDateRange
 
 
 class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
@@ -63,7 +63,7 @@ class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
 
 class ValiditySerializerMixin(serializers.ModelSerializer):
     date_format_string = "{:%Y-%m-%d}"
-    valid_between = TARIC3DateTimeRangeField()
+    valid_between = TARIC3DateRangeField()
     end_date = serializers.SerializerMethodField()
     start_date = serializers.SerializerMethodField()
 

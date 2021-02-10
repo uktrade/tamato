@@ -1,8 +1,14 @@
 """Common field types."""
+from typing import Union
+
+from dateutil.relativedelta import relativedelta
+from django.contrib.postgres.fields import DateRangeField
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
+from psycopg2.extras import DateRange
 
 from common import validators
+from common.util import TaricDateRange
 from common.util import TaricDateTimeRange
 
 
@@ -58,6 +64,26 @@ class ApplicabilityCode(models.PositiveSmallIntegerField):
         name, path, args, kwargs = super().deconstruct()
         del kwargs["choices"]
         return name, path, args, kwargs
+
+
+class TaricDateRangeField(DateRangeField):
+    range_type = TaricDateRange
+
+    def from_db_value(
+        self, value: Union[DateRange, TaricDateRange], *_args, **_kwargs
+    ) -> TaricDateRange:
+        """
+        By default Django ignores the range_type and just returns a Psycopg2 DateRange.
+        This method forces the conversion to a TaricDateRange and shifts the upper date
+        to be inclusive (it is exclusive by default).
+        """
+        if not isinstance(value, DateRange):
+            return value
+        lower = value.lower
+        upper = value.upper
+        if not value.upper_inc and not value.upper_inf:
+            upper = upper - relativedelta(days=1)
+        return TaricDateRange(lower=lower, upper=upper)
 
 
 class TaricDateTimeRangeField(DateTimeRangeField):

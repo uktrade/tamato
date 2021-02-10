@@ -2,7 +2,7 @@ import logging
 import xml.etree.ElementTree as ET
 import xml.etree.ElementTree as etree
 from collections import defaultdict
-from datetime import datetime
+from datetime import date
 from datetime import timedelta
 from enum import Enum
 from io import StringIO
@@ -272,13 +272,9 @@ class PassiveMeasureFilter:
             # want to keep it or not.
             if subrecord_code == Measure.subrecord_code:
                 measure = record["measure"]
-                start_date = LONDON.localize(
-                    datetime.strptime(measure["valid_between"]["lower"], "%Y-%m-%d")
-                )
+                start_date = date.fromisoformat(measure["valid_between"]["lower"])
                 end_date = (
-                    LONDON.localize(
-                        datetime.strptime(measure["valid_between"]["upper"], "%Y-%m-%d")
-                    )
+                    date.fromisoformat(measure["valid_between"]["upper"])
                     if "upper" in measure["valid_between"]
                     else None
                 )

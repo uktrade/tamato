@@ -1,9 +1,9 @@
-from django.contrib.postgres.fields import DateTimeRangeField
 from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
 from common.fields import ShortDescription
+from common.fields import TaricDateRangeField
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas.validators import area_id_validator
@@ -115,7 +115,7 @@ class Regulation(TrackedModel):
 
     # Complete Abrogation, Explicit Abrogation and Prorogation regulations have no
     # validity period
-    valid_between = DateTimeRangeField(blank=True, null=True)
+    valid_between = TaricDateRangeField(blank=True, null=True)
 
     # Base, Modification and FTS regulations have an effective end date
     effective_end_date = models.DateField(blank=True, null=True, editable=False)

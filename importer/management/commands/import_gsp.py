@@ -13,7 +13,7 @@ import xlrd
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 from xlrd.sheet import Sheet
 
@@ -124,7 +124,7 @@ class GSPImporter(RowsImporter):
         self.old_rows = NomenclatureTreeCollector[List[OldMeasureRow]](BREXIT)
         self.new_rows = NomenclatureTreeCollector[NewRow](BREXIT)
 
-        self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.brexit_to_infinity = DateRange(BREXIT, None)
         self.gsp_regulation_group = Group.objects.get(group_id="SPG")
 
         self.gf_geography = GeographicalArea.objects.get(area_id="2020")
@@ -444,7 +444,7 @@ class GSPGeographicAreaImporter:
             return GeographicalMembership(
                 geo_group=geography,
                 member=area,
-                valid_between=DateTimeTZRange(
+                valid_between=DateRange(
                     membership.valid_between.lower, BREXIT - timedelta(days=1)
                 ),
                 update_type=UpdateType.UPDATE,
@@ -456,7 +456,7 @@ class GSPGeographicAreaImporter:
             return GeographicalMembership(
                 geo_group=geography,
                 member=area,
-                valid_between=DateTimeTZRange(BREXIT, None),
+                valid_between=DateRange(BREXIT, None),
                 update_type=UpdateType.CREATE,
                 workbasket=self.workbasket,
             )

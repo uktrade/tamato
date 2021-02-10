@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import date
 
 from crispy_forms_gds.choices import Choice
 from django import forms
@@ -17,7 +17,7 @@ from common.filters import LazyMultipleChoiceFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from footnotes import models
 from footnotes.validators import FOOTNOTE_ID_PATTERN
 from footnotes.validators import FOOTNOTE_TYPE_ID_PATTERN
@@ -105,7 +105,7 @@ class FootnoteFilter(TamatoFilter, FootnoteFilterMixin):
     def filter_active_state(self, queryset, name, value):
 
         active_status_filter = Q()
-        current_date = TaricDateTimeRange(datetime.now(), datetime.now())
+        current_date = TaricDateRange(date.today(), date.today())
         if value == ["active"]:
             active_status_filter = Q(valid_between__upper_inf=True) | Q(
                 valid_between__contains=current_date

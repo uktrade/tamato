@@ -1,9 +1,8 @@
-from datetime import datetime
+from datetime import date
 
 from crispy_forms_gds.choices import Choice
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import DateTimeField
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django_filters import MultipleChoiceFilter
@@ -13,7 +12,7 @@ from common.filters import ACTIVE_STATE_CHOICES
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import TamatoFilter
 from common.jinja2 import break_words
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 
 
 def certificate_type_choices():
@@ -58,7 +57,7 @@ class CertificateFilter(TamatoFilter):
     def filter_active_state(self, queryset, name, value):
 
         active_status_filter = Q()
-        current_date = TaricDateTimeRange(datetime.now(), datetime.now())
+        current_date = TaricDateRange(date.today(), date.today())
         if value == ["active"]:
             active_status_filter = Q(valid_between__upper_inf=True) | Q(
                 valid_between__contains=current_date

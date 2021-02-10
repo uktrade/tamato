@@ -1,7 +1,7 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
-from common.serializers import TARIC3DateTimeRangeField
+from common.serializers import TARIC3DateRangeField
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
@@ -180,7 +180,7 @@ class RegulationImporterSerializer(
     published_at = serializers.DateField(read_only=False, required=False)
     effective_end_date = serializers.DateField(read_only=False, required=False)
     replacement_indicator = serializers.IntegerField(read_only=False)
-    valid_between = TARIC3DateTimeRangeField(required=False)
+    valid_between = TARIC3DateRangeField(required=False)
 
     def get_compound_information_text(self, obj):
         parts = [obj.information_text, obj.public_identifier, obj.url]

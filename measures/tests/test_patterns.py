@@ -5,7 +5,7 @@ import pytest
 
 from common.tests import factories
 from common.tests.util import Dates
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from measures.patterns import MeasureCreationPattern
 from workbaskets.models import WorkBasket
 
@@ -120,7 +120,7 @@ def test_starts_on_minimum_date(
 ):
     measure_data["validity_start"] = date_ranges.no_end_before(date_ranges.now).lower
     measure_data["goods_nomenclature"] = factories.GoodsNomenclatureFactory(
-        valid_between=TaricDateTimeRange(date_ranges.now, None),
+        valid_between=TaricDateRange(date_ranges.now, None),
     )
 
     models = list(measure_creation_pattern.create(**measure_data))
