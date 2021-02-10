@@ -1,12 +1,9 @@
 import re
 from datetime import date
-from datetime import datetime
-from typing import Callable
 
-from crispy_forms_gds.choices import Choice
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import DateTimeField
+from django.db.models import DateField
 from django.db.models import Q
 from django.db.models.functions import Extract
 from django.db.models.functions import Lower
@@ -21,7 +18,7 @@ from common.filters import LazyMultipleChoiceFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 
 
 COMBINED_ADDITIONAL_CODE_AND_TYPE_ID = re.compile(
@@ -93,7 +90,7 @@ class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
         if value:
             queryset = queryset.annotate(
                 start_year=Extract(
-                    Lower("valid_between", output_field=DateTimeField()), "year"
+                    Lower("valid_between", output_field=DateField()), "year"
                 )
             ).filter(start_year__in=value)
         return queryset
@@ -101,7 +98,7 @@ class AdditionalCodeFilter(TamatoFilter, AdditionalCodeFilterMixin):
     def filter_active_state(self, queryset, name, value):
 
         active_status_filter = Q()
-        current_date = TaricDateTimeRange(datetime.now(), datetime.now())
+        current_date = TaricDateRange(date.today(), date.today())
         if value == ["active"]:
             active_status_filter = Q(valid_between__upper_inf=True) | Q(
                 valid_between__contains=current_date

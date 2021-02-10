@@ -30,7 +30,7 @@ def get_envelope_of_active_workbaskets(
 
 
 def get_envelope_filename(counter) -> str:
-    now = datetime.datetime.now()
+    now = datetime.date.today()
     return f"DIT{str(now.year)[:2]}{counter:04}.xml"
 
 

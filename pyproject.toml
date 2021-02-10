@@ -1,0 +1,83 @@
+[project]
+name = "tamato"
+version = "0.0.1"
+requires_python = ">=3.9"
+license = "MIT"
+description = "UK Tariff Management Tool"
+authors = [
+    "Department for International Trade <webops@digital.trade.gov.uk>",
+]
+maintainers = [
+    "Department for International Trade <webops@digital.trade.gov.uk>",
+]
+readme = "README.md"
+dependencies = [
+    "dj-database-url",
+    "django",
+    "django-dotenv",
+    "django-extra-fields",
+    "django-filter",
+    "django-fsm",
+    "django-health-check",
+    "django-polymorphic",
+    "django-treebeard",
+    "django-webpack-loader",
+    "django_extensions",
+    "djangorestframework",
+    "gunicorn",
+    "jinja2",
+    "psycopg2-binary",
+    "sentry-sdk",
+    "werkzeug",
+    "whitenoise",
+]
+
+[project.urls]
+repository = "https://github.com/uktrade/tamato"
+documentation = "https://uktrade.github.io/tamato/docs/"
+
+
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+omit = [
+    '*/migrations/*',
+    '*/site-packages/*',
+    'manage.py',
+    '*/.pycharm_helpers/*',
+    '*/pycharm/*',
+]
+
+exclude_lines = [
+    # Don't complain about missing debug-only code:
+    'def __repr__',
+    'if self\.debug',
+
+    # Don't complain if tests don't hit defensive assertion code:
+    'raise AssertionError',
+    'raise NotImplementedError',
+
+    # Don't complain if non-runnable code isn't run:
+    'if 0:',
+    'if __name__ == .__main__.:',
+]
+
+[tool.isort]
+line_length = 88
+force_single_line = true
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "settings.test"
+norecursedirs = [
+    "venv",
+    "node_modules",
+    ".local",
+]

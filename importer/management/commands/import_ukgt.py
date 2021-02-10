@@ -10,7 +10,7 @@ import xlrd
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from additional_codes.models import AdditionalCode
@@ -96,7 +96,7 @@ class UKGTImporter(RowsImporter):
         }
 
         self.erga_omnes = GeographicalArea.objects.as_at(BREXIT).get(area_id="1011")
-        self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.brexit_to_infinity = DateRange(BREXIT, None)
         self.mfn_regulation_group = Group.objects.get(group_id="DNC")
 
         self.ukgt_si, created = Regulation.objects.get_or_create(

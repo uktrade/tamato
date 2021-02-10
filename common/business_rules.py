@@ -2,8 +2,6 @@
 import logging
 from datetime import date
 from datetime import datetime
-from datetime import time
-from datetime import timezone
 from functools import wraps
 from typing import Iterable
 from typing import Mapping
@@ -62,10 +60,10 @@ class BusinessRule:
 def only_applicable_after(cutoff: Union[date, datetime, str]):
 
     if isinstance(cutoff, str):
-        cutoff = datetime.fromisoformat(cutoff).replace(tzinfo=timezone.utc)
+        cutoff = date.fromisoformat(cutoff)
 
-    if isinstance(cutoff, date):
-        cutoff = datetime.combine(cutoff, time.min, tzinfo=timezone.utc)
+    if isinstance(cutoff, datetime):
+        cutoff = cutoff.date()
 
     def decorator(cls):
         @wraps(cls)

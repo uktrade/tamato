@@ -1,4 +1,5 @@
 import contextlib
+from datetime import date
 from datetime import datetime
 from datetime import timezone
 from functools import wraps
@@ -21,7 +22,7 @@ from lxml import etree
 from common.models import TrackedModel
 from common.renderers import counter_generator
 from common.serializers import TrackedModelSerializer
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.management.commands.import_taric import import_taric
 from workbaskets.validators import WorkflowStatus
@@ -261,188 +262,99 @@ def validate_taric_import(
 
 
 class Dates:
+    deltas = {
+        "normal": (relativedelta(), relativedelta(months=+1)),
+        "earlier": (relativedelta(years=-1), relativedelta(years=-1, months=+1)),
+        "later": (
+            relativedelta(years=+1, months=+1, days=+1),
+            relativedelta(years=+1, months=+2),
+        ),
+        "big": (relativedelta(years=-2), relativedelta(years=+2, days=+1)),
+        "adjacent_earlier": (relativedelta(months=-1), relativedelta(days=-1)),
+        "adjacent_later": (relativedelta(months=+1, days=+1), relativedelta(months=+2)),
+        "adjacent_no_end": (relativedelta(months=+1, days=+1), None),
+        "adjacent_even_later": (
+            relativedelta(months=+2, days=+1),
+            relativedelta(months=+3),
+        ),
+        "adjacent_earlier_big": (
+            relativedelta(years=-2, months=-2),
+            relativedelta(years=-2),
+        ),
+        "adjacent_later_big": (
+            relativedelta(months=+1, days=+1),
+            relativedelta(years=+2, months=+2),
+        ),
+        "overlap_normal": (
+            relativedelta(days=+15),
+            relativedelta(days=+14, months=+1, years=+1),
+        ),
+        "overlap_normal_earlier": (
+            relativedelta(months=-1, days=+14),
+            relativedelta(days=+14),
+        ),
+        "overlap_big": (relativedelta(years=+1), relativedelta(years=+3, days=+2)),
+        "after_big": (
+            relativedelta(years=+3, months=+1),
+            relativedelta(years=+3, months=+2),
+        ),
+        "backwards": (relativedelta(months=+1), relativedelta(days=+1)),
+        "starts_with_normal": (relativedelta(), relativedelta(days=+14)),
+        "ends_with_normal": (relativedelta(days=+14), relativedelta(months=+1)),
+        "current": (relativedelta(weeks=-4), relativedelta(weeks=+4)),
+        "future": (relativedelta(weeks=+10), relativedelta(weeks=+20)),
+        "no_end": (relativedelta(), None),
+        "normal_first_half": (relativedelta(), relativedelta(days=+14)),
+    }
+
     @property
     def now(self):
+        return self.datetime_now.date()
+
+    @property
+    def datetime_now(self):
         return datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0)
 
-    @property
-    def normal(self):
-        return TaricDateTimeRange(
-            self.now,
-            self.now + relativedelta(months=+1),
-        )
-
-    @property
-    def earlier(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(years=-1),
-            self.now + relativedelta(years=-1, months=+1),
-        )
-
-    @property
-    def later(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(years=+1, months=+1, days=+1),
-            self.now + relativedelta(years=+1, months=+2),
-        )
-
-    @property
-    def big(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(years=-2),
-            self.now + relativedelta(years=+2, days=+1),
-        )
-
-    @property
-    def adjacent_earlier(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(months=-1),
-            self.now + relativedelta(days=-1),
-        )
-
-    @property
-    def adjacent_later(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(months=+1, days=+1),
-            self.now + relativedelta(months=+2),
-        )
-
-    @property
-    def adjacent_no_end(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(months=+1, days=+1),
-            None,
-        )
-
-    @property
-    def adjacent_even_later(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(months=+2, days=+1),
-            self.now + relativedelta(months=+3),
-        )
-
-    @property
-    def adjacent_earlier_big(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(years=-2, months=-2),
-            self.now + relativedelta(years=-2),
-        )
-
-    @property
-    def adjacent_later_big(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(months=+1, days=+1),
-            self.now + relativedelta(years=+2, months=+2),
-        )
-
-    @property
-    def overlap_normal(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(days=+15),
-            self.now + relativedelta(days=+14, months=+1, years=+1),
-        )
-
-    @property
-    def overlap_normal_earlier(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(months=-1, days=+14),
-            self.now + relativedelta(days=+14),
-        )
-
-    @property
-    def overlap_big(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(years=+1),
-            self.now + relativedelta(years=+3, days=+2),
-        )
-
-    @property
-    def after_big(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(years=+3, months=+1),
-            self.now + relativedelta(years=+3, months=+2),
-        )
-
-    @property
-    def backwards(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(months=+1),
-            self.now + relativedelta(days=+1),
-        )
-
-    @property
-    def starts_with_normal(self):
-        return TaricDateTimeRange(
-            self.now,
-            self.now + relativedelta(days=+14),
-        )
-
-    @property
-    def ends_with_normal(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(days=+14),
-            self.now + relativedelta(months=+1),
-        )
-
-    @property
-    def current(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(weeks=-4),
-            self.now + relativedelta(weeks=+4),
-        )
-
-    @property
-    def future(self):
-        return TaricDateTimeRange(
-            self.now + relativedelta(weeks=+10),
-            self.now + relativedelta(weeks=+20),
-        )
-
-    @property
-    def no_end(self):
-        return TaricDateTimeRange(
-            self.now,
-            None,
-        )
-
-    @property
-    def normal_first_half(self):
-        return TaricDateTimeRange(
-            self.now,
-            self.now + relativedelta(days=+14),
-        )
+    def __getattr__(self, name):
+        if name in self.deltas:
+            start, end = self.deltas[name]
+            start = self.now + start
+            if end is not None:
+                end = self.now + end
+            return TaricDateRange(start, end)
+        raise AttributeError(name)
 
     @classmethod
     def short_before(cls, dt):
-        return TaricDateTimeRange(
+        return TaricDateRange(
             dt + relativedelta(months=-1),
             dt + relativedelta(days=-14),
         )
 
     @classmethod
     def medium_before(cls, dt):
-        return TaricDateTimeRange(
+        return TaricDateRange(
             dt + relativedelta(months=-1),
             dt + relativedelta(days=-1),
         )
 
     @classmethod
     def short_after(cls, dt):
-        return TaricDateTimeRange(
+        return TaricDateRange(
             dt + relativedelta(days=+14),
             dt + relativedelta(months=+1),
         )
 
     @classmethod
     def short_overlap(cls, dt):
-        return TaricDateTimeRange(
+        return TaricDateRange(
             dt + relativedelta(months=-1),
             dt + relativedelta(months=+1),
         )
 
     @classmethod
     def no_end_before(cls, dt):
-        return TaricDateTimeRange(
+        return TaricDateRange(
             dt + relativedelta(months=-1),
             None,
         )

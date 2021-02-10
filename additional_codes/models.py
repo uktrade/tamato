@@ -25,7 +25,6 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         max_length=1,
         validators=[validators.additional_code_type_sid_validator],
         db_index=True,
-        choices=validators.TypeChoices.choices,
     )
     description = ShortDescription()
 

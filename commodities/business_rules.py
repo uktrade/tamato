@@ -1,7 +1,6 @@
 """Business rules for commodities/goods nomenclatures."""
-from datetime import datetime
+from datetime import date
 from datetime import timedelta
-from datetime import timezone
 
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
@@ -66,7 +65,7 @@ class NIG5(BusinessRule):
 
         from commodities.models import GoodsNomenclatureOrigin
 
-        lower_bound = datetime(2010, 1, 1).replace(tzinfo=timezone.utc)
+        lower_bound = date(2010, 1, 1)
 
         if not (
             good.valid_between.lower <= lower_bound

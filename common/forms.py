@@ -1,8 +1,8 @@
 import logging
-from datetime import datetime
+from datetime import date
 
 from django import forms
-from django.contrib.postgres.forms.ranges import DateTimeRangeField
+from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
 from django.forms.utils import from_current_timezone
 
@@ -45,16 +45,14 @@ class GovukDateField(forms.MultiValueField):
 
             try:
                 day, month, year = data_list
-                result = from_current_timezone(
-                    datetime(int(year), int(month), int(day))
-                )
+                result = date(int(year), int(month), int(day))
             except ValueError as e:
                 raise ValidationError("Enter a valid date.", code="invalid_date") from e
 
             return result
 
 
-class GovukDateRangeField(DateTimeRangeField):
+class GovukDateRangeField(DateRangeField):
     base_field = GovukDateField
 
     def clean(self, value):

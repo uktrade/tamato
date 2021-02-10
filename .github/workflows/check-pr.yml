@@ -51,6 +51,13 @@ jobs:
         npm run build
         python manage.py collectstatic --noinput
 
+    - name: Check for missing migrations
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        DJANGO_SETTINGS_MODULE: settings.test
+      run: |
+        python manage.py makemigrations --dry-run --check
+
     - name: Run Tests
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres

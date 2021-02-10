@@ -22,7 +22,6 @@ class ObjectCacheFacade:
     def __init__(self, engine=None):
         if not engine:
             engine = getattr(settings, "NURSERY_CACHE_ENGINE", self.DEFAULT_ENGINE)
-
         engine_module_str, engine_str = engine.rsplit(".", 1)
         engine_module = import_module(engine_module_str)
         self.engine = getattr(engine_module, engine_str)()

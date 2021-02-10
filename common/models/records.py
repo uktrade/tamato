@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import date
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -10,7 +10,6 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 
-from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
 from django.db.models import Case
 from django.db.models import F
@@ -22,7 +21,6 @@ from django.db.models import When
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
 from django.template import loader
-from django.utils import timezone
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
@@ -85,7 +83,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.filter(transaction__id__gt=transaction_id)
 
-    def as_at(self, date: datetime) -> QuerySet:
+    def as_at(self, date: date) -> QuerySet:
         """
         Return the instances of the model that were represented at a particular date.
 
@@ -101,7 +99,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         If done from the TrackedModel this will return all instances of all tracked models
         as represented at the current date.
         """
-        return self.as_at(timezone.now())
+        return self.as_at(date.today())
 
     def get_versions(self, **kwargs) -> QuerySet:
         for field in self.model.identifying_fields:
@@ -301,13 +299,6 @@ class TimestampedMixin(models.Model):
         abstract = True
 
 
-class ValidityMixin(models.Model):
-    valid_between = DateTimeRangeField(db_index=True)
-
-    class Meta:
-        abstract = True
-
-
 class VersionGroup(TimestampedMixin):
     current_version = models.OneToOneField(
         "common.TrackedModel",
@@ -416,9 +407,10 @@ class TrackedModel(PolymorphicModel):
     def identifying_fields_to_string(
         self, identifying_fields: Optional[Iterable[str]] = None
     ) -> str:
-        field_list = []
-        for field, value in self.get_identifying_fields(identifying_fields).items():
-            field_list.append(f"{field}={str(value)}")
+        field_list = [
+            f"{field}={str(value)}"
+            for field, value in self.get_identifying_fields(identifying_fields).items()
+        ]
 
         return ", ".join(field_list)
 

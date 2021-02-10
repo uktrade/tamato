@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.utils.datastructures import OrderedSet
-from psycopg2._range import DateTimeTZRange
+from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from additional_codes.models import AdditionalCode
@@ -104,7 +104,7 @@ class TRMeasureCreatingPattern(MeasureCreatingPattern):
             measure_type=new_measure_type,
             geographical_area=geography,
             goods_nomenclature=goods_nomenclature,
-            valid_between=DateTimeTZRange(validity_start, validity_end),
+            valid_between=DateRange(validity_start, validity_end),
             generating_regulation=self.generating_regulation,
             terminating_regulation=(
                 self.generating_regulation if validity_end is not None else None
@@ -211,7 +211,7 @@ class TradeRemediesImporter(RowsImporter):
         self.old_rows = NomenclatureTreeCollector[List[OldMeasureRow]](BREXIT)
         self.new_rows = NomenclatureTreeCollector[NewRow](BREXIT)
         self.row_runner = DualRowRunner(self.old_rows, self.new_rows)
-        self.brexit_to_infinity = DateTimeTZRange(BREXIT, None)
+        self.brexit_to_infinity = DateRange(BREXIT, None)
         self.generating_regulation, _ = Regulation.objects.get_or_create(
             regulation_id="C2100005",
             regulation_group=Group.objects.get(group_id="DUM"),

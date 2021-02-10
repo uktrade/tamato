@@ -1,10 +1,11 @@
 import re
 from collections import OrderedDict
 from datetime import date
-from datetime import datetime
 from functools import cached_property
 from typing import Callable
+from typing import Iterable
 from typing import Optional
+from typing import Union
 
 from crispy_forms_gds.choices import Choice
 from crispy_forms_gds.helper import FormHelper
@@ -14,17 +15,13 @@ from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from django import forms
+from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchVector
-from django.db.models import DateTimeField
-from django.db.models import Q
-from django.urls import reverse
 from django_filters import CharFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
 from rest_framework import filters
 from rest_framework.settings import api_settings
-
-from common.util import TaricDateTimeRange
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
 
@@ -95,7 +92,7 @@ class TamatoFilterMixin:
     method for getting the search term.
     """
 
-    search_fields = ("sid",)
+    search_fields: Iterable[Union[str, StringAgg]] = ("sid",)
 
     search_regex: Optional[re.Pattern] = None
 

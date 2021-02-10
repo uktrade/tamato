@@ -18,7 +18,7 @@ from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import maybe_max
 from common.util import maybe_min
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -312,7 +312,7 @@ class MeasureCreationPattern:
                 "order_number": order_number or self.defaults.get("order_number"),
                 "additional_code": additional_code
                 or self.defaults.get("additional_code"),
-                "valid_between": TaricDateTimeRange(actual_start, actual_end),
+                "valid_between": TaricDateRange(actual_start, actual_end),
             },
         }
 

@@ -12,7 +12,7 @@ from commodities import import_parsers as parsers
 from commodities import models
 from commodities import serializers
 from commodities.exceptions import InvalidIndentError
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from importer.handlers import BaseHandler
@@ -283,7 +283,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                 end_date,
             )
 
-            node_data["valid_between"] = TaricDateTimeRange(indent_start, indent_end)
+            node_data["valid_between"] = TaricDateRange(indent_start, indent_end)
 
             next_parent.add_child(**node_data)
 

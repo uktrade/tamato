@@ -1,6 +1,5 @@
 import contextlib
-from datetime import datetime
-from datetime import timezone
+from datetime import date
 from functools import lru_cache
 from typing import Any
 from typing import Callable
@@ -28,7 +27,7 @@ from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import generate_test_import_xml
 from common.util import get_field_tuple
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
 from importer.nursery import get_nursery
@@ -62,9 +61,6 @@ def pytest_bdd_apply_tag(tag, function):
         marker = pytest.mark.skip(reason="Not implemented yet")
         marker(function)
         return True
-    else:
-        # Fall back to pytest-bdd's default behavior
-        return None
 
 
 @pytest.fixture(scope="session")
@@ -86,9 +82,9 @@ def celery_config():
 def validity_range(request):
     start, end, expect_error = request.param
     return (
-        TaricDateTimeRange(
-            datetime.fromisoformat(start).replace(tzinfo=timezone.utc),
-            datetime.fromisoformat(end).replace(tzinfo=timezone.utc),
+        TaricDateRange(
+            date.fromisoformat(start),
+            date.fromisoformat(end),
         ),
         expect_error,
     )
