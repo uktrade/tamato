@@ -72,6 +72,19 @@ if SSO_ENABLED:
         "authbroker_client",
     ]
 
+if os.getenv("ELASTIC_TOKEN"):
+    THIRD_PARTY_APPS += [
+        "elasticapm.contrib.django",
+    ]
+
+    ELASTIC_APM = {
+        "SERVICE_NAME": "TaMaTo",
+        "SECRET_TOKEN": os.getenv("ELASTIC_TOKEN"),
+        "SERVER_URL": "https://apm.elk.uktrade.digital",
+        "ENVIRONMENT": ENV,
+        "SERVER_TIMEOUT": os.getenv("ELASTIC_TIMEOUT", "20s"),
+    }
+
 TAMATO_APPS = [
     "common",
     "additional_codes.apps.AdditionalCodesConfig",
@@ -221,6 +234,7 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "TIMEOUT": None,
+            "SOCKET_CONNECT_TIMEOUT": 5,
         },
     }
 }
@@ -297,10 +311,13 @@ LOGGING = {
         }
     },
     "loggers": {
-        "root": {"handlers": ["console"], "level": "WARNING"},
+        "root": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+        },
         "importer": {
             "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "INFO"),
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
         },
         "commodities": {
             "handlers": ["console"],
@@ -332,16 +349,18 @@ if os.environ.get("SENTRY_DSN"):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
-    sentry_sdk.init(
-        dsn=os.environ["SENTRY_DSN"],
-        environment=ENV,
-        integrations=[DjangoIntegration()],
-    )
+    sentry_kwargs = {
+        "dsn": os.environ["SENTRY_DSN"],
+        "environment": ENV,
+        "integrations": [DjangoIntegration()],
+    }
     if "shell" in sys.argv or "shell_plus" in sys.argv:
-        sentry_sdk.init(
-            # discard all events
-            before_send=lambda event, hint: None
-        )
+        sentry_kwargs["before_send"] = lambda event, hint: None
+
+    if os.getenv("GIT_COMMIT"):
+        sentry_kwargs["release"] = os.getenv("GIT_COMMIT")
+
+    sentry_sdk.init(**sentry_kwargs)
 
 
 # -- Testing

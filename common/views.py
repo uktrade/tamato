@@ -1,13 +1,20 @@
+import time
+
 import django.contrib.auth.views
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.cache import cache
 from django.core.paginator import Paginator
+from django.db import connection
+from django.db import OperationalError
 from django.http import Http404
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views import generic
 from django.views.generic import DetailView
 from django_filters.views import FilterView
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from common.models import Transaction
 from common.pagination import build_pagination_list
@@ -27,6 +34,44 @@ def index(request):
             "workbaskets": workbaskets,
         },
     )
+
+
+def healthcheck(request):
+    start = time.time()
+    response_message = (
+        "<pingdom_http_custom_check><status><strong>{message}</strong></status>"
+        "<response_time><strong>{response_time}</strong></response_time>"
+        "</pingdom_http_custom_check>"
+    )
+    response = HttpResponse(content_type="text/xml")
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+
+    try:
+        connection.cursor()
+    except OperationalError:
+        response.write(
+            response_message.format(
+                message="DB missing", response_time=int(time.time() - start)
+            )
+        )
+        response.status_code = 503
+        return response
+
+    try:
+        cache.set("__pingdom_test", 1, timeout=1)
+    except RedisTimeoutError:
+        response.write(
+            response_message.format(
+                message="Redis missing", response_time=int(time.time() - start)
+            )
+        )
+        response.status_code = 503
+        return response
+
+    response.write(
+        response_message.format(message="OK", response_time=int(time.time() - start))
+    )
+    return response
 
 
 class LoginView(django.contrib.auth.views.LoginView):
