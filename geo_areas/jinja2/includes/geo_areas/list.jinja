@@ -1,0 +1,25 @@
+{% set table_rows = [] %}
+{% for geo_area in object_list %}
+  {% set geo_area_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="#">{{ geo_area.area_id }}</a>
+  {%- endset %}
+  {{ table_rows.append([
+    {"html": geo_area_link},
+    {"text": geo_area.get_description().description},
+    {"text": geo_area.get_area_code_display()},
+    {"text": "{:%d %b %Y}".format(geo_area.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(geo_area.valid_between.upper) if geo_area.valid_between.upper else "-"},
+    {"text": geo_area.transaction.workbasket.get_status_display()},
+  ]) or "" }}
+{% endfor %}
+{{ govukTable({
+  "head": [
+    {"text": "ID"},
+    {"text": "Description"},
+    {"text": "Area code"},
+    {"text": "Start date"},
+    {"text": "End date"},
+    {"text": "Status"}
+  ],
+  "rows": table_rows
+}) }}

@@ -163,3 +163,30 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
         form = TamatoFilterForm if self._meta.form == forms.Form else self._meta.form
 
         return type(str("%sForm" % self.__class__.__name__), (form,), fields)
+
+
+class ActiveStateMixin(FilterSet):
+    """
+    Generic filter mixin to provide an active state filter
+    """
+
+    active_state = MultipleChoiceFilter(
+        choices=ACTIVE_STATE_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        method="filter_active_state",
+        label="Active state",
+        help_text="Select all that apply",
+        required=False,
+    )
+
+    def filter_active_state(self, queryset, name, value):
+        active_status_filter = Q()
+        current_date = TaricDateTimeRange(datetime.now(), datetime.now())
+        if value == ["active"]:
+            active_status_filter = Q(valid_between__upper_inf=True) | Q(
+                valid_between__contains=current_date
+            )
+        if value == ["terminated"]:
+            active_status_filter = Q(valid_between__fully_lt=current_date)
+
+        return queryset.filter(active_status_filter)

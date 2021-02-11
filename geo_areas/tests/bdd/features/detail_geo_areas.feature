@@ -1,4 +1,4 @@
-@bdd
+@bdd @xfail
 Feature: Geographical areas
 
 

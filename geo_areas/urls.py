@@ -8,10 +8,16 @@ from geo_areas import views
 api_router = routers.DefaultRouter()
 api_router.register(r"geographical_areas", views.GeoAreaViewSet, basename="geoarea")
 
-ui_router = routers.DefaultRouter()
-ui_router.register(r"geographical_areas", views.GeoAreaUIViewSet, basename="geoarea-ui")
+ui_patterns = [
+    path(
+        "",
+        views.GeographicalAreaList.as_view(),
+        name="geoarea-ui-list",
+    ),
+]
+
 
 urlpatterns = [
-    path("", include(ui_router.urls)),
+    path("geographical-areas/", include(ui_patterns)),
     path("api/", include(api_router.urls)),
 ]
