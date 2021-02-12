@@ -1,34 +1,15 @@
-{% extends "layouts/layout.jinja" %}
-
 {% from "components/tabs/macro.njk" import govukTabs %}
-{% from "components/input/macro.njk" import govukInput %}
-{% from "components/table/macro.njk" import govukTable %}
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
+{% from "components/table/macro.njk" import govukTable %}
 
 {% set page_title = "Additional code: " ~ object.type.sid ~ object.code %}
+{% set find_edit_url = url("additional_code-ui-list") %}
 
 {% set core_data_tab_html %}{% include "includes/additional_codes/tabs/core_data.jinja" %}{% endset %}
 {% set description_tab_html %}{% include "includes/common/tabs/descriptions.jinja" %}{% endset %}
 {% set version_control_tab_html %}{% include "includes/additional_codes/tabs/version_control.jinja" %}{% endset %}
 
-{% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
-      {"text": "Find and edit additional codes", "href": url("additional_code-ui-list")},
-      {"text": page_title}
-    ]
-  }) }}
-{% endblock %}
-
-{% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-    </div>
-  </div>
-
-  {{ govukTabs({
+{% set tabs = {
     "items": [
       {
         "label": "Details",
@@ -50,7 +31,8 @@
         "panel": {
           "html": version_control_tab_html
         }
-      },
+      }
     ]
-  }) }}
-{% endblock %}
+  }%}
+
+{%- include "layouts/detail.jinja" -%}
