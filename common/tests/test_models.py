@@ -4,8 +4,8 @@ import pytest
 from pytest_django.asserts import assertQuerysetEqual
 
 from common.exceptions import NoIdentifyingValuesGivenError
-from common.models import records
 from common.models import TrackedModel
+from common.models import records
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests import models
@@ -62,7 +62,7 @@ def model_with_history(factory, date_ranges, **kwargs):
                 valid_between=date_ranges.future,
                 update_type=UpdateType.UPDATE,
                 **kwargs,
-            )
+            ),
         )
 
     return Models
@@ -94,9 +94,7 @@ def sample_model() -> models.TestModel1:
 
 
 def test_get_current(model1_with_history, model2_with_history):
-    """
-    Ensure only the most recent records are fetched.
-    """
+    """Ensure only the most recent records are fetched."""
     latest_models = TrackedModel.objects.current()
 
     assert latest_models.count() == 2
@@ -112,9 +110,7 @@ def test_since_transaction(model1_with_history):
 
 
 def test_as_at(date_ranges):
-    """
-    Ensure only records active at a specific date are fetched.
-    """
+    """Ensure only records active at a specific date are fetched."""
 
     pks = {
         factories.TestModel1Factory.create(valid_between=date_ranges.later).pk,
@@ -127,20 +123,17 @@ def test_as_at(date_ranges):
 
 
 def test_active(model1_with_history):
-    """
-    Ensure only the currently active records are fetched.
-    """
+    """Ensure only the currently active records are fetched."""
     queryset = TestModel1.objects.active()
 
     assert set(queryset.values_list("pk", flat=True)) == {
-        model1_with_history.active_model.pk
+        model1_with_history.active_model.pk,
     }
 
 
 def test_get_version_raises_error():
-    """
-    Ensure that trying to get a specific version raises an error if no identifiers given.
-    """
+    """Ensure that trying to get a specific version raises an error if no
+    identifiers given."""
     with pytest.raises(NoIdentifyingValuesGivenError):
         TestModel1.objects.get_versions()
 
@@ -149,54 +142,44 @@ def test_get_version_raises_error():
 
 
 def test_get_current_version(model1_with_history):
-    """
-    Ensure getting the current version works with a standard sid identifier.
-    """
+    """Ensure getting the current version works with a standard sid
+    identifier."""
     model = model1_with_history.active_model
 
     assert TestModel1.objects.get_current_version(sid=model.sid) == model
 
 
 def test_get_current_version_custom_identifier(model2_with_history):
-    """
-    Ensure getting the current version works with a custom identifier.
-    """
+    """Ensure getting the current version works with a custom identifier."""
     model = model2_with_history.active_model
 
     assert TestModel2.objects.get_current_version(custom_sid=model.custom_sid) == model
 
 
 def test_get_latest_version(model1_with_history):
-    """
-    Ensure getting the latest version works with a standard sid identifier.
-    """
+    """Ensure getting the latest version works with a standard sid
+    identifier."""
     model = model1_with_history.all_models[-1]
 
     assert TestModel1.objects.get_latest_version(sid=model.sid) == model
 
 
 def test_get_latest_version_custom_identifier(model2_with_history):
-    """
-    Ensure getting the latest version works with a custom identifier.
-    """
+    """Ensure getting the latest version works with a custom identifier."""
     model = model2_with_history.all_models[-1]
 
     assert TestModel2.objects.get_latest_version(custom_sid=model.custom_sid) == model
 
 
 def test_get_first_version(model1_with_history):
-    """
-    Ensure getting the first version works with a standard sid identifier.
-    """
+    """Ensure getting the first version works with a standard sid identifier."""
     model = model1_with_history.all_models[0]
 
     assert TestModel1.objects.get_first_version(sid=model.sid) == model
 
 
 def test_get_first_version_custom_identifier(model2_with_history):
-    """
-    Ensure getting the first version works with a custom identifier.
-    """
+    """Ensure getting the first version works with a custom identifier."""
     model = model2_with_history.all_models[0]
 
     assert TestModel2.objects.get_first_version(custom_sid=model.custom_sid) == model
@@ -236,12 +219,11 @@ def test_trackedmodel_can_attach_record_codes(workbasket):
 
 
 def test_get_latest_relation_with_latest_links(
-    model1_with_history, django_assert_num_queries
+    model1_with_history,
+    django_assert_num_queries,
 ):
-    """
-    Assert that using `.with_latest_links` should allow a TrackedModel
-    to retrieve the current version of a relation without any extra queries.
-    """
+    """Assert that using `.with_latest_links` should allow a TrackedModel to
+    retrieve the current version of a relation without any extra queries."""
     oldest_link = model1_with_history.all_models[0]
     latest_link = model1_with_history.all_models[-1]
 
@@ -257,11 +239,12 @@ def test_get_latest_relation_with_latest_links(
 
 
 def test_get_latest_relation_without_latest_links(
-    model1_with_history, django_assert_num_queries
+    model1_with_history,
+    django_assert_num_queries,
 ):
     """
-    Assert that without using `.with_latest_link` requires a Tracked Model
-    to use 4 queries to get the current version of a relation.
+    Assert that without using `.with_latest_link` requires a Tracked Model to
+    use 4 queries to get the current version of a relation.
 
     Finding the current version of an object requires 4 queries:
 
@@ -314,7 +297,8 @@ def test_new_draft_uses_passed_transaction(sample_model):
     transaction_count = Transaction.objects.count()
     new_transaction = sample_model.transaction.workbasket.new_transaction()
     new_model = sample_model.new_draft(
-        sample_model.transaction.workbasket, transaction=new_transaction
+        sample_model.transaction.workbasket,
+        transaction=new_transaction,
     )
     assert new_model.transaction == new_transaction
     assert Transaction.objects.count() == transaction_count + 1
@@ -330,3 +314,19 @@ def test_identifying_fields_unique(model1_with_history):
 
 def test_identifying_fields_to_string(sample_model):
     assert sample_model.identifying_fields_to_string() == f"sid={sample_model.sid}"
+
+
+def test_current_as_of(sample_model):
+    transaction = factories.UnapprovedTransactionFactory.create()
+
+    with transaction:
+        unapproved_version = factories.TestModel1Factory.create(
+            sid=sample_model.sid,
+            version_group=sample_model.version_group,
+        )
+
+    assert models.TestModel1.objects.current().get().pk == sample_model.pk
+    assert (
+        models.TestModel1.objects.current_as_of(transaction).get().pk
+        == unapproved_version.pk
+    )

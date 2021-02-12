@@ -14,6 +14,7 @@ from django.db import models
 from django.db.models import Case
 from django.db.models import F
 from django.db.models import Field
+from django.db.models import Max
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Value
@@ -52,12 +53,75 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         models.
         """
         return self.filter(is_current__isnull=False).exclude(
-            update_type=UpdateType.DELETE
+            update_type=UpdateType.DELETE,
+        )
+
+    def current_as_of(self, transaction) -> QuerySet:
+        """
+        Get the current versions of the model being queried up to and including
+        a given transaction (including other preceding transactions in the same
+        workbasket, even if unapproved).
+
+        Current in this context is defined as the latest approved row relating to
+        an object, or the latest row relating to an object within a given
+        transaction or the transaction's workbasket's prceceding transactions.
+
+        The generated SQL is equivalent to:
+
+        .. code:: SQL
+
+            SELECT *,
+                   Max(t3."id") filter (
+                       WHERE (
+                           t3."transaction_id" = {TRANSACTION_ID}
+                        OR ("common_transaction"."order" < {TRANSACTION_ORDER} AND "common_transaction"."workbasket_id" = {WORKBASKET_ID})
+                        OR ("workbaskets_workbasket"."approver_id" IS NOT NULL AND "workbaskets_workbasket"."status" IN (APPROVED_STATUSES))
+                       )
+                   ) AS "latest"
+              FROM "common_trackedmodel"
+             INNER JOIN "common_versiongroup"
+                ON "common_trackedmodel"."version_group_id" = "common_versiongroup"."id"
+              LEFT OUTER JOIN "common_trackedmodel" t3
+                ON "common_versiongroup"."id" = t3."version_group_id"
+              LEFT OUTER JOIN "common_transaction"
+                ON t3."transaction_id" = "common_transaction"."id"
+              LEFT OUTER JOIN "workbaskets_workbasket"
+                ON "common_transaction"."workbasket_id" = "workbaskets_workbasket"."id"
+             WHERE NOT "common_trackedmodel"."update_type" = 2
+             GROUP BY "common_trackedmodel"."id"
+            HAVING max(t3."id") filter (
+                       WHERE (
+                           t3."transaction_id" = {TRANSACTION_ID}
+                        OR ("common_transaction"."order" < {TRANSACTION_ORDER} AND "common_transaction"."workbasket_id" = {WORKBASKET_ID})
+                        OR ("workbaskets_workbasket"."approver_id" IS NOT NULL AND "workbaskets_workbasket"."status" IN (APPROVED_STATUSES))
+                       )
+            ) = "common_trackedmodel"."id"
+        """
+        return (
+            self.annotate(
+                latest=Max(
+                    "version_group__versions",
+                    filter=(
+                        Q(version_group__versions__transaction=transaction)
+                        | Q(
+                            version_group__versions__transaction__workbasket=transaction.workbasket,
+                            version_group__versions__transaction__order__lt=transaction.order,
+                        )
+                        | Q(
+                            version_group__versions__transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
+                            version_group__versions__transaction__workbasket__approver__isnull=False,
+                        )
+                    ),
+                ),
+            )
+            .filter(latest=F("id"))
+            .exclude(update_type=UpdateType.DELETE)
         )
 
     def current_deleted(self) -> QuerySet:
         """
-        Get all the current versions of the model being queried which have been deleted
+        Get all the current versions of the model being queried which have been
+        deleted.
 
         Current is defined as the last row relating to the history of an object.
         this may include current operationally live rows, it will often also mean
@@ -72,8 +136,8 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
     def since_transaction(self, transaction_id: int) -> QuerySet:
         """
-        Get all instances of an object since a certain transaction (i.e. since a particular
-        workbasket was accepted).
+        Get all instances of an object since a certain transaction (i.e. since a
+        particular workbasket was accepted).
 
         This will not include objects without a transaction ID - thus excluding rows which
         have not been accepted yet.
@@ -85,19 +149,21 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
     def as_at(self, date: date) -> QuerySet:
         """
-        Return the instances of the model that were represented at a particular date.
+        Return the instances of the model that were represented at a particular
+        date.
 
-        If done from the TrackedModel this will return all instances of all tracked models
-        as represented at a particular date.
+        If done from the TrackedModel this will return all instances of all
+        tracked models as represented at a particular date.
         """
         return self.filter(valid_between__contains=date)
 
     def active(self) -> QuerySet:
         """
-        Return the instances of the model that are represented at the current date.
+        Return the instances of the model that are represented at the current
+        date.
 
-        If done from the TrackedModel this will return all instances of all tracked models
-        as represented at the current date.
+        If done from the TrackedModel this will return all instances of all
+        tracked models as represented at the current date.
         """
         return self.as_at(date.today())
 
@@ -105,35 +171,27 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         for field in self.model.identifying_fields:
             if field not in kwargs:
                 raise exceptions.NoIdentifyingValuesGivenError(
-                    f"Field {field} expected but not found."
+                    f"Field {field} expected but not found.",
                 )
         return self.filter(**kwargs)
 
     def get_latest_version(self, **kwargs):
-        """
-        Gets the latest version of a specific object.
-        """
+        """Gets the latest version of a specific object."""
         return self.get_versions(**kwargs).current().get()
 
     def get_current_version(self, **kwargs):
-        """
-        Gets the current version of a specific object.
-        """
+        """Gets the current version of a specific object."""
         return self.get_versions(**kwargs).active().get()
 
     def get_first_version(self, **kwargs):
-        """
-        Get the original version of a specific object.
-        """
+        """Get the original version of a specific object."""
         return self.get_versions(**kwargs).order_by("id").first()
 
     def excluding_versions_of(self, version_group):
         return self.exclude(version_group=version_group)
 
     def with_workbasket(self, workbasket):
-        """
-        Add the latest versions of objects from the specified workbasket.
-        """
+        """Add the latest versions of objects from the specified workbasket."""
 
         if workbasket is None:
             return self
@@ -146,9 +204,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         return self.filter(query) | in_workbasket
 
     def approved(self):
-        """
-        Get objects which have been approved/sent-to-cds/published
-        """
+        """Get objects which have been approved/sent-to-cds/published."""
 
         return self.filter(
             transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
@@ -156,16 +212,15 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         )
 
     def approved_or_in_transaction(self, transaction):
-        """
-        Get objects which have been approved or are in the specified transaction.
-        """
+        """Get objects which have been approved or are in the specified
+        transaction."""
 
         return self.filter(
             Q(transaction=transaction)
             | Q(
                 transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
                 transaction__workbasket__approver__isnull=False,
-            )
+            ),
         )
 
     def annotate_record_codes(self) -> QuerySet:
@@ -208,7 +263,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             related_lookups.append(f"{prefix}{relation.name}")
             related_lookups.append(f"{prefix}{relation.name}__version_group")
             related_lookups.append(
-                f"{prefix}{relation.name}__version_group__current_version"
+                f"{prefix}{relation.name}__version_group__current_version",
             )
 
             if recurse_level:
@@ -218,19 +273,19 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                         *lookups,
                         prefix=f"{prefix}{relation.name}__version_group__current_version__",
                         recurse_level=recurse_level - 1,
-                    )
+                    ),
                 )
         return related_lookups
 
     def with_latest_links(self, *lookups, recurse_level=0) -> QuerySet:
         """
-        Runs a `.select_related` operation for all relations, or given relations,
-        joining them with the "current" version of the relation as defined by their
-        Version Group.
+        Runs a `.select_related` operation for all relations, or given
+        relations, joining them with the "current" version of the relation as
+        defined by their Version Group.
 
-        As many objects will often want to access the current version of a relation,
-        instead of the actual linked object, this saves on having to run multiple
-        queries for every current relation.
+        As many objects will often want to access the current version of a
+        relation, instead of the actual linked object, this saves on having to
+        run multiple queries for every current relation.
         """
         related_lookups = self._get_current_related_lookups(
             self.model, *lookups, recurse_level=recurse_level
@@ -248,7 +303,8 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         Iterate all TrackedModel subclasses, generating When statements that map
         the model to its record_code.
 
-        If any of the models start using a foreign key then this function will need to be updated.
+        If any of the models start using a foreign key then this function will
+        need to be updated.
         """
         return [
             When(
@@ -263,9 +319,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
     @staticmethod
     def _subrecord_value_or_f(model):
-        """
-        Return F function or Value to fetch subrecord_code in a query.
-        """
+        """Return F function or Value to fetch subrecord_code in a query."""
         if isinstance(model.subrecord_code, DeferredAttribute):
             return F(f"{model._meta.model_name}__subrecord_code")
         return Value(model.subrecord_code)
@@ -276,8 +330,8 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         Iterate all TrackedModel subclasses, generating When statements that map
         the model to its subrecord_code.
 
-        This function is a little more complex than when_model_record_codes as subrecord_code
-        may be a standard class attribute or a ForeignKey.
+        This function is a little more complex than when_model_record_codes as
+        subrecord_code may be a standard class attribute or a ForeignKey.
         """
         return [
             When(
@@ -317,11 +371,14 @@ class TrackedModel(PolymorphicModel):
     )
 
     update_type = models.PositiveSmallIntegerField(
-        choices=validators.UpdateType.choices, db_index=True
+        choices=validators.UpdateType.choices,
+        db_index=True,
     )
 
     version_group = models.ForeignKey(
-        VersionGroup, on_delete=models.PROTECT, related_name="versions"
+        VersionGroup,
+        on_delete=models.PROTECT,
+        related_name="versions",
     )
 
     objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
@@ -334,8 +391,8 @@ class TrackedModel(PolymorphicModel):
         """
         Generate a TARIC XML template name for the given class.
 
-        Any TrackedModel must be representable via a TARIC compatible XML record.
-        To facilitate this
+        Any TrackedModel must be representable via a TARIC compatible XML
+        record. To facilitate this
         """
 
         if self.taric_template:
@@ -359,7 +416,7 @@ class TrackedModel(PolymorphicModel):
                 f'should be: "{template_name}".\n'
                 "    2) A taric_template attribute, pointing to the correct template.\n"
                 "    3) Override the get_taric_template method, returning an existing "
-                "template."
+                "template.",
             ) from e
 
         return template_name
@@ -401,7 +458,8 @@ class TrackedModel(PolymorphicModel):
         return self.__class__.objects.filter(query)
 
     def identifying_fields_unique(
-        self, identifying_fields: Optional[Iterable[str]] = None
+        self,
+        identifying_fields: Optional[Iterable[str]] = None,
     ) -> bool:
         return (
             self.__class__.objects.filter(
@@ -413,7 +471,8 @@ class TrackedModel(PolymorphicModel):
         )
 
     def identifying_fields_to_string(
-        self, identifying_fields: Optional[Iterable[str]] = None
+        self,
+        identifying_fields: Optional[Iterable[str]] = None,
     ) -> str:
         field_list = [
             f"{field}={str(value)}"
@@ -434,7 +493,8 @@ class TrackedModel(PolymorphicModel):
         )
 
     def get_identifying_fields(
-        self, identifying_fields: Optional[Iterable[str]] = None
+        self,
+        identifying_fields: Optional[Iterable[str]] = None,
     ) -> Dict[str, Any]:
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
@@ -460,10 +520,9 @@ class TrackedModel(PolymorphicModel):
 
     @classmethod
     def get_relations(cls) -> List[Tuple[Field, Type[TrackedModel]]]:
-        """
-        Find all foreign key and one-to-one relations on an object and return a list containing
-        tuples of the field instance and the related model it links to.
-        """
+        """Find all foreign key and one-to-one relations on an object and return
+        a list containing tuples of the field instance and the related model it
+        links to."""
         return [
             (f, f.related_model)
             for f in cls._meta.get_fields()
@@ -476,8 +535,8 @@ class TrackedModel(PolymorphicModel):
 
     def __getattr__(self, item: str):
         """
-        Add the ability to get the current instance of a related object through an attribute.
-        For example if a model is like so:
+        Add the ability to get the current instance of a related object through
+        an attribute. For example if a model is like so:
 
         .. code:: python
             class ExampleModel(TrackedModel):
@@ -499,7 +558,7 @@ class TrackedModel(PolymorphicModel):
                 return super().__getattr__(item)
             except AttributeError as e:
                 raise AttributeError(
-                    f"{item} does not exist on {self.__class__.__name__}"
+                    f"{item} does not exist on {self.__class__.__name__}",
                 ) from e
         return getattr(self, relations[item]).current_version
 
@@ -508,7 +567,7 @@ class TrackedModel(PolymorphicModel):
         if not force_write and not self._can_write():
             raise IllegalSaveError(
                 "TrackedModels cannot be updated once written and approved. "
-                "If writing a new row, use `.new_draft` instead"
+                "If writing a new row, use `.new_draft` instead",
             )
 
         if not hasattr(self, "version_group"):
