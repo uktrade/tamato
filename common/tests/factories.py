@@ -850,11 +850,11 @@ class MeasureConditionComponentFactory(TrackedModelMixin):
     duty_expression = factory.SubFactory(DutyExpressionFactory)
     duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
     monetary_unit = factory.SubFactory(MonetaryUnitFactory)
-    condition_component_measurement = None
+    component_measurement = None
 
 
 class MeasureConditionComponentWithMeasurementFactory(MeasureConditionComponentFactory):
-    condition_component_measurement = factory.SubFactory(MeasurementFactory)
+    component_measurement = factory.SubFactory(MeasurementFactory)
 
 
 class MeasureExcludedGeographicalAreaFactory(TrackedModelMixin):

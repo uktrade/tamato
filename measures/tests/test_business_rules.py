@@ -1585,7 +1585,7 @@ def test_ME111(applicability_code, measurement):
     factories.MeasureConditionComponentWithMeasurementFactory.create(
         condition__dependent_measure=measure,
         duty_expression__measurement_unit_applicability_code=applicability_code,
-        condition_component_measurement=measurement,
+        component_measurement=measurement,
     )
 
     with pytest.raises(BusinessRuleViolation):

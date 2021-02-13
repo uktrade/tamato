@@ -1045,7 +1045,7 @@ class ME111(MeasureConditionComponentApplicability):
     """
 
     component_name = "measurement unit"
-    component_field = "components__condition_component_measurement__measurement_unit"
+    component_field = "components__component_measurement__measurement_unit"
     applicability_field = (
         "components__duty_expression__measurement_unit_applicability_code"
     )

@@ -232,7 +232,7 @@ def test_measure_condition_component_importer_create(imported_fields_match):
             condition=factories.MeasureConditionFactory.create(),
             duty_expression=factories.DutyExpressionFactory.create(),
             monetary_unit=factories.MonetaryUnitFactory.create(),
-            condition_component_measurement=factories.MeasurementFactory.create(),
+            component_measurement=factories.MeasurementFactory.create(),
             update_type=UpdateType.CREATE,
         ),
         serializers.MeasureConditionComponentSerializer,
