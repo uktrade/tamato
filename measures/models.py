@@ -11,6 +11,7 @@ from common.models import ValidityMixin
 from common.util import TaricDateRange
 from measures import business_rules
 from measures import validators
+from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
 from quotas.validators import quota_order_number_validator
 
@@ -608,6 +609,8 @@ class MeasureCondition(TrackedModel):
         null=True,
         blank=True,
     )
+
+    objects = PolymorphicManager.from_queryset(MeasureConditionQuerySet)()
 
     business_rules = (
         business_rules.MC3,

@@ -1,14 +1,147 @@
+from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Case
+from django.db.models import CharField
 from django.db.models import F
 from django.db.models import Func
+from django.db.models import Q
+from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models import When
+from django.db.models.functions import Concat
+from django.db.models.functions.text import Trim
 
 from common.fields import TaricDateRangeField
 from common.models.records import TrackedModelQuerySet
 
 
-class MeasuresQuerySet(TrackedModelQuerySet):
+class DutySentenceMixin(QuerySet):
+    def with_duty_sentence(self) -> QuerySet:
+        """
+        Annotates the query set with a human-readable string that represents the
+        aggregation of all of the linked components into a single duty sentence.
+
+        This operation relies on the `prefix` and `abbreviation` fields being
+        filled in on duty expressions and units, which are not supplied by the
+        TARIC3 XML by default.
+
+        Strings output by this annotation should be valid input to the
+        :class:`~measures.parsers.DutySentenceParser`.
+
+        The annotated field will be generated using the below SQL:
+
+        .. code:: SQL
+
+            STRING_AGG(
+              TRIM(
+                CONCAT(
+                  CASE
+                    WHEN (
+                      "measures_dutyexpression"."prefix" IS NULL
+                      OR "measures_dutyexpression"."prefix" = ''
+                    ) THEN
+                    ELSE CONCAT("measures_dutyexpression"."prefix",' ')
+                  END,
+                  CONCAT(
+                    "measures_measureconditioncomponent"."duty_amount",
+                    CONCAT(
+                      CASE
+                        WHEN (
+                          "measures_measureconditioncomponent"."duty_amount" IS NOT NULL
+                          AND "measures_measureconditioncomponent"."monetary_unit_id" IS NULL
+                        ) THEN '%'
+                        WHEN "measures_measureconditioncomponent"."duty_amount" IS NULL THEN ''
+                        ELSE CONCAT(' ', "measures_monetaryunit"."code")
+                      END,
+                      CONCAT(
+                        CASE
+                          WHEN "measures_measurementunit"."abbreviation" IS NULL THEN ''
+                          WHEN "measures_measureconditioncomponent"."monetary_unit_id" IS NULL THEN "measures_measurementunit"."abbreviation"
+                          ELSE CONCAT(' / ', "measures_measurementunit"."abbreviation")
+                        END,
+                        CASE
+                          WHEN "measures_measurementunitqualifier"."abbreviation" IS NULL THEN
+                          ELSE CONCAT(
+                            ' / ',
+                            "measures_measurementunitqualifier"."abbreviation"
+                          )
+                        END
+                      )
+                    )
+                  )
+                )
+              ),
+            ) AS "duty_sentence"
+        """
+        return self.annotate(
+            duty_sentence=StringAgg(
+                expression=Trim(
+                    Concat(
+                        Case(
+                            When(
+                                Q(components__duty_expression__prefix__isnull=True)
+                                | Q(components__duty_expression__prefix=""),
+                                then=Value(""),
+                            ),
+                            default=Concat(
+                                F("components__duty_expression__prefix"),
+                                Value(" "),
+                            ),
+                        ),
+                        "components__duty_amount",
+                        Case(
+                            When(
+                                components__monetary_unit=None,
+                                components__duty_amount__isnull=False,
+                                then=Value("%"),
+                            ),
+                            When(
+                                components__duty_amount__isnull=True,
+                                then=Value(""),
+                            ),
+                            default=Concat(
+                                Value(" "),
+                                F("components__monetary_unit__code"),
+                            ),
+                        ),
+                        Case(
+                            When(
+                                components__component_measurement__measurement_unit__abbreviation=None,
+                                then=Value(""),
+                            ),
+                            When(
+                                components__monetary_unit__isnull=True,
+                                then=F(
+                                    "components__component_measurement__measurement_unit__abbreviation",
+                                ),
+                            ),
+                            default=Concat(
+                                Value(" / "),
+                                F(
+                                    "components__component_measurement__measurement_unit__abbreviation",
+                                ),
+                            ),
+                        ),
+                        Case(
+                            When(
+                                components__component_measurement__measurement_unit_qualifier__abbreviation=None,
+                                then=Value(""),
+                            ),
+                            default=Concat(
+                                Value(" / "),
+                                F(
+                                    "components__component_measurement__measurement_unit_qualifier__abbreviation",
+                                ),
+                            ),
+                        ),
+                        output_field=CharField(),
+                    ),
+                ),
+                delimiter=" ",
+            ),
+        )
+
+
+class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
     def with_effective_valid_between(self):
         """
         In many cases the measures regulation effective_end_date overrides the
@@ -82,3 +215,7 @@ class MeasuresQuerySet(TrackedModelQuerySet):
                 output_field=TaricDateRangeField(),
             ),
         )
+
+
+class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
+    pass
