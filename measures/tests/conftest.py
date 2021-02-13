@@ -1,4 +1,8 @@
+from typing import Callable
+from typing import Dict
+from typing import Optional
 from typing import Sequence
+from typing import Tuple
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -105,23 +109,29 @@ def duty_expressions(
     plus_agri_component: DutyExpression,
     plus_amount_only: DutyExpression,
     supplementary_unit: DutyExpression,
-) -> Sequence[DutyExpression]:
-    return [
-        percent_or_amount,
-        plus_percent_or_amount,
-        plus_agri_component,
-        plus_amount_only,
-        supplementary_unit,
-    ]
+) -> Dict[int, DutyExpression]:
+    return {
+        d.sid: d
+        for d in [
+            percent_or_amount,
+            plus_percent_or_amount,
+            plus_agri_component,
+            plus_amount_only,
+            supplementary_unit,
+        ]
+    }
 
 
 @pytest.fixture
-def monetary_units() -> Sequence[MonetaryUnit]:
-    return [
-        factories.MonetaryUnitFactory(code="EUR"),
-        factories.MonetaryUnitFactory(code="GBP"),
-        factories.MonetaryUnitFactory(code="XEM"),
-    ]
+def monetary_units() -> Dict[str, MonetaryUnit]:
+    return {
+        m.code: m
+        for m in [
+            factories.MonetaryUnitFactory(code="EUR"),
+            factories.MonetaryUnitFactory(code="GBP"),
+            factories.MonetaryUnitFactory(code="XEM"),
+        ]
+    }
 
 
 @pytest.fixture
@@ -141,11 +151,15 @@ def unit_qualifiers() -> Sequence[MeasurementUnitQualifier]:
 
 
 @pytest.fixture
-def measurements(measurement_units, unit_qualifiers) -> Sequence[Measurement]:
-    return [
+def measurements(
+    measurement_units,
+    unit_qualifiers,
+) -> Dict[Tuple[str, Optional[str]], Measurement]:
+    measurements = [
         *[
             factories.MeasurementFactory(
-                measurement_unit=m, measurement_unit_qualifier=None
+                measurement_unit=m,
+                measurement_unit_qualifier=None,
             )
             for m in measurement_units
         ],
@@ -154,16 +168,91 @@ def measurements(measurement_units, unit_qualifiers) -> Sequence[Measurement]:
             measurement_unit_qualifier=unit_qualifiers[0],
         ),
     ]
+    return {
+        (
+            m.measurement_unit.code,
+            m.measurement_unit_qualifier.code if m.measurement_unit_qualifier else None,
+        ): m
+        for m in measurements
+    }
 
 
 @pytest.fixture
 def duty_sentence_parser(
-    duty_expressions,
-    monetary_units,
-    measurements,
+    duty_expressions: Dict[int, DutyExpression],
+    monetary_units: Dict[str, MonetaryUnit],
+    measurements: Dict[Tuple[str, Optional[str]], Measurement],
 ) -> DutySentenceParser:
     return DutySentenceParser(
-        duty_expressions,
-        monetary_units,
-        measurements,
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
     )
+
+
+@pytest.fixture
+def get_component_data(duty_expressions, monetary_units, measurements) -> Callable:
+    def getter(
+        duty_expression_id,
+        amount,
+        monetary_unit_code,
+        measurement_codes,
+    ) -> Dict:
+        return {
+            "duty_expression": duty_expressions.get(duty_expression_id),
+            "duty_amount": amount,
+            "monetary_unit": monetary_units.get(monetary_unit_code),
+            "component_measurement": measurements.get(measurement_codes),
+        }
+
+    return getter
+
+
+@pytest.fixture(
+    params=(
+        ("4.000%", [(1, 4.0, None, None)]),
+        ("1.230 EUR / kg", [(1, 1.23, "EUR", ("KGM", None))]),
+        ("0.300 XEM / 100 kg / lactic.", [(1, 0.3, "XEM", ("DTN", "Z"))]),
+        (
+            "12.900% + 20.000 EUR / kg",
+            [(1, 12.9, None, None), (4, 20.0, "EUR", ("KGM", None))],
+        ),
+        ("kg", [(99, None, None, ("KGM", None))]),
+        ("100 kg", [(99, None, None, ("DTN", None))]),
+        ("1.000 EUR", [(1, 1.0, "EUR", None)]),
+        ("0.000% + AC", [(1, 0.0, None, None), (12, None, None, None)]),
+    ),
+    ids=[
+        "simple_ad_valorem",
+        "simple_specific_duty",
+        "unit_with_qualifier",
+        "multi_component_expression",
+        "supplementary_unit",
+        "supplementary_unit_with_numbers",
+        "monetary_unit_without_measurement",
+        "non_amount_expression",
+    ],
+)
+def reversible_duty_sentence_data(request, get_component_data):
+    """Duty sentence test cases that are syntactically correct and are also
+    formatted correctly."""
+    expected, component_data = request.param
+    return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture(
+    params=(
+        ("20.0 EUR/100kg", [(1, 20.0, "EUR", ("DTN", None))]),
+        ("1.0 EUR/1000 p/st", [(1, 1.0, "EUR", ("MIL", None))]),
+    ),
+    ids=[
+        "parses_without_spaces",
+        "parses_without_commas",
+    ],
+)
+def irreversible_duty_sentence_data(request, get_component_data):
+    """Duty sentence test cases that are syntactically correct but are not in
+    the canonical rendering format with spaces and commas in the correct
+    places."""
+    expected, component_data = request.param
+    return expected, [get_component_data(*args) for args in component_data]
