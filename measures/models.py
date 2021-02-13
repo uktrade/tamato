@@ -649,7 +649,7 @@ class MeasureConditionComponent(TrackedModel):
         null=True,
         blank=True,
     )
-    condition_component_measurement = models.ForeignKey(
+    component_measurement = models.ForeignKey(
         Measurement,
         on_delete=models.PROTECT,
         null=True,

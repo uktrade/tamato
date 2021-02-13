@@ -182,7 +182,7 @@ class TRMeasureCreatingPattern(MeasureCreatingPattern):
                     duty_expression=duty_expression,
                     duty_amount=component.duty_amount,
                     monetary_unit=monetary_unit,
-                    condition_component_measurement=measurement,
+                    component_measurement=measurement,
                     update_type=UpdateType.CREATE,
                     workbasket=self.workbasket,
                 )

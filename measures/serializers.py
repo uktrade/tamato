@@ -293,7 +293,7 @@ class MeasureConditionComponentSerializer(TrackedModelSerializerMixin):
     condition = MeasureConditionSerializer(read_only=True)
     duty_expression = DutyExpressionSerializer(read_only=True)
     monetary_unit = MonetaryUnitSerializer(read_only=True)
-    condition_component_measurement = MeasurementSerializer(read_only=True)
+    component_measurement = MeasurementSerializer(read_only=True)
 
     class Meta:
         model = models.MeasureConditionComponent
@@ -302,7 +302,7 @@ class MeasureConditionComponentSerializer(TrackedModelSerializerMixin):
             "duty_expression",
             "duty_amount",
             "monetary_unit",
-            "condition_component_measurement",
+            "component_measurement",
             "update_type",
             "record_code",
             "subrecord_code",

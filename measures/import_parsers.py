@@ -632,10 +632,10 @@ class MeasureConditionComponentParser(Writable, ElementParser):
     duty_expression__sid = IntElement(Tag("duty.expression.id"))
     duty_amount = TextElement(Tag("duty.amount"))
     monetary_unit__code = TextElement(Tag("monetary.unit.code"))
-    condition_component_measurement__measurement_unit__code = TextElement(
+    component_measurement__measurement_unit__code = TextElement(
         Tag("measurement.unit.code"),
     )
-    condition_component_measurement__measurement_unit_qualifier__code = TextElement(
+    component_measurement__measurement_unit_qualifier__code = TextElement(
         Tag("measurement.unit.qualifier.code"),
     )
 

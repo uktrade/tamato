@@ -10,11 +10,11 @@
       {%- if record.monetary_unit -%}
       <oub:monetary.unit.code>{{ record.monetary_unit.code }}</oub:monetary.unit.code>
       {%- endif %}
-      {%- if record.condition_component_measurement -%}
-      <oub:measurement.unit.code>{{ record.condition_component_measurement.measurement_unit.code }}</oub:measurement.unit.code>
+      {%- if record.component_measurement -%}
+      <oub:measurement.unit.code>{{ record.component_measurement.measurement_unit.code }}</oub:measurement.unit.code>
       {%- endif %}
-      {%- if record.condition_component_measurement and record.condition_component_measurement.measurement_unit_qualifier -%}
-      <oub:measurement.unit.qualifier.code>{{ record.condition_component_measurement.measurement_unit_qualifier.code }}</oub:measurement.unit.qualifier.code>
+      {%- if record.component_measurement and record.component_measurement.measurement_unit_qualifier -%}
+      <oub:measurement.unit.qualifier.code>{{ record.component_measurement.measurement_unit_qualifier.code }}</oub:measurement.unit.qualifier.code>
       {%- endif %}
     </oub:measure.condition.component>
 {% endcall -%}

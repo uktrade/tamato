@@ -406,14 +406,14 @@ class MeasureConditionComponentHandler(HandlerWithDutyAmount):
                 "measurement_unit_qualifier__code",
             ),
             "model": models.Measurement,
-            "name": "condition_component_measurement",
+            "name": "component_measurement",
             "optional": True,
         },
     )
     serializer_class = serializers.MeasureConditionComponentSerializer
     tag = parsers.MeasureConditionComponentParser.tag.name
 
-    def get_condition_component_measurement_link(self, model, kwargs):
+    def get_component_measurement_link(self, model, kwargs):
         return get_measurement_link(model, kwargs)
 
 
