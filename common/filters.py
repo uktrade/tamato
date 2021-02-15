@@ -1,6 +1,7 @@
 import re
 from collections import OrderedDict
 from datetime import date
+from datetime import datetime
 from functools import cached_property
 from typing import Callable
 from typing import Iterable
@@ -9,19 +10,22 @@ from typing import Union
 
 from crispy_forms_gds.choices import Choice
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Field
-from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchVector
+from django.db.models import Q
 from django_filters import CharFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
 from rest_framework import filters
 from rest_framework.settings import api_settings
+
+from common.util import TaricDateTimeRange
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
 
@@ -40,14 +44,6 @@ def field_to_layout(field_name, field):
     return field_name
 
 
-def last_10_years():
-    current_year = date.today().year
-    return [
-        Choice(str(year), str(year))
-        for year in range(current_year, current_year - 10, -1)
-    ]
-
-
 class LazyMultipleChoiceFilter(MultipleChoiceFilter):
     def get_field_choices(self):
         choices = self.extra.get("choices", [])
@@ -63,10 +59,8 @@ class LazyMultipleChoiceFilter(MultipleChoiceFilter):
 
 
 class TamatoFilterForm(forms.Form):
-    """
-    Generic Filtering form which adds submit and clear buttons, and adds
-    GDS formatting to field types.
-    """
+    """Generic Filtering form which adds submit and clear buttons, and adds GDS
+    formatting to field types."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -81,16 +75,14 @@ class TamatoFilterForm(forms.Form):
             *field_layout,
             Button("submit", "Search and Filter"),
             HTML(
-                f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>'
+                f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>',
             ),
         )
 
 
 class TamatoFilterMixin:
-    """
-    Generic filter mixin to provide basic search fields and an overrideable
-    method for getting the search term.
-    """
+    """Generic filter mixin to provide basic search fields and an overrideable
+    method for getting the search term."""
 
     search_fields: Iterable[Union[str, StringAgg]] = ("sid",)
 
@@ -103,7 +95,7 @@ class TamatoFilterMixin:
             if match:
                 terms = list(match.groups())
                 terms.extend(
-                    [value[: match.start()].strip(), value[match.end() :].strip()]
+                    [value[: match.start()].strip(), value[match.end() :].strip()],
                 )
                 return " ".join(terms)
         return value
@@ -111,7 +103,7 @@ class TamatoFilterMixin:
     def search_queryset(self, queryset, search_term):
         search_term = self.get_search_term(search_term)
         return queryset.annotate(search=SearchVector(*self.search_fields)).filter(
-            search=search_term
+            search=search_term,
         )
 
 
@@ -146,17 +138,15 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
         return self.search_queryset(queryset, value)
 
     def get_form_class(self):
-        """
-        Direct copy of the super function, which replaces the default form
-        with the TamatoFilterForm.
-        """
+        """Direct copy of the super function, which replaces the default form
+        with the TamatoFilterForm."""
         fields = OrderedDict(
-            [(name, filter_.field) for name, filter_ in self.filters.items()]
+            [(name, filter_.field) for name, filter_ in self.filters.items()],
         )
 
         if not self.clear_url:
             raise NotImplementedError(
-                f"clear_url must be defined on {self.__class__.__name__}"
+                f"clear_url must be defined on {self.__class__.__name__}",
             )
         fields["clear_url"] = self.clear_url
 
@@ -166,9 +156,7 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
 
 
 class ActiveStateMixin(FilterSet):
-    """
-    Generic filter mixin to provide an active state filter
-    """
+    """Generic filter mixin to provide an active state filter."""
 
     active_state = MultipleChoiceFilter(
         choices=ACTIVE_STATE_CHOICES,
@@ -184,9 +172,39 @@ class ActiveStateMixin(FilterSet):
         current_date = TaricDateTimeRange(datetime.now(), datetime.now())
         if value == ["active"]:
             active_status_filter = Q(valid_between__upper_inf=True) | Q(
-                valid_between__contains=current_date
+                valid_between__contains=current_date,
             )
         if value == ["terminated"]:
             active_status_filter = Q(valid_between__fully_lt=current_date)
 
         return queryset.filter(active_status_filter)
+
+
+class StartYearMixin(FilterSet):
+    """Generic filter mixin to provide an start year filter, providing the most
+    recent 10 years."""
+
+    current_year = date.today().year
+    last_10_years = [
+        Choice(str(year), str(year))
+        for year in range(current_year, current_year - 10, -1)
+    ]
+
+    start_year = LazyMultipleChoiceFilter(
+        choices=last_10_years,
+        widget=forms.CheckboxSelectMultiple,
+        method="filter_start_year",
+        label="Start Year",
+        help_text="Select all that apply",
+        required=False,
+    )
+
+    def filter_start_year(self, queryset, name, value):
+        if value:
+            queryset = queryset.annotate(
+                start_year=Extract(
+                    Lower("valid_between", output_field=DateField()),
+                    "year",
+                ),
+            ).filter(start_year__in=value)
+        return queryset
