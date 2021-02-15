@@ -185,12 +185,8 @@ class ME6(MustExist):
 
 
 class ME7(BusinessRule):
-    """
-    The goods nomenclature code must be a product code. It may not be an
-    intermediate line.
-
-    test
-    """
+    """The goods nomenclature code must be a product code. It may not be an
+    intermediate line."""
 
     def validate(self, measure):
         if measure.goods_nomenclature and measure.goods_nomenclature.suffix != "80":
@@ -650,9 +646,8 @@ class ME40(BusinessRule):
     specified.  If the flag is set "not permitted" then no measure component or
     measure condition component must exist.  Measure components and measure
     condition components are mutually exclusive. A measure can have either
-    components or condition components (if the ‘duty expression’ flag is.
-
-    ‘mandatory’ or ‘optional’) but not both.
+    components or condition components (if the "duty expression" flag is
+    "mandatory" or "optional") but not both.
 
     This describes the fact that measures of certain types MUST have components
     (duties) assigned to them, whereas others must not. Note the sub-clause also
