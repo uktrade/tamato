@@ -1,7 +1,7 @@
 {% set table_rows = [] %}
 {% for certificate in object_list %}
   {% set object_link -%}
-    <a class="govuk-link govuk-!-font-weight-bold" href="{{ certificate.get_url() }}">{{ certificate.sid}}</a>
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ certificate.get_url() }}">{{ certificate.code}}</a>
   {%- endset %}
   {{ table_rows.append([
     {"html": object_link},

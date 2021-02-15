@@ -5,6 +5,8 @@ from rest_framework import routers
 
 from certificates import views
 from certificates.validators import CERTIFICATE_SID_REGEX
+from certificates.validators import CERTIFICATE_TYPE_SID_REGEX
+
 
 api_router = routers.DefaultRouter()
 api_router.register(r"certificates", views.CertificatesViewSet)
@@ -17,7 +19,7 @@ ui_patterns = [
         name="certificate-ui-list",
     ),
     re_path(
-        fr"^(?P<sid>{CERTIFICATE_SID_REGEX[1:-1]})$",
+        fr"^(?P<certificate_type__sid>{CERTIFICATE_TYPE_SID_REGEX[1:-1]})(?P<sid>{CERTIFICATE_SID_REGEX[1:-1]})$",
         views.CertificateDetail.as_view(),
         name="certificate-ui-detail",
     ),
