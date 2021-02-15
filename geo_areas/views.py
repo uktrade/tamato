@@ -3,6 +3,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.views import TamatoListView
+from common.views import TrackedModelDetailView
 from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
@@ -26,3 +27,9 @@ class GeographicalAreaList(TamatoListView):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "descriptions__description"]
+
+
+class GeographicalAreaDetail(TrackedModelDetailView):
+    model = GeographicalArea
+    template_name = "geo_areas/detail.jinja"
+    queryset = GeographicalArea.objects.current().prefetch_related("descriptions")

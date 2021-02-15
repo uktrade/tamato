@@ -1,5 +1,6 @@
 from django.urls import include
 from django.urls import path
+from django.urls import re_path
 from rest_framework import routers
 
 from geo_areas import views
@@ -13,6 +14,11 @@ ui_patterns = [
         "",
         views.GeographicalAreaList.as_view(),
         name="geoarea-ui-list",
+    ),
+    re_path(
+        r"^(?P<sid>\d*)$",
+        views.GeographicalAreaDetail.as_view(),
+        name="geoarea-ui-detail",
     ),
 ]
 
