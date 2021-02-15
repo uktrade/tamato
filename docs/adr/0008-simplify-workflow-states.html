@@ -112,25 +112,25 @@ be reduced to only those necessary for the product to function.</p>
 <p>The interactions between these states are simpler – once approved there
 is a single happy path with branches to a single final state for the
 various unhappy paths. This is represented in the directed graph:</p>
-<div class="highlight-dot notranslate"><div class="highlight"><pre><span></span>digraph WorkflowStates {
-  editing [group=happy]
-  editing -&gt; proposed;
-  editing -&gt; archived;
-  archived -&gt; editing;
+<div class="highlight-dot notranslate"><div class="highlight"><pre><span></span><span class="k">digraph</span><span class="w"> </span><span class="nt">WorkflowStates</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">editing</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">editing</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">proposed</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="nt">editing</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">archived</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="nt">archived</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">editing</span><span class="p">;</span><span class="w"></span>
 
-  proposed [group=happy]
-  proposed -&gt; approved;
-  proposed -&gt; editing;
+<span class="w">  </span><span class="nt">proposed</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">proposed</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">approved</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="nt">proposed</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">editing</span><span class="p">;</span><span class="w"></span>
 
-  approved [group=happy]
-  approved -&gt; sent;
+<span class="w">  </span><span class="nt">approved</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">approved</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">sent</span><span class="p">;</span><span class="w"></span>
 
-  sent [group=happy]
-  sent -&gt; published;
-  sent -&gt; errored;
+<span class="w">  </span><span class="nt">sent</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">sent</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">published</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="nt">sent</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">errored</span><span class="p">;</span><span class="w"></span>
 
-  published [group=happy]
-}
+<span class="w">  </span><span class="nt">published</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p><img alt="Simplified States" src="../../_images/simplified-states.png" /></p>

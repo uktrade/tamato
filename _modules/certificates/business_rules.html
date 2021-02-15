@@ -40,7 +40,6 @@
 <span></span><span class="sd">&quot;&quot;&quot;Business rules for certificates.&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">find_duplicate_start_dates</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
@@ -62,9 +61,8 @@
 
 
 <div class="viewcode-block" id="CE4"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.CE4">[docs]</a><span class="k">class</span> <span class="nc">CE4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If a certificate is used in a measure condition then the validity periods of the</span>
-<span class="sd">    certificate must span the validity period of the measure.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;If a certificate is used in a measure condition then the validity periods</span>
+<span class="sd">    of the certificate must span the validity period of the measure.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="CE4.validate"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.CE4.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
         <span class="n">Measure</span> <span class="o">=</span> <span class="p">(</span>
@@ -75,6 +73,7 @@
             <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">conditions__required_certificate__sid</span><span class="o">=</span><span class="n">certificate</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">conditions__required_certificate__certificate_type</span><span class="o">=</span><span class="n">certificate</span><span class="o">.</span><span class="n">certificate_type</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">certificate</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
@@ -85,24 +84,27 @@
 
 
 <div class="viewcode-block" id="CE5"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.CE5">[docs]</a><span class="k">class</span> <span class="nc">CE5</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The certificate cannot be deleted if it is used in a measure condition.&quot;&quot;&quot;</span></div>
+    <span class="sd">&quot;&quot;&quot;The certificate cannot be deleted if it is used in a measure</span>
+<span class="sd">    condition.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="CE6"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.CE6">[docs]</a><span class="k">class</span> <span class="nc">CE6</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;At least one description record is mandatory. The start date of the first</span>
-<span class="sd">    description period must be equal to the start date of the certificate. No two</span>
-<span class="sd">    associated description periods for the same certificate and language may have the</span>
-<span class="sd">    same start date. The validity period of the certificate must span the validity</span>
-<span class="sd">    period of the certificate description.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    At least one description record is mandatory.</span>
+
+<span class="sd">    The start date of the first description period must be equal to the start</span>
+<span class="sd">    date of the certificate. No two associated description periods for the same</span>
+<span class="sd">    certificate and language may have the same start date. The validity period</span>
+<span class="sd">    of the certificate must span the validity period of the certificate</span>
+<span class="sd">    description.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;certificate&quot;</span></div>
 
 
 <div class="viewcode-block" id="CE7"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.CE7">[docs]</a><span class="k">class</span> <span class="nc">CE7</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the certificate type must span the validity period of the</span>
-<span class="sd">    certificate.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the certificate type must span the validity period</span>
+<span class="sd">    of the certificate.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;certificate_type&quot;</span></div>
 
@@ -127,8 +129,7 @@
 
 <div class="viewcode-block" id="ContiguousDescriptions"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.ContiguousDescriptions">[docs]</a><span class="k">class</span> <span class="nc">ContiguousDescriptions</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Certificate description validity period must be adjacent to the previous</span>
-<span class="sd">    description&#39;s validity period.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    description&#39;s validity period.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ContiguousDescriptions.validate"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.ContiguousDescriptions.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">):</span>
         <span class="c1"># XXX Predecessor is previous version of the same description. Shouldn&#39;t this</span>
