@@ -40,11 +40,20 @@ class Certificate(TrackedModel, ValidityMixin):
     record_code = "205"
     subrecord_code = "00"
     sid = models.CharField(
-        max_length=3, validators=[validators.certificate_sid_validator], db_index=True
+        max_length=3,
+        validators=[validators.certificate_sid_validator],
+        db_index=True,
     )
 
     certificate_type = models.ForeignKey(
-        CertificateType, related_name="certificates", on_delete=models.PROTECT
+        CertificateType,
+        related_name="certificates",
+        on_delete=models.PROTECT,
+    )
+
+    identifying_fields = (
+        "certificate_type__sid",
+        "sid",
     )
 
     business_rules = (
@@ -62,7 +71,10 @@ class Certificate(TrackedModel, ValidityMixin):
     def get_descriptions(self, workbasket=None):
         return (
             CertificateDescription.objects.current()
-            .filter(described_certificate__sid=self.sid)
+            .filter(
+                described_certificate__sid=self.sid,
+                described_certificate__certificate_type=self.certificate_type,
+            )
             .with_workbasket(workbasket)
         )
 
@@ -91,6 +103,7 @@ class Certificate(TrackedModel, ValidityMixin):
         # TODO handle deletes
         return self.measurecondition_set.model.objects.filter(
             required_certificate__sid=self.sid,
+            required_certificate__certificate_type=self.certificate_type,
         ).exists()
 
 
@@ -105,7 +118,9 @@ class CertificateDescription(TrackedModel, ValidityMixin):
 
     description = ShortDescription()
     described_certificate = models.ForeignKey(
-        Certificate, related_name="descriptions", on_delete=models.PROTECT
+        Certificate,
+        related_name="descriptions",
+        on_delete=models.PROTECT,
     )
 
     business_rules = (
@@ -115,5 +130,5 @@ class CertificateDescription(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return self.identifying_fields_to_string(
-            identifying_fields=("described_certificate", "valid_between")
+            identifying_fields=("described_certificate", "valid_between"),
         )
