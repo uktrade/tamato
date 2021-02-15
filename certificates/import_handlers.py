@@ -19,6 +19,7 @@ class CertificateTypeDescriptionHandler(BaseHandler):
 
 
 class CertificateHandler(BaseHandler):
+    identifying_fields = "sid", "certificate_type__sid"
     links = (
         {
             "model": models.CertificateType,
@@ -40,15 +41,6 @@ class BaseCertificateDescriptionHandler(BaseHandler):
     )
     serializer_class = serializers.CertificateDescriptionSerializer
     tag = "BaseCertificateDescriptionHandler"
-
-    def get_described_certificate_link(self, model, kwargs):
-        certificate_type = models.CertificateType.objects.get_latest_version(
-            sid=kwargs.pop("certificate_type__sid")
-        )
-        obj = model.objects.get_latest_version(
-            certificate_type=certificate_type, **kwargs
-        )
-        return obj
 
 
 class CertificateDescriptionHandler(BaseCertificateDescriptionHandler):
