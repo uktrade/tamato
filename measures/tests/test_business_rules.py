@@ -1010,8 +1010,7 @@ def test_ME40(applicability_code, component, condition_component):
     specified.  If the flag is set "not permitted" then no measure component or
     measure condition component must exist.  Measure components and measure
     condition components are mutually exclusive. A measure can have either
-    components or condition components (if the ‘duty expression’ flag is.
-
+    components or condition components (if the ‘duty expression’ flag is
     ‘mandatory’ or ‘optional’) but not both.
 
     This describes the fact that measures of certain types MUST have components
