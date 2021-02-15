@@ -15,6 +15,7 @@ from common.business_rules import only_applicable_after
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
+from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
@@ -307,7 +308,10 @@ class ME32(BusinessRule):
     """
 
     def validate(self, measure):
-        if measure.goods_nomenclature is None:
+        if (
+            measure.goods_nomenclature is None
+            or measure.update_type == UpdateType.DELETE
+        ):
             return
 
         # build the query for measures matching the given measure

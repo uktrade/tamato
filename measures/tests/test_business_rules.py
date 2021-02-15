@@ -530,11 +530,19 @@ def existing_measure_data(request, date_ranges, existing_goods_nomenclature):
             },
             False,
         ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "update_type": UpdateType.DELETE,
+            },
+            False
+        )
     ),
     ids=[
         "explicit:overlapping",
         "implicit:not-overlapping",
         "explicit:not-overlapping",
+        "deleted",
     ],
 )
 def related_measure_data(request, date_ranges, related_goods_nomenclature):
