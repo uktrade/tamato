@@ -334,27 +334,33 @@ class ME32(BusinessRule):
 
         # get all goods nomenclature versions associated with this measure
         GoodsNomenclature = type(measure.goods_nomenclature)
-        goods = GoodsNomenclature.objects.filter(
+        goods = GoodsNomenclature.objects.current_as_of(measure.transaction).filter(
             sid=measure.goods_nomenclature.sid,
             valid_between__overlap=measure.effective_valid_between,
         )
 
         # hack to avoid circular import
-        Node = GoodsNomenclature.indents.rel.related_model.nodes.rel.related_model
+        Indent = GoodsNomenclature.indents.rel.related_model
+        Node = Indent.nodes.rel.related_model
 
         # for each goods nomenclature version, get all indents
         for good in goods:
-            indents = Node.objects.filter(
+            indents = Indent.objects.current_as_of(measure.transaction).filter(
                 valid_between__overlap=measure.effective_valid_between,
-                indent__indented_goods_nomenclature=good,
+                indented_goods_nomenclature=good,
+            )
+
+            nodes = Node.objects.filter(
+                valid_between__overlap=measure.effective_valid_between,
+                indent__in=indents,
             )
 
             # for each indent, get the goods tree
-            for indent in indents:
+            for node in nodes:
                 tree = (
-                    indent.get_ancestors()
-                    | indent.get_descendants()
-                    | Node.objects.filter(pk=indent.pk)
+                    node.get_ancestors()
+                    | node.get_descendants()
+                    | Node.objects.filter(pk=node.pk)
                 ).filter(
                     valid_between__overlap=measure.effective_valid_between,
                 )

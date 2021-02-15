@@ -13,6 +13,7 @@ from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
+from common.validators import UpdateType
 from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from measures import business_rules
@@ -445,21 +446,45 @@ def existing_goods_nomenclature(date_ranges):
     )
 
 
+def updated_goods_nomenclature(e):
+    good = factories.GoodsNomenclatureFactory(
+        valid_between=e.valid_between,
+        indent__node__parent=e.indents.first().nodes.first(),
+    )
+
+    new_indent = factories.GoodsNomenclatureIndentFactory(
+        update_type=UpdateType.UPDATE,
+        version_group=good.indents.first().version_group,
+        node__parent=None,
+    )
+
+    return good
+
+
 @pytest.fixture(
     params=(
-        lambda e: e,
-        lambda e: factories.GoodsNomenclatureFactory(
-            indent__node__parent=e.indents.first().nodes.first(),
-            valid_between=e.valid_between,
+        (lambda e: e, True),
+        (
+            lambda e: factories.GoodsNomenclatureFactory(
+                indent__node__parent=e.indents.first().nodes.first(),
+                valid_between=e.valid_between,
+            ),
+            True,
+        ),
+        (
+            updated_goods_nomenclature,
+            False,
         ),
     ),
     ids=[
-        "self",
-        "child",
+        "current:self",
+        "current:child",
+        "former:parent",
     ],
 )
 def related_goods_nomenclature(request, existing_goods_nomenclature):
-    return request.param(existing_goods_nomenclature)
+    callable, expected = request.param
+    return callable(existing_goods_nomenclature), expected
 
 
 @pytest.fixture(
@@ -513,11 +538,12 @@ def existing_measure_data(request, date_ranges, existing_goods_nomenclature):
     ],
 )
 def related_measure_data(request, date_ranges, related_goods_nomenclature):
-    callable, expected = request.param
+    callable, date_overlap = request.param
+    nomenclature, nomenclature_overlap = related_goods_nomenclature
     return {
-        "goods_nomenclature": related_goods_nomenclature,
+        "goods_nomenclature": nomenclature,
         **callable(date_ranges),
-    }, expected
+    }, date_overlap and nomenclature_overlap
 
 
 def test_ME32(existing_measure_data, related_measure_data):
