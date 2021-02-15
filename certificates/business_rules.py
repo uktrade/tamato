@@ -1,7 +1,6 @@
 """Business rules for certificates."""
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
-from common.business_rules import find_duplicate_start_dates
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
@@ -23,9 +22,8 @@ class CE2(UniqueIdentifyingFields):
 
 
 class CE4(BusinessRule):
-    """If a certificate is used in a measure condition then the validity periods of the
-    certificate must span the validity period of the measure.
-    """
+    """If a certificate is used in a measure condition then the validity periods
+    of the certificate must span the validity period of the measure."""
 
     def validate(self, certificate):
         Measure = (
@@ -36,6 +34,7 @@ class CE4(BusinessRule):
             .with_effective_valid_between()
             .filter(
                 conditions__required_certificate__sid=certificate.sid,
+                conditions__required_certificate__certificate_type=certificate.certificate_type,
             )
             .exclude(
                 db_effective_valid_between__contained_by=certificate.valid_between,
@@ -46,24 +45,27 @@ class CE4(BusinessRule):
 
 
 class CE5(PreventDeleteIfInUse):
-    """The certificate cannot be deleted if it is used in a measure condition."""
+    """The certificate cannot be deleted if it is used in a measure
+    condition."""
 
 
 class CE6(DescriptionsRules):
-    """At least one description record is mandatory. The start date of the first
-    description period must be equal to the start date of the certificate. No two
-    associated description periods for the same certificate and language may have the
-    same start date. The validity period of the certificate must span the validity
-    period of the certificate description.
+    """
+    At least one description record is mandatory.
+
+    The start date of the first description period must be equal to the start
+    date of the certificate. No two associated description periods for the same
+    certificate and language may have the same start date. The validity period
+    of the certificate must span the validity period of the certificate
+    description.
     """
 
     model_name = "certificate"
 
 
 class CE7(ValidityPeriodContained):
-    """The validity period of the certificate type must span the validity period of the
-    certificate.
-    """
+    """The validity period of the certificate type must span the validity period
+    of the certificate."""
 
     container_field_name = "certificate_type"
 
@@ -88,8 +90,7 @@ class NoOverlappingDescriptions(BusinessRule):
 
 class ContiguousDescriptions(BusinessRule):
     """Certificate description validity period must be adjacent to the previous
-    description's validity period.
-    """
+    description's validity period."""
 
     def validate(self, description: TrackedModel):
         # XXX Predecessor is previous version of the same description. Shouldn't this
