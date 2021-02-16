@@ -91,7 +91,7 @@ the following structure:</p>
 <dl class="method">
 <dt id="importer.parsers.ElementParser.clean">
 <code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ElementParser.clean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clean up data</p>
+<dd><p>Clean up data.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -130,7 +130,7 @@ is an element that this parser should be parsing.</p>
 <dl class="method">
 <dt id="importer.parsers.ElementParser.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ElementParser.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Validate data</p>
+<dd><p>Validate data.</p>
 </dd></dl>
 
 </dd></dl>
@@ -147,7 +147,7 @@ only an integer value and have no attributes or children, eg:</p>
 <dl class="method">
 <dt id="importer.parsers.IntElement.clean">
 <code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#IntElement.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.IntElement.clean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clean up data</p>
+<dd><p>Clean up data.</p>
 </dd></dl>
 
 </dd></dl>
@@ -174,7 +174,7 @@ only a text value and have no attributes or children, eg:</p>
 <dl class="method">
 <dt id="importer.parsers.TextElement.clean">
 <code class="sig-name descname">clean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#TextElement.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.TextElement.clean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clean up data</p>
+<dd><p>Clean up data.</p>
 </dd></dl>
 
 </dd></dl>
@@ -182,32 +182,33 @@ only a text value and have no attributes or children, eg:</p>
 <dl class="class">
 <dt id="importer.parsers.ValidityMixin">
 <em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">ValidityMixin</code><a class="reference internal" href="../../_modules/importer/parsers.html#ValidityMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.ValidityMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse validity start and end dates</p>
+<dd><p>Parse validity start and end dates.</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="importer.parsers.Writable">
 <em class="property">class </em><code class="sig-prename descclassname">importer.parsers.</code><code class="sig-name descname">Writable</code><a class="reference internal" href="../../_modules/importer/parsers.html#Writable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable" title="Permalink to this definition">¶</a></dt>
-<dd><p>A parser which implements the Writable interface can write its changes to the
-database.</p>
-<p>Not all TARIC3 elements correspond to database entities (particularly simple text
-elements, but also envelopes and app.messages).</p>
+<dd><p>A parser which implements the Writable interface can write its changes to
+the database.</p>
+<p>Not all TARIC3 elements correspond to database entities (particularly simple
+text elements, but also envelopes and app.messages).</p>
 <dl class="method">
 <dt id="importer.parsers.Writable.create">
 <code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#Writable.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable.create" title="Permalink to this definition">¶</a></dt>
-<dd><p>Preps the given data as a create record and submits it to the nursery for processing.</p>
+<dd><p>Preps the given data as a create record and submits it to the nursery
+for processing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.parsers.Writable.delete">
 <code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#Writable.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable.delete" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete a DB record with provided data</p>
+<dd><p>Delete a DB record with provided data.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.parsers.Writable.update">
 <code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#Writable.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.parsers.Writable.update" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update a DB record with provided data</p>
+<dd><p>Update a DB record with provided data.</p>
 </dd></dl>
 
 </dd></dl>

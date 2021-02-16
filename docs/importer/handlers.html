@@ -179,15 +179,17 @@ On success a set of all the keys for any objects used which may be in the cache 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.clean">
 <code class="sig-name descname">clean</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.clean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Validate the data against the serializer and return the validated data.</p>
+<dd><p>Validate the data against the serializer and return the validated
+data.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.dispatch">
 <code class="sig-name descname">dispatch</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; common.models.records.TrackedModel<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.dispatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.dispatch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the data into the database.</p>
-<p>This method initially validates all collected data. If valid it then runs
-some pre-processing before saving. Once saved an opportunity is given for post-processing.</p>
+<p>This method initially validates all collected data. If valid it then
+runs some pre-processing before saving. Once saved an opportunity is
+given for post-processing.</p>
 </dd></dl>
 
 <dl class="method">
@@ -232,7 +234,8 @@ be easily validated against the serializer).</p>
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.register_dependant">
 <em class="property">classmethod </em><code class="sig-name descname">register_dependant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.register_dependant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.register_dependant" title="Permalink to this definition">¶</a></dt>
-<dd><p>Allow a handler to retrospectively assign itself to another handlers list of dependencies.</p>
+<dd><p>Allow a handler to retrospectively assign itself to another handlers
+list of dependencies.</p>
 <p>This solves the issue of forward referencing - where a class cannot reference another class
 before that class has been defined.</p>
 </dd></dl>
@@ -240,7 +243,8 @@ before that class has been defined.</p>
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.resolve_dependencies">
 <code class="sig-name descname">resolve_dependencies</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.resolve_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.resolve_dependencies" title="Permalink to this definition">¶</a></dt>
-<dd><p>Search the cache for all object dependencies and attempt to resolve them.</p>
+<dd><p>Search the cache for all object dependencies and attempt to resolve
+them.</p>
 <p>Previously found objects, which are dependent on the current object, should be
 stored in the cache. This method loops over the current objects dependencies and
 attempts to extract them from the cache. It then also searches for the dependencies
@@ -253,7 +257,8 @@ If all dependencies are found the method returns True.</p>
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.resolve_links">
 <code class="sig-name descname">resolve_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.resolve_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.resolve_links" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extract data specific to links and use this to search the database for the relevant objects.</p>
+<dd><p>Extract data specific to links and use this to search the database for
+the relevant objects.</p>
 <p>Once found attach the object to the <cite>resolved_links</cite> dictionary.</p>
 <p>If a non-optional object can’t be found return False. This signifies the links cannot be resolved.
 If all non-optional objects are found then return True.</p>
@@ -262,8 +267,8 @@ If all non-optional objects are found then return True.</p>
 <dl class="method">
 <dt id="importer.handlers.BaseHandler.serialize">
 <code class="sig-name descname">serialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; importer.utils.DispatchedObjectType<a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandler.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandler.serialize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Provides a serializable dict of the object to be stored in the cache. Should hold all the
-necessary data required to rebuild the object</p>
+<dd><p>Provides a serializable dict of the object to be stored in the cache.</p>
+<p>Should hold all the necessary data required to rebuild the object</p>
 </dd></dl>
 
 </dd></dl>
@@ -271,7 +276,8 @@ necessary data required to rebuild the object</p>
 <dl class="class">
 <dt id="importer.handlers.BaseHandlerMeta">
 <em class="property">class </em><code class="sig-prename descclassname">importer.handlers.</code><code class="sig-name descname">BaseHandlerMeta</code><a class="reference internal" href="../../_modules/importer/handlers.html#BaseHandlerMeta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.handlers.BaseHandlerMeta" title="Permalink to this definition">¶</a></dt>
-<dd><p>BaseHandler Metaclass to add validation and registration of each new Handler class.</p>
+<dd><p>BaseHandler Metaclass to add validation and registration of each new Handler
+class.</p>
 <p>Handlers have relatively strict requirements for them to function.</p>
 <p>Firstly there are two required attributes:</p>
 <ol class="arabic simple">

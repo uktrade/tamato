@@ -55,8 +55,8 @@
 <span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
-<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">nsmap</span>
 <span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">Tag</span>
+<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">nsmap</span>
 <span class="kn">from</span> <span class="nn">importer.nursery</span> <span class="kn">import</span> <span class="n">get_nursery</span>
 <span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ElementParser</span>
 <span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ParserError</span>
@@ -84,7 +84,8 @@
     <span class="n">update_type</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;update.type&quot;</span><span class="p">))</span>
 
 <div class="viewcode-block" id="RecordParser.save"><a class="viewcode-back" href="../../docs/importer/taric.html#importer.taric.RecordParser.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save the Record to the database.</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the Record to the database.</span>
 
 <span class="sd">        :param data: A dict of the parsed element, mapping field names to values</span>
 <span class="sd">        :param transaction_id: The primary key of the transaction to add the record to</span>
@@ -108,7 +109,8 @@
     <span class="n">record</span> <span class="o">=</span> <span class="n">RecordParser</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MessageParser.save"><a class="viewcode-back" href="../../docs/importer/taric.html#importer.taric.MessageParser.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save the contained records to the database.</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the contained records to the database.</span>
 
 <span class="sd">        :param data: A dict of parsed element, mapping field names to values</span>
 <span class="sd">        :param transaction_id: The primary key of the transaction to add records to</span>
@@ -131,13 +133,13 @@
         <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">envelope</span><span class="p">:</span> <span class="n">Envelope</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save the transaction and the contained records to the database.</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the transaction and the contained records to the database.</span>
 
 <span class="sd">        :param data: A dict of the parsed element, containing at least an &quot;id&quot; and list</span>
 <span class="sd">            of &quot;message&quot; dicts</span>
 <span class="sd">        :param envelope_id: The ID of the containing Envelope</span>
 <span class="sd">        :param workbasket_id: The primary key of the workbasket to add transactions to</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving transaction </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -154,7 +156,9 @@
             <span class="k">return</span>
 
         <span class="n">EnvelopeTransaction</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-            <span class="n">envelope</span><span class="o">=</span><span class="n">envelope</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="n">transaction</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+            <span class="n">envelope</span><span class="o">=</span><span class="n">envelope</span><span class="p">,</span>
+            <span class="n">transaction</span><span class="o">=</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="n">order</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]),</span>
         <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">message_data</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">]:</span>
@@ -214,7 +218,7 @@
                 <span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workbasket_status</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">envelope</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">Envelope</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
-                <span class="n">envelope_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">envelope_id</span>
+                <span class="n">envelope_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">envelope_id</span><span class="p">,</span>
             <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
@@ -228,7 +232,7 @@
 
 <div class="viewcode-block" id="process_taric_xml_stream"><a class="viewcode-back" href="../../docs/importer/taric.html#importer.taric.process_taric_xml_stream">[docs]</a><span class="k">def</span> <span class="nf">process_taric_xml_stream</span><span class="p">(</span><span class="n">taric_stream</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">username</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parse a TARIC XML stream through the import handlers</span>
+<span class="sd">    Parse a TARIC XML stream through the import handlers.</span>
 
 <span class="sd">    This will load the data from the stream into the database.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
