@@ -30,7 +30,7 @@ class CE4(BusinessRule):
             certificate.measurecondition_set.model.dependent_measure.field.related_model
         )
         if (
-            Measure.objects.current()
+            Measure.objects.current_as_of(certificate.transaction)
             .with_effective_valid_between()
             .filter(
                 conditions__required_certificate__sid=certificate.sid,
@@ -81,7 +81,7 @@ class NoOverlappingDescriptions(BusinessRule):
                 sid=description.sid,
                 valid_between__overlap=description.valid_between,
             )
-            .current()
+            .current_as_of(description.transaction)
             .exclude(id=description.id)
             .exists()
         ):

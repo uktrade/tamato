@@ -3,10 +3,10 @@ import logging
 
 from common.business_rules import BusinessRule
 from common.business_rules import MustExist
-from common.business_rules import only_applicable_after
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import only_applicable_after
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +23,8 @@ class ROIMB4(MustExist):
 
 @only_applicable_after("2003-12-31")
 class ROIMB8(BusinessRule):
-    """Explicit dates of related measures must be within the validity period of the base regulation."""
+    """Explicit dates of related measures must be within the validity period of
+    the base regulation."""
 
     def validate(self, regulation):
         if (
@@ -31,7 +32,7 @@ class ROIMB8(BusinessRule):
                 generating_regulation__regulation_id=regulation.regulation_id,
                 generating_regulation__role_type=regulation.role_type,
             )
-            .current()
+            .current_as_of(regulation.transaction)
             .exclude(
                 valid_between__contained_by=regulation.valid_between,
             )
@@ -41,13 +42,17 @@ class ROIMB8(BusinessRule):
 
 
 class ROIMB44(BusinessRule):
-    """The "Regulation Approved Flag" indicates for a draft regulation whether the draft
-    is approved, i.e. the regulation is definitive apart from its publication (only the
-    definitive regulation id and the O.J.  reference are not yet known).  A draft
-    regulation (regulation id starts with a 'C') can have its "Regulation Approved Flag"
-    set to 0='Not Approved' or 1='Approved'. Its flag can only change from 0='Not
-    Approved' to 1='Approved'. Any other regulation must have its "Regulation Approved
-    Flag" set to 1='Approved'."""
+    """
+    The "Regulation Approved Flag" indicates for a draft regulation whether the
+    draft is approved, i.e. the regulation is definitive apart from its
+    publication (only the definitive regulation id and the O.J.
+
+    reference are not yet known).  A draft regulation (regulation id starts with
+    a 'C') can have its "Regulation Approved Flag" set to 0='Not Approved' or
+    1='Approved'. Its flag can only change from 0='Not Approved' to
+    1='Approved'. Any other regulation must have its "Regulation Approved Flag"
+    set to 1='Approved'.
+    """
 
     # We need to work on the draft –> live status however, as we have not yet worked
     # this through
@@ -66,20 +71,20 @@ class ROIMB44(BusinessRule):
                 raise self.violation(
                     f"Regulation {regulation}: A draft regulation can only have its "
                     "'Regulation Approved Flag' change from 'Not Approved' to "
-                    "'Approved'."
+                    "'Approved'.",
                 )
 
         elif not regulation.approved:
             raise self.violation(
                 f"Regulation {regulation}: A non-draft regulation must have its "
-                "'Regulation Approved Flag' set to 'Approved'."
+                "'Regulation Approved Flag' set to 'Approved'.",
             )
 
 
 class ROIMB46(PreventDeleteIfInUse):
-    """A base regulation cannot be deleted if it is used as a justification regulation,
-    except for ‘C’ regulations used only in measures as both measure-generating
-    regulation and justification regulation."""
+    """A base regulation cannot be deleted if it is used as a justification
+    regulation, except for ‘C’ regulations used only in measures as both
+    measure-generating regulation and justification regulation."""
 
     # We should not be deleting base regulations. Also, we will not be using the
     # justification regulation field, though there will be a lot of EU regulations where
@@ -91,8 +96,8 @@ class ROIMB46(PreventDeleteIfInUse):
 
 
 class ROIMB47(ValidityPeriodContained):
-    """The validity period of the regulation group id must span the validity period of
-    the base regulation."""
+    """The validity period of the regulation group id must span the validity
+    period of the base regulation."""
 
     # But we will be ensuring that the regulation groups are not end dated, therefore we
     # will not get hit by this
