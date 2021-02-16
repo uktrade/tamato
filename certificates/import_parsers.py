@@ -10,15 +10,19 @@ from importer.taric import RecordParser
 @RecordParser.register_child("certificate_type")
 class CertificateTypeParser(ValidityMixin, Writable, ElementParser):
     """
-    <xs:element name="certificate.type" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-                <xs:element name="validity.start.date" type="Date"/>
-                <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="certificate.type" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("certificate.type")
@@ -29,15 +33,19 @@ class CertificateTypeParser(ValidityMixin, Writable, ElementParser):
 @RecordParser.register_child("certificate_type_description")
 class CertificateTypeDescriptionParser(Writable, ElementParser):
     """
-    <xs:element name="certificate.type.description" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-                <xs:element name="language.id" type="LanguageId"/>
-                <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="certificate.type.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("certificate.type.description")
@@ -49,16 +57,20 @@ class CertificateTypeDescriptionParser(Writable, ElementParser):
 @RecordParser.register_child("certificate")
 class CertificateParser(ValidityMixin, Writable, ElementParser):
     """
-    <xs:element name="certificate" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-                <xs:element name="certificate.code" type="CertificateCode"/>
-                <xs:element name="validity.start.date" type="Date"/>
-                <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="certificate" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="certificate.code" type="CertificateCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("certificate")
@@ -70,17 +82,21 @@ class CertificateParser(ValidityMixin, Writable, ElementParser):
 @RecordParser.register_child("certificate_description")
 class CertificateDescriptionParser(Writable, ElementParser):
     """
-    <xs:element name="certificate.description" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="certificate.description.period.sid" type="SID"/>
-                <xs:element name="language.id" type="LanguageId"/>
-                <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-                <xs:element name="certificate.code" type="CertificateCode"/>
-                <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="certificate.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.description.period.sid" type="SID"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="certificate.code" type="CertificateCode"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("certificate.description")
@@ -94,16 +110,20 @@ class CertificateDescriptionParser(Writable, ElementParser):
 @RecordParser.register_child("certificate_description_period")
 class CertificateDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
-    <xs:element name="certificate.description.period" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="certificate.description.period.sid" type="SID"/>
-                <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-                <xs:element name="certificate.code" type="CertificateCode"/>
-                <xs:element name="validity.start.date" type="Date"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="certificate.description.period" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.description.period.sid" type="SID"/>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="certificate.code" type="CertificateCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("certificate.description.period")
@@ -111,5 +131,5 @@ class CertificateDescriptionPeriodParser(ValidityMixin, Writable, ElementParser)
     sid = IntElement(Tag("certificate.description.period.sid"))
     described_certificate__sid = TextElement(Tag("certificate.code"))
     described_certificate__certificate_type__sid = TextElement(
-        Tag("certificate.type.code")
+        Tag("certificate.type.code"),
     )

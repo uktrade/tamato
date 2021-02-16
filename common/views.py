@@ -5,8 +5,8 @@ from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.db import connection
 from django.db import OperationalError
+from django.db import connection
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -51,8 +51,9 @@ def healthcheck(request):
     except OperationalError:
         response.write(
             response_message.format(
-                message="DB missing", response_time=int(time.time() - start)
-            )
+                message="DB missing",
+                response_time=int(time.time() - start),
+            ),
         )
         response.status_code = 503
         return response
@@ -62,14 +63,15 @@ def healthcheck(request):
     except RedisTimeoutError:
         response.write(
             response_message.format(
-                message="Redis missing", response_time=int(time.time() - start)
-            )
+                message="Redis missing",
+                response_time=int(time.time() - start),
+            ),
         )
         response.status_code = 503
         return response
 
     response.write(
-        response_message.format(message="OK", response_time=int(time.time() - start))
+        response_message.format(message="OK", response_time=int(time.time() - start)),
     )
     return response
 
@@ -113,10 +115,8 @@ class DeleteView(CreateView):
 
 
 class WithPaginationListView(FilterView):
-    """
-    Generic list view enabling pagination and
-    adds a page link list to the context.
-    """
+    """Generic list view enabling pagination and adds a page link list to the
+    context."""
 
     paginator_class = Paginator
     paginate_by = settings.REST_FRAMEWORK["PAGE_SIZE"]
@@ -126,15 +126,14 @@ class WithPaginationListView(FilterView):
         page_obj = data["page_obj"]
         page_number = page_obj.number
         data["page_links"] = build_pagination_list(
-            page_number, page_obj.paginator.num_pages
+            page_number,
+            page_obj.paginator.num_pages,
         )
         return data
 
 
 class RequiresSuperuserMixin(UserPassesTestMixin):
-    """
-    Only allow superusers to see this view.
-    """
+    """Only allow superusers to see this view."""
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -145,9 +144,7 @@ class TamatoListView(WithCurrentWorkBasket, WithPaginationListView):
 
 
 class TrackedModelDetailMixin:
-    """
-    Allows detail URLs to use <Identifying-Fields> instead of <pk>
-    """
+    """Allows detail URLs to use <Identifying-Fields> instead of <pk>"""
 
     model = None
     required_url_kwargs = None
@@ -160,7 +157,7 @@ class TrackedModelDetailMixin:
 
         if not all(key in self.kwargs for key in required_url_kwargs):
             raise AttributeError(
-                f"{self.__class__.__name__} must be called with {', '.join(required_url_kwargs)} in the URLconf."
+                f"{self.__class__.__name__} must be called with {', '.join(required_url_kwargs)} in the URLconf.",
             )
 
         queryset = queryset.filter(**self.kwargs)
@@ -172,6 +169,8 @@ class TrackedModelDetailMixin:
 
 
 class TrackedModelDetailView(
-    WithCurrentWorkBasket, TrackedModelDetailMixin, DetailView
+    WithCurrentWorkBasket,
+    TrackedModelDetailMixin,
+    DetailView,
 ):
     pass

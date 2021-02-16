@@ -1,6 +1,4 @@
-"""
-Validators for regulations
-"""
+"""Validators for regulations."""
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -21,7 +19,8 @@ class RoleType(models.IntegerChoices):
 
 
 class ReplacementIndicator(models.IntegerChoices):
-    """The code which indicates whether or not a regulation has been replaced."""
+    """The code which indicates whether or not a regulation has been
+    replaced."""
 
     NOT_REPLACED = 0, "Not replaced"
     REPLACED = 1, "Replaced"
@@ -29,7 +28,8 @@ class ReplacementIndicator(models.IntegerChoices):
 
 
 class CommunityCode(models.IntegerChoices):
-    """Code which specifies whether the treaty origin is ECONOMIC, ATOMIC or COAL."""
+    """Code which specifies whether the treaty origin is ECONOMIC, ATOMIC or
+    COAL."""
 
     ECONOMIC = 1, "Economic"
     ATOMIC = 2, "Atomic"
@@ -73,9 +73,10 @@ regulation_id_validator = RegexValidator(
     (?P<national_suffix>[A-Z]{3}))|
     ((?P<dummy_prefix>IYY)
     (?P<dummy_suffix>\d{5}))
-"""
+""",
 )
 
 no_information_text_delimiters = RegexValidator(
-    r"^[^|\xA0]*$", "Must not contain '|' or 0xA0"
+    r"^[^|\xA0]*$",
+    "Must not contain '|' or 0xA0",
 )

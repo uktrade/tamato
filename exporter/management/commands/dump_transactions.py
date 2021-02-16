@@ -1,11 +1,12 @@
-from exporter.management.commands.util import get_envelope_of_active_workbaskets
 from exporter.management.commands.util import WorkBasketBaseCommand
+from exporter.management.commands.util import get_envelope_of_active_workbaskets
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
 class Command(WorkBasketBaseCommand):
-    """Dump envelope to file or stdout.
+    """
+    Dump envelope to file or stdout.
 
     Invalid envelopes are output but with error level set.
     """
@@ -27,7 +28,8 @@ class Command(WorkBasketBaseCommand):
         )
 
     def get_output_file(self, filename):
-        """Enable the standard where '-' refers to stdout, every other string is an actual filename."""
+        """Enable the standard where '-' refers to stdout, every other string is
+        an actual filename."""
         if filename == "-":
             return self.stdout
         return open(filename, "w+")
@@ -36,7 +38,8 @@ class Command(WorkBasketBaseCommand):
         workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
 
         envelope = get_envelope_of_active_workbaskets(
-            options["envelope_id"], workbaskets
+            options["envelope_id"],
+            workbaskets,
         )
 
         f = self.get_output_file(options["filename"])

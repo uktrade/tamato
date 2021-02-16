@@ -3,16 +3,17 @@ from pathlib import Path
 from django.conf import settings
 from django.core.files.base import ContentFile
 
+from exporter.management.commands.util import WorkBasketBaseCommand
 from exporter.management.commands.util import get_envelope_filename
 from exporter.management.commands.util import get_envelope_of_active_workbaskets
-from exporter.management.commands.util import WorkBasketBaseCommand
 from exporter.storages import HMRCStorage
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
 class Command(WorkBasketBaseCommand):
-    """Upload envelope to HMRC s3 storage.
+    """
+    Upload envelope to HMRC s3 storage.
 
     Invalid envelopes are NOT uploaded.
     """

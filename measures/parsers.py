@@ -9,15 +9,15 @@ from typing import Iterable
 from typing import Union
 
 import pytz
+from parsec import Parser
+from parsec import Value
 from parsec import choice
 from parsec import joint
 from parsec import optional
-from parsec import Parser
 from parsec import regex
 from parsec import spaces
 from parsec import string
 from parsec import try_choice
-from parsec import Value
 
 from common.validators import ApplicabilityCode
 from measures.models import DutyExpression
@@ -49,11 +49,14 @@ def abbrev(
     obj: Union[
         MeasurementUnit,
         MeasurementUnitQualifier,
-    ]
+    ],
 ) -> Parser:
-    """Matches an abbreviation and returns the associated object.
-    Humans cannot be relied upon to use spaces or thousand separators
-    correctly so these can ignored."""
+    """
+    Matches an abbreviation and returns the associated object.
+
+    Humans cannot be relied upon to use spaces or thousand separators correctly
+    so these can ignored.
+    """
     return reduce(
         try_choice,
         [
@@ -66,9 +69,13 @@ def abbrev(
 
 
 def measurement(m: Measurement) -> Parser:
-    """For measurement units and qualifiers, we match a human-readable version
-    of the unit to its internal code. Units by themselves are always allowed,
-    but only some combinations of units and qualifiers are permitted."""
+    """
+    For measurement units and qualifiers, we match a human-readable version of
+    the unit to its internal code.
+
+    Units by themselves are always allowed, but only some combinations of units
+    and qualifiers are permitted.
+    """
     unit = abbrev(m.measurement_unit)
     if m.measurement_unit_qualifier:
         qualifier = token("/") >> abbrev(m.measurement_unit_qualifier)
@@ -78,7 +85,9 @@ def measurement(m: Measurement) -> Parser:
 
 
 def if_applicable(
-    has_this: ApplicabilityCode, parser: Parser, default: Parser = empty
+    has_this: ApplicabilityCode,
+    parser: Parser,
+    default: Parser = empty,
 ) -> Parser:
     """Matches a value depending on the passed applicability code."""
     if has_this == ApplicabilityCode.PERMITTED:
@@ -99,11 +108,12 @@ class DutySentenceParser:
     """
     A duty expression defines what elements are permitted in a measure component
     for each type of duty expression: amount, monetary unit and measurement.
-    They also include the prefix that must be matched at the start of the expression.
-    E.g. (2, '+', MANDATORY, PERMITTED, PERMITTED) describes things like '+ 1.23 EUR/kg'
+    They also include the prefix that must be matched at the start of the
+    expression. E.g. (2, '+', MANDATORY, PERMITTED, PERMITTED) describes things
+    like '+ 1.23 EUR/kg'.
 
-    A parsed measure component references a duty expression ID
-    and will potentially have values for the amount, monetary unit and measurement.
+    A parsed measure component references a duty expression ID and will
+    potentially have values for the amount, monetary unit and measurement.
     """
 
     def __init__(
@@ -145,8 +155,8 @@ class DutySentenceParser:
         # the duty epxression applicability codes. We convert the duty expressions
         # into parsers that will only parse the elements that are permitted for this type.
         def component(duty_exp: DutyExpression) -> Parser:
-            """Matches a string prefix and returns the associated type id,
-            along with any parsed amounts and units according to their applicability,
+            """Matches a string prefix and returns the associated type id, along
+            with any parsed amounts and units according to their applicability,
             as a 4-tuple of (id, amount, monetary unit, measurement)."""
             prefix = duty_exp.prefix
             has_amount = duty_exp.duty_amount_applicability_code
@@ -167,12 +177,13 @@ class DutySentenceParser:
                 ),
             )
             this_measurement = if_applicable(
-                has_measurement, optional(token("/")) >> self._measurement
+                has_measurement,
+                optional(token("/")) >> self._measurement,
             )
 
             component = joint(id, this_value, this_monetary_unit, this_measurement)
             measurement_only = joint(id, this_measurement).parsecmap(
-                lambda t: (t[0], None, None, t[1])
+                lambda t: (t[0], None, None, t[1]),
             )
 
             # It's possible for units that contain numbers (e.g. DTN => '100 kg')
@@ -190,7 +201,7 @@ class DutySentenceParser:
                     duty_amount=exp[1],
                     monetary_unit=exp[2],
                     component_measurement=exp[3],
-                )
+                ),
             )
 
         # Duty sentences can only be of a finite length – each expression may only
@@ -201,7 +212,7 @@ class DutySentenceParser:
             for exp in sorted(duty_expressions, key=lambda e: e.sid)
         ]
         self._sentence = joint(*expressions).parsecmap(
-            lambda sentence: [exp for exp in sentence if exp is not None]
+            lambda sentence: [exp for exp in sentence if exp is not None],
         )
 
     @property
@@ -211,8 +222,8 @@ class DutySentenceParser:
 
     @property
     def measurement_parser(self) -> Parser:
-        """A parser that can parse measurements, including lone units
-        and units paired with permitted qualifiers."""
+        """A parser that can parse measurements, including lone units and units
+        paired with permitted qualifiers."""
         return self._measurement
 
     @property
@@ -221,9 +232,12 @@ class DutySentenceParser:
         return self._sentence
 
     def parse(self, s: str) -> Iterable[MeasureComponent]:
-        """Parses an entire string as a duty sentence, returning
-        a list of the parsed measure components. Throws an error
-        if the string cannot be successfully parsed."""
+        """
+        Parses an entire string as a duty sentence, returning a list of the
+        parsed measure components.
+
+        Throws an error if the string cannot be successfully parsed.
+        """
         return self.sentence_parser.parse_strict(s)
 
     @classmethod
@@ -245,7 +259,9 @@ class DutySentenceParser:
         )
 
         return DutySentenceParser(
-            duty_expressions, monetary_units, permitted_measurements
+            duty_expressions,
+            monetary_units,
+            permitted_measurements,
         )
 
 
@@ -263,7 +279,7 @@ class SeasonalRateParser:
             for match in SeasonalRateParser.SEASONAL_RATE.finditer(duty_exp):
                 rate, start, end = match.groups()
                 validity_start = self.timezone.localize(
-                    datetime.strptime(start, r"%d %b")
+                    datetime.strptime(start, r"%d %b"),
                 )
                 validity_end = self.timezone.localize(datetime.strptime(end, r"%d %b"))
                 yield (

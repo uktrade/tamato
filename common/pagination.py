@@ -2,11 +2,13 @@ from typing import List
 
 
 def build_pagination_list(
-    current_page: int, max_page: int, num_end_pages: int = 3
+    current_page: int,
+    max_page: int,
+    num_end_pages: int = 3,
 ) -> List[str]:
     """
-    Builds a list of numbers for pagination, potentially including the first / last few
-    pages.
+    Builds a list of numbers for pagination, potentially including the first /
+    last few pages.
 
     Returns:
     A list of ranges for the current_page, along with the the end pages if specified,

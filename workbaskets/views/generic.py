@@ -8,9 +8,8 @@ from workbaskets.views.mixins import WithCurrentWorkBasket
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class DraftUpdateView(WithCurrentWorkBasket, UpdateView):
-    """
-    UpdateView which creates or modifies drafts of a model in the current workbasket.
-    """
+    """UpdateView which creates or modifies drafts of a model in the current
+    workbasket."""
 
     def get_transaction(self):
         transaction = super().get_transaction()

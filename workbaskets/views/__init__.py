@@ -1,5 +1,3 @@
-from django.db.models import F
-from django.db.models import Prefetch
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django_filters import rest_framework as filters
@@ -8,7 +6,6 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.reverse import reverse
 
-from common.models import Transaction
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.serializers import WorkBasketSerializer
@@ -16,9 +13,7 @@ from workbaskets.validators import WorkflowStatus
 
 
 class WorkBasketViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows workbaskets to be viewed and edited.
-    """
+    """API endpoint that allows workbaskets to be viewed and edited."""
 
     queryset = WorkBasket.objects.prefetch_related("transactions")
     filter_backends = (filters.DjangoFilterBackend,)
@@ -39,16 +34,16 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
 
 
 class WorkBasketUIViewSet(WorkBasketViewSet):
-    """
-    UI endpoint that allows workbaskets to be viewed and edited.
-    """
+    """UI endpoint that allows workbaskets to be viewed and edited."""
 
     renderer_classes = [renderers.TemplateHTMLRenderer]
 
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return render(
-            request, "workbaskets/list.jinja", context={"workbaskets": queryset}
+            request,
+            "workbaskets/list.jinja",
+            context={"workbaskets": queryset},
         )
 
     def retrieve(self, request, *args, **kwargs):
@@ -75,7 +70,9 @@ class WorkBasketUIViewSet(WorkBasketViewSet):
             ],
         )
         return render(
-            request, "workbaskets/choose-or-create.jinja", context={"objects": queryset}
+            request,
+            "workbaskets/choose-or-create.jinja",
+            context={"objects": queryset},
         )
 
     @action(detail=False, methods=["post"])

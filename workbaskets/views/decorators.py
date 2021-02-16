@@ -7,10 +7,8 @@ from workbaskets.models import WorkBasket
 
 
 def require_current_workbasket(view_func):
-    """
-    View decorator which redirects user to choose or create a workbasket before
-    continuing.
-    """
+    """View decorator which redirects user to choose or create a workbasket
+    before continuing."""
 
     @wraps(view_func)
     def check_for_current_workbasket(request, *args, **kwargs):

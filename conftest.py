@@ -1,27 +1,37 @@
 import contextlib
 from datetime import date
 from functools import lru_cache
-from typing import Any, Callable, Dict, Optional, Type, Union
-from unittest.mock import PropertyMock, patch
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Optional
+from typing import Type
+from typing import Union
+from unittest.mock import PropertyMock
+from unittest.mock import patch
 
 import boto3
 import pytest
-from common.models import TrackedModel
-from common.serializers import TrackedModelSerializer
-from common.tests import factories
-from common.tests.util import Dates, generate_test_import_xml
-from common.util import TaricDateRange, get_field_tuple
-from common.validators import UpdateType
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from exporter.storages import HMRCStorage
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from factory.django import DjangoModelFactory
-from importer.nursery import get_nursery
-from importer.taric import process_taric_xml_stream
 from lxml import etree
 from moto import mock_s3
 from pytest_bdd import given
 from rest_framework.test import APIClient
+
+from common.models import TrackedModel
+from common.serializers import TrackedModelSerializer
+from common.tests import factories
+from common.tests.util import Dates
+from common.tests.util import generate_test_import_xml
+from common.util import TaricDateRange
+from common.util import get_field_tuple
+from common.validators import UpdateType
+from exporter.storages import HMRCStorage
+from importer.nursery import get_nursery
+from importer.taric import process_taric_xml_stream
 from workbaskets.validators import WorkflowStatus
 
 
@@ -35,13 +45,14 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers", "hmrc_live_api: mark test calling the live HMRC Sandbox API"
+        "markers",
+        "hmrc_live_api: mark test calling the live HMRC Sandbox API",
     )
 
 
 def pytest_runtest_setup(item):
     if "hmrc_live_api" in item.keywords and not item.config.getoption(
-        "--hmrc-live-api"
+        "--hmrc-live-api",
     ):
         pytest.skip("Not calling live HMRC Sandbox API. Use --hmrc-live-api to do so.")
 
@@ -71,7 +82,7 @@ def celery_config():
         ("2020-05-18", "2020-05-17", True),
         ("2020-05-18", "2020-05-18", False),
         ("2020-05-18", "2020-05-19", False),
-    ]
+    ],
 )
 def validity_range(request):
     start, end, expect_error = request.param
@@ -148,8 +159,9 @@ def workbasket():
 
 @pytest.fixture
 def unique_identifying_fields():
-    """Provides a function for checking a model of the specified factory class cannot be
-    created with the same identifying_fields as an existing instance.
+    """
+    Provides a function for checking a model of the specified factory class
+    cannot be created with the same identifying_fields as an existing instance.
 
     Usage:
         assert unique_identifying_fields(FactoryClass)
@@ -176,7 +188,9 @@ def unique_identifying_fields():
 
 @pytest.fixture
 def must_exist():
-    """Provides a function for checking a model's foreign key link instance must exist.
+    """
+    Provides a function for checking a model's foreign key link instance must
+    exist.
 
     Usage:
         assert must_exist("field_name", LinkedModelFactory, ModelFactory)
@@ -199,7 +213,8 @@ def must_exist():
 
 @pytest.fixture
 def validity_period_contained(date_ranges):
-    """Provides a function for checking a model's validity period must be contained
+    """
+    Provides a function for checking a model's validity period must be contained
     within the validity period of the specified model.
 
     Usage:
@@ -212,7 +227,7 @@ def validity_period_contained(date_ranges):
 
     def check(dependency_name, dependency_factory, dependent_factory):
         dependency = dependency_factory.create(
-            valid_between=date_ranges.starts_with_normal
+            valid_between=date_ranges.starts_with_normal,
         )
 
         try:
@@ -227,7 +242,7 @@ def validity_period_contained(date_ranges):
         else:
             pytest.fail(
                 f"{dependency_factory._meta.get_model_class().__name__} validity must "
-                f"span {dependent_factory._meta.get_model_class().__name__} validity."
+                f"span {dependent_factory._meta.get_model_class().__name__} validity.",
             )
 
         return True
@@ -237,7 +252,8 @@ def validity_period_contained(date_ranges):
 
 @pytest.fixture
 def imported_fields_match(valid_user, settings):
-    """Provides a function for checking a model can be imported correctly.
+    """
+    Provides a function for checking a model can be imported correctly.
 
     The function takes the following parameters:
         model: A model instance, or a factory class used to build the model.
@@ -263,11 +279,12 @@ def imported_fields_match(valid_user, settings):
             model = model.build(update_type=UpdateType.CREATE)
 
         assert isinstance(
-            model, TrackedModel
+            model,
+            TrackedModel,
         ), "Either a factory or an object instance needs to be provided"
 
         xml = generate_test_import_xml(
-            serializer(model, context={"format": "xml"}).data
+            serializer(model, context={"format": "xml"}).data,
         )
 
         process_taric_xml_stream(
@@ -304,11 +321,11 @@ def update_imported_fields_match(
     request,
 ):
     """
-    Provides much the same functionality as imported_fields_match, however
-    makes some adjustments for updates and deletes.
+    Provides much the same functionality as imported_fields_match, however makes
+    some adjustments for updates and deletes.
 
-    In addition to imported_fields_match a previously created object
-    is generated. The data around version groups is also tested.
+    In addition to imported_fields_match a previously created object is
+    generated. The data around version groups is also tested.
     """
 
     def check(
@@ -330,7 +347,8 @@ def update_imported_fields_match(
             kwargs = kwargs or {}
             for name, dependency_model in (dependencies or {}).items():
                 if isinstance(dependency_model, type) and issubclass(
-                    dependency_model, DjangoModelFactory
+                    dependency_model,
+                    DjangoModelFactory,
                 ):
                     kwargs[name] = dependency_model.create()
                 else:
@@ -384,9 +402,8 @@ def s3():
 
 @pytest.fixture
 def s3_object_exists(s3):
-    """Provide a function to verify that a particular object exists in
-    an expected bucket.
-    """
+    """Provide a function to verify that a particular object exists in an
+    expected bucket."""
 
     def check(bucket_name, key):
         bucket_names = [
@@ -406,7 +423,7 @@ def s3_object_exists(s3):
 
 @pytest.fixture
 def hmrc_storage():
-    """Patch HMRCStorage with moto so that nothing is really uploaded to s3"""
+    """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
     with mock_s3():
         storage = HMRCStorage()
         session = boto3.session.Session()
@@ -430,7 +447,7 @@ def hmrc_storage():
                 connection.create_bucket(
                     Bucket=settings.HMRC_STORAGE_BUCKET_NAME,
                     CreateBucketConfiguration={
-                        "LocationConstraint": settings.AWS_S3_REGION_NAME
+                        "LocationConstraint": settings.AWS_S3_REGION_NAME,
                     },
                 )
 
@@ -444,7 +461,8 @@ def hmrc_storage():
 
 @pytest.fixture
 def make_duplicate_record():
-    """Provides a function for making a duplicate record to test a UniqueIdentifyingFields BusinessRule."""
+    """Provides a function for making a duplicate record to test a
+    UniqueIdentifyingFields BusinessRule."""
 
     def make_dupe(factory, identifying_fields=None):
         existing = factory.create()
@@ -479,8 +497,7 @@ def delete_record():
 @pytest.fixture
 def reference_nonexistent_record():
     """Provides a context manager for creating a record with a reference to a
-    non-existent record to test a MustExist BusinessRule.
-    """
+    non-existent record to test a MustExist BusinessRule."""
 
     @contextlib.contextmanager
     def make_record(

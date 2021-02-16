@@ -26,18 +26,17 @@ from geo_areas.models import GeographicalArea
 from importer.management.commands.doc_importer import RowsImporter
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import DualRowRunner
-from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
-from importer.management.commands.utils import clean_duty_sentence
-from importer.management.commands.utils import clean_item_id
-from importer.management.commands.utils import clean_regulation
-from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import Expression
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
+from importer.management.commands.utils import clean_duty_sentence
+from importer.management.commands.utils import clean_item_id
+from importer.management.commands.utils import clean_regulation
+from importer.management.commands.utils import col
 from importer.management.commands.utils import parse_trade_remedies_duty_expression
 from measures.models import DutyExpression
 from measures.models import Measure
@@ -51,7 +50,6 @@ from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
 from measures.models import MeasureType
 from measures.models import MonetaryUnit
-from measures.parsers import SeasonalRateParser
 from quotas.models import QuotaOrderNumber
 from regulations.models import Group
 from regulations.models import Regulation
@@ -70,18 +68,21 @@ class NewRow:
         self.maintained = new_row[col("N")].value
         self.regulation_id = clean_regulation(new_row[col("I")])
         self.geo_area = GeographicalArea.objects.as_at(BREXIT).get(
-            area_id=new_row[col("K")].value
+            area_id=new_row[col("K")].value,
         )
         self.measure_type = str(int(new_row[col("L")].value))
         self.additional_code = new_row[col("B")].value
 
         try:
             self.goods_nomenclature = GoodsNomenclature.objects.as_at(BREXIT).get(
-                item_id=self.item_id, suffix="80"
+                item_id=self.item_id,
+                suffix="80",
             )
         except GoodsNomenclature.DoesNotExist:
             logger.warning(
-                "Failed to find goods nomenclature %s/%s", self.item_id, "80"
+                "Failed to find goods nomenclature %s/%s",
+                self.item_id,
+                "80",
             )
             self.goods_nomenclature = None
 
@@ -134,7 +135,7 @@ class TRMeasureCreatingPattern(MeasureCreatingPattern):
                     certificate = Certificate.objects.get(
                         sid=condition.certificate_code,
                         certificate_type=CertificateType.objects.get(
-                            sid=condition.certificate_type_code
+                            sid=condition.certificate_type_code,
                         ),
                     )
                 condition = MeasureCondition(
@@ -158,12 +159,12 @@ class TRMeasureCreatingPattern(MeasureCreatingPattern):
             monetary_unit = None
             if component.monetary_unit_code and component.monetary_unit_code != "%":
                 monetary_unit = MonetaryUnit.objects.get(
-                    code=component.monetary_unit_code
+                    code=component.monetary_unit_code,
                 )
             measurement = None
             if component.measurement_unit_code:
                 measurement_unit = MeasurementUnit.objects.get(
-                    code=component.measurement_unit_code
+                    code=component.measurement_unit_code,
                 )
                 measurement_unit_qualifier = None
                 if component.measurement_unit_qualifier_code:
@@ -266,7 +267,10 @@ class TradeRemediesImporter(RowsImporter):
                 assert len(geo_areas) == 1, "All geo_areas in buffer need to be same"
                 logger.debug("End-dating measure: %s", row.measure_sid)
                 yield list(
-                    self.measure_ender.end_date_measure(row, self.generating_regulation)
+                    self.measure_ender.end_date_measure(
+                        row,
+                        self.generating_regulation,
+                    ),
                 )
 
         # Create measures either for the single measure type or a mix
@@ -276,7 +280,9 @@ class TradeRemediesImporter(RowsImporter):
             goods_nomenclature,
         ) in self.measure_slicer.sliced_new_rows(self.old_rows, self.new_rows):
             for transaction in self.make_new_measure(
-                row, matched_old_rows, goods_nomenclature
+                row,
+                matched_old_rows,
+                goods_nomenclature,
             ):
                 yield transaction
 
@@ -290,16 +296,18 @@ class TradeRemediesImporter(RowsImporter):
         if new_row.maintained != "Yes":
             return
         new_measure_type = self.measure_slicer.get_measure_type(
-            matched_old_rows, goods_nomenclature
+            matched_old_rows,
+            goods_nomenclature,
         )
         footnote_list = [row.footnotes for row in matched_old_rows]
         footnote_ids = list(
-            set([footnote for sublist in footnote_list for footnote in sublist])
+            set([footnote for sublist in footnote_list for footnote in sublist]),
         )
         footnote_ids.sort()
         footnotes = [
             Footnote.objects.as_at(BREXIT).get(
-                footnote_id=f[2:], footnote_type__footnote_type_id=f[0:2]
+                footnote_id=f[2:],
+                footnote_type__footnote_type_id=f[0:2],
             )
             for f in footnote_ids
         ]
@@ -310,8 +318,8 @@ class TradeRemediesImporter(RowsImporter):
                     row.additional_code_sid
                     for row in matched_old_rows
                     if row.additional_code_sid
-                ]
-            )
+                ],
+            ),
         )
         assert (
             len(additional_code_list) <= 1
@@ -323,7 +331,8 @@ class TradeRemediesImporter(RowsImporter):
         )
 
         parsed_measure_expressions = parse_trade_remedies_duty_expression(
-            new_row.duty_rate, eur_gbp_conversion_rate=EUR_GBP_CONVERSION_RATE
+            new_row.duty_rate,
+            eur_gbp_conversion_rate=EUR_GBP_CONVERSION_RATE,
         )
         yield list(
             self.measure_creator.create(
@@ -334,7 +343,7 @@ class TradeRemediesImporter(RowsImporter):
                 footnotes=footnotes,
                 measure_expressions=parsed_measure_expressions,
                 additional_code=additional_code,
-            )
+            ),
         )
 
 
@@ -389,7 +398,10 @@ class Command(BaseCommand):
             default=1,
         )
         parser.add_argument(
-            "--output", help="The filename to output to.", type=str, default="out.xml"
+            "--output",
+            help="The filename to output to.",
+            type=str,
+            default="out.xml",
         )
 
     def handle(self, *args, **options):
@@ -399,7 +411,7 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             sys.exit(
                 f"Author does not exist, create user '{username}'"
-                " or edit settings.DATA_IMPORT_USERNAME"
+                " or edit settings.DATA_IMPORT_USERNAME",
             )
 
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
@@ -430,7 +442,7 @@ class Command(BaseCommand):
 
                 measure_sid_counter = counter_generator(options["measure_sid"])
                 measure_condition_sid_counter = counter_generator(
-                    options["measure_condition_sid"]
+                    options["measure_condition_sid"],
                 )
 
                 # Split by addional code, origin code, measure_type groups
@@ -440,14 +452,14 @@ class Command(BaseCommand):
                 logger.debug(old_groups.keys())
 
                 group_ids = OrderedSet(
-                    list(old_groups.keys()) + list(new_groups.keys())
+                    list(old_groups.keys()) + list(new_groups.keys()),
                 )
                 for i, group_by_id in enumerate(group_ids):
                     new_group_rows = new_groups.get(group_by_id, [])
                     old_group_rows = old_groups.get(group_by_id, [])
                     logger.debug(
                         f"processing group {group_by_id}: {i+1}/{len(group_ids)} with "
-                        f"{len(new_group_rows)} new rows and {len(old_group_rows)} old rows"
+                        f"{len(new_group_rows)} new rows and {len(old_group_rows)} old rows",
                     )
                     importer = TradeRemediesImporter(workbasket, env, first_run=i == 0)
                     importer.counters["measure_sid_counter"] = measure_sid_counter
@@ -461,10 +473,13 @@ class Command(BaseCommand):
 
 
 def _split_groups(
-    rows: List[List[Cell]], item_column: str, group_by_columns: List[str]
+    rows: List[List[Cell]],
+    item_column: str,
+    group_by_columns: List[str],
 ) -> OrderedDict:
     """
-    Group rows by group_by_columns and sort ascending on item ID (requirement for dual row runner)
+    Group rows by group_by_columns and sort ascending on item ID (requirement
+    for dual row runner)
 
     :param rows: all non-empty rows from Excel sheet
     :param item_column: the column where the item ID is found

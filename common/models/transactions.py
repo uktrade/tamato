@@ -1,4 +1,4 @@
-"""Transaction model and manager"""
+"""Transaction model and manager."""
 import json
 
 from django.conf import settings
@@ -12,7 +12,7 @@ from common.models.mixins import TimestampedMixin
 
 
 class TransactionManager(models.Manager):
-    """Sorts TrackedModels by record_number and subrecord_number"""
+    """Sorts TrackedModels by record_number and subrecord_number."""
 
     def get_queryset(self):
         annotate_record_code = self.model.tracked_models.rel.related_model.objects.annotate_record_codes().order_by(
@@ -27,7 +27,8 @@ class TransactionManager(models.Manager):
 
 
 class Transaction(TimestampedMixin):
-    """Contains a group of one or more TrackedModel instances that must be applied
+    """
+    Contains a group of one or more TrackedModel instances that must be applied
     atomically.
 
     Linked to a WorkBasket and may be contained by one or more Envelopes when exported.
@@ -38,7 +39,9 @@ class Transaction(TimestampedMixin):
 
     import_transaction_id = models.IntegerField(null=True, editable=False)
     workbasket = models.ForeignKey(
-        "workbaskets.WorkBasket", on_delete=models.PROTECT, related_name="transactions"
+        "workbaskets.WorkBasket",
+        on_delete=models.PROTECT,
+        related_name="transactions",
     )
 
     # The order this transaction appears within the workbasket
@@ -66,7 +69,11 @@ class Transaction(TimestampedMixin):
             raise ValidationError(self.errors)
 
     def to_json(self):
-        """Serialize to JSON. Used for storing in the session."""
+        """
+        Serialize to JSON.
+
+        Used for storing in the session.
+        """
 
         return json.dumps(
             {key: val for key, val in self.__dict__.items() if key != "_state"},
@@ -78,7 +85,8 @@ class Transaction(TimestampedMixin):
 
     def __exit__(self, *exc):
         models.signals.pre_save.disconnect(
-            self.add_to_transaction, dispatch_uid=id(self)
+            self.add_to_transaction,
+            dispatch_uid=id(self),
         )
 
     def add_to_transaction(self, instance, **kwargs):
@@ -87,7 +95,8 @@ class Transaction(TimestampedMixin):
 
 
 class TransactionGroup(models.Model):
-    """An ordered group of Transactions.
+    """
+    An ordered group of Transactions.
 
     Transactions often must be applied in a specific sequence, for example to ensure
     a Measure exists before a Footnote can be associated with it.

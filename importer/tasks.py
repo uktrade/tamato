@@ -20,9 +20,9 @@ def import_chunk(
     """
     Task for importing an XML chunk into the database.
 
-    This task must ensure the chunks status reflects the import process,
-    whether it is currently running, errored or done. Once complete it is
-    also responsible for finding and setting up the next chunk tasks.
+    This task must ensure the chunks status reflects the import process, whether
+    it is currently running, errored or done. Once complete it is also
+    responsible for finding and setting up the next chunk tasks.
     """
     chunk = models.ImporterXMLChunk.objects.get(pk=chunk_pk)
 
@@ -60,9 +60,10 @@ def setup_chunk_task(
     """
     Setup tasks to be run for the given chunk.
 
-    Once a task is made it is important that the task is not duplicated. To stop this the system
-    checks the chunk status. If the status is `RUNNING`, `ERRORED` or `DONE` the task is not setup.
-    If the status is `WAITING` then the status is updated to `RUNNING` and the task is setup.
+    Once a task is made it is important that the task is not duplicated. To stop
+    this the system checks the chunk status. If the status is `RUNNING`,
+    `ERRORED` or `DONE` the task is not setup. If the status is `WAITING` then
+    the status is updated to `RUNNING` and the task is setup.
     """
     if batch.ready_chunks.filter(
         record_code=record_code, status=models.ImporterChunkStatus.RUNNING, **kwargs
@@ -84,7 +85,9 @@ def setup_chunk_task(
 
 
 def find_and_run_next_batch_chunks(
-    batch: models.ImportBatch, status: str, username: str
+    batch: models.ImportBatch,
+    status: str,
+    username: str,
 ):
     """
     Finds the next set of chunks for a batch to run.
@@ -118,7 +121,7 @@ def find_and_run_next_batch_chunks(
             logger.info("Batch %s errored", batch)
             return
         for dependent_batch in models.ImportBatch.objects.depends_on(
-            batch
+            batch,
         ).dependencies_finished():
             logger.info("setting up tasks for %s", dependent_batch)
             find_and_run_next_batch_chunks(dependent_batch, status, username)
@@ -132,7 +135,7 @@ def find_and_run_next_batch_chunks(
     record_codes = set(
         batch.chunks.exclude(status=models.ImporterChunkStatus.DONE)
         .values_list("record_code", flat=True)
-        .distinct()
+        .distinct(),
     )
 
     for key in list(dependency_tree.keys()):
@@ -157,7 +160,11 @@ def find_and_run_next_batch_chunks(
         if code == "400":
             for chapter in chunk_query.values_list("chapter", flat=True).distinct():
                 setup_chunk_task(
-                    batch, status, username, record_code=code, chapter=chapter
+                    batch,
+                    status,
+                    username,
+                    record_code=code,
+                    chapter=chapter,
                 )
         # Special case: measures when split can run entirely async
         elif code == "430":

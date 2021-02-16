@@ -3,9 +3,9 @@ from typing import Union
 
 
 def clean_duty_sentence(value: Union[str, int, float]) -> str:
-    """Given a value, return a string representing a duty sentence
-    taking into account that the value may be storing simple percentages
-    as a number value."""
+    """Given a value, return a string representing a duty sentence taking into
+    account that the value may be storing simple percentages as a number
+    value."""
     if isinstance(value, float) or isinstance(value, int):
         # This is a percentage value that Excel has
         # represented as a number.

@@ -6,10 +6,10 @@ from commodities.models import GoodsNomenclature
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import GoodsNomenclatureIndentNodeFactory
 from common.tests.util import Dates
-from importer.management.commands.utils import convert_eur_to_gbp
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import MeasureTreeCollector
 from importer.management.commands.utils import NomenclatureTreeCollector
+from importer.management.commands.utils import convert_eur_to_gbp
 from importer.management.commands.utils import parse_trade_remedies_duty_expression
 
 pytestmark = pytest.mark.django_db
@@ -133,10 +133,14 @@ def test_different_subtrees(
     root_cc: GoodsNomenclature,
     indepedent_root_cc: GoodsNomenclature,
 ):
-    """When a CC from a different subtree (i.e. not a descendant of the first
-    node that was added) is added, it should not be added to the buffer and instead
-    add() should return False. This is so that external code can detect the fact
-    that we have reached a commodity code that is not part of the current set."""
+    """
+    When a CC from a different subtree (i.e. not a descendant of the first node
+    that was added) is added, it should not be added to the buffer and instead
+    add() should return False.
+
+    This is so that external code can detect the fact that we have reached a
+    commodity code that is not part of the current set.
+    """
     working_set.add(root_cc, 100)
     result = working_set.add(indepedent_root_cc, 200)
     buffer = list(working_set.buffer())
@@ -151,9 +155,12 @@ def test_child(
     root_cc: GoodsNomenclature,
     child_cc: GoodsNomenclature,
 ):
-    """When we add a descendant CC, the root should be split into its children.
+    """
+    When we add a descendant CC, the root should be split into its children.
+
     As this root only has one child, this means that the root is no longer
-    present and only the child remains."""
+    present and only the child remains.
+    """
     working_set.add(root_cc, 100)
     result = working_set.add(child_cc, 200)
     buffer = list(working_set.buffer())
@@ -187,10 +194,14 @@ def test_far_descendents(
     sibling_cc: GoodsNomenclature,
     grandchild_cc: GoodsNomenclature,
 ):
-    """When a grandchild is added, the hierarchy should be split down to contain
-    that grandchild. This means the root is split and then the child is also
-    split. Note that the sibling inherits its context object from the root
-    because it has not been added to the tree explicitly."""
+    """
+    When a grandchild is added, the hierarchy should be split down to contain
+    that grandchild.
+
+    This means the root is split and then the child is also split. Note that the
+    sibling inherits its context object from the root because it has not been
+    added to the tree explicitly.
+    """
     working_set.add(root_cc, 100)
     working_set.add(grandchild_cc, 200)
     buffer = list(working_set.buffer())
@@ -206,9 +217,13 @@ def test_splits_phantom_headings(
     phantom_root_cc: GoodsNomenclature,
     child_of_phantom_cc: GoodsNomenclature,
 ):
-    """When a heading is added that does not have suffix 80, it should be split
-    immediately. Only codes with suffix 80 should be returned by the collector.
-    This is to avoid ME7 errors."""
+    """
+    When a heading is added that does not have suffix 80, it should be split
+    immediately.
+
+    Only codes with suffix 80 should be returned by the collector. This is to
+    avoid ME7 errors.
+    """
     working_set.add(phantom_root_cc, 100)
     buffer = list(working_set.buffer())
     assert len(buffer) == 1
@@ -256,8 +271,8 @@ def test_same_cc_with_different_measure_context_appears_twice(
     different_measure_context: MeasureContext,
     root_cc: GoodsNomenclature,
 ):
-    """When a node is added to the tree having already been added before,
-    but this time with a different measure context, it should hold both."""
+    """When a node is added to the tree having already been added before, but
+    this time with a different measure context, it should hold both."""
     measure_working_set.add(root_cc, RowTest(measure_context, 100))
     measure_working_set.add(root_cc, RowTest(different_measure_context, 200))
     buffer = list(measure_working_set.buffer())
@@ -275,8 +290,8 @@ def test_child_cc_with_different_measure_context_does_not_split(
     root_cc: GoodsNomenclature,
     child_cc: GoodsNomenclature,
 ):
-    """When a child node is added with a different measure context,
-    the parent does not get split because these measures don't overlap."""
+    """When a child node is added with a different measure context, the parent
+    does not get split because these measures don't overlap."""
     measure_working_set.add(root_cc, RowTest(measure_context, 100))
     measure_working_set.add(child_cc, RowTest(different_measure_context, 200))
     buffer = list(measure_working_set.buffer())
@@ -294,8 +309,8 @@ def test_child_cc_with_same_measure_context_does_cause_split(
     child_cc: GoodsNomenclature,
     sibling_cc: GoodsNomenclature,
 ):
-    """When a child node is added with the same measure context but
-    different row context, it overlaps so the parent is split."""
+    """When a child node is added with the same measure context but different
+    row context, it overlaps so the parent is split."""
     measure_working_set.add(root_cc, RowTest(measure_context, 100))
     measure_working_set.add(child_cc, RowTest(measure_context, 200))
     buffer = list(measure_working_set.buffer())
@@ -327,7 +342,7 @@ def test_child_with_overlapping_measure_context_does_cause_split(
 def test_parse_duty_expression():
 
     expression = parse_trade_remedies_duty_expression(
-        "Cond: A cert: D-008 (01):0.000 EUR TNE I ; A (01):172.200 EUR TNE I"
+        "Cond: A cert: D-008 (01):0.000 EUR TNE I ; A (01):172.200 EUR TNE I",
     )
 
     assert expression[0].condition.condition_code == "A"
@@ -355,7 +370,7 @@ def test_parse_duty_expression():
     assert expression[1].component.measurement_unit_qualifier_code == "I"
 
     expression = parse_trade_remedies_duty_expression(
-        "Cond: A cert: D-017 (01):0.000 % ; A cert: D-018 (01):28.200 % ; A (01):28.200 %"
+        "Cond: A cert: D-017 (01):0.000 % ; A cert: D-018 (01):28.200 % ; A (01):28.200 %",
     )
 
     assert expression[0].condition.condition_code == "A"
@@ -397,14 +412,16 @@ def test_parse_duty_expression():
 
 def test_parse_duty_expression_with_conversion():
     expression = parse_trade_remedies_duty_expression(
-        "Cond: A cert: D-017 (01):10.000 EUR", eur_gbp_conversion_rate=2
+        "Cond: A cert: D-017 (01):10.000 EUR",
+        eur_gbp_conversion_rate=2,
     )
 
     assert expression[0].component.duty_amount == "20.000"
     assert expression[0].component.monetary_unit_code == "GBP"
 
     expression = parse_trade_remedies_duty_expression(
-        "Cond: A cert: D-017 (01):10.000 USD", eur_gbp_conversion_rate=2
+        "Cond: A cert: D-017 (01):10.000 USD",
+        eur_gbp_conversion_rate=2,
     )
 
     assert expression[0].component.duty_amount == "10.000"

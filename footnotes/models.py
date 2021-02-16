@@ -12,10 +12,13 @@ from footnotes import validators
 
 
 class FootnoteType(TrackedModel, ValidityMixin):
-    """The footnote type record allows all footnotes to be classified according to type.
-    It will be used to check if a given footnote can be associated with a specific
-    entity. For example, footnote type "CN" will be used to group all CN-related
-    footnotes.
+    """
+    The footnote type record allows all footnotes to be classified according to
+    type.
+
+    It will be used to check if a given footnote can be associated with a
+    specific entity. For example, footnote type "CN" will be used to group all
+    CN-related footnotes.
     """
 
     record_code = "100"
@@ -27,10 +30,12 @@ class FootnoteType(TrackedModel, ValidityMixin):
     identifying_fields = ("footnote_type_id",)
 
     footnote_type_id = models.CharField(
-        max_length=3, validators=[validators.footnote_type_id_validator], db_index=True
+        max_length=3,
+        validators=[validators.footnote_type_id_validator],
+        db_index=True,
     )
     application_code = models.PositiveIntegerField(
-        choices=validators.ApplicationCode.choices
+        choices=validators.ApplicationCode.choices,
     )
     description = ShortDescription()
 
@@ -45,20 +50,22 @@ class FootnoteType(TrackedModel, ValidityMixin):
     def in_use(self):
         # TODO this needs to repect deletes
         return Footnote.objects.filter(
-            footnote_type__footnote_type_id=self.footnote_type_id
+            footnote_type__footnote_type_id=self.footnote_type_id,
         ).exists()
 
 
 class Footnote(TrackedModel, ValidityMixin):
-    """A footnote relates to a piece of text, and either clarifies it (in the case of
-    nomenclature) or limits its application (as in the case of measures).
-    """
+    """A footnote relates to a piece of text, and either clarifies it (in the
+    case of nomenclature) or limits its application (as in the case of
+    measures)."""
 
     record_code = "200"
     subrecord_code = "00"
 
     footnote_id = models.CharField(
-        max_length=5, validators=[validators.footnote_id_validator], db_index=True
+        max_length=5,
+        validators=[validators.footnote_id_validator],
+        db_index=True,
     )
     footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
 
@@ -136,12 +143,13 @@ class Footnote(TrackedModel, ValidityMixin):
 
 class FootnoteDescription(TrackedModel, ValidityMixin):
     """
-    The footnote description contains the text associated with a footnote, for a given
-    language and for a particular period.
+    The footnote description contains the text associated with a footnote, for a
+    given language and for a particular period.
 
-    Description period(s) associated with footnote text. The description of a footnote
-    may change independently of the footnote id. The footnote description period
-    contains the validity start date of the footnote description.
+    Description period(s) associated with footnote text. The description of a
+    footnote may change independently of the footnote id. The footnote
+    description period contains the validity start date of the footnote
+    description.
     """
 
     record_code = "200"
@@ -151,7 +159,9 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
     period_subrecord_code = "05"
 
     described_footnote = models.ForeignKey(
-        Footnote, on_delete=models.CASCADE, related_name="descriptions"
+        Footnote,
+        on_delete=models.CASCADE,
+        related_name="descriptions",
     )
     description = models.TextField()
     description_period_sid = SignedIntSID(db_index=True)

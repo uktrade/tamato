@@ -1,7 +1,5 @@
-"""
-These models are for testing purposes only and will not be
-migrated into the database outside of a test environment.
-"""
+"""These models are for testing purposes only and will not be migrated into the
+database outside of a test environment."""
 from django.db import models
 
 from common.models import TrackedModel

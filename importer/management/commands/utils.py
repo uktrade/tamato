@@ -7,12 +7,11 @@ from datetime import date
 from decimal import Decimal
 from itertools import combinations
 from math import floor
+from typing import IO
 from typing import Any
 from typing import Callable
-from typing import cast
 from typing import Dict
 from typing import Generic
-from typing import IO
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -21,6 +20,7 @@ from typing import Set
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
+from typing import cast
 
 import xlrd
 from django.contrib.auth.models import User
@@ -82,7 +82,10 @@ def spreadsheet_argument(parser: Any, name: str) -> None:
 
 def output_argument(parser: Any) -> None:
     parser.add_argument(
-        "--output", help="The filename to output to.", type=str, default="out.xml"
+        "--output",
+        help="The filename to output to.",
+        type=str,
+        default="out.xml",
     )
 
 
@@ -130,7 +133,9 @@ condition_fields = (
     "action_code",
 )
 Condition = namedtuple(
-    "Condition", condition_fields, defaults=(None,) * len(condition_fields)
+    "Condition",
+    condition_fields,
+    defaults=(None,) * len(condition_fields),
 )
 component_fields = (
     "duty_expression_id",
@@ -140,14 +145,18 @@ component_fields = (
     "measurement_unit_qualifier_code",
 )
 Component = namedtuple(
-    "Component", component_fields, defaults=(None,) * len(condition_fields)
+    "Component",
+    component_fields,
+    defaults=(None,) * len(condition_fields),
 )
 
 
 def parse_trade_remedies_duty_expression(
-    value: str, eur_gbp_conversion_rate: float = None
+    value: str,
+    eur_gbp_conversion_rate: float = None,
 ) -> List[Expression]:
-    """Parse duty expression as expressions with conditions and components:
+    """
+    Parse duty expression as expressions with conditions and components:
 
     - Measure conditions
         c1: condition.code
@@ -195,7 +204,6 @@ def parse_trade_remedies_duty_expression(
         c3: N/A    m3: N/A
         c4: N/A    m4: N/A
         c5: 01     m5: N/A
-
     """
 
     def create_component(match):
@@ -256,7 +264,7 @@ def parse_trade_remedies_duty_expression(
 
 
 def convert_eur_to_gbp(amount: str, conversion_rate: float) -> str:
-    """Convert EUR amount to GBP and round down to nearest pence"""
+    """Convert EUR amount to GBP and round down to nearest pence."""
     converted_amount = (
         floor(int(Decimal(amount) * Decimal(conversion_rate) * 100)) / 100
     )
@@ -264,9 +272,9 @@ def convert_eur_to_gbp(amount: str, conversion_rate: float) -> str:
 
 
 def clean_item_id(cell: Cell) -> str:
-    """Given an Excel cell, return a string representing the 10-digit item id
-    of a goods nomenclature item taking into account that the cell may
-    be storing the item as a number and that trailing zeroes may be missing."""
+    """Given an Excel cell, return a string representing the 10-digit item id of
+    a goods nomenclature item taking into account that the cell may be storing
+    the item as a number and that trailing zeroes may be missing."""
     if cell.ctype == xlrd.XL_CELL_NUMBER:
         item_id = str(int(cell.value))
     else:
@@ -287,9 +295,9 @@ def clean_item_id(cell: Cell) -> str:
 
 
 def clean_duty_sentence(cell: Cell) -> str:
-    """Given an Excel cell, return a string representing a duty sentence
-    taking into account that the cell may be storing simple percentages
-    as a number value."""
+    """Given an Excel cell, return a string representing a duty sentence taking
+    into account that the cell may be storing simple percentages as a number
+    value."""
     if cell.ctype == xlrd.XL_CELL_NUMBER:
         # This is a percentage value that Excel has
         # represented as a number.
@@ -306,7 +314,7 @@ def get_author(username: Optional[str] = None) -> User:
     except User.DoesNotExist:
         raise CommandError(
             f"Author does not exist, create user '{username}'"
-            " or edit settings.DATA_IMPORT_USERNAME"
+            " or edit settings.DATA_IMPORT_USERNAME",
         )
 
 
@@ -314,19 +322,19 @@ WorkingSetItem = Tuple[GoodsNomenclature, Row, Set[int], bool]
 
 
 class NomenclatureTreeCollector(Generic[Row]):
-    """A working tree is a subtree of the Goods Nomenclature hierarchy
-    specified at a certain depth. The first node to be added to the
-    Working Set defines the root of the subtree along with some item of
-    context. If a child node is added to the Working Set, the root
-    is split into smaller subtrees that ensure a complete coverage of
-    the original subtree with no overlaps.
+    """
+    A working tree is a subtree of the Goods Nomenclature hierarchy specified at
+    a certain depth. The first node to be added to the Working Set defines the
+    root of the subtree along with some item of context. If a child node is
+    added to the Working Set, the root is split into smaller subtrees that
+    ensure a complete coverage of the original subtree with no overlaps.
 
-    The item of context is normally a row specifying how to subsequently
-    create a measure. When the subtree is split, the new child that caused
-    the split retains its item of context whereas all of the new children
-    inherit their parents context. This ensures that the newly split
-    children will have the same measure information as their parent was
-    specified with."""
+    The item of context is normally a row specifying how to subsequently create
+    a measure. When the subtree is split, the new child that caused the split
+    retains its item of context whereas all of the new children inherit their
+    parents context. This ensures that the newly split children will have the
+    same measure information as their parent was specified with.
+    """
 
     def __init__(self, date: date) -> None:
         self.reset()
@@ -343,9 +351,13 @@ class NomenclatureTreeCollector(Generic[Row]):
         return False
 
     def add(self, cc: GoodsNomenclature, context: Optional[Row] = None) -> bool:
-        """Works out whether the passed row links to a commodity code
-        that is within the current tree of the others. Returns a bool
-        to represent this. Only pushes the row to the buffer if True."""
+        """
+        Works out whether the passed row links to a commodity code that is
+        within the current tree of the others.
+
+        Returns a bool to represent this. Only pushes the row to the buffer if
+        True.
+        """
 
         # If we have not specified a root yet, (this is the first item),
         # then set the root up. All future stored children will be
@@ -395,7 +407,7 @@ class NomenclatureTreeCollector(Generic[Row]):
                     pass
                 else:
                     logger.debug(
-                        f"Should split parent {parent[0].item_id}/{parent[0].suffix}"
+                        f"Should split parent {parent[0].item_id}/{parent[0].suffix}",
                     )
                     for child_node in (
                         parent[0]
@@ -408,14 +420,16 @@ class NomenclatureTreeCollector(Generic[Row]):
                         child_cc = child_node.indent.indented_goods_nomenclature
                         if cc != child_cc:
                             self.roots.append(
-                                self.make_item(child_cc, parent[1], False)
+                                self.make_item(child_cc, parent[1], False),
                             )
                 self.roots.sort(
-                    key=lambda r: r[0].item_id + r[0].suffix + str(int(r[3]))
+                    key=lambda r: r[0].item_id + r[0].suffix + str(int(r[3])),
                 )
 
     def within_subtree(
-        self, cc: GoodsNomenclature, root: WorkingSetItem = None
+        self,
+        cc: GoodsNomenclature,
+        root: WorkingSetItem = None,
     ) -> bool:
         """Returns True if the child is a descendant of the passed root, or the
         whole tree if no root is passed."""
@@ -529,11 +543,14 @@ MeasureDefn = Tuple[List[OldRow], NewRow, GoodsNomenclature]
 
 
 class MeasureTypeSlicer(Generic[OldRow, NewRow]):
-    """Detect which measure types are in the old rows and if many
-    measure types are present, generate new measures for each old row.
-    If only one measure type is present, generate one measure for it.
-    We may have duplicate entries due to Entry Price System but
-    we only want one new measure per item id, hence use of sets."""
+    """
+    Detect which measure types are in the old rows and if many measure types are
+    present, generate new measures for each old row.
+
+    If only one measure type is present, generate one measure for it. We may
+    have duplicate entries due to Entry Price System but we only want one new
+    measure per item id, hence use of sets.
+    """
 
     def __init__(
         self,
@@ -603,7 +620,9 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
             yield matched_old_rows, new_row, cc
 
     def get_measure_type(
-        self, old_rows: List[OldRow], cc: Optional[GoodsNomenclature] = None
+        self,
+        old_rows: List[OldRow],
+        cc: Optional[GoodsNomenclature] = None,
     ) -> MeasureType:
         measure_types = set(self.get_old_measure_type(r) for r in old_rows)
         assert len(measure_types) <= 1, f"{len(measure_types)} for rows {old_rows}"
@@ -621,9 +640,13 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
 
 
 class EnvelopeSerializer:
-    """A performant envelope serializer. It does not need to keep
-    everything in memory to generate an envelope, instead using
-    a streaming approach. Also keeps track of transaction and message IDs."""
+    """
+    A performant envelope serializer.
+
+    It does not need to keep everything in memory to generate an envelope,
+    instead using a streaming approach. Also keeps track of transaction and
+    message IDs.
+    """
 
     envelope_count = 0
     envelope_size_in_mb = 0
@@ -647,7 +670,7 @@ class EnvelopeSerializer:
         self.write(
             render_to_string(
                 template_name="common/taric/start_file.xml",
-            )
+            ),
         )
         self.start_envelope()
         return self
@@ -660,7 +683,7 @@ class EnvelopeSerializer:
             render_to_string(
                 template_name="common/taric/start_envelope.xml",
                 context={"envelope_id": self.envelope_id},
-            )
+            ),
         )
         self.envelope_count += 1
 
@@ -697,11 +720,13 @@ class EnvelopeSerializer:
                     template_name="workbaskets/taric/transaction.xml",
                     context={
                         "tracked_models": TrackedModelSerializer(
-                            models, many=True, read_only=True
+                            models,
+                            many=True,
+                            read_only=True,
                         ).data,
                         "transaction_id": self.transaction_counter(),
                         "counter_generator": counter_generator,
                         "message_counter": self.message_counter,
                     },
-                )
+                ),
             )

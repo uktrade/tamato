@@ -1,9 +1,7 @@
-"""
-Validators for footnotes
-"""
-from django.core.exceptions import ValidationError
+"""Validators for footnotes."""
 from django.core.validators import RegexValidator
 from django.db import models
+
 
 # Footnote type application codes
 class ApplicationCode(models.IntegerChoices):

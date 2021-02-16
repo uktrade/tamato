@@ -4,10 +4,6 @@ from datetime import date
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
-from django.forms.utils import from_current_timezone
-
-from common import validators
-
 
 log = logging.getLogger(__name__)
 
@@ -56,10 +52,8 @@ class GovukDateRangeField(DateRangeField):
     base_field = GovukDateField
 
     def clean(self, value):
-        """
-        Validate the date range input
-        `value` should be a 2-tuple or list or datetime objects or None
-        """
+        """Validate the date range input `value` should be a 2-tuple or list or
+        datetime objects or None."""
         clean_data = []
         errors = []
         if self.disabled and not isinstance(value, list):

@@ -1,6 +1,4 @@
-"""
-Django settings for tamato project.
-"""
+"""Django settings for tamato project."""
 import json
 import os
 import sys
@@ -13,7 +11,6 @@ import dj_database_url
 from django.urls import reverse_lazy
 
 from common.util import is_truthy
-
 
 # Name of the deployment environment (dev/alpha)
 ENV = os.environ.get("ENV", "dev")
@@ -141,7 +138,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-            ]
+            ],
         },
     },
 ]
@@ -236,11 +233,12 @@ CACHES = {
             "TIMEOUT": None,
             "SOCKET_CONNECT_TIMEOUT": 5,
         },
-    }
+    },
 }
 
 NURSERY_CACHE_ENGINE = os.getenv(
-    "NURSERY_CACHE_ENGINE", "importer.cache.memory.MemoryCacheEngine"
+    "NURSERY_CACHE_ENGINE",
+    "importer.cache.memory.MemoryCacheEngine",
 )
 
 # Wrap each request in a transaction
@@ -301,14 +299,14 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"}
+        "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "default",
-        }
+        },
     },
     "loggers": {
         "root": {
@@ -375,7 +373,7 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
+        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -397,7 +395,8 @@ DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
 # And https://developer.service.hmrc.gov.uk/guides/fraud-prevention/
 HMRC = {
     "base_url": os.environ.get(
-        "HMRC_API_BASE_URL", "https://test-api.service.hmrc.gov.uk"
+        "HMRC_API_BASE_URL",
+        "https://test-api.service.hmrc.gov.uk",
     ),
     "client_id": os.environ.get("HMRC_API_CLIENT_ID"),
     "client_secret": os.environ.get("HMRC_API_CLIENT_SECRET"),

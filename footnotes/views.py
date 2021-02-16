@@ -18,9 +18,7 @@ from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class FootnoteViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows footnotes to be viewed and edited.
-    """
+    """API endpoint that allows footnotes to be viewed and edited."""
 
     queryset = (
         models.Footnote.objects.current()
@@ -101,7 +99,7 @@ class FootnoteDescriptionMixin:
         if not all(key in self.kwargs for key in self.required_url_kwargs):
             raise AttributeError(
                 f"{self.__class__.__name__} must be called with a footnote type id, a "
-                f"footnote id, and a period sid in the URLconf."
+                f"footnote id, and a period sid in the URLconf.",
             )
 
         queryset = queryset.filter(**self.kwargs)
@@ -122,16 +120,16 @@ class FootnoteDescriptionUpdate(FootnoteDescriptionMixin, DraftUpdateView):
 
 
 class FootnoteDescriptionConfirmUpdate(
-    WithCurrentWorkBasket, FootnoteDescriptionMixin, DetailView
+    WithCurrentWorkBasket,
+    FootnoteDescriptionMixin,
+    DetailView,
 ):
     queryset = models.FootnoteDescription.objects.current()
     template_name = "footnotes/confirm_update_description.jinja"
 
 
 class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows footnote types to be viewed or edited.
-    """
+    """API endpoint that allows footnote types to be viewed or edited."""
 
     queryset = models.FootnoteType.objects.current()
     serializer_class = FootnoteTypeSerializer

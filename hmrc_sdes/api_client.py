@@ -6,7 +6,8 @@ from requests_oauthlib import OAuth2Session
 
 
 class HmrcSdesClient(APIClient):
-    """Client for HMRC Secure Data Exchange Notifications API.
+    """
+    Client for HMRC Secure Data Exchange Notifications API.
 
     See https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0
     """
@@ -61,7 +62,7 @@ class HmrcSdesClient(APIClient):
         )
 
     def notify_transfer_complete(self, upload):
-        """Notifies that a given bulk file transfer is complete"""
+        """Notifies that a given bulk file transfer is complete."""
 
         return self.post(
             f"{self.base_url}/organisations/notification/files/transfer/complete/{self.srn}",
@@ -69,7 +70,7 @@ class HmrcSdesClient(APIClient):
         )
 
     def notify_transfer_ready(self, upload):
-        """Notifies that a given bulk file transfer is ready for processing"""
+        """Notifies that a given bulk file transfer is ready for processing."""
 
         return self.post(
             f"{self.base_url}/organisations/notification/files/transfer/ready/{self.srn}",

@@ -11,9 +11,7 @@ from common.views import TrackedModelDetailView
 
 
 class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows certificates to be viewed.
-    """
+    """API endpoint that allows certificates to be viewed."""
 
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer
@@ -22,9 +20,7 @@ class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CertificateTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows certificate types to be viewed.
-    """
+    """API endpoint that allows certificate types to be viewed."""
 
     queryset = CertificateType.objects.all()
     serializer_class = CertificateTypeSerializer
@@ -32,9 +28,7 @@ class CertificateTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CertificatesList(TamatoListView):
-    """
-    UI endpoint for viewing and filtering Certificates
-    """
+    """UI endpoint for viewing and filtering Certificates."""
 
     queryset = (
         Certificate.objects.current()

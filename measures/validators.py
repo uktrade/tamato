@@ -5,7 +5,6 @@ from django.db import models
 from common.validators import ApplicabilityCode  # noqa: simplifies import in models
 from common.validators import NumberRangeValidator
 
-
 measure_type_series_id_validator = RegexValidator(r"^[A-Z][A-Z ]?$")
 measurement_unit_code_validator = RegexValidator(r"^[A-Z0-9]{3}$")
 measurement_unit_qualifier_code_validator = RegexValidator(r"^[A-Z]$")
@@ -16,9 +15,10 @@ measure_condition_code_validator = RegexValidator(r"^[A-Z][A-Z ]?$")
 
 # XXX even though we can't add to or modify these, shouldn't they live in the DB?
 class DutyExpressionId(models.IntegerChoices):
-    """Duty expression IDs control how the duty amount is interpreted. Multiple duty
-    expressions are concatenated in ID order, which is why multiple IDs have the same
-    meaning.
+    """
+    Duty expression IDs control how the duty amount is interpreted. Multiple
+    duty expressions are concatenated in ID order, which is why multiple IDs
+    have the same meaning.
 
     The following values (and their descriptions) are the only possible values
     without having a major impact on HMRC systems.
@@ -88,7 +88,7 @@ class OrderNumberCaptureCode(models.IntegerChoices):
 def validate_measure_explosion_level(value):
     if value not in MeasureExplosionLevel.values:
         raise ValidationError(
-            f"Explosion level must be one of {MeasureExplosionLevel.values}"
+            f"Explosion level must be one of {MeasureExplosionLevel.values}",
         )
 
 
