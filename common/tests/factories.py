@@ -178,7 +178,7 @@ class RegulationFactory(TrackedModelMixin):
     approved = True
     role_type = 1
     valid_between = factory.LazyAttribute(
-        lambda o: Dates().no_end if o.role_type == 1 else None
+        lambda o: Dates().no_end if o.role_type == 1 else None,
     )
     community_code = 1
     regulation_group = factory.LazyAttribute(
@@ -187,7 +187,7 @@ class RegulationFactory(TrackedModelMixin):
             transaction=o.transaction,
         )
         if o.role_type == 1
-        else None
+        else None,
     )
     information_text = string_sequence(length=50)
     public_identifier = factory.sequence(lambda n: f"S.I. 2021/{n}")
@@ -475,7 +475,8 @@ class GoodsNomenclatureOriginFactory(TrackedModelMixin):
 
     new_goods_nomenclature = factory.SubFactory(SimpleGoodsNomenclatureFactory)
     derived_from_goods_nomenclature = factory.SubFactory(
-        SimpleGoodsNomenclatureFactory, valid_between=date_ranges("big")
+        SimpleGoodsNomenclatureFactory,
+        valid_between=date_ranges("big"),
     )
 
 
@@ -484,15 +485,17 @@ class GoodsNomenclatureSuccessorFactory(TrackedModelMixin):
         model = "commodities.GoodsNomenclatureSuccessor"
 
     replaced_goods_nomenclature = factory.SubFactory(
-        SimpleGoodsNomenclatureFactory, valid_between=date_ranges("adjacent_earlier")
+        SimpleGoodsNomenclatureFactory,
+        valid_between=date_ranges("adjacent_earlier"),
     )
     absorbed_into_goods_nomenclature = factory.SubFactory(
-        SimpleGoodsNomenclatureFactory
+        SimpleGoodsNomenclatureFactory,
     )
 
 
 class FootnoteAssociationGoodsNomenclatureFactory(
-    TrackedModelMixin, ValidityFactoryMixin
+    TrackedModelMixin,
+    ValidityFactoryMixin,
 ):
     class Meta:
         model = "commodities.FootnoteAssociationGoodsNomenclature"
@@ -742,7 +745,7 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
     measure_type = factory.SubFactory(MeasureTypeFactory)
     additional_code = None
     order_number = None
-    reduction = factory.Faker("random_int", min=1, max=3)
+    reduction = factory.Sequence(lambda x: (x + 1) % 4)
     generating_regulation = factory.SubFactory(RegulationFactory)
     stopped = False
     export_refund_nomenclature_sid = None
@@ -758,7 +761,8 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
         leave_measure = kwargs.pop("leave_measure", False)
         if "measure_type" in kwargs and not leave_measure:
             kwargs["measure_type"] = cls.measure_type_explosion(
-                kwargs["measure_type"], kwargs.get("goods_nomenclature")
+                kwargs["measure_type"],
+                kwargs.get("goods_nomenclature"),
             )
         obj = model_class(*args, **kwargs)
         obj.save()
@@ -785,7 +789,8 @@ class MeasureWithAdditionalCodeFactory(MeasureFactory):
 
 class MeasureWithQuotaFactory(MeasureFactory):
     measure_type = factory.SubFactory(
-        MeasureTypeFactory, order_number_capture_code=OrderNumberCaptureCode.MANDATORY
+        MeasureTypeFactory,
+        order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
     )
     order_number = factory.SubFactory(
         QuotaOrderNumberFactory,
@@ -867,7 +872,7 @@ class MeasureExcludedGeographicalAreaFactory(TrackedModelMixin):
 
 
 class MeasureExcludedGeographicalMembershipFactory(
-    MeasureExcludedGeographicalAreaFactory
+    MeasureExcludedGeographicalAreaFactory,
 ):
     class Meta:
         exclude = ["membership"]

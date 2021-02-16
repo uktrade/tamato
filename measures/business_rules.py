@@ -186,8 +186,11 @@ class ME6(MustExist):
 
 
 class ME7(BusinessRule):
-    """The goods nomenclature code must be a product code. It may not be an
-    intermediate line."""
+    """
+    The goods nomenclature code must be a product code.
+
+    It may not be an intermediate line.
+    """
 
     def validate(self, measure):
         if measure.goods_nomenclature and measure.goods_nomenclature.suffix != "80":
@@ -318,13 +321,22 @@ class ME32(BusinessRule):
         query = Q(
             measure_type__sid=measure.measure_type.sid,
             geographical_area__sid=measure.geographical_area.sid,
+            reduction=measure.reduction,
         )
         if measure.order_number is not None:
             query &= Q(order_number__sid=measure.order_number.sid)
+        elif measure.dead_order_number is not None:
+            query &= Q(dead_order_number=measure.dead_order_number)
+        else:
+            query &= Q(order_number__isnull=True, dead_order_number__isnull=True)
+
         if measure.additional_code is not None:
             query &= Q(additional_code__sid=measure.additional_code.sid)
-        if measure.reduction is not None:
-            query &= Q(reduction=measure.reduction)
+        elif measure.dead_additional_code is not None:
+            query &= Q(dead_additional_code=measure.dead_additional_code)
+        else:
+            query &= Q(additional_code__isnull=True, dead_additional_code__isnull=True)
+
         matching_measures = (
             type(measure)
             .objects.filter(query)

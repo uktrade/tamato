@@ -501,11 +501,14 @@ def related_goods_nomenclature(request, existing_goods_nomenclature):
         "implicit",
     ],
 )
-def existing_measure_data(request, date_ranges, existing_goods_nomenclature):
-    return {
-        "goods_nomenclature": existing_goods_nomenclature,
-        **request.param(date_ranges),
-    }
+def existing_measure(request, date_ranges, existing_goods_nomenclature):
+    return factories.MeasureWithQuotaFactory.create(
+        **{
+            "goods_nomenclature": existing_goods_nomenclature,
+            "additional_code": factories.AdditionalCodeFactory(),
+            **request.param(date_ranges),
+        }
+    )
 
 
 @pytest.fixture(
@@ -535,8 +538,8 @@ def existing_measure_data(request, date_ranges, existing_goods_nomenclature):
                 "valid_between": d.overlap_normal_earlier,
                 "update_type": UpdateType.DELETE,
             },
-            False
-        )
+            False,
+        ),
     ),
     ids=[
         "explicit:overlapping",
@@ -545,16 +548,46 @@ def existing_measure_data(request, date_ranges, existing_goods_nomenclature):
         "deleted",
     ],
 )
-def related_measure_data(request, date_ranges, related_goods_nomenclature):
+def related_measure_dates(request, date_ranges):
     callable, date_overlap = request.param
+    return callable(date_ranges), date_overlap
+
+
+@pytest.fixture(
+    params=(
+        None,
+        "measure_type",
+        "geographical_area",
+        "order_number",
+        "additional_code",
+        "reduction",
+    ),
+)
+def related_measure_data(
+    request,
+    related_measure_dates,
+    related_goods_nomenclature,
+    existing_measure,
+):
     nomenclature, nomenclature_overlap = related_goods_nomenclature
-    return {
+    validity_data, date_overlap = related_measure_dates
+    full_data = {
         "goods_nomenclature": nomenclature,
-        **callable(date_ranges),
-    }, date_overlap and nomenclature_overlap
+        "measure_type": existing_measure.measure_type,
+        "geographical_area": existing_measure.geographical_area,
+        "order_number": existing_measure.order_number,
+        "additional_code": existing_measure.additional_code,
+        "reduction": existing_measure.reduction,
+        **validity_data,
+    }
+    if request.param in full_data:
+        del full_data[request.param]
+    error_expected = date_overlap and nomenclature_overlap and (request.param is None)
+
+    return full_data, error_expected
 
 
-def test_ME32(existing_measure_data, related_measure_data):
+def test_ME32(related_measure_data):
     """
     There may be no overlap in time with other measure occurrences with a goods
     code in the same nomenclature hierarchy which references the same measure
@@ -565,17 +598,8 @@ def test_ME32(existing_measure_data, related_measure_data):
     in the upward hierarchy and all commodity codes in the downward hierarchy.
     """
 
-    existing = factories.MeasureFactory.create(**existing_measure_data)
-
     related_data, error_expected = related_measure_data
-    related = factories.MeasureFactory.create(
-        measure_type=existing.measure_type,
-        geographical_area=existing.geographical_area,
-        order_number=existing.order_number,
-        additional_code=existing.additional_code,
-        reduction=existing.reduction,
-        **related_data,
-    )
+    related = factories.MeasureFactory.create(**related_data)
 
     if error_expected:
         with pytest.raises(BusinessRuleViolation):
@@ -1018,7 +1042,8 @@ def test_ME40(applicability_code, component, condition_component):
     specified.  If the flag is set "not permitted" then no measure component or
     measure condition component must exist.  Measure components and measure
     condition components are mutually exclusive. A measure can have either
-    components or condition components (if the ‘duty expression’ flag is
+    components or condition components (if the ‘duty expression’ flag is.
+
     ‘mandatory’ or ‘optional’) but not both.
 
     This describes the fact that measures of certain types MUST have components
