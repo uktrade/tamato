@@ -42,10 +42,10 @@
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">MustExist</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -62,7 +62,8 @@
 
 <div class="viewcode-block" id="ROIMB8"><a class="viewcode-back" href="../../docs/business_rules/regulations.html#regulations.business_rules.ROIMB8">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2003-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ROIMB8</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Explicit dates of related measures must be within the validity period of the base regulation.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Explicit dates of related measures must be within the validity period of</span>
+<span class="sd">    the base regulation.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
@@ -70,7 +71,7 @@
                 <span class="n">generating_regulation__regulation_id</span><span class="o">=</span><span class="n">regulation</span><span class="o">.</span><span class="n">regulation_id</span><span class="p">,</span>
                 <span class="n">generating_regulation__role_type</span><span class="o">=</span><span class="n">regulation</span><span class="o">.</span><span class="n">role_type</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">current</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">current_as_of</span><span class="p">(</span><span class="n">regulation</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="n">valid_between__contained_by</span><span class="o">=</span><span class="n">regulation</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
             <span class="p">)</span>
@@ -80,13 +81,17 @@
 
 
 <div class="viewcode-block" id="ROIMB44"><a class="viewcode-back" href="../../docs/business_rules/regulations.html#regulations.business_rules.ROIMB44">[docs]</a><span class="k">class</span> <span class="nc">ROIMB44</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The &quot;Regulation Approved Flag&quot; indicates for a draft regulation whether the draft</span>
-<span class="sd">    is approved, i.e. the regulation is definitive apart from its publication (only the</span>
-<span class="sd">    definitive regulation id and the O.J.  reference are not yet known).  A draft</span>
-<span class="sd">    regulation (regulation id starts with a &#39;C&#39;) can have its &quot;Regulation Approved Flag&quot;</span>
-<span class="sd">    set to 0=&#39;Not Approved&#39; or 1=&#39;Approved&#39;. Its flag can only change from 0=&#39;Not</span>
-<span class="sd">    Approved&#39; to 1=&#39;Approved&#39;. Any other regulation must have its &quot;Regulation Approved</span>
-<span class="sd">    Flag&quot; set to 1=&#39;Approved&#39;.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The &quot;Regulation Approved Flag&quot; indicates for a draft regulation whether the</span>
+<span class="sd">    draft is approved, i.e. the regulation is definitive apart from its</span>
+<span class="sd">    publication (only the definitive regulation id and the O.J.</span>
+
+<span class="sd">    reference are not yet known).  A draft regulation (regulation id starts with</span>
+<span class="sd">    a &#39;C&#39;) can have its &quot;Regulation Approved Flag&quot; set to 0=&#39;Not Approved&#39; or</span>
+<span class="sd">    1=&#39;Approved&#39;. Its flag can only change from 0=&#39;Not Approved&#39; to</span>
+<span class="sd">    1=&#39;Approved&#39;. Any other regulation must have its &quot;Regulation Approved Flag&quot;</span>
+<span class="sd">    set to 1=&#39;Approved&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># We need to work on the draft –&gt; live status however, as we have not yet worked</span>
     <span class="c1"># this through</span>
@@ -105,20 +110,20 @@
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Regulation </span><span class="si">{</span><span class="n">regulation</span><span class="si">}</span><span class="s2">: A draft regulation can only have its &quot;</span>
                     <span class="s2">&quot;&#39;Regulation Approved Flag&#39; change from &#39;Not Approved&#39; to &quot;</span>
-                    <span class="s2">&quot;&#39;Approved&#39;.&quot;</span>
+                    <span class="s2">&quot;&#39;Approved&#39;.&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
 
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">regulation</span><span class="o">.</span><span class="n">approved</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Regulation </span><span class="si">{</span><span class="n">regulation</span><span class="si">}</span><span class="s2">: A non-draft regulation must have its &quot;</span>
-                <span class="s2">&quot;&#39;Regulation Approved Flag&#39; set to &#39;Approved&#39;.&quot;</span>
+                <span class="s2">&quot;&#39;Regulation Approved Flag&#39; set to &#39;Approved&#39;.&quot;</span><span class="p">,</span>
             <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ROIMB46"><a class="viewcode-back" href="../../docs/business_rules/regulations.html#regulations.business_rules.ROIMB46">[docs]</a><span class="k">class</span> <span class="nc">ROIMB46</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A base regulation cannot be deleted if it is used as a justification regulation,</span>
-<span class="sd">    except for ‘C’ regulations used only in measures as both measure-generating</span>
-<span class="sd">    regulation and justification regulation.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;A base regulation cannot be deleted if it is used as a justification</span>
+<span class="sd">    regulation, except for ‘C’ regulations used only in measures as both</span>
+<span class="sd">    measure-generating regulation and justification regulation.&quot;&quot;&quot;</span>
 
     <span class="c1"># We should not be deleting base regulations. Also, we will not be using the</span>
     <span class="c1"># justification regulation field, though there will be a lot of EU regulations where</span>
@@ -130,8 +135,8 @@
 
 
 <div class="viewcode-block" id="ROIMB47"><a class="viewcode-back" href="../../docs/business_rules/regulations.html#regulations.business_rules.ROIMB47">[docs]</a><span class="k">class</span> <span class="nc">ROIMB47</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the regulation group id must span the validity period of</span>
-<span class="sd">    the base regulation.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the regulation group id must span the validity</span>
+<span class="sd">    period of the base regulation.&quot;&quot;&quot;</span>
 
     <span class="c1"># But we will be ensuring that the regulation groups are not end dated, therefore we</span>
     <span class="c1"># will not get hit by this</span>

@@ -47,7 +47,7 @@
             
   <div class="section" id="module-common.business_rules">
 <span id="base-classes"></span><h1>Base classes<a class="headerlink" href="#module-common.business_rules" title="Permalink to this headline">¶</a></h1>
-<p>Base classes for business rules and violations</p>
+<p>Base classes for business rules and violations.</p>
 <dl class="class">
 <dt id="common.business_rules.BusinessRule">
 <em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">BusinessRule</code><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRule" title="Permalink to this definition">¶</a></dt>
@@ -55,13 +55,13 @@
 <dl class="method">
 <dt id="common.business_rules.BusinessRule.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">*args</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRule.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation</p>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="common.business_rules.BusinessRule.violation">
 <code class="sig-name descname">violation</code><span class="sig-paren">(</span><em class="sig-param">model: Union[common.models.records.TrackedModel</em>, <em class="sig-param">str</em>, <em class="sig-param">None] = None</em>, <em class="sig-param">msg: Optional[str] = None</em><span class="sig-paren">)</span> &#x2192; common.business_rules.BusinessRuleViolation<a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule.violation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRule.violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a violation exception object</p>
+<dd><p>Create a violation exception object.</p>
 </dd></dl>
 
 </dd></dl>
@@ -69,7 +69,7 @@
 <dl class="exception">
 <dt id="common.business_rules.BusinessRuleViolation">
 <em class="property">exception </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">BusinessRuleViolation</code><span class="sig-paren">(</span><em class="sig-param">message</em>, <em class="sig-param">code=None</em>, <em class="sig-param">params=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRuleViolation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.BusinessRuleViolation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for business rule violations</p>
+<dd><p>Base class for business rule violations.</p>
 </dd></dl>
 
 <dl class="class">
@@ -79,7 +79,7 @@
 <dl class="method">
 <dt id="common.business_rules.DescriptionsRules.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#DescriptionsRules.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.DescriptionsRules.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation</p>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
@@ -91,7 +91,7 @@
 <dl class="method">
 <dt id="common.business_rules.MustExist.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#MustExist.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.MustExist.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation</p>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
@@ -99,11 +99,12 @@
 <dl class="class">
 <dt id="common.business_rules.NoOverlapping">
 <em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">NoOverlapping</code><a class="reference internal" href="../../_modules/common/business_rules.html#NoOverlapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.NoOverlapping" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing no overlapping validity periods of instances of a model.</p>
+<dd><p>Rule enforcing no overlapping validity periods of instances of a
+model.</p>
 <dl class="method">
 <dt id="common.business_rules.NoOverlapping.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#NoOverlapping.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.NoOverlapping.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation</p>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
@@ -115,7 +116,7 @@
 <dl class="method">
 <dt id="common.business_rules.PreventDeleteIfInUse.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#PreventDeleteIfInUse.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.PreventDeleteIfInUse.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation</p>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
@@ -127,7 +128,7 @@
 <dl class="method">
 <dt id="common.business_rules.UniqueIdentifyingFields.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#UniqueIdentifyingFields.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.UniqueIdentifyingFields.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation</p>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
@@ -135,11 +136,12 @@
 <dl class="class">
 <dt id="common.business_rules.ValidityPeriodContained">
 <em class="property">class </em><code class="sig-prename descclassname">common.business_rules.</code><code class="sig-name descname">ValidityPeriodContained</code><a class="reference internal" href="../../_modules/common/business_rules.html#ValidityPeriodContained"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing validity period is contained by a dependency’s validity period.</p>
+<dd><p>Rule enforcing validity period is contained by a dependency’s validity
+period.</p>
 <dl class="method">
 <dt id="common.business_rules.ValidityPeriodContained.validate">
 <code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#ValidityPeriodContained.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation</p>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
