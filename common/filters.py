@@ -1,7 +1,6 @@
 import re
 from collections import OrderedDict
 from datetime import date
-from datetime import datetime
 from functools import cached_property
 from typing import Callable
 from typing import Iterable
@@ -25,7 +24,7 @@ from django_filters import MultipleChoiceFilter
 from rest_framework import filters
 from rest_framework.settings import api_settings
 
-from common.util import TaricDateTimeRange
+from common.util import TaricDateRange
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
 
@@ -169,7 +168,7 @@ class ActiveStateMixin(FilterSet):
 
     def filter_active_state(self, queryset, name, value):
         active_status_filter = Q()
-        current_date = TaricDateTimeRange(datetime.now(), datetime.now())
+        current_date = TaricDateRange(date.today(), date.today())
         if value == ["active"]:
             active_status_filter = Q(valid_between__upper_inf=True) | Q(
                 valid_between__contains=current_date,

@@ -95,6 +95,7 @@ class Certificate(TrackedModel, ValidityMixin):
         return reverse(
             f"certificate-ui-{action}",
             kwargs={
+                "certificate_type__sid": self.certificate_type.sid,
                 "sid": self.sid,
             },
         )

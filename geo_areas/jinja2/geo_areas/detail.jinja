@@ -3,192 +3,63 @@
 {% from "components/tabs/macro.njk" import govukTabs %}
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
 
-{% set page_title = "Geographical area " ~ area.area_id %}
+{% set page_title = "Geographical area: " ~  object.area_id  %}
 
-{% block beforeContent %}
+{% set core_data_tab_html %}{% include "includes/geo_areas/tabs/core_data.jinja" %}{% endset %}
+{% set description_tab_html %}{% include "includes/common/tabs/descriptions.jinja" %}{% endset %}
+{% set membership_tab_html %}{% include "includes/geo_areas/tabs/memberships.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/geo_areas/tabs/version_control.jinja" %}{% endset %}
+
+{% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
-      {"text": "Geographical areas", "href": url("geoarea-ui-list")},
+      {"text": "Find and edit geographical areas", "href": url("geoarea-ui-list")},
       {"text": page_title}
     ]
   }) }}
 {% endblock %}
 
 {% block content %}
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-  <p class="govuk-body">
-    You are viewing this geographical area in read-only mode.
-  </p>
-
-  {% set core_data_html %}
-    <div class="geo-area__core-data">
-      <div class="geo-area__core-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": true,
-          "rows": [
-            [
-              {"text": "Geographical area ID"},
-              {"text": area.area_id}
-            ],
-            [
-              {"text": "Current description"},
-              {"text": area.get_description().description}
-            ],
-            [
-              {"text": "Area code"},
-              {"text": "{} - {}".format(area.area_code, area.get_area_code_display())}
-            ],
-            [
-              {"text": "Start date"},
-              {"text": "{:%d %b %Y}".format(area.valid_between.lower)}
-            ],
-            [
-              {"text": "End date"},
-              {"text": "{:%d %b %Y}".format(area.valid_between.upper) if area.valid_between.upper else "-"}
-            ]
-          ]
-        }) }}
-      </div>
-      <div class="geo-area__core-data__actions">
-        <h2 class="govuk-heading-s">Actions</h2>
-        <ul class="icon-action-list govuk-list">
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Edit this geographical area</a></li>
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Delete this geographical area</a></li>
-        </ul>
-        <p class="govuk-body-s">
-          Please note that you are unable to modify descriptions on this tab.
-          Please select the "<a href="#descriptions">Descriptions</a>" tab to create and
-          modify descriptions.
-        </p>
-      </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
     </div>
-  {% endset %}
-
-  {% set description_data_html %}
-    {% set description_rows = [] %}
-    {% for description in area.get_descriptions().order_by("valid_between") %}
-      {{ description_rows.append([
-        {"text": "{:%d %b %Y}".format(description.valid_between.lower)},
-        {"text": description.description},
-        {
-            "html": '<a href="#" class="govuk-link govuk-!-font-size-16">Edit description</a>'
-        }
-      ]) or ""}}
-    {% endfor %}
-    <div class="geo-area__description-data">
-      <div class="geo-area__description-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": false,
-          "head": [
-            {
-              "text": "Start Date",
-              "classes": "govuk-!-width-one-quarter"
-            },
-            {
-              "text": "Description",
-              "classes": "govuk-!-width-two-thirds"
-            },
-            {
-              "text": "Actions"
-            },
-          ],
-          "rows": description_rows
-        }) }}
-      </div>
-      <div class="geo-area__description-data__actions">
-        <ul class="icon-action-list govuk-list">
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new geographical area description</a></li>
-        </ul>
-      </div>
-    </div>
-  {% endset %}
-
-  {% set membership_data_html %}
-    {% set membership_rows = [] %}
-    {% for membership in members %}
-      {{ membership_rows.append([
-            {"text": "{:%d %b %Y}".format(membership.valid_between.lower)},
-            {
-                "text": "{:%d %b %Y}".format(membership.valid_between.upper)
-                if membership.valid_between.upper
-                else "-"
-            },
-            {
-                "text": membership.member.area_id
-                if is_group
-                else membership.geo_group.area_id
-            },
-            {
-                "text": membership.member.get_description().description
-                if is_group
-                else membership.geo_group.get_description().description
-            },
-            {
-                "html": '<a href="#" class="govuk-link govuk-!-font-size-16">Terminate</a>'
-            },
-      ]) or "" }}
-    {% endfor %}
-    <div class="geo-area__membership-data">
-      <div class="geo-area__membership-data__content">
-        {{ govukTable({
-          "firstCellIsHeader": false,
-          "head": [
-            {
-              "text": "Start Date"
-            },
-            {
-              "text": "End Date"
-            },
-            {
-              "text": "ID"
-            },
-            {
-              "text": "Description",
-              "classes": "govuk-!-width-one-half"
-            },
-            {
-              "text": "Actions"
-            }
-
-          ],
-          "rows": membership_rows
-        }) }}
-      </div>
-      {% if is_group %}
-      <div class="geo-area__membership-data__actions">
-        <ul class="icon-action-list govuk-list">
-          <li><a href="#" class="govuk-link govuk-!-font-size-16">Create a new membership</a></li>
-        </ul>
-      </div>
-      {% endif %}
-    </div>
-  {% endset %}
+  </div>
 
   {{ govukTabs({
     "items": [
       {
-        "label": "Core geographical area data",
+        "label": "Details",
         "id": "core-data",
         "panel": {
-          "html": core_data_html
+          "html": core_data_tab_html
         }
       },
       {
         "label": "Descriptions",
         "id": "descriptions",
         "panel": {
-          "html": description_data_html
+          "html": description_tab_html
         }
       },
       {
-        "label": "Members" if is_group else "Memberships",
-        "id": "members" if is_group else "memberships",
+        "label": "Memberships",
+        "id": "memberships",
         "panel": {
-          "html": membership_data_html
+          "html": membership_tab_html
+        }
+      },
+      {
+        "label": "Version control",
+        "id": "version-control",
+        "panel": {
+          "html": version_control_tab_html
         }
       },
     ]
   }) }}
 {% endblock %}
+

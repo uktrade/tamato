@@ -1,7 +1,7 @@
 {% set table_rows = [] %}
 {% for geo_area in object_list %}
   {% set geo_area_link -%}
-    <a class="govuk-link govuk-!-font-weight-bold" href="#">{{ geo_area.area_id }}</a>
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("geoarea-ui-detail", kwargs={"sid": geo_area.sid}) }}">{{ geo_area.area_id }}</a>
   {%- endset %}
   {{ table_rows.append([
     {"html": geo_area_link},
