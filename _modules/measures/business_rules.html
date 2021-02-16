@@ -54,6 +54,7 @@
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">TaricDateRange</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">ApplicabilityCode</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">footnotes.validators</span> <span class="kn">import</span> <span class="n">ApplicationCode</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
@@ -225,10 +226,9 @@
 
 <div class="viewcode-block" id="ME7"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME7">[docs]</a><span class="k">class</span> <span class="nc">ME7</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The goods nomenclature code must be a product code. It may not be an</span>
-<span class="sd">    intermediate line.</span>
+<span class="sd">    The goods nomenclature code must be a product code.</span>
 
-<span class="sd">    test</span>
+<span class="sd">    It may not be an intermediate line.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME7.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME7.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
@@ -350,20 +350,32 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME32.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME32.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">measure</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span>
+        <span class="p">):</span>
             <span class="k">return</span>
 
         <span class="c1"># build the query for measures matching the given measure</span>
         <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
             <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">reduction</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">reduction</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">order_number__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">dead_order_number</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">order_number__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dead_order_number__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">reduction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">reduction</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_additional_code</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">dead_additional_code</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">dead_additional_code</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
         <span class="n">matching_measures</span> <span class="o">=</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
             <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
@@ -373,27 +385,33 @@
 
         <span class="c1"># get all goods nomenclature versions associated with this measure</span>
         <span class="n">GoodsNomenclature</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="p">)</span>
-        <span class="n">goods</span> <span class="o">=</span> <span class="n">GoodsNomenclature</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">goods</span> <span class="o">=</span> <span class="n">GoodsNomenclature</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current_as_of</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># hack to avoid circular import</span>
-        <span class="n">Node</span> <span class="o">=</span> <span class="n">GoodsNomenclature</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span>
+        <span class="n">Indent</span> <span class="o">=</span> <span class="n">GoodsNomenclature</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span>
+        <span class="n">Node</span> <span class="o">=</span> <span class="n">Indent</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span>
 
         <span class="c1"># for each goods nomenclature version, get all indents</span>
         <span class="k">for</span> <span class="n">good</span> <span class="ow">in</span> <span class="n">goods</span><span class="p">:</span>
-            <span class="n">indents</span> <span class="o">=</span> <span class="n">Node</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">indents</span> <span class="o">=</span> <span class="n">Indent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current_as_of</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
-                <span class="n">indent__indented_goods_nomenclature</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="n">indented_goods_nomenclature</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">nodes</span> <span class="o">=</span> <span class="n">Node</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                <span class="n">indent__in</span><span class="o">=</span><span class="n">indents</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="c1"># for each indent, get the goods tree</span>
-            <span class="k">for</span> <span class="n">indent</span> <span class="ow">in</span> <span class="n">indents</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
                 <span class="n">tree</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">indent</span><span class="o">.</span><span class="n">get_ancestors</span><span class="p">()</span>
-                    <span class="o">|</span> <span class="n">indent</span><span class="o">.</span><span class="n">get_descendants</span><span class="p">()</span>
-                    <span class="o">|</span> <span class="n">Node</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">indent</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">get_ancestors</span><span class="p">()</span>
+                    <span class="o">|</span> <span class="n">node</span><span class="o">.</span><span class="n">get_descendants</span><span class="p">()</span>
+                    <span class="o">|</span> <span class="n">Node</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                     <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -683,9 +701,8 @@
 <span class="sd">    specified.  If the flag is set &quot;not permitted&quot; then no measure component or</span>
 <span class="sd">    measure condition component must exist.  Measure components and measure</span>
 <span class="sd">    condition components are mutually exclusive. A measure can have either</span>
-<span class="sd">    components or condition components (if the ‘duty expression’ flag is.</span>
-
-<span class="sd">    ‘mandatory’ or ‘optional’) but not both.</span>
+<span class="sd">    components or condition components (if the &quot;duty expression&quot; flag is</span>
+<span class="sd">    &quot;mandatory&quot; or &quot;optional&quot;) but not both.</span>
 
 <span class="sd">    This describes the fact that measures of certain types MUST have components</span>
 <span class="sd">    (duties) assigned to them, whereas others must not. Note the sub-clause also</span>
