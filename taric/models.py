@@ -6,10 +6,9 @@ from taric import validators
 
 
 class EnvelopeId(models.CharField):
-    """An envelope ID must match the format YYxxxx, where YY is the last two digits of
-    the current year and xxxx is a zero padded integer, incrementing from 0001 for the
-    first envelope of the year.
-    """
+    """An envelope ID must match the format YYxxxx, where YY is the last two
+    digits of the current year and xxxx is a zero padded integer, incrementing
+    from 0001 for the first envelope of the year."""
 
     def __init__(self, *args, **kwargs):
         kwargs["max_length"] = 6
@@ -24,15 +23,18 @@ class EnvelopeId(models.CharField):
 
 
 class Envelope(models.Model):
-    """Represents a TARIC3 envelope
+    """
+    Represents a TARIC3 envelope.
 
-    An Envelope contains one or more Transactions, listing changes to be applied to the
-    tariff in the sequence defined by the transaction IDs.
+    An Envelope contains one or more Transactions, listing changes to be applied
+    to the tariff in the sequence defined by the transaction IDs.
     """
 
     envelope_id = EnvelopeId(unique=True)
     transactions = models.ManyToManyField(
-        Transaction, related_name="envelopes", through="EnvelopeTransaction"
+        Transaction,
+        related_name="envelopes",
+        through="EnvelopeTransaction",
     )
 
 

@@ -8,7 +8,6 @@ from importer import models
 from importer.namespaces import nsmap
 from importer.utils import dependency_tree
 
-
 MAX_FILE_SIZE = 1024 * 1024 * 50  # Will keep chunks roughly close to 50MB
 
 
@@ -25,13 +24,13 @@ def get_chunk(
     chapter_heading=None,
 ) -> TemporaryFile:
     """
-    Find or create the chunk currently being written to. If the chunk has to be created
-    write the initial envelope header for it.
+    Find or create the chunk currently being written to. If the chunk has to be
+    created write the initial envelope header for it.
 
-    Chunks are eventually written to the database as Django models, however handling the
-    large strings and storing it in memory before updating is (I believe) O(n!). Whereas
-    storing tempfiles and simply appending to the files before writing to the database is
-    O(n).
+    Chunks are eventually written to the database as Django models, however
+    handling the large strings and storing it in memory before updating is (I
+    believe) O(n!). Whereas storing tempfiles and simply appending to the files
+    before writing to the database is O(n).
     """
     key = (record_code, chapter_heading) if chapter_heading else record_code
 
@@ -40,13 +39,13 @@ def get_chunk(
     except KeyError:
         chunk = TemporaryFile()
         chunk.write(
-            render_to_string(template_name="common/taric/start_file.xml").encode()
+            render_to_string(template_name="common/taric/start_file.xml").encode(),
         )
         chunk.write(
             render_to_string(
                 template_name="common/taric/start_envelope.xml",
                 context={"envelope_id": envelope_id},
-            ).encode()
+            ).encode(),
         )
         chunks_in_progress[key] = chunk
 
@@ -57,11 +56,11 @@ def close_chunk(chunk: TemporaryFile, batch: models.ImportBatch, key):
     """
     Write a chunk to the database.
 
-    To close a chunk properly it must have the envelope closing tag added
-    before being read into the db.
+    To close a chunk properly it must have the envelope closing tag added before
+    being read into the db.
     """
     chunk.write(
-        render_to_string(template_name="common/taric/end_envelope.xml").encode()
+        render_to_string(template_name="common/taric/end_envelope.xml").encode(),
     )
     chunk.seek(0)
     if isinstance(key, tuple):
@@ -75,21 +74,24 @@ def close_chunk(chunk: TemporaryFile, batch: models.ImportBatch, key):
         record_code=record_code,
         chapter=chapter_heading,
         chunk_number=batch.chunks.filter(
-            record_code=record_code, chapter=chapter_heading
+            record_code=record_code,
+            chapter=chapter_heading,
         ).count(),
         chunk_text=chunk.read().decode(),
     )
     chunk.close()
 
     logger.info(
-        "closed chunk with code %s and chapter %s", record_code, chapter_heading
+        "closed chunk with code %s and chapter %s",
+        record_code,
+        chapter_heading,
     )
 
 
 def sort_commodity_codes(transactions):
     """
-    Sort the commodity code transactions by item ID, indent, suffix and transaction ID (which
-    represents the order they were given in).
+    Sort the commodity code transactions by item ID, indent, suffix and
+    transaction ID (which represents the order they were given in).
 
     Commodity codes in seed files have historically arrived unsorted. As the legacy system has
     no active representation of the commodity hierarchy (instead opting to use views) this works
@@ -110,9 +112,8 @@ def sort_commodity_codes(transactions):
     """
 
     def comm_code_key(transaction):
-        """
-        Sort Commodity codes by item id, indent, suffix and transaction id.
-        """
+        """Sort Commodity codes by item id, indent, suffix and transaction
+        id."""
         item_ids = transaction.findall("*/*/*/*/ns2:goods.nomenclature.item.id", nsmap)
         indents = transaction.findall("*/*/*/*/ns2:number.indents", nsmap)
         suffixes = transaction.findall("*/*/*/*/ns2:producline.suffix", nsmap)
@@ -139,10 +140,11 @@ def sort_comm_code_messages(message):
     """
     Sort the messages within a commodity code transaction.
 
-    On top of commodity code transactions being unsorted at times the messages within
-    the transaction are also out of order. This can mean indents are given before the codes they
-    are indenting and other similar issues. In this case the messages only need to be sorted by
-    subrecord code and indent to produce the correct order.
+    On top of commodity code transactions being unsorted at times the messages
+    within the transaction are also out of order. This can mean indents are
+    given before the codes they are indenting and other similar issues. In this
+    case the messages only need to be sorted by subrecord code and indent to
+    produce the correct order.
     """
     code = message.find("*/*/ns2:subrecord.code", nsmap).text
     indent = message.find("*/*/*/ns2:number.indents", nsmap)
@@ -156,8 +158,8 @@ def sort_comm_code_messages(message):
 
 def rewrite_comm_codes(batch: models.ImportBatch, envelope_id: str, record_code="400"):
     """
-    Take the given commodity code data and rewrite it in the correct order required by the
-    hierarchical tree.
+    Take the given commodity code data and rewrite it in the correct order
+    required by the hierarchical tree.
 
     Commodity codes in seed files often are given out of order which breaks the hierarchical
     tree representing them. This function takes all transactions with the relevant record_code
@@ -217,7 +219,8 @@ def write_transaction_to_chunk(
         # Commodities and measures are special cases which can be split on chapter heading as well.
         if record_code in {"400", "430"}:
             item_ids = transaction.findall(
-                "*/*/*/*/ns2:goods.nomenclature.item.id", nsmap
+                "*/*/*/*/ns2:goods.nomenclature.item.id",
+                nsmap,
             )
             chapter_heading = item_ids[0].text[:2] if item_ids else "00"
 
@@ -233,14 +236,14 @@ def write_transaction_to_chunk(
 
     chunk.write(
         etree.tostring(
-            transaction
+            transaction,
         )  # pythons XML doesn't write namespaces back correctly.
         .replace(b"<ns0:", b"<env:")
         .replace(b"<ns1:", b"<ns2:")
         .replace(b"</ns0:", b"</env:")
         .replace(b"</ns1:", b"</ns2:")
         .replace(b"xmlns:ns0=", b"xmlns:env=")
-        .replace(b"xmlns:ns1=", b"xmlns:ns2=")
+        .replace(b"xmlns:ns1=", b"xmlns:ns2="),
     )
 
     if chunk.tell() > MAX_FILE_SIZE:
@@ -251,9 +254,11 @@ def write_transaction_to_chunk(
 
 def chunk_taric(taric3_file, batch: models.ImportBatch) -> models.ImportBatch:
     """
-    Parses a TARIC3 XML stream and breaks it into a batch of chunks. All chunks are written to
-    the database. If the batch is intended to be split on record code then the commodity codes
-    are also sorted into the correct order.
+    Parses a TARIC3 XML stream and breaks it into a batch of chunks.
+
+    All chunks are written to the database. If the batch is intended to be split
+    on record code then the commodity codes are also sorted into the correct
+    order.
     """
     chunks_in_progress = {}
     xmlparser = etree.iterparse(taric3_file, ["start", "end"])

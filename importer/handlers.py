@@ -15,9 +15,8 @@ from common.models import TrackedModel
 from common.validators import UpdateType
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
-from importer.utils import generate_key
 from importer.utils import LinksType
-
+from importer.utils import generate_key
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,8 @@ class MismatchedSerializerError(Exception):
 
 class BaseHandlerMeta(type):
     """
-    BaseHandler Metaclass to add validation and registration of each new Handler class.
+    BaseHandler Metaclass to add validation and registration of each new Handler
+    class.
 
     Handlers have relatively strict requirements for them to function.
 
@@ -61,10 +61,11 @@ class BaseHandlerMeta(type):
             raise AttributeError(f'{name} requires attribute "tag" to be a str.')
 
         if not issubclass(
-            getattr(handler_class, "serializer_class", type), ModelSerializer
+            getattr(handler_class, "serializer_class", type),
+            ModelSerializer,
         ):
             raise AttributeError(
-                f'{name} requires attribute "serializer_class" to be a subclass of "ModelSerializer".'
+                f'{name} requires attribute "serializer_class" to be a subclass of "ModelSerializer".',
             )
 
         TariffObjectNursery.register_handler(handler_class)
@@ -228,7 +229,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     tag: str = None
 
     def __init__(
-        self, dispatched_object: DispatchedObjectType, nursery: TariffObjectNursery
+        self,
+        dispatched_object: DispatchedObjectType,
+        nursery: TariffObjectNursery,
     ):
         self.nursery = nursery
 
@@ -238,7 +241,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         self.transaction_id = dispatched_object["transaction_id"]
 
         self.key = generate_key(
-            tag=self.tag, identifying_fields=self.identifying_fields, data=self.data
+            tag=self.tag,
+            identifying_fields=self.identifying_fields,
+            data=self.data,
         )
 
         self.dependency_keys = self._generate_dependency_keys()
@@ -246,10 +251,12 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
     def _generate_dependency_keys(self) -> Set[str]:
         """
-        Objects are stored in the cache using unique but identifiable IDs. Any dependant object
-        must be able to figure out all the keys for its dependencies.
+        Objects are stored in the cache using unique but identifiable IDs. Any
+        dependant object must be able to figure out all the keys for its
+        dependencies.
 
-        This method fetches all the dependencies, builds their keys and then returns the keys as a set.
+        This method fetches all the dependencies, builds their keys and then
+        returns the keys as a set.
         """
         depends_on = set()
         if not self.dependencies:
@@ -260,20 +267,21 @@ class BaseHandler(metaclass=BaseHandlerMeta):
                     f"Dependent parsers must have the same serializer_class as their dependencies. "
                     f"Dependency {dependency.__name__} has "
                     f"serializer_class {dependency.serializer_class.__name__}. "
-                    f"{self.__class__.__name__} has serializer_class {self.serializer_class.__name__}."
+                    f"{self.__class__.__name__} has serializer_class {self.serializer_class.__name__}.",
                 )
             depends_on.add(
                 generate_key(
                     tag=dependency.tag,
                     identifying_fields=self.identifying_fields,
                     data=self.data,
-                )
+                ),
             )
         return depends_on
 
     def resolve_dependencies(self) -> bool:
         """
-        Search the cache for all object dependencies and attempt to resolve them.
+        Search the cache for all object dependencies and attempt to resolve
+        them.
 
         Previously found objects, which are dependent on the current object, should be
         stored in the cache. This method loops over the current objects dependencies and
@@ -311,7 +319,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         if settings.USE_IMPORTER_CACHE:
             cached_object = self.nursery.get_obj_from_cache(
-                model, kwargs.keys(), kwargs
+                model,
+                kwargs.keys(),
+                kwargs,
             )
             if cached_object and cached_object[1] == model.__name__:
                 return cached_object[0], True
@@ -366,7 +376,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
     def resolve_links(self) -> bool:
         """
-        Extract data specific to links and use this to search the database for the relevant objects.
+        Extract data specific to links and use this to search the database for
+        the relevant objects.
 
         Once found attach the object to the `resolved_links` dictionary.
 
@@ -381,9 +392,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         return True
 
     def clean(self, data: dict) -> dict:
-        """
-        Validate the data against the serializer and return the validated data.
-        """
+        """Validate the data against the serializer and return the validated
+        data."""
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         return serializer.validated_data
@@ -437,8 +447,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         Save the data into the database.
 
-        This method initially validates all collected data. If valid it then runs
-        some pre-processing before saving. Once saved an opportunity is given for post-processing.
+        This method initially validates all collected data. If valid it then
+        runs some pre-processing before saving. Once saved an opportunity is
+        given for post-processing.
         """
         data = self.clean(self.data)
         data.update(transaction_id=self.transaction_id)
@@ -452,8 +463,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
     def serialize(self) -> DispatchedObjectType:
         """
-        Provides a serializable dict of the object to be stored in the cache. Should hold all the
-        necessary data required to rebuild the object
+        Provides a serializable dict of the object to be stored in the cache.
+
+        Should hold all the necessary data required to rebuild the object
         """
         return {
             "data": self.data,
@@ -464,7 +476,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     @classmethod
     def register_dependant(cls, dependant: Type[BaseHandler]):
         """
-        Allow a handler to retrospectively assign itself to another handlers list of dependencies.
+        Allow a handler to retrospectively assign itself to another handlers
+        list of dependencies.
 
         This solves the issue of forward referencing - where a class cannot reference another class
         before that class has been defined.

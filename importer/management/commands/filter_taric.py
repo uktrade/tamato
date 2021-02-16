@@ -25,12 +25,11 @@ from commodities.models import GoodsNomenclature
 from common.renderers import counter_generator
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import Counter
-from importer.management.commands.patterns import LONDON
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.patterns import parse_date
-from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
+from importer.management.commands.utils import col
 from importer.namespaces import nsmap
 from importer.parsers import ElementParser
 from importer.taric import EnvelopeParser
@@ -140,7 +139,8 @@ class TriggeredMeasureTerminator:
             triggered_ends = self.triggers[trigger_key]
             for triggered_end in triggered_ends:
                 logger.info(
-                    "Triggered end of %s", triggered_end.old_measure.measure_sid
+                    "Triggered end of %s",
+                    triggered_end.old_measure.measure_sid,
                 )
                 models = list(
                     self.measure_ender.end_date_measure(
@@ -150,11 +150,14 @@ class TriggeredMeasureTerminator:
                             role_type=triggered_end.triggering_regulation_role,
                         ),
                         new_start_date=triggered_end.end_date + timedelta(days=1),
-                    )
+                    ),
                 )
                 output = StringIO()
                 with EnvelopeSerializer(
-                    output, 0, self.transaction_sequence, self.message_sequence
+                    output,
+                    0,
+                    self.transaction_sequence,
+                    self.message_sequence,
                 ) as env:
                     env.render_transaction(models)
 
@@ -251,9 +254,13 @@ class PassiveMeasureFilter:
     ]
 
     def update_measure(self, xml: Element, tag: Tags, value: str):
-        """Set the tag in the measure XML to the new value. If the tag does not
-        exist, create a new tag and add it before the "stopped.flag" element (so
-        we assume we are adding end date or justification regulation)"""
+        """
+        Set the tag in the measure XML to the new value.
+
+        If the tag does not exist, create a new tag and add it before the
+        "stopped.flag" element (so we assume we are adding end date or
+        justification regulation)
+        """
         element = xml.find(tag, nsmap)
         if element is None:
             stopped = xml.find("oub:stopped.flag", nsmap)
@@ -282,7 +289,7 @@ class PassiveMeasureFilter:
                 start_before_brexit = start_date < BREXIT
                 ends_after_brexit = end_date is None or end_date >= BREXIT
                 terminating_regulation = self.find_terminating_regulation(
-                    record["measure"]
+                    record["measure"],
                 )
 
                 if terminating_regulation:
@@ -373,7 +380,8 @@ class PassiveMeasureFilter:
                     return False
 
                 logger.warning(
-                    "Dependent condition for unknown measure %s", measure_sid
+                    "Dependent condition for unknown measure %s",
+                    measure_sid,
                 )
                 self.measure_condition_kept_sids.add(condition_sid)
                 return True

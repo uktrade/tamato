@@ -46,11 +46,13 @@ class ImportBatch(TimestampedMixin):
 
     name = models.CharField(max_length=32, unique=True)
     split_job = models.BooleanField(
-        default=False
+        default=False,
     )  # XXX could be termed "seed file" instead?
 
     dependencies = models.ManyToManyField(
-        "self", through="BatchDependencies", symmetrical=False
+        "self",
+        through="BatchDependencies",
+        symmetrical=False,
     )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()
@@ -58,7 +60,7 @@ class ImportBatch(TimestampedMixin):
     @property
     def ready_chunks(self):
         return self.chunks.exclude(
-            Q(status=ImporterChunkStatus.DONE) | Q(status=ImporterChunkStatus.ERRORED)
+            Q(status=ImporterChunkStatus.DONE) | Q(status=ImporterChunkStatus.ERRORED),
         ).defer("chunk_text")
 
     def __str__(self):
@@ -66,12 +68,12 @@ class ImportBatch(TimestampedMixin):
 
 
 class ImporterXMLChunk(TimestampedMixin):
-    """
-    A chunk of TARIC XML.
-    """
+    """A chunk of TARIC XML."""
 
     batch = models.ForeignKey(
-        ImportBatch, on_delete=models.PROTECT, related_name="chunks"
+        ImportBatch,
+        on_delete=models.PROTECT,
+        related_name="chunks",
     )
     record_code = models.CharField(max_length=3, null=True, blank=True, default=None)
     chapter = models.CharField(max_length=2, null=True, blank=True, default=None)
@@ -80,7 +82,8 @@ class ImporterXMLChunk(TimestampedMixin):
     chunk_text = models.TextField(blank=False, null=False)
 
     status = models.PositiveSmallIntegerField(
-        choices=ImporterChunkStatus.choices, default=1
+        choices=ImporterChunkStatus.choices,
+        default=1,
     )
 
     def __str__(self):
@@ -95,10 +98,14 @@ class ImporterXMLChunk(TimestampedMixin):
 
 class BatchDependencies(models.Model):
     dependent_batch = models.ForeignKey(
-        ImportBatch, on_delete=models.CASCADE, related_name="batch_dependencies"
+        ImportBatch,
+        on_delete=models.CASCADE,
+        related_name="batch_dependencies",
     )
     depends_on = models.ForeignKey(
-        ImportBatch, on_delete=models.PROTECT, related_name="batch_dependents"
+        ImportBatch,
+        on_delete=models.PROTECT,
+        related_name="batch_dependents",
     )
 
     def __str__(self):

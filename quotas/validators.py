@@ -1,10 +1,9 @@
-"""Validators for quotas"""
+"""Validators for quotas."""
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
-
 
 quota_order_number_validator = RegexValidator(r"^[0-9]{6}$")
 monetary_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
@@ -81,5 +80,5 @@ class QuotaEventType(models.TextChoices):
 def validate_coefficient(value):
     if not value > 0:
         raise ValidationError(
-            "Whenever a sub-quota receives a coefficient, this has to be a strictly positive decimal number."
+            "Whenever a sub-quota receives a coefficient, this has to be a strictly positive decimal number.",
         )

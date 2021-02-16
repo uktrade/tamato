@@ -14,7 +14,7 @@ class TARIC3DateRangeField(DateRangeField):
         input_formats=[
             "iso-8601",
             "%Y-%m-%d",
-        ]  # default  # TARIC3 date format
+        ],  # default  # TARIC3 date format
     )
     range_type = TaricDateRange
 
@@ -31,9 +31,10 @@ class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
         """
         Find the format of the request.
 
-        This first checks the immediate serializer context, if not found it checks the
-        request for query params. If that fails it checks the Accept header to see if
-        any of the `self.formats_with_template` are within the header.
+        This first checks the immediate serializer context, if not found it
+        checks the request for query params. If that fails it checks the Accept
+        header to see if any of the `self.formats_with_template` are within the
+        header.
         """
         if self.context.get("format"):
             return self.context["format"]
@@ -129,7 +130,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     def get_tracked_models(self, obj):
         return TrackedModelSerializer(
             obj.tracked_models.annotate_record_codes().order_by(
-                "record_code", "subrecord_code"
+                "record_code",
+                "subrecord_code",
             ),
             many=True,
             read_only=True,

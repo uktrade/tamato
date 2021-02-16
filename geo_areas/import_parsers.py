@@ -8,25 +8,28 @@ from importer.parsers import ValidityMixin
 from importer.parsers import Writable
 from importer.taric import RecordParser
 
-
 logger = logging.getLogger(__name__)
 
 
 @RecordParser.register_child("geographical_area")
 class GeographicalAreaParser(ValidityMixin, Writable, ElementParser):
     """
-    <xs:element name="geographical.area" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="geographical.area.sid" type="SID"/>
-                <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
-                <xs:element name="validity.start.date" type="Date"/>
-                <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                <xs:element name="geographical.code" type="AreaCode"/>
-                <xs:element name="parent.geographical.area.group.sid" type="SID" minOccurs="0"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="geographical.area" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="geographical.area.sid" type="SID"/>
+                    <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="geographical.code" type="AreaCode"/>
+                    <xs:element name="parent.geographical.area.group.sid" type="SID" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("geographical.area")
@@ -40,17 +43,21 @@ class GeographicalAreaParser(ValidityMixin, Writable, ElementParser):
 @RecordParser.register_child("geographical_area_description")
 class GeographicalAreaDescriptionParser(Writable, ElementParser):
     """
-    <xs:element name="geographical.area.description" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="geographical.area.description.period.sid" type="SID"/>
-                <xs:element name="language.id" type="LanguageId"/>
-                <xs:element name="geographical.area.sid" type="SID"/>
-                <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
-                <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="geographical.area.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="geographical.area.description.period.sid" type="SID"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="geographical.area.sid" type="SID"/>
+                    <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("geographical.area.description")
@@ -64,16 +71,20 @@ class GeographicalAreaDescriptionParser(Writable, ElementParser):
 @RecordParser.register_child("geographical_area_description_period")
 class GeographicalAreaDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
     """
-    <xs:element name="geographical.area.description.period" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="geographical.area.description.period.sid" type="SID"/>
-                <xs:element name="geographical.area.sid" type="SID"/>
-                <xs:element name="validity.start.date" type="Date"/>
-                <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="geographical.area.description.period" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="geographical.area.description.period.sid" type="SID"/>
+                    <xs:element name="geographical.area.sid" type="SID"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("geographical.area.description.period")
@@ -86,16 +97,20 @@ class GeographicalAreaDescriptionPeriodParser(ValidityMixin, Writable, ElementPa
 @RecordParser.register_child("geographical_area_membership")
 class GeographicalAreaMembershipParser(ValidityMixin, Writable, ElementParser):
     """
-    <xs:element name="geographical.area.membership" substitutionGroup="abstract.record">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="geographical.area.sid" type="SID"/>
-                <xs:element name="geographical.area.group.sid" type="SID"/>
-                <xs:element name="validity.start.date" type="Date"/>
-                <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    Example XML:
+
+    .. code-block:: XML
+
+        <xs:element name="geographical.area.membership" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="geographical.area.sid" type="SID"/>
+                    <xs:element name="geographical.area.group.sid" type="SID"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     tag = Tag("geographical.area.membership")

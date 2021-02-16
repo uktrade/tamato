@@ -38,7 +38,8 @@ def test_CE2(make_duplicate_record):
     """The combination certificate type and code must be unique."""
 
     duplicate = make_duplicate_record(
-        factories.CertificateFactory, identifying_fields=("sid", "certificate_type")
+        factories.CertificateFactory,
+        identifying_fields=("sid", "certificate_type"),
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -53,9 +54,8 @@ def test_CE3(date_ranges):
 
 
 def test_CE4(date_ranges):
-    """If a certificate is used in a measure condition then the validity period of the certificate
-    must span the validity period of the measure.
-    """
+    """If a certificate is used in a measure condition then the validity period
+    of the certificate must span the validity period of the measure."""
 
     condition = factories.MeasureConditionWithCertificateFactory.create(
         required_certificate__valid_between=date_ranges.starts_with_normal,
@@ -67,7 +67,8 @@ def test_CE4(date_ranges):
 
 
 def test_CE5(delete_record):
-    """The certificate cannot be deleted if it is used in a measure condition."""
+    """The certificate cannot be deleted if it is used in a measure
+    condition."""
 
     condition = factories.MeasureConditionWithCertificateFactory.create()
 
@@ -84,9 +85,8 @@ def test_CE6_one_description_mandatory():
 
 
 def test_CE6_first_description_must_have_same_start_date(date_ranges):
-    """The start date of the first description period must be equal to the start date of
-    the certificate.
-    """
+    """The start date of the first description period must be equal to the start
+    date of the certificate."""
 
     description = factories.CertificateDescriptionFactory.create(
         described_certificate__valid_between=date_ranges.no_end,
@@ -98,9 +98,8 @@ def test_CE6_first_description_must_have_same_start_date(date_ranges):
 
 
 def test_CE6_start_dates_cannot_match():
-    """No two associated description periods for the same certificate and language may
-    have the same start date.
-    """
+    """No two associated description periods for the same certificate and
+    language may have the same start date."""
 
     existing = factories.CertificateDescriptionFactory.create()
     factories.CertificateDescriptionFactory.create(
@@ -113,9 +112,8 @@ def test_CE6_start_dates_cannot_match():
 
 
 def test_CE6_certificate_validity_period_must_span_description(date_ranges):
-    """The validity period of the certificate must span the validity period of the
-    certificate description.
-    """
+    """The validity period of the certificate must span the validity period of
+    the certificate description."""
 
     description = factories.CertificateDescriptionFactory.create(
         described_certificate__valid_between=date_ranges.normal,
@@ -127,27 +125,27 @@ def test_CE6_certificate_validity_period_must_span_description(date_ranges):
 
 
 def test_CE7(date_ranges):
-    """The validity period of the certificate type must span the validity period of the
-    certificate.
-    """
+    """The validity period of the certificate type must span the validity period
+    of the certificate."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.CE7().validate(
             factories.CertificateFactory.create(
                 certificate_type__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 @pytest.mark.xfail(reason="rule disabled")
 def test_certificate_description_periods_cannot_overlap(date_ranges):
-    """Ensure validity periods for descriptions with a given SID cannot overlap."""
+    """Ensure validity periods for descriptions with a given SID cannot
+    overlap."""
     # XXX All versions of a description will have the same SID. Won't this prevent
     # updates and deletes?
 
     existing = factories.CertificateDescriptionFactory.create(
-        valid_between=date_ranges.normal
+        valid_between=date_ranges.normal,
     )
     description = factories.CertificateDescriptionFactory.create(
         described_certificate=existing.described_certificate,

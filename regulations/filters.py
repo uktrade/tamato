@@ -8,10 +8,8 @@ from regulations.validators import RoleType
 
 
 class RegulationFilterMixin(TamatoFilterMixin):
-    """
-    Filter mixin to allow custom filtering on regulation_id,
-    role_type and information_text.
-    """
+    """Filter mixin to allow custom filtering on regulation_id, role_type and
+    information_text."""
 
     search_fields = ("regulation_id", "role_type", "information_text")
 

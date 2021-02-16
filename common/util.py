@@ -1,6 +1,4 @@
-"""
-Miscellaneous utility functions
-"""
+"""Miscellaneous utility functions."""
 from typing import Optional
 from typing import TypeVar
 from typing import Union
@@ -15,9 +13,12 @@ def is_truthy(value: str) -> bool:
 
 
 def strint(value: Union[int, str, float]) -> str:
-    """If the passed value is a number type, return the
-    number as a string with no deciaml point or places.
-    Else just return the string."""
+    """
+    If the passed value is a number type, return the number as a string with no
+    deciaml point or places.
+
+    Else just return the string.
+    """
     if type(value) in (int, float):
         return str(int(value))
     else:
@@ -25,8 +26,8 @@ def strint(value: Union[int, str, float]) -> str:
 
 
 def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
-    """Return the lowest out of the passed objects that are not None,
-    or return None if all of the passed objects are None."""
+    """Return the lowest out of the passed objects that are not None, or return
+    None if all of the passed objects are None."""
     try:
         return min(d for d in objs if d is not None)
     except ValueError:
@@ -34,8 +35,8 @@ def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
 
 
 def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
-    """Return the highest out of the passed objects that are not None,
-    or return None if all of the passed objects are None."""
+    """Return the highest out of the passed objects that are not None, or return
+    None if all of the passed objects are None."""
     try:
         return max(d for d in objs if d is not None)
     except ValueError:
@@ -58,13 +59,15 @@ class TaricDateTimeRange(DateTimeRange):
 
 
 def validity_range_contains_range(
-    overall_range: DateRange, contained_range: DateRange
+    overall_range: DateRange,
+    contained_range: DateRange,
 ) -> bool:
     """
-    If the contained_range has both an upper and lower bound, check they are both
-    within the overall_range.
+    If the contained_range has both an upper and lower bound, check they are
+    both within the overall_range.
 
-    If either end is unbounded in the contained range,it must also be unbounded in the overall range.
+    If either end is unbounded in the contained range,it must also be unbounded
+    in the overall range.
     """
     # XXX assumes both ranges are [] (inclusive-lower, inclusive-upper)
 
@@ -133,7 +136,9 @@ def get_next_sequence_value(sequence_name: str) -> int:
 
 
 def get_field_tuple(model, field):
-    """Get the value of the named field of the specified model.
+    """
+    Get the value of the named field of the specified model.
+
     Handles special case for "valid_between__lower".
     """
 

@@ -16,9 +16,9 @@ from commodities.models import GoodsNomenclature
 from common.models.records import TrackedModel
 from common.renderers import Counter
 from common.renderers import counter_generator
+from common.util import TaricDateRange
 from common.util import maybe_max
 from common.util import maybe_min
-from common.util import TaricDateRange
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -73,16 +73,18 @@ def copy_measure(measure: Measure, **overrides) -> Measure:
 
 
 class MeasureCreationPattern:
-    """A pattern used for creating measures. This pattern will create new
-    measures to implement the passed duty sentence along with any associatied
-    models such as conditions, exclusions or associations.
+    """
+    A pattern used for creating measures. This pattern will create new measures
+    to implement the passed duty sentence along with any associatied models such
+    as conditions, exclusions or associations.
 
     Each measure and its associated models will be created in a single new
     transaction in the passed workbasket. All measures will be created no
     earlier than the `base_date` and the pattern assumes that reference data
     (such as measurements) do not change over the lifetime of the measures
     created. Any `defaults` passed will be used unless overriden by the call to
-    `create()`."""
+    `create()`.
+    """
 
     def __init__(
         self,
@@ -94,7 +96,7 @@ class MeasureCreationPattern:
         self.workbasket = workbasket
         self.defaults = defaults
         self.duty_sentence_parser = duty_sentence_parser or DutySentenceParser.get(
-            base_date
+            base_date,
         )
 
     @cached_property
@@ -120,7 +122,8 @@ class MeasureCreationPattern:
     @cached_property
     def end_use_certificate(self) -> Certificate:
         return Certificate.objects.get(
-            sid="990", certificate_type=CertificateType.objects.get(sid="N")
+            sid="990",
+            certificate_type=CertificateType.objects.get(sid="N"),
         )
 
     @cached_property
@@ -136,7 +139,8 @@ class MeasureCreationPattern:
         return MeasureAction.objects.get(code="07")
 
     def get_authorised_use_measure_conditions(
-        self, measure: Measure
+        self,
+        measure: Measure,
     ) -> Sequence[MeasureCondition]:
         return [
             MeasureCondition.objects.create(
@@ -161,7 +165,9 @@ class MeasureCreationPattern:
         ]
 
     def get_proof_of_origin_condition(
-        self, measure: Measure, certificates: Sequence[Certificate]
+        self,
+        measure: Measure,
+        certificates: Sequence[Certificate],
     ) -> Iterator[MeasureCondition]:
         if any(certificates):
             for index, certificate in enumerate(certificates, start=1):
@@ -186,7 +192,9 @@ class MeasureCreationPattern:
             )
 
     def get_measure_components_from_duty_rate(
-        self, measure: Measure, rate: str
+        self,
+        measure: Measure,
+        rate: str,
     ) -> Iterator[MeasureComponent]:
         try:
             for component in self.duty_sentence_parser.parse(rate):
@@ -208,7 +216,7 @@ class MeasureCreationPattern:
             measure_origins = set(
                 m.member
                 for m in GeographicalMembership.objects.as_at(
-                    measure.valid_between.lower
+                    measure.valid_between.lower,
                 )
                 .filter(
                     geo_group=measure.geographical_area,
@@ -239,7 +247,9 @@ class MeasureCreationPattern:
             )
 
     def get_measure_footnotes(
-        self, measure: Measure, footnotes: Sequence[Footnote]
+        self,
+        measure: Measure,
+        footnotes: Sequence[Footnote],
     ) -> Sequence[FootnoteAssociationMeasure]:
         footnote_measures = []
         for footnote in footnotes:
@@ -249,7 +259,7 @@ class MeasureCreationPattern:
                     associated_footnote=footnote,
                     update_type=UpdateType.CREATE,
                     transaction=measure.transaction,
-                )
+                ),
             )
         return footnote_measures
 
@@ -269,7 +279,8 @@ class MeasureCreationPattern:
         footnotes: Sequence[Footnote] = [],
         proofs_of_origin: Sequence[Certificate] = [],
     ) -> Iterator[TrackedModel]:
-        """Create a new measure linking the passed data and any defaults. The
+        """
+        Create a new measure linking the passed data and any defaults. The
         measure is saved as part of a single transaction.
 
         If `exclusions` are passed, measure exclusions will be created for those
@@ -284,7 +295,8 @@ class MeasureCreationPattern:
         measure.
 
         If `proofs_of_origin` are passed, measure conditions requiring the
-        proofs will be added to the measure."""
+        proofs will be added to the measure.
+        """
 
         assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
 
@@ -296,8 +308,10 @@ class MeasureCreationPattern:
         if actual_end != validity_end:
             logger.warning(
                 "Measure {} end date capped by {} end date: {:%Y-%m-%d}".format(
-                    new_measure_sid, goods_nomenclature.item_id, actual_end
-                )
+                    new_measure_sid,
+                    goods_nomenclature.item_id,
+                    actual_end,
+                ),
             )
 
         measure_data: Dict[str, Any] = {
@@ -330,7 +344,8 @@ class MeasureCreationPattern:
         # TODO: create multiple measures if memberships come to an end.
         for exclusion in exclusions:
             yield from self.get_measure_excluded_geographical_areas(
-                new_measure, exclusion
+                new_measure,
+                exclusion,
             )
 
         # Output any footnote associations required.
@@ -348,5 +363,6 @@ class MeasureCreationPattern:
 
         # Now generate the duty components for the passed duty rate.
         yield from self.get_measure_components_from_duty_rate(
-            new_measure, duty_sentence
+            new_measure,
+            duty_sentence,
         )

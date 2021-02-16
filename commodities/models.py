@@ -19,10 +19,14 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
     # These are character fields as they often has leading 0s
     item_id = models.CharField(
-        max_length=10, validators=[validators.item_id_validator], db_index=True
+        max_length=10,
+        validators=[validators.item_id_validator],
+        db_index=True,
     )
     suffix = models.CharField(
-        max_length=2, validators=[validators.suffix_validator], db_index=True
+        max_length=2,
+        validators=[validators.suffix_validator],
+        db_index=True,
     )
 
     statistical = models.BooleanField()
@@ -80,7 +84,9 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
     indent = models.PositiveIntegerField(db_index=True)
 
     indented_goods_nomenclature = models.ForeignKey(
-        GoodsNomenclature, on_delete=models.PROTECT, related_name="indents"
+        GoodsNomenclature,
+        on_delete=models.PROTECT,
+        related_name="indents",
     )
 
     business_rules = (business_rules.NIG2,)
@@ -99,10 +105,10 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
 
 class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
     """
-    Goods Nomenclature naturally falls into the structure of a hierarchical tree.
-    As there is a root good e.g. "Live Animals; Animal Products" which then has branch nodes
-    such as "Live animals" and "Meat and edible meat offal". And so on and so forth until
-    leaf nodes are found.
+    Goods Nomenclature naturally falls into the structure of a hierarchical
+    tree. As there is a root good e.g. "Live Animals; Animal Products" which
+    then has branch nodes such as "Live animals" and "Meat and edible meat
+    offal". And so on and so forth until leaf nodes are found.
 
     To represent this efficiently in a database a Materialized Path is used. There is some
     documentation on this here: https://django-treebeard.readthedocs.io/en/latest/mp_tree.html
@@ -155,7 +161,9 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
     path = models.CharField(max_length=255, unique=True, primary_key=True)
 
     indent = models.ForeignKey(
-        GoodsNomenclatureIndent, on_delete=models.PROTECT, related_name="nodes"
+        GoodsNomenclatureIndent,
+        on_delete=models.PROTECT,
+        related_name="nodes",
     )
 
     creating_transaction = models.ForeignKey(
@@ -177,10 +185,10 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
 
     def has_measure_in_tree(self):
         ascendant_measures = self.get_ancestors().filter(
-            indent__indented_goods_nomenclature__measures__isnull=False
+            indent__indented_goods_nomenclature__measures__isnull=False,
         )
         descendant_measures = self.get_descendants().filter(
-            indent__indented_goods_nomenclature__measures__isnull=False
+            indent__indented_goods_nomenclature__measures__isnull=False,
         )
         return (
             self.indent.measures.exists()
@@ -189,20 +197,25 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         )
 
     def copy_tree(
-        self, parent: GoodsNomenclatureIndentNode, valid_between, transaction
+        self,
+        parent: GoodsNomenclatureIndentNode,
+        valid_between,
+        transaction,
     ):
         new_valid_between = self.valid_between
         if not new_valid_between.lower or (
             valid_between.lower and new_valid_between.lower < valid_between.lower
         ):
             new_valid_between = TaricDateRange(
-                valid_between.lower, new_valid_between.upper
+                valid_between.lower,
+                new_valid_between.upper,
             )
         if not new_valid_between.upper or (
             valid_between.upper and new_valid_between.upper > valid_between.upper
         ):
             new_valid_between = TaricDateRange(
-                new_valid_between.lower, valid_between.upper
+                new_valid_between.lower,
+                valid_between.upper,
             )
 
         new_node = parent.add_child(
@@ -233,11 +246,14 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
 
 
 class GoodsNomenclatureOrigin(TrackedModel):
-    """Represents a link between a newly-created GoodsNomenclature and the codes
-    that previously represented it. This will often be the parent nomenclature
-    code. A GoodsNomenclature can have multiple origins when the hierarchy has
-    been reorganised and the new classification was previously covered by
-    multiple codes."""
+    """
+    Represents a link between a newly-created GoodsNomenclature and the codes
+    that previously represented it.
+
+    This will often be the parent nomenclature code. A GoodsNomenclature can
+    have multiple origins when the hierarchy has been reorganised and the new
+    classification was previously covered by multiple codes.
+    """
 
     record_code = "400"
     subrecord_code = "35"
@@ -267,10 +283,13 @@ class GoodsNomenclatureOrigin(TrackedModel):
 
 
 class GoodsNomenclatureSuccessor(TrackedModel):
-    """Represents a link between a end-dated GoodsNomenclature and the codes
-    that have replaced it (or in TARIC parlance have "absorbed" it). The
-    replacing codes cover the goods that this classification code previously
-    covered."""
+    """
+    Represents a link between a end-dated GoodsNomenclature and the codes that
+    have replaced it (or in TARIC parlance have "absorbed" it).
+
+    The replacing codes cover the goods that this classification code previously
+    covered.
+    """
 
     record_code = "400"
     subrecord_code = "40"
@@ -305,7 +324,8 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
 
     goods_nomenclature = models.ForeignKey(GoodsNomenclature, on_delete=models.PROTECT)
     associated_footnote = models.ForeignKey(
-        "footnotes.Footnote", on_delete=models.PROTECT
+        "footnotes.Footnote",
+        on_delete=models.PROTECT,
     )
 
     identifying_fields = (

@@ -9,9 +9,7 @@ from regulations.serializers import RegulationSerializer
 
 
 class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows regulations to be viewed.
-    """
+    """API endpoint that allows regulations to be viewed."""
 
     queryset = Regulation.objects.current().select_related("regulation_group")
     serializer_class = RegulationSerializer
@@ -21,16 +19,16 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RegulationUIViewSet(RegulationViewSet):
-    """
-    UI endpoint that allows regulations to be viewed.
-    """
+    """UI endpoint that allows regulations to be viewed."""
 
     renderer_classes = [renderers.TemplateHTMLRenderer]
 
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return render(
-            request, "regulations/list.jinja", context={"object_list": queryset}
+            request,
+            "regulations/list.jinja",
+            context={"object_list": queryset},
         )
 
     def retrieve(self, request, *args, **kwargs):

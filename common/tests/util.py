@@ -1,5 +1,4 @@
 import contextlib
-from datetime import date
 from datetime import datetime
 from datetime import timezone
 from functools import wraps
@@ -119,7 +118,7 @@ def validate_taric_xml_record_order(xml):
         full_code = record_code + subrecord_code
         if full_code < last_code:
             raise AssertionError(
-                f"Elements out of order in XML: {last_code}, {full_code}"
+                f"Elements out of order in XML: {last_code}, {full_code}",
             )
         last_code = full_code
 
@@ -136,7 +135,10 @@ def taric_xml_record_codes(xml):
 
 
 def validate_taric_xml(
-    factory=None, instance=None, factory_kwargs=None, check_order=True
+    factory=None,
+    instance=None,
+    factory_kwargs=None,
+    check_order=True,
 ):
     def decorator(func):
         def wraps(
@@ -149,11 +151,11 @@ def validate_taric_xml(
         ):
             if not factory and not instance:
                 raise AssertionError(
-                    "Either a factory or an object instance need to be provided"
+                    "Either a factory or an object instance need to be provided",
                 )
             if factory and instance:
                 raise AssertionError(
-                    "Either a factory or an object instance need to be provided - not both."
+                    "Either a factory or an object instance need to be provided - not both.",
                 )
 
             current_instance = instance or factory.create(
@@ -212,11 +214,11 @@ def validate_taric_import(
         def wraps(valid_user, *args, **kwargs):
             if not factory and not instance:
                 raise AssertionError(
-                    "Either a factory or an object instance need to be provided"
+                    "Either a factory or an object instance need to be provided",
                 )
             if factory and instance:
                 raise AssertionError(
-                    "Either a factory or an object instance need to be provided - not both."
+                    "Either a factory or an object instance need to be provided - not both.",
                 )
 
             _factory_kwargs = factory_kwargs or {}
@@ -236,7 +238,7 @@ def validate_taric_import(
             )
 
             xml = generate_test_import_xml(
-                serializer(test_object, context={"format": "xml"}).data
+                serializer(test_object, context={"format": "xml"}).data,
             )
 
             import_taric(xml, valid_user.username, WorkflowStatus.PUBLISHED.value)
@@ -361,7 +363,8 @@ class Dates:
 
 
 def only_applicable_after(cutoff):
-    """Decorator which asserts that a test fails after a specified cutoff date.
+    """
+    Decorator which asserts that a test fails after a specified cutoff date.
 
     :param cutoff: A date string, or datetime object before which the test should fail.
     """

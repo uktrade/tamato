@@ -45,7 +45,9 @@ class GovukFrontendExtension(NunjucksExtension):
                 r"params.legend",
             ]
             source = re.sub(
-                r"(" + r"|".join(nested_attrs) + r")\.", r"(\1|default({})).", source
+                r"(" + r"|".join(nested_attrs) + r")\.",
+                r"(\1|default({})).",
+                source,
             )
 
             # fix concatenating str and int
@@ -65,7 +67,8 @@ class GovukFrontendEnvironment(Environment):
 
 def break_words(word):
     """
-    Adds zero-width spaces around non-word characters to allow breaking lines when wrapping text.
+    Adds zero-width spaces around non-word characters to allow breaking lines
+    when wrapping text.
 
     For example:
 
@@ -99,7 +102,7 @@ def environment(**kwargs):
             "static": static,
             "url": reverse,
             "webpack_static": webpack_static,
-        }
+        },
     )
 
     return env

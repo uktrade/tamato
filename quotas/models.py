@@ -12,11 +12,13 @@ from quotas import validators
 
 
 class QuotaOrderNumber(TrackedModel, ValidityMixin):
-    """The order number is the identification of a quota. It is defined for tariff
-    quotas and surveillances. If an operator wants to benefit from a tariff quota, they
-    must refer to it via the order number in the customs declaration. An order number
-    may have multiple associated quota definitions, for example to divide a quota over
-    several time periods.
+    """
+    The order number is the identification of a quota.
+
+    It is defined for tariff quotas and surveillances. If an operator wants to
+    benefit from a tariff quota, they must refer to it via the order number in
+    the customs declaration. An order number may have multiple associated quota
+    definitions, for example to divide a quota over several time periods.
     """
 
     record_code = "360"
@@ -29,10 +31,10 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         db_index=True,
     )
     mechanism = models.PositiveSmallIntegerField(
-        choices=validators.AdministrationMechanism.choices
+        choices=validators.AdministrationMechanism.choices,
     )
     category = models.PositiveSmallIntegerField(
-        choices=validators.QuotaCategory.choices
+        choices=validators.QuotaCategory.choices,
     )
 
     origins = models.ManyToManyField(
@@ -54,14 +56,13 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     def in_use(self):
         # TODO this should respect deletes
         return self.measure_set.model.objects.filter(
-            order_number__sid=self.sid
+            order_number__sid=self.sid,
         ).exists()
 
 
 class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
-    """The order number origin defines a quota as being available only to imports from a
-    specific origin, usually a country or group of countries.
-    """
+    """The order number origin defines a quota as being available only to
+    imports from a specific origin, usually a country or group of countries."""
 
     record_code = "360"
     subrecord_code = "10"
@@ -69,7 +70,8 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
-        "geo_areas.GeographicalArea", on_delete=models.PROTECT
+        "geo_areas.GeographicalArea",
+        on_delete=models.PROTECT,
     )
 
     excluded_areas = models.ManyToManyField(
@@ -89,21 +91,21 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     def in_use(self):
         # TODO this should respect deletes
         return self.order_number.measure_set.model.objects.filter(
-            order_number__sid=self.order_number.sid
+            order_number__sid=self.order_number.sid,
         ).exists()
 
 
 class QuotaOrderNumberOriginExclusion(TrackedModel):
-    """Origin exclusions specify countries (or groups of countries, or other origins) to
-    exclude from the quota number origin.
-    """
+    """Origin exclusions specify countries (or groups of countries, or other
+    origins) to exclude from the quota number origin."""
 
     record_code = "360"
     subrecord_code = "15"
 
     origin = models.ForeignKey(QuotaOrderNumberOrigin, on_delete=models.PROTECT)
     excluded_geographical_area = models.ForeignKey(
-        "geo_areas.GeographicalArea", on_delete=models.PROTECT
+        "geo_areas.GeographicalArea",
+        on_delete=models.PROTECT,
     )
 
     identifying_fields = "origin__sid", "excluded_geographical_area__sid"
@@ -115,9 +117,10 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
 
 
 class QuotaDefinition(TrackedModel, ValidityMixin):
-    """Defines the validity period and quantity for which a quota is applicable. This
-    model also represents sub-quotas, via a parent-child recursive relation through
-    QuotaAssociation.
+    """
+    Defines the validity period and quantity for which a quota is applicable.
+    This model also represents sub-quotas, via a parent-child recursive relation
+    through QuotaAssociation.
 
     The monetary unit code and the measurement unit code (with its optional unit
     qualifier code) are mutually exclusive.
@@ -149,17 +152,19 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         blank=True,
     )
     maximum_precision = models.PositiveSmallIntegerField(
-        validators=[validators.validate_max_precision]
+        validators=[validators.validate_max_precision],
     )
     quota_critical = models.BooleanField(default=False)
     # the percentage at which the quota becomes critical
     quota_critical_threshold = models.PositiveSmallIntegerField(
-        validators=[validators.validate_percentage]
+        validators=[validators.validate_percentage],
     )
     description = ShortDescription()
 
     sub_quotas = models.ManyToManyField(
-        "self", through="QuotaAssociation", through_fields=("main_quota", "sub_quota")
+        "self",
+        through="QuotaAssociation",
+        through_fields=("main_quota", "sub_quota"),
     )
 
     business_rules = (
@@ -176,13 +181,16 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
 
 
 class QuotaAssociation(TrackedModel):
-    """The quota association defines the relation between quota and sub-quotas."""
+    """The quota association defines the relation between quota and sub-
+    quotas."""
 
     record_code = "370"
     subrecord_code = "05"
 
     main_quota = models.ForeignKey(
-        QuotaDefinition, on_delete=models.PROTECT, related_name="sub_quota_associations"
+        QuotaDefinition,
+        on_delete=models.PROTECT,
+        related_name="sub_quota_associations",
     )
     sub_quota = models.ForeignKey(
         QuotaDefinition,
@@ -190,7 +198,8 @@ class QuotaAssociation(TrackedModel):
         related_name="main_quota_associations",
     )
     sub_quota_relation_type = models.CharField(
-        max_length=2, choices=validators.SubQuotaType.choices
+        max_length=2,
+        choices=validators.SubQuotaType.choices,
     )
     coefficient = models.DecimalField(
         max_digits=16,
@@ -232,7 +241,7 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     blocking_period_type = models.PositiveSmallIntegerField(
-        choices=validators.BlockingPeriodType.choices
+        choices=validators.BlockingPeriodType.choices,
     )
     description = ShortDescription()
 
@@ -240,12 +249,17 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
 
 
 class QuotaEvent(TrackedModel):
-    """We do not care about quota events, except to store historical data. So this model
-    stores all events in a single table."""
+    """
+    We do not care about quota events, except to store historical data.
+
+    So this model stores all events in a single table.
+    """
 
     record_code = "375"
     subrecord_code = models.CharField(
-        max_length=2, choices=validators.QuotaEventType.choices, db_index=True
+        max_length=2,
+        choices=validators.QuotaEventType.choices,
+        db_index=True,
     )
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     occurrence_timestamp = models.DateTimeField()

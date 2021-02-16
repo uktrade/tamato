@@ -8,7 +8,8 @@ additional_code_type_sid_validator = RegexValidator(r"^[A-Z0-9]$")
 
 
 class ApplicationCode(IntegerChoices):
-    """Code which indicates to which data type an additional code type applies."""
+    """Code which indicates to which data type an additional code type
+    applies."""
 
     EXPORT_REFUND_NOMENCLATURE = 0, "Export refund nomenclature"
     ADDITIONAL_CODES = 1, "Additional codes"
@@ -17,7 +18,7 @@ class ApplicationCode(IntegerChoices):
 
 
 class TypeChoices(TextChoices):
-    """ SID choices for Additional Code Types """
+    """SID choices for Additional Code Types."""
 
     TARIFF_PREFERENCE = "2", "2 - Tariff preference"
     PROHIBITION = "3", "3 - Prohibition / Restriction / Surveillance"
@@ -42,13 +43,16 @@ additional_code_validator = RegexValidator(r"^[A-Z0-9][A-Z0-9][A-Z0-9]$")
 
 
 def validate_at_least_one_description(
-    additional_code_class, description_class, workbasket
+    additional_code_class,
+    description_class,
+    workbasket,
 ):
     if not description_class.objects.filter(
         described_additional_code__sid__in=Subquery(
             additional_code_class.objects.filter(workbasket=workbasket).values_list(
-                "sid", flat=True
-            )
-        )
+                "sid",
+                flat=True,
+            ),
+        ),
     ).exists():
         raise ValidationError("At least one description record is mandatory.")

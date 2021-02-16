@@ -1,5 +1,4 @@
 from datetime import date
-from datetime import timezone
 
 from django.db import models
 from polymorphic.managers import PolymorphicManager
@@ -17,9 +16,11 @@ from quotas.validators import quota_order_number_validator
 
 
 class MeasureTypeSeries(TrackedModel, ValidityMixin):
-    """Measure types may be grouped into series. The series can be used to determine how
-    duties are applied, and the possible cumulative effect of other applicable
-    measures.
+    """
+    Measure types may be grouped into series.
+
+    The series can be used to determine how duties are applied, and the possible
+    cumulative effect of other applicable measures.
     """
 
     record_code = "140"
@@ -34,7 +35,7 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
         db_index=True,
     )
     measure_type_combination = models.PositiveSmallIntegerField(
-        choices=validators.MeasureTypeCombination.choices
+        choices=validators.MeasureTypeCombination.choices,
     )
     description = ShortDescription()
 
@@ -78,8 +79,11 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
 
 
 class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
-    """The measurement unit qualifier is used to qualify a measurement unit. For example
-    the measurement unit "kilogram" may be qualified as "net" or "gross".
+    """
+    The measurement unit qualifier is used to qualify a measurement unit.
+
+    For example the measurement unit "kilogram" may be qualified as "net" or
+    "gross".
     """
 
     record_code = "215"
@@ -100,11 +104,14 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
 
 
 class Measurement(TrackedModel, ValidityMixin):
-    """The measurement defines the relationship between a measurement unit and a
-    measurement unit qualifier. This avoids meaningless combinations of the measurement
-    unit and the measurement unit qualifier. Unlike in the TARIC model, we put all combinations
-    of measurement in this table including ones where the qualifier is null.
-    These do not appear in output XML.
+    """
+    The measurement defines the relationship between a measurement unit and a
+    measurement unit qualifier.
+
+    This avoids meaningless combinations of the measurement unit and the
+    measurement unit qualifier. Unlike in the TARIC model, we put all
+    combinations of measurement in this table including ones where the qualifier
+    is null. These do not appear in output XML.
     """
 
     record_code = "220"
@@ -141,9 +148,12 @@ class MonetaryUnit(TrackedModel, ValidityMixin):
 
 
 class DutyExpression(TrackedModel, ValidityMixin):
-    """The duty expression identifies the type of duty which must be applied for a given
-    measure component. It will also control how the duty will be expressed, for example
-    whether an amount is "permitted" or "mandatory".
+    """
+    The duty expression identifies the type of duty which must be applied for a
+    given measure component.
+
+    It will also control how the duty will be expressed, for example whether an
+    amount is "permitted" or "mandatory".
     """
 
     record_code = "230"
@@ -153,7 +163,8 @@ class DutyExpression(TrackedModel, ValidityMixin):
     description_subrecord_code = "05"
 
     sid = models.IntegerField(
-        choices=validators.DutyExpressionId.choices, db_index=True
+        choices=validators.DutyExpressionId.choices,
+        db_index=True,
     )
     prefix = models.CharField(max_length=14, blank=True)
     duty_amount_applicability_code = ApplicabilityCode()
@@ -163,10 +174,12 @@ class DutyExpression(TrackedModel, ValidityMixin):
 
 
 class MeasureType(TrackedModel, ValidityMixin):
-    """The measure type identifies a customs measure. TARIC customs measures cover a
-    wide range of information, including tariff measures (such as levies and
-    anti-dumping duties), and non-tariff measures (such as quantitative restrictions
-    and prohibitions).
+    """
+    The measure type identifies a customs measure.
+
+    TARIC customs measures cover a wide range of information, including tariff
+    measures (such as levies and anti-dumping duties), and non-tariff measures
+    (such as quantitative restrictions and prohibitions).
     """
 
     record_code = "235"
@@ -176,20 +189,22 @@ class MeasureType(TrackedModel, ValidityMixin):
     description_subrecord_code = "05"
 
     sid = models.CharField(
-        max_length=6, validators=[validators.measure_type_id_validator], db_index=True
+        max_length=6,
+        validators=[validators.measure_type_id_validator],
+        db_index=True,
     )
     trade_movement_code = models.PositiveSmallIntegerField(
-        choices=validators.ImportExportCode.choices
+        choices=validators.ImportExportCode.choices,
     )
     priority_code = models.PositiveSmallIntegerField(
-        validators=[validators.validate_priority_code]
+        validators=[validators.validate_priority_code],
     )
     measure_component_applicability_code = ApplicabilityCode()
     origin_destination_code = models.PositiveSmallIntegerField(
-        choices=validators.ImportExportCode.choices
+        choices=validators.ImportExportCode.choices,
     )
     order_number_capture_code = models.PositiveSmallIntegerField(
-        choices=validators.OrderNumberCaptureCode.choices
+        choices=validators.OrderNumberCaptureCode.choices,
     )
     measure_explosion_level = models.PositiveSmallIntegerField(
         choices=validators.MeasureExplosionLevel.choices,
@@ -199,7 +214,8 @@ class MeasureType(TrackedModel, ValidityMixin):
     measure_type_series = models.ForeignKey(MeasureTypeSeries, on_delete=models.PROTECT)
 
     additional_code_types = models.ManyToManyField(
-        "additional_codes.AdditionalCodeType", through="AdditionalCodeTypeMeasureType"
+        "additional_codes.AdditionalCodeType",
+        through="AdditionalCodeTypeMeasureType",
     )
 
     def in_use(self):
@@ -233,24 +249,24 @@ class MeasureType(TrackedModel, ValidityMixin):
 
 class AdditionalCodeTypeMeasureType(TrackedModel, ValidityMixin):
     """The relation between an additional code type and a measure type ensures a
-    coherent association between additional codes and measures.
-    """
+    coherent association between additional codes and measures."""
 
     record_code = "240"
     subrecord_code = "00"
 
     measure_type = models.ForeignKey(MeasureType, on_delete=models.PROTECT)
     additional_code_type = models.ForeignKey(
-        "additional_codes.AdditionalCodeType", on_delete=models.PROTECT
+        "additional_codes.AdditionalCodeType",
+        on_delete=models.PROTECT,
     )
 
     identifying_fields = ("measure_type", "additional_code_type")
 
 
 class MeasureConditionCode(TrackedModel, ValidityMixin):
-    """A measure condition code identifies a broad area where conditions are required,
-    for example "C" will have the description "required to present a certificate".
-    """
+    """A measure condition code identifies a broad area where conditions are
+    required, for example "C" will have the description "required to present a
+    certificate"."""
 
     record_code = "350"
     subrecord_code = "00"
@@ -281,7 +297,10 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
 
 
 class MeasureAction(TrackedModel, ValidityMixin):
-    """The measure action identifies the action to take when a given condition is met.
+    """
+    The measure action identifies the action to take when a given condition is
+    met.
+
     For example, the description of "01" will be "apply ACTION AMOUNT".
     """
 
@@ -292,7 +311,9 @@ class MeasureAction(TrackedModel, ValidityMixin):
     description_subrecord_code = "05"
 
     code = models.CharField(
-        max_length=3, validators=[validators.validate_action_code], db_index=True
+        max_length=3,
+        validators=[validators.validate_action_code],
+        db_index=True,
     )
     description = ShortDescription()
 
@@ -311,17 +332,19 @@ class MeasureAction(TrackedModel, ValidityMixin):
 
 
 class Measure(TrackedModel, ValidityMixin):
-    """Defines the validity period in which a particular measure type is applicable to
-    particular nomenclature for a particular geographical area.
+    """
+    Defines the validity period in which a particular measure type is applicable
+    to particular nomenclature for a particular geographical area.
 
-    Measures in the TARIC database are stored against the nomenclature code which is at the
-    highest level appropriate in the hierarchy. Thus, measures which apply to all the
-    declarable codes in a complete chapter are stored against the nomenclature code for the
-    chapter (i.e. at the 2-digit level only); those which apply to all sub-divisions of an
-    HS code are stored against that HS code (i.e. at the 6-digit level only). The advantage
-    of this system is that it reduces the number of measures stored in the database; the
-    data capture workload (thus diminishing the possibility of introducing errors) and the
-    transmission volumes.
+    Measures in the TARIC database are stored against the nomenclature code
+    which is at the highest level appropriate in the hierarchy. Thus, measures
+    which apply to all the declarable codes in a complete chapter are stored
+    against the nomenclature code for the chapter (i.e. at the 2-digit level
+    only); those which apply to all sub-divisions of an HS code are stored
+    against that HS code (i.e. at the 6-digit level only). The advantage of this
+    system is that it reduces the number of measures stored in the database; the
+    data capture workload (thus diminishing the possibility of introducing
+    errors) and the transmission volumes.
     """
 
     record_code = "430"
@@ -348,10 +371,16 @@ class Measure(TrackedModel, ValidityMixin):
         blank=True,
     )
     dead_additional_code = models.CharField(
-        max_length=16, null=True, blank=True, db_index=True
+        max_length=16,
+        null=True,
+        blank=True,
+        db_index=True,
     )
     order_number = models.ForeignKey(
-        "quotas.QuotaOrderNumber", on_delete=models.PROTECT, null=True, blank=True
+        "quotas.QuotaOrderNumber",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     dead_order_number = models.CharField(
         max_length=6,
@@ -367,7 +396,8 @@ class Measure(TrackedModel, ValidityMixin):
         db_index=True,
     )
     generating_regulation = models.ForeignKey(
-        "regulations.Regulation", on_delete=models.PROTECT
+        "regulations.Regulation",
+        on_delete=models.PROTECT,
     )
     terminating_regulation = models.ForeignKey(
         "regulations.Regulation",
@@ -380,7 +410,8 @@ class Measure(TrackedModel, ValidityMixin):
     export_refund_nomenclature_sid = SignedIntSID(null=True, blank=True, default=None)
 
     footnotes = models.ManyToManyField(
-        "footnotes.Footnote", through="FootnoteAssociationMeasure"
+        "footnotes.Footnote",
+        through="FootnoteAssociationMeasure",
     )
 
     identifying_fields = ("sid",)
@@ -423,7 +454,7 @@ class Measure(TrackedModel, ValidityMixin):
 
     @property
     def effective_end_date(self):
-        """Measure end dates may be overridden by regulations"""
+        """Measure end dates may be overridden by regulations."""
 
         # UK measures will have explicit end dates only
         # if self.national:
@@ -460,7 +491,7 @@ class Measure(TrackedModel, ValidityMixin):
     def has_components(self):
         return (
             MeasureComponent.objects.approved_or_in_transaction(
-                transaction=self.transaction
+                transaction=self.transaction,
             )
             .filter(component_measure__sid=self.sid)
             .exists()
@@ -469,7 +500,7 @@ class Measure(TrackedModel, ValidityMixin):
     def has_condition_components(self):
         return (
             MeasureConditionComponent.objects.approved_or_in_transaction(
-                transaction=self.transaction
+                transaction=self.transaction,
             )
             .filter(condition__dependent_measure__sid=self.sid)
             .exists()
@@ -483,17 +514,28 @@ class MeasureComponent(TrackedModel):
     subrecord_code = "05"
 
     component_measure = models.ForeignKey(
-        Measure, on_delete=models.PROTECT, related_name="components"
+        Measure,
+        on_delete=models.PROTECT,
+        related_name="components",
     )
     duty_expression = models.ForeignKey(DutyExpression, on_delete=models.PROTECT)
     duty_amount = models.DecimalField(
-        max_digits=10, decimal_places=3, null=True, blank=True
+        max_digits=10,
+        decimal_places=3,
+        null=True,
+        blank=True,
     )
     monetary_unit = models.ForeignKey(
-        MonetaryUnit, on_delete=models.PROTECT, null=True, blank=True
+        MonetaryUnit,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     component_measurement = models.ForeignKey(
-        Measurement, on_delete=models.PROTECT, null=True, blank=True
+        Measurement,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
 
     identifying_fields = ("component_measure__sid", "duty_expression__sid")
@@ -511,9 +553,12 @@ class MeasureComponent(TrackedModel):
 
 
 class MeasureCondition(TrackedModel):
-    """A measure may be dependent on conditions. These are expressed in a series of
-    conditions, each having zero or more components. Conditions for the same condition
-    type will have sequence numbers. Conditions of different types may be combined.
+    """
+    A measure may be dependent on conditions.
+
+    These are expressed in a series of conditions, each having zero or more
+    components. Conditions for the same condition type will have sequence
+    numbers. Conditions of different types may be combined.
     """
 
     record_code = "430"
@@ -521,28 +566,47 @@ class MeasureCondition(TrackedModel):
 
     sid = SignedIntSID(db_index=True)
     dependent_measure = models.ForeignKey(
-        Measure, on_delete=models.PROTECT, related_name="conditions"
+        Measure,
+        on_delete=models.PROTECT,
+        related_name="conditions",
     )
     condition_code = models.ForeignKey(
-        MeasureConditionCode, on_delete=models.PROTECT, related_name="conditions"
+        MeasureConditionCode,
+        on_delete=models.PROTECT,
+        related_name="conditions",
     )
     component_sequence_number = models.PositiveSmallIntegerField(
-        validators=[validators.validate_component_sequence_number]
+        validators=[validators.validate_component_sequence_number],
     )
     duty_amount = models.DecimalField(
-        max_digits=10, decimal_places=3, null=True, blank=True
+        max_digits=10,
+        decimal_places=3,
+        null=True,
+        blank=True,
     )
     monetary_unit = models.ForeignKey(
-        MonetaryUnit, on_delete=models.PROTECT, null=True, blank=True
+        MonetaryUnit,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     condition_measurement = models.ForeignKey(
-        Measurement, on_delete=models.PROTECT, null=True, blank=True
+        Measurement,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     action = models.ForeignKey(
-        MeasureAction, on_delete=models.PROTECT, null=True, blank=True
+        MeasureAction,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     required_certificate = models.ForeignKey(
-        "certificates.Certificate", on_delete=models.PROTECT, null=True, blank=True
+        "certificates.Certificate",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
 
     business_rules = (
@@ -561,25 +625,35 @@ class MeasureCondition(TrackedModel):
 
 
 class MeasureConditionComponent(TrackedModel):
-    """Contains the duty information or part of the duty information of the measure
-    condition.
-    """
+    """Contains the duty information or part of the duty information of the
+    measure condition."""
 
     record_code = "430"
     subrecord_code = "11"
 
     condition = models.ForeignKey(
-        MeasureCondition, on_delete=models.PROTECT, related_name="components"
+        MeasureCondition,
+        on_delete=models.PROTECT,
+        related_name="components",
     )
     duty_expression = models.ForeignKey("DutyExpression", on_delete=models.PROTECT)
     duty_amount = models.DecimalField(
-        max_digits=10, decimal_places=3, null=True, blank=True
+        max_digits=10,
+        decimal_places=3,
+        null=True,
+        blank=True,
     )
     monetary_unit = models.ForeignKey(
-        MonetaryUnit, on_delete=models.PROTECT, null=True, blank=True
+        MonetaryUnit,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     condition_component_measurement = models.ForeignKey(
-        Measurement, on_delete=models.PROTECT, null=True, blank=True
+        Measurement,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
 
     identifying_fields = ("condition__sid", "duty_expression__sid")
@@ -593,9 +667,8 @@ class MeasureConditionComponent(TrackedModel):
 
 
 class MeasureExcludedGeographicalArea(TrackedModel):
-    """The measure excluded geographical area modifies the applicable geographical area
-    of a measure, which must be a geographical area group.
-    """
+    """The measure excluded geographical area modifies the applicable
+    geographical area of a measure, which must be a geographical area group."""
 
     record_code = "430"
     subrecord_code = "15"
@@ -603,10 +676,13 @@ class MeasureExcludedGeographicalArea(TrackedModel):
     identifying_fields = ("modified_measure__sid", "excluded_geographical_area__sid")
 
     modified_measure = models.ForeignKey(
-        Measure, on_delete=models.PROTECT, related_name="exclusions"
+        Measure,
+        on_delete=models.PROTECT,
+        related_name="exclusions",
     )
     excluded_geographical_area = models.ForeignKey(
-        "geo_areas.GeographicalArea", on_delete=models.PROTECT
+        "geo_areas.GeographicalArea",
+        on_delete=models.PROTECT,
     )
 
     business_rules = (
@@ -618,16 +694,16 @@ class MeasureExcludedGeographicalArea(TrackedModel):
 
 
 class FootnoteAssociationMeasure(TrackedModel):
-    """The association of a footnote and a measure is always applicable for the entire
-    period of the measure.
-    """
+    """The association of a footnote and a measure is always applicable for the
+    entire period of the measure."""
 
     record_code = "430"
     subrecord_code = "20"
 
     footnoted_measure = models.ForeignKey(Measure, on_delete=models.PROTECT)
     associated_footnote = models.ForeignKey(
-        "footnotes.Footnote", on_delete=models.PROTECT
+        "footnotes.Footnote",
+        on_delete=models.PROTECT,
     )
 
     identifying_fields = (

@@ -11,25 +11,27 @@ from importer.filters import ImportBatchFilter
 
 
 class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
-    """
-    UI endpoint for viewing and filtering Additional Codes
-    """
+    """UI endpoint for viewing and filtering Additional Codes."""
 
     queryset = (
         models.ImportBatch.objects.all()
         .order_by("-created_at")
         .annotate(
             chunks_done=Count(
-                "chunks", filter=Q(chunks__status=models.ImporterChunkStatus.DONE)
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.DONE),
             ),
             chunks_running=Count(
-                "chunks", filter=Q(chunks__status=models.ImporterChunkStatus.RUNNING)
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.RUNNING),
             ),
             chunks_waiting=Count(
-                "chunks", filter=Q(chunks__status=models.ImporterChunkStatus.WAITING)
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.WAITING),
             ),
             chunks_errored=Count(
-                "chunks", filter=Q(chunks__status=models.ImporterChunkStatus.ERRORED)
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.ERRORED),
             ),
         )
     )

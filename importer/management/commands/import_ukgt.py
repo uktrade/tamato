@@ -1,10 +1,10 @@
 import logging
 import sys
-from typing import cast
 from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import cast
 
 import xlrd
 from django.conf import settings
@@ -25,10 +25,10 @@ from importer.management.commands.patterns import DualRowRunner
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
-from importer.management.commands.utils import col
 from importer.management.commands.utils import EnvelopeSerializer
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
+from importer.management.commands.utils import col
 from measures.models import MeasureType
 from regulations.models import Group
 from regulations.models import Regulation
@@ -59,7 +59,8 @@ class NewRow:
 
         try:
             self.goods_nomenclature = GoodsNomenclature.objects.as_at(BREXIT).get(
-                item_id=self.item_id, suffix="80"
+                item_id=self.item_id,
+                suffix="80",
             )
         except GoodsNomenclature.DoesNotExist as ex:
             logger.warning("Failed to find goods nomenclature %s", self.item_id)
@@ -85,10 +86,12 @@ class UKGTImporter(RowsImporter):
         self.row_runner = DualRowRunner(self.old_rows, self.new_rows)
 
         pharma_additional_code = cast(
-            AdditionalCode, AdditionalCode.objects.get(type__sid="2", code="500")
+            AdditionalCode,
+            AdditionalCode.objects.get(type__sid="2", code="500"),
         )
         other_additional_code = cast(
-            AdditionalCode, AdditionalCode.objects.get(type__sid="2", code="501")
+            AdditionalCode,
+            AdditionalCode.objects.get(type__sid="2", code="501"),
         )
         self.additional_codes = {
             str(a.type.sid + a.code): a
@@ -133,8 +136,8 @@ class UKGTImporter(RowsImporter):
             return cell.value
 
     def select_rate_on_trade_remedy(self, row: NewRow) -> Cell:
-        """Where an injury margin applies the CET rate should
-        be retained until the TRs have been reviewed."""
+        """Where an injury margin applies the CET rate should be retained until
+        the TRs have been reviewed."""
         if row.injury_margin:
             return row.cet_expression
         else:
@@ -173,12 +176,13 @@ class UKGTImporter(RowsImporter):
             goods_nomenclature,
         ) in self.measure_slicer.sliced_new_rows(self.old_rows, self.new_rows):
             new_measure_type = self.measure_slicer.get_measure_type(
-                matched_old_rows, goods_nomenclature
+                matched_old_rows,
+                goods_nomenclature,
             )
             yield list(
                 self.measure_creator.create(
                     duty_sentence=self.clean_duty_sentence(
-                        self.select_rate_on_trade_remedy(row)
+                        self.select_rate_on_trade_remedy(row),
                     ),
                     goods_nomenclature=goods_nomenclature,
                     geography=self.erga_omnes,
@@ -190,7 +194,7 @@ class UKGTImporter(RowsImporter):
                         if row.additional_code
                         else None
                     ),
-                )
+                ),
             )
 
 
@@ -258,7 +262,10 @@ class Command(BaseCommand):
             default=200001,
         )
         parser.add_argument(
-            "--output", help="The filename to output to.", type=str, default="out.xml"
+            "--output",
+            help="The filename to output to.",
+            type=str,
+            default="out.xml",
         )
 
     def handle(self, *args, **options):
@@ -268,7 +275,7 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             sys.exit(
                 f"Author does not exist, create user '{username}'"
-                " or edit settings.DATA_IMPORT_USERNAME"
+                " or edit settings.DATA_IMPORT_USERNAME",
             )
 
         new_workbook = xlrd.open_workbook(options["new-spreadsheet"])
@@ -306,10 +313,10 @@ class Command(BaseCommand):
 
                 importer = UKGTImporter(workbasket, env)
                 importer.counters["measure_sid_counter"] = counter_generator(
-                    options["measure_sid"]
+                    options["measure_sid"],
                 )
                 importer.counters["measure_condition_sid_counter"] = counter_generator(
-                    options["measure_condition_sid"]
+                    options["measure_condition_sid"],
                 )
 
                 importer.import_sheets(

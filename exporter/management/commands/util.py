@@ -14,14 +14,16 @@ from workbaskets.views import WorkBasketViewSet
 
 
 def get_envelope_of_active_workbaskets(
-    envelope_id: int, workbaskets: Sequence[WorkBasket]
+    envelope_id: int,
+    workbaskets: Sequence[WorkBasket],
 ) -> bytes:
     """Return bytes object; Envelope XML of workbaskets ready for export."""
     # Re-use the DRF infrastructure, so data is exactly the same
     # as can be output via views for testing.
     view = WorkBasketViewSet.as_view({"get": "list"})
     request = RequestFactory().get(
-        "/api/workbaskets.xml", data={"status": WorkflowStatus.READY_FOR_EXPORT}
+        "/api/workbaskets.xml",
+        data={"status": WorkflowStatus.READY_FOR_EXPORT},
     )
 
     response = view(request, workbaskets, format="xml", envelope_id=envelope_id)
@@ -36,7 +38,7 @@ def get_envelope_filename(counter) -> str:
 
 class WorkBasketBaseCommand(BaseCommand):
     def validate_envelope(self, envelope):
-        """Exit with error if envelope does not validate"""
+        """Exit with error if envelope does not validate."""
         with open(settings.TARIC_XSD) as xsd_file:
             schema = etree.XMLSchema(etree.parse(xsd_file))
             xml = etree.XML(envelope)

@@ -46,7 +46,9 @@ class DispatchedObjectType(TypedDict):
 
 
 def generate_key(
-    tag: str, identifying_fields: Iterable[str], data: Dict[str, Any]
+    tag: str,
+    identifying_fields: Iterable[str],
+    data: Dict[str, Any],
 ) -> str:
     """
     Generate a unique hash key for each object.
@@ -64,7 +66,8 @@ def generate_key(
 
 def build_dependency_tree() -> Dict[str, Set[str]]:
     """
-    Build a dependency tree of all the TrackedModel subclasses mapped by record code.
+    Build a dependency tree of all the TrackedModel subclasses mapped by record
+    code.
 
     The return value is a dictionary, mapped by record code, where the mapped values
     are sets listing all the other record codes the mapped record code depends on.
@@ -77,7 +80,6 @@ def build_dependency_tree() -> Dict[str, Set[str]]:
         {
             "220": {"215", "210"},
         }
-
     """
     dependency_map = {}
     record_codes = {subclass.record_code for subclass in TrackedModel.__subclasses__()}

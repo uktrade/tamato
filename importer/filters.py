@@ -7,9 +7,7 @@ from importer import models
 
 
 class ImportBatchFilter(TamatoFilter):
-    """
-    FilterSet for Import Batches.
-    """
+    """FilterSet for Import Batches."""
 
     search_fields = ("name",)
 

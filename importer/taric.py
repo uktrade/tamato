@@ -16,8 +16,8 @@ from lxml import etree
 from common import models
 from common.validators import UpdateType
 from importer.namespaces import ENVELOPE
-from importer.namespaces import nsmap
 from importer.namespaces import Tag
+from importer.namespaces import nsmap
 from importer.nursery import get_nursery
 from importer.parsers import ElementParser
 from importer.parsers import ParserError
@@ -45,7 +45,8 @@ class RecordParser(ElementParser):
     update_type = TextElement(Tag("update.type"))
 
     def save(self, data: Mapping[str, Any], transaction_id: int):
-        """Save the Record to the database.
+        """
+        Save the Record to the database.
 
         :param data: A dict of the parsed element, mapping field names to values
         :param transaction_id: The primary key of the transaction to add the record to
@@ -69,7 +70,8 @@ class MessageParser(ElementParser):
     record = RecordParser(many=True)
 
     def save(self, data: Mapping[str, Any], transaction_id: int):
-        """Save the contained records to the database.
+        """
+        Save the contained records to the database.
 
         :param data: A dict of parsed element, mapping field names to values
         :param transaction_id: The primary key of the transaction to add records to
@@ -92,13 +94,13 @@ class TransactionParser(ElementParser):
         data: Mapping[str, Any],
         envelope: Envelope,
     ):
-        """Save the transaction and the contained records to the database.
+        """
+        Save the transaction and the contained records to the database.
 
         :param data: A dict of the parsed element, containing at least an "id" and list
             of "message" dicts
         :param envelope_id: The ID of the containing Envelope
         :param workbasket_id: The primary key of the workbasket to add transactions to
-
         """
         logging.debug(f"Saving transaction {self.data['id']}")
 
@@ -115,7 +117,9 @@ class TransactionParser(ElementParser):
             return
 
         EnvelopeTransaction.objects.create(
-            envelope=envelope, transaction=transaction, order=int(self.data["id"])
+            envelope=envelope,
+            transaction=transaction,
+            order=int(self.data["id"]),
         )
 
         for message_data in data["message"]:
@@ -175,7 +179,7 @@ class EnvelopeParser(ElementParser):
                 status=self.workbasket_status,
             )
             self.envelope, _ = Envelope.objects.get_or_create(
-                envelope_id=self.envelope_id
+                envelope_id=self.envelope_id,
             )
 
     def end(self, element):
@@ -189,7 +193,7 @@ class EnvelopeParser(ElementParser):
 
 def process_taric_xml_stream(taric_stream, status, username):
     """
-    Parse a TARIC XML stream through the import handlers
+    Parse a TARIC XML stream through the import handlers.
 
     This will load the data from the stream into the database.
     """

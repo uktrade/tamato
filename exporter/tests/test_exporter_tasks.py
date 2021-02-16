@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-from django.core.management import call_command
 from lxml import etree
 
 from common.tests.factories import FootnoteTypeFactory
@@ -21,9 +20,7 @@ def test_upload_task_uploads_approved_workbasket_to_s3(
     s3_object_exists,
     settings,
 ):
-    """
-    Exercise HMRCStorage and verify content is saved to bucket.
-    """
+    """Exercise HMRCStorage and verify content is saved to bucket."""
     expected_bucket = "test-hmrc"
     expected_key = "tohmrc/staging/DIT200001.xml"
 
@@ -41,7 +38,8 @@ def test_upload_task_uploads_approved_workbasket_to_s3(
         mock_save.assert_called_once()
 
     assert s3_object_exists(
-        expected_bucket, expected_key
+        expected_bucket,
+        expected_key,
     ), "File was not uploaded with expected name."
 
     envelope = s3.get_object(Bucket=expected_bucket, Key=expected_key)["Body"].read()

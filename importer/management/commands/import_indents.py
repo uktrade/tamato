@@ -47,10 +47,11 @@ class Row:
 
 
 class IndentImporter(RowsImporter):
-    """Import indents from a spreadsheet dump of existing indents.
-    The spreadsheed output should include a column for the end date of the indent.
-    This can be calculated by subtracting 1 from the start date of the next indent
-    for the same SID. A la:
+    """
+    Import indents from a spreadsheet dump of existing indents. The spreadsheed
+    output should include a column for the end date of the indent. This can be
+    calculated by subtracting 1 from the start date of the next indent for the
+    same SID. A la:
 
         MAX(goods_nomenclature_indents.validity_start_date) OVER (
             PARTITION BY goods_nomenclature_indents.goods_nomenclature_sid
@@ -73,10 +74,13 @@ class IndentImporter(RowsImporter):
 
         GoodsNomenclature.get(…).indents.as_at(…).get()
 
-    will return the correct indent and the correct parent code at that time."""
+    will return the correct indent and the correct parent code at that time.
+    """
 
     def handle_row(
-        self, new_row: Optional[Row], old_row: None
+        self,
+        new_row: Optional[Row],
+        old_row: None,
     ) -> Iterator[List[TrackedModel]]:
         assert new_row
 
@@ -125,7 +129,7 @@ class IndentImporter(RowsImporter):
                     GoodsNomenclature.objects.filter(
                         item_id__startswith=chapter_heading,
                         item_id__endswith="000000",
-                    ).exclude(suffix="80")
+                    ).exclude(suffix="80"),
                 )
                 and chapter_heading != "99"
             )
@@ -168,10 +172,10 @@ class IndentImporter(RowsImporter):
 
                 if defn in GoodsNomenclatureIndentHandler.overrides:
                     next_indent = GoodsNomenclatureIndent.objects.get(
-                        sid=GoodsNomenclatureIndentHandler.overrides[defn]
+                        sid=GoodsNomenclatureIndentHandler.overrides[defn],
                     )
                     next_parent = next_indent.nodes.get(
-                        valid_between__contains=start_date
+                        valid_between__contains=start_date,
                     )
                     logger.info("Using manual override for indent %s", defn)
                 else:
@@ -190,7 +194,7 @@ class IndentImporter(RowsImporter):
 
                 if not next_parent:
                     raise Exception(
-                        f"Parent at depth {parent_depth} not found for {item_id} (sid {child.sid}) for date {start_date}"
+                        f"Parent at depth {parent_depth} not found for {item_id} (sid {child.sid}) for date {start_date}",
                     )
 
                 indent_start = start_date
@@ -250,7 +254,7 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             sys.exit(
                 f"Author does not exist, create user '{username}'"
-                " or edit settings.DATA_IMPORT_USERNAME"
+                " or edit settings.DATA_IMPORT_USERNAME",
             )
 
         workbasket, _ = WorkBasket.objects.get_or_create(

@@ -6,11 +6,12 @@ from django.urls import reverse
 
 @pytest.mark.parametrize("url_name", ["import_batch-ui-list", "import_batch-ui-create"])
 def test_import_urls_requires_superuser(
-    valid_user: User, admin_user: User, client: Client, url_name: str
+    valid_user: User,
+    admin_user: User,
+    client: Client,
+    url_name: str,
 ):
-    """
-    Ensure only superusers can access the importer views.
-    """
+    """Ensure only superusers can access the importer views."""
     url = reverse(url_name)
     bad_response = client.get(url)
     assert bad_response.status_code == 302
