@@ -13,9 +13,7 @@ from common.views import TrackedModelDetailView
 
 
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows additional codes to be viewed.
-    """
+    """API endpoint that allows additional codes to be viewed."""
 
     queryset = (
         AdditionalCode.objects.current()
@@ -33,9 +31,7 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class AdditionalCodeList(TamatoListView):
-    """
-    UI endpoint for viewing and filtering Additional Codes
-    """
+    """UI endpoint for viewing and filtering Additional Codes."""
 
     queryset = (
         models.AdditionalCode.objects.current()
@@ -53,9 +49,7 @@ class AdditionalCodeList(TamatoListView):
 
 
 class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows additional code types to be viewed.
-    """
+    """API endpoint that allows additional code types to be viewed."""
 
     queryset = AdditionalCodeType.objects.current()
     serializer_class = AdditionalCodeTypeSerializer

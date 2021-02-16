@@ -24,7 +24,8 @@ class HandlerDoesNotExistError(KeyError):
 
 class TariffObjectNursery:
     """
-    Provides an interface between raw data and the Django modelling system for the tariff.
+    Provides an interface between raw data and the Django modelling system for
+    the tariff.
 
     The primary function is to take a raw python object (generally a dictionary) and convert
     it into a row in the database via the Django models.
@@ -54,21 +55,23 @@ class TariffObjectNursery:
 
     def get_handler(self, tag: str):
         """
-        Find a handler which matches the given tag. If one is not found throw an error.
+        Find a handler which matches the given tag.
+
+        If one is not found throw an error.
         """
         try:
             return self.handlers[tag]
         except KeyError as e:
             raise HandlerDoesNotExistError(
-                f'Handler for tag "{tag}" was expected but not found.'
+                f'Handler for tag "{tag}" was expected but not found.',
             ) from e
 
     def submit(self, obj: DispatchedObjectType):
         """
         Entrypoint for the nursery.
 
-        Handles whether an object can be dispatched to the database or, if some pieces of data
-        are missing, cached to await new data.
+        Handles whether an object can be dispatched to the database or, if some
+        pieces of data are missing, cached to await new data.
         """
         handler_class = self.get_handler(obj["tag"])
         handler = handler_class(obj, self)
@@ -125,7 +128,8 @@ class TariffObjectNursery:
         if repeats <= 0:
             if self.cache.keys():
                 logger.warning(
-                    "cache not cleared, %d records remaining", len(self.cache.keys())
+                    "cache not cleared, %d records remaining",
+                    len(self.cache.keys()),
                 )
             return
 
@@ -150,15 +154,16 @@ class TariffObjectNursery:
             for link in filter(lambda x: x["model"] == model, handler.links):
                 link_fields.add(
                     tuple(
-                        sorted(link.get("identifying_fields", model.identifying_fields))
-                    )
+                        sorted(
+                            link.get("identifying_fields", model.identifying_fields),
+                        ),
+                    ),
                 )
         return link_fields
 
     def cache_current_instances(self):
-        """
-        Take all current instances of all TrackedModels in the data and cache them.
-        """
+        """Take all current instances of all TrackedModels in the data and cache
+        them."""
         models = {handler.model for handler in self.handlers.values()}
 
         for model in models:
@@ -177,7 +182,8 @@ class TariffObjectNursery:
         """
         Caches an objects primary key and model name in the cache.
 
-        Key is generated based on the model name and the identifying fields used to find it.
+        Key is generated based on the model name and the identifying fields used
+        to find it.
         """
         model = obj.__class__
         link_fields = self.get_handler_link_fields(model)
@@ -192,10 +198,12 @@ class TariffObjectNursery:
 
     def remove_object_from_cache(self, obj: TrackedModel):
         """
-        Removes an object from the importer cache. If an object has to be deleted (generally
-        done in dev only) then it is problematic to keep the ID in the cache as well.
+        Removes an object from the importer cache. If an object has to be
+        deleted (generally done in dev only) then it is problematic to keep the
+        ID in the cache as well.
 
-        Key is generated based on the model name and the identifying fields used to find it.
+        Key is generated based on the model name and the identifying fields used
+        to find it.
         """
         model = obj.__class__
         link_fields = self.get_handler_link_fields(model)
@@ -210,27 +218,28 @@ class TariffObjectNursery:
 
     @classmethod
     def generate_cache_key(
-        cls, model: Type[TrackedModel], identifying_fields: Iterable, obj: dict
+        cls,
+        model: Type[TrackedModel],
+        identifying_fields: Iterable,
+        obj: dict,
     ) -> str:
-        """
-        Generate a cache key based on the model name and the identifying values used to find it.
-        """
+        """Generate a cache key based on the model name and the identifying
+        values used to find it."""
         return "object_cache_" + generate_key(model.__name__, identifying_fields, obj)
 
     @classmethod
     def get_obj_from_cache(
-        cls, model: Type[TrackedModel], identifying_fields: Iterable, obj: dict
+        cls,
+        model: Type[TrackedModel],
+        identifying_fields: Iterable,
+        obj: dict,
     ) -> Tuple[int, str]:
-        """
-        Fetches an object PK and model name from the cache if it exists.
-        """
+        """Fetches an object PK and model name from the cache if it exists."""
         key = cls.generate_cache_key(model, identifying_fields, obj)
         return cache.get(key)
 
 
 def get_nursery(object_cache=None) -> TariffObjectNursery:
-    """
-    Convenience function for building a nursery object.
-    """
+    """Convenience function for building a nursery object."""
     object_cache = object_cache or ObjectCacheFacade()
     return TariffObjectNursery(object_cache)

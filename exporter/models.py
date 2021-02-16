@@ -11,13 +11,13 @@ from taric.models import Envelope
 
 
 def to_hmrc(instance: "Upload"):
-    """Generate the filepath to upload to HMRC"""
+    """Generate the filepath to upload to HMRC."""
 
     return f"tohmrc/staging/{instance.filename}"
 
 
 class Upload(models.Model):
-    """Represents a TARIC differential update file upload to HMRC"""
+    """Represents a TARIC differential update file upload to HMRC."""
 
     file = models.FileField(storage=S3Boto3Storage, upload_to=to_hmrc)
     envelope = models.ForeignKey(Envelope, on_delete=models.PROTECT)

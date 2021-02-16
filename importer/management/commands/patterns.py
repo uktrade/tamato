@@ -17,32 +17,18 @@ from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from additional_codes.models import AdditionalCode
-from certificates.models import Certificate
-from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models import TrackedModel
 from common.models import Transaction
 from common.renderers import counter_generator
-from common.util import maybe_max
-from common.util import maybe_min
 from common.validators import UpdateType
-from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from importer.management.commands.utils import blank
-from importer.management.commands.utils import clean_item_id
-from importer.management.commands.utils import Counter
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import NomenclatureTreeCollector
-from measures.models import FootnoteAssociationMeasure
+from importer.management.commands.utils import blank
+from importer.management.commands.utils import clean_item_id
 from measures.models import Measure
-from measures.models import MeasureAction
-from measures.models import MeasureComponent
-from measures.models import MeasureCondition
-from measures.models import MeasureConditionCode
-from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
-from measures.parsers import DutySentenceParser
-from measures.parsers import SeasonalRateParser
 from quotas.models import QuotaOrderNumber
 from quotas.validators import AdministrationMechanism
 from quotas.validators import QuotaCategory
@@ -61,7 +47,7 @@ BREXIT = date(2021, 1, 1)
 def parse_date(cell: Cell) -> date:
     if cell.ctype == xlrd.XL_CELL_DATE:
         return LONDON.localize(
-            xlrd.xldate.xldate_as_datetime(cell.value, datemode=0)
+            xlrd.xldate.xldate_as_datetime(cell.value, datemode=0),
         ).date()
     return date.fromisoformat(cell.value)
 
@@ -82,7 +68,8 @@ class OldMeasureRow:
         self.geo_sid = int(old_row[13].value)
         self.measure_start_date = parse_date(old_row[16])
         self.measure_end_date = blank(
-            old_row[17].value, lambda _: parse_date(old_row[17])
+            old_row[17].value,
+            lambda _: parse_date(old_row[17]),
         )
         self.regulation_role = int(old_row[18].value)
         self.regulation_id = str(old_row[19].value)
@@ -95,7 +82,7 @@ class OldMeasureRow:
         self.reduction = blank(old_row[26].value, int)
         self.footnotes = parse_list(old_row[27].value)
         self.goods_nomenclature = GoodsNomenclature.objects.get(
-            sid=self.goods_nomenclature_sid
+            sid=self.goods_nomenclature_sid,
         )
 
     @cached_property
@@ -118,9 +105,13 @@ class OldMeasureRow:
 
 
 class MeasureEndingPattern:
-    """A pattern used for end-dating measures. This pattern will accept an old
-    measure and will decide whether it needs to be end-dated (it starts before the
-    specified date) or deleted (it starts after the specified date)."""
+    """
+    A pattern used for end-dating measures.
+
+    This pattern will accept an old measure and will decide whether it needs to
+    be end-dated (it starts before the specified date) or deleted (it starts
+    after the specified date).
+    """
 
     def __init__(
         self,
@@ -152,11 +143,11 @@ class MeasureEndingPattern:
         # Make sure the needed types and areas are loaded
         if old_row.measure_type not in self.measure_types:
             self.measure_types[old_row.measure_type] = MeasureType.objects.get(
-                sid=old_row.measure_type
+                sid=old_row.measure_type,
             )
         if old_row.geo_sid not in self.geo_areas:
             self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.get(
-                sid=old_row.geo_sid
+                sid=old_row.geo_sid,
             )
 
         # Look up the quota this measure should have.
@@ -250,17 +241,20 @@ class MeasureEndingPattern:
             )
         else:
             logger.debug(
-                "Ignoring old measure %s as ends before Brexit", old_row.measure_sid
+                "Ignoring old measure %s as ends before Brexit",
+                old_row.measure_sid,
             )
 
 
 OldRow = TypeVar("OldRow")
 NewRow = TypeVar("NewRow")
 OldContext = Union[
-    NomenclatureTreeCollector[OldRow], NomenclatureTreeCollector[List[OldRow]]
+    NomenclatureTreeCollector[OldRow],
+    NomenclatureTreeCollector[List[OldRow]],
 ]
 NewContext = Union[
-    NomenclatureTreeCollector[NewRow], NomenclatureTreeCollector[List[NewRow]]
+    NomenclatureTreeCollector[NewRow],
+    NomenclatureTreeCollector[List[NewRow]],
 ]
 
 
@@ -269,7 +263,8 @@ def add_single_row(tree: NomenclatureTreeCollector[OldRow], row: OldRow) -> bool
 
 
 def add_multiple_row(
-    tree: NomenclatureTreeCollector[List[OldRow]], row: OldRow
+    tree: NomenclatureTreeCollector[List[OldRow]],
+    row: OldRow,
 ) -> bool:
     if row.goods_nomenclature in tree:
         roots = [root for root in tree.buffer() if root[0] == row.goods_nomenclature]
@@ -305,7 +300,9 @@ class DualRowRunner(Generic[OldRow, NewRow]):
         self.add_new_row = add_new_row
 
     def handle_rows(
-        self, old_row: Optional[OldRow], new_row: Optional[NewRow]
+        self,
+        old_row: Optional[OldRow],
+        new_row: Optional[NewRow],
     ) -> Iterator[None]:
         logger.debug(
             "Have old row for GN: %s. Have new row for GN: %s",
@@ -342,7 +339,7 @@ class DualRowRunner(Generic[OldRow, NewRow]):
             # The collector is full and the row should be processed
             logger.debug(
                 f"Collector full with {len(self.old_rows.roots)} old (waiting {old_waiting})"
-                f" and {len(self.new_rows.roots)} new (waiting {new_waiting})"
+                f" and {len(self.new_rows.roots)} new (waiting {new_waiting})",
             )
             yield
 

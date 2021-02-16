@@ -6,9 +6,7 @@ from commodities import serializers
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows Goods Nomenclature to be viewed.
-    """
+    """API endpoint that allows Goods Nomenclature to be viewed."""
 
     queryset = models.GoodsNomenclature.objects.all()
     serializer_class = serializers.GoodsNomenclatureSerializer

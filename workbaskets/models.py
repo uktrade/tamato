@@ -1,4 +1,4 @@
-"""WorkBasket models"""
+"""WorkBasket models."""
 import json
 from datetime import datetime
 
@@ -18,21 +18,21 @@ from workbaskets.validators import WorkflowStatus
 
 class WorkBasketQueryset(QuerySet):
     def prefetch_ordered_tracked_models(self) -> QuerySet:
-        """
-        Sort tracked_models by record_number, subrecord_number by
-        using prefetch and imposing the order there.
-        """
+        """Sort tracked_models by record_number, subrecord_number by using
+        prefetch and imposing the order there."""
 
         q_annotate_record_code = TrackedModel.objects.annotate_record_codes().order_by(
-            "record_code", "subrecord_code"
+            "record_code",
+            "subrecord_code",
         )
         return self.prefetch_related(
-            Prefetch("tracked_models", queryset=q_annotate_record_code)
+            Prefetch("tracked_models", queryset=q_annotate_record_code),
         )
 
 
 class WorkBasket(TimestampedMixin):
-    """A WorkBasket groups tariff edits which will be applied at the same time.
+    """
+    A WorkBasket groups tariff edits which will be applied at the same time.
 
     WorkBasket status is controlled by a state machine:
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
@@ -47,7 +47,8 @@ class WorkBasket(TimestampedMixin):
         unique=True,
     )
     reason = models.TextField(
-        blank=True, help_text="Reason for the changes to the tariff"
+        blank=True,
+        help_text="Reason for the changes to the tariff",
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -136,7 +137,7 @@ class WorkBasket(TimestampedMixin):
         pass
 
     def to_json(self):
-        """Used for serializing the workbasket to the session"""
+        """Used for serializing the workbasket to the session."""
 
         data = {key: val for key, val in self.__dict__.items() if key != "_state"}
         if "transactions" in data:
@@ -153,7 +154,7 @@ class WorkBasket(TimestampedMixin):
 
     @classmethod
     def from_json(cls, data):
-        """Restore from session"""
+        """Restore from session."""
 
         return WorkBasket(
             id=int(data["id"]),
@@ -162,10 +163,10 @@ class WorkBasket(TimestampedMixin):
             reason=data["reason"],
             status=data["status"],
             created_at=datetime.fromisoformat(
-                data["created_at"].replace("Z", "+00:00")
+                data["created_at"].replace("Z", "+00:00"),
             ),
             updated_at=datetime.fromisoformat(
-                data["updated_at"].replace("Z", "+00:00")
+                data["updated_at"].replace("Z", "+00:00"),
             ),
             author_id=int(data["author_id"]),
             approver_id=int(data["approver_id"]) if data["approver_id"] else None,
@@ -173,7 +174,7 @@ class WorkBasket(TimestampedMixin):
 
     @classmethod
     def current(cls, request):
-        """Get the current workbasket in the session"""
+        """Get the current workbasket in the session."""
 
         if "workbasket" in request.session:
             return cls.from_json(request.session["workbasket"])

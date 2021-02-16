@@ -31,12 +31,13 @@ def test_MTS1(make_duplicate_record):
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MTS1().validate(
-            make_duplicate_record(factories.MeasureTypeSeriesFactory)
+            make_duplicate_record(factories.MeasureTypeSeriesFactory),
         )
 
 
 def test_MTS2(delete_record):
-    """The measure type series cannot be deleted if it is associated with a measure type."""
+    """The measure type series cannot be deleted if it is associated with a
+    measure type."""
 
     measure_type = factories.MeasureTypeFactory.create()
 
@@ -59,7 +60,7 @@ def test_MT1(make_duplicate_record):
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MT1().validate(
-            make_duplicate_record(factories.MeasureTypeFactory)
+            make_duplicate_record(factories.MeasureTypeFactory),
         )
 
 
@@ -71,16 +72,15 @@ def test_MT2(date_ranges):
 
 
 def test_MT3(date_ranges):
-    """When a measure type is used in a measure then the validity period of the measure
-    type must span the validity period of the measure.
-    """
+    """When a measure type is used in a measure then the validity period of the
+    measure type must span the validity period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MT3().validate(
             factories.MeasureFactory.create(
                 measure_type__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
@@ -88,7 +88,8 @@ def test_MT4(reference_nonexistent_record):
     """The referenced measure type series must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureTypeFactory, "measure_type_series"
+        factories.MeasureTypeFactory,
+        "measure_type_series",
     ) as measure_type:
         with pytest.raises(BusinessRuleViolation):
             business_rules.MT4().validate(measure_type)
@@ -104,16 +105,15 @@ def test_MT7(delete_record):
 
 
 def test_MT10(date_ranges):
-    """The validity period of the measure type series must span the validity period of
-    the measure type.
-    """
+    """The validity period of the measure type series must span the validity
+    period of the measure type."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MT10().validate(
             factories.MeasureTypeFactory.create(
                 measure_type_series__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
@@ -125,7 +125,7 @@ def test_MC1(make_duplicate_record):
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MC1().validate(
-            make_duplicate_record(factories.MeasureConditionCodeFactory)
+            make_duplicate_record(factories.MeasureConditionCodeFactory),
         )
 
 
@@ -134,28 +134,27 @@ def test_MC2(date_ranges):
 
     with pytest.raises(DataError):
         factories.MeasureConditionCodeFactory.create(
-            valid_between=date_ranges.backwards
+            valid_between=date_ranges.backwards,
         )
 
 
 def test_MC3(date_ranges):
-    """If a measure condition code is used in a measure then the validity period of the
-    measure condition code must span the validity period of the measure.
-    """
+    """If a measure condition code is used in a measure then the validity period
+    of the measure condition code must span the validity period of the
+    measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MC3().validate(
             factories.MeasureConditionFactory.create(
                 condition_code__valid_between=date_ranges.normal,
                 dependent_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_MC4(delete_record):
-    """The measure condition code cannot be deleted if it is used in a measure condition
-    component.
-    """
+    """The measure condition code cannot be deleted if it is used in a measure
+    condition component."""
 
     component = factories.MeasureConditionComponentFactory.create()
 
@@ -171,14 +170,13 @@ def test_MA1(make_duplicate_record):
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MA1().validate(
-            make_duplicate_record(factories.MeasureActionFactory)
+            make_duplicate_record(factories.MeasureActionFactory),
         )
 
 
 def test_MA2(delete_record):
-    """The measure action can not be deleted if it is used in a measure condition
-    component.
-    """
+    """The measure action can not be deleted if it is used in a measure
+    condition component."""
 
     component = factories.MeasureConditionComponentFactory.create()
 
@@ -194,16 +192,15 @@ def test_MA3(date_ranges):
 
 
 def test_MA4(date_ranges):
-    """If a measure action is used in a measure then the validity period of the measure
-    action must span the validity period of the measure.
-    """
+    """If a measure action is used in a measure then the validity period of the
+    measure action must span the validity period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.MA4().validate(
             factories.MeasureConditionFactory.create(
                 action__valid_between=date_ranges.starts_with_normal,
                 dependent_measure__valid_between=date_ranges.normal,
-            )
+            ),
         )
 
 
@@ -211,9 +208,12 @@ def test_MA4(date_ranges):
 
 
 def test_ME1(make_duplicate_record):
-    """The combination of measure type + geographical area + goods nomenclature item id
-    + additional code type + additional code + order number + reduction indicator +
-    start date must be unique.
+    """
+    The combination of measure type + geographical area + goods nomenclature
+    item id.
+
+    + additional code type + additional code + order number + reduction
+    indicator + start date must be unique.
     """
 
     with pytest.raises(BusinessRuleViolation):
@@ -229,7 +229,7 @@ def test_ME1(make_duplicate_record):
                     "reduction",
                     "valid_between__lower",
                 ),
-            )
+            ),
         )
 
 
@@ -237,23 +237,23 @@ def test_ME2(reference_nonexistent_record):
     """The measure type must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureFactory, "measure_type"
+        factories.MeasureFactory,
+        "measure_type",
     ) as measure:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME2().validate(measure)
 
 
 def test_ME3(date_ranges):
-    """The validity period of the measure type must span the validity period of the
-    measure.
-    """
+    """The validity period of the measure type must span the validity period of
+    the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME3().validate(
             factories.MeasureFactory.create(
                 measure_type__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
@@ -261,23 +261,23 @@ def test_ME4(reference_nonexistent_record):
     """The geographical area must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureFactory, "geographical_area"
+        factories.MeasureFactory,
+        "geographical_area",
     ) as measure:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME4().validate(measure)
 
 
 def test_ME5(date_ranges):
-    """The validity period of the geographical area must span the validity period of the
-    measure.
-    """
+    """The validity period of the geographical area must span the validity
+    period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME5().validate(
             factories.MeasureFactory.create(
                 geographical_area__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
@@ -294,45 +294,44 @@ def test_ME6(reference_nonexistent_record):
         good.delete()
 
     with reference_nonexistent_record(
-        factories.MeasureFactory, "goods_nomenclature", teardown
+        factories.MeasureFactory,
+        "goods_nomenclature",
+        teardown,
     ) as measure:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME6().validate(measure)
 
 
 def test_ME7():
-    """The goods nomenclature code must be a product code; that is, it may not be an
-    intermediate line.
-    """
+    """The goods nomenclature code must be a product code; that is, it may not
+    be an intermediate line."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME7().validate(
-            factories.MeasureFactory.create(goods_nomenclature__suffix="00")
+            factories.MeasureFactory.create(goods_nomenclature__suffix="00"),
         )
 
     business_rules.ME7().validate(
-        factories.MeasureFactory.create(goods_nomenclature__suffix="80")
+        factories.MeasureFactory.create(goods_nomenclature__suffix="80"),
     )
 
 
 def test_ME8(date_ranges):
-    """The validity period of the goods code must span the validity period of the
-    measure.
-    """
+    """The validity period of the goods code must span the validity period of
+    the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME8().validate(
             factories.MeasureFactory.create(
                 goods_nomenclature__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME88():
-    """The level of the goods code, if present, cannot exceed the explosion level of the
-    measure type.
-    """
+    """The level of the goods code, if present, cannot exceed the explosion
+    level of the measure type."""
 
     good = factories.GoodsNomenclatureFactory.create(item_id="9999999900")
 
@@ -342,15 +341,14 @@ def test_ME88():
                 measure_type__measure_explosion_level=2,
                 goods_nomenclature=good,
                 leave_measure=True,
-            )
+            ),
         )
 
 
 def test_ME16():
-    """Integrating a measure with an additional code when an equivalent or overlapping
-    measures without additional code already exists and vice-versa, should be
-    forbidden.
-    """
+    """Integrating a measure with an additional code when an equivalent or
+    overlapping measures without additional code already exists and vice-versa,
+    should be forbidden."""
 
     existing = factories.MeasureFactory.create(additional_code=None)
     additional_code = factories.AdditionalCodeFactory.create()
@@ -364,7 +362,7 @@ def test_ME16():
                 additional_code=additional_code,
                 order_number=existing.order_number,
                 reduction=existing.reduction,
-            )
+            ),
         )
 
     existing.additional_code = additional_code
@@ -379,27 +377,27 @@ def test_ME16():
                 additional_code=None,
                 order_number=existing.order_number,
                 reduction=existing.reduction,
-            )
+            ),
         )
 
 
 def test_ME115(date_ranges):
-    """The validity period of the referenced additional code must span the validity
-    period of the measure
-    """
+    """The validity period of the referenced additional code must span the
+    validity period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME115().validate(
             factories.MeasureWithAdditionalCodeFactory.create(
                 additional_code__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME25(date_ranges):
-    """If the measure’s end date is specified (implicitly or explicitly) then the start
-    date of the measure must be less than or equal to the end date.
+    """
+    If the measure’s end date is specified (implicitly or explicitly) then the
+    start date of the measure must be less than or equal to the end date.
 
     End date will in almost all circumstances be explicit for measures. If it is
     not, the implicit end date will come from the regulation. It is possible for
@@ -408,7 +406,7 @@ def test_ME25(date_ranges):
     """
 
     business_rules.ME25().validate(
-        factories.MeasureFactory.create(valid_between=date_ranges.normal)
+        factories.MeasureFactory.create(valid_between=date_ranges.normal),
     )
 
     business_rules.ME25().validate(
@@ -416,7 +414,7 @@ def test_ME25(date_ranges):
             valid_between=date_ranges.no_end,
             generating_regulation__valid_between=date_ranges.earlier,
             generating_regulation__effective_end_date=None,
-        )
+        ),
     )
 
     business_rules.ME25().validate(
@@ -424,7 +422,7 @@ def test_ME25(date_ranges):
             valid_between=date_ranges.no_end,
             generating_regulation__valid_between=date_ranges.no_end,
             generating_regulation__effective_end_date=None,
-        )
+        ),
     )
 
     with pytest.raises(DataError):
@@ -436,7 +434,7 @@ def test_ME25(date_ranges):
                 valid_between=date_ranges.no_end,
                 generating_regulation__valid_between=date_ranges.earlier,
                 generating_regulation__effective_end_date=date_ranges.earlier.upper,
-            )
+            ),
         )
 
 
@@ -523,13 +521,14 @@ def related_measure_data(request, date_ranges, related_goods_nomenclature):
 
 
 def test_ME32(existing_measure_data, related_measure_data):
-    """There may be no overlap in time with other measure occurrences with a goods code
-    in the same nomenclature hierarchy which references the same measure type, geo area,
-    order number, additional code and reduction indicator. This rule is not applicable
-    for Meursing additional codes.
+    """
+    There may be no overlap in time with other measure occurrences with a goods
+    code in the same nomenclature hierarchy which references the same measure
+    type, geo area, order number, additional code and reduction indicator. This
+    rule is not applicable for Meursing additional codes.
 
-    This is an extension of the previously described ME1 to all commodity codes in the
-    upward hierarchy and all commodity codes in the downward hierarchy.
+    This is an extension of the previously described ME1 to all commodity codes
+    in the upward hierarchy and all commodity codes in the downward hierarchy.
     """
 
     existing = factories.MeasureFactory.create(**existing_measure_data)
@@ -555,9 +554,11 @@ def test_ME32(existing_measure_data, related_measure_data):
 
 
 def test_ME10():
-    """The order number must be specified if the "order number flag" (specified in the
-    measure type record) has the value "mandatory". If the flag is set to "not
-    permitted" then the field cannot be entered.
+    """
+    The order number must be specified if the "order number flag" (specified in
+    the measure type record) has the value "mandatory".
+
+    If the flag is set to "not permitted" then the field cannot be entered.
     """
 
     with pytest.raises(BusinessRuleViolation):
@@ -566,7 +567,7 @@ def test_ME10():
                 measure_type__order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
                 order_number=None,
                 dead_order_number=None,
-            )
+            ),
         )
 
     with pytest.raises(BusinessRuleViolation):
@@ -574,14 +575,15 @@ def test_ME10():
             factories.MeasureFactory.create(
                 measure_type__order_number_capture_code=OrderNumberCaptureCode.NOT_PERMITTED,
                 order_number=factories.QuotaOrderNumberFactory.create(),
-            )
+            ),
         )
 
 
 @only_applicable_after("2007-12-31")
 def test_ME116(date_ranges):
-    """When a quota order number is used in a measure then the validity period of the
-    quota order number must span the validity period of the measure.
+    """
+    When a quota order number is used in a measure then the validity period of
+    the quota order number must span the validity period of the measure.
 
     This rule is only applicable for measures with start date after 31/12/2007.
     """
@@ -591,14 +593,15 @@ def test_ME116(date_ranges):
             factories.MeasureWithQuotaFactory.create(
                 order_number__valid_between=date_ranges.starts_with_normal,
                 valid_between=date_ranges.normal,
-            )
+            ),
         )
 
 
 @only_applicable_after("2007-12-31")
 def test_ME117():
-    """When a measure has a quota measure type then the origin must exist as a quota
-    order number origin.
+    """
+    When a measure has a quota measure type then the origin must exist as a
+    quota order number origin.
 
     This rule is only applicable for measures with start date after 31/12/2007.
 
@@ -615,21 +618,22 @@ def test_ME117():
             factories.MeasureWithQuotaFactory.create(
                 order_number=origin.order_number,
                 geographical_area=factories.GeographicalAreaFactory.create(),
-            )
+            ),
         )
 
     business_rules.ME117().validate(
         factories.MeasureWithQuotaFactory.create(
             order_number=origin.order_number,
             geographical_area=origin.geographical_area,
-        )
+        ),
     )
 
 
 @pytest.mark.skip(reason="Duplicate of ME116")
 def test_ME118():
-    """When a quota order number is used in a measure then the validity period of the
-    quota order number must span the validity period of the measure.
+    """
+    When a quota order number is used in a measure then the validity period of
+    the quota order number must span the validity period of the measure.
 
     This rule is only applicable for measures with start date after 31/12/2007.
     """
@@ -640,8 +644,9 @@ def test_ME118():
 @pytest.mark.xfail(reason="need to confirm rule is needed")
 @only_applicable_after("2007-12-31")
 def test_ME119(date_ranges):
-    """When a quota order number is used in a measure then the validity period of the
-    quota order number origin must span the validity period of the measure.
+    """
+    When a quota order number is used in a measure then the validity period of
+    the quota order number origin must span the validity period of the measure.
 
     This rule is only applicable for measures with start date after 31/12/2007.
     """
@@ -651,7 +656,7 @@ def test_ME119(date_ranges):
             factories.MeasureWithQuotaFactory.create(
                 order_number__origin__valid_between=date_ranges.starts_with_normal,
                 valid_between=date_ranges.normal,
-            )
+            ),
         )
 
 
@@ -668,7 +673,8 @@ def test_ME119(date_ranges):
     ],
 )
 def test_ME9(additional_code, goods_nomenclature, expect_error):
-    """If no additional code is specified then the goods code is mandatory.
+    """
+    If no additional code is specified then the goods code is mandatory.
 
     A measure can be assigned to:
     - a commodity code only (most measures)
@@ -692,7 +698,7 @@ def test_ME9(additional_code, goods_nomenclature, expect_error):
             factories.MeasureFactory.create(
                 additional_code=additional_code,
                 goods_nomenclature=goods_nomenclature,
-            )
+            ),
         )
     except BusinessRuleViolation:
         if not expect_error:
@@ -703,15 +709,14 @@ def test_ME9(additional_code, goods_nomenclature, expect_error):
 
 
 def test_ME12():
-    """If the additional code is specified then the additional code type must have a
-    relationship with the measure type.
-    """
+    """If the additional code is specified then the additional code type must
+    have a relationship with the measure type."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME12().validate(
             factories.MeasureFactory.create(
-                additional_code=factories.AdditionalCodeFactory.create()
-            )
+                additional_code=factories.AdditionalCodeFactory.create(),
+            ),
         )
 
     rel = factories.AdditionalCodeTypeMeasureTypeFactory.create()
@@ -721,45 +726,45 @@ def test_ME12():
             measure_type=rel.measure_type,
             additional_code__type=rel.additional_code_type,
             goods_nomenclature__item_id="7700000000",
-        )
+        ),
     )
 
 
 @requires_meursing_tables
 def test_ME13():
-    """If the additional code type is related to a Meursing table plan then only the
-    additional code can be specified: no goods code, order number or reduction
-    indicator.
-    """
+    """If the additional code type is related to a Meursing table plan then only
+    the additional code can be specified: no goods code, order number or
+    reduction indicator."""
     assert False
 
 
 @requires_meursing_tables
 def test_ME14():
     """If the additional code type is related to a Meursing table plan then the
-    additional code must exist as a Meursing additional code.
-    """
+    additional code must exist as a Meursing additional code."""
     assert False
 
 
 @requires_meursing_tables
 def test_ME15():
-    """If the additional code type is related to a Meursing table plan then the validity
-    period of the additional code must span the validity period of the measure.
-    """
+    """If the additional code type is related to a Meursing table plan then the
+    validity period of the additional code must span the validity period of the
+    measure."""
     assert False
 
 
 def test_ME17(reference_nonexistent_record):
-    """If the additional code type has as application "non-Meursing" then the additional
-    code must exist as a non-Meursing additional code.
+    """
+    If the additional code type has as application "non-Meursing" then the
+    additional code must exist as a non-Meursing additional code.
 
-    UK tariff does not use meursing tables, so this is essentially saying that an
-    additional code must exist.
+    UK tariff does not use meursing tables, so this is essentially saying that
+    an additional code must exist.
     """
 
     with reference_nonexistent_record(
-        factories.MeasureWithAdditionalCodeFactory, "additional_code"
+        factories.MeasureWithAdditionalCodeFactory,
+        "additional_code",
     ) as measure:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME17().validate(measure)
@@ -767,10 +772,9 @@ def test_ME17(reference_nonexistent_record):
 
 @pytest.mark.skip(reason="No meursing, so duplicate of ME115")
 def test_ME18():
-    """If the additional code type has as application "non-Meursing" then the validity
-    period of the non-Meursing additional code must span the validity period of the
-    measure.
-    """
+    """If the additional code type has as application "non-Meursing" then the
+    validity period of the non-Meursing additional code must span the validity
+    period of the measure."""
 
 
 # -- Export Refund nomenclature measures
@@ -778,18 +782,16 @@ def test_ME18():
 
 @requires_export_refund_nomenclature
 def test_ME19():
-    """If the additional code type has as application "ERN" then the goods code must be
-    specified but the order number is blocked for input.
-    """
+    """If the additional code type has as application "ERN" then the goods code
+    must be specified but the order number is blocked for input."""
     assert False
 
 
 @requires_export_refund_nomenclature
 def test_ME21():
-    """If the additional code type has as application "ERN" then the combination of
-    goods code + additional code must exist as an ERN product code and its validity
-    period must span the validity period of the measure.
-    """
+    """If the additional code type has as application "ERN" then the combination
+    of goods code + additional code must exist as an ERN product code and its
+    validity period must span the validity period of the measure."""
     assert False
 
 
@@ -798,27 +800,26 @@ def test_ME21():
 
 @requires_export_refund_nomenclature
 def test_ME112():
-    """If the additional code type has as application "Export Refund for Processed
-    Agricultural Goods" then the measure does not require a goods code.
-    """
+    """If the additional code type has as application "Export Refund for
+    Processed Agricultural Goods" then the measure does not require a goods
+    code."""
     assert False
 
 
 @requires_export_refund_nomenclature
 def test_ME113():
-    """If the additional code type has as application "Export Refund for Processed
-    Agricultural Goods" then the additional code must exist as an Export Refund for
-    Processed Agricultural Goods additional code.
-    """
+    """If the additional code type has as application "Export Refund for
+    Processed Agricultural Goods" then the additional code must exist as an
+    Export Refund for Processed Agricultural Goods additional code."""
     assert False
 
 
 @requires_export_refund_nomenclature
 def test_ME114():
-    """If the additional code type has as application "Export Refund for Processed
-    Agricultural Goods" then the validity period of the Export Refund for Processed
-    Agricultural Goods additional code must span the validity period of the measure.
-    """
+    """If the additional code type has as application "Export Refund for
+    Processed Agricultural Goods" then the validity period of the Export Refund
+    for Processed Agricultural Goods additional code must span the validity
+    period of the measure."""
     assert False
 
 
@@ -826,12 +827,16 @@ def test_ME114():
 
 
 def test_ME24(reference_nonexistent_record):
-    """The role + regulation id must exist. If no measure start date is specified it
-    defaults to the regulation start date.
+    """
+    The role + regulation id must exist.
+
+    If no measure start date is specified it defaults to the regulation start
+    date.
     """
 
     with reference_nonexistent_record(
-        factories.MeasureFactory, "generating_regulation"
+        factories.MeasureFactory,
+        "generating_regulation",
     ) as measure:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME24().validate(measure)
@@ -846,10 +851,11 @@ def test_ME86():
 
 
 def test_ME87(date_ranges):
-    """The validity period of the measure (implicit or explicit) must reside within the
-    effective validity period of its supporting regulation. The effective validity
-    period is the validity period of the regulation taking into account extensions and
-    abrogation.
+    """
+    The validity period of the measure (implicit or explicit) must reside within
+    the effective validity period of its supporting regulation. The effective
+    validity period is the validity period of the regulation taking into account
+    extensions and abrogation.
 
     A regulation’s validity period is hugely complex in the EU’s world.
     - A regulation is initially assigned a start date. It may be assigned an end date as
@@ -871,7 +877,7 @@ def test_ME87(date_ranges):
             factories.MeasureFactory.create(
                 generating_regulation__valid_between=date_ranges.starts_with_normal,
                 valid_between=date_ranges.normal,
-            )
+            ),
         )
 
     # implicit - regulation end date supercedes measure end date
@@ -882,51 +888,51 @@ def test_ME87(date_ranges):
             factories.MeasureFactory.create(
                 generating_regulation__valid_between=date_ranges.starts_with_normal,
                 valid_between=date_ranges.normal,
-            )
+            ),
         )
 
 
 @pytest.mark.skip(
-    reason="Abrogation, modification and replacement regulations are not used"
+    reason="Abrogation, modification and replacement regulations are not used",
 )
 def test_ME26():
     """The entered regulation may not be completely abrogated."""
 
 
 @pytest.mark.skip(
-    reason="Abrogation, modification and replacement regulations are not used"
+    reason="Abrogation, modification and replacement regulations are not used",
 )
 def test_ME27():
     """The entered regulation may not be fully replaced."""
 
 
 @pytest.mark.skip(
-    reason="Abrogation, modification and replacement regulations are not used"
+    reason="Abrogation, modification and replacement regulations are not used",
 )
 def test_ME28():
-    """The entered regulation may not be partially replaced for the measure type,
-    geographical area or chapter (first two digits of the goods code) of the measure.
-    """
+    """The entered regulation may not be partially replaced for the measure
+    type, geographical area or chapter (first two digits of the goods code) of
+    the measure."""
 
 
 @pytest.mark.skip(
-    reason="Abrogation, modification and replacement regulations are not used"
+    reason="Abrogation, modification and replacement regulations are not used",
 )
 def test_ME29():
-    """If the entered regulation is a modification regulation then its base regulation
-    may not be completely abrogated.
-    """
+    """If the entered regulation is a modification regulation then its base
+    regulation may not be completely abrogated."""
 
 
 def test_ME33(date_ranges):
-    """A justification regulation may not be entered if the measure end date is not
+    """
+    A justification regulation may not be entered if the measure end date is not
     filled in.
 
-    A justification regulation is used to ‘justify’ terminating a regulation. There is
-    no requirement for this in UK law, nor for audit purposes in the UK tariff, however
-    it is a mandatory field in the database and in CDS. The rule is self-explanatory: if
-    there no end date on the measure, then the justification regulation field must be
-    set to null.
+    A justification regulation is used to ‘justify’ terminating a regulation.
+    There is no requirement for this in UK law, nor for audit purposes in the UK
+    tariff, however it is a mandatory field in the database and in CDS. The rule
+    is self-explanatory: if there no end date on the measure, then the
+    justification regulation field must be set to null.
     """
 
     with pytest.raises(BusinessRuleViolation):
@@ -934,12 +940,13 @@ def test_ME33(date_ranges):
             factories.MeasureFactory.create(
                 valid_between=date_ranges.no_end,
                 terminating_regulation=factories.RegulationFactory.create(),
-            )
+            ),
         )
 
 
 def test_ME34(date_ranges):
-    """A justification regulation must be entered if the measure end date is filled
+    """
+    A justification regulation must be entered if the measure end date is filled
     in.
 
     The justification regulation fields MUST be completed when the regulation is end-dated.
@@ -954,7 +961,7 @@ def test_ME34(date_ranges):
             factories.MeasureFactory.create(
                 valid_between=date_ranges.normal,
                 terminating_regulation=None,
-            )
+            ),
         )
 
 
@@ -971,23 +978,27 @@ def test_ME34(date_ranges):
     ],
 )
 def test_ME40(applicability_code, component, condition_component):
-    """If the flag "duty expression" on measure type is "mandatory" then at least one
-    measure component or measure condition component record must be specified.  If the
-    flag is set "not permitted" then no measure component or measure condition component
-    must exist.  Measure components and measure condition components are mutually
-    exclusive. A measure can have either components or condition components
-    (if the ‘duty expression’ flag is ‘mandatory’ or ‘optional’) but not both.
+    """
+    If the flag "duty expression" on measure type is "mandatory" then at least
+    one measure component or measure condition component record must be
+    specified.  If the flag is set "not permitted" then no measure component or
+    measure condition component must exist.  Measure components and measure
+    condition components are mutually exclusive. A measure can have either
+    components or condition components (if the ‘duty expression’ flag is.
 
-    This describes the fact that measures of certain types MUST have components (duties)
-    assigned to them, whereas others must not. Note the sub-clause also – if the value
-    of the field “Component applicable” is set to 1 (mandatory) on a measure type, then
-    when the measure is created, there must be either measure components or measure
-    condition components assigned to the measure, but not both. CDS will generate errors
-    if either of these conditions are not met.
+    ‘mandatory’ or ‘optional’) but not both.
+
+    This describes the fact that measures of certain types MUST have components
+    (duties) assigned to them, whereas others must not. Note the sub-clause also
+    – if the value of the field “Component applicable” is set to 1 (mandatory)
+    on a measure type, then when the measure is created, there must be either
+    measure components or measure condition components assigned to the measure,
+    but not both. CDS will generate errors if either of these conditions are not
+    met.
     """
 
     measure = factories.MeasureFactory.create(
-        measure_type__measure_component_applicability_code=applicability_code
+        measure_type__measure_component_applicability_code=applicability_code,
     )
 
     if component:
@@ -995,7 +1006,7 @@ def test_ME40(applicability_code, component, condition_component):
 
     if condition_component:
         factories.MeasureConditionComponentFactory.create(
-            condition__dependent_measure=measure
+            condition__dependent_measure=measure,
         )
 
     with pytest.raises(BusinessRuleViolation):
@@ -1006,36 +1017,40 @@ def test_ME41(reference_nonexistent_record):
     """The referenced duty expression must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureComponentFactory, "duty_expression"
+        factories.MeasureComponentFactory,
+        "duty_expression",
     ) as component:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME41().validate(component)
 
 
 def test_ME42(date_ranges):
-    """The validity period of the duty expression must span the validity period of the
-    measure."""
+    """The validity period of the duty expression must span the validity period
+    of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME42().validate(
             factories.MeasureComponentFactory.create(
                 duty_expression__valid_between=date_ranges.normal,
                 component_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME43():
-    """The same duty expression can only be used once with the same measure.
+    """
+    The same duty expression can only be used once with the same measure.
 
-    Even if an expression that (in English) reads the same needs to be used more than
-    once in a measure, we must use a different expression ID, never the same one twice.
+    Even if an expression that (in English) reads the same needs to be used more
+    than once in a measure, we must use a different expression ID, never the
+    same one twice.
     """
 
     measure = factories.MeasureFactory.create()
     existing = factories.MeasureComponentFactory.create(component_measure=measure)
     component = factories.MeasureComponentFactory.create(
-        duty_expression=existing.duty_expression, component_measure=measure
+        duty_expression=existing.duty_expression,
+        component_measure=measure,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME43().validate(component)
@@ -1049,8 +1064,12 @@ def test_ME43():
     ],
 )
 def test_ME45(applicability_code, amount):
-    """If the flag "amount" on duty expression is "mandatory" then an amount must be
-    specified. If the flag is set "not permitted" then no amount may be entered."""
+    """
+    If the flag "amount" on duty expression is "mandatory" then an amount must
+    be specified.
+
+    If the flag is set "not permitted" then no amount may be entered.
+    """
 
     measure = factories.MeasureFactory.create()
     factories.MeasureComponentFactory.create(
@@ -1071,9 +1090,12 @@ def test_ME45(applicability_code, amount):
     ],
 )
 def test_ME46(applicability_code, monetary_unit):
-    """If the flag "monetary unit" on duty expression is "mandatory" then a monetary
-    unit must be specified. If the flag is set "not permitted" then no monetary unit may
-    be entered."""
+    """
+    If the flag "monetary unit" on duty expression is "mandatory" then a
+    monetary unit must be specified.
+
+    If the flag is set "not permitted" then no monetary unit may be entered.
+    """
 
     if monetary_unit:
         monetary_unit = factories.MonetaryUnitFactory.create()
@@ -1097,9 +1119,11 @@ def test_ME46(applicability_code, monetary_unit):
     ],
 )
 def test_ME47(applicability_code, measurement):
-    """If the flag "measurement unit" on duty expression is "mandatory" then a
-    measurement unit must be specified. If the flag is set "not permitted" then no
-    measurement unit may be entered.
+    """
+    If the flag "measurement unit" on duty expression is "mandatory" then a
+    measurement unit must be specified.
+
+    If the flag is set "not permitted" then no measurement unit may be entered.
     """
 
     if measurement:
@@ -1120,58 +1144,61 @@ def test_ME48(reference_nonexistent_record):
     """The referenced monetary unit must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureComponentWithMonetaryUnitFactory, "monetary_unit"
+        factories.MeasureComponentWithMonetaryUnitFactory,
+        "monetary_unit",
     ) as component:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME48().validate(component)
 
 
 def test_ME49(date_ranges):
-    """The validity period of the referenced monetary unit must span the validity period
-    of the measure."""
+    """The validity period of the referenced monetary unit must span the
+    validity period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME49().validate(
             factories.MeasureComponentWithMonetaryUnitFactory.create(
                 monetary_unit__valid_between=date_ranges.normal,
                 component_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME50(reference_nonexistent_record):
-    """The combination measurement unit + measurement unit qualifier must exist."""
+    """The combination measurement unit + measurement unit qualifier must
+    exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureComponentWithMeasurementFactory, "component_measurement"
+        factories.MeasureComponentWithMeasurementFactory,
+        "component_measurement",
     ) as component:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME50().validate(component)
 
 
 def test_ME51(date_ranges):
-    """The validity period of the measurement unit must span the validity period of the
-    measure."""
+    """The validity period of the measurement unit must span the validity period
+    of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME51().validate(
             factories.MeasureComponentWithMeasurementFactory.create(
                 component_measurement__measurement_unit__valid_between=date_ranges.normal,
                 component_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME52(date_ranges):
-    """The validity period of the measurement unit qualifier must span the validity
-    period of the measure."""
+    """The validity period of the measurement unit qualifier must span the
+    validity period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME52().validate(
             factories.MeasureComponentWithMeasurementFactory.create(
                 component_measurement__measurement_unit_qualifier__valid_between=date_ranges.normal,
                 component_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
@@ -1182,7 +1209,8 @@ def test_ME53(reference_nonexistent_record):
     """The referenced measure condition must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureConditionComponentFactory, "condition"
+        factories.MeasureConditionComponentFactory,
+        "condition",
     ) as component:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME53().validate(component)
@@ -1190,8 +1218,9 @@ def test_ME53(reference_nonexistent_record):
 
 @pytest.mark.skip(reason="Erroneous business rule")
 def test_ME54():
-    """The validity period of the referenced measure condition must span the validity
-    period of the measure.
+    """
+    The validity period of the referenced measure condition must span the
+    validity period of the measure.
 
     Not required - disregard: as far as we can see, this is an erroneous business rule.
     The measure condition table does not have a start and end date field. The condition
@@ -1203,8 +1232,9 @@ def test_ME54():
 
 @pytest.mark.skip(reason="Erroneous business rule")
 def test_ME55():
-    """A measure condition refers to a measure condition or to a condition + certificate
-    or to a condition + amount specifications.
+    """
+    A measure condition refers to a measure condition or to a condition +
+    certificate or to a condition + amount specifications.
 
     Disregard: this has been written so vaguely that there are no rules to be gleaned
     from it.
@@ -1215,28 +1245,29 @@ def test_ME56(reference_nonexistent_record):
     """The referenced certificate must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureConditionWithCertificateFactory, "required_certificate"
+        factories.MeasureConditionWithCertificateFactory,
+        "required_certificate",
     ) as condition:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME56().validate(condition)
 
 
 def test_ME57(date_ranges):
-    """The validity period of the referenced certificate must span the validity period
-    of the measure."""
+    """The validity period of the referenced certificate must span the validity
+    period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME57().validate(
             factories.MeasureConditionWithCertificateFactory.create(
                 required_certificate__valid_between=date_ranges.normal,
                 dependent_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME58():
-    """The same certificate can only be referenced once by the same measure and the same
-    condition type."""
+    """The same certificate can only be referenced once by the same measure and
+    the same condition type."""
 
     existing = factories.MeasureConditionFactory.create(
         required_certificate=factories.CertificateFactory.create(),
@@ -1255,7 +1286,8 @@ def test_ME59(reference_nonexistent_record):
     """The referenced action code must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureConditionFactory, "action"
+        factories.MeasureConditionFactory,
+        "action",
     ) as condition:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME59().validate(condition)
@@ -1265,58 +1297,61 @@ def test_ME60(reference_nonexistent_record):
     """The referenced monetary unit must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureConditionFactory, "monetary_unit"
+        factories.MeasureConditionFactory,
+        "monetary_unit",
     ) as condition:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME60().validate(condition)
 
 
 def test_ME61(date_ranges):
-    """The validity period of the referenced monetary unit must span the validity period
-    of the measure."""
+    """The validity period of the referenced monetary unit must span the
+    validity period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME61().validate(
             factories.MeasureConditionFactory.create(
                 monetary_unit__valid_between=date_ranges.normal,
                 dependent_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME62(reference_nonexistent_record):
-    """The combination measurement unit + measurement unit qualifier must exist."""
+    """The combination measurement unit + measurement unit qualifier must
+    exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureConditionWithMeasurementFactory, "condition_measurement"
+        factories.MeasureConditionWithMeasurementFactory,
+        "condition_measurement",
     ) as condition:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME62().validate(condition)
 
 
 def test_ME63(date_ranges):
-    """The validity period of the measurement unit must span the validity period of the
-    measure."""
+    """The validity period of the measurement unit must span the validity period
+    of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME63().validate(
             factories.MeasureConditionWithMeasurementFactory.create(
                 condition_measurement__measurement_unit__valid_between=date_ranges.normal,
                 dependent_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_ME64(date_ranges):
-    """The validity period of the measurement unit qualifier must span the validity
-    period of the measure."""
+    """The validity period of the measurement unit qualifier must span the
+    validity period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME64().validate(
             factories.MeasureConditionWithMeasurementFactory.create(
                 condition_measurement__measurement_unit_qualifier__valid_between=date_ranges.normal,
                 dependent_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
@@ -1324,23 +1359,23 @@ def test_ME105(reference_nonexistent_record):
     """The referenced duty expression must exist."""
 
     with reference_nonexistent_record(
-        factories.MeasureConditionComponentFactory, "duty_expression"
+        factories.MeasureConditionComponentFactory,
+        "duty_expression",
     ) as component:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME105().validate(component)
 
 
 def test_ME106(date_ranges):
-    """The validity period of the duty expression must span the validity period of the
-    measure.
-    """
+    """The validity period of the duty expression must span the validity period
+    of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME106().validate(
             factories.MeasureConditionComponentFactory.create(
                 duty_expression__valid_between=date_ranges.starts_with_normal,
                 condition__dependent_measure__valid_between=date_ranges.normal,
-            )
+            ),
         )
 
 
@@ -1353,9 +1388,12 @@ def test_ME106(date_ranges):
     ],
 )
 def test_ME108(expression, same_condition, expect_error):
-    """The same duty expression can only be used once within condition components of the
-    same condition of the same measure.  (i.e. it can be re-used in other conditions, no
-    matter what condition type, of the same measure)
+    """
+    The same duty expression can only be used once within condition components
+    of the same condition of the same measure.
+
+    (i.e. it can be re-used in other conditions, no matter what condition type,
+    of the same measure)
     """
 
     measure = factories.MeasureFactory.create()
@@ -1369,7 +1407,8 @@ def test_ME108(expression, same_condition, expect_error):
         condition = factories.MeasureConditionFactory.create(dependent_measure=measure)
 
     component = factories.MeasureConditionComponentFactory.create(
-        duty_expression__sid=expression, condition=condition
+        duty_expression__sid=expression,
+        condition=condition,
     )
 
     try:
@@ -1390,8 +1429,11 @@ def test_ME108(expression, same_condition, expect_error):
     ],
 )
 def test_ME109(applicability_code, amount):
-    """If the flag 'amount' on duty expression is 'mandatory' then an amount must be
-    specified. If the flag is set to 'not permitted' then no amount may be entered.
+    """
+    If the flag 'amount' on duty expression is 'mandatory' then an amount must
+    be specified.
+
+    If the flag is set to 'not permitted' then no amount may be entered.
     """
 
     measure = factories.MeasureFactory.create()
@@ -1413,9 +1455,11 @@ def test_ME109(applicability_code, amount):
     ],
 )
 def test_ME110(applicability_code, monetary_unit):
-    """If the flag 'monetary unit' on duty expression is 'mandatory' then a monetary
-    unit must be specified. If the flag is set to 'not permitted' then no monetary unit
-    may be entered.
+    """
+    If the flag 'monetary unit' on duty expression is 'mandatory' then a
+    monetary unit must be specified.
+
+    If the flag is set to 'not permitted' then no monetary unit may be entered.
     """
 
     if monetary_unit:
@@ -1440,9 +1484,12 @@ def test_ME110(applicability_code, monetary_unit):
     ],
 )
 def test_ME111(applicability_code, measurement):
-    """If the flag 'measurement unit' on duty expression is 'mandatory' then a
-    measurement unit must be specified. If the flag is set to 'not permitted' then no
-    measurement unit may be entered.
+    """
+    If the flag 'measurement unit' on duty expression is 'mandatory' then a
+    measurement unit must be specified.
+
+    If the flag is set to 'not permitted' then no measurement unit may be
+    entered.
     """
 
     if measurement:
@@ -1467,7 +1514,7 @@ def test_ME65():
     area group (area code = 1)."""
 
     exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
-        modified_measure__geographical_area__area_code=AreaCode.COUNTRY
+        modified_measure__geographical_area__area_code=AreaCode.COUNTRY,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -1475,7 +1522,8 @@ def test_ME65():
 
 
 def test_ME66():
-    """The excluded geographical area must be a member of the geographical area group."""
+    """The excluded geographical area must be a member of the geographical area
+    group."""
 
     membership = factories.GeographicalMembershipFactory.create()
     measure = factories.MeasureFactory.create(geographical_area=membership.geo_group)
@@ -1498,11 +1546,11 @@ def test_ME66():
 
 @pytest.mark.xfail(reason="ME67 disabled")
 def test_ME67(date_ranges):
-    """The membership period of the excluded geographical area must span the validity
-    period of the measure."""
+    """The membership period of the excluded geographical area must span the
+    validity period of the measure."""
 
     membership = factories.GeographicalMembershipFactory.create(
-        valid_between=date_ranges.normal
+        valid_between=date_ranges.normal,
     )
     exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         excluded_geographical_area=membership.member,
@@ -1514,7 +1562,8 @@ def test_ME67(date_ranges):
 
 
 def test_ME68():
-    """The same geographical area can only be excluded once by the same measure."""
+    """The same geographical area can only be excluded once by the same
+    measure."""
 
     existing = factories.MeasureExcludedGeographicalAreaFactory.create()
 
@@ -1534,7 +1583,8 @@ def test_ME69(reference_nonexistent_record):
     """The associated footnote must exist."""
 
     with reference_nonexistent_record(
-        factories.FootnoteAssociationMeasureFactory, "associated_footnote"
+        factories.FootnoteAssociationMeasureFactory,
+        "associated_footnote",
     ) as assoc:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME69().validate(assoc)
@@ -1579,23 +1629,23 @@ def test_ME72():
 
 
 def test_ME73(date_ranges):
-    """The validity period of the associated footnote must span the validity period of
-    the measure."""
+    """The validity period of the associated footnote must span the validity
+    period of the measure."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME73().validate(
             factories.FootnoteAssociationMeasureFactory.create(
                 associated_footnote__valid_between=date_ranges.normal,
                 footnoted_measure__valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 # -- Partial temporary stop
 @requires_partial_temporary_stop
 def test_ME39():
-    """The validity period of the measure must span the validity period of all related
-    partial temporary stop (PTS) records."""
+    """The validity period of the measure must span the validity period of all
+    related partial temporary stop (PTS) records."""
     assert False
 
 
@@ -1607,28 +1657,29 @@ def test_ME74():
 
 @requires_partial_temporary_stop
 def test_ME75():
-    """The PTS regulation and abrogation regulation must be the same if the start date
-    and the end date are entered when creating the record."""
+    """The PTS regulation and abrogation regulation must be the same if the
+    start date and the end date are entered when creating the record."""
     assert False
 
 
 @requires_partial_temporary_stop
 def test_ME76():
-    """The abrogation regulation may not be entered if the PTS end date is not filled
-    in."""
+    """The abrogation regulation may not be entered if the PTS end date is not
+    filled in."""
     assert False
 
 
 @requires_partial_temporary_stop
 def test_ME77():
-    """The abrogation regulation must be entered if the PTS end date is filled in."""
+    """The abrogation regulation must be entered if the PTS end date is filled
+    in."""
     assert False
 
 
 @requires_partial_temporary_stop
 def test_ME78():
-    """The abrogation regulation must be different from the PTS regulation if the end
-    date is filled in during a modification."""
+    """The abrogation regulation must be different from the PTS regulation if
+    the end date is filled in during a modification."""
     assert False
 
 
@@ -1643,7 +1694,9 @@ def test_ME79():
 
 @pytest.mark.xfail(reason="confirm rule is needed")
 def test_ME104(date_ranges, unapproved_transaction):
-    """The justification regulation must be either:
+    """
+    The justification regulation must be either:
+
         - the measure’s measure-generating regulation, or
         - a measure-generating regulation, valid on the day after the measure’s
           (explicit) end date.
@@ -1652,7 +1705,8 @@ def test_ME104(date_ranges, unapproved_transaction):
     """
 
     measure = factories.MeasureFactory.create(
-        valid_between=date_ranges.normal, transaction=unapproved_transaction
+        valid_between=date_ranges.normal,
+        transaction=unapproved_transaction,
     )
     generating = measure.generating_regulation
     terminating = measure.terminating_regulation

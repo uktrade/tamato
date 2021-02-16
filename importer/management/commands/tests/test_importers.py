@@ -68,25 +68,31 @@ class TestTradeRemedies:
 
         # Setup regulations
         regulation_group = factories.RegulationGroupFactory.create(
-            group_id="DUM", description="Anti-dumping duties, countervailing duties"
+            group_id="DUM",
+            description="Anti-dumping duties, countervailing duties",
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group, regulation_id="R0100010"
+            regulation_group=regulation_group,
+            regulation_id="R0100010",
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group, regulation_id="R0200010"
+            regulation_group=regulation_group,
+            regulation_id="R0200010",
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group, regulation_id="R0100030"
+            regulation_group=regulation_group,
+            regulation_id="R0100030",
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group, regulation_id="R0100020"
+            regulation_group=regulation_group,
+            regulation_id="R0100020",
         )
 
         # Setup certificates
         certificate_type = factories.CertificateTypeFactory.create(sid="D")
         factories.CertificateFactory.create(
-            sid="008", certificate_type=certificate_type
+            sid="008",
+            certificate_type=certificate_type,
         )
 
         # Setup good nomenclature
@@ -109,21 +115,29 @@ class TestTradeRemedies:
             description="Anti-dumping/countervailing",
         )
         factories.AdditionalCodeFactory(
-            sid="13160", code=555, type=additional_code_type
+            sid="13160",
+            code=555,
+            type=additional_code_type,
         )
 
         # Setup geographical area's
         area1 = factories.GeographicalAreaFactory.create(
-            sid=103, area_id="US", area_code=0
+            sid=103,
+            area_id="US",
+            area_code=0,
         )
         area2 = factories.GeographicalAreaFactory.create(
-            sid=140, area_id="AD", area_code=0
+            sid=140,
+            area_id="AD",
+            area_code=0,
         )
         factories.GeographicalAreaDescriptionFactory.create(
-            area=area1, description="United States of America"
+            area=area1,
+            description="United States of America",
         )
         factories.GeographicalAreaDescriptionFactory.create(
-            area=area2, description="Andorra"
+            area=area2,
+            description="Andorra",
         )
 
         # Footnotes
@@ -138,6 +152,7 @@ class TestTradeRemedies:
     def test_import_trade_remedies(self):
         """
         Expected output:
+
         -  add regulation C2100005 for "DUM" (Anti-dumping duties, countervailing duties) group from 01/01/21
         -  ending of measure 1 for CC 1000000000 on 31/12/20
         -  ending of measure 2 for CC 1100000000 on 31/12/20
@@ -162,7 +177,6 @@ class TestTradeRemedies:
         - 1000000000 not created as overlapping with child 1200000000
 
         Total transactions: 5 ending and 3 create and 1 regulation = 9
-
         """
         args = [
             fixture_path + "trade_remedies/regulations_to_maintain.xlsx",
@@ -210,19 +224,23 @@ class TestImportTradeDisputes:
 
         # Setup regulations
         regulation_group = factories.RegulationGroupFactory.create(
-            group_id="ADD", description="Additional Duties (AGRI)"
+            group_id="ADD",
+            description="Additional Duties (AGRI)",
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group, regulation_id="R0000001"
+            regulation_group=regulation_group,
+            regulation_id="R0000001",
         )
         factories.RegulationFactory(
-            regulation_group=regulation_group, regulation_id="R0000002"
+            regulation_group=regulation_group,
+            regulation_id="R0000002",
         )
 
         # Setup certificates
         certificate_type = factories.CertificateTypeFactory.create(sid="N")
         factories.CertificateFactory.create(
-            sid="990", certificate_type=certificate_type
+            sid="990",
+            certificate_type=certificate_type,
         )
 
         # Setup good nomenclature
@@ -241,10 +259,13 @@ class TestImportTradeDisputes:
 
         # Setup geographical area's
         area = factories.GeographicalAreaFactory.create(
-            sid=103, area_id="US", area_code=0
+            sid=103,
+            area_id="US",
+            area_code=0,
         )
         factories.GeographicalAreaDescriptionFactory.create(
-            area=area, description="United States of America"
+            area=area,
+            description="United States of America",
         )
 
         # Footnotes
@@ -305,8 +326,8 @@ class TestImportCountries:
     def test_update_area_description(self):
         """
         Expected output:
-        - description for geographical area with sid 1 changed to Andorra
 
+        - description for geographical area with sid 1 changed to Andorra
         """
         factories.UserFactory.create(username="Alice")
         geo_area = factories.GeographicalAreaFactory.create(

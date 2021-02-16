@@ -11,7 +11,8 @@ from common.models.records import TrackedModelQuerySet
 class MeasuresQuerySet(TrackedModelQuerySet):
     def with_effective_valid_between(self):
         """
-        In many cases the measures regulation effective_end_date overrides the measures validity range.
+        In many cases the measures regulation effective_end_date overrides the
+        measures validity range.
 
         Annotate the queryset with the db_effective_valid_between based on the regulations and measure.
 
@@ -49,7 +50,7 @@ class MeasuresQuerySet(TrackedModelQuerySet):
                     valid_between__upper_inf=False,
                     generating_regulation__effective_end_date__isnull=False,
                     valid_between__contains=F(
-                        "generating_regulation__effective_end_date"
+                        "generating_regulation__effective_end_date",
                     ),
                     then=Func(
                         Func(F("valid_between"), function="LOWER"),
@@ -79,5 +80,5 @@ class MeasuresQuerySet(TrackedModelQuerySet):
                 ),
                 default=F("valid_between"),
                 output_field=TaricDateRangeField(),
-            )
+            ),
         )

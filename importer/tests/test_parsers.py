@@ -140,10 +140,13 @@ def test_element_parser_with_two_levels_of_same_tag():
 
 
 def test_element_parser_with_partially_loaded_element():
-    """If we use a streaming XML parser, the API will return start events for
-    XML events before all/any of their children have been loaded. For this
-    reason, we can't use any algorithm which looks at children as part of start
-    events."""
+    """
+    If we use a streaming XML parser, the API will return start events for XML
+    events before all/any of their children have been loaded.
+
+    For this reason, we can't use any algorithm which looks at children as part
+    of start events.
+    """
 
     class Foo(ElementParser):
         tag = Tag("foo")

@@ -32,7 +32,8 @@ def change_range_type(table_name, field_name, to_type, conversion):
 
 
 class ConvertTaricDateRange(Operation):
-    """Migration operation which converts TaricDateTimeRangeFields to
+    """
+    Migration operation which converts TaricDateTimeRangeFields to
     TaricDateRangeField.
 
     This is required because Postgres does not automatically cast tstzranges to
@@ -72,7 +73,7 @@ class ConvertTaricDateRange(Operation):
                 self.name,
                 to_type="daterange",
                 conversion=daterange_from_tstzrange,
-            )
+            ),
         )
 
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
@@ -82,7 +83,7 @@ class ConvertTaricDateRange(Operation):
                 self.name,
                 to_type="tstzrange",
                 conversion=tstzrange_from_daterange,
-            )
+            ),
         )
 
     def describe(self):

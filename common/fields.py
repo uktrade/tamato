@@ -73,9 +73,11 @@ class TaricDateRangeField(DateRangeField):
         self, value: Union[DateRange, TaricDateRange], *_args, **_kwargs
     ) -> TaricDateRange:
         """
-        By default Django ignores the range_type and just returns a Psycopg2 DateRange.
-        This method forces the conversion to a TaricDateRange and shifts the upper date
-        to be inclusive (it is exclusive by default).
+        By default Django ignores the range_type and just returns a Psycopg2
+        DateRange.
+
+        This method forces the conversion to a TaricDateRange and shifts the
+        upper date to be inclusive (it is exclusive by default).
         """
         if not isinstance(value, DateRange):
             return value

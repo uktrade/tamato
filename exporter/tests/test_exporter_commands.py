@@ -14,11 +14,13 @@ pytestmark = pytest.mark.django_db
 
 @pytest.mark.skip()
 def test_upload_command_uploads_approved_workbasket_to_s3(
-    approved_transaction, hmrc_storage, s3, s3_object_exists, settings
+    approved_transaction,
+    hmrc_storage,
+    s3,
+    s3_object_exists,
+    settings,
 ):
-    """
-    Exercise HMRCStorage and verify content is saved to bucket.
-    """
+    """Exercise HMRCStorage and verify content is saved to bucket."""
     expected_bucket = "test-hmrc"
     expected_key = "tohmrc/staging/DIT200001.xml"
 
@@ -36,7 +38,8 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
         mock_save.assert_called_once()
 
     assert s3_object_exists(
-        expected_bucket, expected_key
+        expected_bucket,
+        expected_key,
     ), f"File was not uploaded with expected name, uploaded: Bucket: {expected_bucket} Key: {expected_key}"
 
     envelope = s3.get_object(Bucket=expected_bucket, Key=expected_key)["Body"].read()
@@ -60,9 +63,7 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
 
 @pytest.mark.skip(reason="broken test - TODO")
 def test_dump_command_outputs_approved_workbasket(approved_transaction, capsys):
-    """
-    Exercise HMRCStorage and verify content is saved to bucket.
-    """
+    """Exercise HMRCStorage and verify content is saved to bucket."""
     with capsys.disabled():
         RegulationFactory.create(transaction=approved_transaction)
         # RegulationFactory also creates a Group

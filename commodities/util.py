@@ -8,9 +8,9 @@ class InvalidItemId(Exception):
 
 
 def clean_item_id(value: Union[str, int, float]) -> str:
-    """Given a value, return a string representing the 10-digit item id
-    of a goods nomenclature item taking into account that the value may
-    have a leading zero or trailing zeroes missing."""
+    """Given a value, return a string representing the 10-digit item id of a
+    goods nomenclature item taking into account that the value may have a
+    leading zero or trailing zeroes missing."""
     item_id = strint(value)
     if type(value) in (int, float) and len(item_id) % 2 == 1:
         # If we have an odd number of digits its because

@@ -6,7 +6,6 @@ from common.tests import factories
 from common.tests.util import requires_meursing_tables
 from footnotes import business_rules
 
-
 pytestmark = pytest.mark.django_db
 
 
@@ -14,7 +13,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_FOT1(make_duplicate_record):
-    """The type of the footnote must be unique"""
+    """The type of the footnote must be unique."""
 
     duplicate = make_duplicate_record(factories.FootnoteTypeFactory)
 
@@ -23,7 +22,7 @@ def test_FOT1(make_duplicate_record):
 
 
 def test_FOT2(delete_record):
-    """The footnote type cannot be deleted if it is used in a footnote"""
+    """The footnote type cannot be deleted if it is used in a footnote."""
 
     footnote = factories.FootnoteFactory.create()
 
@@ -32,7 +31,7 @@ def test_FOT2(delete_record):
 
 
 def test_FOT3(date_ranges):
-    """The start date must be less than or equal to the end date"""
+    """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
         factories.FootnoteTypeFactory.create(valid_between=date_ranges.backwards)
@@ -51,7 +50,7 @@ def test_FO2(make_duplicate_record):
 
 
 def test_FO3(date_ranges):
-    """The start date must be less than or equal to the end date"""
+    """The start date must be less than or equal to the end date."""
 
     with pytest.raises(DataError):
         factories.FootnoteFactory.create(valid_between=date_ranges.backwards)
@@ -62,20 +61,19 @@ def test_FO4_one_description_mandatory():
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.FO4().validate(
-            factories.FootnoteFactory.create(description=None)
+            factories.FootnoteFactory.create(description=None),
         )
 
 
 def test_FO4_first_description_must_have_same_start_date(date_ranges):
-    """The start date of the first description period must be equal to the start date of
-    the footnote.
-    """
+    """The start date of the first description period must be equal to the start
+    date of the footnote."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.FO4().validate(
             factories.FootnoteFactory.create(
-                description__valid_between=date_ranges.later
-            )
+                description__valid_between=date_ranges.later,
+            ),
         )
 
 
@@ -92,14 +90,16 @@ def test_FO4_start_dates_cannot_match():
 
 
 def test_FO4_description_start_before_footnote_end(date_ranges):
-    """The start date must be less than or equal to the end date of the footnote."""
+    """The start date must be less than or equal to the end date of the
+    footnote."""
 
     footnote = factories.FootnoteFactory.create(
         valid_between=date_ranges.normal,
         description__valid_between=date_ranges.starts_with_normal,
     )
     factories.FootnoteDescriptionFactory.create(
-        described_footnote=footnote, valid_between=date_ranges.later
+        described_footnote=footnote,
+        valid_between=date_ranges.later,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -107,13 +107,12 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
 
 
 def test_FO5(date_ranges):
-    """When a footnote is used in a measure the validity period of the footnote must
-    span the validity period of the measure.
-    """
+    """When a footnote is used in a measure the validity period of the footnote
+    must span the validity period of the measure."""
 
     assoc = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=factories.MeasureFactory.create(
-            valid_between=date_ranges.normal
+            valid_between=date_ranges.normal,
         ),
         associated_footnote__valid_between=date_ranges.starts_with_normal,
     )
@@ -123,14 +122,13 @@ def test_FO5(date_ranges):
 
 
 def test_FO6(date_ranges):
-    """When a footnote is used in a goods nomenclature the validity period of the
-    footnote must span the validity period of the association with the goods
-    nomenclature.
-    """
+    """When a footnote is used in a goods nomenclature the validity period of
+    the footnote must span the validity period of the association with the goods
+    nomenclature."""
 
     assoc = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
         goods_nomenclature=factories.GoodsNomenclatureFactory.create(
-            valid_between=date_ranges.normal
+            valid_between=date_ranges.normal,
         ),
         associated_footnote__valid_between=date_ranges.starts_with_normal,
     )
@@ -141,22 +139,21 @@ def test_FO6(date_ranges):
 
 @pytest.mark.skip(reason="Export Refunds not implemented")
 def test_FO7():
-    """When a footnote is used in an export refund nomenclature code the validity period
-    of the footnote must span the validity period of the association with the export
-    refund code.
-    """
+    """When a footnote is used in an export refund nomenclature code the
+    validity period of the footnote must span the validity period of the
+    association with the export refund code."""
 
     assert False
 
 
 def test_FO9(date_ranges):
-    """When a footnote is used in an additional code the validity period of the footnote
-    must span the validity period of the association with the additional code.
-    """
+    """When a footnote is used in an additional code the validity period of the
+    footnote must span the validity period of the association with the
+    additional code."""
 
     assoc = factories.FootnoteAssociationAdditionalCodeFactory.create(
         additional_code=factories.AdditionalCodeFactory.create(
-            valid_between=date_ranges.normal
+            valid_between=date_ranges.normal,
         ),
         associated_footnote__valid_between=date_ranges.starts_with_normal,
     )
@@ -167,27 +164,27 @@ def test_FO9(date_ranges):
 
 @requires_meursing_tables
 def test_FO10():
-    """When a footnote is used in a meursing table heading the validity period of the
-    footnote must span the validity period of the association with the meursing heading.
-    """
+    """When a footnote is used in a meursing table heading the validity period
+    of the footnote must span the validity period of the association with the
+    meursing heading."""
 
 
 def test_FO17(date_ranges):
-    """The validity period of the footnote type must span the validity period of the
-    footnote.
-    """
+    """The validity period of the footnote type must span the validity period of
+    the footnote."""
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.FO17().validate(
             factories.FootnoteFactory.create(
                 footnote_type__valid_between=date_ranges.normal,
                 valid_between=date_ranges.overlap_normal,
-            )
+            ),
         )
 
 
 def test_FO11(delete_record):
-    """When a footnote is used in a measure then the footnote may not be deleted."""
+    """When a footnote is used in a measure then the footnote may not be
+    deleted."""
 
     assoc = factories.FootnoteAssociationMeasureFactory.create()
 
@@ -196,9 +193,8 @@ def test_FO11(delete_record):
 
 
 def test_FO12(delete_record):
-    """When a footnote is used in a goods nomenclature then the footnote may not be
-    deleted.
-    """
+    """When a footnote is used in a goods nomenclature then the footnote may not
+    be deleted."""
 
     assoc = factories.FootnoteAssociationGoodsNomenclatureFactory.create()
 
@@ -208,17 +204,15 @@ def test_FO12(delete_record):
 
 @pytest.mark.skip(reason="Export Refunds not implemented")
 def test_FO13():
-    """When a footnote is used in an export refund code then the footnote may not be
-    deleted.
-    """
+    """When a footnote is used in an export refund code then the footnote may
+    not be deleted."""
 
     assert False
 
 
 def test_FO15(delete_record):
-    """When a footnote is used in an additional code then the footnote may not be
-    deleted.
-    """
+    """When a footnote is used in an additional code then the footnote may not
+    be deleted."""
 
     assoc = factories.FootnoteAssociationAdditionalCodeFactory.create()
 
@@ -228,6 +222,5 @@ def test_FO15(delete_record):
 
 @requires_meursing_tables
 def test_FO16():
-    """When a footnote is used in a meursing table heading then the footnote may not be
-    deleted.
-    """
+    """When a footnote is used in a meursing table heading then the footnote may
+    not be deleted."""

@@ -60,7 +60,7 @@ class GoodsNomenclatureOriginHandler(BaseHandler):
     def get_derived_from_goods_nomenclature_link(self, model, kwargs):
         if "new_goods_nomenclature_id" in self.resolved_links:
             good = models.GoodsNomenclature.objects.get(
-                pk=self.resolved_links["new_goods_nomenclature_id"]
+                pk=self.resolved_links["new_goods_nomenclature_id"],
             )
         else:
             good = self.resolved_links["new_goods_nomenclature"]
@@ -104,7 +104,7 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
     def get_absorbed_into_goods_nomenclature_link(self, model, kwargs):
         if "replaced_goods_nomenclature_id" in self.resolved_links:
             good = models.GoodsNomenclature.objects.get(
-                pk=self.resolved_links["replaced_goods_nomenclature_id"]
+                pk=self.resolved_links["replaced_goods_nomenclature_id"],
             )
         else:
             good = self.resolved_links["replaced_goods_nomenclature"]
@@ -155,7 +155,7 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
 
 @GoodsNomenclatureDescriptionHandler.register_dependant
 class GoodsNomenclatureDescriptionPeriodHandler(
-    BaseGoodsNomenclatureDescriptionHandler
+    BaseGoodsNomenclatureDescriptionHandler,
 ):
     dependencies = [GoodsNomenclatureDescriptionHandler]
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
@@ -198,7 +198,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         data.update(**self.extra_data)
         if "indented_goods_nomenclature_id" in data:
             data["indented_goods_nomenclature"] = models.GoodsNomenclature.objects.get(
-                pk=data.pop("indented_goods_nomenclature_id")
+                pk=data.pop("indented_goods_nomenclature_id"),
             )
         item_id = data["indented_goods_nomenclature"].item_id
 
@@ -251,10 +251,10 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             defn = (indent.sid, start_date.year, start_date.month, start_date.day)
             if defn in self.overrides:
                 next_indent = models.GoodsNomenclatureIndent.objects.get(
-                    sid=self.overrides[defn]
+                    sid=self.overrides[defn],
                 )
                 next_parent = next_indent.nodes.filter(
-                    valid_between__contains=start_date
+                    valid_between__contains=start_date,
                 ).get()
                 logger.info("Using manual override for indent %s", defn)
             else:
@@ -272,7 +272,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                 )
             if not next_parent:
                 raise InvalidIndentError(
-                    f"Parent indent not found for {item_id} for date {start_date}"
+                    f"Parent indent not found for {item_id} for date {start_date}",
                 )
 
             indent_start = start_date
@@ -294,9 +294,10 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
     def post_save(self, obj: models.GoodsNomenclatureIndent):
         """
-        There is a possible scenario when introducing an indent that the new indent is put between an
-        existing indent and it's children (i.e. it becomes the new parent for those children). This is
-        possible as the old system had no real materialized tree behind it.
+        There is a possible scenario when introducing an indent that the new
+        indent is put between an existing indent and it's children (i.e. it
+        becomes the new parent for those children). This is possible as the old
+        system had no real materialized tree behind it.
 
         Furthermore on updating changes any node which originally has children will need to have
         its children copied across to the new updated node.
@@ -314,10 +315,10 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         for node in obj.nodes.all():
             for previous_node in previous_version.nodes.filter(
-                valid_between__overlap=node.valid_between
+                valid_between__overlap=node.valid_between,
             ):
                 for child in previous_node.get_children().filter(
-                    valid_between__overlap=node.valid_between
+                    valid_between__overlap=node.valid_between,
                 ):
                     child.copy_tree(
                         parent=node,

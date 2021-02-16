@@ -13,11 +13,12 @@ from regulations import validators
 
 
 class Group(TrackedModel, ValidityMixin):
-    """A regulation group allows regulations to be grouped within the same logical unit.
-    This allows the regulations covered by a certain regulation group to be identified.
-    Consequently it is possible to identify the measure types and/or countries which
-    relate to a regulation group. Only base regulations can be associated with a
-    regulation group.
+    """
+    A regulation group allows regulations to be grouped within the same logical
+    unit. This allows the regulations covered by a certain regulation group to
+    be identified. Consequently it is possible to identify the measure types
+    and/or countries which relate to a regulation group. Only base regulations
+    can be associated with a regulation group.
 
     Regulations can only belong to a single Regulation group.
 
@@ -43,10 +44,14 @@ class Group(TrackedModel, ValidityMixin):
 
 
 class Regulation(TrackedModel):
-    """The main legal acts at the basis of the Union tariff and commercial legislation
-    are regulations and decisions. They can have one or several roles: base, provisional
-    or definitive antidumping, modification, complete abrogation, explicit abrogation,
-    prorogation (extension), Full Temporary Stop (FTS), Partial Temporary Stop (PTS)
+    """
+    The main legal acts at the basis of the Union tariff and commercial
+    legislation are regulations and decisions.
+
+    They can have one or several roles: base, provisional or definitive
+    antidumping, modification, complete abrogation, explicit abrogation,
+    prorogation (extension), Full Temporary Stop (FTS), Partial Temporary Stop
+    (PTS)
     """
 
     identifying_fields = ("role_type", "regulation_id")
@@ -68,7 +73,11 @@ class Regulation(TrackedModel):
         db_index=True,
     )
     official_journal_number = models.CharField(
-        max_length=5, null=True, blank=True, editable=False, default="1"
+        max_length=5,
+        null=True,
+        blank=True,
+        editable=False,
+        default="1",
     )
     official_journal_page = models.PositiveSmallIntegerField(
         blank=True,
@@ -79,7 +88,7 @@ class Regulation(TrackedModel):
     )
     published_at = models.DateField(blank=True, null=True, editable=False)
     information_text = ShortDescription(
-        validators=[validators.no_information_text_delimiters]
+        validators=[validators.no_information_text_delimiters],
     )
     public_identifier = models.CharField(
         max_length=50,
@@ -218,7 +227,8 @@ class Regulation(TrackedModel):
 
 
 class Amendment(TrackedModel):
-    """This regulation amends a base regulation or an antidumping regulation.
+    """
+    This regulation amends a base regulation or an antidumping regulation.
 
     It can affect the tariff and commercial aspects of the updated regulation but it
     does not extend nor close the regulation itself.
@@ -231,10 +241,14 @@ class Amendment(TrackedModel):
     subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="+"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="+",
     )
     target_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="amendments"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="amendments",
     )
 
     identifying_fields = (
@@ -244,9 +258,10 @@ class Amendment(TrackedModel):
 
 
 class Extension(TrackedModel):
-    """Prorogation regulations have no validity period of their own but extend the
-    validity end date of a base or modification regulation. This means that the measures
-    falling under the prorogued regulation are prorogued as well.
+    """
+    Prorogation regulations have no validity period of their own but extend the
+    validity end date of a base or modification regulation. This means that the
+    measures falling under the prorogued regulation are prorogued as well.
 
     A prorogation regulation can extend several regulations at different dates and a
     regulation can be extended several times.
@@ -261,10 +276,14 @@ class Extension(TrackedModel):
     subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="+"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="+",
     )
     target_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="extensions"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="extensions",
     )
     effective_end_date = models.DateField(null=True, blank=True)
 
@@ -272,10 +291,14 @@ class Extension(TrackedModel):
 
 
 class Suspension(TrackedModel):
-    """A FTS regulation suspends the applicability of a regulation for a period of time.
-    This means that all the measures within the regulations are suspended as long as the
-    FTS is valid. Once the FTS is abrogated or reaches its validity end date, all the
-    measures of the suspended regulation become applicable again.
+    """
+    A FTS regulation suspends the applicability of a regulation for a period of
+    time.
+
+    This means that all the measures within the regulations are suspended as
+    long as the FTS is valid. Once the FTS is abrogated or reaches its validity
+    end date, all the measures of the suspended regulation become applicable
+    again.
     """
 
     record_code = "300"
@@ -284,10 +307,14 @@ class Suspension(TrackedModel):
     action_subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="+"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="+",
     )
     target_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="suspensions"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="suspensions",
     )
     effective_end_date = models.DateField(null=True, blank=True)
 
@@ -298,11 +325,12 @@ class Suspension(TrackedModel):
 
 
 class Termination(TrackedModel):
-    """This regulation abrogates a base, modification or FTS regulation at a given date.
-    It puts an end date to an open ended regulation or brings the already existing end
-    date of the regulation further back in time. The end date applies by definition to
-    all measures under the abrogated regulation; unless these measures have a specific
-    end dates.
+    """
+    This regulation abrogates a base, modification or FTS regulation at a given
+    date. It puts an end date to an open ended regulation or brings the already
+    existing end date of the regulation further back in time. The end date
+    applies by definition to all measures under the abrogated regulation; unless
+    these measures have a specific end dates.
 
     If a regulation has been abrogated, its published end date does not take into
     account the abrogation and is different from its effective end date.
@@ -315,10 +343,14 @@ class Termination(TrackedModel):
     subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="+"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="+",
     )
     target_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="terminations"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="terminations",
     )
     effective_date = models.DateField()
 
@@ -326,24 +358,34 @@ class Termination(TrackedModel):
 
 
 class Replacement(TrackedModel):
-    """This record holds the information specifying which draft regulations are replaced
-    by a definitive regulation. Regulations can be partially replaced, based on any one
-    (or a combination) of the following three elements: measure type id, geographical
-    area id and chapter heading.
+    """
+    This record holds the information specifying which draft regulations are
+    replaced by a definitive regulation.
+
+    Regulations can be partially replaced, based on any one (or a combination)
+    of the following three elements: measure type id, geographical area id and
+    chapter heading.
     """
 
     record_code = "305"
     subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="+"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="+",
     )
     target_regulation = models.ForeignKey(
-        Regulation, on_delete=models.PROTECT, related_name="replacements"
+        Regulation,
+        on_delete=models.PROTECT,
+        related_name="replacements",
     )
 
     measure_type_id = models.CharField(
-        max_length=6, validators=[measure_type_id_validator], null=True, blank=True
+        max_length=6,
+        validators=[measure_type_id_validator],
+        null=True,
+        blank=True,
     )
     geographical_area_id = models.CharField(
         max_length=4,

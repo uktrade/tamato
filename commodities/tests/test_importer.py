@@ -1,5 +1,4 @@
 from datetime import date
-from datetime import timezone
 
 import pytest
 
@@ -12,7 +11,6 @@ from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.taric import process_taric_xml_stream
 from workbaskets.validators import WorkflowStatus
-
 
 pytestmark = pytest.mark.django_db
 
@@ -30,7 +28,12 @@ def compare_indent(indent, db_indent, indent_level, count, depth):
 
 
 def compare_updated_indent(
-    updated_indent, db_indent, indent_level, count, depth, parent_indent=None
+    updated_indent,
+    db_indent,
+    indent_level,
+    count,
+    depth,
+    parent_indent=None,
 ):
     db_indent_node = db_indent.nodes.first()
 
@@ -66,7 +69,9 @@ def make_and_get_indent(indent, valid_user, depth):
     xml = generate_test_import_xml(data)
 
     process_taric_xml_stream(
-        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+        xml,
+        username=valid_user.username,
+        status=WorkflowStatus.PUBLISHED.value,
     )
 
     return models.GoodsNomenclatureIndent.objects.filter(
@@ -76,20 +81,22 @@ def make_and_get_indent(indent, valid_user, depth):
 
 def test_goods_nomenclature_importer_create(imported_fields_match):
     assert imported_fields_match(
-        factories.GoodsNomenclatureFactory, serializers.GoodsNomenclatureSerializer
+        factories.GoodsNomenclatureFactory,
+        serializers.GoodsNomenclatureSerializer,
     )
 
 
 def test_goods_nomenclature_importer_update(update_imported_fields_match):
     assert update_imported_fields_match(
-        factories.GoodsNomenclatureFactory, serializers.GoodsNomenclatureSerializer
+        factories.GoodsNomenclatureFactory,
+        serializers.GoodsNomenclatureSerializer,
     )
 
 
 def test_goods_nomenclature_description_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.GoodsNomenclatureDescriptionFactory.build(
-            described_goods_nomenclature=factories.GoodsNomenclatureFactory.create()
+            described_goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
         ),
         serializers.GoodsNomenclatureDescriptionSerializer,
     )
@@ -100,7 +107,7 @@ def test_goods_nomenclature_description_importer_update(update_imported_fields_m
         factories.GoodsNomenclatureDescriptionFactory,
         serializers.GoodsNomenclatureDescriptionSerializer,
         dependencies={
-            "described_goods_nomenclature": factories.GoodsNomenclatureFactory
+            "described_goods_nomenclature": factories.GoodsNomenclatureFactory,
         },
     )
 
@@ -123,16 +130,19 @@ def test_goods_nomenclature_origin_importer_create(valid_user, date_ranges):
 
     xml = generate_test_import_xml(
         serializers.GoodsNomenclatureOriginSerializer(
-            origin_link, context={"format": "xml"}
-        ).data
+            origin_link,
+            context={"format": "xml"},
+        ).data,
     )
 
     process_taric_xml_stream(
-        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+        xml,
+        username=valid_user.username,
+        status=WorkflowStatus.PUBLISHED.value,
     )
 
     db_link = models.GoodsNomenclatureOrigin.objects.get(
-        new_goods_nomenclature__sid=good.sid
+        new_goods_nomenclature__sid=good.sid,
     )
     assert db_link
 
@@ -157,16 +167,19 @@ def test_goods_nomenclature_successor_importer_create(valid_user, date_ranges):
 
     xml = generate_test_import_xml(
         serializers.GoodsNomenclatureSuccessorSerializer(
-            successor_link, context={"format": "xml"}
-        ).data
+            successor_link,
+            context={"format": "xml"},
+        ).data,
     )
 
     process_taric_xml_stream(
-        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+        xml,
+        username=valid_user.username,
+        status=WorkflowStatus.PUBLISHED.value,
     )
 
     db_link = models.GoodsNomenclatureSuccessor.objects.get(
-        replaced_goods_nomenclature__sid=good.sid
+        replaced_goods_nomenclature__sid=good.sid,
     )
     assert db_link
 
@@ -206,16 +219,19 @@ def test_goods_nomenclature_successor_importer_delete(valid_user, date_ranges):
 
     xml = generate_test_import_xml(
         serializers.GoodsNomenclatureSuccessorSerializer(
-            successor_link, context={"format": "xml"}
-        ).data
+            successor_link,
+            context={"format": "xml"},
+        ).data,
     )
 
     process_taric_xml_stream(
-        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+        xml,
+        username=valid_user.username,
+        status=WorkflowStatus.PUBLISHED.value,
     )
 
     db_link = models.GoodsNomenclatureSuccessor.objects.filter(
-        replaced_goods_nomenclature__sid=good.sid
+        replaced_goods_nomenclature__sid=good.sid,
     )
     assert not db_link.current().exists()
     assert db_link.current_deleted().exists()
@@ -225,7 +241,7 @@ def test_goods_nomenclature_indent_importer_create(valid_user):
     indent = factories.GoodsNomenclatureIndentFactory.build(
         update_type=UpdateType.CREATE.value,
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
-            item_id="1100000000"
+            item_id="1100000000",
         ),
     )
 
@@ -236,11 +252,13 @@ def test_goods_nomenclature_indent_importer_create(valid_user):
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update(
-    valid_user, date_ranges, update_type
+    valid_user,
+    date_ranges,
+    update_type,
 ):
     indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
-            item_id="2100000000"
+            item_id="2100000000",
         ),
         valid_between=date_ranges.normal,
     )
@@ -259,12 +277,12 @@ def test_goods_nomenclature_indent_importer_update(
 
 def test_goods_nomenclature_indent_importer_create_with_parent_low_indent(valid_user):
     parent_indent = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__item_id="1200000000"
+        indented_goods_nomenclature__item_id="1200000000",
     ).nodes.first()
 
     indent = factories.GoodsNomenclatureIndentFactory.build(
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
-            item_id="1201000000"
+            item_id="1201000000",
         ),
     )
 
@@ -278,10 +296,12 @@ def test_goods_nomenclature_indent_importer_create_with_parent_low_indent(valid_
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_with_parent_low_indent(
-    valid_user, date_ranges, update_type
+    valid_user,
+    date_ranges,
+    update_type,
 ):
     parent_indent = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__item_id="1200000000"
+        indented_goods_nomenclature__item_id="1200000000",
     ).nodes.first()
 
     indent = factories.GoodsNomenclatureIndentFactory.create(
@@ -311,11 +331,9 @@ def test_goods_nomenclature_indent_importer_update_with_parent_low_indent(
 
 
 def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid_user):
-    """
-    Ensure Goods Nomenclature Indent importers can appropriately handle importing
-    indents into the hierarchy when receiving codes which have already used up
-    all 10 digits of the code.
-    """
+    """Ensure Goods Nomenclature Indent importers can appropriately handle
+    importing indents into the hierarchy when receiving codes which have already
+    used up all 10 digits of the code."""
     parent_indent = None
     for idx in range(1, 6):
         parent_indent = factories.GoodsNomenclatureIndentNodeFactory.create(
@@ -326,7 +344,7 @@ def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid
     indent = factories.GoodsNomenclatureIndentFactory.build(
         update_type=UpdateType.CREATE.value,
         indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
-            item_id="1212121215"
+            item_id="1212121215",
         ),
     )
 
@@ -337,13 +355,13 @@ def test_goods_nomenclature_indent_importer_create_with_parent_high_indent(valid
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_with_parent_high_indent(
-    valid_user, update_type, date_ranges
+    valid_user,
+    update_type,
+    date_ranges,
 ):
-    """
-    Ensure Goods Nomenclature Indent importers can appropriately handle importing
-    indents into the hierarchy when receiving codes which have already used up
-    all 10 digits of the code.
-    """
+    """Ensure Goods Nomenclature Indent importers can appropriately handle
+    importing indents into the hierarchy when receiving codes which have already
+    used up all 10 digits of the code."""
     parent_indent = None
     # Make enough of a hierarchy to ensure we're beyond indent 5, meaning we're dependent
     # on suffix, indent and code and not just the goods code to figure out the hierarchy.
@@ -355,7 +373,7 @@ def test_goods_nomenclature_indent_importer_update_with_parent_high_indent(
 
     indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
-            item_id="1212121215"
+            item_id="1212121215",
         ),
         valid_between=date_ranges.normal,
     )
@@ -373,15 +391,19 @@ def test_goods_nomenclature_indent_importer_update_with_parent_high_indent(
 
 
 def test_goods_nomenclature_indent_importer_create_multiple_parents(
-    valid_user, date_ranges
+    valid_user,
+    date_ranges,
 ):
     """
-    In some cases there is an indent which is created which already expects to have multiple parents
-    over its lifetime. Assert multiple indent nodes are generated in this scenario.
+    In some cases there is an indent which is created which already expects to
+    have multiple parents over its lifetime.
+
+    Assert multiple indent nodes are generated in this scenario.
     """
 
     indent_validity = TaricDateRange(
-        date_ranges.adjacent_earlier.lower, date_ranges.adjacent_later.upper
+        date_ranges.adjacent_earlier.lower,
+        date_ranges.adjacent_later.upper,
     )
     parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
         valid_between=indent_validity,
@@ -394,10 +416,12 @@ def test_goods_nomenclature_indent_importer_create_multiple_parents(
             indent=parent_indent,
         ),
         factories.GoodsNomenclatureIndentNodeFactory.create(
-            valid_between=date_ranges.normal, indent=parent_indent
+            valid_between=date_ranges.normal,
+            indent=parent_indent,
         ),
         factories.GoodsNomenclatureIndentNodeFactory.create(
-            valid_between=date_ranges.adjacent_later, indent=parent_indent
+            valid_between=date_ranges.adjacent_later,
+            indent=parent_indent,
         ),
     }
 
@@ -425,12 +449,15 @@ def test_goods_nomenclature_indent_importer_create_multiple_parents(
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_multiple_parents(
-    valid_user, date_ranges, update_type
+    valid_user,
+    date_ranges,
+    update_type,
 ):
     parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
         valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 12, 1)),
         indented_goods_nomenclature__valid_between=TaricDateRange(
-            date(2020, 1, 1), date(2020, 12, 1)
+            date(2020, 1, 1),
+            date(2020, 12, 1),
         ),
         indented_goods_nomenclature__item_id="1300000000",
     )
@@ -482,7 +509,9 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
 
 @pytest.mark.parametrize("item_id,suffix", [("1402000000", "80"), ("1401010000", "20")])
 def test_goods_nomenclature_indent_importer_create_with_triple_00_indent(
-    valid_user, item_id, suffix
+    valid_user,
+    item_id,
+    suffix,
 ):
     """
     In cases where there are phantom headers right below a chapter (regardless
@@ -496,14 +525,15 @@ def test_goods_nomenclature_indent_importer_create_with_triple_00_indent(
         indented_goods_nomenclature__item_id="1401000000",
         indented_goods_nomenclature__suffix="20",
         node__parent=factories.GoodsNomenclatureIndentFactory.create(
-            indented_goods_nomenclature__item_id="1400000000"
+            indented_goods_nomenclature__item_id="1400000000",
         ).nodes.first(),
     ).nodes.first()
 
     indent = factories.GoodsNomenclatureIndentFactory.build(
         update_type=UpdateType.CREATE.value,
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
-            item_id=item_id, suffix=suffix
+            item_id=item_id,
+            suffix=suffix,
         ),
     )
 
@@ -515,21 +545,26 @@ def test_goods_nomenclature_indent_importer_create_with_triple_00_indent(
 @pytest.mark.parametrize("item_id,suffix", [("1402000000", "80"), ("1401010000", "20")])
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_with_triple_00_indent(
-    valid_user, date_ranges, item_id, suffix, update_type
+    valid_user,
+    date_ranges,
+    item_id,
+    suffix,
+    update_type,
 ):
     parent_indent = factories.GoodsNomenclatureIndentFactory.create(
         update_type=UpdateType.CREATE.value,
         indented_goods_nomenclature__item_id="1401000000",
         indented_goods_nomenclature__suffix="20",
         node__parent=factories.GoodsNomenclatureIndentFactory.create(
-            indented_goods_nomenclature__item_id="1400000000"
+            indented_goods_nomenclature__item_id="1400000000",
         ).nodes.first(),
     ).nodes.first()
 
     indent = factories.GoodsNomenclatureIndentFactory.create(
         update_type=UpdateType.CREATE.value,
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
-            item_id=item_id, suffix=suffix
+            item_id=item_id,
+            suffix=suffix,
         ),
         valid_between=date_ranges.normal,
     )
@@ -571,7 +606,9 @@ def test_goods_nomenclature_indent_importer_update_with_branch_shift(valid_user)
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_with_children(
-    valid_user, update_type, date_ranges
+    valid_user,
+    update_type,
+    date_ranges,
 ):
     parent_indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__item_id="4400000000",

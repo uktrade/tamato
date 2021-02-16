@@ -47,7 +47,7 @@ def get_latest_tracked_models(request, per_page: int = 20) -> List[TrackedModel]
 
     for tracked_class, pk_list in obj_map.items():
         full_tracked_models.extend(
-            tracked_class.objects.filter(pk__in=pk_list).select_related()
+            tracked_class.objects.filter(pk__in=pk_list).select_related(),
         )
 
     full_tracked_models.sort(key=lambda x: -x.pk)
@@ -65,12 +65,11 @@ def get_activity_stream_item_id(obj: TrackedModel) -> str:
 
 def tracked_model_to_activity_stream_item(obj: TrackedModel):
     """
-    Convert a TrackedModel into a data object suitable for consumption
-    by Activity Stream as outlined in https://www.w3.org/TR/activitystreams-core/
+    Convert a TrackedModel into a data object suitable for consumption by
+    Activity Stream as outlined in https://www.w3.org/TR/activitystreams-core/
 
     Instead of providing the full nested data for every related object the
-    relations are removed and provided as their equivalent ActivityStream
-    IDs.
+    relations are removed and provided as their equivalent ActivityStream IDs.
     """
 
     item_type = get_activity_stream_item_type(obj)
@@ -85,7 +84,7 @@ def tracked_model_to_activity_stream_item(obj: TrackedModel):
         relation_obj = getattr(obj, relation.name, None)
         if relation_obj:
             extra_data[f"{item_type}:{relation.name}"] = get_activity_stream_item_id(
-                relation_obj
+                relation_obj,
             )
 
     obj_data = {
@@ -122,7 +121,7 @@ def tracked_model_to_activity_stream_item(obj: TrackedModel):
 
 def next_url(tracked_model: TrackedModel, request: HttpRequest) -> str:
     return request.build_absolute_uri(
-        reverse("activity-stream") + f"?start={tracked_model.pk}"
+        reverse("activity-stream") + f"?start={tracked_model.pk}",
     )
 
 

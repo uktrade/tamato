@@ -25,7 +25,8 @@ class InvalidDataError(Exception):
 
 
 class ElementParser:
-    """Base class for element specific parsers.
+    """
+    Base class for element specific parsers.
 
     ElementParser classes uses introspection to build a lookup table of child element
     parsers to their output JSON field name.
@@ -74,7 +75,6 @@ class ElementParser:
     .. code:: json
 
         {"child": {"id": 2, "field": "Text"}}
-
     """
 
     tag: Optional[Tag] = None
@@ -106,7 +106,9 @@ class ElementParser:
         return field_lookup
 
     def is_parser_for_element(
-        self, parser: ElementParser, element: etree.Element
+        self,
+        parser: ElementParser,
+        element: etree.Element,
     ) -> bool:
         """Check if the parser matches the element."""
         return parser.tag == element.tag
@@ -161,7 +163,8 @@ class ElementParser:
 
             # leaving the child element, so stop delegating
             if not self.child.started and self.is_parser_for_element(
-                self.child, element
+                self.child,
+                element,
             ):
                 field_name = self._field_lookup[self.child]
                 if self.child.many:
@@ -182,12 +185,10 @@ class ElementParser:
             self.validate()
 
     def clean(self):
-        """Clean up data"""
-        pass
+        """Clean up data."""
 
     def validate(self):
-        """Validate data"""
-        pass
+        """Validate data."""
 
     @classmethod
     def register_child(cls, name, *args, **kwargs):
@@ -202,13 +203,13 @@ class ElementParser:
 
 
 class TextElement(ElementParser):
-    """Parse elements which contain a text value.
+    """
+    Parse elements which contain a text value.
 
     This class provides a convenient way to define a parser for elements that contain
     only a text value and have no attributes or children, eg:
 
         <msg:record.code>Example Text</msg:record.code>
-
     """
 
     def clean(self):
@@ -224,7 +225,6 @@ class IntElement(ElementParser):
     only an integer value and have no attributes or children, eg:
 
         <msg:record.code>430</msg:record.code>
-
     """
 
     def clean(self):
@@ -233,7 +233,7 @@ class IntElement(ElementParser):
 
 
 class ValidityMixin:
-    """Parse validity start and end dates"""
+    """Parse validity start and end dates."""
 
     _additional_components = {
         TextElement(Tag("validity.start.date")): "valid_between_lower",
@@ -255,19 +255,19 @@ class ValidityMixin:
 
 
 class Writable:
-    """A parser which implements the Writable interface can write its changes to the
-    database.
+    """
+    A parser which implements the Writable interface can write its changes to
+    the database.
 
-    Not all TARIC3 elements correspond to database entities (particularly simple text
-    elements, but also envelopes and app.messages).
+    Not all TARIC3 elements correspond to database entities (particularly simple
+    text elements, but also envelopes and app.messages).
     """
 
     nursery = get_nursery()
 
     def create(self, data: Mapping[str, Any], transaction_id: int):
-        """
-        Preps the given data as a create record and submits it to the nursery for processing.
-        """
+        """Preps the given data as a create record and submits it to the nursery
+        for processing."""
         data.update(update_type=UpdateType.CREATE)
 
         dispatch_object = {
@@ -279,7 +279,7 @@ class Writable:
         self.nursery.submit(dispatch_object)
 
     def update(self, data: Mapping[str, Any], transaction_id: int):
-        """Update a DB record with provided data"""
+        """Update a DB record with provided data."""
         data.update(update_type=UpdateType.UPDATE.value)
 
         dispatch_object = {
@@ -291,7 +291,7 @@ class Writable:
         self.nursery.submit(dispatch_object)
 
     def delete(self, data: Mapping[str, Any], transaction_id: int):
-        """Delete a DB record with provided data"""
+        """Delete a DB record with provided data."""
         data.update(update_type=UpdateType.DELETE.value)
 
         dispatch_object = {
