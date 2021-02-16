@@ -1,10 +1,12 @@
 {% extends "layouts/layout.jinja" %}
 
+{% set object_type_plural = object_type_plural or object_type + "s" %}
+
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
-      {"text": "Find and edit footnotes", "href": find_edit_url},
+      {"text": "Find and edit " ~ object_type_plural, "href": find_edit_url},
       {"text": page_title}
     ]
   }) }}
