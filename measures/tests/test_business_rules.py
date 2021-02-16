@@ -521,6 +521,41 @@ def existing_measure(request, date_ranges, existing_goods_nomenclature):
         ),
         (
             lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "measure_type": factories.MeasureTypeFactory(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "geographical_area": factories.GeographicalAreaFactory(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "order_number": factories.QuotaOrderNumberFactory(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "additional_code": factories.AdditionalCodeFactory(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "reduction": None,
+            },
+            False,
+        ),
+        (
+            lambda d: {
                 "valid_between": Dates.no_end_before(d.adjacent_earlier.lower),
                 "generating_regulation__valid_between": d.adjacent_earlier,
                 "generating_regulation__effective_end_date": d.adjacent_earlier.upper,
@@ -543,6 +578,11 @@ def existing_measure(request, date_ranges, existing_goods_nomenclature):
     ),
     ids=[
         "explicit:overlapping",
+        "explicit:overlapping:measure_type",
+        "explicit:overlapping:geographical_area",
+        "explicit:overlapping:order_number",
+        "explicit:overlapping:additional_code",
+        "explicit:overlapping:reduction",
         "implicit:not-overlapping",
         "explicit:not-overlapping",
         "deleted",
@@ -553,18 +593,8 @@ def related_measure_dates(request, date_ranges):
     return callable(date_ranges), date_overlap
 
 
-@pytest.fixture(
-    params=(
-        None,
-        "measure_type",
-        "geographical_area",
-        "order_number",
-        "additional_code",
-        "reduction",
-    ),
-)
+@pytest.fixture
 def related_measure_data(
-    request,
     related_measure_dates,
     related_goods_nomenclature,
     existing_measure,
@@ -580,9 +610,7 @@ def related_measure_data(
         "reduction": existing_measure.reduction,
         **validity_data,
     }
-    if request.param in full_data:
-        del full_data[request.param]
-    error_expected = date_overlap and nomenclature_overlap and (request.param is None)
+    error_expected = date_overlap and nomenclature_overlap
 
     return full_data, error_expected
 
