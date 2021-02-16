@@ -8,10 +8,10 @@ from django.db.models import Q
 
 from common.business_rules import BusinessRule
 from common.business_rules import MustExist
-from common.business_rules import only_applicable_after
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import only_applicable_after
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
@@ -24,15 +24,15 @@ class MeasureValidityPeriodContained(ValidityPeriodContained):
     def query_contains_validity(self, container, contained, model):
         queryset = container.__class__.objects.filter(
             **container.get_identifying_fields(),
-        ).current()
+        ).current_as_of(model.transaction)
 
         if container.__class__.__name__ == "Measure":
             queryset = queryset.with_effective_valid_between().filter(
-                db_effective_valid_between__contains=contained.valid_between
+                db_effective_valid_between__contains=contained.valid_between,
             )
         elif contained.__class__.__name__ == "Measure":
             queryset = queryset.filter(
-                valid_between__contains=contained.effective_valid_between
+                valid_between__contains=contained.effective_valid_between,
             )
         else:
             queryset = queryset.filter(valid_between__contains=contained.valid_between)
@@ -49,7 +49,8 @@ class MTS1(UniqueIdentifyingFields):
 
 
 class MTS2(PreventDeleteIfInUse):
-    """The measure type series cannot be deleted if it is associated with a measure type."""
+    """The measure type series cannot be deleted if it is associated with a
+    measure type."""
 
 
 # 235 - MEASURE TYPE
@@ -60,9 +61,8 @@ class MT1(UniqueIdentifyingFields):
 
 
 class MT3(MeasureValidityPeriodContained):
-    """When a measure type is used in a measure then the validity period of the measure
-    type must span the validity period of the measure.
-    """
+    """When a measure type is used in a measure then the validity period of the
+    measure type must span the validity period of the measure."""
 
     container_field_name = "measure_type"
 
@@ -78,9 +78,8 @@ class MT7(PreventDeleteIfInUse):
 
 
 class MT10(ValidityPeriodContained):
-    """The validity period of the measure type series must span the validity period of
-    the measure type.
-    """
+    """The validity period of the measure type series must span the validity
+    period of the measure type."""
 
     container_field_name = "measure_type_series"
 
@@ -93,18 +92,17 @@ class MC1(UniqueIdentifyingFields):
 
 
 class MC3(MeasureValidityPeriodContained):
-    """If a measure condition code is used in a measure then the validity period of the
-    measure condition code must span the validity period of the measure.
-    """
+    """If a measure condition code is used in a measure then the validity period
+    of the measure condition code must span the validity period of the
+    measure."""
 
     container_field_name = "condition_code"
     contained_field_name = "dependent_measure"
 
 
 class MC4(PreventDeleteIfInUse):
-    """The measure condition code cannot be deleted if it is used in a measure condition
-    component.
-    """
+    """The measure condition code cannot be deleted if it is used in a measure
+    condition component."""
 
     in_use_check = "used_in_component"
 
@@ -117,13 +115,13 @@ class MA1(UniqueIdentifyingFields):
 
 
 class MA2(PreventDeleteIfInUse):
-    """The measure action cannot be deleted if it is used in a measure condition component."""
+    """The measure action cannot be deleted if it is used in a measure condition
+    component."""
 
 
 class MA4(MeasureValidityPeriodContained):
-    """If a measure action is used in a measure then the validity period of the measure
-    action must span the validity period of the measure.
-    """
+    """If a measure action is used in a measure then the validity period of the
+    measure action must span the validity period of the measure."""
 
     container_field_name = "action"
     contained_field_name = "dependent_measure"
@@ -133,9 +131,12 @@ class MA4(MeasureValidityPeriodContained):
 
 
 class ME1(UniqueIdentifyingFields):
-    """The combination of measure type + geographical area + goods nomenclature item id
-    + additional code type + additional code + order number + reduction indicator +
-    start date must be unique.
+    """
+    The combination of measure type + geographical area + goods nomenclature
+    item id.
+
+    + additional code type + additional code + order number + reduction
+    indicator + start date must be unique.
     """
 
     identifying_fields = (
@@ -158,7 +159,8 @@ class ME2(MustExist):
 
 
 class ME3(MeasureValidityPeriodContained):
-    """The validity period of the measure type must span the validity period of the measure."""
+    """The validity period of the measure type must span the validity period of
+    the measure."""
 
     container_field_name = "measure_type"
 
@@ -170,7 +172,8 @@ class ME4(MustExist):
 
 
 class ME5(MeasureValidityPeriodContained):
-    """The validity period of the geographical area must span the validity period of the measure."""
+    """The validity period of the geographical area must span the validity
+    period of the measure."""
 
     container_field_name = "geographical_area"
 
@@ -182,9 +185,12 @@ class ME6(MustExist):
 
 
 class ME7(BusinessRule):
-    """The goods nomenclature code must be a product code. It may not be an intermediate line.
+    """
+    The goods nomenclature code must be a product code. It may not be an
+    intermediate line.
 
-    test"""
+    test
+    """
 
     def validate(self, measure):
         if measure.goods_nomenclature and measure.goods_nomenclature.suffix != "80":
@@ -192,13 +198,15 @@ class ME7(BusinessRule):
 
 
 class ME8(MeasureValidityPeriodContained):
-    """The validity period of the goods code must span the validity period of the measure."""
+    """The validity period of the goods code must span the validity period of
+    the measure."""
 
     container_field_name = "goods_nomenclature"
 
 
 class ME88(BusinessRule):
-    """The level of the goods code cannot exceed the explosion level of the measure type."""
+    """The level of the goods code cannot exceed the explosion level of the
+    measure type."""
 
     def validate(self, measure):
         if not measure.goods_nomenclature:
@@ -210,7 +218,7 @@ class ME88(BusinessRule):
                 sid=measure.goods_nomenclature.sid,
                 valid_between__overlap=measure.effective_valid_between,
             )
-            .current()
+            .current_as_of(measure.transaction)
         )
 
         explosion_level = measure.measure_type.measure_explosion_level
@@ -223,10 +231,9 @@ class ME88(BusinessRule):
 
 @only_applicable_after("2004-12-31")
 class ME16(BusinessRule):
-    """Integrating a measure with an additional code when an equivalent or overlapping
-    measures without additional code already exists and vice-versa, should be
-    forbidden.
-    """
+    """Integrating a measure with an additional code when an equivalent or
+    overlapping measures without additional code already exists and vice-versa,
+    should be forbidden."""
 
     def validate(self, measure):
         kwargs = {}
@@ -240,11 +247,11 @@ class ME16(BusinessRule):
 
         if measure.additional_code or measure.dead_additional_code:
             additional_code_query = Q(additional_code__isnull=True) & Q(
-                dead_additional_code__isnull=True
+                dead_additional_code__isnull=True,
             )
         else:
             additional_code_query = Q(additional_code__isnull=False) | Q(
-                dead_additional_code__isnull=False
+                dead_additional_code__isnull=False,
             )
         if (
             type(measure)
@@ -262,7 +269,7 @@ class ME16(BusinessRule):
             )
             .exclude(pk=measure.pk if measure.pk else None)
             .excluding_versions_of(version_group=measure.version_group)
-            .current()
+            .current_as_of(measure.transaction)
             .exists()
         ):
             raise self.violation(
@@ -274,17 +281,15 @@ class ME16(BusinessRule):
 
 
 class ME115(MeasureValidityPeriodContained):
-    """The validity period of the referenced additional code must span the validity
-    period of the measure.
-    """
+    """The validity period of the referenced additional code must span the
+    validity period of the measure."""
 
     container_field_name = "additional_code"
 
 
 class ME25(BusinessRule):
-    """If the measure’s end date is specified (implicitly or explicitly) then the start
-    date of the measure must be less than or equal to the end date.
-    """
+    """If the measure’s end date is specified (implicitly or explicitly) then
+    the start date of the measure must be less than or equal to the end date."""
 
     def validate(self, measure):
         effective_end_date = measure.effective_end_date
@@ -297,9 +302,10 @@ class ME25(BusinessRule):
 
 
 class ME32(BusinessRule):
-    """There may be no overlap in time with other measure occurrences with a goods code
-    in the same nomenclature hierarchy which references the same measure type, geo area,
-    order number, additional code and reduction indicator.
+    """
+    There may be no overlap in time with other measure occurrences with a goods
+    code in the same nomenclature hierarchy which references the same measure
+    type, geo area, order number, additional code and reduction indicator.
 
     This rule is not applicable for Meursing additional codes.
     """
@@ -322,7 +328,7 @@ class ME32(BusinessRule):
         matching_measures = (
             type(measure)
             .objects.filter(query)
-            .current()
+            .current_as_of(measure.transaction)
             .exclude(version_group=measure.version_group)
         )
 
@@ -357,7 +363,8 @@ class ME32(BusinessRule):
                 # clash with the specified measure
                 clashing_measures = matching_measures.with_effective_valid_between().filter(
                     goods_nomenclature__indents__nodes__in=tree.values_list(
-                        "pk", flat=True
+                        "pk",
+                        flat=True,
                     ),
                     db_effective_valid_between__overlap=measure.effective_valid_between,
                 )
@@ -369,9 +376,11 @@ class ME32(BusinessRule):
 
 
 class ME10(BusinessRule):
-    """The order number must be specified if the "order number flag" (specified in the
-    measure type record) has the value "mandatory". If the flag is set to "not
-    permitted" then the field cannot be entered.
+    """
+    The order number must be specified if the "order number flag" (specified in
+    the measure type record) has the value "mandatory".
+
+    If the flag is set to "not permitted" then the field cannot be entered.
     """
 
     def validate(self, measure):
@@ -396,17 +405,17 @@ class ME10(BusinessRule):
 
 @only_applicable_after("2007-12-31")
 class ME116(MeasureValidityPeriodContained):
-    """When a quota order number is used in a measure then the validity period of the
-    quota order number must span the validity period of the measure.
-    """
+    """When a quota order number is used in a measure then the validity period
+    of the quota order number must span the validity period of the measure."""
 
     container_field_name = "order_number"
 
 
 @only_applicable_after("2007-12-31")
 class ME117(BusinessRule):
-    """When a measure has a quota measure type then the origin must exist as a quota
-    order number origin.
+    """
+    When a measure has a quota measure type then the origin must exist as a
+    quota order number origin.
 
     Only origins for quota order numbers managed by the first come first served
     principle are in scope; these order number are starting with '09'; except order
@@ -449,9 +458,9 @@ class ME117(BusinessRule):
 
 @only_applicable_after("2007-12-31")
 class ME119(BusinessRule):
-    """When a quota order number is used in a measure then the validity period of the
-    quota order number origin must span the validity period of the measure.
-    """
+    """When a quota order number is used in a measure then the validity period
+    of the quota order number origin must span the validity period of the
+    measure."""
 
     # This checks the same thing as ON10 from the other side of the relation
 
@@ -477,7 +486,8 @@ class ME119(BusinessRule):
 
 
 class ME9(BusinessRule):
-    """If no additional code is specified then the goods code is mandatory.
+    """
+    If no additional code is specified then the goods code is mandatory.
 
     A measure can be assigned to:
 
@@ -500,23 +510,23 @@ class ME9(BusinessRule):
 
 
 class ME12(BusinessRule):
-    """If the additional code is specified then the additional code type must have a
-    relationship with the measure type.
-    """
+    """If the additional code is specified then the additional code type must
+    have a relationship with the measure type."""
 
     def validate(self, measure):
         if (
             measure.additional_code
             and not measure.measure_type.additional_code_types.filter(
-                sid=measure.additional_code.type.sid
+                sid=measure.additional_code.type.sid,
             ).exists()
         ):
             raise self.violation(measure)
 
 
 class ME17(MustExist):
-    """If the additional code type has as application "non-Meursing" then the additional
-    code must exist as a non-Meursing additional code.
+    """
+    If the additional code type has as application "non-Meursing" then the
+    additional code must exist as a non-Meursing additional code.
 
     UK tariff does not use meursing tables, so this is essentially saying that an
     additional code must exist.
@@ -539,16 +549,20 @@ class ME17(MustExist):
 
 
 class ME24(MustExist):
-    """The role + regulation id must exist. If no measure start date is specified it
-    defaults to the regulation start date.
+    """
+    The role + regulation id must exist.
+
+    If no measure start date is specified it defaults to the regulation start
+    date.
     """
 
     reference_field_name = "generating_regulation"
 
 
 class ME87(BusinessRule):
-    """The validity period of the measure (implicit or explicit) must reside within the
-    effective validity period of its supporting regulation.
+    """
+    The validity period of the measure (implicit or explicit) must reside within
+    the effective validity period of its supporting regulation.
 
     The effective validity period is the validity period of the regulation taking into
     account extensions and abrogation.
@@ -597,7 +611,8 @@ class ME87(BusinessRule):
 
 
 class ME33(BusinessRule):
-    """"A justification regulation may not be entered if the measure end date is not filled in."""
+    """A justification regulation may not be entered if the measure end date is
+    not filled in."""
 
     def validate(self, measure):
         if (
@@ -608,7 +623,8 @@ class ME33(BusinessRule):
 
 
 class ME34(BusinessRule):
-    """A justification regulation must be entered if the measure end date is filled in."""
+    """A justification regulation must be entered if the measure end date is
+    filled in."""
 
     def validate(self, measure):
         if (
@@ -622,19 +638,23 @@ class ME34(BusinessRule):
 
 
 class ME40(BusinessRule):
-    """If the flag "duty expression" on measure type is "mandatory" then at least one
-    measure component or measure condition component record must be specified.  If the
-    flag is set "not permitted" then no measure component or measure condition component
-    must exist.  Measure components and measure condition components are mutually
-    exclusive. A measure can have either components or condition components
-    (if the ‘duty expression’ flag is ‘mandatory’ or ‘optional’) but not both.
+    """
+    If the flag "duty expression" on measure type is "mandatory" then at least
+    one measure component or measure condition component record must be
+    specified.  If the flag is set "not permitted" then no measure component or
+    measure condition component must exist.  Measure components and measure
+    condition components are mutually exclusive. A measure can have either
+    components or condition components (if the ‘duty expression’ flag is.
 
-    This describes the fact that measures of certain types MUST have components (duties)
-    assigned to them, whereas others must not. Note the sub-clause also – if the value
-    of the field “Component applicable” is set to 1 (mandatory) on a measure type, then
-    when the measure is created, there must be either measure components or measure
-    condition components assigned to the measure, but not both. CDS will generate errors
-    if either of these conditions are not met.
+    ‘mandatory’ or ‘optional’) but not both.
+
+    This describes the fact that measures of certain types MUST have components
+    (duties) assigned to them, whereas others must not. Note the sub-clause also
+    – if the value of the field “Component applicable” is set to 1 (mandatory)
+    on a measure type, then when the measure is created, there must be either
+    measure components or measure condition components assigned to the measure,
+    but not both. CDS will generate errors if either of these conditions are not
+    met.
     """
 
     def validate(self, measure):
@@ -675,23 +695,26 @@ class ME41(MustExist):
 
 
 class ME42(MeasureValidityPeriodContained):
-    """The validity period of the duty expression must span the validity period of the measure."""
+    """The validity period of the duty expression must span the validity period
+    of the measure."""
 
     container_field_name = "duty_expression"
     contained_field_name = "component_measure"
 
 
 class ME43(BusinessRule):
-    """The same duty expression can only be used once with the same measure.
+    """
+    The same duty expression can only be used once with the same measure.
 
-    Even if an expression that (in English) reads the same needs to be used more than
-    once in a measure, we must use a different expression ID, never the same one twice.
+    Even if an expression that (in English) reads the same needs to be used more
+    than once in a measure, we must use a different expression ID, never the
+    same one twice.
     """
 
     def validate(self, measure_component):
         duty_expressions_used = (
             type(measure_component)
-            .objects.approved()
+            .objects.current_as_of(measure_component.transaction)
             .with_workbasket(measure_component.transaction.workbasket)
             .exclude(pk=measure_component.pk if measure_component.pk else None)
             .excluding_versions_of(version_group=measure_component.version_group)
@@ -741,7 +764,11 @@ class ComponentApplicability(BusinessRule):
                     == ApplicabilityCode.MANDATORY,
                 }
             )
-            if components.filter(inapplicable).current().exists():
+            if (
+                components.filter(inapplicable)
+                .current_as_of(measure.transaction)
+                .exists()
+            ):
                 raise self.violation(measure, self.messages[code].format(self))
 
 
@@ -751,8 +778,11 @@ class MeasureComponentApplicability(ComponentApplicability):
 
 
 class ME45(MeasureComponentApplicability):
-    """If the flag "amount" on duty expression is "mandatory" then an amount must be
-    specified. If the flag is set "not permitted" then no amount may be entered.
+    """
+    If the flag "amount" on duty expression is "mandatory" then an amount must
+    be specified.
+
+    If the flag is set "not permitted" then no amount may be entered.
     """
 
     article = "an"
@@ -761,9 +791,11 @@ class ME45(MeasureComponentApplicability):
 
 
 class ME46(MeasureComponentApplicability):
-    """If the flag "monetary unit" on duty expression is "mandatory" then a monetary
-    unit must be specified. If the flag is set "not permitted" then no monetary unit may
-    be entered.
+    """
+    If the flag "monetary unit" on duty expression is "mandatory" then a
+    monetary unit must be specified.
+
+    If the flag is set "not permitted" then no monetary unit may be entered.
     """
 
     component_name = "monetary unit"
@@ -771,9 +803,11 @@ class ME46(MeasureComponentApplicability):
 
 
 class ME47(MeasureComponentApplicability):
-    """If the flag "measurement unit" on duty expression is "mandatory" then a
-    measurement unit must be specified. If the flag is set "not permitted" then no
-    measurement unit may be entered.
+    """
+    If the flag "measurement unit" on duty expression is "mandatory" then a
+    measurement unit must be specified.
+
+    If the flag is set "not permitted" then no measurement unit may be entered.
     """
 
     applicability_field = "duty_expression__measurement_unit_applicability_code"
@@ -788,31 +822,31 @@ class ME48(MustExist):
 
 
 class ME49(MeasureValidityPeriodContained):
-    """The validity period of the referenced monetary unit must span the validity period
-    of the measure."""
+    """The validity period of the referenced monetary unit must span the
+    validity period of the measure."""
 
     container_field_name = "monetary_unit"
     contained_field_name = "component_measure"
 
 
 class ME50(MustExist):
-    """The combination measurement unit + measurement unit qualifier must exist."""
+    """The combination measurement unit + measurement unit qualifier must
+    exist."""
 
     reference_field_name = "component_measurement"
 
 
 class ME51(MeasureValidityPeriodContained):
-    """The validity period of the measurement unit must span the validity period of the
-    measure."""
+    """The validity period of the measurement unit must span the validity period
+    of the measure."""
 
     container_field_name = "component_measurement__measurement_unit"
     contained_field_name = "component_measure"
 
 
 class ME52(MeasureValidityPeriodContained):
-    """The validity period of the measurement unit qualifier must span the validity
-    period of the measure.
-    """
+    """The validity period of the measurement unit qualifier must span the
+    validity period of the measure."""
 
     container_field_name = "component_measurement__measurement_unit_qualifier"
     contained_field_name = "component_measure"
@@ -834,18 +868,16 @@ class ME56(MustExist):
 
 
 class ME57(MeasureValidityPeriodContained):
-    """The validity period of the referenced certificate must span the validity period
-    of the measure.
-    """
+    """The validity period of the referenced certificate must span the validity
+    period of the measure."""
 
     container_field_name = "required_certificate"
     contained_field_name = "dependent_measure"
 
 
 class ME58(BusinessRule):
-    """The same certificate can only be referenced once by the same measure and the same
-    condition type.
-    """
+    """The same certificate can only be referenced once by the same measure and
+    the same condition type."""
 
     def validate(self, measure_condition):
         if measure_condition.required_certificate is None:
@@ -853,8 +885,7 @@ class ME58(BusinessRule):
 
         if (
             type(measure_condition)
-            .objects.approved()
-            .with_workbasket(measure_condition.transaction.workbasket)
+            .objects.with_workbasket(measure_condition.transaction.workbasket)
             .exclude(pk=measure_condition.pk if measure_condition.pk else None)
             .excluding_versions_of(version_group=measure_condition.version_group)
             .filter(
@@ -863,7 +894,7 @@ class ME58(BusinessRule):
                 required_certificate__certificate_type__sid=measure_condition.required_certificate.certificate_type.sid,
                 dependent_measure__sid=measure_condition.dependent_measure.sid,
             )
-            .current()
+            .current_as_of(measure_condition.transaction)
             .exists()
         ):
             raise self.violation(measure_condition)
@@ -882,31 +913,31 @@ class ME60(MustExist):
 
 
 class ME61(MeasureValidityPeriodContained):
-    """The validity period of the referenced monetary unit must span the validity period
-    of the measure.
-    """
+    """The validity period of the referenced monetary unit must span the
+    validity period of the measure."""
 
     container_field_name = "monetary_unit"
     contained_field_name = "dependent_measure"
 
 
 class ME62(MustExist):
-    """The combination measurement unit + measurement unit qualifier must exist."""
+    """The combination measurement unit + measurement unit qualifier must
+    exist."""
 
     reference_field_name = "condition_measurement"
 
 
 class ME63(MeasureValidityPeriodContained):
-    """The validity period of the measurement unit must span the validity period of the measure."""
+    """The validity period of the measurement unit must span the validity period
+    of the measure."""
 
     container_field_name = "condition_measurement__measurement_unit"
     contained_field_name = "dependent_measure"
 
 
 class ME64(MeasureValidityPeriodContained):
-    """The validity period of the measurement unit qualifier must span the validity
-    period of the measure.
-    """
+    """The validity period of the measurement unit qualifier must span the
+    validity period of the measure."""
 
     container_field_name = "condition_measurement__measurement_unit_qualifier"
     contained_field_name = "dependent_measure"
@@ -919,24 +950,26 @@ class ME105(MustExist):
 
 
 class ME106(MeasureValidityPeriodContained):
-    """The validity period of the duty expression must span the validity period of the measure."""
+    """The validity period of the duty expression must span the validity period
+    of the measure."""
 
     container_field_name = "duty_expression"
     contained_field_name = "condition__dependent_measure"
 
 
 class ME108(BusinessRule):
-    """The same duty expression can only be used once within condition components of the
-    same condition of the same measure.
+    """
+    The same duty expression can only be used once within condition components
+    of the same condition of the same measure.
 
-    (i.e. it can be re-used in other conditions, no matter what condition type, of the
-    same measure).
+    (i.e. it can be re-used in other conditions, no matter what condition type,
+    of the same measure).
     """
 
     def validate(self, component):
         if (
             type(component)
-            .objects.approved()
+            .objects.current_as_of(component.transaction)
             .with_workbasket(component.transaction.workbasket)
             .exclude(pk=component.pk if component.pk else None)
             .excluding_versions_of(version_group=component.version_group)
@@ -952,13 +985,16 @@ class ME108(BusinessRule):
 class MeasureConditionComponentApplicability(ComponentApplicability):
     def get_components(self, measure):
         return measure.conditions.prefetch_related("components").select_related(
-            "components__duty_expression"
+            "components__duty_expression",
         )
 
 
 class ME109(MeasureConditionComponentApplicability):
-    """If the flag 'amount' on duty expression is 'mandatory' then an amount must be
-    specified. If the flag is set to 'not permitted' then no amount may be entered.
+    """
+    If the flag 'amount' on duty expression is 'mandatory' then an amount must
+    be specified.
+
+    If the flag is set to 'not permitted' then no amount may be entered.
     """
 
     article = "an"
@@ -968,9 +1004,11 @@ class ME109(MeasureConditionComponentApplicability):
 
 
 class ME110(MeasureConditionComponentApplicability):
-    """If the flag 'monetary unit' on duty expression is 'mandatory' then a monetary
-    unit must be specified. If the flag is set to 'not permitted' then no monetary unit
-    may be entered.
+    """
+    If the flag 'monetary unit' on duty expression is 'mandatory' then a
+    monetary unit must be specified.
+
+    If the flag is set to 'not permitted' then no monetary unit may be entered.
     """
 
     component_name = "monetary unit"
@@ -981,9 +1019,12 @@ class ME110(MeasureConditionComponentApplicability):
 
 
 class ME111(MeasureConditionComponentApplicability):
-    """If the flag 'measurement unit' on duty expression is 'mandatory' then a
-    measurement unit must be specified. If the flag is set to 'not permitted' then no
-    measurement unit may be entered.
+    """
+    If the flag 'measurement unit' on duty expression is 'mandatory' then a
+    measurement unit must be specified.
+
+    If the flag is set to 'not permitted' then no measurement unit may be
+    entered.
     """
 
     component_name = "measurement unit"
@@ -1007,21 +1048,21 @@ class ME65(BusinessRule):
 
 
 class ME66(BusinessRule):
-    """The excluded geographical area must be a member of the geographical area group."""
+    """The excluded geographical area must be a member of the geographical area
+    group."""
 
     def validate(self, exclusion):
         geo_group = exclusion.modified_measure.geographical_area
 
         if not geo_group.memberships.filter(
-            sid=exclusion.excluded_geographical_area.sid
+            sid=exclusion.excluded_geographical_area.sid,
         ).exists():
             raise self.violation(exclusion)
 
 
 class ME67(BusinessRule):
-    """The membership period of the excluded geographical area must span the valid
-    period of the measure.
-    """
+    """The membership period of the excluded geographical area must span the
+    valid period of the measure."""
 
     def validate(self, exclusion):
         return  # TODO: Verify this rule
@@ -1037,7 +1078,8 @@ class ME67(BusinessRule):
 
 
 class ME68(BusinessRule):
-    """The same geographical area can only be excluded once by the same measure."""
+    """The same geographical area can only be excluded once by the same
+    measure."""
 
     def validate(self, exclusion):
         if (
@@ -1067,7 +1109,7 @@ class ME70(BusinessRule):
     def validate(self, association):
         if (
             type(association)
-            .objects.approved()
+            .objects.current_as_of(association.transaction)
             .with_workbasket(association.transaction.workbasket)
             .exclude(pk=association.pk if association.pk else None)
             .excluding_versions_of(version_group=association.version_group)
@@ -1103,8 +1145,8 @@ class ME71(BusinessRule):
 
 
 class ME73(MeasureValidityPeriodContained):
-    """The validity period of the associated footnote must span the validity period of
-    the measure."""
+    """The validity period of the associated footnote must span the validity
+    period of the measure."""
 
     container_field_name = "associated_footnote"
     contained_field_name = "footnoted_measure"
@@ -1116,7 +1158,8 @@ class ME73(MeasureValidityPeriodContained):
 
 
 class ME104(BusinessRule):
-    """The justification regulation must be either:
+    """
+    The justification regulation must be either:
 
         - the measure’s measure-generating regulation, or
         - a measure-generating regulation, valid on the day after the measure’s
@@ -1156,7 +1199,8 @@ class ME104(BusinessRule):
         if valid_day not in terminating.valid_between:
             amends = terminating.amends.first()
             if amends and valid_day in TaricDateRange(
-                amends.valid_between.lower, terminating.valid_between.upper
+                amends.valid_between.lower,
+                terminating.valid_between.upper,
             ):
                 return
 

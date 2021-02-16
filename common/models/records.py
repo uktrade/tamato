@@ -107,10 +107,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                             version_group__versions__transaction__workbasket=transaction.workbasket,
                             version_group__versions__transaction__order__lt=transaction.order,
                         )
-                        | Q(
-                            version_group__versions__transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
-                            version_group__versions__transaction__workbasket__approver__isnull=False,
-                        )
+                        | self.approved_query_filter("version_group__versions__")
                     ),
                 ),
             )
@@ -206,22 +203,13 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
     def approved(self):
         """Get objects which have been approved/sent-to-cds/published."""
 
-        return self.filter(
-            transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
-            transaction__workbasket__approver__isnull=False,
-        )
+        return self.filter(self.approved_query_filter())
 
     def approved_or_in_transaction(self, transaction):
         """Get objects which have been approved or are in the specified
         transaction."""
 
-        return self.filter(
-            Q(transaction=transaction)
-            | Q(
-                transaction__workbasket__status__in=WorkflowStatus.approved_statuses(),
-                transaction__workbasket__approver__isnull=False,
-            ),
-        )
+        return self.filter(Q(transaction=transaction) | self.approved_query_filter())
 
     def annotate_record_codes(self) -> QuerySet:
         """
@@ -296,6 +284,14 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
     def get_queryset(self):
         return self.annotate_record_codes().order_by("record_code", "subrecord_code")
+
+    def approved_query_filter(self, prefix=""):
+        return Q(
+            **{
+                f"{prefix}transaction__workbasket__status__in": WorkflowStatus.approved_statuses(),
+                f"{prefix}transaction__workbasket__approver__isnull": False,
+            }
+        )
 
     @staticmethod
     def _when_model_record_codes():
