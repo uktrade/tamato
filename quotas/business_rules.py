@@ -2,10 +2,10 @@
 from decimal import Decimal
 
 from common.business_rules import BusinessRule
-from common.business_rules import only_applicable_after
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import only_applicable_after
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
 from quotas.validators import SubQuotaType
@@ -18,14 +18,13 @@ class ON1(UniqueIdentifyingFields):
 
 
 class ON2(BusinessRule):
-    """There may be no overlap in time of two quota order numbers with the same quota
-    order number id.
-    """
+    """There may be no overlap in time of two quota order numbers with the same
+    quota order number id."""
 
     def validate(self, order_number):
         if (
             type(order_number)
-            .objects.approved()
+            .objects.current_as_of(order_number.transaction)
             .filter(
                 order_number=order_number.order_number,
                 valid_between__overlap=order_number.valid_between,
@@ -37,14 +36,13 @@ class ON2(BusinessRule):
 
 
 class ON5(BusinessRule):
-    """There may be no overlap in time of two quota order number origins with the same
-    quota order number SID and geographical area id.
-    """
+    """There may be no overlap in time of two quota order number origins with
+    the same quota order number SID and geographical area id."""
 
     def validate(self, origin):
         if (
             type(origin)
-            .objects.approved()
+            .objects.current_as_of(origin.transaction)
             .filter(
                 order_number__sid=origin.order_number.sid,
                 geographical_area__sid=origin.geographical_area.sid,
@@ -56,38 +54,34 @@ class ON5(BusinessRule):
             raise self.violation(
                 f"QuotaOrderNumberOrigin {origin}: There may be no overlap in time of "
                 "two quota order number origins with the same quota order number SID "
-                "and geographical area id."
+                "and geographical area id.",
             )
 
 
 @only_applicable_after("2006-12-31")
 class ON6(ValidityPeriodContained):
-    """The validity period of the geographical area must span the validity period of the
-    quota order number origin.
-    """
+    """The validity period of the geographical area must span the validity
+    period of the quota order number origin."""
 
     container_field_name = "geographical_area"
 
 
 class ON7(ValidityPeriodContained):
-    """The validity period of the quota order number must span the validity period of
-    the quota order number origin.
-    """
+    """The validity period of the quota order number must span the validity
+    period of the quota order number origin."""
 
     container_field_name = "order_number"
 
 
 class ON8(ON7):
-    """The validity period of the quota order number must span the validity period of
-    the referencing quota definition.
-    """
+    """The validity period of the quota order number must span the validity
+    period of the referencing quota definition."""
 
 
 @only_applicable_after("2007-12-31")
 class ON9(BusinessRule):
-    """When a quota order number is used in a measure then the validity period of the
-    quota order number must span the validity period of the measure.
-    """
+    """When a quota order number is used in a measure then the validity period
+    of the quota order number must span the validity period of the measure."""
 
     def validate(self, order_number):
         if (
@@ -105,9 +99,9 @@ class ON9(BusinessRule):
 
 @only_applicable_after("2007-12-31")
 class ON10(BusinessRule):
-    """When a quota order number is used in a measure then the validity period of the
-    quota order number origin must span the validity period of the measure.
-    """
+    """When a quota order number is used in a measure then the validity period
+    of the quota order number origin must span the validity period of the
+    measure."""
 
     def validate(self, origin):
         # XXX should this take a QuotaOrderNumber and check all related
@@ -132,7 +126,8 @@ class ON11(PreventDeleteIfInUse):
 
 @only_applicable_after("2007-12-31")
 class ON12(PreventDeleteIfInUse):
-    """The quota order number origin cannot be deleted if it is used in a measure."""
+    """The quota order number origin cannot be deleted if it is used in a
+    measure."""
 
 
 class ON13(BusinessRule):
@@ -146,7 +141,8 @@ class ON13(BusinessRule):
 
 
 class ON14(BusinessRule):
-    """The excluded geographical area must be a member of the geographical area group."""
+    """The excluded geographical area must be a member of the geographical area
+    group."""
 
     def validate(self, exclusion):
         if not exclusion.excluded_geographical_area.groups.filter(
@@ -164,8 +160,7 @@ class QD1(UniqueIdentifyingFields):
 
 class QD7(ValidityPeriodContained):
     """The validity period of the quota definition must be spanned by one of the
-    validity periods of the referenced quota order number.
-    """
+    validity periods of the referenced quota order number."""
 
     # "one of the validity periods" suggests an order number can have more than one
     # validity period, but this is not true. QD7 mirrors ON8, to check the same
@@ -175,25 +170,22 @@ class QD7(ValidityPeriodContained):
 
 
 class QD8(ValidityPeriodContained):
-    """The validity period of the monetary unit code must span the validity period of
-    the quota definition.
-    """
+    """The validity period of the monetary unit code must span the validity
+    period of the quota definition."""
 
     container_field_name = "monetary_unit"
 
 
 class QD10(ValidityPeriodContained):
-    """The validity period measurement unit code must span the validity period of the
-    quota definition.
-    """
+    """The validity period measurement unit code must span the validity period
+    of the quota definition."""
 
     container_field_name = "measurement_unit"
 
 
 class QD11(ValidityPeriodContained):
-    """The validity period of the measurement unit qualifier code must span the validity
-    period of the quota definition.
-    """
+    """The validity period of the measurement unit qualifier code must span the
+    validity period of the quota definition."""
 
     container_field_name = "measurement_unit_qualifier"
 
@@ -203,9 +195,8 @@ class QA1(UniqueIdentifyingFields):
 
 
 class QA2(ValidityPeriodContained):
-    """The sub-quota's validity period must be entirely enclosed within the validity
-    period of the main quota.
-    """
+    """The sub-quota's validity period must be entirely enclosed within the
+    validity period of the main quota."""
 
     container_field_name = "main_quota"
     contained_field_name = "sub_quota"
@@ -213,13 +204,16 @@ class QA2(ValidityPeriodContained):
 
 class QA3(BusinessRule):
     """When converted to the measurement unit of the main quota, the volume of a
-    sub-quota must always be lower than or equal to the volume of the main quota.
-    """
+    sub-quota must always be lower than or equal to the volume of the main
+    quota."""
 
 
 class QA4(BusinessRule):
-    """Whenever a sub-quota receives a coefficient, this has to be a strictly positive
-    decimal number. When it is not specified a value 1 is always assumed.
+    """
+    Whenever a sub-quota receives a coefficient, this has to be a strictly
+    positive decimal number.
+
+    When it is not specified a value 1 is always assumed.
     """
 
     def validate(self, association):
@@ -228,10 +222,12 @@ class QA4(BusinessRule):
 
 
 class QA5(BusinessRule):
-    """Whenever a sub-quota is defined with the 'equivalent' type, it must have the same
-    volume as the ones associated with the parent quota. Moreover it must be defined
-    with a coefficient not equal to 1. A sub-quota defined with the 'normal' type must
-    have a coefficient of 1.
+    """
+    Whenever a sub-quota is defined with the 'equivalent' type, it must have the
+    same volume as the ones associated with the parent quota.
+
+    Moreover it must be defined with a coefficient not equal to 1. A sub-quota
+    defined with the 'normal' type must have a coefficient of 1.
     """
 
     def validate(self, association):
@@ -241,7 +237,7 @@ class QA5(BusinessRule):
                 raise self.violation(
                     f"QuotaAssociation {association}: "
                     "A sub-quota defined with the 'equivalent' type must have a "
-                    "coefficient not equal to 1"
+                    "coefficient not equal to 1",
                 )
 
             if (
@@ -254,7 +250,7 @@ class QA5(BusinessRule):
                 raise self.violation(
                     f"QuotaAssociation {association}: "
                     "Whenever a sub-quota is defined with the 'equivalent' type, it must have "
-                    "the same volume as the ones associated with the parent quota."
+                    "the same volume as the ones associated with the parent quota.",
                 )
 
         elif (
@@ -264,17 +260,18 @@ class QA5(BusinessRule):
             raise self.violation(
                 f"QuotaAssociation {association}: "
                 "A sub-quota defined with the 'normal' type must have a coefficient "
-                "equal to 1"
+                "equal to 1",
             )
 
 
 class QA6(BusinessRule):
-    """Sub-quotas associated with the same main quota must have the same relation type."""
+    """Sub-quotas associated with the same main quota must have the same
+    relation type."""
 
     def validate(self, association):
         if (
             association.main_quota.sub_quota_associations.values(
-                "sub_quota_relation_type"
+                "sub_quota_relation_type",
             )
             .order_by("sub_quota_relation_type")
             .distinct("sub_quota_relation_type")
@@ -296,9 +293,8 @@ class BlockingOnlyOfFCFSQuotas(BusinessRule):
 
 
 class QBP2(BusinessRule):
-    """The start date of the quota blocking period must be later than or equal to the
-    start date of the quota validity period.
-    """
+    """The start date of the quota blocking period must be later than or equal
+    to the start date of the quota validity period."""
 
     def validate(self, blocking):
         if blocking.valid_between.lower < blocking.quota_definition.valid_between.lower:
@@ -306,7 +302,8 @@ class QBP2(BusinessRule):
 
 
 class SuspensionsOnlyToFCFSQuotas(BusinessRule):
-    """Quota suspensions are only applicable to First Come First Served quotas."""
+    """Quota suspensions are only applicable to First Come First Served
+    quotas."""
 
     def validate(self, suspension):
         if (
@@ -317,6 +314,7 @@ class SuspensionsOnlyToFCFSQuotas(BusinessRule):
 
 
 class QSP2(ValidityPeriodContained):
-    """The validity period of the quota must span the quota suspension period."""
+    """The validity period of the quota must span the quota suspension
+    period."""
 
     container_field_name = "quota_definition"

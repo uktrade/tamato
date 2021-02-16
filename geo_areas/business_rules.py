@@ -1,20 +1,20 @@
 """Business rules for geographical areas."""
 from django.db import connection
 from django.db.models import F
-from django.db.models import QuerySet
 
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import MustExist
 from common.business_rules import NoOverlapping
-from common.business_rules import only_applicable_after
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
+from common.business_rules import only_applicable_after
 from geo_areas.validators import AreaCode
 
 
 class GA1(UniqueIdentifyingFields):
-    """The combination geographical area id + validity start date must be unique."""
+    """The combination geographical area id + validity start date must be
+    unique."""
 
     identifying_fields = ("area_id", "valid_between__lower")
 
@@ -29,10 +29,13 @@ class DescriptionNotEmpty(BusinessRule):
 
 
 class GA3(DescriptionsRules):
-    """At least one description record is mandatory. The start date of the first
-    description period must be equal to the start date of the geographical area. Two
-    descriptions may not have the same start date. The start date of the description
-    must be less than or equal to the end date of the geographical area.
+    """
+    At least one description record is mandatory.
+
+    The start date of the first description period must be equal to the start
+    date of the geographical area. Two descriptions may not have the same start
+    date. The start date of the description must be less than or equal to the
+    end date of the geographical area.
     """
 
     model_name = "geographical area"
@@ -55,10 +58,9 @@ class GA4(BusinessRule):
 
 
 class GA5(BusinessRule):
-    """If a geographical area has a parent geographical area group then the validity
-    period of the parent geographical area group must span the validity period of the
-    geographical area.
-    """
+    """If a geographical area has a parent geographical area group then the
+    validity period of the parent geographical area group must span the validity
+    period of the geographical area."""
 
     def validate(self, geo_area):
         if (
@@ -68,7 +70,7 @@ class GA5(BusinessRule):
                 parent__isnull=False,
                 sid=geo_area.sid,
             )
-            .current()
+            .current_as_of(geo_area.transaction)
             .exclude(
                 parent__valid_between__contains=F("valid_between"),
             )
@@ -78,10 +80,13 @@ class GA5(BusinessRule):
 
 
 class GA6(BusinessRule):
-    """Loops in the parent relation between geographical areas and parent geographical
-    area groups are not allowed. If a geographical area A is a parent geographical area
-    group of B then B cannot be a parent geographical area group of A (loops can also
-    exist on more than two levels, e.g. level 3; If A is a parent of B and B is a parent
+    """
+    Loops in the parent relation between geographical areas and parent
+    geographical area groups are not allowed.
+
+    If a geographical area A is a parent geographical area group of B then B
+    cannot be a parent geographical area group of A (loops can also exist on
+    more than two levels, e.g. level 3; If A is a parent of B and B is a parent
     of C then C cannot be a parent of A).
     """
 
@@ -114,24 +119,23 @@ class GA6(BusinessRule):
 
 
 class GA7(NoOverlapping):
-    """The validity period of geographical area must not overlap any other geographical
-    area with the same geographical area id.
-    """
+    """The validity period of geographical area must not overlap any other
+    geographical area with the same geographical area id."""
 
     identifying_fields = ("area_id",)
 
 
 class GA10(BusinessRule):
-    """When a geographical area is referenced in a measure then the validity period of
-    the geographical area must span the validity period of the measure.
-    """
+    """When a geographical area is referenced in a measure then the validity
+    period of the geographical area must span the validity period of the
+    measure."""
 
     def validate(self, geo_area):
         if (
             geo_area.measures.model.objects.filter(
                 geographical_area__sid=geo_area.sid,
             )
-            .current()
+            .current_as_of(geo_area.transaction)
             .with_effective_valid_between()
             .exclude(
                 db_effective_valid_between__contained_by=geo_area.valid_between,
@@ -142,10 +146,9 @@ class GA10(BusinessRule):
 
 
 class GA11(BusinessRule):
-    """If a geographical area is referenced as an excluded geographical area in a
-    measure then the membership period of the geographical area must span the validity
-    period of the measure.
-    """
+    """If a geographical area is referenced as an excluded geographical area in
+    a measure then the membership period of the geographical area must span the
+    validity period of the measure."""
 
     def validate(self, geo_area):
         Measure = (
@@ -153,7 +156,7 @@ class GA11(BusinessRule):
         )
         if (
             Measure.objects.with_effective_valid_between()
-            .current()
+            .current_as_of(geo_area.transaction)
             .filter(exclusions__excluded_geographical_area__sid=geo_area.sid)
             .exclude(db_effective_valid_between__contained_by=geo_area.valid_between)
             .exists()
@@ -182,9 +185,8 @@ class GA14(MustExist):
 
 
 class GA16(BusinessRule):
-    """The validity period of the geographical area group must span all membership
-    periods of its members.
-    """
+    """The validity period of the geographical area group must span all
+    membership periods of its members."""
 
     def validate(self, membership):
         if (
@@ -192,7 +194,7 @@ class GA16(BusinessRule):
             .objects.filter(
                 geo_group=membership.geo_group,
             )
-            .current()
+            .current_as_of(membership.transaction)
             .exclude(
                 member__valid_between__contained_by=membership.geo_group.valid_between,
             )
@@ -202,10 +204,9 @@ class GA16(BusinessRule):
 
 
 class GA17(BusinessRule):
-    """The membership period of a geographical area (member) must be within (inclusive)
-    the validity period of the geographical area group (geographical area’s start and
-    end date).
-    """
+    """The membership period of a geographical area (member) must be within
+    (inclusive) the validity period of the geographical area group (geographical
+    area’s start and end date)."""
 
     def validate(self, membership):
         if (
@@ -213,7 +214,7 @@ class GA17(BusinessRule):
             .objects.filter(
                 geo_group=membership.geo_group,
             )
-            .current()
+            .current_as_of(membership.transaction)
             .exclude(
                 valid_between__contained_by=membership.geo_group.valid_between,
             )
@@ -223,9 +224,8 @@ class GA17(BusinessRule):
 
 
 class GA18(BusinessRule):
-    """When a geographical area is more than once member of the same group then there
-    may be no overlap in their membership periods.
-    """
+    """When a geographical area is more than once member of the same group then
+    there may be no overlap in their membership periods."""
 
     def validate(self, membership):
         if (
@@ -235,7 +235,7 @@ class GA18(BusinessRule):
                 member=membership.member,
                 valid_between__overlap=membership.valid_between,
             )
-            .current()
+            .current_as_of(membership.transaction)
             .exclude(
                 id=membership.id,
             )
@@ -245,10 +245,9 @@ class GA18(BusinessRule):
 
 
 class GA19(BusinessRule):
-    """If the associated geographical area group has a parent geographical area group
-    then all the members of the geographical area group must also be members of the
-    parent geographical area group.
-    """
+    """If the associated geographical area group has a parent geographical area
+    group then all the members of the geographical area group must also be
+    members of the parent geographical area group."""
 
     def validate(self, membership):
         parent = membership.geo_group.parent
@@ -258,10 +257,10 @@ class GA19(BusinessRule):
 
 
 class GA20(BusinessRule):
-    """If the associated geographical area group has a parent geographical area group
-    then the membership period of each member of the parent group must span the
-    membership period of the same geographical area in the geographical area group.
-    """
+    """If the associated geographical area group has a parent geographical area
+    group then the membership period of each member of the parent group must
+    span the membership period of the same geographical area in the geographical
+    area group."""
 
     def validate(self, membership):
         parent = membership.geo_group.parent_current
@@ -271,7 +270,7 @@ class GA20(BusinessRule):
             and parent.members.filter(
                 member__sid=membership.member.sid,
             )
-            .current()
+            .current_as_of(membership.transaction)
             .exclude(
                 valid_between__contains=membership.valid_between,
             )
@@ -281,24 +280,25 @@ class GA20(BusinessRule):
 
 
 class GA21(PreventDeleteIfInUse):
-    """If a geographical area is referenced in a measure then it may not be deleted. The
-    geographical area may be referenced in a measure as the origin/destination or as an
-    excluded geographical area.
+    """
+    If a geographical area is referenced in a measure then it may not be
+    deleted.
+
+    The geographical area may be referenced in a measure as the
+    origin/destination or as an excluded geographical area.
     """
 
 
 class GA22(PreventDeleteIfInUse):
     """A geographical area cannot be deleted if it is referenced as a parent
-    geographical area group.
-    """
+    geographical area group."""
 
     in_use_check = "is_a_parent"
 
 
 class GA23(PreventDeleteIfInUse):
-    """If a geographical area is referenced as an excluded geographical area in a
-    measure, the membership association with the measure geographical area group cannot
-    be deleted.
-    """
+    """If a geographical area is referenced as an excluded geographical area in
+    a measure, the membership association with the measure geographical area
+    group cannot be deleted."""
 
     in_use_check = "member_used_in_measure_exclusion"

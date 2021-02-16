@@ -14,17 +14,15 @@ class CT1(UniqueIdentifyingFields):
 
 
 class ACN1(UniqueIdentifyingFields):
-    """The combination of additional code type + additional code + start date must be
-    unique.
-    """
+    """The combination of additional code type + additional code + start date
+    must be unique."""
 
     identifying_fields = ("type", "code", "valid_between__lower")
 
 
 class ACN2(BusinessRule):
-    """The referenced additional code type must exist and have as application code
-    "non-Meursing" or "Export Refund for Processed Agricultural Goods.
-    """
+    """The referenced additional code type must exist and have as application
+    code "non-Meursing" or "Export Refund for Processed Agricultural Goods."""
 
     def validate(self, additional_code):
         try:
@@ -35,20 +33,20 @@ class ACN2(BusinessRule):
                 raise self.violation(
                     f"AdditionalCode {additional_code}: The referenced additional code "
                     'type must have as application code "non-Meursing" or "Export Refund '
-                    'for Processed Agricultural Goods".'
+                    'for Processed Agricultural Goods".',
                 )
 
         except ObjectDoesNotExist:
             raise self.violation(
                 f"AdditionalCode {additional_code}: The referenced additional code type "
-                "must exist."
+                "must exist.",
             )
 
 
 class ACN4(BusinessRule):
-    """The validity period of the additional code must not overlap any other additional
-    code with the same additional code type + additional code + start date.
-    """
+    """The validity period of the additional code must not overlap any other
+    additional code with the same additional code type + additional code + start
+    date."""
 
     def validate(self, additional_code):
         if (
@@ -59,17 +57,16 @@ class ACN4(BusinessRule):
                 valid_between__startswith=additional_code.valid_between.lower,
                 valid_between__overlap=additional_code.valid_between,
             )
-            .current()
+            .current_as_of(additional_code.transaction)
             .exists()
         ):
             raise self.violation(additional_code)
 
 
 class ACN13(BusinessRule):
-    """When an additional code is used in an additional code nomenclature measure then
-    the validity period of the additional code must span the validity period of the
-    measure.
-    """
+    """When an additional code is used in an additional code nomenclature
+    measure then the validity period of the additional code must span the
+    validity period of the measure."""
 
     def validate(self, additional_code):
         Measure = additional_code.measure_set.model
@@ -78,7 +75,7 @@ class ACN13(BusinessRule):
                 additional_code__sid=additional_code.sid,
             )
             .with_effective_valid_between()
-            .current()
+            .current_as_of(additional_code.transaction)
             .exclude(
                 db_effective_valid_between__contained_by=additional_code.valid_between,
             )
@@ -88,18 +85,20 @@ class ACN13(BusinessRule):
 
 
 class ACN17(ValidityPeriodContained):
-    """The validity period of the additional code type must span the validity period of
-    the additional code.
-    """
+    """The validity period of the additional code type must span the validity
+    period of the additional code."""
 
     container_field_name = "type"
 
 
 class ACN5(DescriptionsRules):
-    """At least one description is mandatory. The start date of the first description
-    period must be equal to the start date of the additional code. No two associated
-    description periods may have the same start date. The start date must be less than
-    or equal to the end date of the additional code.
+    """
+    At least one description is mandatory.
+
+    The start date of the first description period must be equal to the start
+    date of the additional code. No two associated description periods may have
+    the same start date. The start date must be less than or equal to the end
+    date of the additional code.
     """
 
     model_name = "additional code"
@@ -107,5 +106,4 @@ class ACN5(DescriptionsRules):
 
 class ACN14(PreventDeleteIfInUse):
     """An additional code cannot be deleted if it is used in an additional code
-    nomenclature measure.
-    """
+    nomenclature measure."""

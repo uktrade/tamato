@@ -1,4 +1,4 @@
-"""Base classes for business rules and violations"""
+"""Base classes for business rules and violations."""
 import logging
 from datetime import date
 from datetime import datetime
@@ -23,14 +23,14 @@ log.setLevel(logging.DEBUG)
 
 
 class BusinessRuleViolation(ValidationError):
-    """Base class for business rule violations"""
+    """Base class for business rule violations."""
 
 
 class BusinessRule:
     """Represents a TARIC business rule."""
 
     def validate(self, *args):
-        """Perform business rule validation"""
+        """Perform business rule validation."""
         raise NotImplementedError()
 
     def violation(
@@ -38,7 +38,7 @@ class BusinessRule:
         model: Optional[Union[TrackedModel, str]] = None,
         msg: Optional[str] = None,
     ) -> BusinessRuleViolation:
-        """Create a violation exception object"""
+        """Create a violation exception object."""
 
         if msg is None:
             if isinstance(model, str):
@@ -96,12 +96,17 @@ class UniqueIdentifyingFields(BusinessRule):
         identifying_fields = self.identifying_fields or model.identifying_fields
         query = dict(get_field_tuple(model, field) for field in identifying_fields)
 
-        if model.__class__.objects.filter(**query).current().exists():
+        if (
+            model.__class__.objects.filter(**query)
+            .current_as_of(model.transaction)
+            .exists()
+        ):
             raise self.violation(model)
 
 
 class NoOverlapping(BusinessRule):
-    """Rule enforcing no overlapping validity periods of instances of a model."""
+    """Rule enforcing no overlapping validity periods of instances of a
+    model."""
 
     identifying_fields: Optional[Iterable[str]] = None
 
@@ -112,7 +117,7 @@ class NoOverlapping(BusinessRule):
 
         if (
             model.__class__.objects.filter(**query)
-            .current()
+            .current_as_of(model.transaction)
             .exclude(id=model.id)
             .exists()
         ):
@@ -137,7 +142,8 @@ class PreventDeleteIfInUse(BusinessRule):
 
 
 class ValidityPeriodContained(BusinessRule):
-    """Rule enforcing validity period is contained by a dependency's validity period."""
+    """Rule enforcing validity period is contained by a dependency's validity
+    period."""
 
     container_field_name: Optional[str] = None
     contained_field_name: Optional[str] = None
@@ -147,7 +153,7 @@ class ValidityPeriodContained(BusinessRule):
             not container.__class__.objects.filter(
                 **container.get_identifying_fields(),
             )
-            .current()
+            .current_as_of(model.transaction)
             .filter(
                 valid_between__contains=contained.valid_between,
             )
@@ -239,7 +245,7 @@ class DescriptionsRules(BusinessRule):
             raise self.generate_violation(model, "at least one")
 
         if not descriptions.filter(
-            valid_between__startswith=model.valid_between.lower
+            valid_between__startswith=model.valid_between.lower,
         ).exists():
             raise self.generate_violation(model, "first start date")
 
