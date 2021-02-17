@@ -4,16 +4,20 @@
   {{ table_rows.append([
     {"text": "{:%d %b %Y}".format(membership.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(membership.valid_between.upper) if membership.valid_between.upper else "-"},
-    {"text": membership.member.area_id if is_group else membership.geo_group.area_id},
+    {"text": membership.area_id},
     {"text": membership.get_description().description},
   ]) or "" }}
 {% endfor %}
-{{ govukTable({
-  "head": [
-    {"text": "Start date"},
-    {"text": "End date"},
-    {"text": "ID"},
-    {"text": "Description", "classes": "govuk-!-width-one-half"}
-  ],
-  "rows": table_rows
-}) }}
+{% if table_rows == [] %}
+  <p class="govuk-body">There are no memberships for this geographical area.</p>
+{% else %}
+  {{ govukTable({
+    "head": [
+      {"text": "Start date"},
+      {"text": "End date"},
+      {"text": "ID"},
+      {"text": "Description", "classes": "govuk-!-width-one-half"}
+    ],
+    "rows": table_rows
+  }) }}
+{% endif %}
