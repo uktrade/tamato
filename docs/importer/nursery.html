@@ -1,18 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Importer - The Nursery &#8212; TaMaTo 1.0.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -36,7 +36,8 @@
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">The Importer</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">The Importer</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The Importer - The Nursery</a></li> 
       </ul>
     </div>  
 
@@ -47,14 +48,14 @@
             
   <div class="section" id="module-importer.nursery">
 <span id="the-importer-the-nursery"></span><h1>The Importer - The Nursery<a class="headerlink" href="#module-importer.nursery" title="Permalink to this headline">¶</a></h1>
-<dl class="exception">
+<dl class="py exception">
 <dt id="importer.nursery.HandlerDoesNotExistError">
-<em class="property">exception </em><code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">HandlerDoesNotExistError</code><a class="reference internal" href="../../_modules/importer/nursery.html#HandlerDoesNotExistError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.HandlerDoesNotExistError" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">importer.nursery.</span></code><code class="sig-name descname"><span class="pre">HandlerDoesNotExistError</span></code><a class="reference internal" href="../../_modules/importer/nursery.html#HandlerDoesNotExistError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.HandlerDoesNotExistError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="importer.nursery.TariffObjectNursery">
-<em class="property">class </em><code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">TariffObjectNursery</code><span class="sig-paren">(</span><em class="sig-param">cache: importer.cache.cache.ObjectCacheFacade</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.nursery.</span></code><code class="sig-name descname"><span class="pre">TariffObjectNursery</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">importer.cache.cache.ObjectCacheFacade</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides an interface between raw data and the Django modelling system for
 the tariff.</p>
 <p>The primary function is to take a raw python object (generally a dictionary) and convert
@@ -63,24 +64,24 @@ it into a row in the database via the Django models.</p>
 will receive incomplete data objects which depend on data received later. As a result
 this “Nursery” is designed to store and look after incomplete data objects until it can
 be matched with the rest of the data and then dispatched to the database.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.cache_current_instances">
-<code class="sig-name descname">cache_current_instances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.cache_current_instances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.cache_current_instances" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">cache_current_instances</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.cache_current_instances"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.cache_current_instances" title="Permalink to this definition">¶</a></dt>
 <dd><p>Take all current instances of all TrackedModels in the data and cache
 them.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.cache_object">
-<code class="sig-name descname">cache_object</code><span class="sig-paren">(</span><em class="sig-param">obj: common.models.records.TrackedModel</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.cache_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.cache_object" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">cache_object</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.cache_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.cache_object" title="Permalink to this definition">¶</a></dt>
 <dd><p>Caches an objects primary key and model name in the cache.</p>
 <p>Key is generated based on the model name and the identifying fields used
 to find it.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.clear_cache">
-<code class="sig-name descname">clear_cache</code><span class="sig-paren">(</span><em class="sig-param">repeats: int = 2</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.clear_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.clear_cache" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">clear_cache</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repeats</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.clear_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.clear_cache" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterate over the cache and handle any objects which can be resolved.</p>
 <p>As the importer runs many objects are created before their proper
 relationships can be found. In some cases these will be cleared by
@@ -92,45 +93,45 @@ which are also in the cache, but appear later, this method runs
 recursively based on the <cite>repeats</cite> argument</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.generate_cache_key">
-<em class="property">classmethod </em><code class="sig-name descname">generate_cache_key</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.generate_cache_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.generate_cache_key" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">generate_cache_key</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">common.models.records.TrackedModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">str</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.generate_cache_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.generate_cache_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a cache key based on the model name and the identifying
 values used to find it.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.get_handler">
-<code class="sig-name descname">get_handler</code><span class="sig-paren">(</span><em class="sig-param">tag: str</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.get_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_handler" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_handler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.get_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find a handler which matches the given tag.</p>
 <p>If one is not found throw an error.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.get_handler_link_fields">
-<code class="sig-name descname">get_handler_link_fields</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">link_fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.get_handler_link_fields"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_handler_link_fields" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_handler_link_fields</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.get_handler_link_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_handler_link_fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find all the unique link fields for a given model.</p>
 <p>This gives all the combinations of fields used to identify a model.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.get_obj_from_cache">
-<em class="property">classmethod </em><code class="sig-name descname">get_obj_from_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.get_obj_from_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_obj_from_cache" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">get_obj_from_cache</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">common.models.records.TrackedModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.get_obj_from_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.get_obj_from_cache" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetches an object PK and model name from the cache if it exists.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.register_handler">
-<em class="property">classmethod </em><code class="sig-name descname">register_handler</code><span class="sig-paren">(</span><em class="sig-param">handler: Type[BaseHandler]</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.register_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.register_handler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">register_handler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseHandler</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.register_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.register_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Registers a handler to the TariffObjectNursery class.</p>
 <p>The nursery needs to be able to map all handlers against incoming data. To do this the
 nursery needs a map of handlers. This method allows handlers to register themselves so
 that they can be added to the internal nursery map - to be used when processing.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.remove_object_from_cache">
-<code class="sig-name descname">remove_object_from_cache</code><span class="sig-paren">(</span><em class="sig-param">obj: common.models.records.TrackedModel</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.remove_object_from_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.remove_object_from_cache" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">remove_object_from_cache</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.remove_object_from_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.remove_object_from_cache" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes an object from the importer cache. If an object has to be
 deleted (generally done in dev only) then it is problematic to keep the
 ID in the cache as well.</p>
@@ -138,9 +139,9 @@ ID in the cache as well.</p>
 to find it.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="importer.nursery.TariffObjectNursery.submit">
-<code class="sig-name descname">submit</code><span class="sig-paren">(</span><em class="sig-param">obj: importer.utils.DispatchedObjectType</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.submit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.submit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">submit</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">importer.utils.DispatchedObjectType</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/nursery.html#TariffObjectNursery.submit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.submit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Entrypoint for the nursery.</p>
 <p>Handles whether an object can be dispatched to the database or, if some
 pieces of data are missing, cached to await new data.</p>
@@ -148,15 +149,16 @@ pieces of data are missing, cached to await new data.</p>
 
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="importer.nursery.get_nursery">
-<code class="sig-prename descclassname">importer.nursery.</code><code class="sig-name descname">get_nursery</code><span class="sig-paren">(</span><em class="sig-param">object_cache=None</em><span class="sig-paren">)</span> &#x2192; importer.nursery.TariffObjectNursery<a class="reference internal" href="../../_modules/importer/nursery.html#get_nursery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#importer.nursery.get_nursery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">importer.nursery.</span></code><code class="sig-name descname"><span class="pre">get_nursery</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#importer.nursery.TariffObjectNursery" title="importer.nursery.TariffObjectNursery"><span class="pre">importer.nursery.TariffObjectNursery</span></a><a class="reference internal" href="../../_modules/importer/nursery.html#get_nursery"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.get_nursery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for building a nursery object.</p>
 </dd></dl>
 
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -184,7 +186,7 @@ pieces of data are missing, cached to await new data.</p>
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -206,12 +208,13 @@ pieces of data are missing, cached to await new data.</p>
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../code.html" >Code Documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="index.html" >The Importer</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="index.html" >The Importer</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The Importer - The Nursery</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, DIT.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
     </div>
   </body>
 </html>

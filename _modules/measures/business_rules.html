@@ -1,18 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>measures.business_rules &#8212; TaMaTo 1.0.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -27,7 +27,8 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">measures.business_rules</a></li> 
       </ul>
     </div>  
 
@@ -268,7 +269,7 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ME16"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME16">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2004-12-31&quot;</span><span class="p">)</span>
+<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2004-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME16</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Integrating a measure with an additional code when an equivalent or</span>
 <span class="sd">    overlapping measures without additional code already exists and vice-versa,</span>
@@ -316,7 +317,7 @@
                 <span class="s2">&quot;A measure with an additional code cannot be added when an equivalent &quot;</span>
                 <span class="s2">&quot;or overlapping measure without an additional code already exists and &quot;</span>
                 <span class="s2">&quot;vice-versa.&quot;</span><span class="p">,</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
 
 
 <div class="viewcode-block" id="ME115"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME115">[docs]</a><span class="k">class</span> <span class="nc">ME115</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
@@ -460,15 +461,15 @@
             <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ME116"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME116">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME116</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number must span the validity period of the measure.&quot;&quot;&quot;</span>
 
-    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span></div>
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span>
 
 
-<div class="viewcode-block" id="ME117"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME117">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME117</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    When a measure has a quota measure type then the origin must exist as a</span>
@@ -510,10 +511,10 @@
         <span class="k">if</span> <span class="n">origin</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">excluded_origins</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span>
 
-        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ME119"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME119">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME119</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number origin must span the validity period of the</span>
@@ -536,7 +537,7 @@
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
 
 
 <span class="c1"># -- Relation with additional codes</span>
@@ -1268,6 +1269,7 @@
             <span class="p">)</span></div></div>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -1282,7 +1284,7 @@
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1297,12 +1299,13 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../docs/index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">measures.business_rules</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, DIT.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
     </div>
   </body>
 </html>

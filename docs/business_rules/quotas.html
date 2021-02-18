@@ -1,18 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quotas &#8212; TaMaTo 1.0.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -36,7 +36,8 @@
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Business Rules</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Business Rules</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Quotas</a></li> 
       </ul>
     </div>  
 
@@ -48,250 +49,215 @@
   <div class="section" id="module-quotas.business_rules">
 <span id="quotas"></span><h1>Quotas<a class="headerlink" href="#module-quotas.business_rules" title="Permalink to this headline">¶</a></h1>
 <p>Business rules for quotas.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.BlockingOnlyOfFCFSQuotas">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">BlockingOnlyOfFCFSQuotas</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#BlockingOnlyOfFCFSQuotas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.BlockingOnlyOfFCFSQuotas" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">BlockingOnlyOfFCFSQuotas</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#BlockingOnlyOfFCFSQuotas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.BlockingOnlyOfFCFSQuotas" title="Permalink to this definition">¶</a></dt>
 <dd><p>Blocking periods are only applicable to FCFS quotas.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.BlockingOnlyOfFCFSQuotas.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">blocking</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#BlockingOnlyOfFCFSQuotas.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.BlockingOnlyOfFCFSQuotas.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#BlockingOnlyOfFCFSQuotas.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.BlockingOnlyOfFCFSQuotas.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.ON1">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON1</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON1" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">ON1</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Quota order number id + start date must be unique.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="quotas.business_rules.ON10">
-<code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON10</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON10"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON10" title="Permalink to this definition">¶</a></dt>
-<dd><p>When a quota order number is used in a measure then the validity period
-of the quota order number origin must span the validity period of the
-measure.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="quotas.business_rules.ON11">
-<code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON11</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON11"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON11" title="Permalink to this definition">¶</a></dt>
-<dd><p>The quota order number cannot be deleted if it is used in a measure.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="quotas.business_rules.ON12">
-<code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON12</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON12"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON12" title="Permalink to this definition">¶</a></dt>
-<dd><p>The quota order number origin cannot be deleted if it is used in a
-measure.</p>
-</dd></dl>
-
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.ON13">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON13</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON13"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON13" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">ON13</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON13"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON13" title="Permalink to this definition">¶</a></dt>
 <dd><p>An exclusion can only be entered if the order number origin is a geographical
 area group (area code = 1).</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.ON13.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">exclusion</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON13.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON13.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON13.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON13.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.ON14">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON14</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON14"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON14" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">ON14</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON14"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON14" title="Permalink to this definition">¶</a></dt>
 <dd><p>The excluded geographical area must be a member of the geographical area
 group.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.ON14.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">exclusion</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON14.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON14.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON14.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON14.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.ON2">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON2</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON2" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">ON2</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON2" title="Permalink to this definition">¶</a></dt>
 <dd><p>There may be no overlap in time of two quota order numbers with the same
 quota order number id.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.ON2.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">order_number</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON2.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON2.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON2.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON2.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.ON5">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON5</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON5"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON5" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">ON5</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON5"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON5" title="Permalink to this definition">¶</a></dt>
 <dd><p>There may be no overlap in time of two quota order number origins with
 the same quota order number SID and geographical area id.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.ON5.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">origin</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON5.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON5.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">origin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON5.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON5.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="quotas.business_rules.ON6">
-<code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON6</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON6" title="Permalink to this definition">¶</a></dt>
-<dd><p>The validity period of the geographical area must span the validity
-period of the quota order number origin.</p>
-</dd></dl>
-
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.ON7">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON7</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON7"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON7" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">ON7</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON7"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON7" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the quota order number must span the validity
 period of the quota order number origin.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.ON8">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON8</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON8" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">ON8</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON8"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON8" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the quota order number must span the validity
 period of the referencing quota definition.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="quotas.business_rules.ON9">
-<code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">ON9</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#ON9"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.ON9" title="Permalink to this definition">¶</a></dt>
-<dd><p>When a quota order number is used in a measure then the validity period
-of the quota order number must span the validity period of the measure.</p>
-</dd></dl>
-
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QA1">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QA1</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA1" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QA1</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA1" title="Permalink to this definition">¶</a></dt>
 <dd><p>The association between two quota definitions must be unique.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QA2">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QA2</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA2" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QA2</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA2" title="Permalink to this definition">¶</a></dt>
 <dd><p>The sub-quota’s validity period must be entirely enclosed within the
 validity period of the main quota.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QA3">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QA3</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA3" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QA3</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA3"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA3" title="Permalink to this definition">¶</a></dt>
 <dd><p>When converted to the measurement unit of the main quota, the volume of a
 sub-quota must always be lower than or equal to the volume of the main
 quota.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QA4">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QA4</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA4"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA4" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QA4</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA4"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA4" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whenever a sub-quota receives a coefficient, this has to be a strictly
 positive decimal number.</p>
 <p>When it is not specified a value 1 is always assumed.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.QA4.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">association</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA4.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA4.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA4.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA4.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QA5">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QA5</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA5"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA5" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QA5</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA5"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA5" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the
 same volume as the ones associated with the parent quota.</p>
 <p>Moreover it must be defined with a coefficient not equal to 1. A sub-quota
 defined with the ‘normal’ type must have a coefficient of 1.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.QA5.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">association</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA5.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA5.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA5.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA5.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QA6">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QA6</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA6" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QA6</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA6"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA6" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sub-quotas associated with the same main quota must have the same
 relation type.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.QA6.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">association</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA6.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QA6.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA6.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA6.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QBP2">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QBP2</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QBP2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QBP2" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QBP2</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QBP2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QBP2" title="Permalink to this definition">¶</a></dt>
 <dd><p>The start date of the quota blocking period must be later than or equal
 to the start date of the quota validity period.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.QBP2.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">blocking</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QBP2.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QBP2.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QBP2.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QBP2.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QD1">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QD1</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QD1" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QD1</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QD1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Quota order number id + start date must be unique.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QD10">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QD10</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD10"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QD10" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QD10</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD10"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QD10" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period measurement unit code must span the validity period
 of the quota definition.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QD11">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QD11</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD11"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QD11" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QD11</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD11"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QD11" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the measurement unit qualifier code must span the
 validity period of the quota definition.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QD7">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QD7</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD7"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QD7" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QD7</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD7"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QD7" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the quota definition must be spanned by one of the
 validity periods of the referenced quota order number.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QD8">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QD8</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QD8" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QD8</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QD8"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QD8" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the monetary unit code must span the validity
 period of the quota definition.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.QSP2">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">QSP2</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QSP2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.QSP2" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QSP2</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QSP2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QSP2" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the quota must span the quota suspension
 period.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="quotas.business_rules.SuspensionsOnlyToFCFSQuotas">
-<em class="property">class </em><code class="sig-prename descclassname">quotas.business_rules.</code><code class="sig-name descname">SuspensionsOnlyToFCFSQuotas</code><a class="reference internal" href="../../_modules/quotas/business_rules.html#SuspensionsOnlyToFCFSQuotas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.SuspensionsOnlyToFCFSQuotas" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">SuspensionsOnlyToFCFSQuotas</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#SuspensionsOnlyToFCFSQuotas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.SuspensionsOnlyToFCFSQuotas" title="Permalink to this definition">¶</a></dt>
 <dd><p>Quota suspensions are only applicable to First Come First Served
 quotas.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="quotas.business_rules.SuspensionsOnlyToFCFSQuotas.validate">
-<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param">suspension</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#SuspensionsOnlyToFCFSQuotas.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#quotas.business_rules.SuspensionsOnlyToFCFSQuotas.validate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suspension</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#SuspensionsOnlyToFCFSQuotas.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.SuspensionsOnlyToFCFSQuotas.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 
@@ -300,6 +266,7 @@ quotas.</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -327,7 +294,7 @@ quotas.</p>
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -349,12 +316,13 @@ quotas.</p>
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="index.html" >Business Rules</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="index.html" >Business Rules</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Quotas</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, DIT.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
     </div>
   </body>
 </html>
