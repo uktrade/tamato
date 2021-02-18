@@ -71,6 +71,17 @@ class GeographicalArea(TrackedModel, ValidityMixin):
             .with_workbasket(workbasket)
         )
 
+    def get_current_members(self):
+        return [
+            membership.member
+            for membership in GeographicalMembership.objects.filter(
+                geo_group__sid=self.sid,
+            )
+            .current()
+            .select_related("member")
+            .prefetch_related("member__descriptions")
+        ]
+
     def in_use(self):
         # TODO handle deletes
         return self.measures.model.objects.filter(
@@ -110,10 +121,14 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     subrecord_code = "15"
 
     geo_group = models.ForeignKey(
-        GeographicalArea, related_name="members", on_delete=models.PROTECT
+        GeographicalArea,
+        related_name="members",
+        on_delete=models.PROTECT,
     )
     member = models.ForeignKey(
-        GeographicalArea, related_name="groups", on_delete=models.PROTECT
+        GeographicalArea,
+        related_name="groups",
+        on_delete=models.PROTECT,
     )
 
     identifying_fields = ("geo_group__sid", "member__sid")
@@ -142,7 +157,9 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     period_subrecord_code = "05"
 
     area = models.ForeignKey(
-        GeographicalArea, on_delete=models.CASCADE, related_name="descriptions"
+        GeographicalArea,
+        on_delete=models.CASCADE,
+        related_name="descriptions",
     )
     description = ShortDescription()
     sid = SignedIntSID(db_index=True)
