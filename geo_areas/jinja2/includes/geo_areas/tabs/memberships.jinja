@@ -1,6 +1,6 @@
 <h2 class="govuk-heading-l">Memberships</h2>
 {% set table_rows = [] %}
-{% for membership in object.memberships.current() %}
+{% for membership in object.get_current_members() %}
   {{ table_rows.append([
     {"text": "{:%d %b %Y}".format(membership.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(membership.valid_between.upper) if membership.valid_between.upper else "-"},
