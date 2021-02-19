@@ -431,7 +431,7 @@ class Command(BaseCommand):
                 envelope_id=options["envelope_id"],
                 transaction_counter=counter_generator(options["transaction_id"]),
                 message_counter=counter_generator(start=1),
-                max_envelope_size_in_mb=35,
+                max_envelope_size=35 * 1024 * 1024,
             ) as env:
                 new_rows = new_worksheet.get_rows()
                 old_rows = old_worksheet.get_rows()

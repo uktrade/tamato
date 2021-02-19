@@ -166,13 +166,15 @@ class EnvelopeSerializer:
     across multiple envelopes based on a size threshold.
     """
 
+    MIN_ENVELOPE_SIZE = 32768  # 32k is arbitrary - the size is chosen for template size + min size of records.
+
     def __init__(
         self,
         output: IO,
         envelope_id: int,
         transaction_counter: Counter = counter_generator(),
         message_counter: Counter = counter_generator(),
-        max_envelope_size_in_mb: int = None,
+        max_envelope_size: int = None,
         format: str = "xml",
         newline: bool = False,
     ) -> None:
@@ -180,12 +182,9 @@ class EnvelopeSerializer:
         self.transaction_counter = transaction_counter
         self.message_counter = message_counter
         self.envelope_id = envelope_id
-        if max_envelope_size_in_mb is None:
-            self.max_envelope_size = None
-        else:
-            self.max_envelope_size = (
-                max_envelope_size_in_mb * 1024 * 1024
-            ) - self.envelope_end_size
+        self.max_envelope_size = max_envelope_size
+        if self.max_envelope_size < EnvelopeSerializer.MIN_ENVELOPE_SIZE:
+            raise ValueError("Max envelope size is too small.")
         self.envelope_size = 0
         self.format = format
         self.newline = newline
