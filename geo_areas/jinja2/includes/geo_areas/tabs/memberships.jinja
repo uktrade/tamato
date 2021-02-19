@@ -1,11 +1,11 @@
 <h2 class="govuk-heading-l">Memberships</h2>
 {% set table_rows = [] %}
-{% for membership in object.get_current_members() %}
+{% for membership in object.get_current_memberships() %}
   {{ table_rows.append([
     {"text": "{:%d %b %Y}".format(membership.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(membership.valid_between.upper) if membership.valid_between.upper else "-"},
-    {"text": membership.area_id},
-    {"text": membership.get_description().description},
+    {"text": membership.member.area_id},
+    {"text": membership.member.get_description().description},
   ]) or "" }}
 {% endfor %}
 {% if table_rows == [] %}
