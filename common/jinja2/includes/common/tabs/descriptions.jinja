@@ -1,5 +1,5 @@
 {% set description_rows = [] %}
-{% for description in object.descriptions.all() %}
+{% for description in object.get_descriptions() %}
 	{{ description_rows.append([
 		{"text": "{:%d %b %Y}".format(description.valid_between.lower)},
 		{"text": description.description},

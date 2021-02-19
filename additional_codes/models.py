@@ -78,7 +78,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         ):
             descriptions = list(self.descriptions.all())
             return descriptions[-1] if descriptions else None
-        return self.descriptions.last()
+        return self.get_descriptions().last()
 
     def get_descriptions(self, workbasket=None):
         return (
@@ -128,6 +128,9 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
         return self.identifying_fields_to_string(
             identifying_fields=("described_additional_code", "valid_between"),
         )
+
+    class Meta:
+        ordering = ("valid_between",)
 
 
 class FootnoteAssociationAdditionalCode(TrackedModel, ValidityMixin):

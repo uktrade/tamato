@@ -180,3 +180,6 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
                 "description_period_sid": self.description_period_sid,
             },
         )
+
+    class Meta:
+        ordering = ("valid_between",)
