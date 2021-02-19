@@ -13,7 +13,7 @@ class WorkBasketSerializer(serializers.ModelSerializer):
     transactions = TransactionSerializer(read_only=True, many=True)
 
     def get_envelope_id(self, object: models.WorkBasket):
-        return str(object.pk).zfill(6)
+        return object.pk
 
     class Meta:
         model = models.WorkBasket

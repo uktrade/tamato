@@ -1,35 +1,68 @@
-from pathlib import Path
+import logging
+import sys
 
-from django.conf import settings
-from django.core.files.base import ContentFile
+import kombu
+from django.core.management import BaseCommand
+from lxml.etree import DocumentInvalid
 
-from exporter.management.commands.util import WorkBasketBaseCommand
-from exporter.management.commands.util import get_envelope_filename
-from exporter.management.commands.util import get_envelope_of_active_workbaskets
-from exporter.storages import HMRCStorage
-from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import TaricDataAssertionError
+from exporter.tasks import upload_workbaskets
+
+logger = logging.getLogger(__name__)
 
 
-class Command(WorkBasketBaseCommand):
+def run_task_or_exit(task, local=False, *args, **kwargs):
     """
-    Upload envelope to HMRC s3 storage.
+    Run celery task, block then return the return value of the
+    task, or exit..
+
+    :param local:  Run locally (bypass celery)
+    :param task:  Celery task to run.
+    :return: Result of task.
+
+    Utility function for management commands that require the ability
+    to start a celery task, then wait for the result.
+
+    Tasks may optionally be run locally, which can be useful if the
+    user needs to run a task, but celery infrastructure is unavailable.
+    """
+    try:
+        if local:
+            return task.apply(args=args, kwargs=kwargs).get()
+        return task.apply_async(args=args, kwargs=kwargs).get()
+    except kombu.exceptions.OperationalError:
+        # OperationalError here usually indicate that it was not possible to
+        # connect to the celery backend, e.g. redis is not accessible/up.
+        logger.error(
+            "OperationalError - This usually indicates celery or redis are unavailable."
+        )
+        raise
+
+
+class Command(BaseCommand):
+    """Upload envelope to HMRC s3 storage.
 
     Invalid envelopes are NOT uploaded.
     """
 
     help = "Upload workbaskets ready for export to HMRC S3 Storage."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-l",
+            dest="local",
+            action="store_true",
+            help="Run task locally [bypass celery].",
+        )
+
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
+        local = options["local"]
+        try:
+            success, msg = run_task_or_exit(upload_workbaskets, local=local)
+        except (DocumentInvalid, TaricDataAssertionError) as e:
+            sys.exit(f"Error {e}")
 
-        envelope = get_envelope_of_active_workbaskets(workbaskets)
-        self.validate_envelope(envelope)
-
-        filename = get_envelope_filename(1)
-        full_filename = str(Path(settings.HMRC_STORAGE_DIRECTORY) / filename)
-
-        content_file = ContentFile(envelope)
-        storage = HMRCStorage()
-        destination = storage.save(full_filename, content_file)
-        self.stdout.write(f"Uploaded: {destination}")
+        if success:
+            self.stdout.write(msg)
+        else:
+            sys.exit(msg)

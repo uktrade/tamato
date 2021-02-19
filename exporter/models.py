@@ -1,25 +1,26 @@
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from storages.backends.s3boto3 import S3Boto3Storage
 
+from exporter.storages import HMRCStorage
 from hmrc_sdes.api_client import HmrcSdesClient
 from taric.models import Envelope
 
 
-def to_hmrc(instance: "Upload"):
-    """Generate the filepath to upload to HMRC."""
-
-    return f"tohmrc/staging/{instance.filename}"
+def to_hmrc(instance: "Upload", filename: str):
+    """Generate the filepath to upload to HMRC"""
+    return str(Path(settings.HMRC_STORAGE_DIRECTORY) / filename)
 
 
 class Upload(models.Model):
     """Represents a TARIC differential update file upload to HMRC."""
 
-    file = models.FileField(storage=S3Boto3Storage, upload_to=to_hmrc)
+    file = models.FileField(storage=HMRCStorage, upload_to=to_hmrc)
     envelope = models.ForeignKey(Envelope, on_delete=models.PROTECT)
     correlation_id = models.UUIDField(default=uuid.uuid4, editable=False)
     checksum = models.CharField(max_length=32, editable=False)

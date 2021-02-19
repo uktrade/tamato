@@ -1,10 +1,11 @@
 import argparse
+import io
 import logging
-import os
 import re
 from collections import namedtuple
 from datetime import date
 from decimal import Decimal
+from functools import cached_property
 from itertools import combinations
 from math import floor
 from typing import IO
@@ -16,6 +17,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import TypeVar
@@ -59,7 +61,7 @@ class CountersAction(argparse.Action):
 def id_argument(parser: Any, name: str, default: Optional[int] = None) -> None:
     parser.add_argument(
         f"--{name}-id",
-        help=f"The ID value to use for the first new {(name.replace('-',''))}.",
+        help=f"The ID value to use for the first new {(name.replace('-', ''))}.",
         type=lambda s: counter_generator(int(s)),
         action=CountersAction,
         default=default,
@@ -640,16 +642,15 @@ class MeasureTypeSlicer(Generic[OldRow, NewRow]):
 
 
 class EnvelopeSerializer:
-    """
-    A performant envelope serializer.
+    """Streaming Envelope Serializer.
 
-    It does not need to keep everything in memory to generate an envelope,
-    instead using a streaming approach. Also keeps track of transaction and
-    message IDs.
-    """
+    This is not a Django Restful Framework Serializer.
+    EnvelopeSerializer calls DRF serializers for the TrackedModels
+    it needs to output.
 
-    envelope_count = 0
-    envelope_size_in_mb = 0
+    Transaction and message ids are handled and data may be split
+    across multiple envelopes based on a size threshold.
+    """
 
     def __init__(
         self,
@@ -658,75 +659,102 @@ class EnvelopeSerializer:
         transaction_counter: Counter = counter_generator(),
         message_counter: Counter = counter_generator(),
         max_envelope_size_in_mb: int = None,
+        format: str = "xml",
+        newline: bool = False,
     ) -> None:
         self.output = output
         self.transaction_counter = transaction_counter
         self.message_counter = message_counter
         self.envelope_id = envelope_id
-        self.serializer = TrackedModelSerializer(context={"format": "xml"})
-        self.max_envelope_size_in_mb = max_envelope_size_in_mb
+        if max_envelope_size_in_mb is None:
+            self.max_envelope_size = None
+        else:
+            self.max_envelope_size = (
+                max_envelope_size_in_mb * 1024 * 1024
+            ) - self.envelope_end_size
+        self.envelope_size = 0
+        self.format = format
+        self.newline = newline
+
+    @cached_property
+    def envelope_end_size(self):
+        """Size in bytes of envelope end.
+        Used as a padding value when calculating
+        if an envelope is full."""
+        return len(self.render_envelope_end().encode())
 
     def __enter__(self):
-        self.write(
-            render_to_string(
-                template_name="common/taric/start_file.xml",
-            ),
-        )
-        self.start_envelope()
+        self.write(self.render_file_header())
+        self.write(self.render_envelope_start())
         return self
 
     def __exit__(self, *_) -> None:
-        self.end_envelope()
+        self.write(self.render_envelope_end())
 
-    def start_envelope(self) -> None:
-        self.write(
-            render_to_string(
-                template_name="common/taric/start_envelope.xml",
-                context={"envelope_id": self.envelope_id},
-            ),
+    def render_file_header(self) -> str:
+        return render_to_string(
+            template_name="common/taric/start_file.xml",
         )
-        self.envelope_count += 1
 
-    def end_envelope(self) -> None:
-        self.write(render_to_string(template_name="common/taric/end_envelope.xml"))
+    def render_envelope_start(self) -> str:
+        return render_to_string(
+            template_name="common/taric/start_envelope.xml",
+            context={"envelope_id": self.envelope_id},
+        )
 
-    def new_envelope(self) -> None:
-        self.end_envelope()
+    def render_envelope_body(self, models: List[TrackedModel]) -> str:
+        return render_to_string(
+            template_name="workbaskets/taric/transaction.xml",
+            context={
+                "tracked_models": TrackedModelSerializer(
+                    models,
+                    many=True,
+                    read_only=True,
+                    context={"format": self.format},
+                ).data,
+                "transaction_id": self.transaction_counter(),
+                "counter_generator": counter_generator,
+                "message_counter": self.message_counter,
+            },
+        )
+
+    def render_envelope_end(self) -> str:
+        return render_to_string(template_name="common/taric/end_envelope.xml")
+
+    def start_next_envelope(self) -> None:
+        """Update any data ready ready for outputting the next envelope."""
         self.envelope_id += 1
         self.message_counter = counter_generator(start=1)
-        self.start_envelope()
-        self.envelope_count += 1
 
-    def write(self, string_data) -> None:
-        if self.output.mode == "wb":
-            f = self.output.write(string_data.encode())
-            self.envelope_size_in_mb += f / (1024 * 1024)
-        else:
-            # less accurate as size only updates when buffer is flushed to file
+    def write(self, string_data: str) -> None:
+        if isinstance(self.output, io.TextIOBase):
+            self.envelope_size += len(string_data.encode())
             self.output.write(string_data)
-            self.envelope_size_in_mb = os.stat(self.output.name).st_size / (1024 * 1024)
+            if self.newline:
+                self.envelope_size += 1
+                self.output.write("\n")
+        else:
+            # Binary mode
+            bytes_data = string_data.encode()
+            self.envelope_size += len(bytes_data)
+            self.output.write(bytes_data)
+            if self.newline:
+                self.envelope_size += 1
+                self.output.write(b"\n")
+
+    def is_envelope_full(self, object_size=0) -> bool:
+        if self.max_envelope_size is None:
+            return False
+
+        return self.envelope_size + object_size > self.max_envelope_size
 
     def render_transaction(self, models: List[TrackedModel]) -> None:
-        if any(models):
-            if (
-                self.max_envelope_size_in_mb
-                and self.envelope_size_in_mb
-                > self.envelope_count * self.max_envelope_size_in_mb
-            ):
-                self.new_envelope()
+        if models:
+            envelope_body = self.render_envelope_body(models)
 
-            self.write(
-                render_to_string(
-                    template_name="workbaskets/taric/transaction.xml",
-                    context={
-                        "tracked_models": TrackedModelSerializer(
-                            models,
-                            many=True,
-                            read_only=True,
-                        ).data,
-                        "transaction_id": self.transaction_counter(),
-                        "counter_generator": counter_generator,
-                        "message_counter": self.message_counter,
-                    },
-                ),
-            )
+            if self.is_envelope_full(len(envelope_body.encode())):
+                self.write(self.render_envelope_end())
+                self.start_next_envelope()
+                self.write(self.render_envelope_start())
+
+            self.write(envelope_body)

@@ -1,12 +1,19 @@
-from exporter.management.commands.util import WorkBasketBaseCommand
-from exporter.management.commands.util import get_envelope_of_active_workbaskets
+import io
+import os
+import sys
+
+from django.core.management import BaseCommand
+from django.db.transaction import atomic
+
+from exporter.management.commands.util import StdOutStdErrContext
+from exporter.tasks import validate_envelope
+from importer.management.commands.utils import EnvelopeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
-class Command(WorkBasketBaseCommand):
-    """
-    Dump envelope to file or stdout.
+class Command(BaseCommand):
+    """Dump envelope to file or stdout.
 
     Invalid envelopes are output but with error level set.
     """
@@ -18,7 +25,10 @@ class Command(WorkBasketBaseCommand):
             "envelope_id",
             help="The 6-digit envelope ID to use on the generated envelope.",
             type=int,
+            default=None,
+            nargs="?",
         )
+
         parser.add_argument(
             "-o",
             "--output",
@@ -28,25 +38,34 @@ class Command(WorkBasketBaseCommand):
         )
 
     def get_output_file(self, filename):
-        """Enable the standard where '-' refers to stdout, every other string is
-        an actual filename."""
+        """Enable the standard where '-' refers to stdout, every other string is an actual filename."""
         if filename == "-":
-            return self.stdout
+            return StdOutStdErrContext(self.stdout)
         return open(filename, "w+")
 
+    @atomic
     def handle(self, *args, **options):
         workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
+        if not workbaskets:
+            sys.exit("No workbaskets with status READY_FOR_EXPORT.")
 
-        envelope = get_envelope_of_active_workbaskets(
-            options["envelope_id"],
-            workbaskets,
-        )
+        tracked_models = workbaskets.ordered_tracked_models()
+        if not tracked_models:
+            sys.exit(
+                f"{workbaskets.count()} Workbaskets READY_FOR_EXPORT but none contain any transactions."
+            )
 
-        f = self.get_output_file(options["filename"])
-        f.write(envelope.decode("utf-8"))
-        if f not in (self.stdout, self.stderr):
-            # Closing stdout or stderr can make a capturing pytest unhappy.
-            f.close()
+        envelope_id = None
+        if options.get("envelope_id") is not None:
+            envelope_id = int(options["envelope_id"])
 
-        # Don't add more output here in case we are outputting to stdout.
-        self.validate_envelope(envelope)
+        # Write to a buffer so that data can be validated on non seekable output such as stdout.
+        buffer = io.StringIO()
+        with EnvelopeSerializer(buffer, envelope_id=envelope_id, newline=True) as env:
+            env.render_transaction(tracked_models)
+
+        with self.get_output_file(options["filename"]) as output_file:
+            output_file.write(buffer.getvalue())
+
+        buffer.seek(os.SEEK_SET)
+        validate_envelope(buffer, skip_declaration=True)
