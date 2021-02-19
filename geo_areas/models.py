@@ -62,7 +62,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
         ):
             descriptions = list(self.descriptions.all())
             return descriptions[-1] if descriptions else None
-        return self.descriptions.last()
+        return self.get_descriptions().last()
 
     def get_descriptions(self, workbasket=None):
         return (
@@ -164,3 +164,6 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return f'description ({self.sid}) - "{self.description}" for {self.area}'
+
+    class Meta:
+        ordering = ("valid_between",)

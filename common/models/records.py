@@ -28,6 +28,7 @@ from polymorphic.query import PolymorphicQuerySet
 
 from common import exceptions
 from common import validators
+from common.models import TimestampedMixin
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
@@ -339,14 +340,6 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             )
             for model in TrackedModel.__subclasses__()
         ]
-
-
-class TimestampedMixin(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
 
 
 class VersionGroup(TimestampedMixin):

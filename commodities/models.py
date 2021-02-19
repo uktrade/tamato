@@ -244,6 +244,9 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
     )
     description = models.TextField(blank=True)
 
+    class Meta:
+        ordering = ("valid_between",)
+
 
 class GoodsNomenclatureOrigin(TrackedModel):
     """

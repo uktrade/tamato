@@ -133,3 +133,6 @@ class CertificateDescription(TrackedModel, ValidityMixin):
         return self.identifying_fields_to_string(
             identifying_fields=("described_certificate", "valid_between"),
         )
+
+    class Meta:
+        ordering = ("valid_between",)
