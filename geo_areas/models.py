@@ -71,16 +71,14 @@ class GeographicalArea(TrackedModel, ValidityMixin):
             .with_workbasket(workbasket)
         )
 
-    def get_current_members(self):
-        return [
-            membership.member
-            for membership in GeographicalMembership.objects.filter(
+    def get_current_memberships(self):
+        return (
+            GeographicalMembership.objects.filter(
                 geo_group__sid=self.sid,
             )
             .current()
             .select_related("member")
-            .prefetch_related("member__descriptions")
-        ]
+        )
 
     def in_use(self):
         # TODO handle deletes
