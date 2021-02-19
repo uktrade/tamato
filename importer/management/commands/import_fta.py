@@ -34,7 +34,7 @@ from importer.management.commands.utils import blank
 from importer.management.commands.utils import clean_duty_sentence
 from importer.management.commands.utils import clean_item_id
 from importer.management.commands.utils import col
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from importer.management.commands.utils import get_author
 from importer.management.commands.utils import id_argument
 from importer.management.commands.utils import MeasureContext

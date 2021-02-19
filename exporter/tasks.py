@@ -13,7 +13,7 @@ from lxml import etree
 from common.tests.util import TaricDataAssertionError
 from common.tests.util import validate_taric_xml_record_order
 from exporter.models import Upload
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from taric.models import Envelope, EnvelopeTransaction
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus

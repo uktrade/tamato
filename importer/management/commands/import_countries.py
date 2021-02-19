@@ -19,7 +19,7 @@ from geo_areas.models import GeographicalAreaDescription
 from geo_areas.validators import AreaCode
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.utils import col
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 

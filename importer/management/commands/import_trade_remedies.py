@@ -29,7 +29,7 @@ from importer.management.commands.patterns import DualRowRunner
 from importer.management.commands.patterns import MeasureCreatingPattern
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from importer.management.commands.utils import Expression
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
@@ -431,7 +431,7 @@ class Command(BaseCommand):
                 envelope_id=options["envelope_id"],
                 transaction_counter=counter_generator(options["transaction_id"]),
                 message_counter=counter_generator(start=1),
-                max_envelope_size_in_mb=35,
+                max_envelope_size=35 * 1024 * 1024,
             ) as env:
                 new_rows = new_worksheet.get_rows()
                 old_rows = old_worksheet.get_rows()

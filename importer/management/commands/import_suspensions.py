@@ -30,7 +30,7 @@ from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.utils import clean_duty_sentence
 from importer.management.commands.utils import clean_item_id
 from importer.management.commands.utils import col
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from importer.management.commands.utils import MeasureTypeSlicer
 from importer.management.commands.utils import NomenclatureTreeCollector
 from measures.models import MeasureType

@@ -7,7 +7,7 @@ from django.db.transaction import atomic
 
 from exporter.management.commands.util import StdOutStdErrContext
 from exporter.tasks import validate_envelope
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
