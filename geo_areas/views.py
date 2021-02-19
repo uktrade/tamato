@@ -19,7 +19,7 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class GeographicalAreaList(TamatoListView):
-    queryset = GeographicalArea.objects.current().prefetch_related("descriptions")
+    queryset = GeographicalArea.objects.current()
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "descriptions__description"]
@@ -28,4 +28,4 @@ class GeographicalAreaList(TamatoListView):
 class GeographicalAreaDetail(TrackedModelDetailView):
     model = GeographicalArea
     template_name = "geo_areas/detail.jinja"
-    queryset = GeographicalArea.objects.current().prefetch_related("descriptions")
+    queryset = GeographicalArea.objects.current()
