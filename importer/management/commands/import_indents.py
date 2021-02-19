@@ -21,7 +21,7 @@ from commodities.models import GoodsNomenclatureIndentNode
 from common.models import TrackedModel
 from common.validators import UpdateType
 from importer.management.commands.doc_importer import RowsImporter
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from importer.management.commands.utils import maybe_min
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus

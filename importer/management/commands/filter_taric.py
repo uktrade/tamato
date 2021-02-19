@@ -28,7 +28,7 @@ from importer.management.commands.patterns import Counter
 from importer.management.commands.patterns import MeasureEndingPattern
 from importer.management.commands.patterns import OldMeasureRow
 from importer.management.commands.patterns import parse_date
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from importer.management.commands.utils import col
 from importer.namespaces import nsmap
 from importer.parsers import ElementParser

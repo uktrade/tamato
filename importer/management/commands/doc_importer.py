@@ -14,7 +14,7 @@ from django.db import transaction
 from common.models import TrackedModel
 from importer.management.commands.patterns import BREXIT
 from importer.management.commands.patterns import Counter
-from importer.management.commands.utils import EnvelopeSerializer
+from common.serializers import EnvelopeSerializer
 from measures.models import DutyExpression
 from measures.models import Measurement
 from measures.models import MonetaryUnit
