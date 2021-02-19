@@ -184,7 +184,9 @@ class EnvelopeSerializer:
         self.envelope_id = envelope_id
         self.max_envelope_size = max_envelope_size
         if self.max_envelope_size < EnvelopeSerializer.MIN_ENVELOPE_SIZE:
-            raise ValueError("Max envelope size is too small.")
+            raise ValueError(
+                f"Max envelope size {max_envelope_size} is too small, it should be at least {EnvelopeSerializer.MIN_ENVELOPE_SIZE}."
+            )
         self.envelope_size = 0
         self.format = format
         self.newline = newline
