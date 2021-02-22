@@ -174,6 +174,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         business_rules.QD8,
         business_rules.QD10,
         business_rules.QD11,
+        business_rules.PreventQuotaDefinitionDeletion,
     )
 
     def __str__(self):

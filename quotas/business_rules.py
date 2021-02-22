@@ -1,4 +1,5 @@
 """Business rules for quotas."""
+from datetime import date
 from decimal import Decimal
 
 from common.business_rules import BusinessRule
@@ -6,6 +7,7 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
+from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
 from quotas.validators import SubQuotaType
@@ -188,6 +190,19 @@ class QD11(ValidityPeriodContained):
     validity period of the quota definition."""
 
     container_field_name = "measurement_unit_qualifier"
+
+
+class PreventQuotaDefinitionDeletion(BusinessRule):
+    """
+    A Quota Definition cannot be deleted once the start date is in the past.
+
+    The Quota Definition may be end-dated instead.
+    """
+
+    def validate(self, quota_definition):
+        if quota_definition.update_type == UpdateType.DELETE:
+            if quota_definition.valid_between.lower >= date.today():
+                raise self.violation(quota_definition)
 
 
 class QA1(UniqueIdentifyingFields):

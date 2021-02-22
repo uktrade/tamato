@@ -6,6 +6,7 @@ from django.db import DataError
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
+from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas import business_rules
 from quotas.validators import AdministrationMechanism
@@ -352,6 +353,34 @@ def test_QD15():
     """If quota events exist for a quota definition, the end date can only be
     brought forward up to the date of the last quota event on that quota
     definition."""
+
+
+def test_prevent_quota_definition_deletion(unapproved_transaction, date_ranges):
+    """
+    QAM does not like handling deletions of active Quota Definitions.
+
+    Ensure an active Quota Definition cannot be deleted.
+    """
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.future,
+    )
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.PreventQuotaDefinitionDeletion().validate(
+            quota_definition.new_draft(
+                workbasket=unapproved_transaction.workbasket,
+                transaction=unapproved_transaction,
+                update_type=UpdateType.DELETE,
+            ),
+        )
+
+    quota_definition.valid_between = date_ranges.earlier
+    business_rules.PreventQuotaDefinitionDeletion().validate(
+        quota_definition.new_draft(
+            workbasket=unapproved_transaction.workbasket,
+            transaction=unapproved_transaction,
+            update_type=UpdateType.DELETE,
+        ),
+    )
 
 
 def test_QA1(make_duplicate_record):
