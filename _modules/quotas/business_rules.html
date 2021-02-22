@@ -39,6 +39,7 @@
             
   <h1>Source code for quotas.business_rules</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Business rules for quotas.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
@@ -46,6 +47,7 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">SubQuotaType</span>
@@ -228,6 +230,19 @@
 <span class="sd">    validity period of the quota definition.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;measurement_unit_qualifier&quot;</span></div>
+
+
+<div class="viewcode-block" id="PreventQuotaDefinitionDeletion"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.PreventQuotaDefinitionDeletion">[docs]</a><span class="k">class</span> <span class="nc">PreventQuotaDefinitionDeletion</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Quota Definition cannot be deleted once the start date is in the past.</span>
+
+<span class="sd">    The Quota Definition may be end-dated instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PreventQuotaDefinitionDeletion.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.PreventQuotaDefinitionDeletion.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="QA1"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA1">[docs]</a><span class="k">class</span> <span class="nc">QA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>

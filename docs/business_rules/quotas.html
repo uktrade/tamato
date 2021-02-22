@@ -134,6 +134,19 @@ period of the referencing quota definition.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt id="quotas.business_rules.PreventQuotaDefinitionDeletion">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">PreventQuotaDefinitionDeletion</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#PreventQuotaDefinitionDeletion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.PreventQuotaDefinitionDeletion" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Quota Definition cannot be deleted once the start date is in the past.</p>
+<p>The Quota Definition may be end-dated instead.</p>
+<dl class="py method">
+<dt id="quotas.business_rules.PreventQuotaDefinitionDeletion.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quota_definition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#PreventQuotaDefinitionDeletion.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.PreventQuotaDefinitionDeletion.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="quotas.business_rules.QA1">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QA1</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA1" title="Permalink to this definition">¶</a></dt>
 <dd><p>The association between two quota definitions must be unique.</p>
