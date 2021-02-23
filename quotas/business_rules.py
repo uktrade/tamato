@@ -13,6 +13,27 @@ from quotas.validators import AdministrationMechanism
 from quotas.validators import SubQuotaType
 
 
+class PreventDeletingLinkedQuotaDefinitions(BusinessRule):
+    """A deleted Quota Definition must not be referred to by a non-deleted
+    relation."""
+
+    sid_prefix = "quota_definition__"
+
+    def get_relation_model(self, quota_definition):
+        raise NotImplementedError(
+            f"get_relation_model must be implemented on {self.__class__.__name__}.",
+        )
+
+    def validate(self, quota_definition):
+        related_model = self.get_relation_model(quota_definition)
+        if quota_definition.update_type == UpdateType.DELETE:
+            kwargs = {f"{self.sid_prefix}sid": quota_definition.sid}
+            if related_model.objects.current_as_of(
+                transaction=quota_definition.transaction,
+            ).filter(**kwargs):
+                raise self.violation(quota_definition)
+
+
 class ON1(UniqueIdentifyingFields):
     """Quota order number id + start date must be unique."""
 
@@ -203,6 +224,35 @@ class PreventQuotaDefinitionDeletion(BusinessRule):
         if quota_definition.update_type == UpdateType.DELETE:
             if quota_definition.valid_between.lower >= date.today():
                 raise self.violation(quota_definition)
+
+
+class QuotaAssociationMustReferToANonDeletedSubQuota(
+    PreventDeletingLinkedQuotaDefinitions,
+):
+    """A Quota Association must refer to a non-deleted sub quota."""
+
+    sid_prefix = "sub_quota__"
+
+    def get_relation_model(self, quota_definition):
+        return quota_definition.sub_quota_associations.model
+
+
+class QuotaSuspensionMustReferToANonDeletedQuotaDefinition(
+    PreventDeletingLinkedQuotaDefinitions,
+):
+    """A Quota Suspension must refer to a non-deleted Quota Definition."""
+
+    def get_relation_model(self, quota_definition):
+        return quota_definition.quotasuspension_set.model
+
+
+class QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition(
+    PreventDeletingLinkedQuotaDefinitions,
+):
+    """A Quota Blocking Period must refer to a non-deleted Quota Definition."""
+
+    def get_relation_model(self, quota_definition):
+        return quota_definition.quotablocking_set.model
 
 
 class QA1(UniqueIdentifyingFields):
