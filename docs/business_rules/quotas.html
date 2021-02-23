@@ -134,6 +134,19 @@ period of the referencing quota definition.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt id="quotas.business_rules.PreventDeletingLinkedQuotaDefinitions">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">PreventDeletingLinkedQuotaDefinitions</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#PreventDeletingLinkedQuotaDefinitions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions" title="Permalink to this definition">¶</a></dt>
+<dd><p>A deleted Quota Definition must not be referred to by a non-deleted
+relation.</p>
+<dl class="py method">
+<dt id="quotas.business_rules.PreventDeletingLinkedQuotaDefinitions.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quota_definition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#PreventDeletingLinkedQuotaDefinitions.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="quotas.business_rules.PreventQuotaDefinitionDeletion">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">PreventQuotaDefinitionDeletion</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#PreventQuotaDefinitionDeletion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.PreventQuotaDefinitionDeletion" title="Permalink to this definition">¶</a></dt>
 <dd><p>A Quota Definition cannot be deleted once the start date is in the past.</p>
@@ -261,6 +274,24 @@ period of the quota definition.</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QSP2</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QSP2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QSP2" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the quota must span the quota suspension
 period.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="quotas.business_rules.QuotaAssociationMustReferToANonDeletedSubQuota">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QuotaAssociationMustReferToANonDeletedSubQuota</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QuotaAssociationMustReferToANonDeletedSubQuota"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QuotaAssociationMustReferToANonDeletedSubQuota" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Quota Association must refer to a non-deleted sub quota.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="quotas.business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Quota Blocking Period must refer to a non-deleted Quota Definition.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="quotas.business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></code><code class="sig-name descname"><span class="pre">QuotaSuspensionMustReferToANonDeletedQuotaDefinition</span></code><a class="reference internal" href="../../_modules/quotas/business_rules.html#QuotaSuspensionMustReferToANonDeletedQuotaDefinition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Quota Suspension must refer to a non-deleted Quota Definition.</p>
 </dd></dl>
 
 <dl class="py class">

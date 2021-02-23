@@ -53,6 +53,27 @@
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">SubQuotaType</span>
 
 
+<div class="viewcode-block" id="PreventDeletingLinkedQuotaDefinitions"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions">[docs]</a><span class="k">class</span> <span class="nc">PreventDeletingLinkedQuotaDefinitions</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A deleted Quota Definition must not be referred to by a non-deleted</span>
+<span class="sd">    relation.&quot;&quot;&quot;</span>
+
+    <span class="n">sid_prefix</span> <span class="o">=</span> <span class="s2">&quot;quota_definition__&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_relation_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;get_relation_model must be implemented on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="PreventDeletingLinkedQuotaDefinitions.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="n">related_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_relation_model</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sid_prefix</span><span class="si">}</span><span class="s2">sid&quot;</span><span class="p">:</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">sid</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current_as_of</span><span class="p">(</span>
+                <span class="n">transaction</span><span class="o">=</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="ON1"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON1">[docs]</a><span class="k">class</span> <span class="nc">ON1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Quota order number id + start date must be unique.&quot;&quot;&quot;</span>
 
@@ -243,6 +264,35 @@
         <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QuotaAssociationMustReferToANonDeletedSubQuota"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QuotaAssociationMustReferToANonDeletedSubQuota">[docs]</a><span class="k">class</span> <span class="nc">QuotaAssociationMustReferToANonDeletedSubQuota</span><span class="p">(</span>
+    <span class="n">PreventDeletingLinkedQuotaDefinitions</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Quota Association must refer to a non-deleted sub quota.&quot;&quot;&quot;</span>
+
+    <span class="n">sid_prefix</span> <span class="o">=</span> <span class="s2">&quot;sub_quota__&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_relation_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">sub_quota_associations</span><span class="o">.</span><span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="QuotaSuspensionMustReferToANonDeletedQuotaDefinition"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition">[docs]</a><span class="k">class</span> <span class="nc">QuotaSuspensionMustReferToANonDeletedQuotaDefinition</span><span class="p">(</span>
+    <span class="n">PreventDeletingLinkedQuotaDefinitions</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Quota Suspension must refer to a non-deleted Quota Definition.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_relation_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">quotasuspension_set</span><span class="o">.</span><span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition">[docs]</a><span class="k">class</span> <span class="nc">QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition</span><span class="p">(</span>
+    <span class="n">PreventDeletingLinkedQuotaDefinitions</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Quota Blocking Period must refer to a non-deleted Quota Definition.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_relation_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">quotablocking_set</span><span class="o">.</span><span class="n">model</span></div>
 
 
 <div class="viewcode-block" id="QA1"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA1">[docs]</a><span class="k">class</span> <span class="nc">QA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
