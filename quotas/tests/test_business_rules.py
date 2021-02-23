@@ -383,6 +383,57 @@ def test_prevent_quota_definition_deletion(unapproved_transaction, date_ranges):
     )
 
 
+@pytest.mark.parametrize(
+    "factory,business_rule,quota_attr",
+    [
+        (
+            factories.QuotaAssociationFactory,
+            business_rules.QuotaAssociationMustReferToANonDeletedSubQuota,
+            "sub_quota",
+        ),
+        (
+            factories.QuotaSuspensionFactory,
+            business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
+            "quota_definition",
+        ),
+        (
+            factories.QuotaBlockingFactory,
+            business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
+            "quota_definition",
+        ),
+    ],
+)
+def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
+    unapproved_transaction,
+    factory,
+    business_rule,
+    quota_attr,
+):
+    """Ensure a Quota Definition cannot be deleted if referred to by another
+    linking quota model."""
+
+    linking_model = factory.create()
+    quota_definition = getattr(linking_model, quota_attr)
+    with pytest.raises(BusinessRuleViolation):
+        business_rule().validate(
+            quota_definition.new_draft(
+                workbasket=unapproved_transaction.workbasket,
+                transaction=unapproved_transaction,
+                update_type=UpdateType.DELETE,
+            ),
+        )
+
+    linking_model.update_type = UpdateType.DELETE
+    linking_model.save(force_write=True)
+    business_rule().validate(
+        quota_definition.new_draft(
+            workbasket=unapproved_transaction.workbasket,
+            transaction=unapproved_transaction,
+            update_type=UpdateType.DELETE,
+        ),
+    )
+
+
 def test_QA1(make_duplicate_record):
     """The association between two quota definitions must be unique."""
 
