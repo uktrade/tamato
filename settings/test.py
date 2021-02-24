@@ -1,6 +1,5 @@
 from settings.common import *
 
-
 ENV = "test"
 
 CSRF_COOKIE_SECURE = False
@@ -27,7 +26,7 @@ AWS_S3_REGION_NAME = os.environ.get("TEST_AWS_S3_REGION_NAME", "eu-west-2")
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    }
+    },
 }
 
 NURSERY_CACHE_ENGINE = "importer.cache.memory.MemoryCacheEngine"
