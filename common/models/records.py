@@ -522,18 +522,13 @@ class TrackedModel(PolymorphicModel):
             example_model = ExampleModel.objects.first()
             example_model.other_model_current  # Gets the latest version
         """
-        relations = {
-            f"{relation.name}_current": relation.name
-            for relation, model in self.get_relations()
-        }
-        if item not in relations:
-            try:
-                return super().__getattr__(item)
-            except AttributeError as e:
-                raise AttributeError(
-                    f"{item} does not exist on {self.__class__.__name__}",
-                ) from e
-        return getattr(self, relations[item]).current_version
+
+        if item.endswith("_current"):
+            field_name = item[:-8]
+            if field_name in [field.name for field, _ in self.get_relations()]:
+                return getattr(self, field_name).current_version
+
+        return self.__getattribute__(item)
 
     @atomic
     def save(self, *args, force_write=False, **kwargs):

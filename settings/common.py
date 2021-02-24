@@ -311,7 +311,7 @@ LOGGING = {
     "loggers": {
         "root": {
             "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "level": "WARNING",
         },
         "importer": {
             "handlers": ["console"],
