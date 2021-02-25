@@ -17,7 +17,7 @@ def is_truthy(value: str) -> bool:
 def strint(value: Union[int, str, float]) -> str:
     """
     If the passed value is a number type, return the number as a string with no
-    deciaml point or places.
+    decimal point or places.
 
     Else just return the string.
     """

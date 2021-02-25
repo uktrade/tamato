@@ -1,11 +1,17 @@
 import io
+import logging
+import os
 from functools import cached_property
-from typing import IO, List
+from typing import IO
+from typing import List
+from typing import Optional
 
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from drf_extra_fields.fields import DateRangeField
+from lxml import etree
 from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
@@ -15,6 +21,8 @@ from common.models import Transaction
 from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import TaricDateRange
+
+logger = logging.getLogger(__name__)
 
 
 class TARIC3DateRangeField(DateRangeField):
@@ -156,7 +164,8 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 class EnvelopeSerializer:
-    """Streaming Envelope Serializer.
+    """
+    Streaming Envelope Serializer.
 
     This is not a Django Restful Framework Serializer.
     EnvelopeSerializer calls DRF serializers for the TrackedModels
@@ -166,7 +175,7 @@ class EnvelopeSerializer:
     across multiple envelopes based on a size threshold.
     """
 
-    MIN_ENVELOPE_SIZE = 32768  # 32k is arbitrary - the size is chosen for template size + min size of records.
+    MIN_ENVELOPE_SIZE = 4096  # 4k is arbitrary - the size is chosen for template size + min size of records.
 
     def __init__(
         self,
@@ -174,7 +183,7 @@ class EnvelopeSerializer:
         envelope_id: int,
         transaction_counter: Counter = counter_generator(),
         message_counter: Counter = counter_generator(),
-        max_envelope_size: int = None,
+        max_envelope_size: Optional[int] = None,
         format: str = "xml",
         newline: bool = False,
     ) -> None:
@@ -182,20 +191,34 @@ class EnvelopeSerializer:
         self.transaction_counter = transaction_counter
         self.message_counter = message_counter
         self.envelope_id = envelope_id
-        self.max_envelope_size = max_envelope_size
-        if self.max_envelope_size < EnvelopeSerializer.MIN_ENVELOPE_SIZE:
-            raise ValueError(
-                f"Max envelope size {max_envelope_size} is too small, it should be at least {EnvelopeSerializer.MIN_ENVELOPE_SIZE}."
-            )
         self.envelope_size = 0
+        self.max_envelope_size = max_envelope_size
+        if (
+            max_envelope_size is not None
+            and self.max_envelope_size < EnvelopeSerializer.MIN_ENVELOPE_SIZE
+        ):
+            raise ValueError(
+                f"Max envelope size {max_envelope_size} is too small, it should be at least {EnvelopeSerializer.MIN_ENVELOPE_SIZE}.",
+            )
         self.format = format
         self.newline = newline
 
     @cached_property
+    def envelope_start_size(self):
+        """
+        Size in bytes of envelope start.
+
+        Used as a padding value when calculating if an envelope is full.
+        """
+        return len(self.render_envelope_start().encode())
+
+    @cached_property
     def envelope_end_size(self):
-        """Size in bytes of envelope end.
-        Used as a padding value when calculating
-        if an envelope is full."""
+        """
+        Size in bytes of envelope end.
+
+        Used as a padding value when calculating if an envelope is full.
+        """
         return len(self.render_envelope_end().encode())
 
     def __enter__(self):
@@ -257,13 +280,19 @@ class EnvelopeSerializer:
                 self.envelope_size += 1
                 self.output.write(b"\n")
 
-    def is_envelope_full(self, object_size=0) -> bool:
+    def can_fit_one_envelope(self, total_size) -> bool:
+        """Return True If total_size bytes would fit inside a single
+        Envelope."""
         if self.max_envelope_size is None:
-            return False
+            return True
 
-        return self.envelope_size + object_size > self.max_envelope_size
+        return total_size <= self.max_envelope_size
+
+    def is_envelope_full(self, object_size=0) -> bool:
+        return not self.can_fit_one_envelope(self.envelope_size + object_size)
 
     def render_transaction(self, models: List[TrackedModel]) -> None:
+        """Render TrackedModels, splitting to a new Envelope if over-size."""
         if models:
             envelope_body = self.render_envelope_body(models)
 
@@ -273,3 +302,56 @@ class EnvelopeSerializer:
                 self.write(self.render_envelope_start())
 
             self.write(envelope_body)
+
+
+class TaricDataAssertionError(AssertionError):
+    pass
+
+
+def validate_taric_xml_record_order(xml):
+    """Raise AssertionError if any record codes are not in order."""
+    for transaction in xml.findall(".//transaction"):
+        last_code = "00000"
+        for record in transaction.findall(".//record", namespaces=xml.nsmap):
+            record_code = record.findtext(".//record.code", namespaces=xml.nsmap)
+            subrecord_code = record.findtext(".//subrecord.code", namespaces=xml.nsmap)
+            full_code = record_code + subrecord_code
+            if full_code < last_code:
+                raise TaricDataAssertionError(
+                    f"Elements out of order in XML: {last_code}, {full_code}",
+                )
+            last_code = full_code
+
+
+def validate_envelope(envelope_file, skip_declaration=False):
+    """
+    Validate envelope content for XML issues and data order issues.
+
+    raises DocumentInvalid | TaricDataAssertionError
+    """
+    xml_declaration = '<?xml version="1.0" encoding="UTF-8"?>\n'
+
+    with open(settings.TARIC_XSD) as xsd_file:
+        if skip_declaration:
+            pos = envelope_file.tell()
+            xml_declaration = envelope_file.read(len(xml_declaration))
+            if xml_declaration != xml_declaration:
+                logger.warning(
+                    "Expected XML declaration first line of envelope to be XML encoding declaration, but found: ",
+                    xml_declaration,
+                )
+                envelope_file.seek(pos, os.SEEK_SET)
+
+        schema = etree.XMLSchema(etree.parse(xsd_file))
+        xml = etree.parse(envelope_file)
+
+        try:
+            schema.assertValid(xml)
+        except etree.DocumentInvalid as e:
+            logger.error("Envelope did not validate against XSD: %s", str(e.error_log))
+            raise
+        try:
+            validate_taric_xml_record_order(xml)
+        except TaricDataAssertionError as e:
+            logger.error(e.args[0])
+            raise

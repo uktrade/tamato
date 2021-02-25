@@ -143,7 +143,6 @@ TEMPLATES = [
     },
 ]
 
-
 # -- Auth
 LOGIN_URL = reverse_lazy("login")
 if SSO_ENABLED:
@@ -185,7 +184,6 @@ SESSION_COOKIE_SECURE = True
 # Check specified header for whether connection is via HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-
 # -- Running Django
 
 # Path to WSGI application
@@ -197,12 +195,10 @@ ROOT_URLCONF = f"urls"
 # URL path where static files are served
 STATIC_URL = "/assets/"
 
-
 # -- Debug
 
 # Activates debugging
 DEBUG = is_truthy(os.environ.get("DEBUG", False))
-
 
 # -- Database
 
@@ -241,9 +237,13 @@ NURSERY_CACHE_ENGINE = os.getenv(
     "importer.cache.memory.MemoryCacheEngine",
 )
 
+EXPORTER_MAXIMUM_ENVELOPE_SIZE = 39 * 1024 * 1024
+EXPORTER_DISABLE_NOTIFICATION = is_truthy(
+    os.environ.get("EXPORTER_DISABLE_NOTIFICATION", "false"),
+)
+
 # Wrap each request in a transaction
 ATOMIC_REQUESTS = True
-
 
 # -- Internationalization
 
@@ -292,7 +292,6 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-
 # -- Logging
 
 LOGGING = {
@@ -340,7 +339,6 @@ LOGGING = {
     },
 }
 
-
 # -- Sentry error tracking
 
 if os.environ.get("SENTRY_DSN"):
@@ -360,12 +358,10 @@ if os.environ.get("SENTRY_DSN"):
 
     sentry_sdk.init(**sentry_kwargs)
 
-
 # -- Testing
 
 # Override default Django test runner
 TEST_RUNNER = "settings.tests.runner.PytestTestRunner"
-
 
 # -- REST Framework
 REST_FRAMEWORK = {
@@ -387,7 +383,6 @@ REST_FRAMEWORK = {
 TARIC_XSD = os.path.join(BASE_DIR, "common", "assets", "taric3.xsd")
 
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
-
 
 # -- HMRC API client settings
 # See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/application-restricted-endpoints
