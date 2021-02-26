@@ -29,7 +29,7 @@ def get_latest_tracked_models(request, per_page: int = 20) -> List[TrackedModel]
     starting_pk = request.GET.get("start")
 
     tracked_models = (
-        TrackedModel.objects.current()
+        TrackedModel.objects.latest_approved()
         .select_related("polymorphic_ctype")
         .order_by("-pk")
         .non_polymorphic()

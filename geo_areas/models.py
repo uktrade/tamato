@@ -66,7 +66,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
 
     def get_descriptions(self, workbasket=None):
         return (
-            GeographicalAreaDescription.objects.current()
+            GeographicalAreaDescription.objects.latest_approved()
             .filter(area__sid=self.sid)
             .with_workbasket(workbasket)
         )
@@ -76,7 +76,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
             GeographicalMembership.objects.filter(
                 geo_group__sid=self.sid,
             )
-            .current()
+            .latest_approved()
             .select_related("member")
         )
 

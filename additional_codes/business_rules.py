@@ -57,7 +57,7 @@ class ACN4(BusinessRule):
                 valid_between__startswith=additional_code.valid_between.lower,
                 valid_between__overlap=additional_code.valid_between,
             )
-            .current_as_of(additional_code.transaction)
+            .approved_up_to_transaction(additional_code.transaction)
             .exists()
         ):
             raise self.violation(additional_code)
@@ -75,7 +75,7 @@ class ACN13(BusinessRule):
                 additional_code__sid=additional_code.sid,
             )
             .with_effective_valid_between()
-            .current_as_of(additional_code.transaction)
+            .approved_up_to_transaction(additional_code.transaction)
             .exclude(
                 db_effective_valid_between__contained_by=additional_code.valid_between,
             )

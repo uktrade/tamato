@@ -70,7 +70,7 @@ class Certificate(TrackedModel, ValidityMixin):
 
     def get_descriptions(self, workbasket=None):
         return (
-            CertificateDescription.objects.current()
+            CertificateDescription.objects.latest_approved()
             .filter(
                 described_certificate__sid=self.sid,
                 described_certificate__certificate_type=self.certificate_type,

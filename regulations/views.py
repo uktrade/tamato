@@ -11,7 +11,7 @@ from regulations.serializers import RegulationSerializer
 class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows regulations to be viewed."""
 
-    queryset = Regulation.objects.current().select_related("regulation_group")
+    queryset = Regulation.objects.latest_approved().select_related("regulation_group")
     serializer_class = RegulationSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [RegulationFilterBackend]

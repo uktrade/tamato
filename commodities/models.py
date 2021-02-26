@@ -57,7 +57,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
     def get_descriptions(self, workbasket=None):
         return (
-            GoodsNomenclatureDescription.objects.current()
+            GoodsNomenclatureDescription.objects.latest_approved()
             .filter(described_goods_nomenclature__sid=self.sid)
             .with_workbasket(workbasket)
         )
@@ -70,7 +70,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
             self.measures.model.objects.filter(
                 goods_nomenclature__sid=self.sid,
             )
-            .current()
+            .latest_approved()
             .exists()
         )
 
