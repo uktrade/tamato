@@ -55,8 +55,8 @@
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">importer.nursery</span> <span class="kn">import</span> <span class="n">TariffObjectNursery</span>
 <span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">DispatchedObjectType</span>
-<span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">generate_key</span>
 <span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">LinksType</span>
+<span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">generate_key</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -369,7 +369,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">(</span>
-                    <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_versions</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">current_deleted</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_versions</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">latest_deleted</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
                     <span class="kc">False</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_latest_version</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="kc">False</span>
