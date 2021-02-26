@@ -1,12 +1,10 @@
 from contextlib import nullcontext as does_not_raise
 
 import pytest
-from pytest_django.asserts import assertQuerysetEqual
 from django_fsm import TransitionNotAllowed
 
 from common.models import TrackedModel
 from common.tests import factories
-from workbaskets.models import WorkBasket
 from workbaskets import models
 from workbaskets.validators import WorkflowStatus
 
@@ -16,7 +14,7 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def new_workbasket() -> models.WorkBasket:
     workbasket = factories.WorkBasketFactory.create(
-        status=models.WorkflowStatus.NEW_IN_PROGRESS
+        status=models.WorkflowStatus.NEW_IN_PROGRESS,
     )
     transaction = factories.TransactionFactory.create(workbasket=workbasket)
     with transaction:
@@ -566,7 +564,11 @@ def test_workbasket_transactions():
     ],
 )
 def test_workbasket_submit(
-    new_workbasket, start_status, transition, target_status, expect_error
+    new_workbasket,
+    start_status,
+    transition,
+    target_status,
+    expect_error,
 ):
     new_workbasket.status = start_status
     transition_method = getattr(new_workbasket, transition)
@@ -581,3 +583,35 @@ def test_get_tracked_models(new_workbasket):
 
     assert TrackedModel.objects.count() > 2
     assert new_workbasket.tracked_models.count() == 2
+
+
+def test_workbasket_accepted_updates_current_tracked_models(new_workbasket):
+    original_footnote = factories.FootnoteFactory.create()
+    new_footnote = original_footnote.new_draft(workbasket=new_workbasket)
+
+    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    new_workbasket.submit_for_approval()
+    new_footnote.refresh_from_db()
+    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    new_workbasket.approve()
+    new_footnote.refresh_from_db()
+    assert new_footnote.version_group.current_version.pk == new_footnote.pk
+
+
+def test_workbasket_errored_updates_tracked_models(new_workbasket):
+    original_footnote = factories.FootnoteFactory.create()
+    new_footnote = original_footnote.new_draft(workbasket=new_workbasket)
+
+    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    new_workbasket.submit_for_approval()
+    new_footnote.refresh_from_db()
+    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    new_workbasket.approve()
+    new_footnote.refresh_from_db()
+    assert new_footnote.version_group.current_version.pk == new_footnote.pk
+    new_workbasket.export_to_cds()
+    new_footnote.refresh_from_db()
+    assert new_footnote.version_group.current_version.pk == new_footnote.pk
+    new_workbasket.cds_error()
+    new_footnote.refresh_from_db()
+    assert new_footnote.version_group.current_version.pk == original_footnote.pk

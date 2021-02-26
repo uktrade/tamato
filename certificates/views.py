@@ -31,7 +31,7 @@ class CertificatesList(TamatoListView):
     """UI endpoint for viewing and filtering Certificates."""
 
     queryset = (
-        Certificate.objects.current()
+        Certificate.objects.latest_approved()
         .select_related("certificate_type")
         .prefetch_related("descriptions")
     )
@@ -49,7 +49,7 @@ class CertificateDetail(TrackedModelDetailView):
     model = Certificate
     template_name = "certificates/detail.jinja"
     queryset = (
-        Certificate.objects.current()
+        Certificate.objects.latest_approved()
         .select_related("certificate_type")
         .prefetch_related("descriptions")
     )

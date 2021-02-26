@@ -25,7 +25,7 @@ class MeasureValidityPeriodContained(ValidityPeriodContained):
     def query_contains_validity(self, container, contained, model):
         queryset = container.__class__.objects.filter(
             **container.get_identifying_fields(),
-        ).current_as_of(model.transaction)
+        ).approved_up_to_transaction(model.transaction)
 
         if container.__class__.__name__ == "Measure":
             queryset = queryset.with_effective_valid_between().filter(
@@ -218,7 +218,7 @@ class ME88(BusinessRule):
                 sid=measure.goods_nomenclature.sid,
                 valid_between__overlap=measure.effective_valid_between,
             )
-            .current_as_of(measure.transaction)
+            .approved_up_to_transaction(measure.transaction)
         )
 
         explosion_level = measure.measure_type.measure_explosion_level
@@ -269,7 +269,7 @@ class ME16(BusinessRule):
             )
             .exclude(pk=measure.pk if measure.pk else None)
             .excluding_versions_of(version_group=measure.version_group)
-            .current_as_of(measure.transaction)
+            .approved_up_to_transaction(measure.transaction)
             .exists()
         ):
             raise self.violation(
@@ -340,13 +340,15 @@ class ME32(BusinessRule):
         matching_measures = (
             type(measure)
             .objects.filter(query)
-            .current_as_of(measure.transaction)
+            .approved_up_to_transaction(measure.transaction)
             .exclude(version_group=measure.version_group)
         )
 
         # get all goods nomenclature versions associated with this measure
         GoodsNomenclature = type(measure.goods_nomenclature)
-        goods = GoodsNomenclature.objects.current_as_of(measure.transaction).filter(
+        goods = GoodsNomenclature.objects.approved_up_to_transaction(
+            measure.transaction,
+        ).filter(
             sid=measure.goods_nomenclature.sid,
             valid_between__overlap=measure.effective_valid_between,
         )
@@ -357,7 +359,9 @@ class ME32(BusinessRule):
 
         # for each goods nomenclature version, get all indents
         for good in goods:
-            indents = Indent.objects.current_as_of(measure.transaction).filter(
+            indents = Indent.objects.approved_up_to_transaction(
+                measure.transaction,
+            ).filter(
                 valid_between__overlap=measure.effective_valid_between,
                 indented_goods_nomenclature=good,
             )
@@ -731,7 +735,7 @@ class ME43(BusinessRule):
     def validate(self, measure_component):
         duty_expressions_used = (
             type(measure_component)
-            .objects.current_as_of(measure_component.transaction)
+            .objects.approved_up_to_transaction(measure_component.transaction)
             .with_workbasket(measure_component.transaction.workbasket)
             .exclude(pk=measure_component.pk if measure_component.pk else None)
             .excluding_versions_of(version_group=measure_component.version_group)
@@ -783,7 +787,7 @@ class ComponentApplicability(BusinessRule):
             )
             if (
                 components.filter(inapplicable)
-                .current_as_of(measure.transaction)
+                .approved_up_to_transaction(measure.transaction)
                 .exists()
             ):
                 raise self.violation(measure, self.messages[code].format(self))
@@ -911,7 +915,7 @@ class ME58(BusinessRule):
                 required_certificate__certificate_type__sid=measure_condition.required_certificate.certificate_type.sid,
                 dependent_measure__sid=measure_condition.dependent_measure.sid,
             )
-            .current_as_of(measure_condition.transaction)
+            .approved_up_to_transaction(measure_condition.transaction)
             .exists()
         ):
             raise self.violation(measure_condition)
@@ -986,7 +990,7 @@ class ME108(BusinessRule):
     def validate(self, component):
         if (
             type(component)
-            .objects.current_as_of(component.transaction)
+            .objects.approved_up_to_transaction(component.transaction)
             .with_workbasket(component.transaction.workbasket)
             .exclude(pk=component.pk if component.pk else None)
             .excluding_versions_of(version_group=component.version_group)
@@ -1126,7 +1130,7 @@ class ME70(BusinessRule):
     def validate(self, association):
         if (
             type(association)
-            .objects.current_as_of(association.transaction)
+            .objects.approved_up_to_transaction(association.transaction)
             .with_workbasket(association.transaction.workbasket)
             .exclude(pk=association.pk if association.pk else None)
             .excluding_versions_of(version_group=association.version_group)

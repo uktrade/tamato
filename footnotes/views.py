@@ -21,7 +21,7 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     """API endpoint that allows footnotes to be viewed and edited."""
 
     queryset = (
-        models.Footnote.objects.current()
+        models.Footnote.objects.latest_approved()
         .select_related("footnote_type")
         .prefetch_related("descriptions")
     )
@@ -38,7 +38,7 @@ class FootnoteViewSet(viewsets.ModelViewSet):
 
 class FootnoteList(TamatoListView):
     queryset = (
-        models.Footnote.objects.current()
+        models.Footnote.objects.latest_approved()
         .select_related("footnote_type")
         .prefetch_related("descriptions")
     )
@@ -56,7 +56,7 @@ class FootnoteDetail(TrackedModelDetailView):
     model = models.Footnote
     template_name = "footnotes/detail.jinja"
     queryset = (
-        models.Footnote.objects.current()
+        models.Footnote.objects.latest_approved()
         .select_related("footnote_type")
         .prefetch_related("descriptions")
     )
@@ -65,7 +65,7 @@ class FootnoteDetail(TrackedModelDetailView):
 class FootnoteUpdate(TrackedModelDetailMixin, DraftUpdateView):
     form_class = forms.FootnoteForm
     queryset = (
-        models.Footnote.objects.current()
+        models.Footnote.objects.latest_approved()
         .select_related("footnote_type")
         .prefetch_related("descriptions")
     )
@@ -112,7 +112,7 @@ class FootnoteDescriptionMixin:
 
 class FootnoteDescriptionUpdate(FootnoteDescriptionMixin, DraftUpdateView):
     form_class = forms.FootnoteDescriptionForm
-    queryset = models.FootnoteDescription.objects.current()
+    queryset = models.FootnoteDescription.objects.latest_approved()
     template_name = "footnotes/edit_description.jinja"
 
     def get_success_url(self):
@@ -124,13 +124,13 @@ class FootnoteDescriptionConfirmUpdate(
     FootnoteDescriptionMixin,
     DetailView,
 ):
-    queryset = models.FootnoteDescription.objects.current()
+    queryset = models.FootnoteDescription.objects.latest_approved()
     template_name = "footnotes/confirm_update_description.jinja"
 
 
 class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows footnote types to be viewed or edited."""
 
-    queryset = models.FootnoteType.objects.current()
+    queryset = models.FootnoteType.objects.latest_approved()
     serializer_class = FootnoteTypeSerializer
     permission_classes = [permissions.IsAuthenticated]

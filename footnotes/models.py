@@ -97,7 +97,7 @@ class Footnote(TrackedModel, ValidityMixin):
 
     def get_descriptions(self, workbasket=None):
         return (
-            FootnoteDescription.objects.current()
+            FootnoteDescription.objects.latest_approved()
             .filter(
                 described_footnote__footnote_id=self.footnote_id,
                 described_footnote__footnote_type=self.footnote_type,

@@ -491,7 +491,7 @@ class Measure(TrackedModel, ValidityMixin):
 
     def has_components(self):
         return (
-            MeasureComponent.objects.approved_or_in_transaction(
+            MeasureComponent.objects.approved_up_to_transaction(
                 transaction=self.transaction,
             )
             .filter(component_measure__sid=self.sid)
@@ -500,7 +500,7 @@ class Measure(TrackedModel, ValidityMixin):
 
     def has_condition_components(self):
         return (
-            MeasureConditionComponent.objects.approved_or_in_transaction(
+            MeasureConditionComponent.objects.approved_up_to_transaction(
                 transaction=self.transaction,
             )
             .filter(condition__dependent_measure__sid=self.sid)

@@ -175,7 +175,7 @@ class TariffObjectNursery:
             values_list = set(chain.from_iterable(link_fields))
             values_list.add("pk")
 
-            for obj in model.objects.current().select_related():
+            for obj in model.objects.latest_approved().select_related():
                 self.cache_object(obj)
 
     def cache_object(self, obj: TrackedModel):

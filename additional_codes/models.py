@@ -82,7 +82,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
 
     def get_descriptions(self, workbasket=None):
         return (
-            AdditionalCodeDescription.objects.current()
+            AdditionalCodeDescription.objects.latest_approved()
             .filter(described_additional_code__sid=self.sid)
             .with_workbasket(workbasket)
         )
@@ -92,7 +92,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
             self.measure_set.model.objects.filter(
                 additional_code__sid=self.sid,
             )
-            .current()
+            .latest_approved()
             .exists()
         )
 

@@ -44,7 +44,7 @@ class FootnoteFilterBackend(TamatoFilterBackend, FootnoteFilterMixin):
 
 
 def footnote_type_choices():
-    footnote_types = models.FootnoteType.objects.current()
+    footnote_types = models.FootnoteType.objects.latest_approved()
     return [
         Choice(
             footnote_type.footnote_type_id,

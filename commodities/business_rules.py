@@ -22,7 +22,7 @@ class NIG1(BusinessRule):
                 sid=good.sid,
                 valid_between__overlap=good.valid_between,
             )
-            .current_as_of(good.transaction)
+            .approved_up_to_transaction(good.transaction)
             .exists()
         ):
             raise self.violation(good)
@@ -75,7 +75,7 @@ class NIG5(BusinessRule):
             or GoodsNomenclatureOrigin.objects.filter(
                 new_goods_nomenclature__sid=good.sid,
             )
-            .current_as_of(good.transaction)
+            .approved_up_to_transaction(good.transaction)
             .exists()
         ):
             raise self.violation("Non top-level goods must have an origin specified.")
@@ -145,7 +145,7 @@ class NIG11(BusinessRule):
 
         indents = GoodsNomenclatureIndent.objects.filter(
             indented_goods_nomenclature__sid=good.sid,
-        ).current_as_of(good.transaction)
+        ).approved_up_to_transaction(good.transaction)
 
         if indents.count() < 1:
             raise self.violation(
@@ -218,7 +218,7 @@ class NIG24(BusinessRule):
                 goods_nomenclature__sid=association.goods_nomenclature.sid,
                 valid_between__overlap=association.valid_between,
             )
-            .current_as_of(association.transaction)
+            .approved_up_to_transaction(association.transaction)
             .exclude(
                 id=association.pk,
             )
@@ -237,7 +237,7 @@ class NIG30(BusinessRule):
         if (
             good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
             .with_effective_valid_between()
-            .current_as_of(good.transaction)
+            .approved_up_to_transaction(good.transaction)
             .exclude(db_effective_valid_between__contained_by=good.valid_between)
             .exists()
         ):
@@ -280,7 +280,7 @@ class NIG35(BusinessRule):
                 goods_nomenclature__sid=good.sid,
                 additional_code__isnull=False,
             )
-            .current_as_of(good.transaction)
+            .approved_up_to_transaction(good.transaction)
             .exists()
         ):
             raise self.violation(good)
