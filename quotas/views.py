@@ -1,8 +1,10 @@
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from common.views import TamatoListView
 from quotas import models
 from quotas import serializers
+from quotas.filters import QuotaFilter
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
@@ -53,3 +55,9 @@ class QuotaEventViewset(viewsets.ReadOnlyModelViewSet):
     queryset = models.QuotaEvent.objects.has_approved_state()
     serializer_class = serializers.QuotaEventSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class QuotaList(TamatoListView):
+    queryset = models.QuotaOrderNumber.objects.latest_approved()
+    template_name = "quotas/list.jinja"
+    filterset_class = QuotaFilter

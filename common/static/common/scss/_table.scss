@@ -7,4 +7,11 @@
       font-size: inherit;
     }
   }
+  .govuk-table-list {
+    @extend .govuk-list;
+    margin-bottom: 0;
+    li:last-child {
+      margin-bottom: 0;
+    }
+  }
 }
