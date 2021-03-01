@@ -17,7 +17,10 @@ from crispy_forms_gds.layout import Size
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchVector
+from django.db.models import DateField
 from django.db.models import Q
+from django.db.models.functions import Extract
+from django.db.models.functions import Lower
 from django_filters import CharFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
