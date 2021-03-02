@@ -343,22 +343,77 @@ class TrackedModel(PolymorphicModel):
         editable=False,
     )
 
-    update_type = models.PositiveSmallIntegerField(
+    update_type: validators.UpdateType = models.PositiveSmallIntegerField(
         choices=validators.UpdateType.choices,
         db_index=True,
     )
+    """
+    The change that was made to the model when this version of the model was
+    authored.
+
+    The first version should always have :data:`~validators.UpdateType.CREATE`,
+    subsequent versions will have :data:`~validators.UpdateType.UPDATE` and the
+    final version will have :data:`~validators.UpdateType.DELETE`. Deleted
+    models that reappear for the same :attr:`identifying_fields` will have a new
+    :attr:`version_group` created.
+    """
 
     version_group = models.ForeignKey(
         VersionGroup,
         on_delete=models.PROTECT,
         related_name="versions",
     )
+    """
+    Each version group contains all of the versions of the same logical model.
+
+    When a new version of a model is authored (e.g. to
+    :data:`~validators.UpdateType.DELETE` it) a new model row is created and
+    added to the same version group as the existing model being changed.
+
+    Models are identified logically by their :attr:`identifying_fields`, so
+    within one version group all of the models should have the same values for
+    these fields.
+    """
 
     objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
+
+    record_code: int
+    """
+    The type id of this model's type family in the TARIC specification.
+
+    This number groups together a number of different models into 'records'.
+    Where two models share a record code, they are conceptually expressing
+    different properties of the same logical model.
+
+    In theory each :class:`~common.transactions.Transaction` should only contain
+    models with a single :attr:`record_code` (but differing
+    :attr:`subrecord_code`.)
+    """
+
+    subrecord_code: int
+    """
+    The type id of this model in the TARIC specification. The
+    :attr:`subrecord_code` when combined with the :attr:`record_code` uniquely
+    identifies the type within the specification.
+
+    The subrecord code gives the intended order for models in a transaction,
+    with comparatively smaller subrecord codes needing to come before larger
+    ones.
+    """
+
     identifying_fields: Iterable[str] = ("sid",)
+    """
+    The fields which together form a composite unique key for each model.
+
+    The system ID (or SID) field is normally the unique identifier of a TARIC
+    model, but in places where this does not exist models can declare their own.
+    (Note that because mutliple versions of each model will exist this does not
+    actually equate to a ``UNIQUE`` constraint in the database.)
+    """
+
     taric_template = None
 
     def get_taric_template(self):
@@ -366,7 +421,7 @@ class TrackedModel(PolymorphicModel):
         Generate a TARIC XML template name for the given class.
 
         Any TrackedModel must be representable via a TARIC compatible XML
-        record. To facilitate this
+        record.
         """
 
         if self.taric_template:

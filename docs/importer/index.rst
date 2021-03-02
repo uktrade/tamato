@@ -1,3 +1,5 @@
+.. _the-importer:
+
 The Importer
 ============
 
