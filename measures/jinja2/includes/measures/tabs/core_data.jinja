@@ -1,0 +1,69 @@
+<div class="footnote__core-data">
+    <div class="footnote__core-data__content">
+        <h2 class="govuk-heading-l">Details</h2>
+        {{ govukSummaryList({
+            "rows": [
+            {
+                "key": {"text": "Measure ID"},
+                "value": {"text": object.sid},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Measure type"},
+                "value": {"text": object.measure_type.sid ~ " - " ~ object.measure_type.description},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Measure generating regulation"},
+                "value": {"text": object.generating_regulation.regulation_id if object.generating_regulation else "-" },
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Commodity code"},
+                "value": {"text": object.goods_nomenclature.item_id if object.goods_nomenclature else "-"},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Commodity code description"},
+                "value": {"text": object.goods_nomenclature.get_description().description if object.goods_nomenclature else "-"},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Duties"},
+                "value": {"text": measure.duty_sentence if measure.duty_sentence else '-'},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Additional code"},
+                "value": {"text":  measure.additional_code.type.sid ~ measure.additional_code.code if measure.additional_code else '-'},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Geography"},
+                "value": {"text":  measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description if measure.geographical_area else '-'},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Quota order number"},
+                "value": {"text":  measure.order_number.sid if measure.order_number else '-'},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Start date"},
+                "value": {"text":  "{:%d %b %Y}".format(measure.valid_between.lower)},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "End date"},
+                "value": {"text":  "{:%d %b %Y}".format(measure.valid_between.upper) if measure.valid_between.upper else "-"},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Status"},
+                "value": {"text":  measure.transaction.workbasket.get_status_display()},
+                "actions": {"items": []}
+            },
+            ]
+        })}}
+    </div>
+</div>

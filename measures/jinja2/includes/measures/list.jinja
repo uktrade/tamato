@@ -4,7 +4,7 @@
 {% set table_rows = [] %}
 {% for measure in object_list %}
   {% set measure_link -%}
-    <a class="govuk-link govuk-!-font-weight-bold" href="#">{{measure.sid}}</a>
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
   {%- endset %}
   {% set footnotes %}
     {% for footnote in measure.footnotes.all() %}
