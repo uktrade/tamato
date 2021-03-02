@@ -33,6 +33,7 @@ lxml==4.6.2
 moto==1.3.16
 parsec==3.8
 psycopg2-binary==2.8.6
+pygments>=2.8
 pytest==6.2.2
 pytest-bdd==4.0.2
 pytest-cov==2.11.1

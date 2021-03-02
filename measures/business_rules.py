@@ -132,13 +132,9 @@ class MA4(MeasureValidityPeriodContained):
 
 
 class ME1(UniqueIdentifyingFields):
-    """
-    The combination of measure type + geographical area + goods nomenclature
-    item id.
-
-    + additional code type + additional code + order number + reduction
-    indicator + start date must be unique.
-    """
+    """The combination of measure type, geographical area, goods nomenclature
+    item id, additional code type, additional code, order number, reduction
+    indicator and start date must be unique."""
 
     identifying_fields = (
         "measure_type",
