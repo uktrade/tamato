@@ -105,7 +105,13 @@ class DutySentenceMixin(QuerySet):
                         ),
                         Case(
                             When(
-                                components__component_measurement__measurement_unit__abbreviation=None,
+                                Q(components__component_measurement=None)
+                                | Q(
+                                    components__component_measurement__measurement_unit=None,
+                                )
+                                | Q(
+                                    components__component_measurement__measurement_unit__abbreviation=None,
+                                ),
                                 then=Value(""),
                             ),
                             When(
@@ -218,4 +224,48 @@ class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
 
 
 class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
-    pass
+    def with_reference_price_string(self):
+        return self.annotate(
+            reference_price_string=Case(
+                When(
+                    duty_amount__isnull=True,
+                    then=Value(""),
+                ),
+                default=Concat(
+                    "duty_amount",
+                    Case(
+                        When(
+                            monetary_unit__isnull=True,
+                            then=Value(""),
+                        ),
+                        default=Concat(
+                            Value(" "),
+                            F("monetary_unit__code"),
+                        ),
+                    ),
+                    Case(
+                        When(
+                            condition_measurement__measurement_unit__code__isnull=True,
+                            then=Value(""),
+                        ),
+                        default=Concat(
+                            Value(" "),
+                            F("condition_measurement__measurement_unit__code"),
+                        ),
+                    ),
+                    Case(
+                        When(
+                            condition_measurement__measurement_unit_qualifier__code__isnull=True,
+                            then=Value(""),
+                        ),
+                        default=Concat(
+                            Value(" "),
+                            F(
+                                "condition_measurement__measurement_unit_qualifier__code",
+                            ),
+                        ),
+                    ),
+                    output_field=CharField(),
+                ),
+            ),
+        )

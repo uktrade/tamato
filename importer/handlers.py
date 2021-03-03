@@ -15,8 +15,8 @@ from common.models import TrackedModel
 from common.validators import UpdateType
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
-from importer.utils import generate_key
 from importer.utils import LinksType
+from importer.utils import generate_key
 
 logger = logging.getLogger(__name__)
 
@@ -329,7 +329,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         try:
             if self.data["update_type"] == UpdateType.DELETE:
                 return (
-                    model.objects.get_versions(**kwargs).current_deleted().get(),
+                    model.objects.get_versions(**kwargs).latest_deleted().get(),
                     False,
                 )
             return model.objects.get_latest_version(**kwargs), False

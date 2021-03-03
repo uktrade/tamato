@@ -29,7 +29,7 @@ class HandlerWithDutyAmount(BaseHandler):
     def clean(self, data: dict) -> dict:
         if data.get("duty_amount"):
             data["duty_amount"] = Decimal(data["duty_amount"]).quantize(
-                Decimal("1.000")
+                Decimal("1.000"),
             )
 
         return super().clean(data)
@@ -38,7 +38,8 @@ class HandlerWithDutyAmount(BaseHandler):
 def get_measurement_link(model, kwargs):
     measurement_unit_code = kwargs.pop("measurement_unit__code", None)
     measurement_unit_qualifier_code = kwargs.pop(
-        "measurement_unit_qualifier__code", None
+        "measurement_unit_qualifier__code",
+        None,
     )
 
     kwargs["measurement_unit"] = (
@@ -48,7 +49,7 @@ def get_measurement_link(model, kwargs):
     )
     kwargs["measurement_unit_qualifier"] = (
         models.MeasurementUnitQualifier.objects.get_latest_version(
-            code=measurement_unit_qualifier_code
+            code=measurement_unit_qualifier_code,
         )
         if measurement_unit_qualifier_code
         else None
@@ -57,7 +58,7 @@ def get_measurement_link(model, kwargs):
     if not any(kwargs.values()):
         raise model.DoesNotExist
 
-    return model.objects.current().get(**kwargs)
+    return model.objects.latest_approved().get(**kwargs)
 
 
 class MeasureTypeSeriesHandler(BaseHandler):
@@ -264,7 +265,7 @@ class MeasureHandler(BaseHandler):
 
     def load_link(self, name, model, identifying_fields=None, optional=False):
         if name == "terminating_regulation" and self.data.get(
-            "terminating_regulation__regulation_id"
+            "terminating_regulation__regulation_id",
         ):
             optional = False
         return super().load_link(name, model, identifying_fields, optional)
@@ -275,7 +276,7 @@ class MeasureHandler(BaseHandler):
         # QuotaOrderNumber instance?
         order_number = kwargs.pop("order_number")
         try:
-            return model.objects.current().get(
+            return model.objects.latest_approved().get(
                 order_number=order_number,
                 valid_between__contains=date.fromisoformat(
                     self.data["valid_between"]["lower"],
@@ -295,7 +296,7 @@ class MeasureHandler(BaseHandler):
                         kwargs.get("sid") or "",
                         kwargs.get("code") or "",
                         kwargs.get("type__sid") or "",
-                    ]
+                    ],
                 )
             raise
 

@@ -12,7 +12,7 @@ from common.jinja2 import break_words
 
 
 def certificate_type_choices():
-    certificate_types = models.CertificateType.objects.current()
+    certificate_types = models.CertificateType.objects.latest_approved()
     return [
         Choice(
             certificate_type.sid,

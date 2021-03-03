@@ -72,7 +72,7 @@ class GoodsNomenclatureOriginHandler(BaseHandler):
                 valid_between__contains=must_be_active_on_date,
                 **kwargs,
             )
-            .current()
+            .latest_approved()
             .get()
         )
 
@@ -121,7 +121,7 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
                 models.GoodsNomenclatureSuccessor.objects.filter(
                     **{key: self.data[key] for key in self.identifying_fields}
                 )
-                .current()
+                .latest_approved()
                 .get()
             )
             return previous.absorbed_into_goods_nomenclature
@@ -132,7 +132,7 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
                     valid_between__contains=must_be_active_on_date,
                     **kwargs,
                 )
-                .current()
+                .latest_approved()
                 .get()
             )
 

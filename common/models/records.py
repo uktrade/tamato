@@ -38,34 +38,29 @@ class IllegalSaveError(Exception):
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet):
-    def current(self) -> QuerySet:
+    def latest_approved(self) -> QuerySet:
         """
-        Get all the current versions of the model being queried.
+        Get all the latest versions of the model being queried which have been
+        approved.
 
-        Current is defined as the last row relating to the history of an object.
-        This may include current operationally live rows, it will often also mean
-        rows that are not operationally live yet but may be soon. It could also include
-        rows which were operationally live, are no longer operationally live, but have
-        no new row to supercede them, as long as they were set as deleted.
+        This will specifically fetch the most recent approved row pertaining to an object.
+        If a row is unapproved, or has subsequently been rejected after approval, it should
+        not be included in the returned QuerySet. Likewise any objects which have never been
+        approved (are in draft as an initial create step) should not appear in the queryset.
+        Any row marked as deleted will also not be fetched.
 
-        Any row marked as deleted will not be fetched.
-
-        If done from the TrackedModel this will return the current objects for all tracked
-        models.
+        If done from the TrackedModel this will return the objects for all tracked models.
         """
         return self.filter(is_current__isnull=False).exclude(
             update_type=UpdateType.DELETE,
         )
 
-    def current_as_of(self, transaction) -> QuerySet:
+    def approved_up_to_transaction(self, transaction) -> QuerySet:
         """
-        Get the current versions of the model being queried up to and including
-        a given transaction (including other preceding transactions in the same
-        workbasket, even if unapproved).
-
-        Current in this context is defined as the latest approved row relating to
-        an object, or the latest row relating to an object within a given
-        transaction or the transaction's workbasket's prceceding transactions.
+        Get the approved versions of the model being queried unless there exists
+        a version of the model in a draft state within a transaction preceding
+        (and including) the given transaction in the workbasket of the given
+        transaction.
 
         The generated SQL is equivalent to:
 
@@ -116,19 +111,14 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             .exclude(update_type=UpdateType.DELETE)
         )
 
-    def current_deleted(self) -> QuerySet:
+    def latest_deleted(self) -> QuerySet:
         """
-        Get all the current versions of the model being queried which have been
-        deleted.
+        Get all the latest versions of the model being queried which have been
+        approved, but also deleted.
 
-        Current is defined as the last row relating to the history of an object.
-        this may include current operationally live rows, it will often also mean
-        rows that are not operationally live yet but may be soon. It could also include
-        rows which were operationally live, are no longer operationally live, but have
-        no new row to supercede them.
+        See `latest_approved`.
 
-        If done from the TrackedModel this will return the current objects for all tracked
-        models.
+        If done from the TrackedModel this will return the objects for all tracked models.
         """
         return self.filter(is_current__isnull=False, update_type=UpdateType.DELETE)
 
@@ -175,7 +165,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
     def get_latest_version(self, **kwargs):
         """Gets the latest version of a specific object."""
-        return self.get_versions(**kwargs).current().get()
+        return self.get_versions(**kwargs).latest_approved().get()
 
     def get_current_version(self, **kwargs):
         """Gets the current version of a specific object."""
@@ -201,16 +191,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         # add latest version of models from the current workbasket
         return self.filter(query) | in_workbasket
 
-    def approved(self):
+    def has_approved_state(self):
         """Get objects which have been approved/sent-to-cds/published."""
 
         return self.filter(self.approved_query_filter())
-
-    def approved_or_in_transaction(self, transaction):
-        """Get objects which have been approved or are in the specified
-        transaction."""
-
-        return self.filter(Q(transaction=transaction) | self.approved_query_filter())
 
     def annotate_record_codes(self) -> QuerySet:
         """
@@ -454,7 +438,7 @@ class TrackedModel(PolymorphicModel):
             self.__class__.objects.filter(
                 **self.get_identifying_fields(identifying_fields)
             )
-            .current()
+            .latest_approved()
             .count()
             <= 1
         )
@@ -473,7 +457,7 @@ class TrackedModel(PolymorphicModel):
     def _get_version_group(self) -> VersionGroup:
         if self.update_type == validators.UpdateType.CREATE:
             return VersionGroup.objects.create()
-        return self.get_versions().current().last().version_group
+        return self.get_versions().latest_approved().last().version_group
 
     def _can_write(self):
         return not (
@@ -538,18 +522,13 @@ class TrackedModel(PolymorphicModel):
             example_model = ExampleModel.objects.first()
             example_model.other_model_current  # Gets the latest version
         """
-        relations = {
-            f"{relation.name}_current": relation.name
-            for relation, model in self.get_relations()
-        }
-        if item not in relations:
-            try:
-                return super().__getattr__(item)
-            except AttributeError as e:
-                raise AttributeError(
-                    f"{item} does not exist on {self.__class__.__name__}",
-                ) from e
-        return getattr(self, relations[item]).current_version
+
+        if item.endswith("_current"):
+            field_name = item[:-8]
+            if field_name in [field.name for field, _ in self.get_relations()]:
+                return getattr(self, field_name).current_version
+
+        return self.__getattribute__(item)
 
     @atomic
     def save(self, *args, force_write=False, **kwargs):

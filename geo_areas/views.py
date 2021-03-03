@@ -11,7 +11,9 @@ from geo_areas.serializers import GeographicalAreaSerializer
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows geographical areas to be viewed."""
 
-    queryset = GeographicalArea.objects.current().prefetch_related("descriptions")
+    queryset = GeographicalArea.objects.latest_approved().prefetch_related(
+        "descriptions",
+    )
     serializer_class = GeographicalAreaSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = GeographicalAreaFilter
@@ -19,7 +21,7 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class GeographicalAreaList(TamatoListView):
-    queryset = GeographicalArea.objects.current()
+    queryset = GeographicalArea.objects.latest_approved()
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "descriptions__description"]
@@ -28,4 +30,4 @@ class GeographicalAreaList(TamatoListView):
 class GeographicalAreaDetail(TrackedModelDetailView):
     model = GeographicalArea
     template_name = "geo_areas/detail.jinja"
-    queryset = GeographicalArea.objects.current()
+    queryset = GeographicalArea.objects.latest_approved()

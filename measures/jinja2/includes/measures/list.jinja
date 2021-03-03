@@ -1,0 +1,41 @@
+{% from 'macros/create_link.jinja' import create_link %} 
+{% from "includes/measures/conditions.jinja" import conditions_list %}
+
+{% set table_rows = [] %}
+{% for measure in object_list %}
+  {% set measure_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
+  {%- endset %}
+  {% set footnotes %}
+    {% for footnote in measure.footnotes.all() %}
+        {{ create_link(footnote.get_url(), footnote|string) }}{{ ", " if not loop.last else "" }}
+    {% endfor %}
+  {% endset %}
+  {{ table_rows.append([
+    {"html": measure_link},
+    {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
+    {"text": measure.goods_nomenclature.item_id|wordwrap(2)|replace("\n", " ") if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
+    {"text": measure.duty_sentence if measure.duty_sentence else '-'},
+    {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}),measure.additional_code.sid) if measure.additional_code else '-'},
+    {"html": create_link(url("geoarea-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
+    {"text": measure.order_number.sid if measure.order_number else '-'},
+    {"text": footnotes if measure.footnotes.all() else '-'},
+    {"text": conditions_list(measure) if measure.conditions.latest_approved() else "-", "classes": "govuk-!-width-one-quarter"},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "ID"},
+    {"text": "Type"},
+    {"text": "Commodity code"},
+    {"text": "Duties"},
+    {"text": "Additional code"},
+    {"text": "Geography"},
+    {"text": "Quota"},
+    {"text": "Footnote"},
+    {"text": "Conditions"},
+  ],
+  "rows": table_rows,
+  "classes": "govuk-table-m"
+}) }}

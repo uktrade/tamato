@@ -1,0 +1,30 @@
+{% macro conditions_list(measure) -%}
+  <ol class="govuk-list">
+    {% for condition in measure.conditions.latest_approved().with_reference_price_string() -%}
+      <li title="{{ condition.description }}">
+
+        <span class="condition_code">
+          {{ condition.condition_code.code }}{{ condition.component_sequence_number }}
+        </span>
+
+        {% if condition.required_certificate -%}
+          <span class="condition_certificate">
+            {{ condition.required_certificate.code }}
+          </span>
+        {%- endif %}
+
+        {% if condition.reference_price_string -%}
+          <span class="condition_reference">
+            (> {{ condition.reference_price_string }})
+          </span>
+        {%- endif %}
+
+        <span class="condition_action">{{ condition.action.code }}</span>
+
+        {% if condition.condition_string %}
+          - {{ condition.condition_string }}
+        {% endif %}
+      </li>
+    {%- endfor %}
+  </ol>
+{%- endmacro %}

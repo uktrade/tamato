@@ -16,8 +16,8 @@ from footnotes.validators import FOOTNOTE_ID_PATTERN
 from footnotes.validators import FOOTNOTE_TYPE_ID_PATTERN
 
 COMBINED_FOOTNOTE_AND_TYPE_ID = re.compile(
-    r"^(?P<footnote_type_id>" + FOOTNOTE_TYPE_ID_PATTERN + ")"
-    r"(?P<footnote_id>" + FOOTNOTE_ID_PATTERN + ")$",
+    r"(?P<footnote_type_id>" + FOOTNOTE_TYPE_ID_PATTERN + ")"
+    r"(?P<footnote_id>" + FOOTNOTE_ID_PATTERN + ")",
 )
 
 
@@ -44,7 +44,7 @@ class FootnoteFilterBackend(TamatoFilterBackend, FootnoteFilterMixin):
 
 
 def footnote_type_choices():
-    footnote_types = models.FootnoteType.objects.current()
+    footnote_types = models.FootnoteType.objects.latest_approved()
     return [
         Choice(
             footnote_type.footnote_type_id,

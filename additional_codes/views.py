@@ -16,7 +16,7 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows additional codes to be viewed."""
 
     queryset = (
-        AdditionalCode.objects.current()
+        AdditionalCode.objects.latest_approved()
         .select_related("type")
         .prefetch_related("descriptions")
     )
@@ -34,7 +34,7 @@ class AdditionalCodeList(TamatoListView):
     """UI endpoint for viewing and filtering Additional Codes."""
 
     queryset = (
-        models.AdditionalCode.objects.current()
+        models.AdditionalCode.objects.latest_approved()
         .select_related("type")
         .prefetch_related("descriptions")
     )
@@ -51,7 +51,7 @@ class AdditionalCodeList(TamatoListView):
 class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows additional code types to be viewed."""
 
-    queryset = AdditionalCodeType.objects.current()
+    queryset = AdditionalCodeType.objects.latest_approved()
     serializer_class = AdditionalCodeTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -60,7 +60,7 @@ class AdditionalCodeDetail(TrackedModelDetailView):
     model = models.AdditionalCode
     template_name = "additional_codes/detail.jinja"
     queryset = (
-        models.AdditionalCode.objects.current()
+        models.AdditionalCode.objects.latest_approved()
         .select_related("type")
         .prefetch_related("descriptions")
     )

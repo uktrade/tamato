@@ -233,8 +233,8 @@ def test_goods_nomenclature_successor_importer_delete(valid_user, date_ranges):
     db_link = models.GoodsNomenclatureSuccessor.objects.filter(
         replaced_goods_nomenclature__sid=good.sid,
     )
-    assert not db_link.current().exists()
-    assert db_link.current_deleted().exists()
+    assert not db_link.latest_approved().exists()
+    assert db_link.latest_deleted().exists()
 
 
 def test_goods_nomenclature_indent_importer_create(valid_user):

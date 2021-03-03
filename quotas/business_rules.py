@@ -28,7 +28,7 @@ class PreventDeletingLinkedQuotaDefinitions(BusinessRule):
         related_model = self.get_relation_model(quota_definition)
         if quota_definition.update_type == UpdateType.DELETE:
             kwargs = {f"{self.sid_prefix}sid": quota_definition.sid}
-            if related_model.objects.current_as_of(
+            if related_model.objects.approved_up_to_transaction(
                 transaction=quota_definition.transaction,
             ).filter(**kwargs):
                 raise self.violation(quota_definition)
@@ -47,7 +47,7 @@ class ON2(BusinessRule):
     def validate(self, order_number):
         if (
             type(order_number)
-            .objects.current_as_of(order_number.transaction)
+            .objects.approved_up_to_transaction(order_number.transaction)
             .filter(
                 order_number=order_number.order_number,
                 valid_between__overlap=order_number.valid_between,
@@ -65,7 +65,7 @@ class ON5(BusinessRule):
     def validate(self, origin):
         if (
             type(origin)
-            .objects.current_as_of(origin.transaction)
+            .objects.approved_up_to_transaction(origin.transaction)
             .filter(
                 order_number__sid=origin.order_number.sid,
                 geographical_area__sid=origin.geographical_area.sid,

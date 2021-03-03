@@ -36,7 +36,7 @@ class ValidityPeriodContainsIfInUse(BusinessRule):
                 associated_footnote__footnote_id=footnote.footnote_id,
                 associated_footnote__footnote_type__footnote_type_id=footnote.footnote_type.footnote_type_id,
             )
-            .current_as_of(footnote.transaction)
+            .approved_up_to_transaction(footnote.transaction)
             .exclude(
                 **{
                     f"{self.footnoted_model_field_name}__valid_between__contained_by": footnote.valid_between,

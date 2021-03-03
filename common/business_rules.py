@@ -98,7 +98,7 @@ class UniqueIdentifyingFields(BusinessRule):
 
         if (
             model.__class__.objects.filter(**query)
-            .current_as_of(model.transaction)
+            .approved_up_to_transaction(model.transaction)
             .exists()
         ):
             raise self.violation(model)
@@ -117,7 +117,7 @@ class NoOverlapping(BusinessRule):
 
         if (
             model.__class__.objects.filter(**query)
-            .current_as_of(model.transaction)
+            .approved_up_to_transaction(model.transaction)
             .exclude(id=model.id)
             .exists()
         ):
@@ -153,7 +153,7 @@ class ValidityPeriodContained(BusinessRule):
             not container.__class__.objects.filter(
                 **container.get_identifying_fields(),
             )
-            .current_as_of(model.transaction)
+            .approved_up_to_transaction(model.transaction)
             .filter(
                 valid_between__contains=contained.valid_between,
             )

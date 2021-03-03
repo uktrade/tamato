@@ -5,14 +5,16 @@ from datetime import datetime
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Prefetch, Subquery
+from django.db.models import Prefetch
 from django.db.models import QuerySet
+from django.db.models import Subquery
 from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
 from common.models import TrackedModel
 from common.models import Transaction
+from common.models.records import TrackedModelQuerySet
 from workbaskets.validators import WorkflowStatus
 
 
@@ -30,12 +32,14 @@ class WorkBasketQueryset(QuerySet):
         )
 
     def ordered_transactions(self):
-        """This Workbaskets transactions in creation order.
+        """
+        This Workbaskets transactions in creation order.
 
-        Note: tracked_models are ordered by record_code, subrecord_code by TransactionManager"""
+        Note: tracked_models are ordered by record_code, subrecord_code by TransactionManager
+        """
         workbasket_pks = self.values_list("pk", flat=True)
         return Transaction.objects.filter(
-            workbasket__pk__in=Subquery(workbasket_pks)
+            workbasket__pk__in=Subquery(workbasket_pks),
         ).order_by("order")
 
 
@@ -119,7 +123,12 @@ class WorkBasket(TimestampedMixin):
         permission="workbaskets.can_approve",
     )
     def approve(self):
-        pass
+        """Once a workbasket has been approved all related Tracked Models must
+        be updated to the current versions of themselves."""
+        for obj in self.tracked_models.order_by("pk"):
+            version_group = obj.version_group
+            version_group.current_version = obj
+            version_group.save()
 
     @transition(
         field=status,
@@ -143,7 +152,21 @@ class WorkBasket(TimestampedMixin):
         target=WorkflowStatus.CDS_ERROR,
     )
     def cds_error(self):
-        pass
+        """If a workbasket, after approval, is then rejected by CDS it is
+        important to roll back the current models to the previous approved
+        version."""
+        for obj in self.tracked_models.order_by("-pk").select_related("version_group"):
+            version_group = obj.version_group
+            versions = (
+                version_group.versions.has_approved_state()
+                .order_by("-pk")
+                .exclude(pk=obj.pk)
+            )
+            if versions.count() == 0:
+                version_group.current_version = None
+            else:
+                version_group.current_version = versions.first()
+            version_group.save()
 
     def to_json(self):
         """Used for serializing the workbasket to the session."""
@@ -158,7 +181,7 @@ class WorkBasket(TimestampedMixin):
         return json.loads(json.dumps(data, cls=DjangoJSONEncoder))
 
     @property
-    def tracked_models(self):
+    def tracked_models(self) -> TrackedModelQuerySet:
         return TrackedModel.objects.filter(transaction__workbasket=self)
 
     @classmethod

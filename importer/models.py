@@ -53,6 +53,7 @@ class ImportBatch(TimestampedMixin):
         "self",
         through="BatchDependencies",
         symmetrical=False,
+        blank=True,
     )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()
