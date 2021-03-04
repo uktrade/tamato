@@ -78,7 +78,10 @@ class NIG5(BusinessRule):
             .approved_up_to_transaction(good.transaction)
             .exists()
         ):
-            raise self.violation("Non top-level goods must have an origin specified.")
+            raise self.violation(
+                model=good,
+                message="Non top-level goods must have an origin specified.",
+            )
 
 
 class NIG7(BusinessRule):
@@ -99,10 +102,13 @@ class NIG7(BusinessRule):
 
         if day_before_start not in origin_range:
             raise self.violation(
-                f'GoodsNomenclatureOrigin {origin}: The "derived from" code, if '
-                "entered, must be a goods nomenclature which exists and is applicable "
-                "the day before the start date of the new code entered. "
-                f"Origin {origin_range} is not applicable on {day_before_start}.",
+                model=origin,
+                message=(
+                    'The "derived from" code, if entered, must be a goods '
+                    "nomenclature which exists and is applicable the day before the "
+                    "start date of the new code entered. "
+                    f"Origin {origin_range} is not applicable on {day_before_start}."
+                ),
             )
 
 
@@ -116,17 +122,22 @@ class NIG10(BusinessRule):
 
         if ends_on is None:
             raise self.violation(
-                f"GoodsNomenclatureSuccessor {successor}: A successor can only be added "
-                "for goods nomenclature codes with a closing date.",
+                model=successor,
+                message=(
+                    "A successor can only be added for goods nomenclature codes with a "
+                    "closing date."
+                ),
             )
 
         day_after_end = ends_on + timedelta(days=1)
         if day_after_end not in successor_range:
             raise self.violation(
-                f'GoodsNomenclatureSuccessor {successor}: The "absorbed by" code, if '
-                "entered, must be a goods nomenclature which exists and is applicable "
-                "the day after the closing date."
-                f"Successor {successor_range} is not applicable on {day_after_end}.",
+                model=successor,
+                message=(
+                    'The "absorbed by" code, if entered, must be a goods nomenclature '
+                    "which exists and is applicable the day after the closing date."
+                    f"Successor {successor_range} is not applicable on {day_after_end}."
+                ),
             )
 
 
@@ -149,15 +160,19 @@ class NIG11(BusinessRule):
 
         if indents.count() < 1:
             raise self.violation(
-                f"GoodsNomenclature {good}: At least one indent record is mandatory.",
+                model=good,
+                message="At least one indent record is mandatory.",
             )
 
         if not indents.filter(
             valid_between__startswith=good.valid_between.lower,
         ).exists():
             raise self.violation(
-                f"GoodsNomenclature {good}: The start date of the first indentation must "
-                "be equal to the start date of the nomenclature.",
+                model=good,
+                message=(
+                    "The start date of the first indentation must be equal to the "
+                    "start date of the nomenclature."
+                ),
             )
 
         if find_duplicate_start_dates(
@@ -166,14 +181,17 @@ class NIG11(BusinessRule):
             ),
         ).exists():
             raise self.violation(
-                f"GoodsNomenclature {good}: No two associated indentations may have the "
-                "same start date",
+                model=good,
+                message="No two associated indentations may have the same start date",
             )
 
         if indents.filter(valid_between__fully_gt=good.valid_between).exists():
             raise self.violation(
-                f"GoodsNomenclature {good}: The start date of an associated indentation "
-                "must be less than or equal to the end date of the nomenclature.",
+                model=good,
+                message=(
+                    "The start date of an associated indentation must be less than or "
+                    "equal to the end date of the nomenclature."
+                ),
             )
 
 

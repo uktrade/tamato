@@ -69,15 +69,20 @@ class ROIMB44(BusinessRule):
                 .exists()
             ):
                 raise self.violation(
-                    f"Regulation {regulation}: A draft regulation can only have its "
-                    "'Regulation Approved Flag' change from 'Not Approved' to "
-                    "'Approved'.",
+                    model=regulation,
+                    message=(
+                        "A draft regulation can only have its 'Regulation Approved "
+                        "Flag' change from 'Not Approved' to 'Approved'."
+                    ),
                 )
 
         elif not regulation.approved:
             raise self.violation(
-                f"Regulation {regulation}: A non-draft regulation must have its "
-                "'Regulation Approved Flag' set to 'Approved'.",
+                model=regulation,
+                message=(
+                    "A non-draft regulation must have its 'Regulation Approved Flag' "
+                    "set to 'Approved'."
+                ),
             )
 
 

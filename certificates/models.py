@@ -7,6 +7,7 @@ from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from measures import business_rules as measures_business_rules
 
 
 class CertificateType(TrackedModel, ValidityMixin):
@@ -23,6 +24,7 @@ class CertificateType(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
+    indirect_business_rules = (business_rules.CE7,)
     business_rules = (
         business_rules.CET1,
         business_rules.CET2,
@@ -56,6 +58,10 @@ class Certificate(TrackedModel, ValidityMixin):
         "sid",
     )
 
+    indirect_business_rules = (
+        measures_business_rules.ME56,
+        measures_business_rules.ME57,
+    )
     business_rules = (
         business_rules.CE2,
         business_rules.CE4,
@@ -124,6 +130,7 @@ class CertificateDescription(TrackedModel, ValidityMixin):
         on_delete=models.PROTECT,
     )
 
+    indirect_business_rules = (business_rules.CE6,)
     business_rules = (
         business_rules.NoOverlappingDescriptions,
         business_rules.ContiguousDescriptions,

@@ -267,7 +267,7 @@ class ME16(BusinessRule):
                 db_effective_valid_between__overlap=measure.effective_valid_between,
                 **kwargs,
             )
-            .exclude(pk=measure.pk if measure.pk else None)
+            .exclude(pk=measure.pk or None)
             .excluding_versions_of(version_group=measure.version_group)
             .approved_up_to_transaction(measure.transaction)
             .exists()
@@ -907,7 +907,7 @@ class ME58(BusinessRule):
         if (
             type(measure_condition)
             .objects.with_workbasket(measure_condition.transaction.workbasket)
-            .exclude(pk=measure_condition.pk if measure_condition.pk else None)
+            .exclude(pk=measure_condition.pk or None)
             .excluding_versions_of(version_group=measure_condition.version_group)
             .filter(
                 condition_code__code=measure_condition.condition_code.code,
@@ -992,7 +992,7 @@ class ME108(BusinessRule):
             type(component)
             .objects.approved_up_to_transaction(component.transaction)
             .with_workbasket(component.transaction.workbasket)
-            .exclude(pk=component.pk if component.pk else None)
+            .exclude(pk=component.pk or None)
             .excluding_versions_of(version_group=component.version_group)
             .filter(
                 condition__sid=component.condition.sid,
@@ -1095,7 +1095,7 @@ class ME67(BusinessRule):
             member__sid=excluded.sid,
             valid_between__contains=exclusion.modified_measure.effective_valid_between,
         ).exists():
-            raise self.violation(measure)
+            raise self.violation(exclusion)
 
 
 class ME68(BusinessRule):
@@ -1132,7 +1132,7 @@ class ME70(BusinessRule):
             type(association)
             .objects.approved_up_to_transaction(association.transaction)
             .with_workbasket(association.transaction.workbasket)
-            .exclude(pk=association.pk if association.pk else None)
+            .exclude(pk=association.pk or None)
             .excluding_versions_of(version_group=association.version_group)
             .filter(
                 footnoted_measure__sid=association.footnoted_measure.sid,

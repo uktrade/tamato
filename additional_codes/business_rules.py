@@ -31,15 +31,18 @@ class ACN2(BusinessRule):
                 ApplicationCode.EXPORT_REFUND_AGRI,
             }:
                 raise self.violation(
-                    f"AdditionalCode {additional_code}: The referenced additional code "
-                    'type must have as application code "non-Meursing" or "Export Refund '
-                    'for Processed Agricultural Goods".',
+                    model=additional_code,
+                    message=(
+                        "The referenced additional code type must have as application "
+                        'code "non-Meursing" or "Export Refund for Processed '
+                        'Agricultural Goods".'
+                    ),
                 )
 
         except ObjectDoesNotExist:
             raise self.violation(
-                f"AdditionalCode {additional_code}: The referenced additional code type "
-                "must exist.",
+                model=additional_code,
+                message="The referenced additional code type must exist.",
             )
 
 

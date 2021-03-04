@@ -8,6 +8,8 @@ from common.models import TrackedModel
 from common.models import ValidityMixin
 from geo_areas import business_rules
 from geo_areas import validators
+from measures import business_rules as measures_business_rules
+from quotas import business_rules as quotas_business_rules
 
 
 class GeographicalArea(TrackedModel, ValidityMixin):
@@ -41,6 +43,18 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     # This deals with subgroups of other groups
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
 
+    indirect_business_rules = (
+        business_rules.GA14,
+        business_rules.GA16,
+        business_rules.GA17,
+        measures_business_rules.ME1,
+        measures_business_rules.ME65,
+        measures_business_rules.ME66,
+        measures_business_rules.ME67,
+        quotas_business_rules.ON13,
+        quotas_business_rules.ON14,
+        quotas_business_rules.ON6,
+    )
     business_rules = (
         business_rules.GA1,
         business_rules.GA3,

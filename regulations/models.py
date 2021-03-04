@@ -42,6 +42,11 @@ class Group(TrackedModel, ValidityMixin):
 
     identifying_fields = ("group_id",)
 
+    indirect_business_rules = (
+        business_rules.ROIMB4,
+        business_rules.ROIMB47,
+    )
+
 
 class Regulation(TrackedModel):
     """

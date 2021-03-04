@@ -357,7 +357,8 @@ class TrackedModel(PolymorphicModel):
     objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
 
     business_rules: Iterable = ()
-    identifying_fields = ("sid",)
+    indirect_business_rules: Iterable = ()
+    identifying_fields: Iterable[str] = ("sid",)
     taric_template = None
 
     def get_taric_template(self):

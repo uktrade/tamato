@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
+from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
 
@@ -22,7 +23,7 @@ class TransactionManager(models.Manager):
             super()
             .get_queryset()
             .prefetch_related(
-                models.Prefetch("tracked_models", queryset=annotate_record_code)
+                models.Prefetch("tracked_models", queryset=annotate_record_code),
             )
         )
 
@@ -32,9 +33,9 @@ class TransactionQueryset(models.QuerySet):
         """TrackedModel in order of their transactions creation order."""
 
         tracked_models = self.model.tracked_models.rel.related_model.objects.filter(
-            transaction__in=self
+            transaction__in=self,
         ).order_by(
-            "transaction__order"
+            "transaction__order",
         )  # order_by record_code, subrecord_code already happened in get_queryset
         return tracked_models
 
@@ -71,12 +72,11 @@ class Transaction(TimestampedMixin):
             return
 
         self.errors = []
-        for model in self.tracked_models.all():
-            for rule in model.business_rules:
-                try:
-                    rule().validate(model)
-                except BusinessRuleViolation as violation:
-                    self.errors.append(violation)
+
+        try:
+            BusinessRuleChecker(self.tracked_models.all()).validate()
+        except BusinessRuleViolation as violation:
+            self.errors.append(violation)
 
         if self.errors:
             raise ValidationError(self.errors)
