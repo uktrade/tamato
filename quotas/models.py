@@ -44,6 +44,13 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         related_name="quotas",
     )
 
+    indirect_business_rules = (
+        business_rules.ON7,
+        business_rules.ON8,
+        business_rules.QBP2,
+        business_rules.QD1,
+        business_rules.QD7,
+    )
     business_rules = (
         business_rules.ON1,
         business_rules.ON2,
@@ -81,6 +88,10 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         related_name="+",
     )
 
+    indirect_business_rules = (
+        business_rules.ON13,
+        business_rules.ON14,
+    )
     business_rules = (
         business_rules.ON5,
         business_rules.ON6,
@@ -168,6 +179,12 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         through_fields=("main_quota", "sub_quota"),
     )
 
+    indirect_business_rules = (
+        business_rules.QA2,
+        business_rules.QA3,
+        business_rules.QA5,
+        business_rules.QSP2,
+    )
     business_rules = (
         business_rules.ON8,
         business_rules.QD1,

@@ -9,6 +9,7 @@ from common.models import TrackedModel
 from common.models import ValidityMixin
 from footnotes import business_rules
 from footnotes import validators
+from measures import business_rules as measures_business_rules
 
 
 class FootnoteType(TrackedModel, ValidityMixin):
@@ -39,6 +40,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
+    indirect_business_rules = (business_rules.FO17,)
     business_rules = (
         business_rules.FOT1,
         business_rules.FOT2,
@@ -71,6 +73,10 @@ class Footnote(TrackedModel, ValidityMixin):
 
     identifying_fields = ("footnote_id", "footnote_type__footnote_type_id")
 
+    indirect_business_rules = (
+        measures_business_rules.ME71,
+        measures_business_rules.ME73,
+    )
     business_rules = (
         business_rules.FO2,
         business_rules.FO4,
@@ -167,6 +173,8 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
     description_period_sid = SignedIntSID(db_index=True)
 
     identifying_fields = ("description_period_sid",)
+
+    indirect_business_rules = (business_rules.FO4,)
 
     def __str__(self):
         return f"for Footnote {self.described_footnote}"

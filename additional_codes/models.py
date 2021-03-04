@@ -6,6 +6,8 @@ from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
+from footnotes import business_rules as footnotes_business_rules
+from measures import business_rules as measures_business_rules
 
 
 class AdditionalCodeType(TrackedModel, ValidityMixin):
@@ -37,6 +39,11 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         choices=validators.ApplicationCode.choices,
     )
 
+    indirect_business_rules = (
+        business_rules.ACN2,
+        business_rules.ACN17,
+        measures_business_rules.ME12,
+    )
     business_rules = (business_rules.CT1,)
 
     def __str__(self):
@@ -61,6 +68,11 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         validators=[validators.additional_code_validator],
     )
 
+    indirect_business_rules = (
+        footnotes_business_rules.FO15,
+        footnotes_business_rules.FO9,
+        measures_business_rules.ME1,
+    )
     business_rules = (
         business_rules.ACN1,
         business_rules.ACN2,
@@ -123,6 +135,8 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
     description = models.TextField()
 
     identifying_fields = ("description_period_sid",)
+
+    indirect_business_rules = (business_rules.ACN5,)
 
     def __str__(self):
         return self.identifying_fields_to_string(

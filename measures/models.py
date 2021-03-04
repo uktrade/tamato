@@ -14,6 +14,7 @@ from measures import business_rules
 from measures import validators
 from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
+from quotas import business_rules as quotas_business_rules
 from quotas.validators import quota_order_number_validator
 
 
@@ -41,6 +42,7 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
+    indirect_business_rules = (business_rules.MT10,)
     business_rules = (
         business_rules.MTS1,
         business_rules.MTS2,
@@ -71,6 +73,11 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
     abbreviation = models.CharField(max_length=32, blank=True)
 
     identifying_fields = ("code",)
+
+    indirect_business_rules = (
+        business_rules.ME51,
+        business_rules.ME63,
+    )
     business_rules = (
         business_rules.MT1,
         business_rules.MT3,
@@ -104,6 +111,12 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
 
     identifying_fields = ("code",)
 
+    indirect_business_rules = (
+        business_rules.ME52,
+        business_rules.ME64,
+        quotas_business_rules.QD11,
+    )
+
 
 class Measurement(TrackedModel, ValidityMixin):
     """
@@ -129,6 +142,11 @@ class Measurement(TrackedModel, ValidityMixin):
 
     identifying_fields = ("measurement_unit", "measurement_unit_qualifier")
 
+    indirect_business_rules = (
+        business_rules.ME50,
+        business_rules.ME62,
+    )
+
 
 class MonetaryUnit(TrackedModel, ValidityMixin):
     """The monetary unit identifies the currency code used in the system."""
@@ -147,6 +165,14 @@ class MonetaryUnit(TrackedModel, ValidityMixin):
     description = ShortDescription()
 
     identifying_fields = ("code",)
+
+    indirect_business_rules = (
+        business_rules.ME48,
+        business_rules.ME49,
+        business_rules.ME60,
+        business_rules.ME61,
+        quotas_business_rules.QD8,
+    )
 
 
 class DutyExpression(TrackedModel, ValidityMixin):
@@ -173,6 +199,19 @@ class DutyExpression(TrackedModel, ValidityMixin):
     measurement_unit_applicability_code = ApplicabilityCode()
     monetary_unit_applicability_code = ApplicabilityCode()
     description = ShortDescription()
+
+    indirect_business_rules = (
+        business_rules.ME40,
+        business_rules.ME42,
+        business_rules.ME45,
+        business_rules.ME46,
+        business_rules.ME47,
+        business_rules.ME105,
+        business_rules.ME106,
+        business_rules.ME109,
+        business_rules.ME110,
+        business_rules.ME111,
+    )
 
 
 class MeasureType(TrackedModel, ValidityMixin):
@@ -218,6 +257,12 @@ class MeasureType(TrackedModel, ValidityMixin):
     additional_code_types = models.ManyToManyField(
         "additional_codes.AdditionalCodeType",
         through="AdditionalCodeTypeMeasureType",
+    )
+
+    indirect_business_rules = (
+        business_rules.ME1,
+        business_rules.ME10,
+        business_rules.ME88,
     )
 
     def in_use(self):
@@ -321,6 +366,10 @@ class MeasureAction(TrackedModel, ValidityMixin):
 
     identifying_fields = ("code",)
 
+    indirect_business_rules = (
+        business_rules.MA4,
+        business_rules.ME59,
+    )
     business_rules = (
         business_rules.MA1,
         business_rules.MA2,
@@ -418,6 +467,18 @@ class Measure(TrackedModel, ValidityMixin):
 
     identifying_fields = ("sid",)
 
+    indirect_business_rules = (
+        business_rules.MA4,
+        business_rules.MC3,
+        business_rules.ME42,
+        business_rules.ME49,
+        business_rules.ME61,
+        business_rules.ME65,
+        business_rules.ME66,
+        business_rules.ME67,
+        business_rules.ME71,
+        business_rules.ME73,
+    )
     business_rules = (
         business_rules.ME1,
         business_rules.ME2,
@@ -550,6 +611,12 @@ class MeasureComponent(TrackedModel):
 
     identifying_fields = ("component_measure__sid", "duty_expression__sid")
 
+    indirect_business_rules = (
+        business_rules.ME40,
+        business_rules.ME45,
+        business_rules.ME46,
+        business_rules.ME47,
+    )
     business_rules = (
         business_rules.ME41,
         business_rules.ME42,
@@ -621,6 +688,11 @@ class MeasureCondition(TrackedModel):
 
     objects = PolymorphicManager.from_queryset(MeasureConditionQuerySet)()
 
+    indirect_business_rules = (
+        business_rules.MA2,
+        business_rules.MC4,
+        business_rules.ME53,
+    )
     business_rules = (
         business_rules.MC3,
         business_rules.MA4,
@@ -737,6 +809,12 @@ class MeasureConditionComponent(TrackedModel):
             "duty_expression__sid",
         ]
 
+    indirect_business_rules = (
+        business_rules.ME109,
+        business_rules.ME110,
+        business_rules.ME111,
+        business_rules.ME40,
+    )
     business_rules = (
         business_rules.ME53,
         business_rules.ME105,

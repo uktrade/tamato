@@ -64,14 +64,15 @@ def proofs_of_origin_objects():
 def proofs_of_origin_measure_data(measure_data: Dict, proofs_of_origin_objects) -> Dict:
     return {
         "proofs_of_origin": [
-            factories.CertificateFactory(sid="123", certificate_type__sid="U")
+            factories.CertificateFactory(sid="123", certificate_type__sid="U"),
         ],
         **measure_data,
     }
 
 
 def test_sid_is_next_highest(
-    measure_data, measure_creation_pattern: MeasureCreationPattern
+    measure_data,
+    measure_creation_pattern: MeasureCreationPattern,
 ):
     measure = factories.MeasureFactory()
     models = list(measure_creation_pattern.create(**measure_data))
@@ -79,7 +80,8 @@ def test_sid_is_next_highest(
 
 
 def test_condition_sid_is_next_highest(
-    authorised_use_measure_data, measure_creation_pattern: MeasureCreationPattern
+    authorised_use_measure_data,
+    measure_creation_pattern: MeasureCreationPattern,
 ):
     condition = factories.MeasureConditionFactory()
     models = list(measure_creation_pattern.create(**authorised_use_measure_data))
@@ -96,7 +98,9 @@ def test_all_records_in_same_transaction(
 
 
 def test_ends_on_nomenclature_end(
-    measure_data, date_ranges: Dates, measure_creation_pattern: MeasureCreationPattern
+    measure_data,
+    date_ranges: Dates,
+    measure_creation_pattern: MeasureCreationPattern,
 ):
     measure_data["goods_nomenclature"] = factories.GoodsNomenclatureFactory(
         valid_between=date_ranges.starts_with_normal,
@@ -106,7 +110,9 @@ def test_ends_on_nomenclature_end(
 
 
 def test_starts_on_nomenclature_start(
-    measure_data, date_ranges: Dates, measure_creation_pattern: MeasureCreationPattern
+    measure_data,
+    date_ranges: Dates,
+    measure_creation_pattern: MeasureCreationPattern,
 ):
     measure_data["goods_nomenclature"] = factories.GoodsNomenclatureFactory(
         valid_between=date_ranges.adjacent_later,
@@ -116,7 +122,9 @@ def test_starts_on_nomenclature_start(
 
 
 def test_starts_on_minimum_date(
-    measure_data, date_ranges: Dates, measure_creation_pattern: MeasureCreationPattern
+    measure_data,
+    date_ranges: Dates,
+    measure_creation_pattern: MeasureCreationPattern,
 ):
     measure_data["validity_start"] = date_ranges.no_end_before(date_ranges.now).lower
     measure_data["goods_nomenclature"] = factories.GoodsNomenclatureFactory(
@@ -157,7 +165,8 @@ def test_excludes_countries_and_regions(
 
 
 def test_excludes_area_groups(
-    measure_data, measure_creation_pattern: MeasureCreationPattern
+    measure_data,
+    measure_creation_pattern: MeasureCreationPattern,
 ):
     membership = factories.GeographicalMembershipFactory()
     measure_data["geographical_area"] = membership.geo_group
@@ -169,7 +178,8 @@ def test_excludes_area_groups(
 
 
 def test_associates_footnotes(
-    measure_data, measure_creation_pattern: MeasureCreationPattern
+    measure_data,
+    measure_creation_pattern: MeasureCreationPattern,
 ):
     footnote = factories.FootnoteFactory()
     measure_data["footnotes"] = [footnote]

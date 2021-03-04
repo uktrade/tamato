@@ -9,6 +9,7 @@ from common.models import NumericSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from common.util import TaricDateRange
+from measures import business_rules as measures_business_rules
 
 
 class GoodsNomenclature(TrackedModel, ValidityMixin):
@@ -46,6 +47,16 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         ),
     )
 
+    indirect_business_rules = (
+        business_rules.NIG10,
+        business_rules.NIG2,
+        business_rules.NIG22,
+        business_rules.NIG7,
+        measures_business_rules.ME1,
+        measures_business_rules.ME7,
+        measures_business_rules.ME71,
+        measures_business_rules.ME88,
+    )
     business_rules = (
         business_rules.NIG1,
         business_rules.NIG5,
@@ -98,6 +109,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
         related_name="indents",
     )
 
+    indirect_business_rules = (business_rules.NIG11,)
     business_rules = (business_rules.NIG2,)
 
     def save(self, *args, **kwargs):
@@ -253,6 +265,8 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
     )
     description = models.TextField(blank=True)
 
+    indirect_business_rules = (business_rules.NIG12,)
+
     class Meta:
         ordering = ("valid_between",)
 
@@ -285,6 +299,7 @@ class GoodsNomenclatureOrigin(TrackedModel):
         "derived_from_goods_nomenclature__sid",
     )
 
+    indirect_business_rules = (business_rules.NIG5,)
     business_rules = (business_rules.NIG7,)
 
     def __str__(self):

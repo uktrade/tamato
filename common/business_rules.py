@@ -9,7 +9,6 @@ from typing import Optional
 from typing import Union
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django.db.models import QuerySet
 from django.db.models.functions import Lower
@@ -19,15 +18,85 @@ from common.util import get_field_tuple
 from common.validators import UpdateType
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
-class BusinessRuleViolation(ValidationError):
+class BusinessRuleViolation(Exception):
     """Base class for business rule violations."""
 
+    def default_message(self) -> Optional[str]:
+        if self.__doc__:
+            # use the docstring as the error message, up to the first blank line
+            message, *_ = self.__doc__.split("\n\n", 1)
 
-class BusinessRule:
+            # replace multiple whitespace (including newlines) with single spaces
+            return " ".join(message.split())
+
+        return None
+
+    def __init__(self, model: TrackedModel, message: Optional[str] = None):
+        self.model = model
+
+        if not message:
+            message = self.default_message()
+
+        super().__init__(message, model)
+
+
+class BusinessRuleBase(type):
+    """Metaclass for all BusinessRules."""
+
+    def __new__(cls, name, bases, attrs, **kwargs):
+        parents = [parent for parent in bases if isinstance(parent, BusinessRuleBase)]
+
+        # do not initialize base class
+        if not parents:
+            return super().__new__(cls, name, bases, attrs)
+
+        new_class = super().__new__(cls, name, bases, attrs, **kwargs)
+
+        # add BusinessRuleViolation subclass
+        setattr(
+            new_class,
+            "Violation",
+            type(
+                "Violation",
+                tuple(
+                    parent.Violation
+                    for parent in parents
+                    if hasattr(parent, "Violation")
+                )
+                or (BusinessRuleViolation,),
+                {
+                    "__module__": attrs.get("__module__"),
+                    "__qualname__": f"{new_class.__qualname__}.Violation",
+                },
+            ),
+        )
+
+        # set violation default message
+        setattr(
+            new_class.Violation,
+            "__doc__",
+            getattr(new_class, "__doc__", None),
+        )
+
+        return new_class
+
+
+class BusinessRule(metaclass=BusinessRuleBase):
     """Represents a TARIC business rule."""
+
+    @classmethod
+    def get_linked_models(cls, model: TrackedModel) -> Iterable[TrackedModel]:
+        for link in model._meta.related_objects:
+            business_rules = getattr(link.related_model, "business_rules", [])
+            if cls in business_rules:
+                return getattr(
+                    model,
+                    link.related_name or f"{link.related_model._meta.model_name}_set",
+                ).latest_approved()
+
+        return []
 
     def validate(self, *args):
         """Perform business rule validation."""
@@ -35,26 +104,32 @@ class BusinessRule:
 
     def violation(
         self,
-        model: Optional[Union[TrackedModel, str]] = None,
-        msg: Optional[str] = None,
+        model: Optional[TrackedModel] = None,
+        message: Optional[str] = None,
     ) -> BusinessRuleViolation:
         """Create a violation exception object."""
 
-        if msg is None:
-            if isinstance(model, str):
-                # handle msg string passed as only param
-                msg = model
-                model = None
-            else:
-                # use the docstring as the error message, up to the first blank line
-                msg, *_ = self.__doc__.split("\n\n", 1)
-                # replace multiple whitspace (including newlines) with single spaces
-                msg = " ".join(msg.split())
+        return getattr(self.__class__, "Violation", BusinessRuleViolation)(
+            model=model,
+            message=message,
+        )
 
-        if model:
-            msg = f"{model.__class__.__name__} {model.pk}: {msg}"
 
-        return BusinessRuleViolation(msg)
+class BusinessRuleChecker:
+    def __init__(self, models: Iterable[TrackedModel]):
+        self.checks: set[tuple[type[BusinessRule], TrackedModel]] = set()
+
+        for model in models:
+            for rule in model.business_rules:
+                self.checks.add((rule, model))
+
+            for rule in model.indirect_business_rules:
+                for linked_model in rule.get_linked_models(model):
+                    self.checks.add((rule, linked_model))
+
+    def validate(self):
+        for rule, model in self.checks:
+            rule().validate(model)
 
 
 def only_applicable_after(cutoff: Union[date, datetime, str]):
@@ -90,7 +165,7 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
 class UniqueIdentifyingFields(BusinessRule):
     """Rule enforcing identifying fields are unique."""
 
-    identifying_fields = None
+    identifying_fields: Optional[Iterable[str]] = None
 
     def validate(self, model):
         identifying_fields = self.identifying_fields or model.identifying_fields

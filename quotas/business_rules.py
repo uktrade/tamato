@@ -75,9 +75,12 @@ class ON5(BusinessRule):
             .exists()
         ):
             raise self.violation(
-                f"QuotaOrderNumberOrigin {origin}: There may be no overlap in time of "
-                "two quota order number origins with the same quota order number SID "
-                "and geographical area id.",
+                model=origin,
+                message=(
+                    "There may be no overlap in time of two quota order number "
+                    "origins with the same quota order number SID and geographical "
+                    "area id."
+                ),
             )
 
 
@@ -300,9 +303,11 @@ class QA5(BusinessRule):
 
             if association.coefficient == Decimal("1.00000"):
                 raise self.violation(
-                    f"QuotaAssociation {association}: "
-                    "A sub-quota defined with the 'equivalent' type must have a "
-                    "coefficient not equal to 1",
+                    model=association,
+                    message=(
+                        "A sub-quota defined with the 'equivalent' type must have a "
+                        "coefficient not equal to 1"
+                    ),
                 )
 
             if (
@@ -313,9 +318,12 @@ class QA5(BusinessRule):
                 > 1
             ):
                 raise self.violation(
-                    f"QuotaAssociation {association}: "
-                    "Whenever a sub-quota is defined with the 'equivalent' type, it must have "
-                    "the same volume as the ones associated with the parent quota.",
+                    model=association,
+                    message=(
+                        "Whenever a sub-quota is defined with the 'equivalent' type, it "
+                        "must have the same volume as the ones associated with the "
+                        "parent quota."
+                    ),
                 )
 
         elif (
@@ -323,9 +331,11 @@ class QA5(BusinessRule):
             and association.coefficient != Decimal("1.00000")
         ):
             raise self.violation(
-                f"QuotaAssociation {association}: "
-                "A sub-quota defined with the 'normal' type must have a coefficient "
-                "equal to 1",
+                model=association,
+                message=(
+                    "A sub-quota defined with the 'normal' type must have a coefficient "
+                    "equal to 1"
+                ),
             )
 
 
