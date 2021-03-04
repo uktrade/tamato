@@ -1,8 +1,12 @@
 {% set description_rows = [] %}
+{% macro create_actions(description_period_sid) %}
+	<a href="{{ url(edit_url, kwargs={"description_period_sid": description_period_sid}) }}">Edit</a>
+{% endmacro%}
 {% for description in object.get_descriptions() %}
 	{{ description_rows.append([
 		{"text": "{:%d %b %Y}".format(description.valid_between.lower)},
 		{"text": description.description},
+		{"html": create_actions(description.description_period_sid)} if edit_url else {}, 
 	]) or ""}}
 {% endfor %}
 
@@ -13,8 +17,9 @@
 			"head": [
 				{"text": "Start date", "classes":  "govuk-!-width-one-eighth"},
 				{"text": "Description"},
+				{"text": "Actions"} if edit_url else {},
 			],
-			"rows": description_rows
+			"rows": description_rows,
 		}) }}
 	</div>
 </div>

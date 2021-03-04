@@ -1,0 +1,28 @@
+{% extends "layouts/layout.jinja" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Find and edit " ~ object.get_verbose_name(plural=True), "href": find_edit_url},
+      {"text": object.get_verbose_name() ~ ": " ~ detail_page.text, "href": detail_page.url},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <div class="govuk-grid-row govuk-!-margin-bottom-3">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">Edit the description for {{object.get_verbose_name()}} {{detail_page.text}}.</p>
+    </div>
+  </div>
+  <div class="govuk-grid-row govuk-!-margin-bottom-3">
+    <div class="govuk-grid-column-two-thirds">
+        <form method="get" action="{{ form_url }}">
+            {{ crispy(form) }}
+        </form>
+    </div>
+  </div>
+{% endblock %}

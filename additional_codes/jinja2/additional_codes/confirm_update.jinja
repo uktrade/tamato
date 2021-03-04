@@ -1,0 +1,32 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/panel/macro.njk" import govukPanel %}
+
+{% set page_title = "Edit " ~ object._meta.verbose_name %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": object._meta.verbose_name_plural|capitalize, "href": object.get_url("list")},
+      {"text": object._meta.verbose_name|capitalize ~ " " ~ object|string, "href": object.get_url()},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  {{ govukPanel({
+    "titleText": object._meta.verbose_name|capitalize ~ " " ~ object|string ~ " has been updated.",
+    "html": "This change has been added to your workbasket<br>" ~ request.session.workbasket.title
+  }) }}
+
+  <h2 class="govuk-heading-m">Next steps</h2>
+  <p class="govuk-body">To complete your task you must export your change.</p>
+  <button class="govuk-button govuk-button--secondary" href="{{ url("workbasket-ui-detail", args=[request.session.workbasket.id]) }}">Go to {{request.session.workbasket.title}}</button>
+  <ul class="govuk-list">
+    <li><a href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
+    <li><a href="{{ object.get_url("list") }}">Manage more {{ object._meta.verbose_name_plural }}</a></li>
+    <li><a href="{{ url("index") }}">Return to main menu</a></li>
+  </ul>
+{% endblock %}

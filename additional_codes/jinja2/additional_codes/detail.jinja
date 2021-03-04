@@ -5,6 +5,7 @@
 {% set object_type = "additional code" %}
 {% set page_title = "Additional code: " ~ object.type.sid ~ object.code %}
 {% set find_edit_url = url("additional_code-ui-list") %}
+{% set edit_url = "additional_code-ui-edit-description" %}
 
 {% set core_data_tab_html %}{% include "includes/additional_codes/tabs/core_data.jinja" %}{% endset %}
 {% set description_tab_html %}{% include "includes/common/tabs/descriptions.jinja" %}{% endset %}

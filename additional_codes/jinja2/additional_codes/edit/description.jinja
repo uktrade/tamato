@@ -1,0 +1,11 @@
+{% set find_edit_url = url("additional_code-ui-list") %}
+{% set form_url = url("additional_code-ui-edit-description", kwargs={"description_period_sid": object.description_period_sid})%}
+{% set page_title = "Edit " ~ object.get_verbose_name() ~ " description" %}
+
+{% set detail_page = { 
+    "url": url("additional_code-ui-detail", kwargs={"sid": object.described_additional_code.sid}),
+    "text": object.described_additional_code.type.sid ~ object.described_additional_code.code
+    }
+%}
+
+{%- include "layouts/edit_description.jinja" -%}

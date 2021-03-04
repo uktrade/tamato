@@ -122,12 +122,16 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
 
     indirect_business_rules = (business_rules.ACN5,)
 
+    def get_verbose_name(self, plural=False):
+        return self._meta.verbose_name_plural if plural else self._meta.verbose_name
+
     def __str__(self):
         return self.identifying_fields_to_string(
             identifying_fields=("described_additional_code", "valid_between"),
         )
 
     class Meta:
+        verbose_name = "additional code"
         ordering = ("valid_between",)
 
 
