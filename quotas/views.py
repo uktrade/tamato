@@ -2,6 +2,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.views import TamatoListView
+from common.views import TrackedModelDetailView
 from quotas import models
 from quotas import serializers
 from quotas.filters import QuotaFilter
@@ -61,3 +62,9 @@ class QuotaList(TamatoListView):
     queryset = models.QuotaOrderNumber.objects.latest_approved()
     template_name = "quotas/list.jinja"
     filterset_class = QuotaFilter
+
+
+class QuotaDetail(TrackedModelDetailView):
+    model = models.QuotaOrderNumber
+    template_name = "quotas/detail.jinja"
+    queryset = models.QuotaOrderNumber.objects.latest_approved()
