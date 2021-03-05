@@ -1,3 +1,5 @@
+.. _12-ordering-of-tariff-transactions:
+
 12. Ordering of tariff transactions
 ===================================
 

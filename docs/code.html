@@ -16,7 +16,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="The Importer" href="importer/index.html" />
+    <link rel="next" title="Architecture" href="architecture/index.html" />
     <link rel="prev" title="Regulations" href="business_rules/regulations.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -29,7 +29,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="importer/index.html" title="The Importer"
+          <a href="architecture/index.html" title="Architecture"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="business_rules/regulations.html" title="Regulations"
@@ -50,6 +50,48 @@
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Code Documentation:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture/index.html">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture/index.html#bird-s-eye-view">Bird’s Eye View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture/index.html#concepts">Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#taric">TARIC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#validity-dates-as-version-control">Validity dates as version control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#tracked-models-as-version-control">Tracked models as version control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture/index.html#domain-modules">Domain Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-additional_codes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">additional_codes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-quotas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">quotas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-certificates"><code class="xref py py-mod docutils literal notranslate"><span class="pre">certificates</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-geo_areas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">geo_areas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-footnotes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">footnotes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture/index.html#inside-domain-modules">Inside Domain Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#models"><code class="docutils literal notranslate"><span class="pre">models</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#business-rules"><code class="docutils literal notranslate"><span class="pre">business_rules</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#patterns"><code class="docutils literal notranslate"><span class="pre">patterns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#serializers"><code class="docutils literal notranslate"><span class="pre">serializers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#import-parsers-and-import-handlers"><code class="docutils literal notranslate"><span class="pre">import_parsers</span></code> and <code class="docutils literal notranslate"><span class="pre">import_handlers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#validators"><code class="docutils literal notranslate"><span class="pre">validators</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#querysets"><code class="docutils literal notranslate"><span class="pre">querysets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#parsers"><code class="docutils literal notranslate"><span class="pre">parsers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#filters"><code class="docutils literal notranslate"><span class="pre">filters</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#views"><code class="docutils literal notranslate"><span class="pre">views</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture/index.html#cross-cutting-modules">Cross-Cutting Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-importer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#id1"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture/index.html#module-workbaskets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">workbaskets</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="importer/index.html">The Importer</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="importer/handlers.html">The Importer - Handlers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="importer/nursery.html">The Importer - The Nursery</a></li>
@@ -72,8 +114,8 @@
   <p class="topless"><a href="business_rules/regulations.html"
                         title="previous chapter">Regulations</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="importer/index.html"
-                        title="next chapter">The Importer</a></p>
+  <p class="topless"><a href="architecture/index.html"
+                        title="next chapter">Architecture</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -105,7 +147,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="importer/index.html" title="The Importer"
+          <a href="architecture/index.html" title="Architecture"
              >next</a> |</li>
         <li class="right" >
           <a href="business_rules/regulations.html" title="Regulations"
