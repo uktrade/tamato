@@ -24,6 +24,7 @@ from django.db.models.functions import Lower
 from django_filters import CharFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
+from django_filters.constants import EMPTY_VALUES
 from rest_framework import filters
 from rest_framework.settings import api_settings
 
@@ -44,6 +45,17 @@ def field_to_layout(field_name, field):
         return Field.checkboxes(field_name, legend_size=Size.SMALL)
 
     return field_name
+
+
+class MultiValueCharFilter(CharFilter):
+    def filter(self, qs, value):
+        if value in EMPTY_VALUES:
+            return qs
+        if self.distinct:
+            qs = qs.distinct()
+        lookup = "%s__%s" % (self.field_name, "in")
+        qs = self.get_method(qs)(**{lookup: value.split()})
+        return qs
 
 
 class LazyMultipleChoiceFilter(MultipleChoiceFilter):
