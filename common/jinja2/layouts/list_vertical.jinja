@@ -35,7 +35,7 @@
 
     <div class="filter-layout__content govuk-!-margin-top-5">
       {% if paginator.count > 0 %}
-        <p class="govuk-body">{{paginator.count}} {{ object_type_plural if paginator.count > 1 else object_type }}</p>
+        <p class="govuk-body">{{'{0:,}'.format(paginator.count)}} {{ object_type_plural if paginator.count > 1 else object_type }}</p>
       {% endif %}
       {% if object_list %}
         {% include list_include %}
@@ -51,10 +51,10 @@
       {% if page_obj.has_other_pages() %}
         <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
           <div class="govuk-body">
-            Showing 20 of {{paginator.count}} {{ object_type_plural if paginator.count > 1 else object_type }}
+            Showing 20 of {{'{0:,}'.format(paginator.count)}} {{ object_type_plural if paginator.count > 1 else object_type }}
           </div>
           <div class="govuk-body pagination__summary">
-            Page {{page_obj.number}} of {{ paginator.num_pages}}
+            Page {{page_obj.number}} of {{ '{0:,}'.format(paginator.num_pages)}}
           </div>
           <ul class="govuk-list pagination__links">
             {% if page_obj.has_previous() %}
@@ -75,7 +75,7 @@
                 {% if page_link == '...' or page_link == page_obj.number|string %}
                   {{ page_link }}
                 {% else %}
-                  <a class="govuk-link" href="?{{ query_transform(request, page=page_link) }}" aria-label="Goto Page {{ page_link }}">{{ page_link }}</a>
+                  <a class="govuk-link" href="?{{ query_transform(request, page=page_link) }}" aria-label="Goto Page {{ page_link }}">{{ '{0:,}'.format(page_link|int) }}</a>
                 {% endif %}
               </li>
             {% endfor %}
