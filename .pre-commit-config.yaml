@@ -33,3 +33,7 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
+  - repo: https://github.com/ikamensh/flynt/
+    rev: ''
+    hooks:
+      - id: flynt
