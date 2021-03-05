@@ -67,6 +67,14 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
             order_number__sid=self.sid,
         ).exists()
 
+    def get_url(self, action="detail"):
+        return reverse(
+            f"quota-ui-{action}",
+            kwargs={
+                "sid": self.sid,
+            },
+        )
+
 
 class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to
@@ -200,14 +208,6 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return str(self.sid)
-
-    def get_url(self, action="detail"):
-        return reverse(
-            f"quota-ui-{action}",
-            kwargs={
-                "sid": self.order_number.sid,
-            },
-        )
 
 
 class QuotaAssociation(TrackedModel):
