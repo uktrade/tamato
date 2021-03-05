@@ -54,6 +54,13 @@
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA1</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA1" title="Permalink to this definition">¶</a></dt>
 <dd><p>The combination geographical area id + validity start date must be
 unique.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA1.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA1.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The combination geographical area id + validity start date must be
+unique.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -62,6 +69,14 @@ unique.</p>
 <dd><p>When a geographical area is referenced in a measure then the validity
 period of the geographical area must span the validity period of the
 measure.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA10.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA10.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a geographical area is referenced in a measure then the validity
+period of the geographical area must span the validity period of the
+measure.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA10.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geo_area</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA10.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA10.validate" title="Permalink to this definition">¶</a></dt>
@@ -76,6 +91,14 @@ measure.</p>
 <dd><p>If a geographical area is referenced as an excluded geographical area in
 a measure then the membership period of the geographical area must span the
 validity period of the measure.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA11.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA11.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a geographical area is referenced as an excluded geographical area in
+a measure then the membership period of the geographical area must span the
+validity period of the measure.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA11.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geo_area</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA11.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA11.validate" title="Permalink to this definition">¶</a></dt>
@@ -88,12 +111,24 @@ validity period of the measure.</p>
 <dt id="geo_areas.business_rules.GA12">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA12</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA12"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA12" title="Permalink to this definition">¶</a></dt>
 <dd><p>The referenced geographical area id (member) must exist.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA12.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA12.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The referenced geographical area id (member) must exist.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt id="geo_areas.business_rules.GA13">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA13</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA13"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA13" title="Permalink to this definition">¶</a></dt>
 <dd><p>Group member must be a Country or Region, not a Group.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA13.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA13.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Group member must be a Country or Region, not a Group.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA13.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">membership</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA13.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA13.validate" title="Permalink to this definition">¶</a></dt>
@@ -106,6 +141,12 @@ validity period of the measure.</p>
 <dt id="geo_areas.business_rules.GA14">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA14</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA14"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA14" title="Permalink to this definition">¶</a></dt>
 <dd><p>The referenced geographical area group id must exist.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA14.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA14.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The referenced geographical area group id must exist.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -113,6 +154,13 @@ validity period of the measure.</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA16</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA16"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA16" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of the geographical area group must span all
 membership periods of its members.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA16.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA16.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The validity period of the geographical area group must span all
+membership periods of its members.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA16.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">membership</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA16.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA16.validate" title="Permalink to this definition">¶</a></dt>
@@ -127,6 +175,14 @@ membership periods of its members.</p>
 <dd><p>The membership period of a geographical area (member) must be within
 (inclusive) the validity period of the geographical area group (geographical
 area’s start and end date).</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA17.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA17.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The membership period of a geographical area (member) must be within
+(inclusive) the validity period of the geographical area group (geographical
+area’s start and end date).</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA17.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">membership</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA17.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA17.validate" title="Permalink to this definition">¶</a></dt>
@@ -140,6 +196,13 @@ area’s start and end date).</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA18</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA18"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA18" title="Permalink to this definition">¶</a></dt>
 <dd><p>When a geographical area is more than once member of the same group then
 there may be no overlap in their membership periods.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA18.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA18.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a geographical area is more than once member of the same group then
+there may be no overlap in their membership periods.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA18.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">membership</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA18.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA18.validate" title="Permalink to this definition">¶</a></dt>
@@ -154,6 +217,14 @@ there may be no overlap in their membership periods.</p>
 <dd><p>If the associated geographical area group has a parent geographical area
 group then all the members of the geographical area group must also be
 members of the parent geographical area group.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA19.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA19.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the associated geographical area group has a parent geographical area
+group then all the members of the geographical area group must also be
+members of the parent geographical area group.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA19.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">membership</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA19.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA19.validate" title="Permalink to this definition">¶</a></dt>
@@ -169,6 +240,15 @@ members of the parent geographical area group.</p>
 group then the membership period of each member of the parent group must
 span the membership period of the same geographical area in the geographical
 area group.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA20.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA20.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the associated geographical area group has a parent geographical area
+group then the membership period of each member of the parent group must
+span the membership period of the same geographical area in the geographical
+area group.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA20.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">membership</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA20.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA20.validate" title="Permalink to this definition">¶</a></dt>
@@ -184,6 +264,15 @@ area group.</p>
 deleted.</p>
 <p>The geographical area may be referenced in a measure as the
 origin/destination or as an excluded geographical area.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA21.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA21.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a geographical area is referenced in a measure then it may not be
+deleted.</p>
+<p>The geographical area may be referenced in a measure as the
+origin/destination or as an excluded geographical area.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -191,6 +280,13 @@ origin/destination or as an excluded geographical area.</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA22</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA22"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA22" title="Permalink to this definition">¶</a></dt>
 <dd><p>A geographical area cannot be deleted if it is referenced as a parent
 geographical area group.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA22.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA22.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>A geographical area cannot be deleted if it is referenced as a parent
+geographical area group.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -199,6 +295,14 @@ geographical area group.</p>
 <dd><p>If a geographical area is referenced as an excluded geographical area in
 a measure, the membership association with the measure geographical area
 group cannot be deleted.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA23.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA23.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a geographical area is referenced as an excluded geographical area in
+a measure, the membership association with the measure geographical area
+group cannot be deleted.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -209,6 +313,16 @@ group cannot be deleted.</p>
 date of the geographical area. Two descriptions may not have the same start
 date. The start date of the description must be less than or equal to the
 end date of the geographical area.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA3.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA3.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>At least one description record is mandatory.</p>
+<p>The start date of the first description period must be equal to the start
+date of the geographical area. Two descriptions may not have the same start
+date. The start date of the description must be less than or equal to the
+end date of the geographical area.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -216,6 +330,13 @@ end date of the geographical area.</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA4</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA4"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA4" title="Permalink to this definition">¶</a></dt>
 <dd><p>The referenced parent geographical area group must be an existing geographical
 area with area code = 1 (geographical area group).</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA4.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA4.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The referenced parent geographical area group must be an existing geographical
+area with area code = 1 (geographical area group).</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA4.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geo_area</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA4.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA4.validate" title="Permalink to this definition">¶</a></dt>
@@ -230,6 +351,14 @@ area with area code = 1 (geographical area group).</p>
 <dd><p>If a geographical area has a parent geographical area group then the
 validity period of the parent geographical area group must span the validity
 period of the geographical area.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA5.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA5.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a geographical area has a parent geographical area group then the
+validity period of the parent geographical area group must span the validity
+period of the geographical area.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA5.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geo_area</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA5.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA5.validate" title="Permalink to this definition">¶</a></dt>
@@ -247,6 +376,17 @@ geographical area groups are not allowed.</p>
 cannot be a parent geographical area group of A (loops can also exist on
 more than two levels, e.g. level 3; If A is a parent of B and B is a parent
 of C then C cannot be a parent of A).</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA6.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA6.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loops in the parent relation between geographical areas and parent
+geographical area groups are not allowed.</p>
+<p>If a geographical area A is a parent geographical area group of B then B
+cannot be a parent geographical area group of A (loops can also exist on
+more than two levels, e.g. level 3; If A is a parent of B and B is a parent
+of C then C cannot be a parent of A).</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="geo_areas.business_rules.GA6.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geo_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA6.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA6.validate" title="Permalink to this definition">¶</a></dt>
@@ -260,6 +400,13 @@ of C then C cannot be a parent of A).</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA7</span></code><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA7"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA7" title="Permalink to this definition">¶</a></dt>
 <dd><p>The validity period of geographical area must not overlap any other
 geographical area with the same geographical area id.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.GA7.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.models.records.TrackedModel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.GA7.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The validity period of geographical area must not overlap any other
+geographical area with the same geographical area id.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>

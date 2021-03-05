@@ -115,9 +115,12 @@
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;QuotaOrderNumberOrigin </span><span class="si">{</span><span class="n">origin</span><span class="si">}</span><span class="s2">: There may be no overlap in time of &quot;</span>
-                <span class="s2">&quot;two quota order number origins with the same quota order number SID &quot;</span>
-                <span class="s2">&quot;and geographical area id.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">origin</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;There may be no overlap in time of two quota order number &quot;</span>
+                    <span class="s2">&quot;origins with the same quota order number SID and geographical &quot;</span>
+                    <span class="s2">&quot;area id.&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span></div></div>
 
 
@@ -340,9 +343,11 @@
 
             <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">==</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.00000&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;QuotaAssociation </span><span class="si">{</span><span class="n">association</span><span class="si">}</span><span class="s2">: &quot;</span>
-                    <span class="s2">&quot;A sub-quota defined with the &#39;equivalent&#39; type must have a &quot;</span>
-                    <span class="s2">&quot;coefficient not equal to 1&quot;</span><span class="p">,</span>
+                    <span class="n">model</span><span class="o">=</span><span class="n">association</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;A sub-quota defined with the &#39;equivalent&#39; type must have a &quot;</span>
+                        <span class="s2">&quot;coefficient not equal to 1&quot;</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
 
             <span class="k">if</span> <span class="p">(</span>
@@ -353,9 +358,12 @@
                 <span class="o">&gt;</span> <span class="mi">1</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;QuotaAssociation </span><span class="si">{</span><span class="n">association</span><span class="si">}</span><span class="s2">: &quot;</span>
-                    <span class="s2">&quot;Whenever a sub-quota is defined with the &#39;equivalent&#39; type, it must have &quot;</span>
-                    <span class="s2">&quot;the same volume as the ones associated with the parent quota.&quot;</span><span class="p">,</span>
+                    <span class="n">model</span><span class="o">=</span><span class="n">association</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Whenever a sub-quota is defined with the &#39;equivalent&#39; type, it &quot;</span>
+                        <span class="s2">&quot;must have the same volume as the ones associated with the &quot;</span>
+                        <span class="s2">&quot;parent quota.&quot;</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
 
         <span class="k">elif</span> <span class="p">(</span>
@@ -363,9 +371,11 @@
             <span class="ow">and</span> <span class="n">association</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">!=</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.00000&quot;</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;QuotaAssociation </span><span class="si">{</span><span class="n">association</span><span class="si">}</span><span class="s2">: &quot;</span>
-                <span class="s2">&quot;A sub-quota defined with the &#39;normal&#39; type must have a coefficient &quot;</span>
-                <span class="s2">&quot;equal to 1&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">association</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;A sub-quota defined with the &#39;normal&#39; type must have a coefficient &quot;</span>
+                    <span class="s2">&quot;equal to 1&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span></div></div>
 
 

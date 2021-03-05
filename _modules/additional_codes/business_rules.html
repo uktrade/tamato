@@ -71,15 +71,18 @@
                 <span class="n">ApplicationCode</span><span class="o">.</span><span class="n">EXPORT_REFUND_AGRI</span><span class="p">,</span>
             <span class="p">}:</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;AdditionalCode </span><span class="si">{</span><span class="n">additional_code</span><span class="si">}</span><span class="s2">: The referenced additional code &quot;</span>
-                    <span class="s1">&#39;type must have as application code &quot;non-Meursing&quot; or &quot;Export Refund &#39;</span>
-                    <span class="s1">&#39;for Processed Agricultural Goods&quot;.&#39;</span><span class="p">,</span>
+                    <span class="n">model</span><span class="o">=</span><span class="n">additional_code</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;The referenced additional code type must have as application &quot;</span>
+                        <span class="s1">&#39;code &quot;non-Meursing&quot; or &quot;Export Refund for Processed &#39;</span>
+                        <span class="s1">&#39;Agricultural Goods&quot;.&#39;</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
 
         <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;AdditionalCode </span><span class="si">{</span><span class="n">additional_code</span><span class="si">}</span><span class="s2">: The referenced additional code type &quot;</span>
-                <span class="s2">&quot;must exist.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">additional_code</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;The referenced additional code type must exist.&quot;</span><span class="p">,</span>
             <span class="p">)</span></div></div>
 
 

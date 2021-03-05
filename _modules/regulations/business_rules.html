@@ -109,15 +109,20 @@
                 <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Regulation </span><span class="si">{</span><span class="n">regulation</span><span class="si">}</span><span class="s2">: A draft regulation can only have its &quot;</span>
-                    <span class="s2">&quot;&#39;Regulation Approved Flag&#39; change from &#39;Not Approved&#39; to &quot;</span>
-                    <span class="s2">&quot;&#39;Approved&#39;.&quot;</span><span class="p">,</span>
+                    <span class="n">model</span><span class="o">=</span><span class="n">regulation</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;A draft regulation can only have its &#39;Regulation Approved &quot;</span>
+                        <span class="s2">&quot;Flag&#39; change from &#39;Not Approved&#39; to &#39;Approved&#39;.&quot;</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
 
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">regulation</span><span class="o">.</span><span class="n">approved</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Regulation </span><span class="si">{</span><span class="n">regulation</span><span class="si">}</span><span class="s2">: A non-draft regulation must have its &quot;</span>
-                <span class="s2">&quot;&#39;Regulation Approved Flag&#39; set to &#39;Approved&#39;.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">regulation</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;A non-draft regulation must have its &#39;Regulation Approved Flag&#39; &quot;</span>
+                    <span class="s2">&quot;set to &#39;Approved&#39;.&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span></div></div>
 
 

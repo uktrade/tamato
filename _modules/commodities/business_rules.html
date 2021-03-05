@@ -118,7 +118,10 @@
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">good</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="s2">&quot;Non top-level goods must have an origin specified.&quot;</span><span class="p">)</span></div></div>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Non top-level goods must have an origin specified.&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="NIG7"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG7">[docs]</a><span class="k">class</span> <span class="nc">NIG7</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
@@ -139,10 +142,13 @@
 
         <span class="k">if</span> <span class="n">day_before_start</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">origin_range</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;GoodsNomenclatureOrigin </span><span class="si">{</span><span class="n">origin</span><span class="si">}</span><span class="s1">: The &quot;derived from&quot; code, if &#39;</span>
-                <span class="s2">&quot;entered, must be a goods nomenclature which exists and is applicable &quot;</span>
-                <span class="s2">&quot;the day before the start date of the new code entered. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Origin </span><span class="si">{</span><span class="n">origin_range</span><span class="si">}</span><span class="s2"> is not applicable on </span><span class="si">{</span><span class="n">day_before_start</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">origin</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s1">&#39;The &quot;derived from&quot; code, if entered, must be a goods &#39;</span>
+                    <span class="s2">&quot;nomenclature which exists and is applicable the day before the &quot;</span>
+                    <span class="s2">&quot;start date of the new code entered. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Origin </span><span class="si">{</span><span class="n">origin_range</span><span class="si">}</span><span class="s2"> is not applicable on </span><span class="si">{</span><span class="n">day_before_start</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span></div></div>
 
 
@@ -156,17 +162,22 @@
 
         <span class="k">if</span> <span class="n">ends_on</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclatureSuccessor </span><span class="si">{</span><span class="n">successor</span><span class="si">}</span><span class="s2">: A successor can only be added &quot;</span>
-                <span class="s2">&quot;for goods nomenclature codes with a closing date.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">successor</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;A successor can only be added for goods nomenclature codes with a &quot;</span>
+                    <span class="s2">&quot;closing date.&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span>
 
         <span class="n">day_after_end</span> <span class="o">=</span> <span class="n">ends_on</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">day_after_end</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">successor_range</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;GoodsNomenclatureSuccessor </span><span class="si">{</span><span class="n">successor</span><span class="si">}</span><span class="s1">: The &quot;absorbed by&quot; code, if &#39;</span>
-                <span class="s2">&quot;entered, must be a goods nomenclature which exists and is applicable &quot;</span>
-                <span class="s2">&quot;the day after the closing date.&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Successor </span><span class="si">{</span><span class="n">successor_range</span><span class="si">}</span><span class="s2"> is not applicable on </span><span class="si">{</span><span class="n">day_after_end</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">successor</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s1">&#39;The &quot;absorbed by&quot; code, if entered, must be a goods nomenclature &#39;</span>
+                    <span class="s2">&quot;which exists and is applicable the day after the closing date.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Successor </span><span class="si">{</span><span class="n">successor_range</span><span class="si">}</span><span class="s2"> is not applicable on </span><span class="si">{</span><span class="n">day_after_end</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span></div></div>
 
 
@@ -189,15 +200,19 @@
 
         <span class="k">if</span> <span class="n">indents</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: At least one indent record is mandatory.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;At least one indent record is mandatory.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">valid_between__startswith</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: The start date of the first indentation must &quot;</span>
-                <span class="s2">&quot;be equal to the start date of the nomenclature.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;The start date of the first indentation must be equal to the &quot;</span>
+                    <span class="s2">&quot;start date of the nomenclature.&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">find_duplicate_start_dates</span><span class="p">(</span>
@@ -206,14 +221,17 @@
             <span class="p">),</span>
         <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: No two associated indentations may have the &quot;</span>
-                <span class="s2">&quot;same start date&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;No two associated indentations may have the same start date&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">valid_between__fully_gt</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;GoodsNomenclature </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2">: The start date of an associated indentation &quot;</span>
-                <span class="s2">&quot;must be less than or equal to the end date of the nomenclature.&quot;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;The start date of an associated indentation must be less than or &quot;</span>
+                    <span class="s2">&quot;equal to the end date of the nomenclature.&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span></div></div>
 
 

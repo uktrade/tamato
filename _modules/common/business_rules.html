@@ -49,7 +49,6 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
 <span class="kn">from</span> <span class="nn">django.db.models.functions</span> <span class="kn">import</span> <span class="n">Lower</span>
@@ -59,15 +58,85 @@
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="BusinessRuleViolation"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRuleViolation">[docs]</a><span class="k">class</span> <span class="nc">BusinessRuleViolation</span><span class="p">(</span><span class="n">ValidationError</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for business rule violations.&quot;&quot;&quot;</span></div>
+<div class="viewcode-block" id="BusinessRuleViolation"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRuleViolation">[docs]</a><span class="k">class</span> <span class="nc">BusinessRuleViolation</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for business rule violations.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">default_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">:</span>
+            <span class="c1"># use the docstring as the error message, up to the first blank line</span>
+            <span class="n">message</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># replace multiple whitespace (including newlines) with single spaces</span>
+            <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">message</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_message</span><span class="p">()</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="BusinessRule"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRule">[docs]</a><span class="k">class</span> <span class="nc">BusinessRule</span><span class="p">:</span>
+<div class="viewcode-block" id="BusinessRuleBase"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRuleBase">[docs]</a><span class="k">class</span> <span class="nc">BusinessRuleBase</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass for all BusinessRules.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">parents</span> <span class="o">=</span> <span class="p">[</span><span class="n">parent</span> <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">BusinessRuleBase</span><span class="p">)]</span>
+
+        <span class="c1"># do not initialize base class</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">parents</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+        <span class="n">new_class</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># add BusinessRuleViolation subclass</span>
+        <span class="nb">setattr</span><span class="p">(</span>
+            <span class="n">new_class</span><span class="p">,</span>
+            <span class="s2">&quot;Violation&quot;</span><span class="p">,</span>
+            <span class="nb">type</span><span class="p">(</span>
+                <span class="s2">&quot;Violation&quot;</span><span class="p">,</span>
+                <span class="nb">tuple</span><span class="p">(</span>
+                    <span class="n">parent</span><span class="o">.</span><span class="n">Violation</span>
+                    <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parents</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="s2">&quot;Violation&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="n">BusinessRuleViolation</span><span class="p">,),</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;__module__&quot;</span><span class="p">:</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;__module__&quot;</span><span class="p">),</span>
+                    <span class="s2">&quot;__qualname__&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">new_class</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.Violation&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># set violation default message</span>
+        <span class="nb">setattr</span><span class="p">(</span>
+            <span class="n">new_class</span><span class="o">.</span><span class="n">Violation</span><span class="p">,</span>
+            <span class="s2">&quot;__doc__&quot;</span><span class="p">,</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">new_class</span><span class="p">,</span> <span class="s2">&quot;__doc__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_class</span></div>
+
+
+<div class="viewcode-block" id="BusinessRule"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRule">[docs]</a><span class="k">class</span> <span class="nc">BusinessRule</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">BusinessRuleBase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Represents a TARIC business rule.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_linked_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">related_objects</span><span class="p">:</span>
+            <span class="n">business_rules</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">related_model</span><span class="p">,</span> <span class="s2">&quot;business_rules&quot;</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">business_rules</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span>
+                    <span class="n">model</span><span class="p">,</span>
+                    <span class="n">link</span><span class="o">.</span><span class="n">related_name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">_set&quot;</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">[]</span>
 
 <div class="viewcode-block" id="BusinessRule.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRule.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Perform business rule validation.&quot;&quot;&quot;</span>
@@ -75,26 +144,32 @@
 
 <div class="viewcode-block" id="BusinessRule.violation"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRule.violation">[docs]</a>    <span class="k">def</span> <span class="nf">violation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">msg</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BusinessRuleViolation</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Create a violation exception object.&quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="c1"># handle msg string passed as only param</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="n">model</span>
-                <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># use the docstring as the error message, up to the first blank line</span>
-                <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="c1"># replace multiple whitspace (including newlines) with single spaces</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="s2">&quot;Violation&quot;</span><span class="p">,</span> <span class="n">BusinessRuleViolation</span><span class="p">)(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
 
-        <span class="k">if</span> <span class="n">model</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span>
 
-        <span class="k">return</span> <span class="n">BusinessRuleViolation</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div></div>
+<span class="k">class</span> <span class="nc">BusinessRuleChecker</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">],</span> <span class="n">TrackedModel</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">business_rules</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">rule</span><span class="p">,</span> <span class="n">model</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">indirect_business_rules</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">linked_model</span> <span class="ow">in</span> <span class="n">rule</span><span class="o">.</span><span class="n">get_linked_models</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">rule</span><span class="p">,</span> <span class="n">linked_model</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">rule</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
+            <span class="n">rule</span><span class="p">()</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">only_applicable_after</span><span class="p">(</span><span class="n">cutoff</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
@@ -130,7 +205,7 @@
 <div class="viewcode-block" id="UniqueIdentifyingFields"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.UniqueIdentifyingFields">[docs]</a><span class="k">class</span> <span class="nc">UniqueIdentifyingFields</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Rule enforcing identifying fields are unique.&quot;&quot;&quot;</span>
 
-    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="UniqueIdentifyingFields.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.UniqueIdentifyingFields.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="n">identifying_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">identifying_fields</span>
