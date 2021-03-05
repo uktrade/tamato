@@ -1,0 +1,46 @@
+{% set origins %}
+    <ul class="govuk-list">
+        {% for origin in object.origins.distinct().all() %}
+            <li>{{origin.area_id}} - {{origin.get_description().description}}</li>
+        {% endfor %}
+    </ul>
+{% endset %}
+<div class="quota__core-data">
+    <div class="quota__core-data__content">
+        <h2 class="govuk-heading-l">Details</h2>
+        {{ govukSummaryList({
+            "rows": [
+            {
+                "key": {"text": "Order Number"},
+                "value": {"text": object.order_number},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Origin"},
+                "value": {"text": origins if object.origins.all() else "-"},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Start date"},
+                "value": {"text":  "{:%d %b %Y}".format(object.valid_between.lower)},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "End date"},
+                "value": {"text":  "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Category"},
+                "value": {"text": object.get_category_display()},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Mechanism"},
+                "value": {"text": object.get_mechanism_display()},
+                "actions": {"items": []}
+            },
+            ]
+        })}}
+    </div>
+</div>

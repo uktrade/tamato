@@ -1,34 +1,34 @@
-{% from 'macros/create_link.jinja' import create_link %} 
+{% from 'macros/create_link.jinja' import create_link %}
 
 {% set table_rows = [] %}
 {% for quota in object_list %}
-{% set quota_link -%}
-<a class="govuk-link govuk-!-font-weight-bold" href="#">{{ quota.order_number }}</a>
-{%- endset %}
-{% set origins %}
-    <ul class="govuk-table-list">
-    {% for origin in quota.origins.distinct().all() %}
-        <li>{{create_link(url("geoarea-ui-detail", kwargs={"sid": origin.sid}), origin.area_id ~ " - " ~ origin.get_description().description)}}</li>
-    {% endfor %}
-    </ul>
-{% endset %}
-{{ table_rows.append([
-    {"html": quota_link},
-    {"text": origins if quota.origins.all() else "-"},
-    {"text": "{:%d %b %Y}".format(quota.valid_between.lower)},
-    {"text": "{:%d %b %Y}".format(quota.valid_between.upper) if quota.valid_between.upper else "-"},
-    {"text": quota.get_category_display()},
-    {"text": quota.get_mechanism_display()},
-]) or "" }}
+    {% set quota_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ quota.get_url() }}">{{ quota.order_number }}</a>
+    {%- endset %}
+    {% set origins %}
+        <ul class="govuk-table-list">
+        {% for origin in quota.origins.distinct().all() %}
+            <li>{{create_link(url("geoarea-ui-detail", kwargs={"sid": origin.sid}), origin.area_id ~ " - " ~ origin.get_description().description)}}</li>
+        {% endfor %}
+        </ul>
+    {% endset %}
+    {{ table_rows.append([
+        {"html": quota_link},
+        {"text": origins if quota.origins.all() else "-"},
+        {"text": "{:%d %b %Y}".format(quota.valid_between.lower)},
+        {"text": "{:%d %b %Y}".format(quota.valid_between.upper) if quota.valid_between.upper else "-"},
+        {"text": quota.get_category_display()},
+        {"text": quota.get_mechanism_display()},
+    ]) or "" }}
 {% endfor %}
 {{ govukTable({
-"head": [
-    {"text": "Order number"},
-    {"text": "Origin"},
-    {"text": "Start date"},
-    {"text": "End date"},
-    {"text": "Category"},
-    {"text": "Mechanism"},
-],
-"rows": table_rows
+    "head": [
+        {"text": "Order number"},
+        {"text": "Origin"},
+        {"text": "Start date"},
+        {"text": "End date"},
+        {"text": "Category"},
+        {"text": "Mechanism"},
+    ],
+    "rows": table_rows
 }) }}

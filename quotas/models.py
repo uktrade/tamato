@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.urls import reverse
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -182,6 +183,14 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return str(self.sid)
+
+    def get_url(self, action="detail"):
+        return reverse(
+            f"quota-ui-{action}",
+            kwargs={
+                "sid": self.order_number.sid,
+            },
+        )
 
 
 class QuotaAssociation(TrackedModel):
