@@ -1,5 +1,5 @@
 {% set origins %}
-    <ul class="govuk-list">
+    <ul class="govuk-table-list">
         {% for origin in object.origins.distinct().all() %}
             <li>{{origin.area_id}} - {{origin.get_description().description}}</li>
         {% endfor %}
