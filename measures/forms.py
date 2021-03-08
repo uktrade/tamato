@@ -42,7 +42,7 @@ class MeasureFilterForm(forms.Form):
                         inline=True,
                     ),
                     "start_date",
-                    css_class="govuk-grid-column-one-third",
+                    css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
                 ),
                 Div(
                     Field.radios(
@@ -51,7 +51,7 @@ class MeasureFilterForm(forms.Form):
                         inline=True,
                     ),
                     "end_date",
-                    css_class="govuk-grid-column-one-third",
+                    css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
                 ),
                 css_class="govuk-grid-row govuk-!-margin-top-6",
             ),
