@@ -45,3 +45,7 @@
 .quarters .govuk-form-group {
   @extend .govuk-grid-column-one-quarter;
 }
+
+.form-group-margin-bottom-2 .govuk-form-group {
+  @extend .govuk-\!-margin-bottom-2;
+}
