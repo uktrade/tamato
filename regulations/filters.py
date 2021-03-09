@@ -1,10 +1,11 @@
-from django_filters import rest_framework as filters
+from django.urls import reverse_lazy
 
+from common.filters import ActiveStateMixin
+from common.filters import StartYearMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
 from regulations.models import Regulation
-from regulations.validators import RoleType
 
 
 class RegulationFilterMixin(TamatoFilterMixin):
@@ -18,9 +19,14 @@ class RegulationFilterBackend(TamatoFilterBackend, RegulationFilterMixin):
     pass
 
 
-class RegulationFilter(TamatoFilter, RegulationFilterMixin):
-    role_type = filters.TypedMultipleChoiceFilter(choices=RoleType.choices, coerce=int)
+class RegulationFilter(
+    TamatoFilter,
+    RegulationFilterMixin,
+    StartYearMixin,
+    ActiveStateMixin,
+):
+    clear_url = reverse_lazy("regulation-ui-list")
 
     class Meta:
         model = Regulation
-        fields = ["regulation_id", "role_type"]
+        fields = ["search", "start_year", "active_state"]

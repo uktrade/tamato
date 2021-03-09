@@ -1,8 +1,9 @@
-from django.shortcuts import render
-from rest_framework import permissions
-from rest_framework import renderers
 from rest_framework import viewsets
 
+from common.views import TamatoListView
+from common.views import TrackedModelDetailView
+from regulations import models
+from regulations.filters import RegulationFilter
 from regulations.filters import RegulationFilterBackend
 from regulations.models import Regulation
 from regulations.serializers import RegulationSerializer
@@ -13,27 +14,22 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Regulation.objects.latest_approved().select_related("regulation_group")
     serializer_class = RegulationSerializer
-    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [RegulationFilterBackend]
-    search_fields = ["regulation_id"]
+    search_fields = ["regulation_id", "pk"]
 
 
-class RegulationUIViewSet(RegulationViewSet):
+class RegulationList(TamatoListView):
     """UI endpoint that allows regulations to be viewed."""
 
-    renderer_classes = [renderers.TemplateHTMLRenderer]
+    queryset = Regulation.objects.latest_approved().select_related("regulation_group")
+    template_name = "regulations/list.jinja"
+    filterset_class = RegulationFilter
+    search_fields = ["regulation_id", "pk"]
 
-    def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
-        return render(
-            request,
-            "regulations/list.jinja",
-            context={"object_list": queryset},
-        )
 
-    def retrieve(self, request, *args, **kwargs):
-        return render(
-            request,
-            "regulations/detail.jinja",
-            context={"regulation": self.get_object()},
-        )
+class RegulationDetail(TrackedModelDetailView):
+    required_url_kwargs = ("regulation_id",)
+
+    model = models.Regulation
+    template_name = "regulations/detail.jinja"
+    queryset = Regulation.objects.latest_approved().select_related("regulation_group")
