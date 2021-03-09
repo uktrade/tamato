@@ -62,7 +62,7 @@ class MeasureFilter(TamatoFilter):
     )
 
     geographical_area = CharFilter(
-        label="Geography",
+        label="Geographical area",
         field_name="geographical_area__sid",
     )
 
