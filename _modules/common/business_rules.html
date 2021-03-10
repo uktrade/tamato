@@ -50,9 +50,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
-<span class="kn">from</span> <span class="nn">django.db.models.functions</span> <span class="kn">import</span> <span class="n">Lower</span>
 
 <span class="kn">from</span> <span class="nn">common.models.records</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_field_tuple</span>
@@ -129,6 +127,9 @@
 
     <span class="n">Violation</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRuleViolation</span><span class="p">]</span>
 
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="n">transaction</span>
+
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_linked_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
         <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">related_objects</span><span class="p">:</span>
@@ -159,8 +160,10 @@
 
 
 <span class="k">class</span> <span class="nc">BusinessRuleChecker</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">],</span> <span class="n">transaction</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">],</span> <span class="n">TrackedModel</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="n">transaction</span>
 
         <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">business_rules</span><span class="p">:</span>
@@ -172,7 +175,7 @@
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">rule</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
-            <span class="n">rule</span><span class="p">()</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+            <span class="n">rule</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">only_applicable_after</span><span class="p">(</span><span class="n">cutoff</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
@@ -185,8 +188,8 @@
 
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="nd">@wraps</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">decorated</span><span class="p">():</span>
-            <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">validate</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">validate</span>
 
             <span class="nd">@wraps</span><span class="p">(</span><span class="n">validate</span><span class="p">)</span>
@@ -216,7 +219,7 @@
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">query</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
@@ -236,7 +239,7 @@
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">query</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
@@ -272,7 +275,7 @@
             <span class="ow">not</span> <span class="n">container</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="o">**</span><span class="n">container</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">(),</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">contained</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
             <span class="p">)</span>
@@ -319,21 +322,6 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<span class="k">def</span> <span class="nf">find_duplicate_start_dates</span><span class="p">(</span><span class="n">queryset</span><span class="p">:</span> <span class="n">QuerySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">queryset</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">start_date</span><span class="o">=</span><span class="n">Lower</span><span class="p">(</span><span class="s2">&quot;valid_between&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;start_date&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">start_date_matches</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;start_date&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">start_date_matches__gt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-
 <div class="viewcode-block" id="DescriptionsRules"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.DescriptionsRules">[docs]</a><span class="k">class</span> <span class="nc">DescriptionsRules</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Repeated rule pattern for descriptions.&quot;&quot;&quot;</span>
 
@@ -355,7 +343,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_descriptions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">workbasket</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">transaction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DescriptionsRules.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.DescriptionsRules.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="n">descriptions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;valid_between&quot;</span><span class="p">)</span>
@@ -363,15 +351,21 @@
         <span class="k">if</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;at least one&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">valid_between__startswith</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">valid_betweens</span> <span class="o">=</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;valid_between&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span> <span class="o">==</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">valid_betweens</span><span class="p">),</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;first start date&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">find_duplicate_start_dates</span><span class="p">(</span><span class="n">descriptions</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">({</span><span class="n">vb</span><span class="o">.</span><span class="n">lower</span> <span class="k">for</span> <span class="n">vb</span> <span class="ow">in</span> <span class="n">valid_betweens</span><span class="p">})</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">vb</span><span class="o">.</span><span class="n">lower</span> <span class="k">for</span> <span class="n">vb</span> <span class="ow">in</span> <span class="n">valid_betweens</span><span class="p">],</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;duplicate start dates&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">valid_between__fully_gt</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper_inf</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">,</span> <span class="n">valid_betweens</span><span class="p">),</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;start after end&quot;</span><span class="p">)</span></div></div>
 </pre></div>
 

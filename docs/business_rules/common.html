@@ -51,7 +51,7 @@
 <p>Base classes for business rules and violations.</p>
 <dl class="py class">
 <dt id="common.business_rules.BusinessRule">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">BusinessRule</span></code><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRule" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">BusinessRule</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#BusinessRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a TARIC business rule.</p>
 <dl class="py method">
 <dt id="common.business_rules.BusinessRule.validate">
@@ -81,7 +81,7 @@
 
 <dl class="py class">
 <dt id="common.business_rules.DescriptionsRules">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">DescriptionsRules</span></code><a class="reference internal" href="../../_modules/common/business_rules.html#DescriptionsRules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.DescriptionsRules" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">DescriptionsRules</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#DescriptionsRules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.DescriptionsRules" title="Permalink to this definition">¶</a></dt>
 <dd><p>Repeated rule pattern for descriptions.</p>
 <dl class="py exception">
 <dt id="common.business_rules.DescriptionsRules.Violation">
@@ -99,7 +99,7 @@
 
 <dl class="py class">
 <dt id="common.business_rules.MustExist">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">MustExist</span></code><a class="reference internal" href="../../_modules/common/business_rules.html#MustExist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.MustExist" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">MustExist</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#MustExist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.MustExist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rule enforcing a referenced record exists.</p>
 <dl class="py exception">
 <dt id="common.business_rules.MustExist.Violation">
@@ -117,7 +117,7 @@
 
 <dl class="py class">
 <dt id="common.business_rules.NoOverlapping">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">NoOverlapping</span></code><a class="reference internal" href="../../_modules/common/business_rules.html#NoOverlapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.NoOverlapping" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">NoOverlapping</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#NoOverlapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.NoOverlapping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rule enforcing no overlapping validity periods of instances of a
 model.</p>
 <dl class="py exception">
@@ -137,7 +137,7 @@ model.</p>
 
 <dl class="py class">
 <dt id="common.business_rules.PreventDeleteIfInUse">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">PreventDeleteIfInUse</span></code><a class="reference internal" href="../../_modules/common/business_rules.html#PreventDeleteIfInUse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.PreventDeleteIfInUse" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">PreventDeleteIfInUse</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#PreventDeleteIfInUse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.PreventDeleteIfInUse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rule preventing deleting an in-use model.</p>
 <dl class="py exception">
 <dt id="common.business_rules.PreventDeleteIfInUse.Violation">
@@ -155,7 +155,7 @@ model.</p>
 
 <dl class="py class">
 <dt id="common.business_rules.UniqueIdentifyingFields">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">UniqueIdentifyingFields</span></code><a class="reference internal" href="../../_modules/common/business_rules.html#UniqueIdentifyingFields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.UniqueIdentifyingFields" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">UniqueIdentifyingFields</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#UniqueIdentifyingFields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.UniqueIdentifyingFields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rule enforcing identifying fields are unique.</p>
 <dl class="py exception">
 <dt id="common.business_rules.UniqueIdentifyingFields.Violation">
@@ -173,7 +173,7 @@ model.</p>
 
 <dl class="py class">
 <dt id="common.business_rules.ValidityPeriodContained">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">ValidityPeriodContained</span></code><a class="reference internal" href="../../_modules/common/business_rules.html#ValidityPeriodContained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">ValidityPeriodContained</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#ValidityPeriodContained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rule enforcing validity period is contained by a dependency’s validity
 period.</p>
 <dl class="py exception">
