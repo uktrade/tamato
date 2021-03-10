@@ -3,6 +3,7 @@ from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from django import forms
@@ -17,18 +18,42 @@ class MeasureFilterForm(forms.Form):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Div(
-                Field(
-                    "sid",
+                Field.text("sid", label_size=Size.SMALL, field_width=Fluid.TWO_THIRDS),
+                Field.text(
+                    "goods_nomenclature",
                     label_size=Size.SMALL,
-                    css_class="govuk-!-width-two-thirds",
+                    field_width=Fluid.TWO_THIRDS,
                 ),
-                Field("goods_nomenclature", css_class="govuk-!-width-two-thirds"),
-                Field("additional_code", css_class="govuk-!-width-two-thirds"),
-                Field("order_number", css_class="govuk-!-width-two-thirds"),
-                Field("measure_type", css_class="govuk-!-width-two-thirds"),
-                Field("regulation", css_class="govuk-!-width-two-thirds"),
-                Field("geographical_area", css_class="govuk-!-width-two-thirds"),
-                Field("footnote", css_class="govuk-!-width-two-thirds"),
+                Field.text(
+                    "additional_code",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.TWO_THIRDS,
+                ),
+                Field.text(
+                    "order_number",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.TWO_THIRDS,
+                ),
+                Field.text(
+                    "measure_type",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.TWO_THIRDS,
+                ),
+                Field.text(
+                    "regulation",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.TWO_THIRDS,
+                ),
+                Field.text(
+                    "geographical_area",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.TWO_THIRDS,
+                ),
+                Field.text(
+                    "footnote",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.TWO_THIRDS,
+                ),
                 css_class="govuk-grid-row quarters",
             ),
             HTML(
