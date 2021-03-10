@@ -11,6 +11,7 @@ from common.models import TrackedModel
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
+from common.tests.models import TestModelDescription1
 from common.tests.util import Dates
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
@@ -304,6 +305,14 @@ class TestModel1Factory(TrackedModelMixin, ValidityFactoryMixin):
 
     name = factory.Faker("text", max_nb_chars=24)
     sid = numeric_sid()
+
+
+class TestModelDescription1Factory(TrackedModelMixin, ValidityFactoryMixin):
+    class Meta:
+        model = TestModelDescription1
+
+    described_record = factory.SubFactory(TestModel1Factory)
+    description = factory.Faker("text", max_nb_chars=500)
 
 
 class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):

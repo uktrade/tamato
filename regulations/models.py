@@ -227,6 +227,7 @@ class Regulation(TrackedModel):
                 generating_regulation__regulation_id=self.regulation_id,
                 generating_regulation__role_type=self.role_type,
             )
+            .approved_up_to_transaction(transaction=self.transaction)
             .exists()
         )
 

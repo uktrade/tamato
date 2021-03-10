@@ -18,16 +18,17 @@ def test_FOT1(make_duplicate_record):
     duplicate = make_duplicate_record(factories.FootnoteTypeFactory)
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FOT1().validate(duplicate)
+        business_rules.FOT1(duplicate.transaction).validate(duplicate)
 
 
 def test_FOT2(delete_record):
     """The footnote type cannot be deleted if it is used in a footnote."""
 
     footnote = factories.FootnoteFactory.create()
+    deleted_record = delete_record(footnote.footnote_type)
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FOT2().validate(delete_record(footnote.footnote_type))
+        business_rules.FOT2(deleted_record.transaction).validate(deleted_record)
 
 
 def test_FOT3(date_ranges):
@@ -46,7 +47,7 @@ def test_FO2(make_duplicate_record):
     duplicate = make_duplicate_record(factories.FootnoteFactory)
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO2().validate(duplicate)
+        business_rules.FO2(duplicate.transaction).validate(duplicate)
 
 
 def test_FO3(date_ranges):
@@ -58,35 +59,31 @@ def test_FO3(date_ranges):
 
 def test_FO4_one_description_mandatory():
     """At least one description record is mandatory."""
-
+    footnote = factories.FootnoteFactory.create(description=None)
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4().validate(
-            factories.FootnoteFactory.create(description=None),
-        )
+        business_rules.FO4(footnote.transaction).validate(footnote)
 
 
 def test_FO4_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the footnote."""
-
+    footnote = factories.FootnoteFactory.create(
+        description__valid_between=date_ranges.later,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4().validate(
-            factories.FootnoteFactory.create(
-                description__valid_between=date_ranges.later,
-            ),
-        )
+        business_rules.FO4(footnote.transaction).validate(footnote)
 
 
 def test_FO4_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
     footnote = factories.FootnoteFactory.create()
-    factories.FootnoteDescriptionFactory.create(
+    duplicate = factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,
         valid_between=footnote.valid_between,
     )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4().validate(footnote)
+        business_rules.FO4(duplicate.transaction).validate(footnote)
 
 
 def test_FO4_description_start_before_footnote_end(date_ranges):
@@ -97,13 +94,13 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
         valid_between=date_ranges.normal,
         description__valid_between=date_ranges.starts_with_normal,
     )
-    factories.FootnoteDescriptionFactory.create(
+    early_description = factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,
         valid_between=date_ranges.later,
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4().validate(footnote)
+        business_rules.FO4(early_description.transaction).validate(footnote)
 
 
 def test_FO5(date_ranges):
@@ -118,7 +115,7 @@ def test_FO5(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO5().validate(assoc.associated_footnote)
+        business_rules.FO5(assoc.transaction).validate(assoc.associated_footnote)
 
 
 def test_FO6(date_ranges):
@@ -134,7 +131,7 @@ def test_FO6(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO6().validate(assoc.associated_footnote)
+        business_rules.FO6(assoc.transaction).validate(assoc.associated_footnote)
 
 
 @pytest.mark.skip(reason="Export Refunds not implemented")
@@ -159,7 +156,7 @@ def test_FO9(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO9().validate(assoc.associated_footnote)
+        business_rules.FO9(assoc.transaction).validate(assoc.associated_footnote)
 
 
 @requires_meursing_tables
@@ -172,14 +169,12 @@ def test_FO10():
 def test_FO17(date_ranges):
     """The validity period of the footnote type must span the validity period of
     the footnote."""
-
+    footnote = factories.FootnoteFactory.create(
+        footnote_type__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO17().validate(
-            factories.FootnoteFactory.create(
-                footnote_type__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.FO17(footnote.transaction).validate(footnote)
 
 
 def test_FO11(delete_record):
@@ -189,7 +184,9 @@ def test_FO11(delete_record):
     assoc = factories.FootnoteAssociationMeasureFactory.create()
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO11().validate(delete_record(assoc.associated_footnote))
+        business_rules.FO11(assoc.transaction).validate(
+            delete_record(assoc.associated_footnote),
+        )
 
 
 def test_FO12(delete_record):
@@ -199,7 +196,9 @@ def test_FO12(delete_record):
     assoc = factories.FootnoteAssociationGoodsNomenclatureFactory.create()
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO12().validate(delete_record(assoc.associated_footnote))
+        business_rules.FO12(assoc.transaction).validate(
+            delete_record(assoc.associated_footnote),
+        )
 
 
 @pytest.mark.skip(reason="Export Refunds not implemented")
@@ -217,7 +216,9 @@ def test_FO15(delete_record):
     assoc = factories.FootnoteAssociationAdditionalCodeFactory.create()
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.FO15().validate(delete_record(assoc.associated_footnote))
+        business_rules.FO15(assoc.transaction).validate(
+            delete_record(assoc.associated_footnote),
+        )
 
 
 @requires_meursing_tables

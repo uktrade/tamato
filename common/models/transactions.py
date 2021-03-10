@@ -74,7 +74,7 @@ class Transaction(TimestampedMixin):
         self.errors = []
 
         try:
-            BusinessRuleChecker(self.tracked_models.all()).validate()
+            BusinessRuleChecker(self.tracked_models.all(), self).validate()
         except BusinessRuleViolation as violation:
             self.errors.append(violation)
 

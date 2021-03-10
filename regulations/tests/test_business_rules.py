@@ -18,7 +18,7 @@ def test_ROIMB1(make_duplicate_record):
     duplicate = make_duplicate_record(factories.BaseRegulationFactory)
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ROIMB1().validate(duplicate)
+        business_rules.ROIMB1(duplicate.transaction).validate(duplicate)
 
 
 def test_ROIMB3(date_ranges):
@@ -37,7 +37,7 @@ def test_ROIMB4(reference_nonexistent_record):
         "regulation_group",
     ) as regulation:
         with pytest.raises(BusinessRuleViolation):
-            business_rules.ROIMB4().validate(regulation)
+            business_rules.ROIMB4(regulation.transaction).validate(regulation)
 
 
 @pytest.mark.skip(reason="Not using regulation replacement functionality")
@@ -80,7 +80,9 @@ def test_ROIMB8(date_ranges):
         valid_between=date_ranges.overlap_normal,
     )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ROIMB8().validate(measure.generating_regulation)
+        business_rules.ROIMB8(measure.transaction).validate(
+            measure.generating_regulation,
+        )
 
 
 @pytest.mark.skip(reason="Not using effective end date")
@@ -131,10 +133,10 @@ def test_ROIMB44(id, approved, change_flag, expect_error):
 
     if expect_error:
         with pytest.raises(BusinessRuleViolation):
-            business_rules.ROIMB44().validate(regulation)
+            business_rules.ROIMB44(regulation.transaction).validate(regulation)
 
     else:
-        business_rules.ROIMB44().validate(regulation)
+        business_rules.ROIMB44(regulation.transaction).validate(regulation)
 
 
 def test_ROIMB46(delete_record):
@@ -147,9 +149,10 @@ def test_ROIMB46(delete_record):
 
     regulation = factories.BaseRegulationFactory.create()
     factories.MeasureFactory.create(terminating_regulation=regulation)
+    deleted = delete_record(regulation)
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ROIMB46().validate(delete_record(regulation))
+        business_rules.ROIMB46(deleted.transaction).validate(deleted)
 
     draft_regulation = factories.BaseRegulationFactory.create(regulation_id="C2000000")
     factories.MeasureFactory.create(
@@ -157,14 +160,16 @@ def test_ROIMB46(delete_record):
         terminating_regulation=draft_regulation,
     )
 
-    business_rules.ROIMB46().validate(delete_record(draft_regulation))
+    deleted = delete_record(draft_regulation)
+    business_rules.ROIMB46(deleted.transaction).validate(deleted)
 
     not_base_regulation = factories.RegulationFactory.create(
         role_type=RoleType.MODIFICATION,
     )
     factories.MeasureFactory.create(terminating_regulation=not_base_regulation)
 
-    business_rules.ROIMB46().validate(delete_record(not_base_regulation))
+    deleted = delete_record(not_base_regulation)
+    business_rules.ROIMB46(deleted.transaction).validate(deleted)
 
 
 def test_ROIMB47(date_ranges):
@@ -172,11 +177,10 @@ def test_ROIMB47(date_ranges):
     period of the base regulation."""
     # But we will be ensuring that the regulation groups are not end dated, therefore we
     # will not get hit by this
+    regulation = factories.BaseRegulationFactory.create(
+        regulation_group__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ROIMB47().validate(
-            factories.BaseRegulationFactory.create(
-                regulation_group__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.ROIMB47(regulation.transaction).validate(regulation)

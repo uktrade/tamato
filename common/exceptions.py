@@ -4,3 +4,11 @@ class NoIdentifyingValuesGivenError(Exception):
 
 class AlreadyHasSuccessorError(Exception):
     pass
+
+
+class IllegalSaveError(Exception):
+    pass
+
+
+class NoDescriptionError(Exception):
+    pass

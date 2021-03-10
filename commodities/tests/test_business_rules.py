@@ -15,13 +15,13 @@ def test_NIG1():
 
     good = factories.GoodsNomenclatureFactory.create()
 
+    duplicate = factories.GoodsNomenclatureFactory.create(
+        sid=good.sid,
+        valid_between=good.valid_between,
+    )
+
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG1().validate(
-            factories.GoodsNomenclatureFactory.create(
-                sid=good.sid,
-                valid_between=good.valid_between,
-            ),
-        )
+        business_rules.NIG1(duplicate.transaction).validate(duplicate)
 
 
 def test_NIG2(date_ranges):
@@ -40,7 +40,7 @@ def test_NIG2(date_ranges):
         indented_goods_nomenclature__valid_between=date_ranges.adjacent_later_big,
     )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG2().validate(child)
+        business_rules.NIG2(child.transaction).validate(child)
 
 
 def test_NIG4(date_ranges):
@@ -60,21 +60,19 @@ def test_NIG5():
 
     origin = factories.GoodsNomenclatureFactory.create()
     parent_node = factories.GoodsNomenclatureIndentFactory.create().nodes.first()
+    bad_good = factories.GoodsNomenclatureFactory.create(
+        origin=None,
+        indent__node__parent=parent_node,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG5().validate(
-            factories.GoodsNomenclatureFactory.create(
-                origin=None,
-                indent__node__parent=parent_node,
-            ),
-        )
+        business_rules.NIG5(bad_good.transaction).validate(bad_good)
 
-    business_rules.NIG5().validate(
-        factories.GoodsNomenclatureFactory.create(
-            origin__derived_from_goods_nomenclature=origin,
-            indent__node__parent=parent_node,
-        ),
+    good_good = factories.GoodsNomenclatureFactory.create(
+        origin__derived_from_goods_nomenclature=origin,
+        indent__node__parent=parent_node,
     )
+    business_rules.NIG5(good_good.transaction).validate(good_good)
 
 
 @pytest.mark.parametrize(
@@ -91,17 +89,15 @@ def test_NIG5():
 def test_NIG7(date_ranges, valid_between, expect_error):
     """The origin must be applicable the day before the start date of the new
     code entered."""
-
+    origin = factories.GoodsNomenclatureOriginFactory.create(
+        derived_from_goods_nomenclature__valid_between=date_ranges.normal,
+        new_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            valid_between,
+        ),
+    )
     try:
-        business_rules.NIG7().validate(
-            factories.GoodsNomenclatureOriginFactory.create(
-                derived_from_goods_nomenclature__valid_between=date_ranges.normal,
-                new_goods_nomenclature__valid_between=getattr(
-                    date_ranges,
-                    valid_between,
-                ),
-            ),
-        )
+        business_rules.NIG7(origin.transaction).validate(origin)
     except BusinessRuleViolation:
         if not expect_error:
             raise
@@ -123,17 +119,15 @@ def test_NIG7(date_ranges, valid_between, expect_error):
 def test_NIG10(date_ranges, valid_between, expect_error):
     """The successor must be applicable the day after the end date of the old
     code."""
-
+    successor = factories.GoodsNomenclatureSuccessorFactory.create(
+        absorbed_into_goods_nomenclature__valid_between=date_ranges.normal,
+        replaced_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            valid_between,
+        ),
+    )
     try:
-        business_rules.NIG10().validate(
-            factories.GoodsNomenclatureSuccessorFactory.create(
-                absorbed_into_goods_nomenclature__valid_between=date_ranges.normal,
-                replaced_goods_nomenclature__valid_between=getattr(
-                    date_ranges,
-                    valid_between,
-                ),
-            ),
-        )
+        business_rules.NIG10(successor.transaction).validate(successor)
     except BusinessRuleViolation:
         if not expect_error:
             raise
@@ -145,10 +139,9 @@ def test_NIG10(date_ranges, valid_between, expect_error):
 def test_NIG11_one_indent_mandatory():
     """At least one indent record is mandatory."""
 
+    good = factories.GoodsNomenclatureFactory.create(indent=None)
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11().validate(
-            factories.GoodsNomenclatureFactory.create(indent=None),
-        )
+        business_rules.NIG11(good.transaction).validate(good)
 
 
 def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
@@ -161,19 +154,23 @@ def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11().validate(indent.indented_goods_nomenclature)
+        business_rules.NIG11(indent.transaction).validate(
+            indent.indented_goods_nomenclature,
+        )
 
 
 def test_NIG11_no_overlapping_indents():
     """No two associated indentations may have the same start date."""
 
     existing = factories.GoodsNomenclatureIndentFactory.create()
-    factories.GoodsNomenclatureIndentFactory.create(
+    duplicate = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=existing.indented_goods_nomenclature,
         valid_between=existing.valid_between,
     )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11().validate(existing.indented_goods_nomenclature)
+        business_rules.NIG11(duplicate.transaction).validate(
+            existing.indented_goods_nomenclature,
+        )
 
 
 def test_NIG11_start_date_less_than_end_date(date_ranges):
@@ -186,40 +183,39 @@ def test_NIG11_start_date_less_than_end_date(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11().validate(indent.indented_goods_nomenclature)
+        business_rules.NIG11(indent.transaction).validate(
+            indent.indented_goods_nomenclature,
+        )
 
 
 def test_NIG12_one_description_mandatory():
     """At least one description record is mandatory."""
+    good = factories.GoodsNomenclatureFactory.create(description=None)
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12().validate(
-            factories.GoodsNomenclatureFactory.create(description=None),
-        )
+        business_rules.NIG12(good.transaction).validate(good)
 
 
 def test_NIG12_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the nomenclature."""
-
+    good = factories.GoodsNomenclatureFactory.create(
+        description__valid_between=date_ranges.later,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12().validate(
-            factories.GoodsNomenclatureFactory.create(
-                description__valid_between=date_ranges.later,
-            ),
-        )
+        business_rules.NIG12(good.transaction).validate(good)
 
 
 def test_NIG12_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
     goods_nomenclature = factories.GoodsNomenclatureFactory.create()
-    factories.GoodsNomenclatureDescriptionFactory.create(
+    duplicate = factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=goods_nomenclature,
         valid_between=goods_nomenclature.valid_between,
     )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12().validate(goods_nomenclature)
+        business_rules.NIG12(duplicate.transaction).validate(goods_nomenclature)
 
 
 def test_NIG12_description_start_before_nomenclature_end(
@@ -234,13 +230,13 @@ def test_NIG12_description_start_before_nomenclature_end(
         description__valid_between=date_ranges.starts_with_normal,
         transaction=unapproved_transaction,
     )
-    factories.GoodsNomenclatureDescriptionFactory.create(
+    early_description = factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=goods_nomenclature,
         valid_between=date_ranges.later,
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12().validate(goods_nomenclature)
+        business_rules.NIG12(early_description.transaction).validate(goods_nomenclature)
 
 
 def test_NIG21(date_ranges):
@@ -256,27 +252,23 @@ def test_NIG21(date_ranges):
 def test_NIG22(date_ranges):
     """The period of the association with a footnote must be within the validity
     period of the nomenclature."""
-
+    association = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        goods_nomenclature__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG22().validate(
-            factories.FootnoteAssociationGoodsNomenclatureFactory.create(
-                goods_nomenclature__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.NIG22(association.transaction).validate(association)
 
 
 def test_NIG23(date_ranges):
     """The period of the association with a footnote must be within the validity
     period of the footnote."""
-
+    association = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG23().validate(
-            factories.FootnoteAssociationGoodsNomenclatureFactory.create(
-                associated_footnote__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.NIG23(association.transaction).validate(association)
 
 
 @pytest.mark.xfail(reason="NIG24 disabled")
@@ -294,15 +286,13 @@ def test_NIG24(date_ranges, valid_between, expect_error):
     existing = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
         valid_between=date_ranges.normal,
     )
-
+    association = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote=existing.associated_footnote,
+        goods_nomenclature=existing.goods_nomenclature,
+        valid_between=getattr(date_ranges, valid_between),
+    )
     try:
-        business_rules.NIG24().validate(
-            factories.FootnoteAssociationGoodsNomenclatureFactory.create(
-                associated_footnote=existing.associated_footnote,
-                goods_nomenclature=existing.goods_nomenclature,
-                valid_between=getattr(date_ranges, valid_between),
-            ),
-        )
+        business_rules.NIG24(association.transaction).validate(association)
     except BusinessRuleViolation:
         if not expect_error:
             raise
@@ -322,7 +312,7 @@ def test_NIG30(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG30().validate(measure.goods_nomenclature)
+        business_rules.NIG30(measure.transaction).validate(measure.goods_nomenclature)
 
 
 def test_NIG31(date_ranges):
@@ -337,7 +327,7 @@ def test_NIG31(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG31().validate(measure.goods_nomenclature)
+        business_rules.NIG31(measure.transaction).validate(measure.goods_nomenclature)
 
 
 def test_NIG34(delete_record):
@@ -345,9 +335,9 @@ def test_NIG34(delete_record):
     measure."""
 
     measure = factories.MeasureFactory.create()
-
+    deleted_record = delete_record(measure.goods_nomenclature)
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG34().validate(delete_record(measure.goods_nomenclature))
+        business_rules.NIG34(deleted_record.transaction).validate(deleted_record)
 
 
 def test_NIG35(delete_record):
@@ -355,9 +345,9 @@ def test_NIG35(delete_record):
     nomenclature measure."""
 
     measure = factories.MeasureWithAdditionalCodeFactory.create()
-
+    deleted_record = delete_record(measure.goods_nomenclature)
     with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG35().validate(delete_record(measure.goods_nomenclature))
+        business_rules.NIG35(deleted_record.transaction).validate(deleted_record)
 
 
 @pytest.mark.skip(reason="Not using export refunds")

@@ -83,22 +83,6 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         business_rules.ACN17,
     )
 
-    def get_description(self):
-        if (
-            hasattr(self, "_prefetched_objects_cache")
-            and "descriptions" in self._prefetched_objects_cache
-        ):
-            descriptions = list(self.descriptions.all())
-            return descriptions[-1] if descriptions else None
-        return self.get_descriptions().last()
-
-    def get_descriptions(self, workbasket=None):
-        return (
-            AdditionalCodeDescription.objects.latest_approved()
-            .filter(described_additional_code__sid=self.sid)
-            .with_workbasket(workbasket)
-        )
-
     def in_use(self):
         return (
             self.measure_set.model.objects.filter(

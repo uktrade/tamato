@@ -24,7 +24,7 @@ def test_ON1(make_duplicate_record):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON1().validate(duplicate)
+        business_rules.ON1(duplicate.transaction).validate(duplicate)
 
 
 def test_ON2(date_ranges, approved_transaction, unapproved_transaction):
@@ -43,7 +43,7 @@ def test_ON2(date_ranges, approved_transaction, unapproved_transaction):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON2().validate(order_number)
+        business_rules.ON2(order_number.transaction).validate(order_number)
 
 
 def test_ON5(date_ranges, approved_transaction, unapproved_transaction):
@@ -68,7 +68,7 @@ def test_ON5(date_ranges, approved_transaction, unapproved_transaction):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON5().validate(origin)
+        business_rules.ON5(origin.transaction).validate(origin)
 
 
 @only_applicable_after("2006-12-31")
@@ -87,7 +87,7 @@ def test_ON6(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON6().validate(origin)
+        business_rules.ON6(origin.transaction).validate(origin)
 
 
 def test_ON7(date_ranges, approved_transaction, unapproved_transaction):
@@ -105,7 +105,7 @@ def test_ON7(date_ranges, approved_transaction, unapproved_transaction):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON7().validate(origin)
+        business_rules.ON7(origin.transaction).validate(origin)
 
 
 def test_ON8(date_ranges, approved_transaction, unapproved_transaction):
@@ -123,7 +123,7 @@ def test_ON8(date_ranges, approved_transaction, unapproved_transaction):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON8().validate(quota_def)
+        business_rules.ON8(quota_def.transaction).validate(quota_def)
 
 
 @only_applicable_after("2007-12-31")
@@ -138,13 +138,13 @@ def test_ON9(date_ranges):
     order_number = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.normal,
     )
-    factories.MeasureFactory.create(
+    measure = factories.MeasureFactory.create(
         order_number=order_number,
         valid_between=date_ranges.overlap_normal,
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON9().validate(order_number)
+        business_rules.ON9(measure.transaction).validate(order_number)
 
 
 @only_applicable_after("2007-12-31")
@@ -162,7 +162,7 @@ def test_ON10(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON10().validate(
+        business_rules.ON10(measure.transaction).validate(
             measure.order_number.quotaordernumberorigin_set.first(),
         )
 
@@ -176,9 +176,9 @@ def test_ON11(delete_record):
     """
 
     measure = factories.MeasureWithQuotaFactory.create()
-
+    deleted = delete_record(measure.order_number)
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON11().validate(delete_record(measure.order_number))
+        business_rules.ON11(deleted.transaction).validate(deleted)
 
 
 @only_applicable_after("2007-12-31")
@@ -190,11 +190,10 @@ def test_ON12(delete_record):
     """
 
     measure = factories.MeasureWithQuotaFactory.create()
+    deleted = delete_record(measure.order_number.quotaordernumberorigin_set.first())
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON12().validate(
-            delete_record(measure.order_number.quotaordernumberorigin_set.first()),
-        )
+        business_rules.ON12(deleted.transaction).validate(deleted)
 
 
 @pytest.mark.parametrize(
@@ -216,7 +215,7 @@ def test_ON13(area_code, expect_error):
     exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(origin=origin)
 
     try:
-        business_rules.ON13().validate(exclusion)
+        business_rules.ON13(exclusion.transaction).validate(exclusion)
     except BusinessRuleViolation as e:
         if not expect_error:
             raise e
@@ -231,21 +230,20 @@ def test_ON14():
 
     membership = factories.GeographicalMembershipFactory.create()
     non_member = factories.GeographicalAreaFactory.create()
+    exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(
+        origin__geographical_area=membership.geo_group,
+        excluded_geographical_area=non_member,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ON14().validate(
-            factories.QuotaOrderNumberOriginExclusionFactory.create(
-                origin__geographical_area=membership.geo_group,
-                excluded_geographical_area=non_member,
-            ),
-        )
+        business_rules.ON14(exclusion.transaction).validate(exclusion)
 
-    business_rules.ON14().validate(
-        factories.QuotaOrderNumberOriginExclusionFactory.create(
-            origin__geographical_area=membership.geo_group,
-            excluded_geographical_area=membership.member,
-        ),
+    exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(
+        origin__geographical_area=membership.geo_group,
+        excluded_geographical_area=membership.member,
     )
+
+    business_rules.ON14(exclusion.transaction).validate(exclusion)
 
 
 def test_QD1(make_duplicate_record):
@@ -257,7 +255,7 @@ def test_QD1(make_duplicate_record):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QD1().validate(duplicate)
+        business_rules.QD1(duplicate.transaction).validate(duplicate)
 
 
 def test_QD2(date_ranges):
@@ -273,27 +271,24 @@ def test_QD7(date_ranges):
     # "one of the validity periods" suggests an order number can have more than one
     # validity period, but this is not true. QD7 mirrors ON8, to check the same
     # constraint whether adding a quota definition or an order number.
-
+    definition = factories.QuotaDefinitionFactory.create(
+        order_number__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QD7().validate(
-            factories.QuotaDefinitionFactory.create(
-                order_number__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.QD7(definition.transaction).validate(definition)
 
 
 def test_QD8(date_ranges):
     """The validity period of the monetary unit code must span the validity
     period of the quota definition."""
+    definition = factories.QuotaDefinitionFactory.create(
+        monetary_unit__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QD8().validate(
-            factories.QuotaDefinitionFactory.create(
-                monetary_unit__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.QD8(definition.transaction).validate(definition)
 
 
 @pytest.mark.skip(reason="Using GBP, not EUR")
@@ -307,27 +302,24 @@ def test_QD9():
 def test_QD10(date_ranges):
     """The validity period of the measurement unit code must span the validity
     period of the quota definition."""
+    definition = factories.QuotaDefinitionFactory.create(
+        measurement_unit__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QD10().validate(
-            factories.QuotaDefinitionFactory.create(
-                measurement_unit__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.QD10(definition.transaction).validate(definition)
 
 
 def test_QD11(date_ranges):
     """The validity period of the measurement unit qualifier code must span the
     validity period of the quota definition."""
-
+    definition = factories.QuotaDefinitionWithQualifierFactory.create(
+        measurement_unit_qualifier__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QD11().validate(
-            factories.QuotaDefinitionWithQualifierFactory.create(
-                measurement_unit_qualifier__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.QD11(definition.transaction).validate(definition)
 
 
 @pytest.mark.skip("Quota events are not supported")
@@ -364,23 +356,25 @@ def test_prevent_quota_definition_deletion(unapproved_transaction, date_ranges):
     quota_definition = factories.QuotaDefinitionFactory.create(
         valid_between=date_ranges.future,
     )
+    deleted = quota_definition.new_draft(
+        workbasket=unapproved_transaction.workbasket,
+        transaction=unapproved_transaction,
+        update_type=UpdateType.DELETE,
+    )
+
     with pytest.raises(BusinessRuleViolation):
-        business_rules.PreventQuotaDefinitionDeletion().validate(
-            quota_definition.new_draft(
-                workbasket=unapproved_transaction.workbasket,
-                transaction=unapproved_transaction,
-                update_type=UpdateType.DELETE,
-            ),
+        business_rules.PreventQuotaDefinitionDeletion(deleted.transaction).validate(
+            deleted,
         )
 
     quota_definition.valid_between = date_ranges.earlier
-    business_rules.PreventQuotaDefinitionDeletion().validate(
-        quota_definition.new_draft(
-            workbasket=unapproved_transaction.workbasket,
-            transaction=unapproved_transaction,
-            update_type=UpdateType.DELETE,
-        ),
+    deleted = quota_definition.new_draft(
+        workbasket=unapproved_transaction.workbasket,
+        transaction=unapproved_transaction,
+        update_type=UpdateType.DELETE,
     )
+
+    business_rules.PreventQuotaDefinitionDeletion(deleted.transaction).validate(deleted)
 
 
 @pytest.mark.parametrize(
@@ -414,24 +408,23 @@ def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
 
     linking_model = factory.create()
     quota_definition = getattr(linking_model, quota_attr)
+
+    deleted = quota_definition.new_draft(
+        workbasket=unapproved_transaction.workbasket,
+        transaction=unapproved_transaction,
+        update_type=UpdateType.DELETE,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rule().validate(
-            quota_definition.new_draft(
-                workbasket=unapproved_transaction.workbasket,
-                transaction=unapproved_transaction,
-                update_type=UpdateType.DELETE,
-            ),
-        )
+        business_rule(deleted.transaction).validate(deleted)
 
     linking_model.update_type = UpdateType.DELETE
     linking_model.save(force_write=True)
-    business_rule().validate(
-        quota_definition.new_draft(
-            workbasket=unapproved_transaction.workbasket,
-            transaction=unapproved_transaction,
-            update_type=UpdateType.DELETE,
-        ),
+    deleted = quota_definition.new_draft(
+        workbasket=unapproved_transaction.workbasket,
+        transaction=unapproved_transaction,
+        update_type=UpdateType.DELETE,
     )
+    business_rule(deleted.transaction).validate(deleted)
 
 
 def test_QA1(make_duplicate_record):
@@ -440,20 +433,19 @@ def test_QA1(make_duplicate_record):
     duplicate = make_duplicate_record(factories.QuotaAssociationFactory)
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QA1().validate(duplicate)
+        business_rules.QA1(duplicate.transaction).validate(duplicate)
 
 
 def test_QA2(date_ranges):
     """The sub-quota’s validity period must be entirely enclosed within the
     validity period of the main quota."""
+    association = factories.QuotaAssociationFactory.create(
+        main_quota__valid_between=date_ranges.normal,
+        sub_quota__valid_between=date_ranges.overlap_normal,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QA2().validate(
-            factories.QuotaAssociationFactory.create(
-                main_quota__valid_between=date_ranges.normal,
-                sub_quota__valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.QA2(association.transaction).validate(association)
 
 
 @pytest.mark.skip(reason="Needs clarification")
@@ -487,10 +479,10 @@ def test_QA4(coefficient, expect_error):
     if coefficient is not None:
         kwargs["coefficient"] = coefficient
 
+    assoc = factories.QuotaAssociationFactory.create(**kwargs)
+
     try:
-        business_rules.QA4().validate(
-            factories.QuotaAssociationFactory.create(**kwargs),
-        )
+        business_rules.QA4(assoc.transaction).validate(assoc)
 
     except BusinessRuleViolation:
         if not expect_error:
@@ -518,7 +510,7 @@ def test_QA5():
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QA5().validate(assoc)
+        business_rules.QA5(assoc.transaction).validate(assoc)
 
 
 def test_QA5_pt2():
@@ -528,27 +520,24 @@ def test_QA5_pt2():
 
     Moreover it must be defined with a coefficient not equal to 1
     """
-
+    assoc = factories.EquivalentQuotaAssociationFactory.create(
+        coefficient=Decimal("1.00000"),
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QA5().validate(
-            factories.EquivalentQuotaAssociationFactory.create(
-                coefficient=Decimal("1.00000"),
-            ),
-        )
+        business_rules.QA5(assoc.transaction).validate(assoc)
 
 
 def test_QA5_pt3(unapproved_transaction):
     """A sub-quota defined with the 'normal' type must have a coefficient of
     1."""
+    assoc = factories.QuotaAssociationFactory.create(
+        coefficient=Decimal("1.20000"),
+        sub_quota_relation_type=SubQuotaType.NORMAL,
+        transaction=unapproved_transaction,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QA5().validate(
-            factories.QuotaAssociationFactory.create(
-                coefficient=Decimal("1.20000"),
-                sub_quota_relation_type=SubQuotaType.NORMAL,
-                transaction=unapproved_transaction,
-            ),
-        )
+        business_rules.QA5(assoc.transaction).validate(assoc)
 
 
 def test_QA6(unapproved_transaction):
@@ -565,31 +554,29 @@ def test_QA6(unapproved_transaction):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QA6().validate(assoc)
+        business_rules.QA6(assoc.transaction).validate(assoc)
 
 
 def test_blocking_of_fcfs_quotas_only():
     """Blocking periods are only applicable to FCFS quotas."""
+    blocking = factories.QuotaBlockingFactory.create(
+        quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.BlockingOnlyOfFCFSQuotas().validate(
-            factories.QuotaBlockingFactory.create(
-                quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED,
-            ),
-        )
+        business_rules.BlockingOnlyOfFCFSQuotas(blocking.transaction).validate(blocking)
 
 
 def test_QBP2(date_ranges):
     """The start date of the quota blocking period must be later than or equal
     to the start date of the quota validity period."""
+    blocking = factories.QuotaBlockingFactory.create(
+        quota_definition__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal_earlier,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QBP2().validate(
-            factories.QuotaBlockingFactory.create(
-                quota_definition__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal_earlier,
-            ),
-        )
+        business_rules.QBP2(blocking.transaction).validate(blocking)
 
 
 def test_QBP3(date_ranges):
@@ -603,23 +590,23 @@ def test_QBP3(date_ranges):
 def test_suspension_of_fcfs_quotas_only():
     """Quota suspensions are only applicable to First Come First Served
     quotas."""
+    suspension = factories.QuotaSuspensionFactory.create(
+        quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.SuspensionsOnlyToFCFSQuotas().validate(
-            factories.QuotaSuspensionFactory.create(
-                quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED,
-            ),
+        business_rules.SuspensionsOnlyToFCFSQuotas(suspension.transaction).validate(
+            suspension,
         )
 
 
 def test_QSP2(date_ranges):
     """The validity period of the quota must span the quota suspension
     period."""
+    suspension = factories.QuotaSuspensionFactory.create(
+        quota_definition__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.QSP2().validate(
-            factories.QuotaSuspensionFactory.create(
-                quota_definition__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.QSP2(suspension.transaction).validate(suspension)

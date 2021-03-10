@@ -70,7 +70,7 @@ class GA5(BusinessRule):
                 parent__isnull=False,
                 sid=geo_area.sid,
             )
-            .approved_up_to_transaction(geo_area.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exclude(
                 parent__valid_between__contains=F("valid_between"),
             )
