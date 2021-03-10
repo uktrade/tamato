@@ -48,14 +48,21 @@ def field_to_layout(field_name, field):
 
 
 class MultiValueCharFilter(CharFilter):
+    """
+    Multiple words are passed in as a single string, which does not allow for
+    lookup based on each word.
+
+    This override splits the string on spaces into an array based and does a
+    lookup on each word individually.
+    """
+
     def filter(self, qs, value):
         if value in EMPTY_VALUES:
             return qs
         if self.distinct:
             qs = qs.distinct()
-        lookup = "%s__%s" % (self.field_name, "in")
-        qs = self.get_method(qs)(**{lookup: value.split()})
-        return qs
+        lookup = f"{self.field_name}__in"
+        return self.get_method(qs)(**{lookup: value.split()})
 
 
 class LazyMultipleChoiceFilter(MultipleChoiceFilter):
@@ -166,7 +173,7 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
 
         form = TamatoFilterForm if self._meta.form == forms.Form else self._meta.form
 
-        return type(str("%sForm" % self.__class__.__name__), (form,), fields)
+        return type(str(f"{self.__class__.__name__}Form"), (form,), fields)
 
 
 class ActiveStateMixin(FilterSet):

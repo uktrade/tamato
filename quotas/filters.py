@@ -18,7 +18,7 @@ class QuotaFilter(TamatoFilter):
     )
 
     origin = MultiValueCharFilter(
-        label="Origin(s)",
+        label="Geographical area(s)",
         field_name="origins__area_id",
     )
 
