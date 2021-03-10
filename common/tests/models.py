@@ -35,3 +35,16 @@ class TestModel3(TrackedModel, ValidityMixin):
 
     sid = models.PositiveIntegerField()
     linked_model = models.ForeignKey(TestModel1, null=True, on_delete=models.PROTECT)
+
+
+class TestModelDescription1(TrackedModel, ValidityMixin):
+    __test__ = False
+    record_code = "01"
+    subrecord_code = "02"
+
+    described_record = models.ForeignKey(
+        TestModel1,
+        on_delete=models.PROTECT,
+        related_name="descriptions",
+    )
+    description = models.CharField(max_length=500)

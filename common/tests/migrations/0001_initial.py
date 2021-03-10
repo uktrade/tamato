@@ -95,4 +95,35 @@ class Migration(migrations.Migration):
             },
             bases=("common.trackedmodel", models.Model),
         ),
+        migrations.CreateModel(
+            name="TestModelDescription1",
+            fields=[
+                (
+                    "trackedmodel_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        serialize=False,
+                        to="common.trackedmodel",
+                    ),
+                ),
+                ("valid_between", common.fields.TaricDateRangeField(db_index=True)),
+                ("description", models.CharField(max_length=500)),
+                (
+                    "described_record",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="descriptions",
+                        to="tests.testmodel1",
+                    ),
+                ),
+            ],
+            options={
+                "abstract": False,
+                "base_manager_name": "objects",
+            },
+            bases=("common.trackedmodel", models.Model),
+        ),
     ]

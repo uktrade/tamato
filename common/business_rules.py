@@ -10,9 +10,7 @@ from typing import Type
 from typing import Union
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count
 from django.db.models import QuerySet
-from django.db.models.functions import Lower
 
 from common.models.records import TrackedModel
 from common.util import get_field_tuple
@@ -89,6 +87,9 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
     Violation: Type[BusinessRuleViolation]
 
+    def __init__(self, transaction):
+        self.transaction = transaction
+
     @classmethod
     def get_linked_models(cls, model: TrackedModel) -> Iterable[TrackedModel]:
         for link in model._meta.related_objects:
@@ -119,8 +120,10 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
 
 class BusinessRuleChecker:
-    def __init__(self, models: Iterable[TrackedModel]):
+    def __init__(self, models: Iterable[TrackedModel], transaction):
         self.checks: set[tuple[type[BusinessRule], TrackedModel]] = set()
+
+        self.transaction = transaction
 
         for model in models:
             for rule in model.business_rules:
@@ -132,7 +135,7 @@ class BusinessRuleChecker:
 
     def validate(self):
         for rule, model in self.checks:
-            rule().validate(model)
+            rule(self.transaction).validate(model)
 
 
 def only_applicable_after(cutoff: Union[date, datetime, str]):
@@ -145,8 +148,8 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
 
     def decorator(cls):
         @wraps(cls)
-        def decorated():
-            instance = cls()
+        def decorated(*args, **kwargs):
+            instance = cls(*args, **kwargs)
             validate = instance.validate
 
             @wraps(validate)
@@ -176,7 +179,7 @@ class UniqueIdentifyingFields(BusinessRule):
 
         if (
             model.__class__.objects.filter(**query)
-            .approved_up_to_transaction(model.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exclude(id=model.id)
             .exists()
         ):
@@ -196,7 +199,7 @@ class NoOverlapping(BusinessRule):
 
         if (
             model.__class__.objects.filter(**query)
-            .approved_up_to_transaction(model.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exclude(id=model.id)
             .exists()
         ):
@@ -232,7 +235,7 @@ class ValidityPeriodContained(BusinessRule):
             not container.__class__.objects.filter(
                 **container.get_identifying_fields(),
             )
-            .approved_up_to_transaction(model.transaction)
+            .approved_up_to_transaction(self.transaction)
             .filter(
                 valid_between__contains=contained.valid_between,
             )
@@ -279,21 +282,6 @@ class MustExist(BusinessRule):
             raise self.violation(model)
 
 
-def find_duplicate_start_dates(queryset: QuerySet) -> QuerySet:
-    return (
-        queryset.annotate(
-            start_date=Lower("valid_between"),
-        )
-        .values("start_date")
-        .annotate(
-            start_date_matches=Count("start_date"),
-        )
-        .filter(
-            start_date_matches__gt=1,
-        )
-    )
-
-
 class DescriptionsRules(BusinessRule):
     """Repeated rule pattern for descriptions."""
 
@@ -315,7 +303,7 @@ class DescriptionsRules(BusinessRule):
         return self.violation(model, msg)
 
     def get_descriptions(self, model) -> QuerySet:
-        return model.get_descriptions(workbasket=model.transaction.workbasket)
+        return model.get_descriptions(transaction=self.transaction)
 
     def validate(self, model):
         descriptions = self.get_descriptions(model).order_by("valid_between")
@@ -323,13 +311,19 @@ class DescriptionsRules(BusinessRule):
         if descriptions.count() < 1:
             raise self.generate_violation(model, "at least one")
 
-        if not descriptions.filter(
-            valid_between__startswith=model.valid_between.lower,
-        ).exists():
+        valid_betweens = descriptions.values_list("valid_between", flat=True)
+
+        if not any(
+            filter(lambda x: x.lower == model.valid_between.lower, valid_betweens),
+        ):
             raise self.generate_violation(model, "first start date")
 
-        if find_duplicate_start_dates(descriptions).exists():
+        if len({vb.lower for vb in valid_betweens}) != len(
+            [vb.lower for vb in valid_betweens],
+        ):
             raise self.generate_violation(model, "duplicate start dates")
 
-        if descriptions.filter(valid_between__fully_gt=model.valid_between).exists():
+        if not model.valid_between.upper_inf and any(
+            filter(lambda x: x.lower > model.valid_between.upper, valid_betweens),
+        ):
             raise self.generate_violation(model, "start after end")

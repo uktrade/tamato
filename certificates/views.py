@@ -30,11 +30,7 @@ class CertificateTypeViewSet(viewsets.ReadOnlyModelViewSet):
 class CertificatesList(TamatoListView):
     """UI endpoint for viewing and filtering Certificates."""
 
-    queryset = (
-        Certificate.objects.latest_approved()
-        .select_related("certificate_type")
-        .prefetch_related("descriptions")
-    )
+    queryset = Certificate.objects.latest_approved().select_related("certificate_type")
     template_name = "certificates/list.jinja"
     filterset_class = CertificateFilter
     search_fields = [
@@ -48,8 +44,4 @@ class CertificatesList(TamatoListView):
 class CertificateDetail(TrackedModelDetailView):
     model = Certificate
     template_name = "certificates/detail.jinja"
-    queryset = (
-        Certificate.objects.latest_approved()
-        .select_related("certificate_type")
-        .prefetch_related("descriptions")
-    )
+    queryset = Certificate.objects.latest_approved().select_related("certificate_type")

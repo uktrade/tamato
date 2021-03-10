@@ -69,22 +69,6 @@ class GeographicalArea(TrackedModel, ValidityMixin):
         business_rules.GA22,
     )
 
-    def get_description(self):
-        if (
-            hasattr(self, "_prefetched_objects_cache")
-            and "descriptions" in self._prefetched_objects_cache
-        ):
-            descriptions = list(self.descriptions.all())
-            return descriptions[-1] if descriptions else None
-        return self.get_descriptions().last()
-
-    def get_descriptions(self, workbasket=None):
-        return (
-            GeographicalAreaDescription.objects.latest_approved()
-            .filter(area__sid=self.sid)
-            .with_workbasket(workbasket)
-        )
-
     def get_current_memberships(self):
         return (
             GeographicalMembership.objects.filter(

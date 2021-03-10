@@ -3,9 +3,9 @@ from typing import List
 import pytest
 from pytest_django.asserts import assertQuerysetEqual  # noqa
 
+import common.exceptions
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
-from common.models import records
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests import models
@@ -285,7 +285,7 @@ def test_current_version(sample_model):
 def test_save(sample_model):
     assert sample_model.current_version == sample_model
 
-    with pytest.raises(records.IllegalSaveError):
+    with pytest.raises(common.exceptions.IllegalSaveError):
         sample_model.name = "fails"
         sample_model.save()
 
@@ -330,3 +330,37 @@ def test_current_as_of(sample_model):
         models.TestModel1.objects.approved_up_to_transaction(transaction).get().pk
         == unapproved_version.pk
     )
+
+
+def test_get_descriptions(sample_model):
+    descriptions = {
+        factories.TestModelDescription1Factory.create(described_record=sample_model)
+        for _ in range(2)
+    }
+    assert set(sample_model.get_descriptions()) == descriptions
+
+
+def test_get_descriptions_with_update(sample_model):
+    description = factories.TestModelDescription1Factory.create(
+        described_record=sample_model,
+    )
+    workbasket = factories.WorkBasketFactory.create()
+    new_description = description.new_draft(workbasket)
+
+    description_queryset = sample_model.get_descriptions()
+    assert description in description_queryset
+    assert new_description not in description_queryset
+
+    description_queryset = sample_model.get_descriptions(
+        transaction=new_description.transaction,
+    )
+
+    assert new_description in description_queryset
+    assert description not in description_queryset
+
+    workbasket.submit_for_approval()
+    workbasket.approve()
+    description_queryset = sample_model.get_descriptions()
+
+    assert new_description in description_queryset
+    assert description not in description_queryset

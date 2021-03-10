@@ -18,9 +18,10 @@ pytestmark = pytest.mark.django_db
 def test_CT1(make_duplicate_record):
     """The additional code type must be unique."""
 
+    additional_code_type = make_duplicate_record(factories.AdditionalCodeTypeFactory)
     with pytest.raises(BusinessRuleViolation):
-        business_rules.CT1().validate(
-            make_duplicate_record(factories.AdditionalCodeTypeFactory),
+        business_rules.CT1(additional_code_type.transaction).validate(
+            additional_code_type,
         )
 
 
@@ -58,7 +59,7 @@ def test_ACN1(make_duplicate_record):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN1().validate(duplicate)
+        business_rules.ACN1(duplicate.transaction).validate(duplicate)
 
 
 def test_ACN2_type_must_exist(reference_nonexistent_record):
@@ -84,11 +85,11 @@ def test_ACN2_type_must_exist(reference_nonexistent_record):
 def test_ACN2_allowed_application_codes(app_code, expect_error):
     """The referenced additional code type must have as application code "non-
     Meursing" or "Export Refund for Processed Agricultural Goods”."""
-
+    additional_code = factories.AdditionalCodeFactory.create(
+        type__application_code=app_code,
+    )
     try:
-        business_rules.ACN2().validate(
-            factories.AdditionalCodeFactory.create(type__application_code=app_code),
-        )
+        business_rules.ACN2(additional_code.transaction).validate(additional_code)
     except BusinessRuleViolation:
         if not expect_error:
             raise
@@ -113,14 +114,14 @@ def test_ACN4(date_ranges):
     # duplicate of ACN1.
 
     existing = factories.AdditionalCodeFactory.create(valid_between=date_ranges.normal)
-
+    duplicate = factories.AdditionalCodeFactory.create(
+        code=existing.code,
+        type=existing.type,
+        valid_between=date_ranges.starts_with_normal,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN4().validate(
-            factories.AdditionalCodeFactory.create(
-                code=existing.code,
-                type=existing.type,
-                valid_between=date_ranges.starts_with_normal,
-            ),
+        business_rules.ACN4(duplicate.transaction).validate(
+            duplicate,
         )
 
 
@@ -145,20 +146,18 @@ def test_ACN13(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN13().validate(measure.additional_code)
+        business_rules.ACN13(measure.transaction).validate(measure.additional_code)
 
 
 def test_ACN17(date_ranges):
     """The validity period of the additional code type must span the validity
     period of the additional code."""
-
+    additional_code = factories.AdditionalCodeFactory.create(
+        type__valid_between=date_ranges.normal,
+        valid_between=date_ranges.overlap_normal,
+    )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN17().validate(
-            factories.AdditionalCodeFactory.create(
-                type__valid_between=date_ranges.normal,
-                valid_between=date_ranges.overlap_normal,
-            ),
-        )
+        business_rules.ACN17(additional_code.transaction).validate(additional_code)
 
 
 # Footnote association
@@ -220,9 +219,9 @@ def test_ACN11():
 
 def test_ACN5_one_description_mandatory():
     """At least one description is mandatory."""
-
+    additional_code = factories.AdditionalCodeFactory.create()
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5().validate(factories.AdditionalCodeFactory.create())
+        business_rules.ACN5(additional_code.transaction).validate(additional_code)
 
 
 def test_ACN5_first_description_must_have_same_start_date(date_ranges):
@@ -235,20 +234,24 @@ def test_ACN5_first_description_must_have_same_start_date(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5().validate(description.described_additional_code)
+        business_rules.ACN5(description.transaction).validate(
+            description.described_additional_code,
+        )
 
 
 def test_ACN5_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
     existing = factories.AdditionalCodeDescriptionFactory.create()
-    factories.AdditionalCodeDescriptionFactory.create(
+    duplicate = factories.AdditionalCodeDescriptionFactory.create(
         described_additional_code=existing.described_additional_code,
         valid_between=existing.valid_between,
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5().validate(existing.described_additional_code)
+        business_rules.ACN5(duplicate.transaction).validate(
+            existing.described_additional_code,
+        )
 
 
 def test_ACN5_description_start_before_additional_code_end(date_ranges):
@@ -259,13 +262,15 @@ def test_ACN5_description_start_before_additional_code_end(date_ranges):
         described_additional_code__valid_between=date_ranges.normal,
         valid_between=date_ranges.later,
     )
-    factories.AdditionalCodeDescriptionFactory.create(
+    next_description = factories.AdditionalCodeDescriptionFactory.create(
         described_additional_code=description.described_additional_code,
         valid_between=date_ranges.starts_with_normal,
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5().validate(description.described_additional_code)
+        business_rules.ACN5(next_description.transaction).validate(
+            description.described_additional_code,
+        )
 
 
 def test_ACN14(delete_record):
@@ -276,14 +281,16 @@ def test_ACN14(delete_record):
     additional_code = factories.AdditionalCodeFactory.create(
         type=assoc.additional_code_type,
     )
-    factories.MeasureFactory.create(
+    measure = factories.MeasureFactory.create(
         measure_type=assoc.measure_type,
         additional_code=additional_code,
         goods_nomenclature__item_id="2000000000",
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN14().validate(delete_record(additional_code))
+        business_rules.ACN14(measure.transaction).validate(
+            delete_record(additional_code),
+        )
 
 
 @requires_meursing_tables

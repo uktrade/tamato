@@ -68,22 +68,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         business_rules.NIG35,
     )
 
-    def get_description(self):
-        if (
-            hasattr(self, "_prefetched_objects_cache")
-            and "descriptions" in self._prefetched_objects_cache
-        ):
-            descriptions = list(self.descriptions.all())
-            return descriptions[-1] if descriptions else None
-        return self.get_descriptions().last()
-
-    def get_descriptions(self, workbasket=None):
-        return (
-            GoodsNomenclatureDescription.objects.latest_approved()
-            .filter(described_goods_nomenclature__sid=self.sid)
-            .with_workbasket(workbasket)
-        )
-
     def __str__(self):
         return self.item_id
 

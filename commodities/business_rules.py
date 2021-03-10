@@ -2,11 +2,13 @@
 from datetime import date
 from datetime import timedelta
 
+from django.db.models import Count
+from django.db.models.functions import Lower
+
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
-from common.business_rules import find_duplicate_start_dates
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 
@@ -175,11 +177,22 @@ class NIG11(BusinessRule):
                 ),
             )
 
-        if find_duplicate_start_dates(
+        if (
             GoodsNomenclatureIndent.objects.filter(
                 pk__in=indents.values_list("pk", flat=True),
-            ),
-        ).exists():
+            )
+            .annotate(
+                start_date=Lower("valid_between"),
+            )
+            .values("start_date")
+            .annotate(
+                start_date_matches=Count("start_date"),
+            )
+            .filter(
+                start_date_matches__gt=1,
+            )
+            .exists()
+        ):
             raise self.violation(
                 model=good,
                 message="No two associated indentations may have the same start date",

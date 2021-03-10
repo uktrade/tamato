@@ -74,26 +74,6 @@ class Certificate(TrackedModel, ValidityMixin):
     def code(self):
         return self.certificate_type.sid + self.sid
 
-    def get_descriptions(self, workbasket=None):
-        return (
-            CertificateDescription.objects.latest_approved()
-            .filter(
-                described_certificate__sid=self.sid,
-                described_certificate__certificate_type=self.certificate_type,
-            )
-            .with_workbasket(workbasket)
-        )
-
-    def get_description(self):
-        if (
-            hasattr(self, "_prefetched_objects_cache")
-            and "descriptions" in self._prefetched_objects_cache
-        ):
-            descriptions = list(self.descriptions.all())
-            return descriptions[-1] if descriptions else None
-
-        return self.get_descriptions().last()
-
     def __str__(self):
         return self.code
 
