@@ -1,12 +1,12 @@
 from datetime import date
 
 import pytest
+from dateutil.relativedelta import relativedelta
 
 from commodities import models
 from commodities import serializers
 from common.tests import factories
 from common.tests.util import generate_test_import_xml
-from common.tests.util import requires_update_importer
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.taric import process_taric_xml_stream
@@ -62,7 +62,7 @@ def make_and_get_indent(indent, valid_user, depth):
         "taric_template": "taric/goods_nomenclature_indent.xml",
         "update_type": indent.update_type,
         "sid": indent.sid,
-        "start_date": "{:%Y-%m-%d}".format(indent.valid_between.lower),
+        "start_date": f"{indent.valid_between.lower:%Y-%m-%d}",
         "indent": depth,
     }
 
@@ -588,20 +588,149 @@ def test_goods_nomenclature_indent_importer_update_with_triple_00_indent(
     )
 
 
-@requires_update_importer
-def test_goods_nomenclature_indent_importer_create_with_branch_shift(valid_user):
+@pytest.fixture
+def make_inappropriate_family(date_ranges, valid_user):
+    def _make_inappropriate_family(chapter):
+        grand_parent_indent = factories.GoodsNomenclatureIndentFactory.create(
+            indented_goods_nomenclature__item_id=f"{chapter}00000000",
+            indented_goods_nomenclature__valid_between=date_ranges.no_end,
+            valid_between=date_ranges.no_end,
+            indent="0",
+            node__valid_between=date_ranges.no_end,
+        )
+
+        bad_parent = factories.GoodsNomenclatureIndentFactory.create(
+            node__parent=grand_parent_indent.nodes.first(),
+            indented_goods_nomenclature__item_id=f"{chapter}01000000",
+            indented_goods_nomenclature__valid_between=date_ranges.no_end,
+            valid_between=date_ranges.no_end,
+            indent="0",
+            node__valid_between=date_ranges.no_end,
+        )
+
+        child_indent = factories.GoodsNomenclatureIndentFactory.create(
+            node__parent=bad_parent.nodes.first(),
+            valid_between=date_ranges.no_end,
+            indent="1",
+            indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
+                item_id=f"{chapter}02020000",
+                valid_between=date_ranges.no_end,
+            ),
+        )
+
+        return bad_parent, child_indent
+
+    return _make_inappropriate_family
+
+
+def test_goods_nomenclature_indent_importer_with_branch_shift(
+    make_inappropriate_family,
+    valid_user,
+    date_ranges,
+):
     """
-    There is an unlikely (query impossible) scenario where a new indent could
-    manage to step in between an existing Goods Nomenclature and its parent.
+    In some scenarios a new indent can step in between an existing Goods
+    Nomenclature and its parent.
 
-    This would require the tree to be updated once ingested.
+    This would require the tree to be updated once ingested so as to shift all
+    children to the new indent.
     """
-    assert False
+
+    bad_parent, child_indent = make_inappropriate_family("45")
+
+    grand_child_indent = factories.GoodsNomenclatureIndentFactory.create(
+        node__parent=child_indent.nodes.first(),
+        valid_between=date_ranges.no_end,
+        indent="2",
+        indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
+            item_id="4502020000",
+            valid_between=date_ranges.no_end,
+        ),
+    )
+
+    child_nodes = models.GoodsNomenclatureIndentNode.objects.filter(indent=child_indent)
+    assert child_nodes.count() > 0
+    for node in child_nodes:
+        assert node.get_parent() == bad_parent.nodes.first()
+
+    grandchild_nodes = models.GoodsNomenclatureIndentNode.objects.filter(
+        indent=grand_child_indent,
+    )
+    assert grandchild_nodes.count() > 0
+    for node in grandchild_nodes:
+        assert node.get_parent().indent == child_indent
+
+    new_parent_node = make_and_get_indent(
+        factories.GoodsNomenclatureIndentFactory.build(
+            indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
+                item_id="4502000000",
+                valid_between=date_ranges.no_end,
+            ),
+            valid_between=date_ranges.no_end,
+            update_type=UpdateType.CREATE,
+        ),
+        valid_user,
+        depth=0,
+    ).nodes.first()
+
+    child_nodes = models.GoodsNomenclatureIndentNode.objects.filter(indent=child_indent)
+    grand_child_nodes = models.GoodsNomenclatureIndentNode.objects.filter(
+        indent=grand_child_indent,
+    )
+    assert child_nodes.count() > 0
+    for node in child_nodes:
+        assert node.get_parent() == new_parent_node
+
+    assert grand_child_nodes.count() > 0
+    for node in grand_child_nodes:
+        assert node.get_parent().indent == child_indent
 
 
-@requires_update_importer
-def test_goods_nomenclature_indent_importer_update_with_branch_shift(valid_user):
-    assert False
+def test_goods_nomenclature_indent_importer_with_overlapping_branch_shift(
+    make_inappropriate_family,
+    valid_user,
+    date_ranges,
+):
+    """
+    In some scenarios a new indent can step in between an existing Goods
+    Nomenclature and its parent. In more extreme cases when this happens the
+    dates could overlap so that the child needs to belong to both parents.
+
+    Ensure when this happens the child is split between both parents.
+    """
+    bad_parent, child_indent = make_inappropriate_family("46")
+
+    child_nodes = models.GoodsNomenclatureIndentNode.objects.filter(indent=child_indent)
+    assert child_nodes.count() > 0
+    for node in child_nodes:
+        assert node.get_parent() == bad_parent.nodes.first()
+
+    new_parent = make_and_get_indent(
+        factories.GoodsNomenclatureIndentFactory.build(
+            indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
+                item_id="4602000000",
+                valid_between=date_ranges.adjacent_no_end,
+            ),
+            valid_between=date_ranges.adjacent_no_end,
+            update_type=UpdateType.CREATE,
+        ),
+        valid_user,
+        depth=0,
+    )
+
+    child_nodes = models.GoodsNomenclatureIndentNode.objects.filter(indent=child_indent)
+
+    assert child_nodes.count() == 2
+    nodes = {node.get_parent().indent: node for node in child_nodes}
+
+    assert bad_parent in nodes
+    assert nodes[bad_parent].valid_between == TaricDateRange(
+        date_ranges.no_end.lower,
+        date_ranges.adjacent_no_end.lower - relativedelta(days=1),
+    )
+
+    assert new_parent in nodes
+    assert nodes[new_parent].valid_between == date_ranges.adjacent_no_end
 
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])

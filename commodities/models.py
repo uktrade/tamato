@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from django.db import models
+from django.db import transaction
+from django.db.models import Q
 from treebeard.mp_tree import MP_Node
 
 from commodities import business_rules
@@ -112,6 +114,15 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
     indirect_business_rules = (business_rules.NIG11,)
     business_rules = (business_rules.NIG2,)
 
+    def get_parent_indents(self):
+        parent_path_query = Q()
+        for path in self.nodes.values_list("path", flat=True):
+            parent_path_query = parent_path_query | Q(
+                nodes__path=path[: -GoodsNomenclatureIndentNode.steplen],
+            )
+
+        return GoodsNomenclatureIndent.objects.filter(parent_path_query)
+
     def save(self, *args, **kwargs):
         return_value = super().save(*args, **kwargs)
 
@@ -217,12 +228,10 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
             or descendant_measures.exists()
         )
 
-    def copy_tree(
+    def _get_restricted_valid_between(
         self,
-        parent: GoodsNomenclatureIndentNode,
-        valid_between,
-        transaction,
-    ):
+        valid_between: TaricDateRange,
+    ) -> TaricDateRange:
         new_valid_between = self.valid_between
         if not new_valid_between.lower or (
             valid_between.lower and new_valid_between.lower < valid_between.lower
@@ -239,6 +248,17 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
                 valid_between.upper,
             )
 
+        return new_valid_between
+
+    @transaction.atomic
+    def copy_tree(
+        self,
+        parent: GoodsNomenclatureIndentNode,
+        valid_between: TaricDateRange,
+        transaction,
+    ):
+        new_valid_between = self._get_restricted_valid_between(valid_between)
+
         new_node = parent.add_child(
             indent=self.indent,
             valid_between=new_valid_between,
@@ -246,6 +266,15 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         )
         for child in self.get_children():
             child.copy_tree(new_node, valid_between, transaction)
+
+        return new_node
+
+    @transaction.atomic
+    def restrict_valid_between(self, valid_between: TaricDateRange):
+        self.valid_between = self._get_restricted_valid_between(valid_between)
+        for child in self.get_children():
+            child.restrict_valid_between(self.valid_between)
+        self.save()
 
     def __str__(self):
         return f"path={self.path}, indent=({self.indent})"
