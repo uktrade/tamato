@@ -1,4 +1,6 @@
 """Miscellaneous utility functions."""
+from __future__ import annotations
+
 from typing import Optional
 from typing import TypeVar
 from typing import Union
@@ -48,6 +50,15 @@ class TaricDateRange(DateRange):
         if not upper:
             bounds = "[)"
         super().__init__(lower, upper, bounds, empty)
+
+    def upper_is_greater(self, compared_date_range: TaricDateRange) -> bool:
+        if self.upper_inf and not compared_date_range.upper_inf:
+            return True
+        if (
+            None not in {self.upper, compared_date_range.upper}
+        ) and self.upper > compared_date_range.upper:
+            return True
+        return False
 
 
 # XXX keep for migrations

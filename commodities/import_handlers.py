@@ -7,6 +7,7 @@ from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
+from django.db.models import Q
 
 from commodities import import_parsers as parsers
 from commodities import models
@@ -284,7 +285,6 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             )
 
             node_data["valid_between"] = TaricDateRange(indent_start, indent_end)
-
             next_parent.add_child(**node_data)
 
             start_date = (
@@ -292,6 +292,164 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             )
         return indent
 
+    @transaction.atomic
+    def move_child_node_to_new_parent(
+        self,
+        child_node: models.GoodsNomenclatureIndentNode,
+        parent_indent: models.GoodsNomenclatureIndent,
+    ):
+        """
+        Given a child with an inappropriate parent and a replacing parent,
+        replace the child's parent.
+
+        In some cases the inappropriate parent may only be inappropriate during certain dates - in which
+        case the child and it's descendants need to be split across both parents.
+        """
+        new_valid_between = child_node.valid_between
+
+        if new_valid_between.upper_is_greater(parent_indent.valid_between):
+            # There is overlap on the upper end of the indent.
+            # Copy child indent so the old tree is replicated after the
+            # new indents validity range.
+            child_node.copy_tree(
+                parent=child_node.get_parent(),
+                valid_between=TaricDateRange(
+                    parent_indent.valid_between.upper + relativedelta(days=1),
+                    new_valid_between.upper,
+                ),
+                transaction=parent_indent.transaction,
+            )
+            new_valid_between = TaricDateRange(
+                new_valid_between.lower,
+                parent_indent.valid_between.upper,
+            )
+
+        if new_valid_between.lower < parent_indent.valid_between.lower:
+            # There is overlap on the lower end of the indent.
+            # Split the child tree so it is a child of both the old
+            # parent and the new parent indent.
+            old_child = child_node
+            child_node = child_node.copy_tree(
+                parent=child_node.get_parent(),
+                valid_between=TaricDateRange(
+                    parent_indent.valid_between.lower,
+                    new_valid_between.upper,
+                ),
+                transaction=parent_indent.transaction,
+            )
+
+            old_child.restrict_valid_between(
+                TaricDateRange(
+                    new_valid_between.lower,
+                    parent_indent.valid_between.lower - relativedelta(days=1),
+                ),
+            )
+            new_valid_between = TaricDateRange(
+                parent_indent.valid_between.lower,
+                new_valid_between.upper,
+            )
+
+        new_parents = parent_indent.nodes.filter(
+            valid_between__overlap=new_valid_between,
+            depth=child_node.depth - 1,
+        )
+        if new_parents.count() == 1:
+            # No need to split the child node further, it fits completely
+            # into the new parent node.
+            new_parent = new_parents.get()
+            child_node.move(new_parent, "last-child")
+        else:
+            # The new child node does not fit neatly into a single parent node.
+            # Split the child node so it fits under each new parent node.
+            start_date = new_valid_between.lower
+            end_date = new_valid_between.upper
+            for parent in new_parents:
+                new_valid_between = TaricDateRange(
+                    parent.valid_between.lower
+                    if parent.valid_between.lower > start_date
+                    else start_date,
+                    parent.valid_between.upper
+                    if parent.valid_between.upper < end_date
+                    else end_date,
+                )
+                child_node.copy_tree(
+                    parent,
+                    new_valid_between,
+                    parent_indent.transaction,
+                )
+                child_node.delete()
+                start_date = parent.valid_between.upper + relativedelta(
+                    days=1,
+                )
+
+    @transaction.atomic
+    def find_and_replace_inappropriate_parent_nodes(
+        self,
+        obj: models.GoodsNomenclatureIndent,
+    ):
+        """
+        In some cases an indent is introduced in between an existing indent and
+        it's children. In this case those children should move from the existing
+        indent to the new indent.
+
+        This method finds all possible children of a new indent and queries to
+        see if any should be moved from their current parent to the new indent.
+        """
+        nodes = obj.nodes.all()
+        excluded_nodes = [
+            Q(nodes__path__startswith=path)
+            for path in nodes.values_list("path", flat=True)
+        ]
+
+        # These are the children which could be moved to the new indent.
+        # This is because they are one level deeper than the new indent
+        # and have item IDs greater than the new indent.
+        possible_children = (
+            models.GoodsNomenclatureIndent.objects.approved_up_to_transaction(
+                obj.transaction,
+            )
+            .filter(
+                nodes__depth=nodes.first().depth + 1,
+                valid_between__overlap=obj.valid_between,
+                indented_goods_nomenclature__item_id__gte=obj.indented_goods_nomenclature.item_id,
+                indented_goods_nomenclature__item_id__startswith=obj.indented_goods_nomenclature.item_id[
+                    :2
+                ],
+            )
+            .exclude(*excluded_nodes)
+        )
+
+        for child in possible_children:
+            # A child can only be moved to the new node if it has parents which can be replaced.
+            # A parent can only be replaced if it is the current parent of this possible child, and
+            # it's item_id is considered lesser than the new indents item_id.
+            replaceable_parents = child.get_parent_indents().filter(
+                indented_goods_nomenclature__item_id__lt=obj.indented_goods_nomenclature.item_id,
+                valid_between__overlap=obj.valid_between,
+            )
+
+            if not replaceable_parents.exists():
+                # In this case all the parents of the node are appropriate and don't need to be replaced.
+                continue
+
+            has_parent_path = Q()
+            for path in models.GoodsNomenclatureIndentNode.objects.filter(
+                indent__in=replaceable_parents,
+            ).values_list("path", flat=True):
+                has_parent_path = has_parent_path | Q(path__startswith=path)
+
+            child_nodes = models.GoodsNomenclatureIndentNode.objects.filter(
+                has_parent_path,
+                valid_between__overlap=obj.valid_between,
+                indent=child,
+            ).order_by("valid_between")
+
+            for child_node in child_nodes:
+                self.move_child_node_to_new_parent(child_node, obj)
+
+        return obj
+
+    @transaction.atomic
     def post_save(self, obj: models.GoodsNomenclatureIndent):
         """
         There is a possible scenario when introducing an indent that the new
@@ -299,19 +457,21 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         becomes the new parent for those children). This is possible as the old
         system had no real materialized tree behind it.
 
-        Furthermore on updating changes any node which originally has children will need to have
-        its children copied across to the new updated node.
-
-        This method currently handles copying children for updated indents only.
-
-        TODO: Update this method to handle the new indents being added in between previous ones (the
-        TODO: first scenario)
+        Furthermore on updating changes any node which originally has children
+        will need to have its children copied across to the new updated node.
         """
+
+        self.find_and_replace_inappropriate_parent_nodes(obj)
+
         if self.data["update_type"] == UpdateType.CREATE:
             return super(GoodsNomenclatureIndentHandler, self).post_save(obj)
 
-        # TODO: Should only use approved versions - but imported objects don't have approvers.
-        previous_version = obj.version_group.versions.exclude(pk=obj.pk).last()
+        previous_version = (
+            obj.version_group.versions.exclude(pk=obj.pk)
+            .has_approved_state()
+            .order_by("transaction__updated_at")
+            .last()
+        )
 
         for node in obj.nodes.all():
             for previous_node in previous_version.nodes.filter(

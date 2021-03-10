@@ -27,7 +27,7 @@ from importer.management.commands.import_taric import import_taric
 from workbaskets.validators import WorkflowStatus
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
-UPDATE_IMPORTER_IMPLEMENTED = False
+UPDATE_IMPORTER_IMPLEMENTED = True
 EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED = False
 COMMODITIES_IMPLEMENTED = True
 MEURSING_TABLES_IMPLEMENTED = False
@@ -123,7 +123,7 @@ def validate_taric_xml_record_order(xml):
             full_code = record_code + subrecord_code
             if full_code < last_code:
                 raise TaricDataAssertionError(
-                    f"Elements out of order in XML: {last_code}, {full_code}"
+                    f"Elements out of order in XML: {last_code}, {full_code}",
                 )
             last_code = full_code
 

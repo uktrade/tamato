@@ -438,7 +438,7 @@ indent_path_generator = string_generator(4)
 
 def build_indent_path(good_indent_node):
     parent = good_indent_node.parent
-    if parent:
+    if parent is not None:
         parent.numchild += 1
         parent.save()
         return parent.path + indent_path_generator()
@@ -638,7 +638,7 @@ class QuotaEventFactory(TrackedModelMixin):
 
     @factory.lazy_attribute
     def data(self):
-        now = "{:%Y-%m-%d}".format(Dates().now)
+        now = f"{Dates().now:%Y-%m-%d}"
         if self.subrecord_code == "00":
             return {
                 "old.balance": "0.0",
@@ -731,7 +731,7 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "measures.MeasureAction"
 
-    code = factory.Sequence(lambda x: "{0:02d}".format(x + 1))
+    code = factory.Sequence(lambda x: f"{x + 1:02d}")
     description = short_description()
 
 
