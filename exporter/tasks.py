@@ -2,120 +2,141 @@ import logging
 import os
 import tempfile
 from hashlib import md5
-from typing import Optional, Tuple
+from typing import Dict
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 from celery import shared_task
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db.models import QuerySet
 from django.db.transaction import atomic
-from lxml import etree
 
-from common.tests.util import TaricDataAssertionError
-from common.tests.util import validate_taric_xml_record_order
 from exporter.models import Upload
-from common.serializers import EnvelopeSerializer
-from taric.models import Envelope, EnvelopeTransaction
+from exporter.serializers import MultiFileEnvelopeTransactionSerializer
+from exporter.serializers import RenderedTransactions
+from exporter.serializers import validate_rendered_envelopes
+from exporter.util import dit_file_generator
+from taric.models import Envelope
+from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
-XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n'
+
+class RaceCondition(Exception):
+    pass
 
 
-def validate_envelope(envelope_file, skip_declaration=False):
-    """Validate envelope content for XML issues and data order issues.
+@atomic
+def upload_and_create_envelopes(
+    workbaskets: QuerySet,
+    rendered_envelopes: Sequence[RenderedTransactions],
+    first_envelope_id,
+) -> Dict[Union[int, None], str]:
+    # {envelope_id: message} User messages can be returned to the caller of the task.
+    user_messages = {}
+    current_envelope_id = first_envelope_id
+    for rendered_envelope in rendered_envelopes:
+        envelope = Envelope.new_envelope()
+        if current_envelope_id != int(envelope.envelope_id):
+            # TODO consider locking the table for writes instead
+            logger.error(
+                "Envelope created out of sequence: %s != %s this may due to simultaneous updates causing a race condition.",
+                (current_envelope_id, int(envelope.envelope_id)),
+            )
+            raise RaceCondition(
+                f"Envelope out of sequence: {envelope.envelope_id} != {current_envelope_id}",
+            )
+        current_envelope_id = int(envelope.envelope_id)
 
-    raises DocumentInvalid | TaricDataAssertionError
-    """
-    with open(settings.TARIC_XSD) as xsd_file:
-        if skip_declaration:
-            pos = envelope_file.position()
-            xml_declaration = envelope_file.read(len(XML_DECLARATION))
-            if xml_declaration != XML_DECLARATION:
-                logger.warning(
-                    "Expected XML declaration first line of envelope to be XML encoding declaration, but found: ",
-                    xml_declaration,
-                )
-                envelope_file.seek(pos)
+        envelope_transactions = [
+            EnvelopeTransaction(order=order, envelope=envelope, transaction=transaction)
+            for order, transaction in enumerate(rendered_envelope.transactions)
+        ]
+        EnvelopeTransaction.objects.bulk_create(envelope_transactions)
+        envelope.save()
 
-        schema = etree.XMLSchema(etree.parse(xsd_file))
-        xml = etree.parse(envelope_file)
+        rendered_envelope.output.seek(0, os.SEEK_SET)
+        content_file = ContentFile(rendered_envelope.output.read())
+        upload = Upload()
+        upload.envelope = envelope
+        upload.file = content_file
 
-        try:
-            schema.assertValid(xml)
-        except etree.DocumentInvalid as e:
-            logger.error("Envelope did not validate against XSD: %s", str(e.error_log))
-            raise
-        try:
-            validate_taric_xml_record_order(xml)
-        except TaricDataAssertionError as e:
-            logger.error(e.args[0])
-            raise
+        rendered_envelope.output.seek(0, os.SEEK_SET)
+        upload.checksum = md5(rendered_envelope.output.read()).hexdigest()
+
+        upload.file.save(upload.filename, content_file)
+        if settings.EXPORTER_DISABLE_NOTIFICATION:
+            logger.info("HMRC notification disabled.")
+        else:
+            logger.info("Notify HMRC of upload, %s", upload.filename)
+            upload.notify_hmrc()  # sets notification_sent
+
+        logger.info("Workbasket sent to CDS")
+        workbaskets.update(status=WorkflowStatus.SENT_TO_CDS)
+
+        logger.debug("Uploaded: %s", upload.filename)
+        user_messages[envelope.envelope_id] = f"Uploaded {upload.filename}"
+    return user_messages
 
 
 @shared_task
 @atomic
-def upload_workbaskets() -> Tuple[bool, str]:
+def upload_workbaskets() -> Tuple[bool, Optional[Dict[Union[str, None], str]]]:
     """
     Upload workbaskets.
 
-    Returns a bool for success and a message for the user.
+    Returns a bool for success and dict of user messages keyed by envelope_id or
+    None.
     """
     workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
     if not workbaskets:
         msg = "Nothing to upload:  No workbaskets with status READY_FOR_EXPORT."
         logger.info(msg)
-        return False, msg
+        return False, {None: msg}
 
-    # tracked_models:  will be serialized, then added to an envelope for uploaded.
+    # transactions:  will be serialized, then added to an envelope for uploaded.
     transactions = workbaskets.ordered_transactions()
-    tracked_models = transactions.ordered_tracked_models()
-    if not tracked_models:
+
+    if not transactions:
         msg = f"Nothing to upload:  {workbaskets.count()} Workbaskets READY_FOR_EXPORT but none contain any transactions."
         logger.info(msg)
-        return False, msg
+        return False, {None: msg}
 
-    # Write to a temporary file so that output can be validated afterwards.
-    with tempfile.TemporaryFile() as envelope_file:
-        envelope = Envelope.new_envelope()
+    first_envelope_id = int(Envelope.next_envelope_id())
+    # Write files to a temporary, so they can all be validated before uploading.
+    with tempfile.TemporaryDirectory(prefix="dit-tamato_") as temporary_directory:
+        output_file_constructor = dit_file_generator(
+            temporary_directory,
+            first_envelope_id,
+        )
 
-        with EnvelopeSerializer(
-            envelope_file, envelope_id=int(envelope.envelope_id)
-        ) as env:
-            env.render_transaction(tracked_models)
+        serializer = MultiFileEnvelopeTransactionSerializer(
+            output_file_constructor,
+            envelope_id=first_envelope_id,
+            max_envelope_size=settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE,
+        )
 
-        envelope_file.seek(os.SEEK_SET)
-        try:
-            validate_envelope(envelope_file)
-        except (TaricDataAssertionError, etree.DocumentInvalid):
-            # Nothing to log here - validate_envelope has already logged the issue.
-            raise
-        except BaseException as e:
-            logger.exception(e)
-            raise
+        rendered_envelopes = list(serializer.split_render_transactions(transactions))
 
-        envelope_transactions = [
-            EnvelopeTransaction(order=order, envelope=envelope, transaction=transaction)
-            for order, transaction in enumerate(transactions)
-        ]
+        invalid_envelopes = validate_rendered_envelopes(rendered_envelopes)
+        error_messages = {
+            envelope_id: f"Envelope {envelope_id:06} was invalid {exception}"
+            for envelope_id, exception in invalid_envelopes.items()
+        }
 
-        EnvelopeTransaction.objects.bulk_create(envelope_transactions)
-        envelope.save()
+        if error_messages:
+            return False, error_messages
 
-        envelope_file.seek(os.SEEK_SET)
-        content_file = ContentFile(envelope_file.read())
-        upload = Upload()
-        upload.envelope = envelope
-        upload.file = content_file
+        # Transactions envelopes are all valid, and ready for upload.
+        user_messages = upload_and_create_envelopes(
+            workbaskets,
+            rendered_envelopes,
+            first_envelope_id,
+        )
 
-        envelope_file.seek(os.SEEK_SET)
-        upload.checksum = md5(envelope_file.read()).hexdigest()
-
-        upload.file.save(upload.filename, content_file)
-        upload.notify_hmrc()  # sets notification_sent
-
-        workbaskets.update(status=WorkflowStatus.SENT_TO_CDS)
-
-        logger.debug("Uploaded: %s", upload.filename)
-        return True, upload.filename
+        return True, user_messages

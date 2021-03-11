@@ -1,8 +1,8 @@
-import freezegun
-import pytest
-
 from datetime import datetime
 from datetime import timezone
+
+import freezegun
+import pytest
 
 from common.tests import factories
 from taric.models import Envelope
@@ -20,7 +20,7 @@ def test_envelope_transactions(date_ranges):
 
 @freezegun.freeze_time(datetime(2030, 1, 1, tzinfo=timezone.utc))
 def test_new_envelope_populates_envelope_id():
-    """Verify Envelope.new_envelope correctly populates envelope_id"""
+    """Verify Envelope.new_envelope correctly populates envelope_id."""
     # Create 3 envelopes: the first envelope in a year uses
     #                     different logic to subsequent years,
     #                     this verifies that ids increment in both cases.
@@ -36,7 +36,7 @@ def test_new_envelope_populates_envelope_id():
 
 @freezegun.freeze_time(datetime(2024, 1, 1, tzinfo=timezone.utc))
 def test_new_envelope_enforces_daily_limit():
-    factories.EnvelopeFactory(envelope_id="249999")
+    factories.EnvelopeFactory.create(envelope_id="249999")
 
     with pytest.raises(ValueError) as e:
         Envelope.new_envelope()

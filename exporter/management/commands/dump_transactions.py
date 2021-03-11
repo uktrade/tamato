@@ -1,71 +1,96 @@
-import io
 import os
 import sys
 
+from django.conf import settings
 from django.core.management import BaseCommand
 from django.db.transaction import atomic
+from lxml import etree
 
-from exporter.management.commands.util import StdOutStdErrContext
-from exporter.tasks import validate_envelope
-from common.serializers import EnvelopeSerializer
+from common.serializers import validate_envelope
+from exporter.serializers import MultiFileEnvelopeTransactionSerializer
+from exporter.util import dit_file_generator
+from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
+# VARIATION_SELECTOR enables emoji presentation
+WARNING_SIGN_EMOJI = "\N{WARNING SIGN}\N{VARIATION SELECTOR-16}"
+
 
 class Command(BaseCommand):
-    """Dump envelope to file or stdout.
+    """
+    Dump envelope to file or stdout.
 
     Invalid envelopes are output but with error level set.
     """
 
-    help = "Output workbaskets ready for export to a file or stdout"
+    help = "Dump transactions ready for export to a directory."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "envelope_id",
-            help="The 6-digit envelope ID to use on the generated envelope.",
+            help="Override first envelope id [6 digit number].",
             type=int,
             default=None,
+            action="store",
             nargs="?",
         )
 
         parser.add_argument(
-            "-o",
-            "--output",
-            dest="filename",
-            help="File to output to, - for stdout.",
-            default="-",
+            "-d",
+            "--dir",
+            dest="directory",
+            default=".",
+            help="Directory to output to, defaults to the current directory.",
         )
-
-    def get_output_file(self, filename):
-        """Enable the standard where '-' refers to stdout, every other string is an actual filename."""
-        if filename == "-":
-            return StdOutStdErrContext(self.stdout)
-        return open(filename, "w+")
 
     @atomic
     def handle(self, *args, **options):
         workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
         if not workbaskets:
-            sys.exit("No workbaskets with status READY_FOR_EXPORT.")
+            sys.exit("Nothing to upload:  No workbaskets with status READY_FOR_EXPORT.")
 
-        tracked_models = workbaskets.ordered_tracked_models()
-        if not tracked_models:
+        # transactions:  will be serialized, then added to an envelope for uploaded.
+        transactions = workbaskets.ordered_transactions()
+
+        if not transactions:
             sys.exit(
-                f"{workbaskets.count()} Workbaskets READY_FOR_EXPORT but none contain any transactions."
+                f"Nothing to upload:  {workbaskets.count()} Workbaskets READY_FOR_EXPORT but none contain any transactions.",
             )
 
-        envelope_id = None
         if options.get("envelope_id") is not None:
-            envelope_id = int(options["envelope_id"])
+            envelope_id = int(options.get("envelope_id"))
+        else:
+            envelope_id = int(Envelope.next_envelope_id())
 
-        # Write to a buffer so that data can be validated on non seekable output such as stdout.
-        buffer = io.StringIO()
-        with EnvelopeSerializer(buffer, envelope_id=envelope_id, newline=True) as env:
-            env.render_transaction(tracked_models)
+        directory = options.get("directory", ".")
 
-        with self.get_output_file(options["filename"]) as output_file:
-            output_file.write(buffer.getvalue())
-
-        buffer.seek(os.SEEK_SET)
-        validate_envelope(buffer, skip_declaration=True)
+        output_file_constructor = dit_file_generator(directory, envelope_id)
+        serializer = MultiFileEnvelopeTransactionSerializer(
+            output_file_constructor,
+            envelope_id=envelope_id,
+            max_envelope_size=settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE,
+        )
+        errors = False
+        for rendered_envelope in serializer.split_render_transactions(transactions):
+            envelope_file = rendered_envelope.output
+            if not rendered_envelope.transactions:
+                self.stdout.write(
+                    f"{envelope_file.name} {WARNING_SIGN_EMOJI}  is empty !",
+                )
+                errors = True
+            else:
+                envelope_file.seek(0, os.SEEK_SET)
+                try:
+                    validate_envelope(envelope_file)
+                except etree.DocumentInvalid:
+                    self.stdout.write(
+                        f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
+                    )
+                else:
+                    total_transactions = len(rendered_envelope.transactions)
+                    self.stdout.write(
+                        f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions in {envelope_file.tell()} bytes.",
+                    )
+        if errors:
+            sys.exit(1)

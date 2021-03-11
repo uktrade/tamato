@@ -21,6 +21,7 @@ from lxml import etree
 from common.models import TrackedModel
 from common.renderers import counter_generator
 from common.serializers import TrackedModelSerializer
+from common.serializers import validate_taric_xml_record_order
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.management.commands.import_taric import import_taric

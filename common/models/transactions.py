@@ -95,6 +95,7 @@ class Transaction(TimestampedMixin):
 
     def __enter__(self):
         models.signals.pre_save.connect(self.add_to_transaction, dispatch_uid=id(self))
+        return self
 
     def __exit__(self, *exc):
         models.signals.pre_save.disconnect(

@@ -3,9 +3,7 @@ import sys
 
 import kombu
 from django.core.management import BaseCommand
-from lxml.etree import DocumentInvalid
 
-from common.tests.util import TaricDataAssertionError
 from exporter.tasks import upload_workbaskets
 
 logger = logging.getLogger(__name__)
@@ -13,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 def run_task_or_exit(task, local=False, *args, **kwargs):
     """
-    Run celery task, block then return the return value of the
-    task, or exit..
+    Run celery task, block then return the return value of the task, or exit..
 
     :param local:  Run locally (bypass celery)
     :param task:  Celery task to run.
@@ -34,13 +31,14 @@ def run_task_or_exit(task, local=False, *args, **kwargs):
         # OperationalError here usually indicate that it was not possible to
         # connect to the celery backend, e.g. redis is not accessible/up.
         logger.error(
-            "OperationalError - This usually indicates celery or redis are unavailable."
+            "OperationalError - This usually indicates celery or redis are unavailable.",
         )
         raise
 
 
 class Command(BaseCommand):
-    """Upload envelope to HMRC s3 storage.
+    """
+    Upload envelope to HMRC s3 storage.
 
     Invalid envelopes are NOT uploaded.
     """
@@ -57,12 +55,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         local = options["local"]
-        try:
-            success, msg = run_task_or_exit(upload_workbaskets, local=local)
-        except (DocumentInvalid, TaricDataAssertionError) as e:
-            sys.exit(f"Error {e}")
+        success, messages_dict = run_task_or_exit(upload_workbaskets, local=local)
 
-        if success:
-            self.stdout.write(msg)
-        else:
-            sys.exit(msg)
+        if None in messages_dict:
+            # Messages not associated with an envelope
+            self.stdout.write(messages_dict.pop(None))
+
+        if messages_dict:
+            # Envelope statuses
+            self.stdout.write("Envelope:         Message:")
+            for envelope_id, message in messages_dict.items():
+                self.stdout.write(f"{envelope_id}            {message}")
+
+        sys.exit(0 if success else 1)

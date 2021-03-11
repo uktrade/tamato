@@ -11,7 +11,8 @@ from taric import validators
 
 class EnvelopeQuerySet(QuerySet):
     def envelopes_by_year(self, year: Optional[int] = None):
-        """Return all envelopes for a year, defaulting to this year.
+        """
+        Return all envelopes for a year, defaulting to this year.
 
         :param year: int year, defaults to this year.
 
@@ -22,7 +23,9 @@ class EnvelopeQuerySet(QuerySet):
         else:
             now = date(year, 1, 1)
 
-        return self.order_by("envelope_id").filter(envelope_id__startswith=f"{now:%y}")
+        return self.filter(envelope_id__regex=fr"{now:%y}\d{{4}}").order_by(
+            "envelope_id",
+        )
 
 
 class EnvelopeId(models.CharField):
@@ -60,8 +63,7 @@ class Envelope(models.Model):
     )
 
     @classmethod
-    def new_envelope(cls):
-        """New Envelope instance.  Populates envelope_id."""
+    def next_envelope_id(cls):
         envelope = cls.objects.envelopes_by_year().last()
 
         if envelope is None:
@@ -74,18 +76,24 @@ class Envelope(models.Model):
 
             if counter > 9999:
                 raise ValueError(
-                    "Cannot create more than 9999 Envelopes on a single year."
+                    "Cannot create more than 9999 Envelopes on a single year.",
                 )
 
             now = date(year, 1, 1)
 
-        envelope_id = f"{now:%y}{counter:04d}"
-        new_instance = cls.objects.create(envelope_id=envelope_id)
-        return new_instance
+        return f"{now:%y}{counter:04d}"
+
+    @classmethod
+    def new_envelope(cls):
+        """
+        New Envelope instance.
+
+        Populating envelope_id.
+        """
+        return cls.objects.create(envelope_id=cls.next_envelope_id())
 
     def __repr__(self):
-        envelope_id = self.envelope_id
-        return f'<Envelope: envelope_id="{envelope_id}">'
+        return f'<Envelope: envelope_id="{self.envelope_id}">'
 
     class Meta:
         ordering = ("envelope_id",)
