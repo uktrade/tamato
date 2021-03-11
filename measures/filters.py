@@ -1,6 +1,3 @@
-from datetime import date
-
-from crispy_forms_gds.fields import DateInputField
 from django import forms
 from django.db.models import DateField
 from django.db.models import Q
@@ -12,6 +9,7 @@ from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
 from common.filters import TamatoFilter
+from common.forms import DateInputFieldFixed
 from footnotes.filters import COMBINED_FOOTNOTE_AND_TYPE_ID
 from measures.forms import MeasureFilterForm
 from measures.models import Measure
@@ -21,15 +19,6 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("before", "before"),
     ("after", "after"),
 )
-
-
-class DateInputFieldFixed(DateInputField):
-    def compress(self, data_list):
-        day, month, year = data_list if data_list else [None, None, None]
-        if day and month and year:
-            return date(day=int(day), month=int(month), year=int(year))
-        else:
-            return None
 
 
 class GovUKDateFilter(DateFilter):

@@ -53,7 +53,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             update_type=UpdateType.DELETE,
         )
 
-    def approved_up_to_transaction(self, transaction) -> QuerySet:
+    def approved_up_to_transaction(self, transaction=None) -> QuerySet:
         """
         Get the approved versions of the model being queried unless there exists
         a version of the model in a draft state within a transaction preceding
@@ -91,6 +91,9 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                        )
             ) = "common_trackedmodel"."id"
         """
+        if not transaction:
+            return self.latest_approved()
+
         return (
             self.annotate(
                 latest=Max(

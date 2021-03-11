@@ -78,12 +78,15 @@ class Certificate(TrackedModel, ValidityMixin):
         return self.code
 
     def get_url(self, action="detail"):
+        kwargs = {
+            "certificate_type__sid": self.certificate_type.sid,
+            "sid": self.sid,
+        }
+        if action == "list":
+            kwargs = {}
         return reverse(
             f"certificate-ui-{action}",
-            kwargs={
-                "certificate_type__sid": self.certificate_type.sid,
-                "sid": self.sid,
-            },
+            kwargs=kwargs,
         )
 
     def in_use(self):

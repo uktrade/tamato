@@ -22,7 +22,7 @@
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
     {% if request.session.workbasket %}
-      You currently have the "{{ request.session.workbasket }}" workbasket open.
+      You currently have the "{{ request.session.workbasket.title }}" workbasket open.
     {% else %}
       You currently do not have an open workbasket.
     {% endif %}
