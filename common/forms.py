@@ -1,11 +1,21 @@
 import logging
 from datetime import date
 
+from crispy_forms_gds.fields import DateInputField
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
 
 log = logging.getLogger(__name__)
+
+
+class DateInputFieldFixed(DateInputField):
+    def compress(self, data_list):
+        day, month, year = data_list or [None, None, None]
+        if day and month and year:
+            return date(day=int(day), month=int(month), year=int(year))
+        else:
+            return None
 
 
 class GovukDateWidget(forms.MultiWidget):
@@ -49,7 +59,7 @@ class GovukDateField(forms.MultiValueField):
 
 
 class GovukDateRangeField(DateRangeField):
-    base_field = GovukDateField
+    base_field = DateInputFieldFixed
 
     def clean(self, value):
         """Validate the date range input `value` should be a 2-tuple or list or

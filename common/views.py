@@ -7,12 +7,12 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import OperationalError
 from django.db import connection
+from django.db import models
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views import generic
-from django.views.generic import DetailView
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
@@ -106,6 +106,10 @@ class UpdateView(generic.UpdateView):
     """Create an updated version of a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.UPDATE
+    template_name = "common/edit.jinja"
+
+    def get_success_url(self):
+        return self.object.get_url("confirm-update")
 
 
 class DeleteView(CreateView):
@@ -146,7 +150,7 @@ class TamatoListView(WithCurrentWorkBasket, WithPaginationListView):
 class TrackedModelDetailMixin:
     """Allows detail URLs to use <Identifying-Fields> instead of <pk>"""
 
-    model = None
+    model: type[models.Model]
     required_url_kwargs = None
 
     def get_object(self, queryset=None):
@@ -155,7 +159,7 @@ class TrackedModelDetailMixin:
 
         required_url_kwargs = self.required_url_kwargs or self.model.identifying_fields
 
-        if not all(key in self.kwargs for key in required_url_kwargs):
+        if any(key not in self.kwargs for key in required_url_kwargs):
             raise AttributeError(
                 f"{self.__class__.__name__} must be called with {', '.join(required_url_kwargs)} in the URLconf.",
             )
@@ -171,6 +175,6 @@ class TrackedModelDetailMixin:
 class TrackedModelDetailView(
     WithCurrentWorkBasket,
     TrackedModelDetailMixin,
-    DetailView,
+    generic.DetailView,
 ):
     pass
