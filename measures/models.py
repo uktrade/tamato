@@ -577,6 +577,11 @@ class Measure(TrackedModel, ValidityMixin):
             },
         )
 
+    def get_conditions(self):
+        return MeasureCondition.objects.filter(
+            dependent_measure__sid=self.sid,
+        ).latest_approved()
+
 
 class MeasureComponent(TrackedModel):
     """Contains the duty information or part of the duty information."""
