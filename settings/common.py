@@ -218,7 +218,12 @@ CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
 if VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
         if redis_instance["name"] == "DJANGO_CACHE":
-            CACHE_URL = redis_instance["credentials"]["uri"]
+            credentials = redis_instance["credentials"]
+            CACHE_URL = "rediss://:{}@{}:{}/0?ssl_cert_reqs=CERT_REQUIRED".format(
+                credentials["password"],
+                credentials["host"],
+                credentials["port"],
+            )
             break
 CACHES = {
     "default": {
@@ -283,7 +288,14 @@ CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCAT
 if VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
         if redis_instance["name"] == "CELERY_BROKER":
-            CELERY_BROKER_URL = redis_instance["credentials"]["uri"]
+            credentials = redis_instance["credentials"]
+            CELERY_BROKER_URL = (
+                "rediss://:{}@{}:{}/0?ssl_cert_reqs=CERT_REQUIRED".format(
+                    credentials["password"],
+                    credentials["host"],
+                    credentials["port"],
+                )
+            )
             break
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
