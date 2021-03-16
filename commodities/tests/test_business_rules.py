@@ -4,6 +4,7 @@ from django.db import DataError
 from commodities import business_rules
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -58,7 +59,7 @@ def test_NIG4(date_ranges):
         factories.GoodsNomenclatureFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_NIG5():
+def test_NIG5(workbasket):
     """
     When creating a goods nomenclature code, an origin must exist.
 
@@ -74,6 +75,9 @@ def test_NIG5():
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.NIG5(bad_good.transaction).validate(bad_good)
+
+    deleted_good = bad_good.new_draft(workbasket, update_type=UpdateType.DELETE)
+    business_rules.NIG5(deleted_good.transaction).validate(deleted_good)
 
     good_good = factories.GoodsNomenclatureFactory.create(
         origin__derived_from_goods_nomenclature=origin,
