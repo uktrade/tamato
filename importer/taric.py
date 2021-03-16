@@ -9,6 +9,7 @@ from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.transaction import atomic
 from lxml import etree
@@ -16,8 +17,8 @@ from lxml import etree
 from common import models
 from common.validators import UpdateType
 from importer.namespaces import ENVELOPE
-from importer.namespaces import nsmap
 from importer.namespaces import Tag
+from importer.namespaces import nsmap
 from importer.nursery import get_nursery
 from importer.parsers import ElementParser
 from importer.parsers import ParserError
@@ -124,7 +125,12 @@ class TransactionParser(ElementParser):
 
         for message_data in data["message"]:
             self.message.save(message_data, transaction.id)
-        self.parent.workbasket.clean()
+
+        try:
+            transaction.clean()
+        except ValidationError as e:
+            for message in e.messages:
+                logger.error(message)
 
     def end(self, element: etree.Element):
         super().end(element)

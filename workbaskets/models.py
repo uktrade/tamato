@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import Prefetch
@@ -210,6 +211,17 @@ class WorkBasket(TimestampedMixin):
 
         if "workbasket" in request.session:
             return cls.from_json(request.session["workbasket"])
+
+    def clean(self):
+        errors = []
+        for txn in self.transactions.order_by("order"):
+            try:
+                txn.clean()
+            except ValidationError as e:
+                errors.extend(e.error_list)
+
+        if any(errors):
+            raise ValidationError(errors)
 
     def new_transaction(self, **kwargs):
         """Create a new transaction in this workbasket."""
