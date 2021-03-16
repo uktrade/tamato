@@ -1,0 +1,30 @@
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% set table_rows = [] %}
+{% for object in object_list %}
+  {{ table_rows.append([
+    {"html": create_link(object.get_url(), object.regulation_id), "classes": "govuk-!-font-weight-bold"},
+    {"text": object.information_text if object.information_text else "-"},
+    {"text": create_link(object.url, object.public_identifier) if object.public_identifier else "-"},
+    {"text": (object.regulation_group.group_id ~ ": " ~object.regulation_group.description) if object.regulation_group else "-"},
+    {"text": "{:%d %b %Y}".format(object.valid_between.lower) if object.valid_between else "-"},
+    {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+    {"text": object.transaction.workbasket.get_status_display()},
+]) or "" }}
+
+
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "ID"},
+    {"text": "Information text"},
+    {"text": "Public Identifier"},
+    {"text": "Regulation group"},
+    {"text": "Start date"},
+    {"text": "End date"},
+    {"text": "Status"},
+  ],
+  "rows": table_rows
+}) }}
+

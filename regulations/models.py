@@ -1,6 +1,7 @@
 from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
+from django.urls import reverse
 
 from common.fields import ShortDescription
 from common.fields import TaricDateRangeField
@@ -229,6 +230,15 @@ class Regulation(TrackedModel):
             )
             .approved_up_to_transaction(transaction=self.transaction)
             .exists()
+        )
+
+    def get_url(self, action="detail"):
+        return reverse(
+            f"regulation-ui-{action}",
+            kwargs={
+                "role_type": self.role_type,
+                "regulation_id": self.regulation_id,
+            },
         )
 
 
