@@ -243,7 +243,7 @@ class ValidityPeriodContained(BusinessRule):
 
         if not container:
             # TODO should this raise an exception?
-            log.warning(
+            log.debug(
                 "Skipping %s: Container field %s not found.",
                 self.__class__.__name__,
                 self.container_field_name,
