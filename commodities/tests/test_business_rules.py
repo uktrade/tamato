@@ -9,11 +9,18 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.xfail(reason="NIG1 disabled")
-def test_NIG1():
+def test_NIG1(date_ranges):
     """The validity period of the goods nomenclature must not overlap any other
     goods nomenclature with the same SID."""
 
     good = factories.GoodsNomenclatureFactory.create()
+    business_rules.NIG1(good.transaction).validate(good)
+
+    non_overlapping = factories.GoodsNomenclatureFactory.create(
+        sid=good.sid,
+        valid_between=date_ranges.adjacent_earlier,
+    )
+    business_rules.NIG1(non_overlapping.transaction).validate(non_overlapping)
 
     duplicate = factories.GoodsNomenclatureFactory.create(
         sid=good.sid,

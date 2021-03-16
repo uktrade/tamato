@@ -114,15 +114,15 @@ def test_ACN4(date_ranges):
     # duplicate of ACN1.
 
     existing = factories.AdditionalCodeFactory.create(valid_between=date_ranges.normal)
+    business_rules.ACN4(existing.transaction).validate(existing)
+
     duplicate = factories.AdditionalCodeFactory.create(
         code=existing.code,
         type=existing.type,
         valid_between=date_ranges.starts_with_normal,
     )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN4(duplicate.transaction).validate(
-            duplicate,
-        )
+        business_rules.ACN4(duplicate.transaction).validate(duplicate)
 
 
 @requires_meursing_tables
