@@ -2,8 +2,6 @@ import logging
 import random
 import time
 from datetime import timedelta
-from typing import Any
-from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
@@ -14,19 +12,12 @@ from commodities import models
 from commodities import serializers
 from commodities.exceptions import InvalidIndentError
 from common.util import TaricDateRange
+from common.util import maybe_min
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from importer.handlers import BaseHandler
 
 logger = logging.getLogger(__name__)
-
-
-def maybe_min(*objs: Optional[Any]) -> Optional[Any]:
-    present = [d for d in objs if d is not None]
-    if any(present):
-        return min(present)
-    else:
-        return None
 
 
 class GoodsNomenclatureHandler(BaseHandler):
