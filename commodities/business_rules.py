@@ -58,6 +58,9 @@ class NIG5(BusinessRule):
 
         from commodities.models import GoodsNomenclatureOrigin
 
+        if good.update_type == UpdateType.DELETE:
+            return
+
         lower_bound = date(2010, 1, 1)
 
         if not (
