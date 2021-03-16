@@ -7,27 +7,16 @@ from django.db.models.functions import Lower
 
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
+from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 
 
-class NIG1(BusinessRule):
+class NIG1(NoOverlapping):
     """The validity period of the goods nomenclature must not overlap any other
     goods nomenclature with the same SID."""
-
-    def validate(self, good):
-        if (
-            type(good)
-            .objects.filter(
-                sid=good.sid,
-                valid_between__overlap=good.valid_between,
-            )
-            .approved_up_to_transaction(good.transaction)
-            .exists()
-        ):
-            raise self.violation(good)
 
 
 class NIG2(BusinessRule):

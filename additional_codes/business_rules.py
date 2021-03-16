@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from additional_codes.validators import ApplicationCode
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
+from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
@@ -46,24 +47,16 @@ class ACN2(BusinessRule):
             )
 
 
-class ACN4(BusinessRule):
+class ACN4(NoOverlapping):
     """The validity period of the additional code must not overlap any other
     additional code with the same additional code type + additional code + start
     date."""
 
-    def validate(self, additional_code):
-        if (
-            type(additional_code)
-            .objects.filter(
-                type__sid=additional_code.type.sid,
-                code=additional_code.code,
-                valid_between__startswith=additional_code.valid_between.lower,
-                valid_between__overlap=additional_code.valid_between,
-            )
-            .approved_up_to_transaction(additional_code.transaction)
-            .exists()
-        ):
-            raise self.violation(additional_code)
+    identifying_fields = (
+        "type__sid",
+        "code",
+        "valid_between__lower",
+    )
 
 
 class ACN13(BusinessRule):
