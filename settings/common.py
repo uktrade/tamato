@@ -220,7 +220,7 @@ if VCAP_SERVICES.get("redis"):
         if redis_instance["name"] == "DJANGO_CACHE":
             credentials = redis_instance["credentials"]
             CACHE_URL = credentials["uri"]
-            CACHE_URL += "?ssl_cert_reqs=CERT_REQUIRED"
+            CACHE_URL += "?ssl_cert_reqs=required"
             break
 CACHES = {
     "default": {
@@ -287,7 +287,7 @@ if VCAP_SERVICES.get("redis"):
         if redis_instance["name"] == "CELERY_BROKER":
             credentials = redis_instance["credentials"]
             CELERY_BROKER_URL = credentials["uri"]
-            CELERY_BROKER_URL += "?ssl_cert_reqs=CERT_REQUIRED"
+            CELERY_BROKER_URL += "?ssl_cert_reqs=required"
             break
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
@@ -348,11 +348,12 @@ LOGGING = {
 if os.environ.get("SENTRY_DSN"):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
 
     sentry_kwargs = {
         "dsn": os.environ["SENTRY_DSN"],
         "environment": ENV,
-        "integrations": [DjangoIntegration()],
+        "integrations": [DjangoIntegration(), RedisIntegration()],
     }
     if "shell" in sys.argv or "shell_plus" in sys.argv:
         sentry_kwargs["before_send"] = lambda event, hint: None
