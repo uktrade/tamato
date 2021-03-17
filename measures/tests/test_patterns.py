@@ -41,6 +41,22 @@ def measure_data(date_ranges) -> Dict:
 
 
 @pytest.fixture
+def condition_measure_objects():
+    factories.MeasureConditionCodeFactory(code="B")
+    factories.MeasureActionFactory(code="29")
+    factories.MeasureActionFactory(code="09")
+    factories.CertificateFactory(sid="001", certificate_type__sid="C")
+
+
+@pytest.fixture
+def condition_measure_data(measure_data: Dict, condition_measure_objects) -> Dict:
+    return {
+        "condition_sentence": "Cond: B cert: C-001 (29):; B (09):",
+        **measure_data,
+    }
+
+
+@pytest.fixture
 def authorised_use_objects():
     factories.MeasureConditionCodeFactory(code="B")
     factories.MeasureActionFactory(code="27")
@@ -222,6 +238,24 @@ def test_attaches_proof_of_origin_conditions(
     assert conditions[1].condition_code.code == "Q"
     assert conditions[1].required_certificate is None
     assert conditions[1].action.code == "07"
+    assert conditions[1].component_sequence_number == 2
+
+
+def test_attaches_conditions_from_sentence(
+    condition_measure_data,
+    measure_creation_pattern: MeasureCreationPattern,
+):
+    models = list(measure_creation_pattern.create(**condition_measure_data))
+    conditions = models[0].conditions.all()
+    assert len(conditions) == 2
+    assert conditions[0].condition_code.code == "B"
+    assert conditions[0].required_certificate.certificate_type.sid == "C"
+    assert conditions[0].required_certificate.sid == "001"
+    assert conditions[0].action.code == "29"
+    assert conditions[0].component_sequence_number == 1
+    assert conditions[1].condition_code.code == "B"
+    assert conditions[1].required_certificate is None
+    assert conditions[1].action.code == "09"
     assert conditions[1].component_sequence_number == 2
 
 
