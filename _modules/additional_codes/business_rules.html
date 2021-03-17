@@ -44,6 +44,7 @@
 <span class="kn">from</span> <span class="nn">additional_codes.validators</span> <span class="kn">import</span> <span class="n">ApplicationCode</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">NoOverlapping</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
@@ -86,24 +87,16 @@
             <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ACN4"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN4">[docs]</a><span class="k">class</span> <span class="nc">ACN4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ACN4"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN4">[docs]</a><span class="k">class</span> <span class="nc">ACN4</span><span class="p">(</span><span class="n">NoOverlapping</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The validity period of the additional code must not overlap any other</span>
 <span class="sd">    additional code with the same additional code type + additional code + start</span>
 <span class="sd">    date.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ACN4.validate"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN4.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_code</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">type</span><span class="p">(</span><span class="n">additional_code</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">type__sid</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-                <span class="n">code</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
-                <span class="n">valid_between__startswith</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
-                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">additional_code</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">additional_code</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">additional_code</span><span class="p">)</span></div></div>
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;type__sid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;code&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ACN13"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN13">[docs]</a><span class="k">class</span> <span class="nc">ACN13</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
