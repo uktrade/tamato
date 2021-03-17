@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -5,15 +6,63 @@ from typing import Tuple
 import parsec  # type: ignore
 import pytest
 
+from measures.parsers import ConditionSentenceParser
 from measures.parsers import DutySentenceParser
 from measures.parsers import SeasonalRateParser
 
 pytestmark = pytest.mark.django_db
 
 
+def assert_attributes(expected, actual):
+    if expected is None:
+        assert actual is None
+    else:
+        assert actual is not None
+        for field in expected:
+            assert getattr(actual, field) == expected[field]
+
+
 @pytest.fixture
 def seasonal_rate_parser() -> SeasonalRateParser:
     return SeasonalRateParser()
+
+
+@pytest.fixture
+def condition_sentence_parser(
+    duty_expressions,
+    monetary_units,
+    measurements,
+    condition_codes,
+    action_codes,
+) -> ConditionSentenceParser:
+    return ConditionSentenceParser(
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
+        condition_codes.values(),
+        action_codes.values(),
+        2.00,
+    )
+
+
+@pytest.fixture
+def get_condition_data(
+    certificates,
+    condition_codes,
+    action_codes,
+):
+    def getter(
+        condition_code,
+        certificate_id,
+        action_code,
+    ):
+        return {
+            "condition_code": condition_codes.get(condition_code),
+            "action": action_codes.get(action_code),
+            "required_certificate": certificates.get(certificate_id),
+        }
+
+    return getter
 
 
 def duty_sentence_parser_test(
@@ -24,8 +73,7 @@ def duty_sentence_parser_test(
     components = list(duty_sentence_parser.parse(duty_sentence))
     assert len(expected_results) == len(components)
     for expected, actual in zip(expected_results, components):
-        for field in expected:
-            assert getattr(actual, field) == expected[field]
+        assert_attributes(expected, actual)
 
 
 def test_reversible_duty_sentence_parsing(
@@ -72,3 +120,85 @@ def test_seasonal_rate_parser(
 ):
     for index, season in enumerate(seasonal_rate_parser.detect_seasons(duty_sentence)):
         assert expected_results[index] == season
+
+
+@pytest.fixture(
+    params=(
+        (
+            "Cond: A cert: D-018 (01):0.000 GBP DTN Z; A (01):172.200 GBP DTN Z",
+            [
+                (("A", "D018", "01"), (1, Decimal("0.0"), "GBP", ("DTN", "Z"))),
+                (("A", None, "01"), (1, Decimal("172.200"), "GBP", ("DTN", "Z"))),
+            ],
+        ),
+        (
+            "Cond: A cert: D-017 (01):0.000 % ; A cert: D-018 (01):28.200 % ; A (01):28.200 %",
+            [
+                (("A", "D017", "01"), (1, Decimal("0.00"), None, None)),
+                (("A", "D018", "01"), (1, Decimal("28.2"), None, None)),
+                (("A", None, "01"), (1, Decimal("28.2"), None, None)),
+            ],
+        ),
+        (
+            "Cond: A cert: D-017 (01):NIHIL",
+            [
+                (("A", "D017", "01"), (37, None, None, None)),
+            ],
+        ),
+        (
+            "Cond:  Y cert: D-017 (29):; Y cert: D-018 (29):; Y (09):",
+            [
+                (("Y", "D017", "29"), None),
+                (("Y", "D018", "29"), None),
+                (("Y", None, "09"), None),
+            ],
+        ),
+        (
+            "NIHIL",
+            [
+                (None, (37, None, None, None)),
+            ],
+        ),
+        (
+            "172.200 GBP DTN Z ",
+            [
+                (None, (1, Decimal("172.200"), "GBP", ("DTN", "Z"))),
+            ],
+        ),
+        (
+            "Cond: A cert: D-017 (01):10.000 EUR",
+            [
+                (("A", "D017", "01"), (1, Decimal("20.0"), "GBP", None)),
+            ],
+        ),
+        (
+            "Cond: A cert: D-017 (01):10.000 XEM",
+            [
+                (("A", "D017", "01"), (1, Decimal("10.0"), "XEM", None)),
+            ],
+        ),
+    ),
+)
+def condition_sentence_data(request, get_condition_data, get_component_data):
+    expected, expressions = request.param
+    return expected, [
+        (
+            get_condition_data(*condition) if condition else None,
+            get_component_data(*component) if component else None,
+        )
+        for (condition, component) in expressions
+    ]
+
+
+def test_condition_sentence_parsing(
+    condition_sentence_parser: ConditionSentenceParser,
+    condition_sentence_data,
+):
+    condition_sentence, expected_results = condition_sentence_data
+    components = list(condition_sentence_parser.parse(condition_sentence))
+    assert len(expected_results) == len(components)
+    for expected, actual in zip(expected_results, components):
+        expected_condition, expected_component = expected
+        actual_condition, actual_component = actual
+        assert_attributes(expected_condition, actual_condition)
+        assert_attributes(expected_component, actual_component)

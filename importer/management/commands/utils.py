@@ -1,11 +1,8 @@
 import argparse
 import logging
 import re
-from collections import namedtuple
 from datetime import date
-from decimal import Decimal
 from itertools import combinations
-from math import floor
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -20,7 +17,6 @@ from typing import TypeVar
 from typing import Union
 from typing import cast
 
-import xlrd
 from django.contrib.auth.models import User
 from django.core.management.base import CommandError
 from xlrd.sheet import Cell
@@ -116,189 +112,6 @@ def clean_regulation(cell: Cell) -> str:
     elif match_id == 3:
         return regulation_id
     raise ValueError("Unknown regulation")
-
-
-Expression = namedtuple("Expression", "condition component")
-condition_fields = (
-    "condition_code",
-    "certificate",
-    "certificate_type_code",
-    "certificate_code",
-    "action_code",
-)
-Condition = namedtuple(
-    "Condition",
-    condition_fields,
-    defaults=(None,) * len(condition_fields),
-)
-component_fields = (
-    "duty_expression_id",
-    "duty_amount",
-    "monetary_unit_code",
-    "measurement_unit_code",
-    "measurement_unit_qualifier_code",
-)
-Component = namedtuple(
-    "Component",
-    component_fields,
-    defaults=(None,) * len(condition_fields),
-)
-
-
-def parse_trade_remedies_duty_expression(
-    value: str,
-    eur_gbp_conversion_rate: float = None,
-) -> List[Expression]:
-    """
-    Parse duty expression as expressions with conditions and components:
-
-    - Measure conditions
-        c1: condition.code
-        c2: requires certificate?
-        c3: certificate.type.code
-        c4: certificate.code
-        c5: action.code (always 01 - apply the amount of the action)
-
-    - Measure components (only 1):
-        m1: duty.expression.id (01 or 37 if NIHIL)
-        m2: duty.amount
-        m3: monetary.unit.code
-        m4: measurement.unit.code
-        m5: measurement.unit.qualifier.code
-
-    Examples:
-    - Cond:  A cert: D-008 (01):0.000 EUR TNE I ; A (01):172.200 EUR TNE I
-        c1: A      m1: 01
-        c2: True   m2: 0.000
-        c3: D      m3: EUR
-        c4: 008    m4: TNE
-        c5: 01     m5: I
-
-        c1: A      m1: 01
-        c2: False  m2: 172.200
-        c3: N/A    m3: EUR
-        c4: N/A    m4: TNE
-        c5: 01     m5: I
-
-    Cond:  A cert: D-017 (01):0.000 % ; A cert: D-018 (01):28.200 % ; A (01):28.200 %
-        c1: A      m1: 01
-        c2: True   m2: 0.000
-        c3: D      m3: N/A
-        c4: 017    m4: N/A
-        c5: 01     m5: N/A
-
-        c1: A      m1: 01
-        c2: True   m2: 28.200
-        c3: D      m3: N/A
-        c4: 018    m4: N/A
-        c5: 01     m5: N/A
-
-        c1: A      m1: 01
-        c2: False  m2: 28.200
-        c3: N/A    m3: N/A
-        c4: N/A    m4: N/A
-        c5: 01     m5: N/A
-    """
-
-    def create_component(match):
-        return Component(
-            duty_expression_id="37" if match.group("m1") == "NIHIL" else "01",
-            duty_amount=convert_eur_to_gbp(match.group("m2"), eur_gbp_conversion_rate)
-            if match.group("m3") == "EUR" and eur_gbp_conversion_rate
-            else match.group("m2"),
-            monetary_unit_code="GBP"
-            if match.group("m3") == "EUR" and eur_gbp_conversion_rate
-            else match.group("m3"),
-            measurement_unit_code=match.group("m4"),
-            measurement_unit_qualifier_code=match.group("m5"),
-        )
-
-    if value.startswith("Cond: "):
-        regex = (
-            r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-(?P<c4>\d{3}) )?\((?P<c5>\d{2})\):"
-            r"(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
-            r"(?:(?P<m5>\S+)(?:\s|$))?"
-        )
-        parsed_expressions = []
-        for entry in value.lstrip("Cond: ").split(";"):
-            entry = entry.strip()
-            match = re.match(regex, entry)
-            if match:
-                condition = Condition(
-                    condition_code=match.group("c1"),
-                    certificate=match.group("c2") == "cert:",
-                    certificate_type_code=match.group("c3"),
-                    certificate_code=match.group("c4"),
-                    action_code=match.group("c5"),
-                )
-                expression = Expression(
-                    condition=condition,
-                    component=create_component(match),
-                )
-                parsed_expressions.append(expression)
-            else:
-                raise ValueError(f"Could not parse duty expression: {value}")
-    else:
-        regex = (
-            r"^(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
-            r"(?:(?P<m5>\S+)(?:\s|$))?"
-        )
-        parsed_expressions = []
-        entry = value.strip()
-        match = re.match(regex, entry)
-        if match:
-            expression = Expression(
-                condition=None,
-                component=create_component(match),
-            )
-            parsed_expressions.append(expression)
-        else:
-            raise ValueError(f"Could not parse duty expression: {value}")
-    return parsed_expressions
-
-
-def convert_eur_to_gbp(amount: str, conversion_rate: float) -> str:
-    """Convert EUR amount to GBP and round down to nearest pence."""
-    converted_amount = (
-        floor(int(Decimal(amount) * Decimal(conversion_rate) * 100)) / 100
-    )
-    return "{0:.3f}".format(converted_amount)
-
-
-def clean_item_id(cell: Cell) -> str:
-    """Given an Excel cell, return a string representing the 10-digit item id of
-    a goods nomenclature item taking into account that the cell may be storing
-    the item as a number and that trailing zeroes may be missing."""
-    if cell.ctype == xlrd.XL_CELL_NUMBER:
-        item_id = str(int(cell.value))
-    else:
-        item_id = str(cell.value)
-
-    if len(item_id) % 2 == 1:
-        # If we have an odd number of digits its because
-        # we lost a leading zero due to the numeric storage
-        item_id = "0" + item_id
-
-    # We need a full 10 digit code so padd with trailing zeroes
-    assert len(item_id) % 2 == 0
-    if len(item_id) == 8:
-        item_id += "00"
-
-    assert len(item_id) == 10
-    return item_id
-
-
-def clean_duty_sentence(cell: Cell) -> str:
-    """Given an Excel cell, return a string representing a duty sentence taking
-    into account that the cell may be storing simple percentages as a number
-    value."""
-    if cell.ctype == xlrd.XL_CELL_NUMBER:
-        # This is a percentage value that Excel has
-        # represented as a number.
-        return f"{cell.value * 100}%"
-    else:
-        # All other values will apear as text.
-        return cell.value
 
 
 def get_author(username: Optional[str] = None) -> User:

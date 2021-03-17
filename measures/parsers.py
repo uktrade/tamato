@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from datetime import datetime
 from decimal import Decimal
 from functools import reduce
 from itertools import chain
+from typing import Dict
 from typing import Iterable
+from typing import Iterator
+from typing import Match
+from typing import Optional
+from typing import Tuple
 from typing import Union
 
-import pytz
 from parsec import Parser
 from parsec import Value
 from parsec import choice
@@ -19,13 +24,19 @@ from parsec import spaces
 from parsec import string
 from parsec import try_choice
 
+from certificates.models import Certificate
 from common.validators import ApplicabilityCode
 from measures.models import DutyExpression
+from measures.models import MeasureAction
 from measures.models import MeasureComponent
+from measures.models import MeasureCondition
+from measures.models import MeasureConditionCode
+from measures.models import MeasureConditionComponent
 from measures.models import Measurement
 from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
+from measures.util import convert_eur_to_gbp
 
 # Used to represent percentage or currency values.
 Amount = Decimal
@@ -241,7 +252,7 @@ class DutySentenceParser:
         return self.sentence_parser.parse_strict(s)
 
     @classmethod
-    def get(cls, forward_time: datetime) -> DutySentenceParser:
+    def get(cls, forward_time: date) -> DutySentenceParser:
         """Return a DutySentenceParser loaded with expressions and measurements
         that are valid on the passed date."""
         duty_expressions = (
@@ -271,17 +282,12 @@ class SeasonalRateParser:
 
     SEASONAL_RATE = re.compile(r"([\d\.]+%) *\((\d\d [A-Z]{3}) *- *(\d\d [A-Z]{3})\)")
 
-    def __init__(self) -> None:
-        self.timezone = pytz.utc
-
     def detect_seasons(self, duty_exp: str) -> Iterable:
         if SeasonalRateParser.SEASONAL_RATE.search(duty_exp):
             for match in SeasonalRateParser.SEASONAL_RATE.finditer(duty_exp):
                 rate, start, end = match.groups()
-                validity_start = self.timezone.localize(
-                    datetime.strptime(start, r"%d %b"),
-                )
-                validity_end = self.timezone.localize(datetime.strptime(end, r"%d %b"))
+                validity_start = datetime.strptime(start, r"%d %b").date()
+                validity_end = datetime.strptime(end, r"%d %b").date()
                 yield (
                     rate,
                     validity_start.day,
@@ -289,3 +295,207 @@ class SeasonalRateParser:
                     validity_end.day,
                     validity_end.month,
                 )
+
+
+class ConditionSentenceParser:
+    """
+    A condition sentence is a string representation of a set of MeasureCondition
+    objects.
+
+    The string is formed from a number of conditon phrases that contain a
+    condition type, an optional certificate and then an action code. It can also
+    contain an optional duty amount which is similar to a duty sentence but only
+    accepts a single component and raw codes, no abbreviations.
+
+    - Measure conditions
+        c1: condition.code
+        c2: requires certificate?
+        c3: certificate.type.code
+        c4: certificate.code
+        c5: action.code (always 01 - apply the amount of the action)
+
+    - Measure components (only 1):
+        m1: duty.expression.id (01 or 37 if NIHIL)
+        m2: duty.amount
+        m3: monetary.unit.code
+        m4: measurement.unit.code
+        m5: measurement.unit.qualifier.code
+
+    Examples:
+    - Cond:  "A cert: D-008 (01):0.000 EUR TNE I ; A (01):172.200 EUR TNE I"
+        c1: A      m1: 01
+        c2: True   m2: 0.000
+        c3: D      m3: EUR
+        c4: 008    m4: TNE
+        c5: 01     m5: I
+
+        c1: A      m1: 01
+        c2: False  m2: 172.200
+        c3: N/A    m3: EUR
+        c4: N/A    m4: TNE
+        c5: 01     m5: I
+
+    - Cond:  "A cert: D-017 (01):0.000 % ; A cert: D-018 (01):28.200 % ; A (01):28.200 %"
+        c1: A      m1: 01
+        c2: True   m2: 0.000
+        c3: D      m3: N/A
+        c4: 017    m4: N/A
+        c5: 01     m5: N/A
+
+        c1: A      m1: 01
+        c2: True   m2: 28.200
+        c3: D      m3: N/A
+        c4: 018    m4: N/A
+        c5: 01     m5: N/A
+
+        c1: A      m1: 01
+        c2: False  m2: 28.200
+        c3: N/A    m3: N/A
+        c4: N/A    m4: N/A
+        c5: 01     m5: N/A
+    """
+
+    DUTY_PHRASE_REGEX = (
+        r"(?:(?P<m1>NIHIL)(?:$)|(?P<m2>\S+)(?:\s|$))"
+        r"(?:(?P<m3>\S+)(?:\s|$))?(?:(?P<m4>\S+)(?:\s|$))?"
+        r"(?:(?P<m5>\S+)(?:\s|$))?"
+    )
+
+    DUTY_PHRASE_PATTERN = re.compile(
+        f"^{DUTY_PHRASE_REGEX}",
+    )
+
+    CONDITION_PHRASE_PATTERN = re.compile(
+        r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-(?P<c4>\d{3}) )?\((?P<c5>\d{2})\):\s*"
+        f"(?:{DUTY_PHRASE_REGEX})?",
+    )
+
+    def __init__(
+        self,
+        duty_expressions: Iterable[DutyExpression],
+        monetary_units: Iterable[MonetaryUnit],
+        permitted_measurements: Iterable[Measurement],
+        condition_codes: Iterable[MeasureConditionCode],
+        action_codes: Iterable[MeasureAction],
+        eur_gbp_conversion_rate: Optional[float] = None,
+    ):
+        self.duty_expressions = {int(d.sid): d for d in duty_expressions}
+        self.monetary_units: Dict[str, Optional[MonetaryUnit]] = {
+            str(m.code): m for m in monetary_units
+        }
+        self.monetary_units["%"] = None
+        self.permitted_measurements = {
+            (
+                m.measurement_unit.code,
+                m.measurement_unit_qualifier.code
+                if m.measurement_unit_qualifier
+                else None,
+            ): m
+            for m in permitted_measurements
+        }
+        self.condition_codes = {str(c.code): c for c in condition_codes}
+        self.action_codes = {str(a.code): a for a in action_codes}
+        self.certificates: Dict[str, Certificate] = {}
+        self.eur_gbp_conversion_rate = eur_gbp_conversion_rate
+
+    def create_component(
+        self,
+        match: Match[str],
+    ) -> Optional[MeasureConditionComponent]:
+        if not (match.group("m1") or match.group("m2") or match.group("m3")):
+            return None
+
+        return MeasureConditionComponent(
+            duty_expression=(
+                self.duty_expressions[37]
+                if match.group("m1") == "NIHIL"
+                else self.duty_expressions[1]
+            ),
+            duty_amount=(
+                Decimal(
+                    convert_eur_to_gbp(match.group("m2"), self.eur_gbp_conversion_rate),
+                )
+                if match.group("m3") == "EUR" and self.eur_gbp_conversion_rate
+                else (Decimal(match.group("m2")) if match.group("m2") else None)
+            ),
+            monetary_unit=(
+                self.monetary_units["GBP"]
+                if match.group("m3") == "EUR" and self.eur_gbp_conversion_rate
+                else (
+                    self.monetary_units[match.group("m3")]
+                    if match.group("m3")
+                    else None
+                )
+            ),
+            component_measurement=self.permitted_measurements[
+                (
+                    match.group("m4"),
+                    match.group("m5"),
+                )
+            ]
+            if (match.group("m4") or match.group("m5"))
+            else None,
+        )
+
+    def get_certificate(self, match: Match[str]) -> Optional[Certificate]:
+        if not match.group("c2") == "cert:":
+            return None
+
+        cert_id = match.group("c3") + match.group("c4")
+        if cert_id not in self.certificates:
+            self.certificates[cert_id] = Certificate.objects.latest_approved().get(
+                certificate_type__sid=match.group("c3"),
+                sid=match.group("c4"),
+            )
+
+        return self.certificates[cert_id]
+
+    def parse(
+        self,
+        value: str,
+    ) -> Iterator[
+        Tuple[Optional[MeasureCondition], Optional[MeasureConditionComponent]]
+    ]:
+        if value.startswith("Cond:"):
+            for entry in value.lstrip("Cond:").strip().split(";"):
+                match = re.match(self.CONDITION_PHRASE_PATTERN, entry.strip())
+                if match:
+                    condition = MeasureCondition(
+                        condition_code=self.condition_codes[match.group("c1")],
+                        required_certificate=self.get_certificate(match),
+                        action=self.action_codes[match.group("c5")],
+                    )
+                    yield (condition, self.create_component(match))
+                else:
+                    raise ValueError(f"Could not parse condition expression: '{value}'")
+        else:
+            match = re.match(self.DUTY_PHRASE_PATTERN, value.strip())
+            if match:
+                yield (None, self.create_component(match))
+            else:
+                raise ValueError(f"Could not parse condition expression: '{value}'")
+
+    @classmethod
+    def get(cls, forward_time: date):
+        duty_expressions = (
+            DutyExpression.objects.as_at(forward_time)
+            # Exclude anything which will match all strings
+            .exclude(prefix__isnull=True).order_by("sid")
+        )
+        monetary_units = MonetaryUnit.objects.as_at(forward_time)
+        permitted_measurements = (
+            Measurement.objects.as_at(forward_time)
+            .exclude(measurement_unit__abbreviation__exact="")
+            .exclude(
+                measurement_unit_qualifier__abbreviation__exact="",
+            )
+        )
+        condition_codes = MeasureConditionCode.objects.as_at(forward_time)
+        action_codes = MeasureAction.objects.as_at(forward_time)
+        return ConditionSentenceParser(
+            duty_expressions,
+            monetary_units,
+            permitted_measurements,
+            condition_codes,
+            action_codes,
+        )

@@ -10,6 +10,8 @@ from django.core.exceptions import ValidationError
 from common.tests import factories
 from common.validators import ApplicabilityCode
 from measures.models import DutyExpression
+from measures.models import MeasureAction
+from measures.models import MeasureConditionCode
 from measures.models import Measurement
 from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
@@ -92,6 +94,17 @@ def plus_amount_only() -> DutyExpression:
 
 
 @pytest.fixture
+def nothing() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=37,
+        prefix="NIHIL",
+        duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+    )
+
+
+@pytest.fixture
 def supplementary_unit() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=99,
@@ -109,6 +122,7 @@ def duty_expressions(
     plus_agri_component: DutyExpression,
     plus_amount_only: DutyExpression,
     supplementary_unit: DutyExpression,
+    nothing: DutyExpression,
 ) -> Dict[int, DutyExpression]:
     return {
         d.sid: d
@@ -118,7 +132,40 @@ def duty_expressions(
             plus_agri_component,
             plus_amount_only,
             supplementary_unit,
+            nothing,
         ]
+    }
+
+
+@pytest.fixture
+def condition_codes() -> Dict[str, MeasureConditionCode]:
+    return {
+        mcc.code: mcc
+        for mcc in [
+            factories.MeasureConditionCodeFactory(code="A"),
+            factories.MeasureConditionCodeFactory(code="Y"),
+        ]
+    }
+
+
+@pytest.fixture
+def action_codes() -> Dict[str, MeasureAction]:
+    return {
+        a.code: a
+        for a in [
+            factories.MeasureActionFactory(code="01"),
+            factories.MeasureActionFactory(code="09"),
+            factories.MeasureActionFactory(code="29"),
+        ]
+    }
+
+
+@pytest.fixture
+def certificates():
+    d_type = factories.CertificateTypeFactory(sid="D")
+    return {
+        "D017": factories.CertificateFactory(sid="017", certificate_type=d_type),
+        "D018": factories.CertificateFactory(sid="018", certificate_type=d_type),
     }
 
 
