@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import date
 from functools import cached_property
 from typing import Any
 from typing import Dict
@@ -32,6 +32,7 @@ from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
+from measures.parsers import ConditionSentenceParser
 from measures.parsers import DutySentenceParser
 from quotas.models import QuotaOrderNumber
 from workbaskets.models import WorkBasket
@@ -89,14 +90,21 @@ class MeasureCreationPattern:
     def __init__(
         self,
         workbasket: WorkBasket,
-        base_date: datetime,
+        base_date: date,
         defaults: Dict[str, Any] = {},
         duty_sentence_parser: DutySentenceParser = None,
+        condition_sentence_parser: ConditionSentenceParser = None,
     ) -> None:
         self.workbasket = workbasket
         self.defaults = defaults
         self.duty_sentence_parser = duty_sentence_parser or DutySentenceParser.get(
             base_date,
+        )
+        self.condition_sentence_parser = (
+            condition_sentence_parser
+            or ConditionSentenceParser.get(
+                base_date,
+            )
         )
 
     @cached_property
@@ -207,6 +215,33 @@ class MeasureCreationPattern:
             logger.error(f"Explosion parsing {rate}")
             raise ex
 
+    def get_conditions(
+        self,
+        measure: Measure,
+        conditions: str,
+    ) -> Iterator[MeasureCondition]:
+        for index, (condition, component) in enumerate(
+            self.condition_sentence_parser.parse(conditions),
+            start=1,
+        ):
+            if not condition:
+                raise ValueError(f"Expected to parse a condition from '{conditions}'")
+
+            condition.sid = self.measure_condition_sid_counter()
+            condition.component_sequence_number = index
+            condition.dependent_measure = measure
+            condition.update_type = UpdateType.CREATE
+            condition.transaction = measure.transaction
+            condition.save()
+
+            if component:
+                component.condition = condition
+                component.update_type = UpdateType.CREATE
+                component.transaction = condition.transaction
+                component.save()
+
+            yield condition
+
     def get_measure_excluded_geographical_areas(
         self,
         measure: Measure,
@@ -270,14 +305,15 @@ class MeasureCreationPattern:
         geographical_area: GeographicalArea,
         goods_nomenclature: GoodsNomenclature,
         measure_type: MeasureType,
-        validity_start: datetime,
-        validity_end: datetime,
+        validity_start: date,
+        validity_end: date,
         exclusions: Sequence[GeographicalArea] = [],
         order_number: Optional[QuotaOrderNumber] = None,
         authorised_use: bool = False,
         additional_code: AdditionalCode = None,
         footnotes: Sequence[Footnote] = [],
         proofs_of_origin: Sequence[Certificate] = [],
+        condition_sentence: Optional[str] = None,
     ) -> Iterator[TrackedModel]:
         """
         Create a new measure linking the passed data and any defaults. The
@@ -360,6 +396,10 @@ class MeasureCreationPattern:
         # some measure conditions with the passed proof of origin.
         if any(proofs_of_origin):
             yield from self.get_proof_of_origin_condition(new_measure, proofs_of_origin)
+
+        # If we have a condition sentence, parse and add to the measure.
+        if condition_sentence:
+            yield from self.get_conditions(new_measure, condition_sentence)
 
         # Now generate the duty components for the passed duty rate.
         yield from self.get_measure_components_from_duty_rate(
