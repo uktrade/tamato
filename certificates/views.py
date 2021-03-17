@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import models
 from rest_framework import permissions
@@ -33,10 +35,18 @@ class CertificateTypeViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class CertificatesList(TamatoListView):
+class CertificateMixin:
+    model: type[models.Model] = Certificate
+
+    def get_queryset(self):
+        return Certificate.objects.approved_up_to_transaction(
+            WorkBasket.current(self.request).transactions.order_by("order").last(),
+        ).select_related("certificate_type")
+
+
+class CertificatesList(CertificateMixin, TamatoListView):
     """UI endpoint for viewing and filtering Certificates."""
 
-    queryset = Certificate.objects.latest_approved().select_related("certificate_type")
     template_name = "certificates/list.jinja"
     filterset_class = CertificateFilter
     search_fields = [
@@ -47,44 +57,30 @@ class CertificatesList(TamatoListView):
     ]
 
 
-class CertificateDetailMixin:
-    model: type[models.Model] = Certificate
-
-    def get_queryset(self):
-        return Certificate.objects.approved_up_to_transaction(
-            WorkBasket.current(self.request).transactions.order_by("order").last(),
-        ).select_related("certificate_type")
-
-
-class CertificateDetail(CertificateDetailMixin, TrackedModelDetailView):
+class CertificateDetail(CertificateMixin, TrackedModelDetailView):
     template_name = "certificates/detail.jinja"
 
 
 class CertificateUpdate(
     PermissionRequiredMixin,
-    CertificateDetailMixin,
+    CertificateMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
     form_class = CertificateForm
     permission_required = "common.change_trackedmodel"
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        instance = kwargs.get("instance")
-        if self.request.method == "POST" and instance:
-            kwargs["instance"] = instance.new_draft(
+    def get_object(self, queryset: Optional[models.QuerySet] = None) -> models.Model:
+        obj = super().get_object(queryset)
+
+        if self.request.method == "POST":
+            obj = obj.new_draft(
                 WorkBasket.current(self.request),
                 save=False,
             )
-        kwargs["initial"].update(
-            {
-                "code": instance.code,
-                "certificate_type": instance.certificate_type_id,
-            },
-        )
-        return kwargs
+
+        return obj
 
 
-class CertificateConfirmUpdate(CertificateDetailMixin, TrackedModelDetailView):
-    template_name = "certificates/confirm_update.jinja"
+class CertificateConfirmUpdate(CertificateMixin, TrackedModelDetailView):
+    template_name = "common/confirm_update.jinja"

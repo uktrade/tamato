@@ -1,9 +1,8 @@
 {% from "components/tabs/macro.njk" import govukTabs %}
-{% from "components/summary-list/macro.njk" import govukSummaryList %}
-{% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = "Certificate: " ~ object.code %}
-{% set find_edit_url = url("certificate-ui-list") %}
+{% extends "layouts/detail.jinja" %}
+
+{% set page_title = object._meta.verbose_name|capitalize ~ ": " ~ object.code %}
 
 {% set core_data_tab_html %}{% include "includes/certificates/tabs/core_data.jinja" %}{% endset %}
 {% set description_tab_html %}{% include "includes/common/tabs/descriptions.jinja" %}{% endset %}
@@ -33,6 +32,5 @@
         }
       },
     ]
-  }%}
-
-{%- include "layouts/detail.jinja" -%}
+  }
+%}

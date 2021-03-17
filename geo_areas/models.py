@@ -1,7 +1,6 @@
 from django.db import models
 from django.db.models import CheckConstraint
 from django.db.models import Q
-from django.urls import reverse
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -33,6 +32,8 @@ class GeographicalArea(TrackedModel, ValidityMixin):
 
     record_code = "250"
     subrecord_code = "00"
+
+    url_pattern_name_prefix = "geoarea"
 
     sid = SignedIntSID(db_index=True)
     area_id = models.CharField(max_length=4, validators=[validators.area_id_validator])
@@ -93,16 +94,6 @@ class GeographicalArea(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return f"{self.get_area_code_display()} {self.area_id}"
-
-    def get_url(self, action="detail"):
-        kwargs = {}
-        if action != "list":
-            kwargs = self.get_identifying_fields()
-
-        return reverse(
-            f"geoarea-ui-{action}",
-            kwargs=kwargs,
-        )
 
     class Meta:
         constraints = (
