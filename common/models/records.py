@@ -3,12 +3,8 @@ from __future__ import annotations
 import re
 from datetime import date
 from typing import Any
-from typing import Dict
 from typing import Iterable
-from typing import List
 from typing import Optional
-from typing import Tuple
-from typing import Type
 
 from django.db import models
 from django.db.models import Case
@@ -22,6 +18,7 @@ from django.db.models import When
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
 from django.template import loader
+from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
@@ -215,7 +212,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
     def _get_current_related_lookups(
         self, model, *lookups, prefix="", recurse_level=0
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Build a list of lookups for the current versions of related objects.
 
@@ -569,7 +566,7 @@ class TrackedModel(PolymorphicModel):
     def get_identifying_fields(
         self,
         identifying_fields: Optional[Iterable[str]] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
 
@@ -593,7 +590,7 @@ class TrackedModel(PolymorphicModel):
         return current_version
 
     @classmethod
-    def get_relations(cls) -> List[Tuple[Field, Type[TrackedModel]]]:
+    def get_relations(cls) -> list[tuple[Field, type[TrackedModel]]]:
         """Find all foreign key and one-to-one relations on an object and return
         a list containing tuples of the field instance and the related model it
         links to."""
@@ -657,3 +654,15 @@ class TrackedModel(PolymorphicModel):
 
     def __hash__(self):
         return hash(f"{__name__}.{self.__class__.__name__}")
+
+    def get_url(self, action="detail"):
+        kwargs = {}
+        if action != "list":
+            kwargs = self.get_identifying_fields()
+
+        name = self._meta.verbose_name.replace(" ", "_")
+
+        return reverse(
+            f"{name}-ui-{action}",
+            kwargs=kwargs,
+        )
