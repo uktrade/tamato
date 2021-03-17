@@ -53,7 +53,7 @@
     },
     {
         "key": {"text": "End date"},
-        "value": {"text":  "{:%d %b %Y}".format(measure.valid_between.upper) if measure.valid_between.upper else "-"},
+        "value": {"text":  "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-"},
         "actions": {"items": []}
     },
     {

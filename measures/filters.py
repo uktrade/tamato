@@ -8,6 +8,7 @@ from django_filters import CharFilter
 from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
+from additional_codes.filters import COMBINED_ADDITIONAL_CODE_AND_TYPE_ID
 from common.filters import TamatoFilter
 from common.forms import DateInputFieldFixed
 from footnotes.filters import COMBINED_FOOTNOTE_AND_TYPE_ID
@@ -47,7 +48,7 @@ class MeasureFilter(TamatoFilter):
 
     additional_code = CharFilter(
         label="Additional code",
-        field_name="additional_code__sid",
+        method="filter_additional_code",
     )
 
     geographical_area = CharFilter(
@@ -57,7 +58,7 @@ class MeasureFilter(TamatoFilter):
 
     order_number = CharFilter(
         label="Quota order number",
-        field_name="order_number__sid",
+        field_name="order_number__order_number",
     )
 
     regulation = CharFilter(
@@ -96,6 +97,17 @@ class MeasureFilter(TamatoFilter):
     clear_url = reverse_lazy("measure-ui-list")
 
     def date_modifier(self, queryset, name, value):
+        return queryset
+
+    def filter_additional_code(self, queryset, name, value):
+        if value:
+            match = COMBINED_ADDITIONAL_CODE_AND_TYPE_ID.match(value)
+            if match:
+                return queryset.filter(
+                    additional_code__code=match.group("code"),
+                    additional_code__type__sid=match.group("type__sid"),
+                )
+            return queryset.none()
         return queryset
 
     def filter_footnotes(self, queryset, name, value):

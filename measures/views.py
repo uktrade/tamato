@@ -7,7 +7,7 @@ from measures.filters import MeasureFilter
 class MeasureList(TamatoListView):
     """UI endpoint for viewing and filtering Measures."""
 
-    queryset = models.Measure.objects.with_duty_sentence()
+    queryset = models.Measure.objects.with_duty_sentence().latest_approved()
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
 
