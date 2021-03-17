@@ -1,12 +1,8 @@
-import logging
 from datetime import date
 
 from crispy_forms_gds.fields import DateInputField
-from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
-
-log = logging.getLogger(__name__)
 
 
 class DateInputFieldFixed(DateInputField):
@@ -16,46 +12,6 @@ class DateInputFieldFixed(DateInputField):
             return date(day=int(day), month=int(month), year=int(year))
         else:
             return None
-
-
-class GovukDateWidget(forms.MultiWidget):
-    def __init__(self, attrs=None):
-        widgets = (
-            forms.NumberInput(attrs=attrs),
-            forms.NumberInput(attrs=attrs),
-            forms.NumberInput(attrs=attrs),
-        )
-        super().__init__(widgets=widgets, attrs=attrs)
-
-    def decompress(self, value):
-        if value:
-            return [value.day, value.month, value.year]
-        return ["", "", ""]
-
-
-class GovukDateField(forms.MultiValueField):
-    widget = GovukDateWidget
-
-    def __init__(self, **kwargs):
-        fields = (
-            forms.CharField(),
-            forms.CharField(),
-            forms.CharField(),
-        )
-        super().__init__(fields=fields, require_all_fields=True, **kwargs)
-
-    def compress(self, data_list):
-        if data_list:
-            if not all(data_list):
-                raise ValidationError("Enter a valid date.", code="invalid_date")
-
-            try:
-                day, month, year = data_list
-                result = date(int(year), int(month), int(day))
-            except ValueError as e:
-                raise ValidationError("Enter a valid date.", code="invalid_date") from e
-
-            return result
 
 
 class GovukDateRangeField(DateRangeField):
