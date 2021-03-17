@@ -68,6 +68,9 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         business_rules.NIG35,
     )
 
+    class Meta:
+        verbose_name = "commodity code"
+
     def __str__(self):
         return self.item_id
 
