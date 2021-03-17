@@ -92,15 +92,6 @@ class Footnote(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
 
-    def get_url(self, action="detail"):
-        return reverse(
-            f"footnote-ui-{action}",
-            kwargs={
-                "footnote_type__footnote_type_id": self.footnote_type.footnote_type_id,
-                "footnote_id": self.footnote_id,
-            },
-        )
-
     def _used_in(self, dependent_type: Type[TrackedModel]):
         # TODO this should respect deletes
         return dependent_type.objects.filter(

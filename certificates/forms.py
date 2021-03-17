@@ -16,6 +16,7 @@ from common.util import TaricDateRange
 class CertificateForm(forms.ModelForm):
     code = forms.CharField(
         label="Certificate ID",
+        required=False,
     )
     start_date = DateInputFieldFixed(
         label="Start date",
@@ -34,12 +35,14 @@ class CertificateForm(forms.ModelForm):
         self.fields[
             "certificate_type"
         ].label_from_instance = lambda obj: f"{obj.sid} - {obj.description}"
+        self.fields["certificate_type"].required = False
 
-        if self.instance and self.instance.pk:
-
-            self.fields["code"].initial = self.instance.code
+        if self.instance:
+            self.fields["code"].disabled = True
             self.fields["code"].help_text = "You can't edit this"
+            self.fields["code"].initial = self.instance.code
 
+            self.fields["certificate_type"].disabled = True
             self.fields["certificate_type"].help_text = "You can't edit this"
 
             if self.instance.valid_between.lower:
@@ -62,27 +65,26 @@ class CertificateForm(forms.ModelForm):
             Submit("submit", "Save"),
         )
 
-    def clean_code(self):
-        code = self.cleaned_data.get("code")
-
-        if not (self.instance and self.instance.pk) and not code:
-            raise ValidationError("Certificate code is required")
-
-        return code
-
-    def clean_certificate_type(self):
-        type = self.cleaned_data.get("certificate_type")
-
-        if not (self.instance and self.instance.sid) and not type:
-            raise ValidationError("Certificate type is required")
-
-        return type
-
     def clean(self):
         cleaned_data = super().clean()
 
         # extract sid from code
         cleaned_data["sid"] = cleaned_data.pop("code", "")[1:]
+
+        if not cleaned_data["sid"] and self.instance and self.instance.sid:
+            cleaned_data["sid"] = self.instance.sid
+
+        if not cleaned_data["sid"]:
+            raise ValidationError({"code": "Certificate code is required"})
+
+        # get type from instance if not submitted
+        ctype = cleaned_data.get("certificate_type")
+
+        if not ctype and self.instance and self.instance.certificate_type:
+            ctype = self.instance.certificate_type
+
+        if not ctype:
+            raise ValidationError({"certificate_type": "Certificate type is required"})
 
         # combine start and end dates into date range
         start_date = cleaned_data.pop("start_date", None)

@@ -660,9 +660,13 @@ class TrackedModel(PolymorphicModel):
         if action != "list":
             kwargs = self.get_identifying_fields()
 
-        name = self._meta.verbose_name.replace(" ", "_")
-
         return reverse(
-            f"{name}-ui-{action}",
+            f"{self.get_url_pattern_name_prefix()}-ui-{action}",
             kwargs=kwargs,
         )
+
+    def get_url_pattern_name_prefix(self):
+        prefix = getattr(self, "url_pattern_name_prefix", None)
+        if not prefix:
+            prefix = self._meta.verbose_name.replace(" ", "_")
+        return prefix
