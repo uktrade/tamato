@@ -66,7 +66,6 @@ class GeographicalArea(TrackedModel, ValidityMixin):
         business_rules.GA7,
         business_rules.GA10,
         business_rules.GA11,
-        business_rules.GA12,
         business_rules.GA21,
         business_rules.GA22,
     )
@@ -132,6 +131,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     identifying_fields = ("geo_group__sid", "member__sid")
 
     business_rules = (
+        business_rules.GA12,
         business_rules.GA13,
         business_rules.GA16,
         business_rules.GA17,
