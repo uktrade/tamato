@@ -4,10 +4,9 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set object_type_plural = object_type_plural or object_type + "s" %}
 {% set create_url = create_url or "create" %}
 
-{% set page_title = "Find and edit " + (object_type_plural or object_type + "s") %}
+{% set page_title = "Find and edit " ~ object_list.model._meta.verbose_name_plural %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -21,8 +20,8 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
-    Search for {{object_type_plural}}.
-    Alternatively, <a class="govuk-link" href="{{ create_url }}">create a new {{ object_type }}</a>.
+    Search for {{object_list.model._meta.verbose_name_plural}}.
+    Alternatively, <a class="govuk-link" href="{{ create_url }}">create a new {{ object_list.model._meta.verbose_name }}</a>.
   </p>
 
   <div class="filter-layout full-width-search">
@@ -35,7 +34,7 @@
 
     <div class="filter-layout__content govuk-!-margin-top-5">
       {% if paginator.count > 0 %}
-        <p class="govuk-body">{{'{0:,}'.format(paginator.count)}} {{ object_type_plural if paginator.count > 1 else object_type }}</p>
+        <p class="govuk-body">{{'{0:,}'.format(paginator.count)}} {{ object_list.model._meta.verbose_name_plural if paginator.count > 1 else object_list.model._meta.verbose_name }}</p>
       {% endif %}
       {% if object_list %}
         {% include list_include %}
@@ -51,7 +50,7 @@
       {% if page_obj.has_other_pages() %}
         <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
           <div class="govuk-body">
-            Showing 20 of {{'{0:,}'.format(paginator.count)}} {{ object_type_plural if paginator.count > 1 else object_type }}
+            Showing 20 of {{'{0:,}'.format(paginator.count)}} {{ object_list.model._meta.verbose_name_plural if paginator.count > 1 else object_list.model._meta.verbose_name }}
           </div>
           <div class="govuk-body pagination__summary">
             Page {{page_obj.number}} of {{ '{0:,}'.format(paginator.num_pages)}}

@@ -75,6 +75,9 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
             },
         )
 
+    class Meta:
+        verbose_name = "quota"
+
 
 class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to

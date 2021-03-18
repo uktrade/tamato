@@ -2,7 +2,6 @@
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set object_type = "additional code" %}
 {% set page_title = "Additional code: " ~ object.type.sid ~ object.code %}
 {% set find_edit_url = url("additional_code-ui-list") %}
 
