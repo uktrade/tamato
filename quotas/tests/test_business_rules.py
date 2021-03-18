@@ -1,3 +1,4 @@
+from collections import defaultdict
 from decimal import Decimal
 
 import pytest
@@ -448,13 +449,40 @@ def test_QA2(date_ranges):
         business_rules.QA2(association.transaction).validate(association)
 
 
-@pytest.mark.skip(reason="Needs clarification")
-def test_QA3():
+@pytest.mark.parametrize(
+    "main_volume, main_unit, sub_volume, sub_unit, expect_error",
+    [
+        (1.0, "KGM", 1.0, "KGM", False),
+        (1.0, "KGM", 0.0, "KGM", False),
+        (2.0, "KGM", 1.0, "KGM", False),
+        (1.0, "KGM", 2.0, "KGM", True),
+        (1.0, "KGM", 1.0, "DTN", True),
+        (1.0, "DTN", 1.0, "DTN", False),
+    ],
+)
+def test_QA3(main_volume, main_unit, sub_volume, sub_unit, expect_error):
     """When converted to the measurement unit of the main quota, the volume of a
     sub-quota must always be lower than or equal to the volume of the main
     quota."""
 
-    assert False
+    units = defaultdict(factories.MeasurementUnitFactory)
+
+    try:
+        assoc = factories.QuotaAssociationFactory(
+            main_quota__volume=main_volume,
+            main_quota__measurement_unit=units[main_unit],
+            sub_quota__volume=sub_volume,
+            sub_quota__measurement_unit=units[sub_unit],
+        )
+        business_rules.QA3(assoc.transaction).validate(assoc)
+
+    except BusinessRuleViolation:
+        if not expect_error:
+            raise
+
+    else:
+        if expect_error:
+            pytest.fail("Did not raise BusinessRuleViolation")
 
 
 @pytest.mark.parametrize(
