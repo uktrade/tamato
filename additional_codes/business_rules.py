@@ -8,6 +8,7 @@ from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import ValidityPeriodContains
 
 
 class CT1(UniqueIdentifyingFields):
@@ -59,25 +60,12 @@ class ACN4(NoOverlapping):
     )
 
 
-class ACN13(BusinessRule):
+class ACN13(ValidityPeriodContains):
     """When an additional code is used in an additional code nomenclature
     measure then the validity period of the additional code must span the
     validity period of the measure."""
 
-    def validate(self, additional_code):
-        Measure = additional_code.measure_set.model
-        if (
-            Measure.objects.filter(
-                additional_code__sid=additional_code.sid,
-            )
-            .with_effective_valid_between()
-            .approved_up_to_transaction(additional_code.transaction)
-            .exclude(
-                db_effective_valid_between__contained_by=additional_code.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(additional_code)
+    contained_field_name = "measure"
 
 
 class ACN17(ValidityPeriodContained):

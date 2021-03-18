@@ -11,6 +11,7 @@ from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import ValidityPeriodContains
 from common.business_rules import only_applicable_after
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
@@ -61,11 +62,11 @@ class MT1(UniqueIdentifyingFields):
     """The measure type code must be unique."""
 
 
-class MT3(MeasureValidityPeriodContained):
+class MT3(ValidityPeriodContains):
     """When a measure type is used in a measure then the validity period of the
     measure type must span the validity period of the measure."""
 
-    container_field_name = "measure_type"
+    contained_field_name = "measure"
 
 
 class MT4(MustExist):

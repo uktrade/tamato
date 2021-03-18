@@ -78,13 +78,6 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
         business_rules.ME51,
         business_rules.ME63,
     )
-    business_rules = (
-        business_rules.MT1,
-        business_rules.MT3,
-        business_rules.MT4,
-        business_rules.MT7,
-        business_rules.MT10,
-    )
 
 
 class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
@@ -263,6 +256,13 @@ class MeasureType(TrackedModel, ValidityMixin):
         business_rules.ME1,
         business_rules.ME10,
         business_rules.ME88,
+    )
+    business_rules = (
+        business_rules.MT1,
+        business_rules.MT3,
+        business_rules.MT4,
+        business_rules.MT7,
+        business_rules.MT10,
     )
 
     def in_use(self):
@@ -515,6 +515,8 @@ class Measure(TrackedModel, ValidityMixin):
 
     objects = PolymorphicManager.from_queryset(MeasuresQuerySet)()
 
+    validity_field_name = "db_effective_valid_between"
+
     @property
     def effective_end_date(self):
         """Measure end dates may be overridden by regulations."""
@@ -550,6 +552,10 @@ class Measure(TrackedModel, ValidityMixin):
     @property
     def effective_valid_between(self):
         return TaricDateRange(self.valid_between.lower, self.effective_end_date)
+
+    @classmethod
+    def objects_with_validity_field(cls):
+        return super().objects_with_validity_field().with_effective_valid_between()
 
     def has_components(self):
         return (
