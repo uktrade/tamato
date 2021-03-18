@@ -188,7 +188,6 @@ class EnvelopeSerializer:
         newline: bool = False,
     ) -> None:
         self.output = output
-        self.transaction_counter = transaction_counter
         self.message_counter = message_counter
         self.envelope_id = envelope_id
         self.envelope_size = 0
@@ -240,7 +239,11 @@ class EnvelopeSerializer:
             context={"envelope_id": self.envelope_id},
         )
 
-    def render_envelope_body(self, models: List[TrackedModel]) -> str:
+    def render_envelope_body(
+        self,
+        models: List[TrackedModel],
+        transaction_id: int,
+    ) -> str:
         return render_to_string(
             template_name="workbaskets/taric/transaction.xml",
             context={
@@ -250,7 +253,7 @@ class EnvelopeSerializer:
                     read_only=True,
                     context={"format": self.format},
                 ).data,
-                "transaction_id": self.transaction_counter(),
+                "transaction_id": transaction_id,
                 "counter_generator": counter_generator,
                 "message_counter": self.message_counter,
             },
@@ -291,10 +294,14 @@ class EnvelopeSerializer:
     def is_envelope_full(self, object_size=0) -> bool:
         return not self.can_fit_one_envelope(self.envelope_size + object_size)
 
-    def render_transaction(self, models: List[TrackedModel]) -> None:
+    def render_transaction(
+        self,
+        models: List[TrackedModel],
+        transaction_id: int,
+    ) -> None:
         """Render TrackedModels, splitting to a new Envelope if over-size."""
         if models:
-            envelope_body = self.render_envelope_body(models)
+            envelope_body = self.render_envelope_body(models, transaction_id)
 
             if self.is_envelope_full(len(envelope_body.encode())):
                 self.write(self.render_envelope_end())
