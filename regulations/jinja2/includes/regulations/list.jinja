@@ -5,7 +5,6 @@
   {{ table_rows.append([
     {"html": create_link(object.get_url(), object.regulation_id), "classes": "govuk-!-font-weight-bold"},
     {"text": object.information_text if object.information_text else "-"},
-    {"text": create_link(object.url, object.public_identifier) if object.public_identifier else "-"},
     {"text": (object.regulation_group.group_id ~ ": " ~object.regulation_group.description) if object.regulation_group else "-"},
     {"text": "{:%d %b %Y}".format(object.valid_between.lower) if object.valid_between else "-"},
     {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
@@ -18,9 +17,8 @@
 {{ govukTable({
   "head": [
     {"text": "ID"},
-    {"text": "Information text"},
-    {"text": "Public Identifier"},
-    {"text": "Regulation group"},
+    {"text": "Title"},
+    {"text": "Group"},
     {"text": "Start date"},
     {"text": "End date"},
     {"text": "Status"},

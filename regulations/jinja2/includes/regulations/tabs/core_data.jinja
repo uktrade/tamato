@@ -1,3 +1,4 @@
+{% from 'macros/create_link.jinja' import create_link %}
 <div class="regulation__core-data">
 	<div class="regulation__core-data__content">
 		<h2 class="govuk-heading-l">Details</h2>
@@ -5,31 +6,31 @@
 		   govukSummaryList({
 			"rows": [
 			{
-				"key": {"text": "Internal identifier"},
+				"key": {"text": "Regulation ID"},
 				"value": {"text": object.regulation_id},
 				"actions": {"items": []}
 			},
 			{
-				"key": {"text": "Information text"},
+				"key": {"text": "Regulation Group"},
+				"value": {"text": (object.regulation_group.group_id ~ ": " ~object.regulation_group.description) if object.regulation_group else "-"},
+				"actions": {"items": []}
+			},
+			{
+				"key": {"text": "Title"},
 				"value": {"text": object.information_text if object.information_text else "-"},
 				"actions": {"items": []}
 			},
 			{
 				"key": {"text": "Public-facing identifier"},
-				"value": {"html": ("<a href=\"" ~ object.url ~ "\">" ~ object.public_identifier ~ "</a>") if object.public_identifier else "-"},
+				"value": {"html": create_link(object.url, object.public_identifier) if object.public_identifier else "-"},
 				"actions": {"items": []}
 			},
 
             {
               "key": {"text": "URL"},
-              "value": {"text": object.url or "-"},
+              "value": {"html": create_link(object.url, object.url) if object.url else "-"},
               "actions": {"items": []}
             },
-			{
-				"key": {"text": "Regulation group"},
-				"value": {"text": (object.regulation_group.group_id ~ ": " ~object.regulation_group.description) if object.regulation_group else "-"},
-				"actions": {"items": []}
-			},
 			{
 				"key": {"text": "Start date"},
 				"value": {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
