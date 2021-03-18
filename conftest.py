@@ -460,6 +460,25 @@ def s3():
 
 
 @pytest.fixture
+def s3_bucket_names(s3):
+    def run():
+        return [bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]]
+
+    return run
+
+
+@pytest.fixture
+def s3_object_names(s3):
+    def run(bucket_name):
+        return [
+            contents["Key"]
+            for contents in s3.list_objects(Bucket=bucket_name)["Contents"]
+        ]
+
+    return run
+
+
+@pytest.fixture
 def s3_object_exists(s3):
     """Provide a function to verify that a particular object exists in an
     expected bucket."""

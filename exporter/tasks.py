@@ -8,6 +8,7 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
+from botocore.exceptions import ConnectionError
 from celery import shared_task
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -69,6 +70,7 @@ def upload_and_create_envelopes(
         rendered_envelope.output.seek(0, os.SEEK_SET)
         upload.checksum = md5(rendered_envelope.output.read()).hexdigest()
 
+        # --- possibly error here... <- inject error and see what happens :)
         upload.file.save(upload.filename, content_file)
         if settings.EXPORTER_DISABLE_NOTIFICATION:
             logger.info("HMRC notification disabled.")
@@ -84,9 +86,16 @@ def upload_and_create_envelopes(
     return user_messages
 
 
-@shared_task
+@shared_task(
+    bind=True,
+    default_retry_delay=settings.EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY,
+    max_retries=settings.EXPORTER_UPLOAD_MAX_RETRIES,
+    retry_backoff=True,
+    retry_backoff_max=settings.EXPORTER_UPLOAD_RETRY_BACKOFF_MAX,
+    retry_jitter=True,
+)
 @atomic
-def upload_workbaskets() -> Tuple[bool, Optional[Dict[Union[str, None], str]]]:
+def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]]]:
     """
     Upload workbaskets.
 
@@ -133,10 +142,23 @@ def upload_workbaskets() -> Tuple[bool, Optional[Dict[Union[str, None], str]]]:
             return False, error_messages
 
         # Transactions envelopes are all valid, and ready for upload.
-        user_messages = upload_and_create_envelopes(
-            workbaskets,
-            rendered_envelopes,
-            first_envelope_id,
-        )
-
-        return True, user_messages
+        try:
+            user_messages = upload_and_create_envelopes(
+                workbaskets,
+                rendered_envelopes,
+                first_envelope_id,
+            )
+        except ConnectionError as e:
+            # Connection issues may happen, so retry here.
+            if settings.EXPORTER_UPLOAD_MAX_RETRIES:
+                logger.info(
+                    "%s uploading attempting to upload envelope. endpoint: %s error: %s",
+                    type(e),
+                    e.kwargs.get("endpoint_url"),
+                    e.kwargs.get("error"),
+                )
+                self.retry(throw=False)
+            else:
+                raise
+        else:
+            return True, user_messages

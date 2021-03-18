@@ -239,6 +239,18 @@ NURSERY_CACHE_ENGINE = os.getenv(
     "importer.cache.memory.MemoryCacheEngine",
 )
 
+# Settings about retrying uploads if the bucket or endpoint cannot be contacted.
+# Names correspond to celery settings for retrying tasks:
+#   https://docs.celeryproject.org/en/master/userguide/tasks.html#automatic-retry-for-known-exceptions
+EXPORTER_UPLOAD_MAX_RETRIES = int(os.environ.get("EXPORTER_UPLOAD_MAX_RETRIES", "3"))
+EXPORTER_UPLOAD_RETRY_BACKOFF_MAX = int(
+    os.environ.get("EXPORTER_UPLOAD_RETRY_BACKOFF_MAX", "600"),
+)
+EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY = int(
+    os.environ.get("EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY", "8"),
+)
+
+
 EXPORTER_MAXIMUM_ENVELOPE_SIZE = 39 * 1024 * 1024
 EXPORTER_DISABLE_NOTIFICATION = is_truthy(
     os.environ.get("EXPORTER_DISABLE_NOTIFICATION", "false"),
