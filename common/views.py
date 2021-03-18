@@ -1,4 +1,5 @@
 import time
+from typing import Type
 
 import django.contrib.auth.views
 from django.conf import settings
@@ -7,7 +8,6 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import OperationalError
 from django.db import connection
-from django.db import models
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -16,6 +16,7 @@ from django.views import generic
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
@@ -150,7 +151,7 @@ class TamatoListView(WithCurrentWorkBasket, WithPaginationListView):
 class TrackedModelDetailMixin:
     """Allows detail URLs to use <Identifying-Fields> instead of <pk>"""
 
-    model: type[models.Model]
+    model: Type[TrackedModel]
     required_url_kwargs = None
 
     def get_object(self, queryset=None):
