@@ -252,11 +252,13 @@ class GA20(BusinessRule):
     area group."""
 
     def validate(self, membership):
+        if not membership.geo_group.parent:
+            return
+
         parent = membership.geo_group.parent_current
 
         if (
-            parent
-            and parent.members.filter(
+            parent.members.filter(
                 member__sid=membership.member.sid,
             )
             .approved_up_to_transaction(membership.transaction)
