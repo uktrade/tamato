@@ -2,7 +2,6 @@
 import logging
 from datetime import date
 from datetime import datetime
-from functools import wraps
 from typing import Iterable
 from typing import Mapping
 from typing import Optional
@@ -147,23 +146,15 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
         cutoff = cutoff.date()
 
     def decorator(cls):
-        @wraps(cls)
-        def decorated(*args, **kwargs):
-            instance = cls(*args, **kwargs)
-            validate = instance.validate
-
-            @wraps(validate)
-            def validate_if_applicable(model):
+        class OnlyApplicableAfter(cls):
+            def validate(self, model):
                 if model.valid_between.lower > cutoff:
-                    validate(model)
+                    super().validate(model)
                 else:
                     log.debug("Skipping %s: Start date before cutoff", cls.__name__)
 
-            instance.validate = validate_if_applicable
-
-            return instance
-
-        return decorated
+        OnlyApplicableAfter.__name__ = cls.__name__
+        return OnlyApplicableAfter
 
     return decorator
 
@@ -224,8 +215,9 @@ class PreventDeleteIfInUse(BusinessRule):
 
 
 class ValidityPeriodContained(BusinessRule):
-    """Rule enforcing validity period is contained by a dependency's validity
-    period."""
+    """Rule enforcing validity period of a contained object (found through the
+    ``contained_field_name``) is contained by a container object's validity
+    period (found through the ``container_field_name``)."""
 
     container_field_name: Optional[str] = None
     contained_field_name: Optional[str] = None
@@ -259,6 +251,42 @@ class ValidityPeriodContained(BusinessRule):
             return
 
         self.query_contains_validity(container, contained, model)
+
+
+class ValidityPeriodContains(BusinessRule):
+    """Rule enforcing validity period of this object contains a contained
+    object's validity period (found through the ``contained_field_name``)."""
+
+    contained_field_name: str
+
+    def validate(self, model):
+        contained_model = model
+        relation_path = []
+        for step in self.contained_field_name.split("__"):
+            relation = {
+                **contained_model._meta.fields_map,
+                **contained_model._meta._forward_fields_map,
+            }[step]
+            contained_model = relation.related_model
+            relation_path.append(relation.remote_field.name)
+
+        if (
+            contained_model.objects_with_validity_field()
+            .filter(
+                **{
+                    f"{'__'.join(reversed(relation_path))}__{field}": value
+                    for (field, value) in model.get_identifying_fields().items()
+                }
+            )
+            .approved_up_to_transaction(model.transaction)
+            .exclude(
+                **{
+                    f"{contained_model.validity_field_name}__contained_by": model.valid_between,
+                },
+            )
+            .exists()
+        ):
+            raise self.violation(model)
 
 
 class MustExist(BusinessRule):
