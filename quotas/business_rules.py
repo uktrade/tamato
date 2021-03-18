@@ -271,9 +271,27 @@ class QA2(ValidityPeriodContained):
 
 
 class QA3(BusinessRule):
-    """When converted to the measurement unit of the main quota, the volume of a
+    """
+    When converted to the measurement unit of the main quota, the volume of a
     sub-quota must always be lower than or equal to the volume of the main
-    quota."""
+    quota.
+
+    (The wording of this rule implies that quotas with different units can be
+    linked together and there is no business rule that prevents this from
+    happening. However, historically there have been no quotas where the units
+    have been different and we should maintain this going forward as the system
+    has no conversion ratios or other way of relating units to each other.)
+    """
+
+    def validate(self, association):
+        main = association.main_quota
+        sub = association.sub_quota
+        if not (
+            sub.measurement_unit == main.measurement_unit
+            and sub.volume <= main.volume
+            and sub.initial_volume <= main.initial_volume
+        ):
+            raise self.violation(association)
 
 
 class QA4(BusinessRule):
