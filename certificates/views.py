@@ -1,4 +1,5 @@
 from typing import Optional
+from typing import Type
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import models
@@ -11,6 +12,7 @@ from certificates.models import Certificate
 from certificates.models import CertificateType
 from certificates.serializers import CertificateSerializer
 from certificates.serializers import CertificateTypeSerializer
+from common.models import TrackedModel
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -36,7 +38,7 @@ class CertificateTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CertificateMixin:
-    model: type[models.Model] = Certificate
+    model: Type[TrackedModel] = Certificate
 
     def get_queryset(self):
         return Certificate.objects.approved_up_to_transaction(
