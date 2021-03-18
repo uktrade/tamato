@@ -8,6 +8,7 @@ from common.business_rules import MustExist
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
+from common.business_rules import ValidityPeriodContains
 from common.business_rules import only_applicable_after
 from geo_areas.validators import AreaCode
 
@@ -125,24 +126,12 @@ class GA7(NoOverlapping):
     identifying_fields = ("area_id",)
 
 
-class GA10(BusinessRule):
+class GA10(ValidityPeriodContains):
     """When a geographical area is referenced in a measure then the validity
     period of the geographical area must span the validity period of the
     measure."""
 
-    def validate(self, geo_area):
-        if (
-            geo_area.measures.model.objects.filter(
-                geographical_area__sid=geo_area.sid,
-            )
-            .approved_up_to_transaction(geo_area.transaction)
-            .with_effective_valid_between()
-            .exclude(
-                db_effective_valid_between__contained_by=geo_area.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(geo_area)
+    contained_field_name = "measures"
 
 
 class GA11(BusinessRule):

@@ -32,5 +32,22 @@ class ValidityMixin(models.Model):
 
     valid_between = TaricDateRangeField(db_index=True)
 
+    validity_field_name: str = "valid_between"
+    """The name of the field that should be used for validity date checking."""
+
+    @classmethod
+    def objects_with_validity_field(cls):
+        """
+        Returns a QuerySet which will have this model's validity date field (as
+        specified by :attr:`validity_field_name`) present on the returned
+        models.
+
+        The need for this is that some models (e.g.
+        :class:`~measures.models.Measure`) use a validity date that is computed
+        on demand as part of a database query and hence is not present on the
+        default queryset.
+        """
+        return cls.objects
+
     class Meta:
         abstract = True

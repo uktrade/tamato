@@ -570,8 +570,6 @@ class TrackedModel(PolymorphicModel):
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
 
-        identifying_fields = identifying_fields or self.identifying_fields
-
         for field in identifying_fields:
             value = self
             for layer in field.split("__"):

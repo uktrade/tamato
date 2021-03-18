@@ -6,6 +6,7 @@ from common.business_rules import BusinessRule
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import ValidityPeriodContains
 from common.business_rules import only_applicable_after
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
@@ -105,44 +106,20 @@ class ON8(ON7):
 
 
 @only_applicable_after("2007-12-31")
-class ON9(BusinessRule):
+class ON9(ValidityPeriodContains):
     """When a quota order number is used in a measure then the validity period
     of the quota order number must span the validity period of the measure."""
 
-    def validate(self, order_number):
-        if (
-            order_number.measure_set.model.objects.filter(
-                order_number__sid=order_number.sid,
-            )
-            .with_effective_valid_between()
-            .exclude(
-                db_effective_valid_between__contained_by=order_number.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(order_number)
+    contained_field_name = "measure"
 
 
 @only_applicable_after("2007-12-31")
-class ON10(BusinessRule):
+class ON10(ValidityPeriodContains):
     """When a quota order number is used in a measure then the validity period
     of the quota order number origin must span the validity period of the
     measure."""
 
-    def validate(self, origin):
-        # XXX should this take a QuotaOrderNumber and check all related
-        # QuotaOrderNumberOrigins?
-        if (
-            origin.order_number.measure_set.model.objects.filter(
-                order_number__sid=origin.order_number.sid,
-            )
-            .with_effective_valid_between()
-            .exclude(
-                db_effective_valid_between__contained_by=origin.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(origin)
+    contained_field_name = "order_number__measure"
 
 
 @only_applicable_after("2007-12-31")

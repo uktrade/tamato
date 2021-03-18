@@ -4,6 +4,7 @@ from common.business_rules import DescriptionsRules
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import ValidityPeriodContains
 from common.models import TrackedModel
 
 
@@ -21,27 +22,11 @@ class CE2(UniqueIdentifyingFields):
     identifying_fields = ("sid", "certificate_type")
 
 
-class CE4(BusinessRule):
+class CE4(ValidityPeriodContains):
     """If a certificate is used in a measure condition then the validity periods
     of the certificate must span the validity period of the measure."""
 
-    def validate(self, certificate):
-        Measure = (
-            certificate.measurecondition_set.model.dependent_measure.field.related_model
-        )
-        if (
-            Measure.objects.approved_up_to_transaction(certificate.transaction)
-            .with_effective_valid_between()
-            .filter(
-                conditions__required_certificate__sid=certificate.sid,
-                conditions__required_certificate__certificate_type=certificate.certificate_type,
-            )
-            .exclude(
-                db_effective_valid_between__contained_by=certificate.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(certificate)
+    contained_field_name = "measurecondition__dependent_measure"
 
 
 class CE5(PreventDeleteIfInUse):

@@ -78,7 +78,7 @@ def test_MT3(date_ranges):
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.MT3(measure.transaction).validate(measure)
+        business_rules.MT3(measure.transaction).validate(measure.measure_type)
 
 
 def test_MT4(reference_nonexistent_record):
