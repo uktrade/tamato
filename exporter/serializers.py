@@ -74,7 +74,7 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
                 #
                 continue
 
-            envelope_body = self.render_envelope_body(tracked_models)
+            envelope_body = self.render_envelope_body(tracked_models, transaction.order)
             envelope_body_size = len(envelope_body.encode())
             if self.is_envelope_full(envelope_body_size):
                 oversize = not self.can_fit_one_envelope(

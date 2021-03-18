@@ -79,7 +79,10 @@ def test_envelope_serializer_outputs_expected_items(approved_workbasket):
 
     output = io.BytesIO()
     with EnvelopeSerializer(output, random.randint(2, 9999)) as env:
-        env.render_transaction(approved_workbasket.tracked_models.all())
+        env.render_transaction(
+            models=approved_workbasket.tracked_models.all(),
+            transaction_id=tx.order,
+        )
 
     output_xml = etree.XML(output.getvalue())
     output_record_codes = {*taric_xml_record_codes(output_xml)}
