@@ -345,7 +345,9 @@ LOGGING = {
 
 # -- Sentry error tracking
 
-if os.environ.get("SENTRY_DSN"):
+SENTRY_ENABLED = is_truthy(os.environ.get("SENTRY_DSN", "False"))
+
+if SENTRY_ENABLED:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.redis import RedisIntegration
