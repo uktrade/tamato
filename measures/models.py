@@ -1,7 +1,6 @@
 from datetime import date
 
 from django.db import models
-from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
 
 from common.fields import ApplicabilityCode
@@ -573,14 +572,6 @@ class Measure(TrackedModel, ValidityMixin):
             )
             .filter(condition__dependent_measure__sid=self.sid)
             .exists()
-        )
-
-    def get_url(self, action="detail"):
-        return reverse(
-            f"measure-ui-{action}",
-            kwargs={
-                "sid": self.sid,
-            },
         )
 
     def get_conditions(self):
