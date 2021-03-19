@@ -51,6 +51,7 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">TaricDateRange</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
@@ -101,11 +102,11 @@
     <span class="sd">&quot;&quot;&quot;The measure type code must be unique.&quot;&quot;&quot;</span></div>
 
 
-<div class="viewcode-block" id="MT3"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.MT3">[docs]</a><span class="k">class</span> <span class="nc">MT3</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+<div class="viewcode-block" id="MT3"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.MT3">[docs]</a><span class="k">class</span> <span class="nc">MT3</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a measure type is used in a measure then the validity period of the</span>
 <span class="sd">    measure type must span the validity period of the measure.&quot;&quot;&quot;</span>
 
-    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure_type&quot;</span></div>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span></div>
 
 
 <div class="viewcode-block" id="MT4"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.MT4">[docs]</a><span class="k">class</span> <span class="nc">MT4</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>

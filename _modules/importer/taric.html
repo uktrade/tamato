@@ -49,6 +49,7 @@
 
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">IntegrityError</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
 <span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
@@ -56,8 +57,8 @@
 <span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
-<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">nsmap</span>
 <span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">Tag</span>
+<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">nsmap</span>
 <span class="kn">from</span> <span class="nn">importer.nursery</span> <span class="kn">import</span> <span class="n">get_nursery</span>
 <span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ElementParser</span>
 <span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ParserError</span>
@@ -66,6 +67,9 @@
 <span class="kn">from</span> <span class="nn">taric.models</span> <span class="kn">import</span> <span class="n">EnvelopeTransaction</span>
 <span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">WorkBasket</span>
 <span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
+
+<span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">SENTRY_ENABLED</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">sentry_sdk</span> <span class="kn">import</span> <span class="n">capture_exception</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -164,7 +168,14 @@
 
         <span class="k">for</span> <span class="n">message_data</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">message_data</span><span class="p">,</span> <span class="n">transaction</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">workbasket</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span></div>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">transaction</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">messages</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">SENTRY_ENABLED</span><span class="p">:</span>
+                <span class="n">capture_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>

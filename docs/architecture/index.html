@@ -117,6 +117,24 @@ validity end date is blank (<code class="xref py py-attr docutils literal notran
 is live indefinitely after the start date.</p>
 <p>Validity dates can be modified with a new version of a model, so a model
 that initially has a blank end date can be updated to subsequently add one.</p>
+<dl class="py method">
+<dt id="common.models.mixins.ValidityMixin.objects_with_validity_field">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">objects_with_validity_field</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins.html#ValidityMixin.objects_with_validity_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.ValidityMixin.objects_with_validity_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a QuerySet which will have this model’s validity date field (as
+specified by <a class="reference internal" href="#common.models.mixins.ValidityMixin.validity_field_name" title="common.models.mixins.ValidityMixin.validity_field_name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_field_name</span></code></a>) present on the returned
+models.</p>
+<p>The need for this is that some models (e.g.
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Measure</span></code>) use a validity date that is computed
+on demand as part of a database query and hence is not present on the
+default queryset.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="common.models.mixins.ValidityMixin.validity_field_name">
+<code class="sig-name descname"><span class="pre">validity_field_name</span></code><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><em class="property"> <span class="pre">=</span> <span class="pre">'valid_between'</span></em><a class="headerlink" href="#common.models.mixins.ValidityMixin.validity_field_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the field that should be used for validity date checking.</p>
+</dd></dl>
+
 </dd></dl>
 
 <p>Description models have a requirement that there must always be one live

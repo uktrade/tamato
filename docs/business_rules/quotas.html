@@ -259,12 +259,28 @@ validity period of the main quota.</p>
 <dd><p>When converted to the measurement unit of the main quota, the volume of a
 sub-quota must always be lower than or equal to the volume of the main
 quota.</p>
+<p>(The wording of this rule implies that quotas with different units can be
+linked together and there is no business rule that prevents this from
+happening. However, historically there have been no quotas where the units
+have been different and we should maintain this going forward as the system
+has no conversion ratios or other way of relating units to each other.)</p>
 <dl class="py exception">
 <dt id="quotas.business_rules.QA3.Violation">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.QA3.Violation" title="Permalink to this definition">¶</a></dt>
 <dd><p>When converted to the measurement unit of the main quota, the volume of a
 sub-quota must always be lower than or equal to the volume of the main
 quota.</p>
+<p>(The wording of this rule implies that quotas with different units can be
+linked together and there is no business rule that prevents this from
+happening. However, historically there have been no quotas where the units
+have been different and we should maintain this going forward as the system
+has no conversion ratios or other way of relating units to each other.)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="quotas.business_rules.QA3.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/quotas/business_rules.html#QA3.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA3.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
 </dd></dl>
 
 </dd></dl>

@@ -72,6 +72,23 @@
 
     <span class="n">valid_between</span> <span class="o">=</span> <span class="n">TaricDateRangeField</span><span class="p">(</span><span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+    <span class="n">validity_field_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;valid_between&quot;</span>
+    <span class="sd">&quot;&quot;&quot;The name of the field that should be used for validity date checking.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ValidityMixin.objects_with_validity_field"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.mixins.ValidityMixin.objects_with_validity_field">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">objects_with_validity_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a QuerySet which will have this model&#39;s validity date field (as</span>
+<span class="sd">        specified by :attr:`validity_field_name`) present on the returned</span>
+<span class="sd">        models.</span>
+
+<span class="sd">        The need for this is that some models (e.g.</span>
+<span class="sd">        :class:`~measures.models.Measure`) use a validity date that is computed</span>
+<span class="sd">        on demand as part of a database query and hence is not present on the</span>
+<span class="sd">        default queryset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span></div>
+
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div>
 </pre></div>

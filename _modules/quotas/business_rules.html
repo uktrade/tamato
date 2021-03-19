@@ -46,6 +46,7 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
@@ -145,44 +146,20 @@
 
 
 <span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ON9</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ON9</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number must span the validity period of the measure.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">order_number</span><span class="o">.</span><span class="n">measure_set</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">order_number__sid</span><span class="o">=</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-                <span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">order_number</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">order_number</span><span class="p">)</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span>
 
 
 <span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ON10</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ON10</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number origin must span the validity period of the</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
-        <span class="c1"># XXX should this take a QuotaOrderNumber and check all related</span>
-        <span class="c1"># QuotaOrderNumberOrigins?</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">origin</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">measure_set</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">order_number__sid</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-                <span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number__measure&quot;</span>
 
 
 <span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
@@ -311,9 +288,27 @@
 
 
 <div class="viewcode-block" id="QA3"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA3">[docs]</a><span class="k">class</span> <span class="nc">QA3</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When converted to the measurement unit of the main quota, the volume of a</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    When converted to the measurement unit of the main quota, the volume of a</span>
 <span class="sd">    sub-quota must always be lower than or equal to the volume of the main</span>
-<span class="sd">    quota.&quot;&quot;&quot;</span></div>
+<span class="sd">    quota.</span>
+
+<span class="sd">    (The wording of this rule implies that quotas with different units can be</span>
+<span class="sd">    linked together and there is no business rule that prevents this from</span>
+<span class="sd">    happening. However, historically there have been no quotas where the units</span>
+<span class="sd">    have been different and we should maintain this going forward as the system</span>
+<span class="sd">    has no conversion ratios or other way of relating units to each other.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QA3.validate"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA3.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="n">main</span> <span class="o">=</span> <span class="n">association</span><span class="o">.</span><span class="n">main_quota</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">association</span><span class="o">.</span><span class="n">sub_quota</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">sub</span><span class="o">.</span><span class="n">measurement_unit</span> <span class="o">==</span> <span class="n">main</span><span class="o">.</span><span class="n">measurement_unit</span>
+            <span class="ow">and</span> <span class="n">sub</span><span class="o">.</span><span class="n">volume</span> <span class="o">&lt;=</span> <span class="n">main</span><span class="o">.</span><span class="n">volume</span>
+            <span class="ow">and</span> <span class="n">sub</span><span class="o">.</span><span class="n">initial_volume</span> <span class="o">&lt;=</span> <span class="n">main</span><span class="o">.</span><span class="n">initial_volume</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="QA4"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QA4">[docs]</a><span class="k">class</span> <span class="nc">QA4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>

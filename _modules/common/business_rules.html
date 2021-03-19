@@ -42,7 +42,6 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
@@ -187,23 +186,15 @@
         <span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="nd">@wraps</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="n">validate</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">validate</span>
-
-            <span class="nd">@wraps</span><span class="p">(</span><span class="n">validate</span><span class="p">)</span>
-            <span class="k">def</span> <span class="nf">validate_if_applicable</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="k">class</span> <span class="nc">OnlyApplicableAfter</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">:</span>
-                    <span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: Start date before cutoff&quot;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 
-            <span class="n">instance</span><span class="o">.</span><span class="n">validate</span> <span class="o">=</span> <span class="n">validate_if_applicable</span>
-
-            <span class="k">return</span> <span class="n">instance</span>
-
-        <span class="k">return</span> <span class="n">decorated</span>
+        <span class="n">OnlyApplicableAfter</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="n">OnlyApplicableAfter</span>
 
     <span class="k">return</span> <span class="n">decorator</span>
 
@@ -264,8 +255,9 @@
 
 
 <div class="viewcode-block" id="ValidityPeriodContained"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.ValidityPeriodContained">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodContained</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Rule enforcing validity period is contained by a dependency&#39;s validity</span>
-<span class="sd">    period.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Rule enforcing validity period of a contained object (found through the</span>
+<span class="sd">    ``contained_field_name``) is contained by a container object&#39;s validity</span>
+<span class="sd">    period (found through the ``container_field_name``).&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">contained_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -291,7 +283,7 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">container</span><span class="p">:</span>
             <span class="c1"># TODO should this raise an exception?</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
                 <span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: Container field </span><span class="si">%s</span><span class="s2"> not found.&quot;</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">container_field_name</span><span class="p">,</span>
@@ -299,6 +291,42 @@
             <span class="k">return</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">query_contains_validity</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="n">contained</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ValidityPeriodContains"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.ValidityPeriodContains">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodContains</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Rule enforcing validity period of this object contains a contained</span>
+<span class="sd">    object&#39;s validity period (found through the ``contained_field_name``).&quot;&quot;&quot;</span>
+
+    <span class="n">contained_field_name</span><span class="p">:</span> <span class="nb">str</span>
+
+<div class="viewcode-block" id="ValidityPeriodContains.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.ValidityPeriodContains.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="n">contained_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">relation_path</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
+            <span class="n">relation</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="o">**</span><span class="n">contained_model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">fields_map</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">contained_model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">_forward_fields_map</span><span class="p">,</span>
+            <span class="p">}[</span><span class="n">step</span><span class="p">]</span>
+            <span class="n">contained_model</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">related_model</span>
+            <span class="n">relation_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relation</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">contained_model</span><span class="o">.</span><span class="n">objects_with_validity_field</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;__&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">relation_path</span><span class="p">))</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">value</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contained_model</span><span class="o">.</span><span class="n">validity_field_name</span><span class="si">}</span><span class="s2">__contained_by&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="MustExist"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.MustExist">[docs]</a><span class="k">class</span> <span class="nc">MustExist</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
