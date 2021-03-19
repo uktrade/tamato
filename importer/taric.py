@@ -28,6 +28,9 @@ from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
+if settings.SENTRY_ENABLED:
+    from sentry_sdk import capture_exception
+
 logger = logging.getLogger(__name__)
 
 now = time.time()
@@ -131,6 +134,8 @@ class TransactionParser(ElementParser):
         except ValidationError as e:
             for message in e.messages:
                 logger.error(message)
+            if settings.SENTRY_ENABLED:
+                capture_exception(e)
 
     def end(self, element: etree.Element):
         super().end(element)
