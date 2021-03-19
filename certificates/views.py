@@ -41,9 +41,14 @@ class CertificateMixin:
     model: Type[TrackedModel] = Certificate
 
     def get_queryset(self):
-        return Certificate.objects.approved_up_to_transaction(
-            WorkBasket.current(self.request).transactions.order_by("order").last(),
-        ).select_related("certificate_type")
+        workbasket = WorkBasket.current(self.request)
+        tx = None
+        if workbasket:
+            tx = workbasket.transactions.order_by("order").last()
+
+        return Certificate.objects.approved_up_to_transaction(tx).select_related(
+            "certificate_type",
+        )
 
 
 class CertificatesList(CertificateMixin, TamatoListView):
