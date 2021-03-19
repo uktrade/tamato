@@ -9,6 +9,8 @@ api_router = routers.DefaultRouter()
 api_router.register(r"additional_codes", views.AdditionalCodeViewSet)
 api_router.register(r"additional_code_types", views.AdditionalCodeTypeViewSet)
 
+detail = r"^(?P<sid>\d*)"
+
 ui_patterns = [
     path(
         "",
@@ -16,9 +18,19 @@ ui_patterns = [
         name="additional_code-ui-list",
     ),
     re_path(
-        r"^(?P<sid>\d*)$",
+        fr"{detail}/$",
         views.AdditionalCodeDetail.as_view(),
         name="additional_code-ui-detail",
+    ),
+    re_path(
+        fr"{detail}/edit/$",
+        views.AdditionalCodeUpdate.as_view(),
+        name="additional_code-ui-edit",
+    ),
+    re_path(
+        fr"{detail}/confirm-update/$",
+        views.AdditionalCodeConfirmUpdate.as_view(),
+        name="additional_code-ui-confirm-update",
     ),
 ]
 

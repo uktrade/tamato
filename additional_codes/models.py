@@ -83,6 +83,9 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         business_rules.ACN17,
     )
 
+    def __str__(self):
+        return f"{self.type.sid}{self.code}"
+
     def in_use(self):
         return (
             self.measure_set.model.objects.filter(

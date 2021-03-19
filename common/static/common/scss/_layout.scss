@@ -27,6 +27,11 @@
   max-width: 1180px;
 }
 
+.app-related-items {
+  border-top: 2px solid #1d70b8;
+  padding-top: 10px;
+}
+
 .govuk-\!-width-one-eighth {
   width: 100% !important;
   @media (min-width: 20.0312em) {
@@ -48,4 +53,8 @@
 
 .form-group-margin-bottom-2 .govuk-form-group {
   @extend .govuk-\!-margin-bottom-2;
+}
+
+.govuk-list-spaced li {
+  @extend .govuk-\!-margin-bottom-4;
 }
