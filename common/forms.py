@@ -1,8 +1,15 @@
 from datetime import date
 
 from crispy_forms_gds.fields import DateInputField
+from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Submit
+from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
+
+from common.util import TaricDateRange
 
 
 class DateInputFieldFixed(DateInputField):
@@ -62,3 +69,44 @@ class GovukDateRangeField(DateRangeField):
         self.validate(out)
         self.run_validators(out)
         return out
+
+
+class DescriptionForm(forms.ModelForm):
+    start_date = DateInputFieldFixed(
+        label="Start date",
+    )
+
+    description = forms.CharField(
+        help_text="Edit or overwrite the existing description",
+    )
+
+    valid_between = GovukDateRangeField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance.valid_between.lower:
+            self.fields["start_date"].initial = self.instance.valid_between.lower
+        if self.instance.valid_between.upper:
+            self.fields["end_date"].initial = self.instance.valid_between.upper
+
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            Field("start_date", context={"legend_size": "govuk-label--s"}),
+            Field("description", context={"legend_size": "govuk-label--s"}),
+            Submit("submit", "Save"),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        start_date = cleaned_data.pop("start_date", None)
+        cleaned_data["valid_between"] = TaricDateRange(
+            start_date,
+            self.instance.valid_between.upper,
+        )
+
+        return cleaned_data
+
+    class Meta:
+        fields = ("description", "valid_between")

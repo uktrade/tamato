@@ -8,8 +8,10 @@ from rest_framework import viewsets
 
 from additional_codes.filters import AdditionalCodeFilter
 from additional_codes.filters import AdditionalCodeFilterBackend
+from additional_codes.forms import AdditionalCodeDescriptionForm
 from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
+from additional_codes.models import AdditionalCodeDescription
 from additional_codes.models import AdditionalCodeType
 from additional_codes.serializers import AdditionalCodeSerializer
 from additional_codes.serializers import AdditionalCodeTypeSerializer
@@ -61,6 +63,18 @@ class AdditionalCodeMixin:
         )
 
 
+class AdditionalCodeDescriptionMixin:
+    model: Type[TrackedModel] = AdditionalCodeDescription
+
+    def get_queryset(self):
+        workbasket = WorkBasket.current(self.request)
+        tx = None
+        if workbasket:
+            tx = workbasket.transactions.order_by("order").last()
+
+        return AdditionalCodeDescription.objects.approved_up_to_transaction(tx)
+
+
 class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
     """UI endpoint for viewing and filtering Additional Codes."""
 
@@ -97,6 +111,35 @@ class AdditionalCodeUpdate(
             )
 
         return obj
+
+
+class AdditionalCodeUpdateDescription(
+    PermissionRequiredMixin,
+    AdditionalCodeDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftUpdateView,
+):
+    form_class = AdditionalCodeDescriptionForm
+    permission_required = "common.change_trackedmodel"
+    template_name = "common/edit_description.jinja"
+
+    def get_object(self, queryset: Optional[models.QuerySet] = None) -> models.Model:
+        obj = super().get_object(queryset)
+
+        if self.request.method == "POST":
+            obj = obj.new_draft(
+                WorkBasket.current(self.request),
+                save=False,
+            )
+
+        return obj
+
+
+class AdditionalCodeDescriptionConfirmUpdate(
+    AdditionalCodeDescriptionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "common/confirm_update_description.jinja"
 
 
 class AdditionalCodeConfirmUpdate(AdditionalCodeMixin, TrackedModelDetailView):

@@ -1,9 +1,12 @@
 from django.db import models
+from django.urls import NoReverseMatch
+from django.urls import reverse
 
 from additional_codes import business_rules
 from additional_codes import validators
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
+from common.models import DescriptionMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from footnotes import business_rules as footnotes_business_rules
@@ -96,7 +99,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         )
 
 
-class AdditionalCodeDescription(TrackedModel, ValidityMixin):
+class AdditionalCodeDescription(TrackedModel, ValidityMixin, DescriptionMixin):
     """
     The additional code description contains the description of the additional
     code for a particular period.
@@ -129,6 +132,18 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin):
         return self.identifying_fields_to_string(
             identifying_fields=("described_additional_code", "valid_between"),
         )
+
+    def get_url(self, **kwargs):
+        try:
+            return reverse(
+                f"{self.get_url_pattern_name_prefix()}-ui-edit",
+                kwargs={
+                    "described_additional_code__sid": self.described_additional_code.sid,
+                    "description_period_sid": self.description_period_sid,
+                },
+            )
+        except NoReverseMatch:
+            return
 
     class Meta:
         ordering = ("valid_between",)
