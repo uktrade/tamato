@@ -1,32 +1,16 @@
 {% extends "layouts/form.jinja" %}
 
-{% set page_title = "Edit " ~ object._meta.verbose_name %}
+{% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
 
 {% block beforeContent %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
-      {"text": object._meta.verbose_name_plural|capitalize, "href": object.get_url("list")},
-      {"text": object._meta.verbose_name|capitalize ~ " " ~ object|string, "href": object.get_url()},
+      {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string, "href": object.get_url()},
       {"text": page_title}
     ]
   }) }}
-{% endblock %}
-
-{% block form_preamble %}
-  <p class="govuk-body">
-    Use this form to edit an existing {{ object._meta.verbose_name }}.
-  </p>
-  <p>
-  Workbasket:
-  {% with current_workbasket = get_current_workbasket(request) -%}
-    {% if current_workbasket -%}
-      <a href="{{ url("workbasket-ui-detail", args=[current_workbasket.id]) }}">{{ current_workbasket.title }}</a>
-    {%- else -%}
-      No current workbasket
-    {%- endif %}
-  {%- endwith %}
-  </p>
 {% endblock %}
 
 {% block form %}

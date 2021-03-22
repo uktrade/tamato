@@ -1,6 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 
 {% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
 
 {% set page_title = "Edit " ~ object._meta.verbose_name %}
 
@@ -8,24 +9,37 @@
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
-      {"text": object._meta.verbose_name_plural|capitalize, "href": object.get_url("list")},
-      {"text": object._meta.verbose_name|capitalize ~ " " ~ object|string, "href": object.get_url()},
+      {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string, "href": object.get_url()},
       {"text": page_title}
     ]
   }) }}
 {% endblock %}
 
 {% block content %}
-  {{ govukPanel({
-    "titleText": object._meta.verbose_name|capitalize ~ " " ~ object|string ~ " has been updated.",
-    "html": "This change has been added to your workbasket<br>" ~ request.session.workbasket.title
-  }) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Confirmation</span>
+      <h1 class="govuk-heading-xl">Edit {{object._meta.verbose_name}} details</h1>
+      
+      {{ govukPanel({
+        "titleText": object._meta.verbose_name|capitalize ~ " " ~ object|string ~ " has been updated.",
+        "text": "This change has been added to " ~ request.session.workbasket.title,
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
 
-  <h2 class="govuk-heading-m">Next steps</h2>
-  <ul class="govuk-list">
-    <li><a href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
-    <li><a href="{{ object.get_url("list") }}">Manage more {{ object._meta.verbose_name_plural }}</a></li>
-    <li><a href="{{ url("workbasket-ui-detail", args=[request.session.workbasket.id]) }}">View content of your workbasket</a></li>
-    <li><a href="{{ url("index") }}">Return to main menu</a></li>
-  </ul>
+      <h2 class="govuk-heading-m">Next steps</h2>
+      <p class="govuk-body">To complete your task you must export your change. </p>
+      {{ govukButton({
+        "text": "Go to " ~ request.session.workbasket.title,
+        "href": url("workbasket-ui-detail", args=[request.session.workbasket.id]),
+        "classes": "govuk-button--secondary"
+      }) }}
+      <ul class="govuk-list govuk-list-spaced">
+        <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
+        <li><a href="{{ object.get_url("list") }}">Manage more {{ object._meta.verbose_name_plural }}</a></li>
+        <li><a href="{{ url("index") }}">Return to main menu</a></li>
+      </ul>
+    </div>
+  </div>
 {% endblock %}

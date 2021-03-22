@@ -11,13 +11,6 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
-  {% with form_preamble = "" -%}
-    {% set form_preamble -%}
-      {% block form_preamble %}{% endblock %}
-    {%- endset -%}
-    {{ govukInsetText({"html": form_preamble}) }}
-  {%- endwith %}
-
   {% block form %}{% endblock %}
 {% endblock %}
 
