@@ -83,6 +83,18 @@
             <span class="n">workbasket__pk__in</span><span class="o">=</span><span class="n">Subquery</span><span class="p">(</span><span class="n">workbasket_pks</span><span class="p">),</span>
         <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">is_approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">status__in</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">approved_statuses</span><span class="p">(),</span>
+            <span class="n">approver__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_not_approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+            <span class="n">status__in</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">approved_statuses</span><span class="p">(),</span>
+            <span class="n">approver__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
 
 <div class="viewcode-block" id="WorkBasket"><a class="viewcode-back" href="../../docs/architecture/index.html#workbaskets.models.WorkBasket">[docs]</a><span class="k">class</span> <span class="nc">WorkBasket</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -163,9 +175,10 @@
         <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">READY_FOR_EXPORT</span><span class="p">,</span>
         <span class="n">permission</span><span class="o">=</span><span class="s2">&quot;workbaskets.can_approve&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">def</span> <span class="nf">approve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">approve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Once a workbasket has been approved all related Tracked Models must</span>
 <span class="sd">        be updated to the current versions of themselves.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approver</span> <span class="o">=</span> <span class="n">user</span>
         <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">):</span>
             <span class="n">version_group</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version_group</span>
             <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">obj</span>
