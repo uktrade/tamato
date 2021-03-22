@@ -67,7 +67,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-one-quarter">
       <h2 class="govuk-heading-m">Measures</h2>
-      <ul class="govuk-list"
+      <ul class="govuk-list">
         <li>
           <a class="govuk-link" href="{{ url('measure-ui-list') }}">
             Find and edit measures
@@ -77,7 +77,7 @@
     </div>
     <div class="govuk-grid-column-one-quarter">
       <h2 class="govuk-heading-m">Quotas</h2>
-      <ul class="govuk-list"
+      <ul class="govuk-list">
         <li>
           <a class="govuk-link" href="{{ url('quota-ui-list') }}">
             Find and edit quotas
@@ -87,7 +87,7 @@
     </div>
     <div class="govuk-grid-column-one-quarter">
       <h2 class="govuk-heading-m">Regulations</h2>
-      <ul class="govuk-list"
+      <ul class="govuk-list">
         <li>
           <a class="govuk-link" href="{{ url('regulation-ui-list') }}">
             Find and edit regulations
@@ -97,22 +97,5 @@
     </div>
   </div>
   <p class="govuk-body govuk-!-margin-bottom-9"></p>
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-      <h2 class="govuk-heading-m">Workbaskets</h2>
-      {% set workbaskets_notification %}
-        {% with num_workbaskets = workbaskets|length %}
-          {% if num_workbaskets > 0 %}
-            You have {{ num_workbaskets }} workbasket{{ pluralize(num_workbaskets) }}, listed below.
-          {% else %}
-            You are not working with any workbaskets at the moment.
-          {% endif %}
-        {% endwith %}
-      {% endset %}
-      {{ govukInsetText({
-        "text": workbaskets_notification
-      }) }}
-      {% include "includes/workbasket-list.jinja" %}
-    </div>
-  </div>
+    {% include "includes/workbaskets/workbasket-detail.jinja" %}
 {% endblock %}

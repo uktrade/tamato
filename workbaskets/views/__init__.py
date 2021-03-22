@@ -1,5 +1,9 @@
+from django.contrib.auth.decorators import permission_required
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.views.decorators.http import require_GET
 from django_filters import rest_framework as filters
 from rest_framework import renderers
 from rest_framework import viewsets
@@ -88,3 +92,20 @@ class WorkBasketUIViewSet(WorkBasketViewSet):
 
         request.session["workbasket"] = workbasket.to_json()
         return redirect(request.session.get("return_to", reverse("index")))
+
+
+@permission_required("workbaskets.change_workbasket")
+@require_GET
+@transaction.atomic
+def submit_workbasket_view(request, workbasket_pk):
+    workbasket = get_object_or_404(WorkBasket, pk=workbasket_pk)
+
+    workbasket.full_clean()
+
+    workbasket.submit_for_approval()
+    workbasket.approve(request.user)
+
+    workbasket.export_to_cds()
+    workbasket.save()
+
+    return redirect("index")

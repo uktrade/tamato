@@ -171,7 +171,7 @@ def validate_taric_xml(
             api_client.force_login(user=valid_user)
             response = api_client.get(
                 reverse(
-                    "workbasket-detail",
+                    "workbaskets:workbasket-detail",
                     kwargs={"pk": approved_transaction.workbasket.pk},
                 ),
                 {"format": "xml"},

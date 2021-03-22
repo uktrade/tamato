@@ -18,6 +18,7 @@ from django.db.models import When
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
 from django.template import loader
+from django.urls import NoReverseMatch
 from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
@@ -581,6 +582,22 @@ class TrackedModel(PolymorphicModel):
         return fields
 
     @property
+    def structure_code(self):
+        return str(self)
+
+    @property
+    def structure_description(self):
+        description = None
+        if hasattr(self, "descriptions"):
+            description = self.get_descriptions().last()
+            if description:
+                # Get the actual description, not just the object
+                description = description.description
+        if hasattr(self, "description"):
+            description = self.description
+        return description or "-"
+
+    @property
     def current_version(self) -> TrackedModel:
         current_version = self.version_group.current_version
         if current_version is None:
@@ -657,11 +674,13 @@ class TrackedModel(PolymorphicModel):
         kwargs = {}
         if action != "list":
             kwargs = self.get_identifying_fields()
-
-        return reverse(
-            f"{self.get_url_pattern_name_prefix()}-ui-{action}",
-            kwargs=kwargs,
-        )
+        try:
+            return reverse(
+                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
+                kwargs=kwargs,
+            )
+        except NoReverseMatch:
+            return
 
     def get_url_pattern_name_prefix(self):
         prefix = getattr(self, "url_pattern_name_prefix", None)

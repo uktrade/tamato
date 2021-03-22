@@ -31,7 +31,7 @@ urlpatterns = [
     path("", include("measures.urls")),
     path("", include("quotas.urls")),
     path("", include("regulations.urls")),
-    path("", include("workbaskets.urls")),
+    path("", include("workbaskets.urls", namespace="workbaskets")),
     path("admin/", admin.site.urls),
 ]
 

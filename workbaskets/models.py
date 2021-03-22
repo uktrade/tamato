@@ -43,6 +43,18 @@ class WorkBasketQueryset(QuerySet):
             workbasket__pk__in=Subquery(workbasket_pks),
         ).order_by("order")
 
+    def is_approved(self):
+        return self.filter(
+            status__in=WorkflowStatus.approved_statuses(),
+            approver__isnull=False,
+        )
+
+    def is_not_approved(self):
+        return self.exclude(
+            status__in=WorkflowStatus.approved_statuses(),
+            approver__isnull=False,
+        )
+
 
 class WorkBasket(TimestampedMixin):
     """
@@ -123,9 +135,10 @@ class WorkBasket(TimestampedMixin):
         target=WorkflowStatus.READY_FOR_EXPORT,
         permission="workbaskets.can_approve",
     )
-    def approve(self):
+    def approve(self, user):
         """Once a workbasket has been approved all related Tracked Models must
         be updated to the current versions of themselves."""
+        self.approver = user
         for obj in self.tracked_models.order_by("pk"):
             version_group = obj.version_group
             version_group.current_version = obj

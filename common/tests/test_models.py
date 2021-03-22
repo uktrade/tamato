@@ -340,7 +340,7 @@ def test_get_descriptions(sample_model):
     assert set(sample_model.get_descriptions()) == descriptions
 
 
-def test_get_descriptions_with_update(sample_model):
+def test_get_descriptions_with_update(sample_model, valid_user):
     description = factories.TestModelDescription1Factory.create(
         described_record=sample_model,
     )
@@ -359,7 +359,7 @@ def test_get_descriptions_with_update(sample_model):
     assert description not in description_queryset
 
     workbasket.submit_for_approval()
-    workbasket.approve()
+    workbasket.approve(valid_user)
     description_queryset = sample_model.get_descriptions()
 
     assert new_description in description_queryset
