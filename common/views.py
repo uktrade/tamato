@@ -25,14 +25,24 @@ from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 def index(request):
-    workbaskets = []
-    if request.user.is_authenticated:
-        workbaskets = WorkBasket.objects.filter(author=request.user)
+    try:
+        workbasket = WorkBasket.objects.is_not_approved().get()
+    except WorkBasket.DoesNotExist:
+        workbasket = WorkBasket.objects.create(
+            title=f"Workbasket {WorkBasket.objects.last().pk+1}",
+            author=request.user,
+        )
+
+    paginated_tracked_models = Paginator(workbasket.tracked_models, per_page=10)
+    page = paginated_tracked_models.get_page(request.GET.get("page", 1))
     return render(
         request,
         "common/index.jinja",
         context={
-            "workbaskets": workbaskets,
+            "workbasket": workbasket,
+            "page_obj": page,
+            "paginator": paginated_tracked_models,
+            "object_list": page.object_list,
         },
     )
 

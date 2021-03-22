@@ -7,12 +7,14 @@ from typing import Dict
 from typing import Optional
 from typing import Type
 from typing import Union
-from unittest.mock import patch
 from unittest.mock import PropertyMock
+from unittest.mock import patch
 
 import boto3
 import pytest
 from django.conf import settings
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from factory.django import DjangoModelFactory
@@ -26,12 +28,13 @@ from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import generate_test_import_xml
-from common.util import get_field_tuple
 from common.util import TaricDateRange
+from common.util import get_field_tuple
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
@@ -106,8 +109,31 @@ def api_client() -> APIClient:
 
 
 @pytest.fixture
-def valid_user(db):
-    return factories.UserFactory.create()
+def policy_group(db) -> Group:
+    policy_g = Group.objects.create()
+    tracked_model_perm = Permission.objects.get(
+        content_type__app_label="common",
+        codename="add_trackedmodel",
+    )
+    add_workbasket_perm = Permission.objects.get(
+        content_type__app_label="workbaskets",
+        codename="add_workbasket",
+    )
+    change_workbasket_perm = Permission.objects.get(
+        content_type__app_label="workbaskets",
+        codename="change_workbasket",
+    )
+    policy_g.permissions.add(tracked_model_perm)
+    policy_g.permissions.add(add_workbasket_perm)
+    policy_g.permissions.add(change_workbasket_perm)
+    return policy_g
+
+
+@pytest.fixture
+def valid_user(db, policy_group):
+    user = factories.UserFactory.create()
+    policy_group.user_set.add(user)
+    return user
 
 
 @given('a valid user named "Alice"', target_fixture="a_valid_user_called_alice")
@@ -116,8 +142,9 @@ def a_valid_user_called_alice():
 
 
 @pytest.fixture
-def valid_user_login(client, valid_user):
+def valid_user_client(client, valid_user):
     client.force_login(valid_user)
+    return client
 
 
 @given("I am logged in as Alice", target_fixture="alice_login")
@@ -135,6 +162,19 @@ def valid_user_api_client(api_client, valid_user) -> APIClient:
 def taric_schema(settings) -> etree.XMLSchema:
     with open(settings.TARIC_XSD) as xsd_file:
         return etree.XMLSchema(etree.parse(xsd_file))
+
+
+@pytest.fixture
+def new_workbasket() -> WorkBasket:
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.NEW_IN_PROGRESS,
+    )
+    transaction = factories.TransactionFactory.create(workbasket=workbasket)
+    with transaction:
+        for _ in range(2):
+            factories.FootnoteTypeFactory.create()
+
+    return workbasket
 
 
 @pytest.fixture

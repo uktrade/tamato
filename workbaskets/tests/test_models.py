@@ -5,23 +5,9 @@ from django_fsm import TransitionNotAllowed
 
 from common.models import TrackedModel
 from common.tests import factories
-from workbaskets import models
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def new_workbasket() -> models.WorkBasket:
-    workbasket = factories.WorkBasketFactory.create(
-        status=models.WorkflowStatus.NEW_IN_PROGRESS,
-    )
-    transaction = factories.TransactionFactory.create(workbasket=workbasket)
-    with transaction:
-        for _ in range(2):
-            factories.FootnoteTypeFactory.create()
-
-    return workbasket
 
 
 def test_workbasket_transactions():
@@ -569,11 +555,15 @@ def test_workbasket_submit(
     transition,
     target_status,
     expect_error,
+    valid_user,
 ):
     new_workbasket.status = start_status
     transition_method = getattr(new_workbasket, transition)
     with expect_error:
-        transition_method()
+        if transition_method.__name__ == "approve":
+            transition_method(valid_user)
+        else:
+            transition_method()
         assert new_workbasket.status == target_status
 
 
@@ -585,7 +575,7 @@ def test_get_tracked_models(new_workbasket):
     assert new_workbasket.tracked_models.count() == 2
 
 
-def test_workbasket_accepted_updates_current_tracked_models(new_workbasket):
+def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, valid_user):
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_draft(workbasket=new_workbasket)
 
@@ -593,12 +583,12 @@ def test_workbasket_accepted_updates_current_tracked_models(new_workbasket):
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve()
+    new_workbasket.approve(valid_user)
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
 
 
-def test_workbasket_errored_updates_tracked_models(new_workbasket):
+def test_workbasket_errored_updates_tracked_models(new_workbasket, valid_user):
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_draft(workbasket=new_workbasket)
 
@@ -606,7 +596,7 @@ def test_workbasket_errored_updates_tracked_models(new_workbasket):
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve()
+    new_workbasket.approve(valid_user)
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
     new_workbasket.export_to_cds()

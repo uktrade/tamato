@@ -58,3 +58,13 @@
 .govuk-list-spaced li {
   @extend .govuk-\!-margin-bottom-4;
 }
+
+.align-left {
+  float: left;
+}
+.align-right {
+  float: right;
+  li {
+    display: inline;
+  }
+}
