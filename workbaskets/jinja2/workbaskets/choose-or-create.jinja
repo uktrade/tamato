@@ -12,7 +12,7 @@
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
-      {"text": "Workbaskets", "href": url("workbasket-ui-list")},
+      {"text": "Workbaskets", "href": url("workbaskets:workbasket-ui-list")},
       {"text": page_title}
     ]
   }) }}
@@ -30,7 +30,7 @@
     create a new one.
   </p>
 
-  <form method="post" action="{{ url("workbasket-ui-set-current-workbasket") }}">
+  <form method="post" action="{{ url("workbaskets:workbasket-ui-set-current-workbasket") }}">
     {{ csrf_input }}
     {% set workbasket_options = [] -%}
     {% for workbasket in objects -%}
