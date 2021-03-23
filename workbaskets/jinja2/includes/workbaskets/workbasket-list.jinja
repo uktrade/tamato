@@ -22,7 +22,7 @@
     {% set table_rows = [] %}
     {% for workbasket in workbaskets %}
       {% set workbasket_link -%}
-        <a href="{{ url("workbasket-ui-detail", kwargs={"pk": workbasket.id}) }}">{{ workbasket.title }}</a>
+        <a href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.id}) }}">{{ workbasket.title }}</a>
       {%- endset -%}
       {{ table_rows.append([
         {"html": workbasket_link},

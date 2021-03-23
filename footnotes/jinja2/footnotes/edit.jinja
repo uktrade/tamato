@@ -25,7 +25,7 @@
   Workbasket:
   {% with current_workbasket = get_current_workbasket(request) -%}
     {% if current_workbasket -%}
-      <a href="{{ url("workbasket-ui-detail", args=[current_workbasket.id]) }}">{{ current_workbasket.title }}</a>
+      <a href="{{ url("workbaskets:workbasket-ui-detail", args=[current_workbasket.id]) }}">{{ current_workbasket.title }}</a>
     {%- else -%}
       No current workbasket
     {%- endif %}

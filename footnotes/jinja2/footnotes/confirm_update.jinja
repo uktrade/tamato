@@ -25,7 +25,7 @@
   <ul class="govuk-list">
     <li><a href="{{ object.get_url() }}">View footnote {{ object|string }}</a></li>
     <li><a href="{{ url("footnote-ui-list") }}">Manage more footnotes</a></li>
-    <li><a href="{{ url("workbasket-ui-detail", args=[request.session.workbasket.id]) }}">View content of your workbasket</a></li>
+    <li><a href="{{ url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) }}">View content of your workbasket</a></li>
     <li><a href="{{ url("index") }}">Return to main menu</a></li>
   </ul>
 {% endblock %}
