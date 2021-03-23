@@ -6,40 +6,34 @@
     Your tariff changes
   </h2>
     {% set change_count = workbasket.tracked_models.count() %}
-    <div class="govuk-grid-column-full govuk-!-margin-top-3">
-        <div class="govuk-grid-column-full">
-            <p class="govuk-body align-left">{{ change_count }} change{{ pluralize(change_count) }}</p>
-            <p class="govuk-body align-right">
-                <a href="{{ url('workbaskets:submit_workbasket', args=[workbasket.pk] ) }}" class="govuk-link govuk-!-margin-right-5">Mark "Done" the selected changes</a>
-            </p>
-        </div>
-        {% set table_rows = [] %}
-        {% for obj in page_obj.object_list %}
-          {% set object_link -%}
-            <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.structure_code }}</a>
-          {%- endset %}
-          {{ table_rows.append([
-            {"html": object_link},
-            {"text": obj._meta.verbose_name|capitalize},
-            {"text": obj.structure_description},
-            {"text": "{:%d %b %Y}".format(obj.transaction.updated_at)},
-          ]) or "" }}
-        {% endfor %}
+    <p class="govuk-body align-left">{{ change_count }} change{{ pluralize(change_count) }}</p>
+    <p class="govuk-body align-right">
+        <a href="{{ url('workbaskets:submit_workbasket', args=[workbasket.pk] ) }}" class="govuk-link">Mark "Done" the selected changes</a>
+    </p>
+    {% set table_rows = [] %}
+    {% for obj in page_obj.object_list %}
+      {% set object_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.structure_code }}</a>
+      {%- endset %}
+      {{ table_rows.append([
+        {"html": object_link},
+        {"text": obj._meta.verbose_name|capitalize},
+        {"text": obj.structure_description},
+        {"text": "{:%d %b %Y}".format(obj.transaction.updated_at)},
+      ]) or "" }}
+    {% endfor %}
 
-        {{ govukTable({
-          "head": [
-            {"text": "Structure Code"},
-            {"text": "Structure"},
-            {"text": "Structure Description"},
-            {"text": "Activity Date"},
-          ],
-          "rows": table_rows
-        }) }}
+    {{ govukTable({
+      "head": [
+        {"text": "Structure Code"},
+        {"text": "Structure"},
+        {"text": "Structure Description"},
+        {"text": "Activity Date"},
+      ],
+      "rows": table_rows
+    }) }}
 
-        <div class="filter-layout__content govuk-!-margin-top-5">
-            {% include "includes/common/pagination.jinja" %}
-        </div>
-    </div>
+    {% include "includes/common/pagination.jinja" %}
 
 </div>
 </div>
