@@ -7,13 +7,10 @@ from django.views.decorators.http import require_GET
 from django_filters import rest_framework as filters
 from rest_framework import renderers
 from rest_framework import viewsets
-from rest_framework.decorators import action
-from rest_framework.reverse import reverse
 
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.serializers import WorkBasketSerializer
-from workbaskets.validators import WorkflowStatus
 
 
 class WorkBasketViewSet(viewsets.ModelViewSet):
@@ -64,34 +61,6 @@ class WorkBasketUIViewSet(WorkBasketViewSet):
             "workbaskets/detail.jinja",
             context={"workbasket": self.get_object(), "workbasketitem_groups": groups},
         )
-
-    @action(detail=False, methods=["get"])
-    def choose_or_create(self, request):
-        queryset = self.filter_queryset(self.get_queryset()).filter(
-            status__in=[
-                WorkflowStatus.NEW_IN_PROGRESS,
-                WorkflowStatus.EDITING,
-            ],
-        )
-        return render(
-            request,
-            "workbaskets/choose-or-create.jinja",
-            context={"objects": queryset},
-        )
-
-    @action(detail=False, methods=["post"])
-    def set_current_workbasket(self, request):
-        if request.data["workbasket"] == "new":
-            workbasket = WorkBasket.objects.create(
-                title=request.data["title"],
-                reason=request.data["reason"],
-                author=request.user,
-            )
-        else:
-            workbasket = WorkBasket.objects.get(pk=int(request.data["workbasket"]))
-
-        request.session["workbasket"] = workbasket.to_json()
-        return redirect(request.session.get("return_to", reverse("index")))
 
 
 @permission_required("workbaskets.change_workbasket")
