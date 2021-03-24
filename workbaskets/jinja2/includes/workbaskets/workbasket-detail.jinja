@@ -8,7 +8,7 @@
     {% set change_count = workbasket.tracked_models.count() %}
     <p class="govuk-body align-left">{{ change_count }} change{{ pluralize(change_count) }}</p>
     <p class="govuk-body align-right">
-        <a href="{{ url('workbaskets:submit_workbasket', args=[workbasket.pk] ) }}" class="govuk-link">Mark "Done" the selected changes</a>
+        <a href="{{ url('workbaskets:submit_workbasket', args=[workbasket.pk] ) }}" class="govuk-link">Publish all changes</a>
     </p>
     {% set table_rows = [] %}
     {% for obj in page_obj.object_list %}
@@ -16,19 +16,19 @@
         <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.structure_code }}</a>
       {%- endset %}
       {{ table_rows.append([
-        {"html": object_link},
-        {"text": obj._meta.verbose_name|capitalize},
-        {"text": obj.structure_description},
-        {"text": "{:%d %b %Y}".format(obj.transaction.updated_at)},
+        {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},
+        {"html": object_link, "classes": "govuk-!-width-one-quarter"},
+        {"text": obj.structure_description, "classes": "govuk-!-width-one-quarter"},
+        {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
       ]) or "" }}
     {% endfor %}
 
     {{ govukTable({
       "head": [
-        {"text": "Structure Code"},
-        {"text": "Structure"},
-        {"text": "Structure Description"},
-        {"text": "Activity Date"},
+        {"text": "Type"},
+        {"text": "ID"},
+        {"text": "Description"},
+        {"text": "Activity date"},
       ],
       "rows": table_rows
     }) }}
