@@ -1,9 +1,15 @@
+from typing import Optional
+from typing import Type
+
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db.models import Model
+from django.db.models import QuerySet
 from django.http import Http404
 from django.views.generic import DetailView
 from rest_framework import permissions
 from rest_framework import viewsets
-from rest_framework.reverse import reverse
 
+from common.models import TrackedModel
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -13,6 +19,7 @@ from footnotes.filters import FootnoteFilter
 from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
+from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftUpdateView
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
@@ -36,12 +43,23 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
-class FootnoteList(TamatoListView):
-    queryset = (
-        models.Footnote.objects.latest_approved()
-        .select_related("footnote_type")
-        .prefetch_related("descriptions")
-    )
+class FootnoteMixin:
+    model: Type[TrackedModel] = models.Footnote
+
+    def get_queryset(self):
+        workbasket = WorkBasket.current(self.request)
+        tx = None
+        if workbasket:
+            tx = workbasket.transactions.order_by("order").last()
+
+        return models.Footnote.objects.approved_up_to_transaction(tx).select_related(
+            "footnote_type",
+        )
+
+
+class FootnoteList(FootnoteMixin, TamatoListView):
+    """UI endpoint for viewing and filtering Footnotes."""
+
     template_name = "footnotes/list.jinja"
     filterset_class = FootnoteFilter
     search_fields = [
@@ -52,37 +70,33 @@ class FootnoteList(TamatoListView):
     ]
 
 
-class FootnoteDetail(TrackedModelDetailView):
-    model = models.Footnote
+class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
     template_name = "footnotes/detail.jinja"
-    queryset = (
-        models.Footnote.objects.latest_approved()
-        .select_related("footnote_type")
-        .prefetch_related("descriptions")
-    )
 
 
-class FootnoteUpdate(TrackedModelDetailMixin, DraftUpdateView):
+class FootnoteUpdate(
+    PermissionRequiredMixin,
+    FootnoteMixin,
+    TrackedModelDetailMixin,
+    DraftUpdateView,
+):
     form_class = forms.FootnoteForm
-    queryset = (
-        models.Footnote.objects.latest_approved()
-        .select_related("footnote_type")
-        .prefetch_related("descriptions")
-    )
-    template_name = "footnotes/edit.jinja"
+    permission_required = "common.change_trackedmodel"
 
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["footnote_type"].disabled = True
-        form.fields["footnote_id"].disabled = True
-        return form
+    def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
+        obj = super().get_object(queryset)
 
-    def get_success_url(self):
-        return reverse("footnote-ui-confirm-update", kwargs=self.kwargs)
+        if self.request.method == "POST":
+            obj = obj.new_draft(
+                WorkBasket.current(self.request),
+                save=False,
+            )
+
+        return obj
 
 
-class FootnoteConfirmUpdate(FootnoteDetail):
-    template_name = "footnotes/confirm_update.jinja"
+class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
+    template_name = "common/confirm_update.jinja"
 
 
 class FootnoteDescriptionMixin:

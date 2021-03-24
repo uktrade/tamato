@@ -3,7 +3,7 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Edit " ~ object._meta.verbose_name %}
+{% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
 
 {% block beforeContent %}
   {{ govukBreadcrumbs({
@@ -20,18 +20,18 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l">Confirmation</span>
-      <h1 class="govuk-heading-xl">Edit {{object._meta.verbose_name}} details</h1>
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
       
       {{ govukPanel({
-        "titleText": object._meta.verbose_name|capitalize ~ " " ~ object|string ~ " has been updated.",
+        "titleText": object._meta.verbose_name|capitalize ~ " " ~ object|string ~ " has been updated",
         "text": "This change has been added to your tariff changes",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
 
       <h2 class="govuk-heading-m">Next steps</h2>
-      <p class="govuk-body">To complete your task you must export your change. </p>
+      <p class="govuk-body">To complete your task you must publish your change. </p>
       {{ govukButton({
-        "text": "Go to " ~ request.session.workbasket.title,
+        "text": "Go to your tariff changes",
         "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
         "classes": "govuk-button--secondary"
       }) }}
