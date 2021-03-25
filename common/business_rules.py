@@ -2,6 +2,7 @@
 import logging
 from datetime import date
 from datetime import datetime
+from functools import wraps
 from typing import Iterable
 from typing import Mapping
 from typing import Optional
@@ -146,15 +147,25 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
         cutoff = cutoff.date()
 
     def decorator(cls):
-        class OnlyApplicableAfter(cls):
-            def validate(self, model):
-                if model.valid_between.lower > cutoff:
-                    super().validate(model)
-                else:
-                    log.debug("Skipping %s: Start date before cutoff", cls.__name__)
+        """
+        Keep a copy of the wrapped model's original validation method and only
+        call it if the model's validity start date is after the given date.
 
-        OnlyApplicableAfter.__name__ = cls.__name__
-        return OnlyApplicableAfter
+        The newly defined validate method is used to replace the model's own.
+        ``_original_validate`` is a reference to the model's original validate
+        method and remains in scope for the newly defined validate method.
+        """
+        _original_validate = cls.validate
+
+        @wraps(_original_validate)
+        def validate(self, model):
+            if model.valid_between.lower > cutoff:
+                _original_validate(self, model)
+            else:
+                log.debug("Skipping %s: Start date before cutoff", cls.__name__)
+
+        cls.validate = validate
+        return cls
 
     return decorator
 
