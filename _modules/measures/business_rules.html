@@ -266,13 +266,13 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2004-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ME16"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME16">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2004-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME16</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Integrating a measure with an additional code when an equivalent or</span>
 <span class="sd">    overlapping measures without additional code already exists and vice-versa,</span>
 <span class="sd">    should be forbidden.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+<div class="viewcode-block" id="ME16.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME16.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;order_number__order_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">order_number</span>
@@ -314,7 +314,7 @@
                 <span class="s2">&quot;A measure with an additional code cannot be added when an equivalent &quot;</span>
                 <span class="s2">&quot;or overlapping measure without an additional code already exists and &quot;</span>
                 <span class="s2">&quot;vice-versa.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ME115"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME115">[docs]</a><span class="k">class</span> <span class="nc">ME115</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
@@ -462,15 +462,15 @@
             <span class="p">)</span></div></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ME116"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME116">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME116</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number must span the validity period of the measure.&quot;&quot;&quot;</span>
 
-    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span>
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ME117"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME117">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME117</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    When a measure has a quota measure type then the origin must exist as a</span>
@@ -488,7 +488,7 @@
 <span class="sd">        147 - Customs Union Quota</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+<div class="viewcode-block" id="ME117.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME117.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">quotas.models</span> <span class="kn">import</span> <span class="n">QuotaOrderNumberOrigin</span>
 
         <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -512,10 +512,10 @@
         <span class="k">if</span> <span class="n">origin</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">excluded_origins</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span>
 
-        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ME119"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME119">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME119</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number origin must span the validity period of the</span>
@@ -523,7 +523,7 @@
 
     <span class="c1"># This checks the same thing as ON10 from the other side of the relation</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+<div class="viewcode-block" id="ME119.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME119.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
         <span class="c1"># TODO: Ignore this for now - the data from HMRC has violations. Investigate and fix later.</span>
         <span class="k">return</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="p">:</span>
@@ -538,7 +538,7 @@
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
 <span class="c1"># -- Relation with additional codes</span>

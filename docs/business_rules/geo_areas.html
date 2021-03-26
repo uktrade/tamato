@@ -50,6 +50,24 @@
 <span id="geographical-areas"></span><h1>Geographical Areas<a class="headerlink" href="#module-geo_areas.business_rules" title="Permalink to this headline">¶</a></h1>
 <p>Business rules for geographical areas.</p>
 <dl class="py class">
+<dt id="geo_areas.business_rules.DescriptionNotEmpty">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">DescriptionNotEmpty</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#DescriptionNotEmpty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.DescriptionNotEmpty" title="Permalink to this definition">¶</a></dt>
+<dd><p>A description cannot be blank.</p>
+<dl class="py exception">
+<dt id="geo_areas.business_rules.DescriptionNotEmpty.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geo_areas.business_rules.DescriptionNotEmpty.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>A description cannot be blank.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geo_areas.business_rules.DescriptionNotEmpty.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#DescriptionNotEmpty.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.DescriptionNotEmpty.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="geo_areas.business_rules.GA1">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geo_areas.business_rules.</span></code><code class="sig-name descname"><span class="pre">GA1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/geo_areas/business_rules.html#GA1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#geo_areas.business_rules.GA1" title="Permalink to this definition">¶</a></dt>
 <dd><p>The combination geographical area id + validity start date must be

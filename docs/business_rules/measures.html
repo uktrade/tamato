@@ -338,6 +338,84 @@ validity period of the measure.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt id="measures.business_rules.ME116">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></code><code class="sig-name descname"><span class="pre">ME116</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME116"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME116" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a quota order number is used in a measure then the validity period
+of the quota order number must span the validity period of the measure.</p>
+<dl class="py exception">
+<dt id="measures.business_rules.ME116.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME116.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a quota order number is used in a measure then the validity period
+of the quota order number must span the validity period of the measure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="measures.business_rules.ME117">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></code><code class="sig-name descname"><span class="pre">ME117</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME117"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME117" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a measure has a quota measure type then the origin must exist as a
+quota order number origin.</p>
+<p>Only origins for quota order numbers managed by the first come first served
+principle are in scope; these order number are starting with ‘09’; except order
+numbers starting with ‘094’.</p>
+<dl class="simple">
+<dt>Quota measure types are the following:</dt><dd><p>122 - Non preferential tariff quota
+123 - Non preferential tariff quota under end-use
+143 - Preferential tariff quota
+146 - Preferential tariff quota under end-use
+147 - Customs Union Quota</p>
+</dd>
+</dl>
+<dl class="py exception">
+<dt id="measures.business_rules.ME117.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME117.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a measure has a quota measure type then the origin must exist as a
+quota order number origin.</p>
+<p>Only origins for quota order numbers managed by the first come first served
+principle are in scope; these order number are starting with ‘09’; except order
+numbers starting with ‘094’.</p>
+<dl class="simple">
+<dt>Quota measure types are the following:</dt><dd><p>122 - Non preferential tariff quota
+123 - Non preferential tariff quota under end-use
+143 - Preferential tariff quota
+146 - Preferential tariff quota under end-use
+147 - Customs Union Quota</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="measures.business_rules.ME117.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME117.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME117.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="measures.business_rules.ME119">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></code><code class="sig-name descname"><span class="pre">ME119</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME119"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME119" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a quota order number is used in a measure then the validity period
+of the quota order number origin must span the validity period of the
+measure.</p>
+<dl class="py exception">
+<dt id="measures.business_rules.ME119.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME119.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a quota order number is used in a measure then the validity period
+of the quota order number origin must span the validity period of the
+measure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="measures.business_rules.ME119.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME119.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME119.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="measures.business_rules.ME12">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></code><code class="sig-name descname"><span class="pre">ME12</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME12"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME12" title="Permalink to this definition">¶</a></dt>
 <dd><p>If the additional code is specified then the additional code type must
@@ -352,6 +430,28 @@ have a relationship with the measure type.</p>
 <dl class="py method">
 <dt id="measures.business_rules.ME12.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME12.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME12.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="measures.business_rules.ME16">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></code><code class="sig-name descname"><span class="pre">ME16</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME16"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME16" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integrating a measure with an additional code when an equivalent or
+overlapping measures without additional code already exists and vice-versa,
+should be forbidden.</p>
+<dl class="py exception">
+<dt id="measures.business_rules.ME16.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME16.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integrating a measure with an additional code when an equivalent or
+overlapping measures without additional code already exists and vice-versa,
+should be forbidden.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="measures.business_rules.ME16.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/measures/business_rules.html#ME16.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME16.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 </dd></dl>
 

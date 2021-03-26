@@ -61,12 +61,12 @@
     <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;regulation_group&quot;</span></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2003-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ROIMB8"><a class="viewcode-back" href="../../docs/business_rules/regulations.html#regulations.business_rules.ROIMB8">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2003-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ROIMB8</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Explicit dates of related measures must be within the validity period of</span>
 <span class="sd">    the base regulation.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB8.validate"><a class="viewcode-back" href="../../docs/business_rules/regulations.html#regulations.business_rules.ROIMB8.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">regulation</span><span class="o">.</span><span class="n">measure_set</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">generating_regulation__regulation_id</span><span class="o">=</span><span class="n">regulation</span><span class="o">.</span><span class="n">regulation_id</span><span class="p">,</span>
@@ -78,7 +78,7 @@
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">regulation</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">regulation</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ROIMB44"><a class="viewcode-back" href="../../docs/business_rules/regulations.html#regulations.business_rules.ROIMB44">[docs]</a><span class="k">class</span> <span class="nc">ROIMB44</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>

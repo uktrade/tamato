@@ -60,13 +60,13 @@
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;area_id&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;1998-02-01&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="DescriptionNotEmpty"><a class="viewcode-back" href="../../docs/business_rules/geo_areas.html#geo_areas.business_rules.DescriptionNotEmpty">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;1998-02-01&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">DescriptionNotEmpty</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A description cannot be blank.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
+<div class="viewcode-block" id="DescriptionNotEmpty.validate"><a class="viewcode-back" href="../../docs/business_rules/geo_areas.html#geo_areas.business_rules.DescriptionNotEmpty.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">description</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">description</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="GA3"><a class="viewcode-back" href="../../docs/business_rules/geo_areas.html#geo_areas.business_rules.GA3">[docs]</a><span class="k">class</span> <span class="nc">GA3</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>

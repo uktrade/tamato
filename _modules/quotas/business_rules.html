@@ -125,12 +125,12 @@
             <span class="p">)</span></div></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2006-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ON6"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON6">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2006-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ON6</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The validity period of the geographical area must span the validity</span>
 <span class="sd">    period of the quota order number origin.&quot;&quot;&quot;</span>
 
-    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;geographical_area&quot;</span>
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;geographical_area&quot;</span></div>
 
 
 <div class="viewcode-block" id="ON7"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON7">[docs]</a><span class="k">class</span> <span class="nc">ON7</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
@@ -145,32 +145,32 @@
 <span class="sd">    period of the referencing quota definition.&quot;&quot;&quot;</span></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ON9"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON9">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ON9</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number must span the validity period of the measure.&quot;&quot;&quot;</span>
 
-    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ON10"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON10">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ON10</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number origin must span the validity period of the</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
-    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number__measure&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number__measure&quot;</span></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ON11"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON11">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ON11</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The quota order number cannot be deleted if it is used in a measure.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;The quota order number cannot be deleted if it is used in a measure.&quot;&quot;&quot;</span></div>
 
 
-<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ON12"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON12">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ON12</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The quota order number origin cannot be deleted if it is used in a</span>
-<span class="sd">    measure.&quot;&quot;&quot;</span>
+<span class="sd">    measure.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="ON13"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON13">[docs]</a><span class="k">class</span> <span class="nc">ON13</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
