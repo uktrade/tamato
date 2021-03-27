@@ -70,7 +70,6 @@ def upload_and_create_envelopes(
         rendered_envelope.output.seek(0, os.SEEK_SET)
         upload.checksum = md5(rendered_envelope.output.read()).hexdigest()
 
-        # --- possibly error here... <- inject error and see what happens :)
         upload.file.save(upload.filename, content_file)
         if settings.EXPORTER_DISABLE_NOTIFICATION:
             logger.info("HMRC notification disabled.")
@@ -157,7 +156,7 @@ def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]
                     e.kwargs.get("endpoint_url"),
                     e.kwargs.get("error"),
                 )
-                self.retry(throw=False)
+                self.retry()
             else:
                 raise
         else:
