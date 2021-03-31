@@ -5,9 +5,10 @@ from rest_framework.serializers import ModelSerializer
 
 from common.tests import factories
 from common.tests.models import TestModel1
+from importer import models
 from importer.handlers import BaseHandler
-from importer.nursery import get_nursery
 from importer.nursery import TariffObjectNursery
+from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType
 
 
@@ -57,7 +58,7 @@ def handler_class_with_links(mock_serializer) -> Type[BaseHandler]:
             {
                 "model": TestModel1,
                 "name": "test_model_1",
-            }
+            },
         ]
         serializer_class = mock_serializer
         tag = "test_handler"
@@ -90,7 +91,9 @@ def prepped_handler(object_nursery, handler_class, handler_test_data) -> BaseHan
 
 @pytest.fixture
 def prepped_handler_with_dependencies1(
-    object_nursery, handler_class_with_dependencies, handler_test_data
+    object_nursery,
+    handler_class_with_dependencies,
+    handler_test_data,
 ) -> BaseHandler:
     return handler_class_with_dependencies(handler_test_data, object_nursery)
 
@@ -107,8 +110,28 @@ def prepped_handler_with_dependencies2(
 
 @pytest.fixture
 def prepped_handler_with_link(
-    handler_class_with_links, object_nursery, handler_test_data
+    handler_class_with_links,
+    object_nursery,
+    handler_test_data,
 ) -> BaseHandler:
     handler_test_data["data"]["test_model_1__sid"] = factories.TestModel1Factory().sid
 
     return handler_class_with_links(handler_test_data, object_nursery)
+
+
+@pytest.fixture
+def chunk() -> models.ImporterXMLChunk:
+    return factories.ImporterXMLChunkFactory.create()
+
+
+@pytest.fixture
+def batch() -> models.ImportBatch:
+    return factories.ImportBatchFactory.create()
+
+
+@pytest.fixture
+def batch_dependency() -> models.BatchDependencies:
+    dependencies = factories.BatchDependenciesFactory.create()
+    factories.ImporterXMLChunkFactory.create(batch=dependencies.depends_on)
+    factories.ImporterXMLChunkFactory.create(batch=dependencies.dependent_batch)
+    return dependencies
