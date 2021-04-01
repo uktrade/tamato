@@ -15,6 +15,7 @@ from common.tests.models import TestModelDescription1
 from common.tests.util import Dates
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from importer.models import ImporterChunkStatus
 from measures.validators import DutyExpressionId
 from measures.validators import ImportExportCode
 from measures.validators import MeasureTypeCombination
@@ -933,8 +934,22 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
     name = factory.sequence(str)
 
 
-class ImporterXMLChunk(factory.django.DjangoModelFactory):
+class ImporterXMLChunkFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "importer.ImporterXMLChunk"
 
     batch = factory.SubFactory(ImportBatchFactory)
+    chunk_number = 1
+    status = ImporterChunkStatus.WAITING
+    chunk_text = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" id="1">
+</env:envelope>"""
+
+
+class BatchDependenciesFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "importer.BatchDependencies"
+
+    dependent_batch = factory.SubFactory(ImportBatchFactory)
+    depends_on = factory.SubFactory(ImportBatchFactory)

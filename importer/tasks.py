@@ -130,6 +130,7 @@ def find_and_run_next_batch_chunks(
         setup_chunk_task(batch, status, username)
         return
 
+    # If the job is a split job (should only be used for seed files) the following logic applies.
     dependency_tree = build_dependency_tree()
 
     record_codes = set(

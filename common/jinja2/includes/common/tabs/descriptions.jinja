@@ -1,22 +1,29 @@
 {% from "components/table/macro.njk" import govukTable %}
+{% from 'macros/create_link.jinja' import create_link %} 
 
 {% set description_rows = [] %}
 {% for description in object.get_descriptions() %}
-	{{ description_rows.append([
+	{% set edit_url = description.get_url() %}
+	{% set description_row = [
 		{"text": "{:%d %b %Y}".format(description.valid_between.lower)},
 		{"text": description.description},
-	]) or ""}}
+	]%}
+	{% if edit_url %}
+		{{ description_row.append({"html": create_link(edit_url, "Edit") }) or "" }}
+	{% endif %}
+	{{ description_rows.append(description_row) or "" }}
 {% endfor %}
 
-<div class="additional_code__description-data">
-	<div class="additional_code__description-data__content">
-		<h2 class="govuk-heading-l">Descriptions</h2>
-		{{ govukTable({
-			"head": [
-				{"text": "Start date", "classes":  "govuk-!-width-one-eighth"},
-				{"text": "Description"},
-			],
-			"rows": description_rows
-		}) }}
-	</div>
-</div>
+<h2 class="govuk-heading-l">Descriptions</h2>
+{% set head = [
+	{"text": "Start date", "classes":  "govuk-!-width-one-eighth"},
+	{"text": "Description"},
+]%}
+{% if description_rows.0|length == 3 %}
+	{{ head.append({"text": "Actions"}) or "" }}
+{% endif %}
+{{ govukTable({
+	"head": head,
+	"rows": description_rows
+}) }}
+	
