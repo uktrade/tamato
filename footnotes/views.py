@@ -4,8 +4,6 @@ from typing import Type
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Model
 from django.db.models import QuerySet
-from django.http import Http404
-from django.views.generic import DetailView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -21,7 +19,6 @@ from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftUpdateView
-from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class FootnoteViewSet(viewsets.ModelViewSet):
@@ -43,6 +40,14 @@ class FootnoteViewSet(viewsets.ModelViewSet):
     ]
 
 
+class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    """API endpoint that allows footnote types to be viewed or edited."""
+
+    queryset = models.FootnoteType.objects.latest_approved()
+    serializer_class = FootnoteTypeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class FootnoteMixin:
     model: Type[TrackedModel] = models.Footnote
 
@@ -55,6 +60,18 @@ class FootnoteMixin:
         return models.Footnote.objects.approved_up_to_transaction(tx).select_related(
             "footnote_type",
         )
+
+
+class FootnoteDescriptionMixin:
+    model: Type[TrackedModel] = models.FootnoteDescription
+
+    def get_queryset(self):
+        workbasket = WorkBasket.current(self.request)
+        tx = None
+        if workbasket:
+            tx = workbasket.transactions.order_by("order").last()
+
+        return models.FootnoteDescription.objects.approved_up_to_transaction(tx)
 
 
 class FootnoteList(FootnoteMixin, TamatoListView):
@@ -99,52 +116,30 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
 
 
-class FootnoteDescriptionMixin:
-    required_url_kwargs = [
-        "described_footnote__footnote_type__footnote_type_id",
-        "described_footnote__footnote_id",
-        "description_period_sid",
-    ]
+class FootnoteUpdateDescription(
+    PermissionRequiredMixin,
+    FootnoteDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftUpdateView,
+):
+    form_class = forms.FootnoteDescriptionForm
+    permission_required = "common.change_trackedmodel"
+    template_name = "common/edit_description.jinja"
 
-    def get_object(self, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
+    def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
+        obj = super().get_object(queryset)
 
-        if not all(key in self.kwargs for key in self.required_url_kwargs):
-            raise AttributeError(
-                f"{self.__class__.__name__} must be called with a footnote type id, a "
-                f"footnote id, and a period sid in the URLconf.",
+        if self.request.method == "POST":
+            obj = obj.new_draft(
+                WorkBasket.current(self.request),
+                save=False,
             )
 
-        queryset = queryset.filter(**self.kwargs)
-
-        try:
-            return queryset.get()
-        except queryset.model.DoesNotExist:
-            raise Http404(f"No footnote description matching the query")
-
-
-class FootnoteDescriptionUpdate(FootnoteDescriptionMixin, DraftUpdateView):
-    form_class = forms.FootnoteDescriptionForm
-    queryset = models.FootnoteDescription.objects.latest_approved()
-    template_name = "footnotes/edit_description.jinja"
-
-    def get_success_url(self):
-        return self.object.get_url("confirm-update")
+        return obj
 
 
 class FootnoteDescriptionConfirmUpdate(
-    WithCurrentWorkBasket,
     FootnoteDescriptionMixin,
-    DetailView,
+    TrackedModelDetailView,
 ):
-    queryset = models.FootnoteDescription.objects.latest_approved()
-    template_name = "footnotes/confirm_update_description.jinja"
-
-
-class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """API endpoint that allows footnote types to be viewed or edited."""
-
-    queryset = models.FootnoteType.objects.latest_approved()
-    serializer_class = FootnoteTypeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    template_name = "common/confirm_update_description.jinja"

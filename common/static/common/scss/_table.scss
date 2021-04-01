@@ -1,3 +1,6 @@
+.govuk-table-list {
+  @extend .govuk-list;
+}
 @media (min-width: 40.0625em) {
   .govuk-table-m {
     font-size: 16px;
@@ -8,7 +11,6 @@
     }
   }
   .govuk-table-list {
-    @extend .govuk-list;
     margin-bottom: 0;
     li:last-child {
       margin-bottom: 0;

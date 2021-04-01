@@ -4,6 +4,7 @@ from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
@@ -78,6 +79,7 @@ class DescriptionForm(forms.ModelForm):
 
     description = forms.CharField(
         help_text="Edit or overwrite the existing description",
+        widget=forms.Textarea,
     )
 
     valid_between = GovukDateRangeField(required=False)
@@ -93,7 +95,7 @@ class DescriptionForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Field("start_date", context={"legend_size": "govuk-label--s"}),
-            Field("description", context={"legend_size": "govuk-label--s"}),
+            Field.textarea("description", label_size=Size.SMALL, rows=5),
             Submit("submit", "Save"),
         )
 
