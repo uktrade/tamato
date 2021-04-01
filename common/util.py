@@ -5,6 +5,9 @@ from typing import Optional
 from typing import TypeVar
 from typing import Union
 
+import wrapt
+from django.db import transaction
+from django.db.transaction import atomic
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
 
@@ -134,3 +137,19 @@ def get_field_tuple(model, field):
         value = getattr(model, field)
 
     return field, value
+
+
+def lock_tables(*models):
+    @atomic
+    @wrapt.decorator
+    def wrapper(wrapped, instance, args, kwargs):
+        cursor = transaction.get_connection().cursor()
+        for model in models:
+            cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+
+        try:
+            return wrapped(*args, **kwargs)
+        finally:
+            cursor.close()
+
+    return wrapper

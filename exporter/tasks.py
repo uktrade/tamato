@@ -8,6 +8,7 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
+from apiclient.exceptions import APIRequestError
 from botocore.exceptions import ConnectionError
 from celery import shared_task
 from django.conf import settings
@@ -15,6 +16,7 @@ from django.core.files.base import ContentFile
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 
+from common.util import lock_tables
 from exporter.models import Upload
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
@@ -38,13 +40,18 @@ def upload_and_create_envelopes(
     rendered_envelopes: Sequence[RenderedTransactions],
     first_envelope_id,
 ) -> Dict[Union[int, None], str]:
+    """
+    Upload envelopes.
+
+    This function locks the Envelope table so that Envelope.envelope_id remains
+    in sequence.
+    """
     # {envelope_id: message} User messages can be returned to the caller of the task.
     user_messages = {}
     current_envelope_id = first_envelope_id
     for rendered_envelope in rendered_envelopes:
         envelope = Envelope.new_envelope()
         if current_envelope_id != int(envelope.envelope_id):
-            # TODO consider locking the table for writes instead
             logger.error(
                 "Envelope created out of sequence: %s != %s this may due to simultaneous updates causing a race condition.",
                 (current_envelope_id, int(envelope.envelope_id)),
@@ -75,7 +82,11 @@ def upload_and_create_envelopes(
             logger.info("HMRC notification disabled.")
         else:
             logger.info("Notify HMRC of upload, %s", upload.filename)
-            upload.notify_hmrc()  # sets notification_sent
+            try:
+                upload.notify_hmrc()
+            except APIRequestError:
+                logger.info("Contacting endpoint")
+                raise
 
         logger.info("Workbasket sent to CDS")
         workbaskets.update(status=WorkflowStatus.SENT_TO_CDS)
@@ -93,7 +104,7 @@ def upload_and_create_envelopes(
     retry_backoff_max=settings.EXPORTER_UPLOAD_RETRY_BACKOFF_MAX,
     retry_jitter=True,
 )
-@atomic
+@lock_tables(Envelope)
 def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]]]:
     """
     Upload workbaskets.
@@ -148,7 +159,7 @@ def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]
                 first_envelope_id,
             )
         except ConnectionError as e:
-            # Connection issues may happen, so retry here.
+            # Connection issue during upload.
             if settings.EXPORTER_UPLOAD_MAX_RETRIES:
                 logger.info(
                     "%s uploading attempting to upload envelope. endpoint: %s error: %s",
@@ -156,6 +167,16 @@ def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]
                     e.kwargs.get("endpoint_url"),
                     e.kwargs.get("error"),
                 )
+                self.retry()
+            else:
+                raise
+        except APIRequestError as e:
+            # Connection issue during notification
+            logger.info(f"{type(e)} notifying HMRC {e.message} {e.info}")
+            if settings.EXPORTER_UPLOAD_MAX_RETRIES and (
+                e.status_code is None or e.status_code >= 500
+            ):
+                # This is similar logic to that used in 'retrying': https://github.com/MikeWooster/api-client/blob/master/apiclient/retrying.py#L25
                 self.retry()
             else:
                 raise

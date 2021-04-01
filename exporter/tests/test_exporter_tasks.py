@@ -80,6 +80,8 @@ def test_upload_workbaskets_retries(mock_save, settings):
     """Verify if HMRCStorage.save raises a boto.ConnectionError the task
     upload_workflow task retries based on
     settings.EXPORTER_UPLOAD_MAX_RETRIES."""
+    settings.EXPORTER_DISABLE_NOTIFICATION = True
+    # Notifications are disabled, as they are not being tested here.
     settings.EXPORTER_UPLOAD_MAX_RETRIES = 1
 
     approved_workbasket = ApprovedWorkBasketFactory.create()
