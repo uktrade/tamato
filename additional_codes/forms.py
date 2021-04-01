@@ -8,6 +8,7 @@ from django import forms
 
 from additional_codes import models
 from common.forms import DateInputFieldFixed
+from common.forms import DescriptionForm
 from common.forms import GovukDateRangeField
 from common.util import TaricDateRange
 
@@ -52,9 +53,6 @@ class AdditionalCodeForm(forms.ModelForm):
                 self.fields["end_date"].initial = self.instance.valid_between.upper
 
         self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-
         self.helper.layout = Layout(
             Field.text(
                 "code",
@@ -89,3 +87,9 @@ class AdditionalCodeForm(forms.ModelForm):
     class Meta:
         model = models.AdditionalCode
         fields = ("type", "valid_between")
+
+
+class AdditionalCodeDescriptionForm(DescriptionForm):
+    class Meta:
+        model = models.AdditionalCodeDescription
+        fields = ("description", "valid_between")

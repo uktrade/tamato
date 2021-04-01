@@ -1,7 +1,6 @@
 from typing import Type
 
 from django.db import models
-from django.urls import reverse
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -150,16 +149,6 @@ class FootnoteDescription(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return f"for Footnote {self.described_footnote}"
-
-    def get_url(self, action="detail"):
-        return reverse(
-            f"footnote-ui-description-{action}",
-            kwargs={
-                "described_footnote__footnote_type__footnote_type_id": self.described_footnote.footnote_type.footnote_type_id,
-                "described_footnote__footnote_id": self.described_footnote.footnote_id,
-                "description_period_sid": self.description_period_sid,
-            },
-        )
 
     class Meta:
         ordering = ("valid_between",)
