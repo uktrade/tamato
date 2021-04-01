@@ -13,7 +13,7 @@
     {% set table_rows = [] %}
     {% for obj in page_obj.object_list %}
       {% set object_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.structure_code }}</a>
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}</a>
       {%- endset %}
       {{ table_rows.append([
         {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},

@@ -51,3 +51,11 @@ class ValidityMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+class DescriptionMixin:
+    def get_described_object(self):
+        for rel, _ in self.get_relations():
+            if rel.name.startswith("described_"):
+                return getattr(self, rel.name)
+        raise AttributeError()

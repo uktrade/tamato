@@ -1,0 +1,27 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/details/macro.njk" import govukDetails %}
+
+{% set page_title = "Edit " ~ object._meta.verbose_name %}
+
+{% set described_object = object.get_described_object() %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Find and edit " ~ described_object._meta.verbose_name_plural, "href": described_object.get_url("list")},
+      {"text": described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string, "href": described_object.get_url()},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block form %}
+  {% call django_form(action=object.get_url("edit")) %}
+    {{ crispy(form) }}
+  {% endcall %}
+  {{ govukDetails({
+  "summaryText": "Help with formatting description",
+  "text": "We need to know your nationality so we can work out which elections you’re entitled to vote in. If you cannot provide your nationality, you’ll have to send copies of identity documents through the post."
+  }) }}
+{% endblock %}
