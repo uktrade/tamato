@@ -9,6 +9,7 @@ from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from common.util import TaricDateRange
+from common.validators import UpdateType
 from measures import business_rules
 from measures import validators
 from measures.querysets import MeasureConditionQuerySet
@@ -578,6 +579,37 @@ class Measure(TrackedModel, ValidityMixin):
         return MeasureCondition.objects.filter(
             dependent_measure__sid=self.sid,
         ).latest_approved()
+
+    def terminate(self, workbasket, when: date):
+        """
+        Returns a new version of the measure updated to end on the specified
+        date.
+
+        If the measure would not have started on that date, the measure is
+        deleted instead. If the measure will already have ended by this date,
+        then does nothing.
+        """
+        starts_after_date = self.valid_between.lower >= when
+        ends_before_date = (
+            not self.valid_between.upper_inf and self.valid_between.upper < when
+        )
+
+        if ends_before_date:
+            return self
+
+        update_params = {}
+        if starts_after_date:
+            update_params["update_type"] = UpdateType.DELETE
+        else:
+            update_params["update_type"] = UpdateType.UPDATE
+            update_params["valid_between"] = TaricDateRange(
+                lower=self.valid_between.lower,
+                upper=when,
+            )
+            if not self.terminating_regulation:
+                update_params["terminating_regulation"] = self.generating_regulation
+
+        return self.new_draft(workbasket, **update_params)
 
 
 class MeasureComponent(TrackedModel):

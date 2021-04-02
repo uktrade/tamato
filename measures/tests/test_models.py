@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 
 from common.tests import factories
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -83,3 +84,51 @@ def test_stringify_measure_condition():
     )
     assert cond.reference_price_string == "0.000 EUR DTN"
     assert cond.condition_string == "2.500% + 37.800 EUR / 100 kg"
+
+
+@pytest.fixture(
+    params=(
+        lambda d: {
+            "valid_between": d.normal,
+            "terminating_regulation": factories.RegulationFactory(),
+        },
+        lambda d: {
+            "valid_between": d.no_end,
+            "terminating_regulation": None,
+        },
+    ),
+    ids=(
+        "has_end_date",
+        "has_no_end_date",
+    ),
+)
+def measure_to_terminate(request, date_ranges):
+    return factories.MeasureFactory(**request.param(date_ranges))
+
+
+@pytest.fixture(
+    params=(
+        lambda d: d.earlier.upper,
+        lambda d: d.overlap_normal.upper,
+        lambda d: d.later.upper,
+    ),
+    ids=(
+        "before_start",
+        "during_validity",
+        "after_existing_end",
+    ),
+)
+def termination_date(request, date_ranges):
+    return request.param(date_ranges)
+
+
+def test_measure_termination(workbasket, measure_to_terminate, termination_date):
+    terminated_measure = measure_to_terminate.terminate(workbasket, termination_date)
+
+    if terminated_measure.update_type == UpdateType.DELETE:
+        assert terminated_measure.valid_between.lower >= termination_date
+    else:
+        assert terminated_measure.terminating_regulation is not None
+        assert terminated_measure.valid_between.upper_inf is False
+        assert terminated_measure.valid_between.upper <= termination_date
+    terminated_measure.clean()

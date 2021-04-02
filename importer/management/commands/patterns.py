@@ -1,38 +1,23 @@
 import logging
 from datetime import date
-from datetime import timedelta
 from functools import cached_property
-from typing import Dict
 from typing import Generic
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import Set
 from typing import TypeVar
 from typing import Union
 
 import pytz
 import xlrd
-from psycopg2.extras import DateRange
 from xlrd.sheet import Cell
 
 from additional_codes.models import AdditionalCode
 from commodities.models import GoodsNomenclature
-from common.models import TrackedModel
-from common.models import Transaction
-from common.renderers import counter_generator
-from common.validators import UpdateType
-from geo_areas.models import GeographicalArea
 from importer.management.commands.utils import MeasureContext
 from importer.management.commands.utils import NomenclatureTreeCollector
 from importer.management.commands.utils import blank
 from importer.management.commands.utils import clean_item_id
-from measures.models import Measure
-from measures.models import MeasureType
-from quotas.models import QuotaOrderNumber
-from quotas.validators import AdministrationMechanism
-from quotas.validators import QuotaCategory
-from regulations.models import Regulation
 
 logger = logging.getLogger(__name__)
 
@@ -102,148 +87,6 @@ class OldMeasureRow:
             self.measure_start_date,
             self.measure_end_date,
         )
-
-
-class MeasureEndingPattern:
-    """
-    A pattern used for end-dating measures.
-
-    This pattern will accept an old measure and will decide whether it needs to
-    be end-dated (it starts before the specified date) or deleted (it starts
-    after the specified date).
-    """
-
-    def __init__(
-        self,
-        transaction: Optional[Transaction] = None,
-        measure_types: Dict[str, MeasureType] = {},
-        geo_areas: Dict[str, GeographicalArea] = {},
-        ensure_unique: bool = True,
-    ) -> None:
-        self.transaction = transaction
-        self.measure_types = measure_types
-        self.geo_areas = geo_areas
-        self.ensure_unique = ensure_unique
-        self.old_sids: Set[int] = set()
-        self.fake_quota_sids = counter_generator(start=10000)
-        self.start_of_time = date(1970, 1, 1)
-
-    def end_date_measure(
-        self,
-        old_row: OldMeasureRow,
-        terminating_regulation: Regulation,
-        new_start_date: date = BREXIT,
-    ) -> Iterator[TrackedModel]:
-        if old_row.inherited_measure:
-            return
-        if old_row.measure_sid in self.old_sids and self.ensure_unique:
-            raise Exception(f"Measure appears more than once: {old_row.measure_sid}")
-        self.old_sids.add(old_row.measure_sid)
-
-        # Make sure the needed types and areas are loaded
-        if old_row.measure_type not in self.measure_types:
-            self.measure_types[old_row.measure_type] = MeasureType.objects.get(
-                sid=old_row.measure_type,
-            )
-        if old_row.geo_sid not in self.geo_areas:
-            self.geo_areas[old_row.geo_sid] = GeographicalArea.objects.get(
-                sid=old_row.geo_sid,
-            )
-
-        # Look up the quota this measure should have.
-        # If this measure has a licensed quota, create it
-        # because it won't be in the source data. This isn't saved.
-        if old_row.order_number and old_row.order_number.startswith("094"):
-            quota, _ = QuotaOrderNumber.objects.get_or_create(
-                order_number=old_row.order_number,
-                defaults={
-                    "sid": self.fake_quota_sids(),
-                    "valid_between": DateRange(
-                        lower=self.start_of_time,
-                        upper=None,
-                    ),
-                    "category": QuotaCategory.WTO,
-                    "mechanism": AdministrationMechanism.LICENSED,
-                    "transaction": self.transaction,
-                    "update_type": UpdateType.CREATE,
-                },
-            )
-        else:
-            quota = (
-                QuotaOrderNumber.objects.get(
-                    order_number=old_row.order_number,
-                    valid_between__contains=DateRange(
-                        lower=old_row.measure_start_date,
-                        upper=old_row.measure_end_date,
-                    ),
-                )
-                if old_row.order_number
-                else None
-            )
-
-        # If the old measure starts after the start date, delete it so it
-        # will never come into force. If it ends before the start date do nothing.
-        starts_after_date = old_row.measure_start_date >= new_start_date
-        ends_before_date = (
-            old_row.measure_end_date and old_row.measure_end_date < new_start_date
-        )
-
-        generating_regulation = Regulation.objects.get(
-            role_type=old_row.regulation_role,
-            regulation_id=old_row.regulation_id,
-        )
-
-        if old_row.justification_regulation_id and starts_after_date:
-            # Delete the measure, but the regulation still needs to be
-            # correct if it has already been end-dated
-            assert old_row.measure_end_date
-            justification_regulation = Regulation.objects.get(
-                role_type=old_row.regulation_role,
-                regulation_id=old_row.regulation_id,
-            )
-        elif not starts_after_date:
-            # end-date the measure, and terminate it with the UKGT SI.
-            justification_regulation = terminating_regulation
-        else:
-            # delete the measure but it don't end-date.
-            assert old_row.measure_end_date is None
-            justification_regulation = None
-
-        if not ends_before_date:
-            yield Measure(
-                sid=old_row.measure_sid,
-                measure_type=self.measure_types[old_row.measure_type],
-                geographical_area=self.geo_areas[old_row.geo_sid],
-                goods_nomenclature=old_row.goods_nomenclature,
-                additional_code=(
-                    AdditionalCode.objects.get(sid=old_row.additional_code_sid)
-                    if old_row.additional_code_sid
-                    else None
-                ),
-                valid_between=DateRange(
-                    old_row.measure_start_date,
-                    (
-                        old_row.measure_end_date
-                        if starts_after_date
-                        else new_start_date - timedelta(days=1)
-                    ),
-                ),
-                order_number=quota,
-                generating_regulation=generating_regulation,
-                terminating_regulation=justification_regulation,
-                stopped=old_row.stopped,
-                reduction=old_row.reduction,
-                export_refund_nomenclature_sid=old_row.export_refund_sid,
-                update_type=(
-                    UpdateType.DELETE if starts_after_date else UpdateType.UPDATE
-                ),
-                transaction=self.transaction,
-            )
-        else:
-            logger.debug(
-                "Ignoring old measure %s as ends before Brexit",
-                old_row.measure_sid,
-            )
 
 
 OldRow = TypeVar("OldRow")
