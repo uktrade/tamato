@@ -13,10 +13,26 @@ class NumberRangeValidator:
         self.max_value = max_value
 
     def __call__(self, value):
-        if not (self.min_value <= value <= self.max_value):
+        try:
+            if not (self.min_value <= value <= self.max_value):
+                raise ValidationError(
+                    "%(value)s is not between %(min)s and %(max)s.",
+                    params={
+                        "value": value,
+                        "min": self.min_value,
+                        "max": self.max_value,
+                    },
+                )
+        except TypeError:
             raise ValidationError(
-                "%(value)s is not between %(min)s and %(max)s.",
-                params={"value": value, "min": self.min_value, "max": self.max_value},
+                "%(value)s is not comparable to %(min)s [%(min_type)s] and %(max)s [%(max_type)s].",
+                params={
+                    "value": value,
+                    "min": self.min_value,
+                    "max": self.max_value,
+                    "min_type": type(self.min_value),
+                    "max_type": type(self.max_value),
+                },
             )
 
     def __eq__(self, other):
