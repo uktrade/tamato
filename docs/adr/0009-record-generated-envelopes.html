@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>9. Generate envelope files &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,14 +47,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="generate-envelope-files">
+  <section id="generate-envelope-files">
 <span id="id1"></span><h1>9. Generate envelope files<a class="headerlink" href="#generate-envelope-files" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2020-10-14</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Proposed</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>We must geneate XML envelope files as a way of communicating tariff data to HMRC
 and our other consumers. The spec for envelope files is defined as an XSD
@@ -77,7 +78,7 @@ can’t be manually controlled. The envelope ID is set based on the current date
 and a sequence number. The transaction and message IDs are both set sequentially
 on a per-envelope basis. When a validation error occurs at CDS a new envelope ID
 is used.</p>
-<div class="section" id="https-interface">
+<section id="https-interface">
 <h3>HTTPS interface<a class="headerlink" href="#https-interface" title="Permalink to this headline">¶</a></h3>
 <p>HTTPS clients already expect TARIC3 XML over an HTTPS API. The existing HTTPS
 API in TTM provides TARIC3 XML envelopes and metadata about them including the
@@ -85,8 +86,8 @@ envelope ID. There may be little to substantially change about this API – it
 returns a list of envelopes generated per day.</p>
 <p>There is no limit on the size of returned envelopes and there is no limit on the
 number of envelopes generated in one day.</p>
-</div>
-<div class="section" id="hmrc-interface">
+</section>
+<section id="hmrc-interface">
 <h3>HMRC interface<a class="headerlink" href="#hmrc-interface" title="Permalink to this headline">¶</a></h3>
 <p>According to HMRC envelope and transaction IDs affect the sequence numbers used
 by CDS for processing. TaMaTo should use the same envelope ID when an envelope
@@ -106,13 +107,13 @@ the future that we need to pack multiple transactions into a single envelope.</p
 <p>This essentially means that a “workbasket” does not correspond to any specific
 element in HMRC XML – it could be formed from several transactions across
 several envelopes.</p>
-</div>
-</div>
-<div class="section" id="decision">
+</section>
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>The concept of “workbasket”, “transaction” and “envelope” will all be separated
 and therefore tracked with separate sequence numbers.</p>
-<div class="section" id="envelopes">
+<section id="envelopes">
 <h3>Envelopes<a class="headerlink" href="#envelopes" title="Permalink to this headline">¶</a></h3>
 <p>The envelope ID is a numeric value that ends up as an attribute on the root
 element of the envelope. It will be prepended with ‘DIT’ when used as the
@@ -140,8 +141,8 @@ function to do this might be:</p>
   <span class="c1"># TODO: code</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="transactions">
+</section>
+<section id="transactions">
 <h3>Transactions<a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h3>
 <p>Transactions should contain the minimum number of records required to represent
 a “logical” database operation that passes all reqired validations. For most use
@@ -166,9 +167,9 @@ conditions</p></li>
 <li><p>Adding a footnote: three records, one for the new footnote, followed by one
 for the description period, followed by one for the description.</p></li>
 </ul>
-</div>
-</div>
-<div class="section" id="consequences">
+</section>
+</section>
+<section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
 <p>As the rules for forming transactions are complex, and partially dependent on
 what has already been added to an envelope, it does not necessarily make sense
@@ -190,8 +191,8 @@ or changing them if necessary</p></li>
 <li><p>Have a way to quickly generate API responses without calling out to an
 existing file store, if we choose to cache generated files</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>

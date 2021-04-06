@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>11. Store and check business rules around preference codes &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,14 +47,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="store-and-check-business-rules-around-preference-codes">
+  <section id="store-and-check-business-rules-around-preference-codes">
 <span id="store-and-check-preference-codes"></span><h1>11. Store and check business rules around preference codes<a class="headerlink" href="#store-and-check-business-rules-around-preference-codes" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2021-02-11</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Proposed</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>There are many different mechanisms in the tariff to give traders preferential
 access to the market. For example, the same trader might have available to them
@@ -71,7 +72,7 @@ separate correlation table is used that maps preference codes to the measure
 types that should be applied. For example, specifying preference code “100”
 selects measure type 103 for the Erga Omnes third-country duty.</p>
 <p>This mechanism has three extra purposes.</p>
-<div class="section" id="it-controls-when-additional-duties-get-applied">
+<section id="it-controls-when-additional-duties-get-applied">
 <h3>It controls when additional duties get applied<a class="headerlink" href="#it-controls-when-additional-duties-get-applied" title="Permalink to this headline">¶</a></h3>
 <p>Any measure type specified against the preference code in the correlation table
 is “added on” to the final tariff. So in addition to the third-country duty
@@ -81,8 +82,8 @@ present. This means that those additional duties (if present) will also be
 charged. This is the means by which safeguard quotas can “switch off” the normal
 safeguard duty because the preference code for non-preferential quotas does not
 include 696 measures.</p>
-</div>
-<div class="section" id="it-controls-requirements-around-presence-of-supporting-measures">
+</section>
+<section id="it-controls-requirements-around-presence-of-supporting-measures">
 <h3>It controls requirements around presence of supporting measures<a class="headerlink" href="#it-controls-requirements-around-presence-of-supporting-measures" title="Permalink to this headline">¶</a></h3>
 <p>Some preference codes are only valid when two measure types are found together.
 For example, the preference code “323” covers preferential tariff quotas subject
@@ -95,8 +96,8 @@ subheading submitted to end-use provisions measure (464).</p></li>
 <p>The presence of these two measure types in the same table represents an “option”
 because 143 and 146 both come from the same measure type series which has its
 combination field set to zero, so only one can apply.</p>
-</div>
-<div class="section" id="it-specifies-regulation-groups">
+</section>
+<section id="it-specifies-regulation-groups">
 <h3>It specifies regulation groups<a class="headerlink" href="#it-specifies-regulation-groups" title="Permalink to this headline">¶</a></h3>
 <p>For each preference code and measure type, the correlation table can specify a
 list of regulation groups. The measure generating regulation must then sit in
@@ -104,9 +105,9 @@ one of those groups for the preference code to be applicable. For example,
 preference code “120” is only applicable when there is a measure with type 122
 and regulation group KON. This means that any non-preferential tariff quotas
 must always be linked to a regulation in the correct group.</p>
-</div>
-</div>
-<div class="section" id="decision">
+</section>
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>Tables of the current preference code correlation data will be stored in TaMaTo
 using the following schema:</p>
@@ -255,8 +256,8 @@ measure’s generating regulation must be one of the declared groups.</p></li>
 use one of the declared condition codes. If the mapping does not declare any
 condition codes then the measure may have any or no conditions.</p></li>
 </ul>
-</div>
-<div class="section" id="consequences">
+</section>
+<section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
 <p>The main motivation for storing preference code tables is to implement ME120.
 With this rule, users are prevented from creating measures that traders are
@@ -276,8 +277,8 @@ codes and the mappings are possible independently.</p>
 because in the current version of the table there are no measure types with
 conditions that do not also have a counterpart without conditions – hence from
 an ME120 perspective the conditions make no difference.</p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>

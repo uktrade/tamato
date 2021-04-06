@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>Architecture &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -45,11 +46,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="architecture">
+  <section id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
 <p>This page describes the high-level architecture of TaMaTo. If you want to
 familiarize yourself with the code base, you are in just the right place!</p>
-<div class="section" id="bird-s-eye-view">
+<section id="bird-s-eye-view">
 <h2>Bird’s Eye View<a class="headerlink" href="#bird-s-eye-view" title="Permalink to this headline">¶</a></h2>
 <img alt="../../_images/birds-eye.svg" src="../../_images/birds-eye.svg" /><p>TaMaTo is a data storage and management system that acts as the single source of
 truth for the UK customs tariff. Its role is to represent trade policy as
@@ -73,10 +74,10 @@ directly.</p>
 from TaMaTo. There are also a number of other consumers: the Jersey and Guernsey
 border systems Caesar and GEMS, policy-makers via DIT’s Data Workspace and other
 third parties via open data.</p>
-</div>
-<div class="section" id="concepts">
+</section>
+<section id="concepts">
 <h2>Concepts<a class="headerlink" href="#concepts" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="taric">
+<section id="taric">
 <h3>TARIC<a class="headerlink" href="#taric" title="Permalink to this headline">¶</a></h3>
 <p>Most UK border systems were previously designed to take customs tariff updates
 from the European Union. For this reason the tariff domain model and output
@@ -96,8 +97,8 @@ that TaMaTo must be able to read data and apply business rules as of a certain
 transaction as opposed to just considering all data that is present (including
 e.g. draft data). More detail on what practical difference this makes is in the
 documentation on <a class="reference internal" href="../adr/0012-ordering-of-tariff-transactions.html#ordering-of-tariff-transactions"><span class="std std-ref">12. Ordering of tariff transactions</span></a>.</p>
-</div>
-<div class="section" id="validity-dates-as-version-control">
+</section>
+<section id="validity-dates-as-version-control">
 <h3>Validity dates as version control<a class="headerlink" href="#validity-dates-as-version-control" title="Permalink to this headline">¶</a></h3>
 <p>The domain model implements a version control system that specifies which models
 of the tariff are live on the border on a given day. This allows a tariff update
@@ -141,8 +142,8 @@ default queryset.</p>
 description at any time. For this reason, descriptions do not have end dates and
 only have start dates. The description is live up until the start date of the
 next description record.</p>
-</div>
-<div class="section" id="tracked-models-as-version-control">
+</section>
+<section id="tracked-models-as-version-control">
 <h3>Tracked models as version control<a class="headerlink" href="#tracked-models-as-version-control" title="Permalink to this headline">¶</a></h3>
 <p>The TARIC data exchange communicates about models in terms of what changes are
 being made to them. Hence, it is not enough for a TARIC-aware system to just
@@ -279,68 +280,68 @@ Any row marked as deleted will also not be fetched.</p>
 
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="domain-modules">
+</section>
+</section>
+<section id="domain-modules">
 <h2>Domain Modules<a class="headerlink" href="#domain-modules" title="Permalink to this headline">¶</a></h2>
 <p>The tariffs domain model is implemented across a number of <strong>domain modules</strong>,
 each itself a Django App. Each module is responsible for one family of tariff
 objects.</p>
-<div class="section" id="module-measures">
+<section id="module-measures">
 <span id="measures"></span><h3><a class="reference internal" href="#module-measures" title="measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a><a class="headerlink" href="#module-measures" title="Permalink to this headline">¶</a></h3>
 <p>Measures are the fundamental building blocks of the tariff, they link
 everything together, and each piece of trade legislation that impacts the trade
 of goods must be translated into one or more measures.</p>
-</div>
-<div class="section" id="module-commodities">
+</section>
+<section id="module-commodities">
 <span id="commodities"></span><h3><a class="reference internal" href="#module-commodities" title="commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><a class="headerlink" href="#module-commodities" title="Permalink to this headline">¶</a></h3>
 <p>Commodity codes are 10-digit codes that refer to specific products. Traders must
 put these codes on their declaration forms when importing or exporting goods.</p>
 <p>Nomenclature, also known as goods classification, goods nomenclature or
 commodity code classification, is the name for the full list of products in the
 UK Tariff.</p>
-</div>
-<div class="section" id="module-additional_codes">
+</section>
+<section id="module-additional_codes">
 <span id="additional-codes"></span><h3><a class="reference internal" href="#module-additional_codes" title="additional_codes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">additional_codes</span></code></a><a class="headerlink" href="#module-additional_codes" title="Permalink to this headline">¶</a></h3>
 <p>Additional codes are used when the 10-digit commodity code is not enough to
 identify the context for the trade.</p>
 <p>For example, for trade remedy purposes most additional codes identify the
 companies that the trade is coming from.</p>
-</div>
-<div class="section" id="module-quotas">
+</section>
+<section id="module-quotas">
 <span id="quotas"></span><h3><a class="reference internal" href="#module-quotas" title="quotas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">quotas</span></code></a><a class="headerlink" href="#module-quotas" title="Permalink to this headline">¶</a></h3>
 <p>Quotas are used to control quantities of particular goods being imported.</p>
-</div>
-<div class="section" id="module-certificates">
+</section>
+<section id="module-certificates">
 <span id="certificates"></span><h3><a class="reference internal" href="#module-certificates" title="certificates"><code class="xref py py-mod docutils literal notranslate"><span class="pre">certificates</span></code></a><a class="headerlink" href="#module-certificates" title="Permalink to this headline">¶</a></h3>
 <p>Certificates, licenses, and non-paper conditions are sometimes required to bring
 goods through customs.</p>
 <p>A certificate is not a representation of the actual document itself – the
 database stores only a certificate code (4 digits) and a description of that
 code.</p>
-</div>
-<div class="section" id="module-geo_areas">
+</section>
+<section id="module-geo_areas">
 <span id="geo-areas"></span><h3><a class="reference internal" href="#module-geo_areas" title="geo_areas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">geo_areas</span></code></a><a class="headerlink" href="#module-geo_areas" title="Permalink to this headline">¶</a></h3>
 <p>Geographical areas represent areas to which goods can be imported or exported.</p>
 <p>All measures and quotas apply to a geographical area which may contain single or
 multiple countries.</p>
-</div>
-<div class="section" id="module-regulations">
+</section>
+<section id="module-regulations">
 <span id="regulations"></span><h3><a class="reference internal" href="#module-regulations" title="regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a><a class="headerlink" href="#module-regulations" title="Permalink to this headline">¶</a></h3>
 <p>Regulations represent peices of legislation that empower tariff measures.</p>
-</div>
-<div class="section" id="module-footnotes">
+</section>
+<section id="module-footnotes">
 <span id="footnotes"></span><h3><a class="reference internal" href="#module-footnotes" title="footnotes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">footnotes</span></code></a><a class="headerlink" href="#module-footnotes" title="Permalink to this headline">¶</a></h3>
 <p>Footnotes are used to give more human-readable information about measures or
 the use of commodity codes.</p>
-</div>
-</div>
-<div class="section" id="inside-domain-modules">
+</section>
+</section>
+<section id="inside-domain-modules">
 <h2>Inside Domain Modules<a class="headerlink" href="#inside-domain-modules" title="Permalink to this headline">¶</a></h2>
 <p>Each domain module has a similar layout, some of which is inherited from the
 Django system. Inside each domain module, you might expect to see the following,
 either as modules themselves or single files.</p>
-<div class="section" id="models">
+<section id="models">
 <h3><code class="docutils literal notranslate"><span class="pre">models</span></code><a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
 <p>Classes representing domain models. With again a few exceptions, most models
 correspond directly to an element in the TARIC specification. Most of these will
@@ -356,8 +357,8 @@ that represents both the description and the description period on the
 assumption that we will only support English as a language, and for
 <a class="reference internal" href="#module-regulations" title="regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a>, where the UK legislative model is considerably simpler than
 its European counterpart.</p>
-</div>
-<div class="section" id="business-rules">
+</section>
+<section id="business-rules">
 <h3><code class="docutils literal notranslate"><span class="pre">business_rules</span></code><a class="headerlink" href="#business-rules" title="Permalink to this headline">¶</a></h3>
 <p>Classes that implement business logic checking on models. Most of the business
 rules are defined by the TARIC specification. There are also some places where
@@ -368,8 +369,8 @@ tightly control the function of the system.</p>
 used in that spec (e.g. <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME32" title="measures.business_rules.ME32"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME32</span></code></a>) and business
 rules that have been added to the system are given descriptive names. Each
 business rule has a docstring that describes the rule.</p>
-</div>
-<div class="section" id="patterns">
+</section>
+<section id="patterns">
 <h3><code class="docutils literal notranslate"><span class="pre">patterns</span></code><a class="headerlink" href="#patterns" title="Permalink to this headline">¶</a></h3>
 <p>Objects that implement an operation on the data taking into account the
 high-level domain logic around how the tariff actually works. These are
@@ -387,29 +388,29 @@ specific way and the pattern encodes that implementation.</p>
 <p>So where the tariff works a certain way as the result of a business decision as
 opposed to a constraint in the data, that decision should be implemented as a
 pattern.</p>
-</div>
-<div class="section" id="serializers">
+</section>
+<section id="serializers">
 <h3><code class="docutils literal notranslate"><span class="pre">serializers</span></code><a class="headerlink" href="#serializers" title="Permalink to this headline">¶</a></h3>
 <p>Classes that implement serialization logic. Most are derived from Django REST
 Framework’s serializer base class. The serializers are mostly used to output
 TARIC3 XML and for this they rely on XML templates written in the Jinja2
 templating language.</p>
-</div>
-<div class="section" id="import-parsers-and-import-handlers">
+</section>
+<section id="import-parsers-and-import-handlers">
 <h3><code class="docutils literal notranslate"><span class="pre">import_parsers</span></code> and <code class="docutils literal notranslate"><span class="pre">import_handlers</span></code><a class="headerlink" href="#import-parsers-and-import-handlers" title="Permalink to this headline">¶</a></h3>
 <p>These are classes that extract data from TARIC XML and process that data into
 complete models with all linked dependencies respectively.</p>
 <p>See the documentation on <a class="reference internal" href="../importer/index.html#the-importer"><span class="std std-ref">the importer</span></a> for a full
 description.</p>
-</div>
-<div class="section" id="validators">
+</section>
+<section id="validators">
 <h3><code class="docutils literal notranslate"><span class="pre">validators</span></code><a class="headerlink" href="#validators" title="Permalink to this headline">¶</a></h3>
 <p>Classes that implement model-specific validation routines. These mostly
 implement rules around the correct formatting of data (e.g. if the code of a
 model has the correct number of digits) compared to the business rules which
 check correctness of fields and relationships between models.</p>
-</div>
-<div class="section" id="querysets">
+</section>
+<section id="querysets">
 <h3><code class="docutils literal notranslate"><span class="pre">querysets</span></code><a class="headerlink" href="#querysets" title="Permalink to this headline">¶</a></h3>
 <p>Implementations of custom Django QuerySet classes that represent complex
 database queries. In some places it is desirable to more tightly control how the
@@ -417,43 +418,43 @@ system fetches it’s data – for example, to efficiently generate a new field 
 aggregates.</p>
 <p>The <a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModelQuerySet</span></code></a> is one of the most used
 as it implements selecting the correct versions from the version control system.</p>
-</div>
-<div class="section" id="parsers">
+</section>
+<section id="parsers">
 <h3><code class="docutils literal notranslate"><span class="pre">parsers</span></code><a class="headerlink" href="#parsers" title="Permalink to this headline">¶</a></h3>
 <p>Classes that implement custom parsers for use in translating from simple strings
 in the user interface or spreadsheets into model objects (or sets of them).
 These do not generally follow a specific implementation pattern.</p>
-</div>
-<div class="section" id="filters">
+</section>
+<section id="filters">
 <h3><code class="docutils literal notranslate"><span class="pre">filters</span></code><a class="headerlink" href="#filters" title="Permalink to this headline">¶</a></h3>
 <p>Django-style filter objects used by the search interfaces.</p>
-</div>
-<div class="section" id="views">
+</section>
+<section id="views">
 <h3><code class="docutils literal notranslate"><span class="pre">views</span></code><a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h3>
 <p>Django-style view objects used by the user interface.</p>
-</div>
-</div>
-<div class="section" id="cross-cutting-modules">
+</section>
+</section>
+<section id="cross-cutting-modules">
 <h2>Cross-Cutting Modules<a class="headerlink" href="#cross-cutting-modules" title="Permalink to this headline">¶</a></h2>
 <p>As well as domain modules, there are also a number of modules that provide
 cross-cutting concerns to the rest of the system.</p>
-<div class="section" id="module-importer">
+<section id="module-importer">
 <span id="importer"></span><h3><a class="reference internal" href="#module-importer" title="importer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importer</span></code></a><a class="headerlink" href="#module-importer" title="Permalink to this headline">¶</a></h3>
 <p>Implements a scalable and robust system for extracting data from TARIC XML seed
 and delta files and storing them correctly in TaMaTo.</p>
 <p>See the documentation on the <a class="reference internal" href="../importer/nursery.html#module-importer.nursery" title="importer.nursery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nursery</span></code></a>,
 <a class="reference internal" href="../importer/handlers.html#module-importer.handlers" title="importer.handlers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">handlers</span></code></a>, <a class="reference internal" href="../importer/parsers_and_namespaces.html#module-importer.parsers" title="importer.parsers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">parsers</span></code></a>, <a class="reference internal" href="../importer/parsers_and_namespaces.html#module-importer.namespaces" title="importer.namespaces"><code class="xref py py-mod docutils literal notranslate"><span class="pre">namespaces</span></code></a>
 and <a class="reference internal" href="../importer/taric.html#module-importer.taric" title="importer.taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a> for more information.</p>
-</div>
-<div class="section" id="module-exporter">
+</section>
+<section id="module-exporter">
 <span id="exporter"></span><h3><a class="reference internal" href="#module-exporter" title="exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a><a class="headerlink" href="#module-exporter" title="Permalink to this headline">¶</a></h3>
 <p>Classes for exposing a number of different output data formats.</p>
 <p>Most notably, the exporter module implements the correct output of the
 transaction stream into TARIC XML envelopes and handles the process by which
 these envelopes are marshalled to CDS.</p>
 <p>This module also makes available the objects in the system as an <a class="reference external" href="https://www.w3.org/TR/activitypub/">ActivityPub</a> endpoint.</p>
-</div>
-<div class="section" id="module-hmrc_sdes">
+</section>
+<section id="module-hmrc_sdes">
 <span id="hmrc-sdes"></span><h3><a class="reference internal" href="#module-hmrc_sdes" title="hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a><a class="headerlink" href="#module-hmrc_sdes" title="Permalink to this headline">¶</a></h3>
 <p>Provides the ability to communicate with HMRC’s Secure Data Exchange Service
 (SDES).</p>
@@ -462,13 +463,13 @@ these envelopes are marshalled to CDS.</p>
 then notify SDES via an HTTPS API that a file is ready to be downloaded. This
 module makes available the API client library to make the call.</p>
 <p>More information about SDES is available from <a class="reference external" href="https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0">the HMRC developer hub</a>.</p>
-</div>
-<div class="section" id="id1">
+</section>
+<section id="id1">
 <h3><a class="reference internal" href="#module-taric" title="taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <span class="target" id="module-taric"></span><p>Implements models used by the <a class="reference internal" href="#module-exporter" title="exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a> to keep track of which
 envelopes the system has generated and which transactions they contained.</p>
-</div>
-<div class="section" id="module-workbaskets">
+</section>
+<section id="module-workbaskets">
 <span id="workbaskets"></span><h3><a class="reference internal" href="#module-workbaskets" title="workbaskets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">workbaskets</span></code></a><a class="headerlink" href="#module-workbaskets" title="Permalink to this headline">¶</a></h3>
 <p>Provides classes and models for tracking draft data and implements the
 workflow that data must go through before publication.</p>
@@ -480,9 +481,9 @@ workflow that data must go through before publication.</p>
 See <a class="reference external" href="https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow">https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow</a></p>
 </dd></dl>
 
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
             <div class="clearer"></div>

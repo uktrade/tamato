@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>7. Changes go through a stateful workflow &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,15 +47,15 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="changes-go-through-a-stateful-workflow">
+  <section id="changes-go-through-a-stateful-workflow">
 <span id="id1"></span><h1>7. Changes go through a stateful workflow<a class="headerlink" href="#changes-go-through-a-stateful-workflow" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2020-06-02</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Approved, partially superseded by
 <a class="reference external" href="./0008-simplify-workflow-states">ADR-0008</a>.</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>When a change is made to data in the Tariff Management Tool there are
 various actions that must take place before it becomes live in border
@@ -95,8 +96,8 @@ order.</p>
 <p>We should also retain the history of all approved transactions which
 have been sent to CDS as a minimum. This is for both audit and debugging
 purposes.</p>
-</div>
-<div class="section" id="decision">
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p><img alt="Schema of TrackedModels and Workbaskets" src="../../_images/tracked_model_workbasket_schema_updated.png" /></p>
 <p>We will adopt the terms “database-live” and “operationally-live” as per
@@ -188,8 +189,8 @@ changes from <code class="docutils literal notranslate"><span class="pre">EDITIN
 <code class="docutils literal notranslate"><span class="pre">APPROVAL_REJECTED</span></code>, <code class="docutils literal notranslate"><span class="pre">CDS_ERROR</span></code> and <code class="docutils literal notranslate"><span class="pre">PUBLISHED</span></code> are all final.
 Sending a workbasket back to the editing stage is done by cloning the
 workbasket and its data.</p>
-</div>
-<div class="section" id="consequences">
+</section>
+<section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
 <p>Workbaskets are only given a <code class="docutils literal notranslate"><span class="pre">transaction_id</span></code> when they are approved
 and start on their journey to being published. This means transactions
@@ -212,8 +213,8 @@ detect which row is current, so we will implement these in software.
 This is for good reason as there are going to have to be some in
 software anyway and it also means that we can run them across different
 contexts e.g. the database-live rows + a certain workbasket.</p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>

@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>5. Use tracked models and workbaskets &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,14 +47,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="use-tracked-models-and-workbaskets">
+  <section id="use-tracked-models-and-workbaskets">
 <span id="id1"></span><h1>5. Use tracked models and workbaskets<a class="headerlink" href="#use-tracked-models-and-workbaskets" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2020-05-21</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Approved</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>The Tariff Management Tool (TAMATO) requires a system to trial and
 approve changes which, once accepted, can be tracked as a series of
@@ -68,12 +69,12 @@ changes from any previous state. This is currently termed as
 </ol>
 <p>This ADR is primarily concerned with the data model underlying this
 system and not the application of the system.</p>
-</div>
-<div class="section" id="decision">
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>The proposed data model would involve two models, a <code class="docutils literal notranslate"><span class="pre">WorkBasket</span></code> model
 and a <code class="docutils literal notranslate"><span class="pre">TrackedModel</span></code> like so (column names subject to ORM standards):</p>
-<div class="section" id="workbasket">
+<section id="workbasket">
 <h3>WorkBasket<a class="headerlink" href="#workbasket" title="Permalink to this headline">¶</a></h3>
 <table class="docutils align-default">
 <colgroup>
@@ -141,8 +142,8 @@ made.</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="trackedmodel">
+</section>
+<section id="trackedmodel">
 <h3>TrackedModel<a class="headerlink" href="#trackedmodel" title="Permalink to this headline">¶</a></h3>
 <table class="docutils align-default">
 <colgroup>
@@ -197,11 +198,11 @@ item.</p></td>
 </table>
 <p>Each object table that implements the TrackedModel pattern has a FK to
 the <code class="docutils literal notranslate"><span class="pre">TrackedModel</span></code> table.</p>
-</div>
-</div>
-<div class="section" id="reasoning">
+</section>
+</section>
+<section id="reasoning">
 <h2>Reasoning<a class="headerlink" href="#reasoning" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="workbaskets">
+<section id="workbaskets">
 <h3>WorkBaskets<a class="headerlink" href="#workbaskets" title="Permalink to this headline">¶</a></h3>
 <p>Most of the WorkBasket model is self-explanatory.</p>
 <p>WorkBaskets must be reviewed before being applied. As a result two FKs
@@ -223,8 +224,8 @@ a WorkBasket reflects a Finite-state machine. As a result a status
 attribute allows us to track where the WorkBasket is within the machine
 and add transitions from one state to another based on events within the
 system.</p>
-</div>
-<div class="section" id="trackedmodel-1">
+</section>
+<section id="trackedmodel-1">
 <span id="id2"></span><h3>TrackedModel<a class="headerlink" href="#trackedmodel-1" title="Permalink to this headline">¶</a></h3>
 <p>The TrackedModel holds some intermediate data on the object being
 introduced, such as the update type applied to the object, however its
@@ -244,9 +245,9 @@ changed. This generally consists of a key field for the objects ID and a
 content type field to identify the actual table being linked to. This
 way the WorkBasket can stay naïve to the multiple tables it is affecting
 and let the TrackedModel table handle the generic relations.</p>
-</div>
-</div>
-<div class="section" id="consequences">
+</section>
+</section>
+<section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
 <p>The consequences of this decision are significant, as WorkBaskets
 underpin the majority of the app’s purpose. However there are a number
@@ -278,8 +279,8 @@ to should not be massive.</p></li>
 chances of merge conflicts. Other methods would allow editing each
 individual column which would lower this risk.</p></li>
 </ol>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>

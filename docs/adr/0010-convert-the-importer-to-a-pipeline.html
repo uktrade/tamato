@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>10. Convert the XML importer to a pipeline &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,14 +47,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="convert-the-xml-importer-to-a-pipeline">
+  <section id="convert-the-xml-importer-to-a-pipeline">
 <span id="id1"></span><h1>10. Convert the XML importer to a pipeline<a class="headerlink" href="#convert-the-xml-importer-to-a-pipeline" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2020-08-20</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Proposed</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>Migrating legacy and new data into the Tariff Management Tool (TaMaTo)
 is integral to keeping the system up-to-date. Historically the
@@ -65,7 +66,7 @@ which works with TARIC3 XML.</p>
 extracts XML data into python objects effectively. However a newly
 realised problem within the project stops this from being a complete
 solution.</p>
-<div class="section" id="the-problem">
+<section id="the-problem">
 <h3>The problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h3>
 <p>Over the course of TaMaTo’s redevelopment several data models have been
 determined as unnecessary abstractions. These unnecessary models have
@@ -97,9 +98,9 @@ initial importer:</p>
 extracts each record individually and immediately tries to dispatch it
 to the database as a complete object. In most cases the data is
 incomplete and the data validation fails - halting the process.</p>
-</div>
-</div>
-<div class="section" id="decision">
+</section>
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>To be able to handle the incomplete data records being input the
 importer is being split into 3 components which work together as a
@@ -111,12 +112,12 @@ pipeline. The three components are as follows:</p>
 </ol>
 <p>A cache has also been introduced to store the python dicts whilst a
 handler waits for further data.</p>
-<div class="section" id="the-pipeline">
+<section id="the-pipeline">
 <h3>The pipeline<a class="headerlink" href="#the-pipeline" title="Permalink to this headline">¶</a></h3>
 <p>The flow between these three components looks roughly like the following
 diagram:</p>
 <p><img alt="Importer Pipeline Flow Diagram" src="../../_images/importer-pipeline-flow.png" /></p>
-<div class="section" id="the-xml-parser">
+<section id="the-xml-parser">
 <h4>The XML Parser<a class="headerlink" href="#the-xml-parser" title="Permalink to this headline">¶</a></h4>
 <p>Initially an XML file is passed to the XML parser.</p>
 <p>The parser reflects the XML file structure with each elemnt being a
@@ -129,7 +130,7 @@ tag.</p>
 <p>The important factor here is how the data is extracted and put into the
 dictionary. The naming of each piece of data is integral to how the
 handler uses that data later on.</p>
-<div class="section" id="code-example">
+<section id="code-example">
 <h5>Code example<a class="headerlink" href="#code-example" title="Permalink to this headline">¶</a></h5>
 <p>A basic set of XML Parser classes may look like:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
@@ -173,9 +174,9 @@ handler uses that data later on.</p>
 <span class="nt">&lt;/transaction&gt;</span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="the-object-nursery">
+</section>
+</section>
+<section id="the-object-nursery">
 <h4>The Object Nursery<a class="headerlink" href="#the-object-nursery" title="Permalink to this headline">¶</a></h4>
 <p>The Object Nursery acts as a go-between for the parser. The nursery
 itself does very little. But it is here where the handling of incomplete
@@ -193,7 +194,7 @@ ready to be processed or when it needs to be stored. Instead it takes
 the cue for these actions from the handler being used. The nursery
 simply presents an interface for the handler to interact with the cache,
 whilst also acting as a gateway before to start the handling process.</p>
-<div class="section" id="the-record-cache">
+<section id="the-record-cache">
 <h5>The record cache<a class="headerlink" href="#the-record-cache" title="Permalink to this headline">¶</a></h5>
 <p>The record cache is an intermediate storage which holds record objects.
 These record objects contain their data, workbasket ID, and a unique
@@ -203,9 +204,9 @@ and the nursery. This means the cache could be anything ranging from
 local file storage to a redis cluster to an in process dictionary.
 Currently the most simple approach has been taken - an in process
 dictionary.</p>
-</div>
-</div>
-<div class="section" id="the-object-handler">
+</section>
+</section>
+<section id="the-object-handler">
 <h4>The Object Handler<a class="headerlink" href="#the-object-handler" title="Permalink to this headline">¶</a></h4>
 <p>The Object Handler is where most of the processing happens.</p>
 <p>A handler defines the serializer it uses to validate data and insert the
@@ -227,20 +228,20 @@ dependent records is given to a handler.</p>
 <p>If both steps are successful the handler validates the data and inserts
 it into the database. If either validation or insertion fails then an
 error will be raised.</p>
-</div>
-</div>
-</div>
-<div class="section" id="consequences">
+</section>
+</section>
+</section>
+<section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
 <p>The system is relatively complex but has several benefits.</p>
-<div class="section" id="pros">
+<section id="pros">
 <h3>Pros:<a class="headerlink" href="#pros" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="highly-customisable">
+<section id="highly-customisable">
 <h4>Highly customisable<a class="headerlink" href="#highly-customisable" title="Permalink to this headline">¶</a></h4>
 <p>Both handlers and parsers can be changed extensively to match individual
 model needs.</p>
-</div>
-<div class="section" id="highly-decoupled">
+</section>
+<section id="highly-decoupled">
 <h4>Highly Decoupled<a class="headerlink" href="#highly-decoupled" title="Permalink to this headline">¶</a></h4>
 <p>Most of the system acts in a decoupled way. The Nursery doesn’t care
 where it gets data from. Nor does the nursery care where the data is
@@ -252,43 +253,43 @@ if it is a nursery - they just need an interface to the cache.</p>
 to add a new integration for other clients who don’t want to use TARIC
 XML as an input. It is also simple to create entirely custom handlers
 for certain models.</p>
-</div>
-<div class="section" id="works-with-existing-serializers">
+</section>
+<section id="works-with-existing-serializers">
 <h4>Works with existing serializers<a class="headerlink" href="#works-with-existing-serializers" title="Permalink to this headline">¶</a></h4>
 <p>API serializers are reused for validation purposes, easing some of the
 complexities.</p>
-</div>
-</div>
-<div class="section" id="cons-many-of-these-are-still-the-case-for-alternative-solutions">
+</section>
+</section>
+<section id="cons-many-of-these-are-still-the-case-for-alternative-solutions">
 <h3>Cons (many of these are still the case for alternative solutions):<a class="headerlink" href="#cons-many-of-these-are-still-the-case-for-alternative-solutions" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="it-s-complex">
+<section id="it-s-complex">
 <h4>It’s complex<a class="headerlink" href="#it-s-complex" title="Permalink to this headline">¶</a></h4>
 <p>There are a lot of moving parts involved in the system. This makes it
 relatively fragile and non-trivial to conceptualize while working on it.</p>
-</div>
-<div class="section" id="doesn-t-handle-incomplete-data-well">
+</section>
+<section id="doesn-t-handle-incomplete-data-well">
 <h4>Doesn’t handle incomplete data well<a class="headerlink" href="#doesn-t-handle-incomplete-data-well" title="Permalink to this headline">¶</a></h4>
 <p>This is incomplete data that cannot be completed. If partial data comes
 through and its dependencies do not, the data will end up stuck in the
 cache. The nursery will not handle this.</p>
-</div>
-<div class="section" id="relies-on-unique-keys-actually-being-unique">
+</section>
+<section id="relies-on-unique-keys-actually-being-unique">
 <h4>Relies on unique keys actually being unique<a class="headerlink" href="#relies-on-unique-keys-actually-being-unique" title="Permalink to this headline">¶</a></h4>
 <p>An assumption is made that we can build unique keys for each record
 using the identifying data it contains. This may not be the case (keys
 may not be unique). In this case records in the cache may be
 overwritten.</p>
-</div>
-<div class="section" id="doesn-t-handle-optional-foreign-keys-well">
+</section>
+<section id="doesn-t-handle-optional-foreign-keys-well">
 <h4>Doesn’t handle optional foreign keys well<a class="headerlink" href="#doesn-t-handle-optional-foreign-keys-well" title="Permalink to this headline">¶</a></h4>
 <p>Optional foreign keys are generally ignored if not found. This may be a
 problem when the foreign keys are presented later on.</p>
-</div>
-</div>
-</div>
-<div class="section" id="alternatives-considered">
+</section>
+</section>
+</section>
+<section id="alternatives-considered">
 <h2>Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="handling-dependencies-in-the-xml">
+<section id="handling-dependencies-in-the-xml">
 <h3>Handling dependencies in the XML<a class="headerlink" href="#handling-dependencies-in-the-xml" title="Permalink to this headline">¶</a></h3>
 <p>Another solution was to let the XML parser handle the entire process. If
 an interdependent record is found it could pass it to the parent
@@ -304,8 +305,8 @@ solution:</p>
 <li><p>The system is tightly coupled, it would be far harder to adapt to varying model needs.</p></li>
 <li><p>The storage is tied to the system memory which may present problems for big inputs.</p></li>
 </ol>
-</div>
-<div class="section" id="sorting-the-records-within-the-xml">
+</section>
+<section id="sorting-the-records-within-the-xml">
 <h3>Sorting the records within the XML<a class="headerlink" href="#sorting-the-records-within-the-xml" title="Permalink to this headline">¶</a></h3>
 <p>Another solution was to parse the XML and sort it before inserting rows.
 This would allow assigning unique keys, merging dependencies and then
@@ -314,39 +315,39 @@ the lack of assurance on where items come within the input. Therefore
 the amount of data required to store in memory could be significant.</p>
 <p>However this solution may still be desirable. The nursery approach does
 not preclude sorting as an impossibility.</p>
-</div>
-</div>
-<div class="section" id="future-suggestions">
+</section>
+</section>
+<section id="future-suggestions">
 <h2>Future suggestions<a class="headerlink" href="#future-suggestions" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="clean-up-process">
+<section id="clean-up-process">
 <h3>Clean up process<a class="headerlink" href="#clean-up-process" title="Permalink to this headline">¶</a></h3>
 <p>Currently there is no way to know when an input is finished. As a result
 this may leave straggling records in the cache. A clean up process
 should be implemented to allow these records to be wrapped up before the
 process dies.</p>
-</div>
-<div class="section" id="batching">
+</section>
+<section id="batching">
 <h3>Batching<a class="headerlink" href="#batching" title="Permalink to this headline">¶</a></h3>
 <p>As the nursery controls when records are first handled it would be
 trivial to implement a batching system. This would involve the nursery
 holding onto records at first until some milestone is reached (e.g. <em>x</em>
 number of records, or an entire XMl transaction or similar). Once the
 milestone is reached the entire batch could be processed in one go.</p>
-</div>
-<div class="section" id="implement-sorting">
+</section>
+<section id="implement-sorting">
 <h3>Implement sorting<a class="headerlink" href="#implement-sorting" title="Permalink to this headline">¶</a></h3>
 <p>If batching is implemented then sorting the data appropriately would be
 a trivial addition to this system.</p>
-</div>
-<div class="section" id="more-intricate-dependency-and-link-checks">
+</section>
+<section id="more-intricate-dependency-and-link-checks">
 <h3>More intricate dependency and link checks<a class="headerlink" href="#more-intricate-dependency-and-link-checks" title="Permalink to this headline">¶</a></h3>
 <p>Currently the system for adding links is very adaptable, however the
 system for <em>checking</em> if a link is needed is not. It may be worth adding
 more complex checks (probably function based). This would allow the
 importer to more closely match the business rules.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
             <div class="clearer"></div>

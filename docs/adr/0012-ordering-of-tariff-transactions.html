@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>12. Ordering of tariff transactions &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,14 +47,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="ordering-of-tariff-transactions">
+  <section id="ordering-of-tariff-transactions">
 <span id="id1"></span><h1>12. Ordering of tariff transactions<a class="headerlink" href="#ordering-of-tariff-transactions" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2021-02-24</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Approved</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>The tariff is communicated to other systems through a stream of transactions.
 Each transaction represents an “atomic” set of changes to a single business
@@ -67,8 +68,8 @@ would need to happen in multiple transactions).</p>
 valid end-state for the data to be in. For example,
 <a class="reference internal" href="../business_rules/quotas.html#quotas.business_rules.QA3" title="quotas.business_rules.QA3"><code class="xref py py-class docutils literal notranslate"><span class="pre">QA3</span></code></a> specifies that a sub-quota must not have a
 bigger balance than it’s parent quota.</p>
-</div>
-<div class="section" id="ordering-within-transactions">
+</section>
+<section id="ordering-within-transactions">
 <h2>Ordering within transactions<a class="headerlink" href="#ordering-within-transactions" title="Permalink to this headline">¶</a></h2>
 <p>The point at which the business rules are applied to each transaction is not
 consistent – the TARIC Principles doc has the following to say:</p>
@@ -89,8 +90,8 @@ transaction.</p>
 a transaction as long as they do not depend on each other. For example, there
 seems to be no issue with sending measure footnote associations (430-20) before
 measure components (430-05).</p>
-</div>
-<div class="section" id="ordering-of-transactions">
+</section>
+<section id="ordering-of-transactions">
 <h2>Ordering of transactions<a class="headerlink" href="#ordering-of-transactions" title="Permalink to this headline">¶</a></h2>
 <p>However, many of the business rules talk about the relationship between
 different business objects – and hence edits to these objects will occur in
@@ -99,7 +100,7 @@ transaction, some of the rules therefore impose tricky constraints on the
 ordering of transactions.</p>
 <p>Here are some specific cases where the business rules describe relationships
 between models, and the ordering constraints this imposes on the transactions.</p>
-<div class="section" id="terminating-a-geographical-area-membership-where-exclusions-exist">
+<section id="terminating-a-geographical-area-membership-where-exclusions-exist">
 <h3>#1: Terminating a geographical area membership where exclusions exist<a class="headerlink" href="#terminating-a-geographical-area-membership-where-exclusions-exist" title="Permalink to this headline">¶</a></h3>
 <p>The business rule <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME67" title="measures.business_rules.ME67"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME67</span></code></a> links membership of a
 geographical area to measure exclusions:</p>
@@ -129,8 +130,8 @@ would this result in the correct ordering. But it’s possible that a more compl
 system could understand the dependencies between objects (i.e. that memberships
 depend on geo exclusions) and could order the transactions correctly such that
 dependent records come after their dependencies.</p>
-</div>
-<div class="section" id="changing-the-length-of-a-goods-nomenclature">
+</section>
+<section id="changing-the-length-of-a-goods-nomenclature">
 <h3>#2: Changing the length of a goods nomenclature<a class="headerlink" href="#changing-the-length-of-a-goods-nomenclature" title="Permalink to this headline">¶</a></h3>
 <p>The business rule <a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG30" title="commodities.business_rules.NIG30"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG30</span></code></a> requires the
 validity of a goods nomenclature to always be greater than or equal to any
@@ -153,8 +154,8 @@ first.</p>
 <p>So from this we see that the order of transactions cannot depend so
 simply on record codes update types, or even on a topological dependency between
 types, but is also dependent on the nature of the change being made.</p>
-</div>
-<div class="section" id="changing-the-volume-of-quotas-with-associations">
+</section>
+<section id="changing-the-volume-of-quotas-with-associations">
 <h3>#3: Changing the volume of quotas with associations<a class="headerlink" href="#changing-the-volume-of-quotas-with-associations" title="Permalink to this headline">¶</a></h3>
 <p>The business rule <a class="reference internal" href="../business_rules/quotas.html#quotas.business_rules.QA3" title="quotas.business_rules.QA3"><code class="xref py py-class docutils literal notranslate"><span class="pre">QA3</span></code></a> implies an ordering on
 changes to linked quota volumes:</p>
@@ -174,8 +175,8 @@ first because if we increased B first we wouldn’t have B &lt;= A at the end of
 transaction.</p>
 <p>So in this use case, records of the same type are being updated and again the
 order of transactions is dependent on what the change actually is.</p>
-</div>
-<div class="section" id="changing-the-quota-order-number-of-a-quota">
+</section>
+<section id="changing-the-quota-order-number-of-a-quota">
 <h3>#4: Changing the quota order number of a quota<a class="headerlink" href="#changing-the-quota-order-number-of-a-quota" title="Permalink to this headline">¶</a></h3>
 <p>The business rule <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME116" title="measures.business_rules.ME116"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME116</span></code></a> requires a quota order
 number linked to a measure to exist:</p>
@@ -210,8 +211,8 @@ similar problems with additional codes and goods nomenclature).</p>
 rules if we just tried to solve the problem with updates (which would be a
 reasonable starting assumption). The system or its users will need to “know”
 that changing a quota order number can only be performed to a certain pattern.</p>
-</div>
-<div class="section" id="what-we-have-learned">
+</section>
+<section id="what-we-have-learned">
 <h3>What we have learned<a class="headerlink" href="#what-we-have-learned" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>It’s possible to define an order using dependencies between records in some
@@ -224,9 +225,9 @@ and whose changes need to be performed in a different/specific way.</p></li>
 solve the problem of generating transactions in the first place that correspond
 to a known pattern (whether automatically or through training).</p></li>
 </ul>
-</div>
-</div>
-<div class="section" id="handling-business-rule-errors">
+</section>
+</section>
+<section id="handling-business-rule-errors">
 <h2>Handling business rule errors<a class="headerlink" href="#handling-business-rule-errors" title="Permalink to this headline">¶</a></h2>
 <p>Given the above learning about the inability of the system to correctly order
 transactions by itself, two options present themselves for the approach to
@@ -250,7 +251,7 @@ users will have to undo much of their work in order to fix violations. It is
 also easier from a system perspective to assume that any data is always
 compliant with the business rules. It also removes the need for the system to
 provide features to reorder transactions and edit away errored data.</p>
-<div class="section" id="using-multiple-workbaskets">
+<section id="using-multiple-workbaskets">
 <h3>Using multiple workbaskets<a class="headerlink" href="#using-multiple-workbaskets" title="Permalink to this headline">¶</a></h3>
 <p>Option 1 falls down when multiple workbaskets come into play. As each
 application of the business rules should only take into account the transactions
@@ -265,9 +266,9 @@ we enforce the business rules on edit we still have to deal with errored data
 We will need to provide training and/or tools to allow users to deal with these
 situations – again, the number of possibilities for the rules to be broken like
 this is numerous and automation is only of limited use.</p>
-</div>
-</div>
-<div class="section" id="decision">
+</section>
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>The business rules and the code that runs them will be refactored to reflect the
 ordering instructions: business rules will be run at the end of every
@@ -286,8 +287,8 @@ without using the pattern).</p>
 <p>The system will provide tools to allow users to deal with errored data. The
 exact nature of these is to be defined, but will need to include the ability to
 reorder transactions and remove errored models.</p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>

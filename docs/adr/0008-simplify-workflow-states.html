@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>8. Simplify workflow states &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,14 +47,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="simplify-workflow-states">
+  <section id="simplify-workflow-states">
 <span id="id1"></span><h1>8. Simplify workflow states<a class="headerlink" href="#simplify-workflow-states" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2020-08-05</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Approved</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>In <a class="reference external" href="./0007-changes-go-through-a-stateful-workflow">a previous ADR</a>
 the concept of a stateful workflow and defined associated workbasket
@@ -75,8 +76,8 @@ no purpose (e.g. moving <code class="docutils literal notranslate"><span class="
 true hierarchical tree). It therefore stands to reason that the
 workbasket states, which form a key part of the user experience, should
 be reduced to only those necessary for the product to function.</p>
-</div>
-<div class="section" id="decision">
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>The following states for workbaskets will be adopted:</p>
 <table class="docutils align-default">
@@ -135,8 +136,8 @@ various unhappy paths. This is represented in the directed graph:</p>
 </pre></div>
 </div>
 <p><img alt="Simplified States" src="../../_images/simplified-states.png" /></p>
-</div>
-<div class="section" id="consequences">
+</section>
+<section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
 <p>As before, workbaskets that end up in a final state on the unhappy path
 will need to be cloned before they can be submitted again. This should
@@ -154,8 +155,8 @@ submitted with the same ID there may have to be additional complexity to
 handle this. It is worth noting that this is <strong>not</strong> supported by TTM,
 which always numbers transactions sequentially in an envelope starting
 from 1.</p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>

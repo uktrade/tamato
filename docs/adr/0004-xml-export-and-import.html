@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
     <title>4. XML Import and Export &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
@@ -46,14 +47,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="xml-import-and-export">
+  <section id="xml-import-and-export">
 <span id="id1"></span><h1>4. XML Import and Export<a class="headerlink" href="#xml-import-and-export" title="Permalink to this headline">¶</a></h1>
 <p>Date: 2020-05-07</p>
-<div class="section" id="status">
+<section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
 <p>Approved, partially superseded by <a class="reference external" href="./0009-record-generated-envelopes">ADR-0009</a>.</p>
-</div>
-<div class="section" id="context">
+</section>
+<section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
 <p>The Tariff Management Tool (TaMaTo) must publish an up-to-date UK tariff
 for reference by HMRC, Jersey and Guernsey border control agencies from
@@ -84,12 +85,12 @@ increment by 1 for each message in the extraction (not just the
 transaction).</p>
 <p>Records themselves have numeric sequence identifiers which increment by
 1 for each record in the extraction.</p>
-</div>
-<div class="section" id="decision">
+</section>
+<section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>We will build separate modules for ingesting TARIC3 Extractions of the
 EU tariff and for producing TARIC3 Extractions of the UK tariff.</p>
-<div class="section" id="extraction">
+<section id="extraction">
 <h3>Extraction<a class="headerlink" href="#extraction" title="Permalink to this headline">¶</a></h3>
 <p>The Extraction app will be a command line script, executed by a <code class="docutils literal notranslate"><span class="pre">cron</span></code>
 job (or similar scheduling system) on a daily interval. It will produce
@@ -105,8 +106,8 @@ method. It is assumed that the records in the extraction have already
 been validated against the business rules by TaMaTo.</p>
 <p>The output of the app will (if valid) be uploaded to AWS S3 and made
 available to HMRC etc via SFTP with AWS Transfer.</p>
-</div>
-<div class="section" id="ingestion">
+</section>
+<section id="ingestion">
 <h3>Ingestion<a class="headerlink" href="#ingestion" title="Permalink to this headline">¶</a></h3>
 <p>The Ingestion app will be a command line script, executed by a <code class="docutils literal notranslate"><span class="pre">cron</span></code>
 job (or similar) on a daily interval. It will parse and validate TARIC3
@@ -117,9 +118,9 @@ work baskets owned by special user accounts and may bypass the usual
 approval process.</p>
 <p>On unsuccessful ingestion of a document, the app will send a failure
 notification to the development team.</p>
-</div>
-</div>
-<div class="section" id="consequences">
+</section>
+</section>
+<section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
 <p>Using the API instead of writing and reading from the database directly
 would reduce coupling and increase cohesion. Validation of business
@@ -134,8 +135,8 @@ building an intermediate object model.</p>
 of XML documents, which reduces memory requirements.</p>
 <p>Ingested data uploaded as workbaskets enables using the TaMaTo UI to
 display updates to tariff managers in the same way as their own changes.</p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
