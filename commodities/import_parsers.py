@@ -1,7 +1,9 @@
 import logging
 
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
+from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import ValidityStartMixin
@@ -39,7 +41,7 @@ class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
     suffix = TextElement(Tag("producline.suffix"))  # XXX not a typo
     valid_between_lower = TextElement(Tag("validity.start.date"))
     valid_between_upper = TextElement(Tag("validity.end.date"))
-    statistical = TextElement(Tag("statistical.indicator"))
+    statistical = BooleanElement(Tag("statistical.indicator"))
 
 
 @RecordParser.register_child("goods_nomenclature_origin")
@@ -206,7 +208,7 @@ class GoodsNomenclatureIndentsParser(ValidityStartMixin, Writable, ElementParser
 
     sid = TextElement(Tag("goods.nomenclature.indent.sid"))
     indented_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
-    indent = TextElement(Tag("number.indents"))
+    indent = IntElement(Tag("number.indents"), format="FM00")
     indented_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
     )
