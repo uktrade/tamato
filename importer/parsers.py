@@ -202,42 +202,92 @@ class ElementParser:
         return wraps
 
 
-class TextElement(ElementParser):
-    """
-    Parse elements which contain a text value.
+class ValueElementMixin:
+    """Provides a convenient way to define a parser for elements that contain
+    only a text value and have no attributes or children."""
 
-    This class provides a convenient way to define a parser for elements that contain
-    only a text value and have no attributes or children, eg:
+    native_type: type
+    """The Python type that most closely matches the type of the XML element."""
+
+    def clean(self):
+        super().clean()
+        self.data = self.native_type(self.text)
+
+
+class TextElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element which contains a text value.
+
+    .. code-block:: XML
 
         <msg:record.code>Example Text</msg:record.code>
     """
 
-    def clean(self):
-        super().clean()
-        self.data = self.text
+    native_type = str
 
 
-class IntElement(ElementParser):
+class IntElement(ValueElementMixin, ElementParser):
     """
-    Parse elements which contain an integer value.
+    Represents an element which contains an integer value.
 
-    This class provides a convenient way to define a parser for elements that contain
-    only an integer value and have no attributes or children, eg:
+    .. code-block:: XML
 
         <msg:record.code>430</msg:record.code>
     """
 
+    native_type = int
+
+    def __init__(
+        self,
+        *args,
+        format: str = "FM99999999999999999999",  # pylint: disable=unused-argument
+    ):
+        super().__init__(*args)
+
+
+class BooleanElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element which contains a true or false value.
+
+    The actual value in the XML by default is assumed to be a 1 for True and a 0
+    for False. This can be customised by passing in different values.
+
+    .. code-block:: XML
+
+        <msg:some.value>1</msg:some.value>
+        <msg:some.value>0</msg:some.value>
+    """
+
+    native_type = bool
+
+    def __init__(self, *args, true_value: str = "1", false_value: str = "0", **kwargs):
+        self.true_value = true_value
+        self.false_value = false_value
+        super().__init__(*args, **kwargs)
+
     def clean(self):
-        super().clean()
-        self.data = int(self.text)
+        if self.text == self.true_value:
+            self.data = True
+        elif self.text == self.false_value:
+            self.data = False
+        else:
+            self.data = None
+
+
+class RangeLowerElement(TextElement):
+    """Represents an element that is the lower part of a range."""
+
+
+class RangeUpperElement(TextElement):
+    """Represents an element that is the upper part of a range."""
 
 
 class ValidityMixin:
     """Parse validity start and end dates."""
 
     _additional_components = {
-        TextElement(Tag("validity.start.date")): "valid_between_lower",
-        TextElement(Tag("validity.end.date")): "valid_between_upper",
+        RangeLowerElement(Tag("validity.start.date")): "valid_between_lower",
+        RangeUpperElement(Tag("validity.end.date")): "valid_between_upper",
     }
 
     def clean(self):

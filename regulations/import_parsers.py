@@ -1,4 +1,5 @@
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -99,9 +100,9 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
     official_journal_page = IntElement(Tag("officialjournal.page"))
     community_code = IntElement(Tag("community.code"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
-    stopped = TextElement(Tag("stopped.flag"))
+    stopped = BooleanElement(Tag("stopped.flag"))
     information_text = TextElement(Tag("information.text"))
-    approved = TextElement(Tag("approved.flag"))
+    approved = BooleanElement(Tag("approved.flag"))
     effective_end_date = TextElement(Tag("effective.end.date"))
 
 
@@ -149,9 +150,9 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     target_regulation__role_type = TextElement(Tag("base.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag("base.regulation.id"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
-    stopped = TextElement(Tag("stopped.flag"))
+    stopped = BooleanElement(Tag("stopped.flag"))
     information_text = TextElement(Tag("information.text"))
-    approved = TextElement(Tag("approved.flag"))
+    approved = BooleanElement(Tag("approved.flag"))
 
 
 @RecordParser.register_child("fts_regulation")
@@ -194,7 +195,7 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
     effective_end_date = TextElement(Tag("effective.enddate"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
     information_text = TextElement(Tag("information.text"))
-    approved = TextElement(Tag("approved.flag"))
+    approved = BooleanElement(Tag("approved.flag"))
 
 
 @RecordParser.register_child("fts_action")

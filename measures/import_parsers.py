@@ -1,4 +1,5 @@
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -247,7 +248,7 @@ class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
 
     tag = Tag("duty.expression")
 
-    sid = IntElement(Tag("duty.expression.id"))
+    sid = IntElement(Tag("duty.expression.id"), format="FM00")
     duty_amount_applicability_code = IntElement(Tag("duty.amount.applicability.code"))
     measurement_unit_applicability_code = IntElement(
         Tag("measurement.unit.applicability.code"),
@@ -277,7 +278,7 @@ class DutyExpressionDescriptionParser(Writable, ElementParser):
 
     tag = Tag("duty.expression.description")
 
-    sid = IntElement(Tag("duty.expression.id"))
+    sid = DutyExpressionParser.sid
     description = TextElement(Tag("description"))
 
 
@@ -517,7 +518,7 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
     terminating_regulation__regulation_id = TextElement(
         Tag("justification.regulation.id"),
     )
-    stopped = TextElement(Tag("stopped.flag"))
+    stopped = BooleanElement(Tag("stopped.flag"))
     geographical_area__sid = TextElement(Tag("geographical.area.sid"))
     goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     additional_code__sid = TextElement(Tag("additional.code.sid"))
@@ -547,7 +548,7 @@ class MeasureComponentParser(Writable, ElementParser):
     tag = Tag("measure.component")
 
     component_measure__sid = TextElement(Tag("measure.sid"))
-    duty_expression__sid = IntElement(Tag("duty.expression.id"))
+    duty_expression__sid = DutyExpressionParser.sid
     duty_amount = TextElement(Tag("duty.amount"))
     monetary_unit__code = TextElement(Tag("monetary.unit.code"))
     component_measurement__measurement_unit__code = TextElement(
@@ -629,7 +630,7 @@ class MeasureConditionComponentParser(Writable, ElementParser):
     tag = Tag("measure.condition.component")
 
     condition__sid = TextElement(Tag("measure.condition.sid"))
-    duty_expression__sid = IntElement(Tag("duty.expression.id"))
+    duty_expression__sid = DutyExpressionParser.sid
     duty_amount = TextElement(Tag("duty.amount"))
     monetary_unit__code = TextElement(Tag("monetary.unit.code"))
     component_measurement__measurement_unit__code = TextElement(

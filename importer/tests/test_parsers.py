@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as etree
 
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
@@ -203,3 +204,35 @@ def test_validity_mixin():
             "upper": "2020-01-02",
         },
     }
+
+
+@pytest.mark.parametrize(
+    ("true_value", "false_value", "text", "expected"),
+    (
+        ("1", "0", "1", True),
+        ("1", "0", "0", False),
+        ("Y", "N", "Y", True),
+        ("Y", "N", "N", False),
+        ("1", "0", "", None),
+        ("1", "0", None, None),
+        ("1", "0", "Y", None),
+        ("1", "0", "N", None),
+        ("1", "0", "00001", None),
+        ("1", "0", "11111", None),
+        ("1", "0", "10000", None),
+    ),
+)
+def test_boolean_element_parser(true_value, false_value, text, expected):
+    parser = BooleanElement(
+        Tag("foo"),
+        true_value=true_value,
+        false_value=false_value,
+    )
+
+    el = etree.Element(str(Tag("foo")))
+    el.text = text
+
+    parser.start(el)
+    parser.end(el)
+
+    assert parser.data == expected
