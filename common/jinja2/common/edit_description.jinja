@@ -1,9 +1,46 @@
 {% extends "layouts/form.jinja" %}
 {% from "components/details/macro.njk" import govukDetails %}
+{% from "components/table/macro.njk" import govukTable %}
 
 {% set page_title = "Edit " ~ object._meta.verbose_name %}
 
-{% set described_object = object.get_described_object() %}
+{% set described_object = object.get_described_object() %}  
+
+{% set description_help_html %}
+  <p class="govuk-body">
+    It is possible to use HTML when defining descriptions. The table below shows 
+    a few examples of useful codes that you may want to use. Please use HTML sparingly and only where 
+    absolutely necessary.
+  </p>
+  {{ govukTable({
+    "head": [
+      {"text": "Code(s)"},
+      {"text": "Usage"},
+      {"text": "Example", "classes": "govuk-!-width-one-third"},
+    ],
+    "rows": [[
+      {"text": "<b></b>"},
+      {"text": "Make a piece of content bold. It is preferable to use the tag pair <strong></strong> instead of <b></b>, however many of the Taric descriptions already use standard bold tags."},
+      {"html": "This is " ~ '<b>bold</b>'|e ~ " content <br> becomes <br> This is <b>bold<b> content"},
+    ], 
+    [
+      {"text": "<em></em>"},
+      {"text": "Make a piece of content italicised"},
+      {"html": "This is " ~ '<em>italicised</em>'|e ~ " content <br> becomes <br> This is <em>italicised</em> content"},
+    ],
+    [
+      {"text": "<u></u>"},
+      {"text": "Make a piece of content underlined"},
+      {"html": "This is " ~ '<u>underlined</u>'|e ~ " content <br> becomes <br> This is <u>underlined</u> content"},
+    ],
+    [
+      {"text": "<a href=\'\'></a>"},
+      {"text": "Add a hyperlink"},
+      {"html": "This is " ~ "<a href=:\'https://www.gov.uk\'>a hyperlink to gov.uk</a>"|e ~ "<br> becomes <br> <a href=:'https://www.gov.uk'>a hyperlink to gov.uk</a>"},
+    ]
+    ]
+  }) }}
+{% endset %}
 
 {% block beforeContent %}
   {{ govukBreadcrumbs({
@@ -17,11 +54,15 @@
 {% endblock %}
 
 {% block form %}
-  {% call django_form(action=object.get_url("edit")) %}
-    {{ crispy(form) }}
-  {% endcall %}
-  {{ govukDetails({
-  "summaryText": "Help with formatting description",
-  "text": "We need to know your nationality so we can work out which elections you’re entitled to vote in. If you cannot provide your nationality, you’ll have to send copies of identity documents through the post."
-  }) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% call django_form(action=object.get_url("edit")) %}
+        {{ crispy(form) }}
+      {% endcall %}
+      {{ govukDetails({
+      "summaryText": "Help with formatting description",
+      "html": description_help_html
+      }) }}
+    </div>
+  </div>
 {% endblock %}

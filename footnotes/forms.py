@@ -7,6 +7,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 
 from common.forms import DateInputFieldFixed
+from common.forms import DescriptionForm
 from common.forms import GovukDateRangeField
 from common.util import TaricDateRange
 from footnotes import models
@@ -91,9 +92,7 @@ class FootnoteForm(forms.ModelForm):
         fields = ("footnote_type", "valid_between")
 
 
-class FootnoteDescriptionForm(forms.ModelForm):
-    valid_between = GovukDateRangeField()
-
+class FootnoteDescriptionForm(DescriptionForm):
     class Meta:
         model = models.FootnoteDescription
         fields = ("description", "valid_between")

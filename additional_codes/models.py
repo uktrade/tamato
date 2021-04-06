@@ -133,14 +133,19 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin, DescriptionMixin):
             identifying_fields=("described_additional_code", "valid_between"),
         )
 
-    def get_url(self, **kwargs):
+    def get_url(self, action="detail"):
+        kwargs = {}
+        if action != "list":
+            kwargs = self.get_identifying_fields()
+        if action == "edit" or "confirm-update":
+            kwargs = {
+                "described_additional_code__sid": self.described_additional_code.sid,
+                "description_period_sid": self.description_period_sid,
+            }
         try:
             return reverse(
-                f"{self.get_url_pattern_name_prefix()}-ui-edit",
-                kwargs={
-                    "described_additional_code__sid": self.described_additional_code.sid,
-                    "description_period_sid": self.description_period_sid,
-                },
+                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
+                kwargs=kwargs,
             )
         except NoReverseMatch:
             return

@@ -3,6 +3,7 @@ from django.urls import path
 from django.urls import re_path
 from rest_framework import routers
 
+from common.urls import DESCRIPTION_ID_PATTERN
 from footnotes import views
 from footnotes.validators import FOOTNOTE_ID_PATTERN
 from footnotes.validators import FOOTNOTE_TYPE_ID_PATTERN
@@ -36,20 +37,14 @@ ui_patterns = [
         name="footnote-ui-confirm-update",
     ),
     re_path(
-        (
-            description_detail
-            + r"description/(?P<description_period_sid>[0-9]{1,8})/edit/$"
-        ),
-        views.FootnoteDescriptionUpdate.as_view(),
-        name="footnote-ui-description-edit",
+        fr"{description_detail}/description/{DESCRIPTION_ID_PATTERN}/edit/$",
+        views.FootnoteUpdateDescription.as_view(),
+        name="footnote_description-ui-edit",
     ),
     re_path(
-        (
-            description_detail
-            + r"description/(?P<description_period_sid>[0-9]{1,8})/confirm-update/$"
-        ),
+        fr"{description_detail}/description/{DESCRIPTION_ID_PATTERN}/confirm-update/$",
         views.FootnoteDescriptionConfirmUpdate.as_view(),
-        name="footnote-ui-description-confirm-update",
+        name="footnote_description-ui-confirm-update",
     ),
     path("api/", include(api_router.urls)),
 ]

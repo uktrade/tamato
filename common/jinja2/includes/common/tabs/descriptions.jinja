@@ -3,7 +3,7 @@
 
 {% set description_rows = [] %}
 {% for description in object.get_descriptions() %}
-	{% set edit_url = description.get_url() %}
+	{% set edit_url = description.get_url("edit") %}
 	{% set description_row = [
 		{"text": "{:%d %b %Y}".format(description.valid_between.lower)},
 		{"text": description.description},
