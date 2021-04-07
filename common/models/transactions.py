@@ -8,9 +8,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.models.aggregates import Count
 from django.db.models.expressions import Window
 from django.db.models.functions.window import RowNumber
 
+from common import xml
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
@@ -47,11 +49,22 @@ class TransactionQueryset(models.QuerySet):
     def with_xml(self):
         from importer.taric import TransactionParser
 
-        return self.annotate(message_id=Window(expression=RowNumber())).annotate(
-            xml=TransactionParser().serializer(),
+        return self.annotate(
+            message_id=Window(expression=RowNumber()),
+            xml=xml.XMLSerialize(TransactionParser().serializer()),
         )
 
-    def get_xml(self) -> Iterator[bytes]:
+    def not_empty(self):
+        # Django bug 2361  https://code.djangoproject.com/ticket/2361
+        #   Queryset.filter(m2mfield__isnull=False) may duplicate records,
+        #   so cannot be used, instead the count() of each tracked_models
+        #   resultset is checked.
+        full_transactions = self.annotate(models=Count("tracked_models")).filter(
+            models__gt=0,
+        )
+        return self.filter(pk__in=full_transactions)
+
+    def get_xml(self) -> Iterator[str]:
         return (
             self.with_xml()
             .values_list("xml", flat=True)

@@ -56,6 +56,13 @@ class XMLConcat(Func):
     output_field = TextField()
 
 
+class XMLSerialize(Func):
+    function = "XMLSERIALIZE"
+    output_field = TextField()
+    template = "%(function)s(CONTENT %(expressions)s AS text)"
+    arity = 1
+
+
 class Identity(Func):
     function = ""
     template = "%(expressions)s"

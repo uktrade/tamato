@@ -3,7 +3,7 @@ import logging
 import os
 from functools import cached_property
 from typing import IO
-from typing import List
+from typing import Iterator
 from typing import Optional
 
 from django.conf import settings
@@ -16,8 +16,8 @@ from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 
-from common.models import TrackedModel
 from common.models import Transaction
+from common.models.transactions import TransactionQueryset
 from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import TaricDateRange
@@ -258,23 +258,9 @@ class EnvelopeSerializer:
 
     def render_envelope_body(
         self,
-        models: List[TrackedModel],
-        transaction_id: int,
-    ) -> str:
-        return render_to_string(
-            template_name="workbaskets/taric/transaction.xml",
-            context={
-                "tracked_models": TrackedModelSerializer(
-                    models,
-                    many=True,
-                    read_only=True,
-                    context={"format": self.format},
-                ).data,
-                "transaction_id": transaction_id,
-                "counter_generator": counter_generator,
-                "message_counter": self.message_counter,
-            },
-        )
+        transactions: TransactionQueryset,
+    ) -> Iterator[str]:
+        return transactions.get_xml()
 
     def render_envelope_end(self) -> str:
         return render_to_string(template_name="common/taric/end_envelope.xml")
@@ -313,12 +299,10 @@ class EnvelopeSerializer:
 
     def render_transaction(
         self,
-        models: List[TrackedModel],
-        transaction_id: int,
+        transactions: TransactionQueryset,
     ) -> None:
         """Render TrackedModels, splitting to a new Envelope if over-size."""
-        if models:
-            envelope_body = self.render_envelope_body(models, transaction_id)
+        for envelope_body in self.render_envelope_body(transactions.not_empty()):
 
             if self.is_envelope_full(len(envelope_body.encode())):
                 self.write(self.render_envelope_end())

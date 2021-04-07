@@ -80,8 +80,7 @@ def test_envelope_serializer_outputs_expected_items(approved_workbasket):
     output = io.BytesIO()
     with EnvelopeSerializer(output, random.randint(2, 9999)) as env:
         env.render_transaction(
-            models=approved_workbasket.tracked_models.all(),
-            transaction_id=tx.order,
+            transactions=approved_workbasket.transactions,
         )
 
     output_xml = etree.XML(output.getvalue())
@@ -114,7 +113,8 @@ def test_transaction_envelope_serializer_splits_output():
 
     transactions = Transaction.objects.filter(pk__in=[tx1.pk, tx2.pk, tx3.pk])
     expected_transactions = [
-        Transaction.objects.filter(pk=tx.pk) for tx in [tx1, tx2, tx3]
+        Transaction.objects.filter(pk=tx.pk).values_list("pk", flat=True)
+        for tx in [tx1, tx2, tx3]
     ]
     expected_record_codes = [
         [

@@ -6,6 +6,7 @@ from typing import Dict
 from typing import List
 from typing import Sequence
 
+from django.conf import settings
 from lxml import etree
 
 from common.serializers import EnvelopeSerializer
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 # RenderedTransactions
 RenderedTransactions = namedtuple(
     "RenderedTransactions",
-    "envelope_id output transactions is_oversize max_envelope_size",
+    ("envelope_id", "output", "transactions", "is_oversize", "max_envelope_size"),
 )
 RenderedTransactions.__doc__ = """\
 Transient object that links Transaction objects to the file like object they were rendered to as Envelope XML.
@@ -73,22 +74,14 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
 
         # Transactions written to the current output
         current_transactions = []
-        for transaction in transactions.all():
-            tracked_models = transaction.tracked_models.all()
-            if not tracked_models.count():
-                # Transactions with no tracked models can occur if a workbasket
-                # is created and then populated, these are filtered as an empty
-                # transaction will cause an XSD validation error later on.
-                #
-                # Django bug 2361  https://code.djangoproject.com/ticket/2361
-                #   Queryset.filter(m2mfield__isnull=False) may duplicate records,
-                #   so cannot be used, instead the count() of each tracked_models
-                #   resultset is checked.
-                #
-                #
-                continue
-
-            envelope_body = self.render_envelope_body(tracked_models, transaction.order)
+        # Transactions with no tracked models can occur if a workbasket
+        # is created and then populated, these are filtered as an empty
+        # transaction will cause an XSD validation error later on.
+        full_transactions = transactions.not_empty().with_xml()
+        for transaction in full_transactions.iterator(
+            settings.EXPORTER_MAXIMUM_DATABASE_CHUNK,
+        ):
+            envelope_body = transaction.xml
             envelope_body_size = len(envelope_body.encode())
             if self.is_envelope_full(envelope_body_size):
                 oversize = not self.can_fit_one_envelope(
@@ -112,7 +105,7 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
                 self.write(self.render_file_header())
                 self.write(self.render_envelope_start())
 
-            current_transactions.append(transaction)
+            current_transactions.append(transaction.pk)
 
             self.write(envelope_body)
 
