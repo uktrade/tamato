@@ -225,7 +225,7 @@
             <span class="p">)</span>
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">membership</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-                <span class="n">member__valid_between__contained_by</span><span class="o">=</span><span class="n">membership</span><span class="o">.</span><span class="n">geo_group</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+                <span class="n">valid_between__contained_by</span><span class="o">=</span><span class="n">membership</span><span class="o">.</span><span class="n">geo_group</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
