@@ -185,7 +185,7 @@ class GA16(BusinessRule):
             )
             .approved_up_to_transaction(membership.transaction)
             .exclude(
-                member__valid_between__contained_by=membership.geo_group.valid_between,
+                valid_between__contained_by=membership.geo_group.valid_between,
             )
             .exists()
         ):
