@@ -4,6 +4,7 @@ from django.db import DataError
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
+from common.tests.util import raises_if
 from geo_areas import business_rules
 from geo_areas.validators import AreaCode
 
@@ -193,14 +194,9 @@ def test_GA13(area_code, expect_error):
     membership = factories.GeographicalMembershipFactory.create(
         member__area_code=area_code,
     )
-    try:
+
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.GA13(membership.transaction).validate(membership)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 def test_GA14(reference_nonexistent_record):
@@ -223,15 +219,24 @@ def test_GA15(date_ranges):
         )
 
 
-def test_GA16(date_ranges):
+@pytest.mark.parametrize(
+    ("group_validity", "membership_validity", "expect_error"),
+    (
+        ("normal", "normal", False),
+        ("normal", "overlap_normal", True),
+        ("no_end", "no_end", False),
+        ("normal", "later", True),
+    ),
+)
+def test_GA16(date_ranges, group_validity, membership_validity, expect_error):
     """The validity period of the geographical area group must span all
     membership periods of its members."""
 
     membership = factories.GeographicalMembershipFactory.create(
-        geo_group__valid_between=date_ranges.normal,
-        member__valid_between=date_ranges.overlap_normal,
+        geo_group__valid_between=getattr(date_ranges, group_validity),
+        valid_between=getattr(date_ranges, membership_validity),
     )
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.GA16(membership.transaction).validate(membership)
 
 
