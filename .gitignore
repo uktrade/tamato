@@ -50,6 +50,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+allure-results/
 
 # Translations
 *.mo
@@ -95,7 +96,7 @@ ipython_config.py
 __pypackages__/
 
 # Celery stuff
-celerybeat-schedule
+celerybeat-schedule*
 celerybeat.pid
 
 # SageMath parsed files
@@ -138,5 +139,8 @@ webpack-stats.json
 
 # PyCharm
 .idea/
+
+# VS Code
+.vscode/
 
 *.gz
