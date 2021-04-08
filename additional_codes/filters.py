@@ -4,14 +4,14 @@ from django.contrib.postgres.aggregates import StringAgg
 from django.forms import CheckboxSelectMultiple
 from django.urls import reverse_lazy
 
-from additional_codes.models import AdditionalCode
-from additional_codes.validators import TypeChoices
+from additional_codes import models
 from common.filters import ActiveStateMixin
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import StartYearMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
+from common.filters import type_choices
 
 COMBINED_ADDITIONAL_CODE_AND_TYPE_ID = re.compile(
     r"(?P<type__sid>[A-Z0-9])(?P<code>[A-Z0-9]{3})",
@@ -55,7 +55,7 @@ class AdditionalCodeFilter(
     """
 
     additional_code_type = LazyMultipleChoiceFilter(
-        choices=TypeChoices.choices,
+        choices=type_choices(models.AdditionalCodeType.objects.latest_approved()),
         widget=CheckboxSelectMultiple,
         field_name="type__sid",
         label="Additional Code Type",
@@ -66,6 +66,6 @@ class AdditionalCodeFilter(
     clear_url = reverse_lazy("additional_code-ui-list")
 
     class Meta:
-        model = AdditionalCode
+        model = models.AdditionalCode
         # Defines the order shown in the form.
         fields = ["search", "additional_code_type", "start_year", "active_state"]

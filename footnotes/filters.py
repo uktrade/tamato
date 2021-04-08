@@ -1,6 +1,5 @@
 import re
 
-from crispy_forms_gds.choices import Choice
 from django.contrib.postgres.aggregates import StringAgg
 from django.forms import CheckboxSelectMultiple
 from django.urls import reverse_lazy
@@ -11,6 +10,7 @@ from common.filters import StartYearMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
+from common.filters import type_choices
 from footnotes import models
 from footnotes.validators import FOOTNOTE_ID_PATTERN
 from footnotes.validators import FOOTNOTE_TYPE_ID_PATTERN
@@ -43,20 +43,6 @@ class FootnoteFilterBackend(TamatoFilterBackend, FootnoteFilterMixin):
     pass
 
 
-def footnote_type_choices():
-    footnote_types = models.FootnoteType.objects.latest_approved()
-    return [
-        Choice(
-            footnote_type.footnote_type_id,
-            "{0} - {1}".format(
-                footnote_type.footnote_type_id,
-                footnote_type.description,
-            ),
-        )
-        for footnote_type in footnote_types
-    ]
-
-
 class FootnoteFilter(
     TamatoFilter,
     FootnoteFilterMixin,
@@ -65,7 +51,7 @@ class FootnoteFilter(
 ):
 
     footnote_type = LazyMultipleChoiceFilter(
-        choices=footnote_type_choices,
+        choices=type_choices(models.FootnoteType.objects.latest_approved()),
         widget=CheckboxSelectMultiple,
         field_name="footnote_type__footnote_type_id",
         label="Footnote Type",
