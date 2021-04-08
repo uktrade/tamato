@@ -12,7 +12,6 @@ from django.db.models import F
 from django.db.models import Field
 from django.db.models import Max
 from django.db.models import Q
-from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.query_utils import DeferredAttribute
@@ -34,7 +33,7 @@ from workbaskets.validators import WorkflowStatus
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet):
-    def latest_approved(self) -> QuerySet:
+    def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
         approved.
@@ -51,7 +50,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             update_type=UpdateType.DELETE,
         )
 
-    def approved_up_to_transaction(self, transaction=None) -> QuerySet:
+    def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
         """
         Get the approved versions of the model being queried unless there exists
         a version of the model in a draft state within a transaction preceding
@@ -110,7 +109,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
             .exclude(update_type=UpdateType.DELETE)
         )
 
-    def latest_deleted(self) -> QuerySet:
+    def latest_deleted(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
         approved, but also deleted.
@@ -121,7 +120,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.filter(is_current__isnull=False, update_type=UpdateType.DELETE)
 
-    def since_transaction(self, transaction_id: int) -> QuerySet:
+    def since_transaction(self, transaction_id: int) -> TrackedModelQuerySet:
         """
         Get all instances of an object since a certain transaction (i.e. since a
         particular workbasket was accepted).
@@ -134,7 +133,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.filter(transaction__id__gt=transaction_id)
 
-    def as_at(self, date: date) -> QuerySet:
+    def as_at(self, date: date) -> TrackedModelQuerySet:
         """
         Return the instances of the model that were represented at a particular
         date.
@@ -144,7 +143,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.filter(valid_between__contains=date)
 
-    def active(self) -> QuerySet:
+    def active(self) -> TrackedModelQuerySet:
         """
         Return the instances of the model that are represented at the current
         date.
@@ -154,7 +153,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
         """
         return self.as_at(date.today())
 
-    def get_versions(self, **kwargs) -> QuerySet:
+    def get_versions(self, **kwargs) -> TrackedModelQuerySet:
         for field in self.model.identifying_fields:
             if field not in kwargs:
                 raise exceptions.NoIdentifyingValuesGivenError(
@@ -195,7 +194,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
 
         return self.filter(self.approved_query_filter())
 
-    def annotate_record_codes(self) -> QuerySet:
+    def annotate_record_codes(self) -> TrackedModelQuerySet:
         """
         :return: Query annotated with record_code and subrecord_code.
         """
@@ -249,7 +248,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet):
                 )
         return related_lookups
 
-    def with_latest_links(self, *lookups, recurse_level=0) -> QuerySet:
+    def with_latest_links(self, *lookups, recurse_level=0) -> TrackedModelQuerySet:
         """
         Runs a `.select_related` operation for all relations, or given
         relations, joining them with the "current" version of the relation as
@@ -374,7 +373,9 @@ class TrackedModel(PolymorphicModel):
     these fields.
     """
 
-    objects = PolymorphicManager.from_queryset(TrackedModelQuerySet)()
+    objects: TrackedModelQuerySet = PolymorphicManager.from_queryset(
+        TrackedModelQuerySet,
+    )()
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()

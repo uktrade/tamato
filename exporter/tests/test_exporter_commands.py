@@ -4,10 +4,10 @@ import pytest
 from django.core.management import call_command
 from lxml import etree
 
-from common.serializers import validate_taric_xml_record_order
 from common.tests.factories import FootnoteTypeFactory
 from common.tests.factories import RegulationFactory
 from common.tests.util import taric_xml_record_codes
+from common.tests.util import validate_taric_xml_record_order
 
 pytestmark = pytest.mark.django_db
 

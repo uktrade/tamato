@@ -6,6 +6,7 @@ from additional_codes import models
 from additional_codes.validators import ApplicationCode
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
+from common.tests.util import raises_if
 from common.tests.util import requires_meursing_tables
 
 pytestmark = pytest.mark.django_db
@@ -88,14 +89,8 @@ def test_ACN2_allowed_application_codes(app_code, expect_error):
     additional_code = factories.AdditionalCodeFactory.create(
         type__application_code=app_code,
     )
-    try:
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ACN2(additional_code.transaction).validate(additional_code)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 def test_ACN3(date_ranges):

@@ -5,7 +5,6 @@ from typing import Optional
 from typing import TypeVar
 from typing import Union
 
-from django.db import connection
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
 
@@ -111,39 +110,6 @@ def validity_range_contains_range(
             return False
 
     return True
-
-
-def create_sequence(
-    name: str,
-    start: Optional[int] = None,
-    increment_by: int = 1,
-    max_value: Optional[int] = None,
-    min_value: Optional[int] = None,
-    cache: int = 1,
-    cycle: bool = False,
-) -> str:
-    """Generate SQL to create a PostgreSQL sequence."""
-
-    parts = [
-        f"CREATE SEQUENCE IF NOT EXISTS {name}",
-        f"INCREMENT BY {increment_by}",
-        f"MINVALUE {min_value}" if min_value is not None else "NO MINVALUE",
-        f"MAXVALUE {max_value}" if max_value is not None else "NO MAXVALUE",
-        f"START {start}" if start is not None else "",
-        f"CACHE {cache}",
-        "CYCLE" if cycle else "NO CYCLE",
-    ]
-    return " ".join(parts) + ";"
-
-
-def get_next_sequence_value(sequence_name: str) -> int:
-    """Fetch next value in named sequence."""
-
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT nextval(%s)", [sequence_name])
-        row = cursor.fetchone()
-
-    return row[0]
 
 
 def get_field_tuple(model, field):
