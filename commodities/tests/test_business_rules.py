@@ -4,6 +4,7 @@ from django.db import DataError
 from commodities import business_rules
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
+from common.tests.util import raises_if
 from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
@@ -137,14 +138,8 @@ def test_NIG10(date_ranges, valid_between, expect_error):
             valid_between,
         ),
     )
-    try:
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG10(successor.transaction).validate(successor)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 def test_NIG11_one_indent_mandatory():
