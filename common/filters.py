@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import Callable
 from typing import Iterable
 from typing import Optional
+from typing import Sequence
 from typing import Union
 
 from crispy_forms_gds.choices import Choice
@@ -21,6 +22,7 @@ from django.db.models import DateField
 from django.db.models import Q
 from django.db.models.functions import Extract
 from django.db.models.functions import Lower
+from django.utils.safestring import mark_safe
 from django_filters import CharFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
@@ -28,6 +30,8 @@ from django_filters.constants import EMPTY_VALUES
 from rest_framework import filters
 from rest_framework.settings import api_settings
 
+from common.jinja2 import break_words
+from common.models.records import TrackedModelQuerySet
 from common.util import TaricDateRange
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
@@ -45,6 +49,34 @@ def field_to_layout(field_name, field):
         return Field.checkboxes(field_name, legend_size=Size.SMALL)
 
     return field_name
+
+
+def type_choices(queryset: TrackedModelQuerySet) -> Callable[[], Sequence[Choice]]:
+    """
+    Converts a model representing a type into a set of choices.
+
+    The type model must have only one identifying field and have a description
+    field.
+    """
+    if len(queryset.model.identifying_fields) != 1:
+        raise TypeError("Model is required to have 1 identifying field only")
+    field = queryset.model.identifying_fields[0]
+
+    def get_choices():
+        return [
+            Choice(
+                model.get_identifying_fields()[field],
+                mark_safe(
+                    "{0} - {1}".format(
+                        model.get_identifying_fields()[field],
+                        break_words(model.description),
+                    ),
+                ),
+            )
+            for model in queryset
+        ]
+
+    return get_choices
 
 
 class MultiValueCharFilter(CharFilter):
