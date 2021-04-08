@@ -6,7 +6,7 @@ export
 
 SPHINXOPTS    ?=
 
-.PHONY: help clean clean-bytecode clean-static collectstatic compilescss dependencies docker-image docker-test node_modules run test build-docs
+.PHONY: help clean clean-bytecode clean-static collectstatic compilescss dependencies docker-image docker-test node_modules run test test-fast build-docs
 
 
 
@@ -69,10 +69,16 @@ run: collectstatic migrate
 	@${PYTHON} manage.py runserver_plus 0.0.0.0:8000
 
 ## test: Run tests
-test:
+test-fast:
 	@echo
 	@echo "> Running tests..."
 	${PYTHON} manage.py test --failfast
+
+test:
+	@echo
+	@echo "> Running tests..."
+	@coverage run --source='.' manage.py test -- --alluredir=allure-results --nomigrations
+	@coverage xml
 
 ## docker-image: Build docker image
 docker-image:
