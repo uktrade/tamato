@@ -14,7 +14,7 @@ repos:
             "--remove-unused-variable",
           ]
   - repo: https://github.com/pycqa/isort
-    rev: 5.7.0
+    rev: 5.8.0
     hooks:
       - id: isort
         args: [--force-single-line-imports]
@@ -34,6 +34,6 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
-    rev: ''
+    rev: '0.63'
     hooks:
       - id: flynt
