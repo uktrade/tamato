@@ -52,7 +52,6 @@
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Field</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Max</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Value</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">When</span>
 <span class="kn">from</span> <span class="nn">django.db.models.query_utils</span> <span class="kn">import</span> <span class="n">DeferredAttribute</span>
@@ -74,7 +73,7 @@
 
 
 <div class="viewcode-block" id="TrackedModelQuerySet"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet">[docs]</a><span class="k">class</span> <span class="nc">TrackedModelQuerySet</span><span class="p">(</span><span class="n">PolymorphicQuerySet</span><span class="p">):</span>
-<div class="viewcode-block" id="TrackedModelQuerySet.latest_approved"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet.latest_approved">[docs]</a>    <span class="k">def</span> <span class="nf">latest_approved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+<div class="viewcode-block" id="TrackedModelQuerySet.latest_approved"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet.latest_approved">[docs]</a>    <span class="k">def</span> <span class="nf">latest_approved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get all the latest versions of the model being queried which have been</span>
 <span class="sd">        approved.</span>
@@ -91,7 +90,7 @@
             <span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="TrackedModelQuerySet.approved_up_to_transaction"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet.approved_up_to_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+<div class="viewcode-block" id="TrackedModelQuerySet.approved_up_to_transaction"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet.approved_up_to_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the approved versions of the model being queried unless there exists</span>
 <span class="sd">        a version of the model in a draft state within a transaction preceding</span>
@@ -150,7 +149,7 @@
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">)</span>
         <span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">latest_deleted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">latest_deleted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get all the latest versions of the model being queried which have been</span>
 <span class="sd">        approved, but also deleted.</span>
@@ -161,7 +160,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_current__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">since_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">since_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get all instances of an object since a certain transaction (i.e. since a</span>
 <span class="sd">        particular workbasket was accepted).</span>
@@ -174,7 +173,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transaction__id__gt</span><span class="o">=</span><span class="n">transaction_id</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">as_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">:</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">as_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">:</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the instances of the model that were represented at a particular</span>
 <span class="sd">        date.</span>
@@ -184,7 +183,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">valid_between__contains</span><span class="o">=</span><span class="n">date</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">active</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">active</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the instances of the model that are represented at the current</span>
 <span class="sd">        date.</span>
@@ -194,7 +193,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_at</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">NoIdentifyingValuesGivenError</span><span class="p">(</span>
@@ -235,7 +234,7 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">approved_query_filter</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">annotate_record_codes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">annotate_record_codes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: Query annotated with record_code and subrecord_code.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -289,7 +288,7 @@
                 <span class="p">)</span>
         <span class="k">return</span> <span class="n">related_lookups</span>
 
-    <span class="k">def</span> <span class="nf">with_latest_links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">lookups</span><span class="p">,</span> <span class="n">recurse_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">with_latest_links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">lookups</span><span class="p">,</span> <span class="n">recurse_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Runs a `.select_related` operation for all relations, or given</span>
 <span class="sd">        relations, joining them with the &quot;current&quot; version of the relation as</span>
@@ -414,7 +413,9 @@
 <span class="sd">    these fields.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">objects</span> <span class="o">=</span> <span class="n">PolymorphicManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span><span class="n">TrackedModelQuerySet</span><span class="p">)()</span>
+    <span class="n">objects</span><span class="p">:</span> <span class="n">TrackedModelQuerySet</span> <span class="o">=</span> <span class="n">PolymorphicManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span>
+        <span class="n">TrackedModelQuerySet</span><span class="p">,</span>
+    <span class="p">)()</span>
 
     <span class="n">business_rules</span><span class="p">:</span> <span class="n">Iterable</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">indirect_business_rules</span><span class="p">:</span> <span class="n">Iterable</span> <span class="o">=</span> <span class="p">()</span>
