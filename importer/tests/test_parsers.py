@@ -1,7 +1,10 @@
 import xml.etree.ElementTree as etree
 
+import pytest
+
 from importer.namespaces import Tag
 from importer.parsers import BooleanElement
+from importer.parsers import CompoundElement
 from importer.parsers import ElementParser
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
@@ -227,6 +230,38 @@ def test_boolean_element_parser(true_value, false_value, text, expected):
         Tag("foo"),
         true_value=true_value,
         false_value=false_value,
+    )
+
+    el = etree.Element(str(Tag("foo")))
+    el.text = text
+
+    parser.start(el)
+    parser.end(el)
+
+    assert parser.data == expected
+
+
+@pytest.mark.parametrize(
+    ("num_children", "separator", "text", "expected"),
+    (
+        (0, "|", "foo", ("foo",)),
+        (0, "|", "foo|bar", ("foo|bar",)),
+        (1, "|", "foo", ("foo", None)),
+        (1, "|", "foo|bar", ("foo", "bar")),
+        (1, "|", "foo|bar|baz", ("foo", "bar|baz")),
+        (2, "|", "foo", ("foo", None, None)),
+        (2, "|", "foo|bar", ("foo", "bar", None)),
+        (2, "|", "foo|bar|baz", ("foo", "bar", "baz")),
+        (2, ";", "foo;bar;baz", ("foo", "bar", "baz")),
+        (2, "|", "foo;bar;baz", ("foo;bar;baz", None, None)),
+        (2, ";", "foo|bar|baz", ("foo|bar|baz", None, None)),
+    ),
+)
+def test_compound_element_parser(num_children, separator, text, expected):
+    parser = CompoundElement(
+        Tag("foo"),
+        *(str(i) for i in range(num_children)),
+        separator=separator,
     )
 
     el = etree.Element(str(Tag("foo")))

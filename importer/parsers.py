@@ -282,6 +282,39 @@ class RangeUpperElement(TextElement):
     """Represents an element that is the upper part of a range."""
 
 
+class CompoundElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element in XML that is actually a concatenation of one or more
+    logical values and separators.
+
+    The separator by default is assumed to be a pipe character. The parsed data
+    will always contain a tuple that is the size of the number of expected
+    fields (the original field and any extras) – if less than the specified
+    number of separators occur the rightmost fields will have value ``None``.
+
+    .. code-block:: XML
+
+        <msg:some.value>one|two|three</msg:some.value>
+    """
+
+    native_type = tuple
+
+    def __init__(
+        self,
+        tag: Tag,
+        *extra_fields: str,
+        separator: str = "|",
+    ):
+        super().__init__(tag)
+        self.extra_fields = extra_fields
+        self.separator = separator
+
+    def clean(self):
+        parts = self.text.split(self.separator, len(self.extra_fields))
+        missing = len(self.extra_fields) - len(parts) + 1
+        self.data = self.native_type([*parts, *([None] * missing)])
+
+
 class ValidityMixin:
     """Parse validity start and end dates."""
 
