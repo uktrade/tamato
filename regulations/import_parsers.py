@@ -1,5 +1,6 @@
 from importer.namespaces import Tag
 from importer.parsers import BooleanElement
+from importer.parsers import CompoundElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -101,7 +102,11 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
     community_code = IntElement(Tag("community.code"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
     stopped = BooleanElement(Tag("stopped.flag"))
-    information_text = TextElement(Tag("information.text"))
+    information_text = CompoundElement(
+        Tag("information.text"),
+        "public_identifier",
+        "url",
+    )
     approved = BooleanElement(Tag("approved.flag"))
     effective_end_date = TextElement(Tag("effective.end.date"))
 
@@ -151,7 +156,11 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     target_regulation__regulation_id = TextElement(Tag("base.regulation.id"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
     stopped = BooleanElement(Tag("stopped.flag"))
-    information_text = TextElement(Tag("information.text"))
+    information_text = CompoundElement(
+        Tag("information.text"),
+        "public_identifier",
+        "url",
+    )
     approved = BooleanElement(Tag("approved.flag"))
 
 
@@ -194,7 +203,11 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
     official_journal_page = IntElement(Tag("officialjournal.page"))
     effective_end_date = TextElement(Tag("effective.enddate"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
-    information_text = TextElement(Tag("information.text"))
+    information_text = CompoundElement(
+        Tag("information.text"),
+        "public_identifier",
+        "url",
+    )
     approved = BooleanElement(Tag("approved.flag"))
 
 

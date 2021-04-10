@@ -30,11 +30,9 @@ class RegulationHandler(BaseHandler):
     tag = parsers.BaseRegulationParser.tag.name
 
     def clean(self, data: dict) -> dict:
-        if "|" in data.get("information_text", ""):
-            data["information_text"], data["public_identifier"], data["url"] = data[
-                "information_text"
-            ].split("|")
-
+        data["information_text"], data["public_identifier"], data["url"] = data[
+            "information_text"
+        ]
         return super().clean(data)
 
 
@@ -43,19 +41,17 @@ class BaseRegulationThroughTableHandler(BaseHandler):
     serializer_class = serializers.RegulationImporterSerializer
     tag = "BaseRegulationThroughTableHandler"
 
-    def clean(self, data: dict) -> dict:
-        if "|" in data.get("information_text", ""):
-            data["information_text"], data["public_identifier"], data["url"] = data[
-                "information_text"
-            ].split("|")
-
-        return super().clean(data)
-
 
 class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
     identifying_fields = ("role_type", "regulation_id")
     serializer_class = serializers.RegulationImporterSerializer
     tag = parsers.ModificationRegulationParser.tag.name
+
+    def clean(self, data: dict) -> dict:
+        data["information_text"], data["public_identifier"], data["url"] = data[
+            "information_text"
+        ]
+        return super().clean(data)
 
     @transaction.atomic
     def save(self, data: dict):
@@ -67,7 +63,7 @@ class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
                 "enacting_regulation": enacting_regulation,
                 "update_type": data["update_type"],
                 "transaction_id": data["transaction_id"],
-            }
+            },
         )
 
 
@@ -79,6 +75,10 @@ class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
         self.suspension_data = {}
         if "effective_end_date" in data:
             self.suspension_data["effective_end_date"] = data.pop("effective_end_date")
+        if "information_text" in data:
+            data["information_text"], data["public_identifier"], data["url"] = data[
+                "information_text"
+            ]
         return super().clean(data)
 
     @transaction.atomic
@@ -92,7 +92,7 @@ class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
                 "update_type": data["update_type"],
                 "transaction_id": data["transaction_id"],
                 **self.suspension_data,
-            }
+            },
         )
 
 
