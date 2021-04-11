@@ -149,3 +149,34 @@ class AdditionalCodeTypeDescriptionParser(ValidityMixin, Writable, ElementParser
 
     sid = TextElement(Tag("additional.code.type.id"))
     description = TextElement(Tag("description"))
+
+
+@RecordParser.register_child("footnote_association_additional_code")
+class FootnoteAssociationAdditionalCodeParser(ValidityMixin, Writable, ElementParser):
+    """
+    Example XML:
+
+    .. code-block: XML
+
+        <xs:element name="footnote.association.additional.code" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="additional.code.sid" type="SID"/>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="footnote.id" type="FootnoteId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+                    <xs:element name="additional.code" type="AdditionalCode"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
+    """
+
+    tag = Tag("footnote.association.additional.code")
+
+    additional_code__sid = TextElement(Tag("additional.code.sid"))
+    associated_footnote__footnote_type__sid = TextElement(Tag("footnote.type.id"))
+    associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    additional_code__type__sid = TextElement(Tag("additional.code.type.id"))
+    additional_code__code = TextElement(Tag("additional.code"))
