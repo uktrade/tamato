@@ -1,0 +1,8 @@
+{% macro autocomplete(params) %}
+    <label for='{{params.name}}' class='govuk-label'>{{params.label}}</label>
+    {% if params.help_text %}
+        <div id='{{params.name}}_hint' class='govuk-hint'>{{params.help_text}}</div>
+    {% endif %}
+    <div id='{{params.name}}_view_container' data-original-value='{{params.display_value or ""}}'></div>
+    <input name='{{ params.name}}' id='{{params.name}}' type='hidden' value='{{params.initial_value or ""}}'/>  
+{% endmacro %}

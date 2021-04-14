@@ -3,6 +3,8 @@ const imagePath = (name) => images(name, true)
 
 require.context('govuk-frontend/govuk/assets');
 import showHideCheckboxes from './showHideCheckboxes';
+import initAutocomplete from './autocomplete';
 import { initAll } from 'govuk-frontend';
 showHideCheckboxes();
+initAutocomplete();
 initAll();

@@ -18,6 +18,16 @@ ui_patterns = [
         views.MeasureDetail.as_view(),
         name="measure-ui-detail",
     ),
+    path(
+        "<sid:sid>/edit/",
+        views.MeasureUpdate.as_view(),
+        name="measure-ui-edit",
+    ),
+    path(
+        "<sid:sid>/confirm-update/",
+        views.MeasureConfirmUpdate.as_view(),
+        name="measure-ui-confirm-update",
+    ),
 ]
 
 

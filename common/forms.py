@@ -9,8 +9,37 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
+from django.forms.widgets import Widget
+from django.template import loader
+from django.utils.safestring import mark_safe
 
 from common.util import TaricDateRange
+
+
+class AutocompleteWidget(Widget):
+    template_name = "components/autocomplete.jinja"
+
+    def get_context(self, name, value, attrs=None):
+        display_string = ""
+        if value:
+            display_string = value.structure_code
+            if value.structure_description:
+                display_string = f"{display_string} - {value.structure_description}"
+
+        return {
+            "widget": {
+                "name": name,
+                "value": value.pk if value else None,
+                "label": self.attrs["label"],
+                "help_text": self.attrs["help_text"],
+                "display_value": display_string,
+            },
+        }
+
+    def render(self, name, value, attrs=None, renderer=None):
+        context = self.get_context(name, value, attrs)
+        template = loader.get_template(self.template_name).render(context)
+        return mark_safe(template)
 
 
 class DateInputFieldFixed(DateInputField):

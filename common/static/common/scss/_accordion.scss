@@ -1,0 +1,7 @@
+/*
+  By default, GOV.UK accordions remove the margin on the last child in
+  an accordion section. This is an override so that we can keep it.
+*/
+.govuk-accordion__section-content > :last-child {
+  @extend .govuk-\!-margin-bottom-6;
+}
