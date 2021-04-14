@@ -38,8 +38,8 @@
         "classes": "govuk-button--secondary"
       }) }}
       <ul class="govuk-list govuk-list-spaced">
-        <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
-        <li><a class="govuk-link" href="{{ object.get_url("list") }}">Manage more {{ described_object._meta.verbose_name_plural }}</a></li>
+        <li><a class="govuk-link" href="{{ described_object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
+        <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Manage more {{ described_object._meta.verbose_name_plural }}</a></li>
         <li><a class="govuk-link" href="{{ url("index") }}">Return to main menu</a></li>
       </ul>
     </div>
