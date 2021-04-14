@@ -1,4 +1,3 @@
-from django.contrib.auth.models import Permission
 from pytest_bdd import given
 
 from common.tests import factories
@@ -24,29 +23,3 @@ def footnote_NC000(date_ranges, approved_transaction):
         transaction=approved_transaction,
     )
     return footnote
-
-
-@given(
-    'a valid user named "Bob" with permission to edit footnotes',
-    target_fixture="user_bob",
-)
-def user_bob():
-    bob = factories.UserFactory(username="Bob")
-    bob.user_permissions.add(
-        *list(
-            Permission.objects.filter(
-                content_type__app_label="footnotes",
-                codename__in=[
-                    "change_footnote",
-                    "add_footnotedescription",
-                    "change_footnotedescription",
-                ],
-            )
-        )
-    )
-    return bob
-
-
-@given("I am logged in as Bob", target_fixture="user_bob_login")
-def user_bob_login(client, user_bob):
-    client.force_login(user_bob)

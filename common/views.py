@@ -3,6 +3,7 @@ from typing import Type
 
 import django.contrib.auth.views
 from django.conf import settings
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.cache import cache
 from django.core.paginator import Paginator
@@ -95,9 +96,10 @@ class LogoutView(django.contrib.auth.views.LogoutView):
     template_name = "common/logged_out.jinja"
 
 
-class CreateView(generic.CreateView):
+class CreateView(PermissionRequiredMixin, generic.CreateView):
     """Create a new tracked model."""
 
+    permission_required = "common.add_trackedmodel"
     UPDATE_TYPE = UpdateType.CREATE
 
     def form_valid(self, form):
@@ -113,10 +115,11 @@ class CreateView(generic.CreateView):
         return Transaction()
 
 
-class UpdateView(generic.UpdateView):
+class UpdateView(PermissionRequiredMixin, generic.UpdateView):
     """Create an updated version of a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.UPDATE
+    permission_required = "common.change_trackedmodel"
     template_name = "common/edit.jinja"
 
     def get_success_url(self):

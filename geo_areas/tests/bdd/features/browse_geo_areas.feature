@@ -3,7 +3,7 @@ Feature: Geographical areas
 
 
 Background:
-    Given a valid user named "Alice"
+    Given a valid user named Alice
     And geographical_area 1001 with a description and area_code 0
 
 Scenario Outline: Searching for a geographical_area

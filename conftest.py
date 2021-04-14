@@ -13,6 +13,7 @@ from unittest.mock import patch
 import boto3
 import pytest
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,6 +22,7 @@ from factory.django import DjangoModelFactory
 from lxml import etree
 from moto import mock_s3
 from pytest_bdd import given
+from pytest_bdd import parsers
 from rest_framework.test import APIClient
 
 from common.models import TrackedModel
@@ -110,23 +112,21 @@ def api_client() -> APIClient:
 
 @pytest.fixture
 def policy_group(db) -> Group:
-    policy_g = Group.objects.create()
-    tracked_model_perm = Permission.objects.get(
-        content_type__app_label="common",
-        codename="add_trackedmodel",
-    )
-    add_workbasket_perm = Permission.objects.get(
-        content_type__app_label="workbaskets",
-        codename="add_workbasket",
-    )
-    change_workbasket_perm = Permission.objects.get(
-        content_type__app_label="workbaskets",
-        codename="change_workbasket",
-    )
-    policy_g.permissions.add(tracked_model_perm)
-    policy_g.permissions.add(add_workbasket_perm)
-    policy_g.permissions.add(change_workbasket_perm)
-    return policy_g
+    group = factories.UserGroupFactory.create(name="Policy")
+
+    for app_label, codename in [
+        ("common", "add_trackedmodel"),
+        ("common", "change_trackedmodel"),
+        ("workbaskets", "add_workbasket"),
+        ("workbaskets", "change_workbasket"),
+    ]:
+        group.permissions.add(
+            Permission.objects.get(
+                content_type__app_label=app_label,
+                codename=codename,
+            ),
+        )
+    return group
 
 
 @pytest.fixture
@@ -136,20 +136,31 @@ def valid_user(db, policy_group):
     return user
 
 
-@given('a valid user named "Alice"', target_fixture="a_valid_user_called_alice")
-def a_valid_user_called_alice():
-    return factories.UserFactory.create(username="Alice")
-
-
 @pytest.fixture
 def valid_user_client(client, valid_user):
     client.force_login(valid_user)
     return client
 
 
-@given("I am logged in as Alice", target_fixture="alice_login")
-def alice_login(client, a_valid_user_called_alice):
-    client.force_login(a_valid_user_called_alice)
+@pytest.fixture
+@given(parsers.parse("a valid user named {username}"), target_fixture="a_valid_user")
+def a_valid_user(username):
+    return factories.UserFactory.create(username=username)
+
+
+@given(parsers.parse("I am logged in as {username}"), target_fixture="logged_in")
+def logged_in(client, username):
+    user = get_user_model().objects.get(username=username)
+    client.force_login(user)
+
+
+@given(
+    parsers.parse("{username} is in the Policy group"),
+    target_fixture="user_in_policy_group",
+)
+def user_in_policy_group(client, policy_group, username):
+    user = get_user_model().objects.get(username=username)
+    policy_group.user_set.add(user)
 
 
 @pytest.fixture
@@ -180,6 +191,14 @@ def new_workbasket() -> WorkBasket:
 @pytest.fixture
 def approved_workbasket():
     return factories.ApprovedWorkBasketFactory.create()
+
+
+@pytest.fixture
+@given("there is a current workbasket")
+def session_workbasket(client, new_workbasket):
+    client.session["workbasket"] = new_workbasket.to_json()
+    client.session.save()
+    return new_workbasket
 
 
 @pytest.fixture

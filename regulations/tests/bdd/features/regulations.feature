@@ -3,7 +3,7 @@ Feature: Regulations
     Legal Acts which generate measures or affect applicability of existing regulations
 
 Background:
-    Given a valid user named "Alice"
+    Given a valid user named Alice
     And some regulations
     And regulation C2000000
 
