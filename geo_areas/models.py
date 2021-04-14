@@ -73,10 +73,10 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     def get_current_memberships(self):
         return (
             GeographicalMembership.objects.filter(
-                geo_group__sid=self.sid,
+                Q(geo_group__sid=self.sid) | Q(member__sid=self.sid),
             )
             .latest_approved()
-            .select_related("member")
+            .select_related("member", "geo_group")
         )
 
     def in_use(self):
@@ -139,6 +139,22 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         business_rules.GA20,
         business_rules.GA23,
     )
+
+    def other(self, area: GeographicalArea) -> GeographicalArea:
+        """
+        When passed an area that is part of this membership, returns the other
+        area in the membership.
+
+        So if the geo group is passed this returns the member, and if the member
+        is passed this returns the geo group. Raises a ValueError if an object
+        is passed that is neither of these.
+        """
+        if area == self.geo_group:
+            return self.member
+        elif area == self.member:
+            return self.geo_group
+        else:
+            raise ValueError(f"{area} is not part of membership {self}")
 
     def member_used_in_measure_exclusion(self):
         # TODO handle deletes

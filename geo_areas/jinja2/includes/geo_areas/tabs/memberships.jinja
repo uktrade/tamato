@@ -4,8 +4,8 @@
   {{ table_rows.append([
     {"text": "{:%d %b %Y}".format(membership.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(membership.valid_between.upper) if membership.valid_between.upper else "-"},
-    {"text": membership.member.area_id},
-    {"text": membership.member.get_description().description},
+    {"text": membership.other(object).area_id},
+    {"text": membership.other(object).get_description().description},
   ]) or "" }}
 {% endfor %}
 {% if table_rows == [] %}
