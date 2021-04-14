@@ -1,7 +1,6 @@
 from typing import Optional
 from typing import Type
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import models
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -69,13 +68,11 @@ class CertificateDetail(CertificateMixin, TrackedModelDetailView):
 
 
 class CertificateUpdate(
-    PermissionRequiredMixin,
     CertificateMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
     form_class = CertificateForm
-    permission_required = "common.change_trackedmodel"
 
     def get_object(self, queryset: Optional[models.QuerySet] = None) -> models.Model:
         obj = super().get_object(queryset)

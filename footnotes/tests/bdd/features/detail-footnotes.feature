@@ -4,7 +4,7 @@ Feature: Footnotes
 
 
 Background:
-    Given a valid user named "Alice"
+    Given a valid user named Alice
     And footnote NC000
 
 

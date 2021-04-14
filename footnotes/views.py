@@ -1,7 +1,6 @@
 from typing import Optional
 from typing import Type
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Model
 from django.db.models import QuerySet
 from rest_framework import permissions
@@ -92,13 +91,11 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
 
 
 class FootnoteUpdate(
-    PermissionRequiredMixin,
     FootnoteMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
     form_class = forms.FootnoteForm
-    permission_required = "common.change_trackedmodel"
 
     def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
         obj = super().get_object(queryset)
@@ -117,13 +114,11 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
 
 
 class FootnoteUpdateDescription(
-    PermissionRequiredMixin,
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
     form_class = forms.FootnoteDescriptionForm
-    permission_required = "common.change_trackedmodel"
     template_name = "common/edit_description.jinja"
 
     def get_object(self, queryset: Optional[QuerySet] = None) -> Model:

@@ -2,9 +2,10 @@
 Feature: Edit Footnote
 
 Background:
-    Given a valid user named "Bob" with permission to edit footnotes
+    Given a valid user named Bob
+    And Bob is in the policy group
     And footnote NC000
-    And a current workbasket
+    And there is a current workbasket
 
 
 Scenario: View Footnote edit screen

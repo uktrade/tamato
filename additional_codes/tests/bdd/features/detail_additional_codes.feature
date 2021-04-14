@@ -2,7 +2,7 @@
 Feature: Additional Codes
 
 Background:
-    Given a valid user named "Alice"
+    Given a valid user named Alice
     And additional code X000
 
 Scenario: View additional code core data

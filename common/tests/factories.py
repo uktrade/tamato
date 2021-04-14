@@ -58,6 +58,15 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.sequence(lambda n: f"{factory.Faker('name')}{n}")
 
 
+class UserGroupFactory(factory.django.DjangoModelFactory):
+    """User Group factory."""
+
+    class Meta:
+        model = "auth.Group"
+
+    name = factory.Faker("bs")
+
+
 class WorkBasketFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "workbaskets.WorkBasket"

@@ -3,27 +3,14 @@ import re
 
 import pytest
 from dateutil.relativedelta import relativedelta
-from pytest_bdd import given
 from pytest_bdd import scenarios
 from pytest_bdd import then
 from pytest_bdd import when
-
-from common.tests import factories
-
 
 pytestmark = pytest.mark.django_db
 
 
 scenarios("features/edit-footnote.feature")
-
-
-@given("a current workbasket")
-def current_workbasket(client):
-    workbasket = factories.WorkBasketFactory()
-    session = client.session
-    session["workbasket"] = workbasket.to_json()
-    session.save()
-    return workbasket
 
 
 @pytest.fixture
@@ -56,7 +43,8 @@ def submit_footnote_NC000(client, footnote_NC000, change):
     change_payload = {
         "start date": make_payload(existing.lower + relativedelta(days=+1)),
         "end date": make_payload(
-            existing.lower, existing.upper + relativedelta(months=+1)
+            existing.lower,
+            existing.upper + relativedelta(months=+1),
         ),
     }
     return client.post(footnote_NC000.get_url("edit"), change_payload[change])
@@ -64,7 +52,8 @@ def submit_footnote_NC000(client, footnote_NC000, change):
 
 @then("I should be presented with a footnote update screen")
 def i_should_be_presented_with_a_footnote_update_screen(
-    submit_footnote_NC000, footnote_NC000
+    submit_footnote_NC000,
+    footnote_NC000,
 ):
     """I should be presented with a footnote update screen."""
     assert submit_footnote_NC000.status_code == 302
