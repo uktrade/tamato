@@ -32,7 +32,7 @@
       <p class="govuk-body">To complete your task you must publish your change. </p>
       {{ govukButton({
         "text": "Go to your tariff changes",
-        "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
+        "href": url("index"),
         "classes": "govuk-button--secondary"
       }) }}
       <ul class="govuk-list govuk-list-spaced">
