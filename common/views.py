@@ -48,43 +48,52 @@ def index(request):
     )
 
 
+class HealthCheckResponse(HttpResponse):
+    """
+    Formatted HTTP response for healthcheck.
+
+    See https://readme.trade.gov.uk/docs/howtos/healthcheck.html
+    """
+
+    def __init__(self):
+        super().__init__(content_type="text/xml")
+        self["Cache-Control"] = "no-cache, no-store, must-revalidate"
+
+        self.start_time = time.time()
+        self.status = "OK"
+
+    @property
+    def content(self):
+        return (
+            "<pingdom_http_custom_check>"
+            f"<status>{self.status}</status>"
+            f"<response_time>{int(time.time() - self.start_time)}</response_time>"
+            "</pingdom_http_custom_check>"
+        )
+
+    @content.setter
+    def content(self, value):
+        pass
+
+    def fail(self, status):
+        self.status_code = 503
+        self.status = status
+        return self
+
+
 def healthcheck(request):
-    start = time.time()
-    response_message = (
-        "<pingdom_http_custom_check><status><strong>{message}</strong></status>"
-        "<response_time><strong>{response_time}</strong></response_time>"
-        "</pingdom_http_custom_check>"
-    )
-    response = HttpResponse(content_type="text/xml")
-    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response = HealthCheckResponse()
 
     try:
         connection.cursor()
     except OperationalError:
-        response.write(
-            response_message.format(
-                message="DB missing",
-                response_time=int(time.time() - start),
-            ),
-        )
-        response.status_code = 503
-        return response
+        return response.fail("DB missing")
 
     try:
         cache.set("__pingdom_test", 1, timeout=1)
     except RedisTimeoutError:
-        response.write(
-            response_message.format(
-                message="Redis missing",
-                response_time=int(time.time() - start),
-            ),
-        )
-        response.status_code = 503
-        return response
+        return response.fail("Redis missing")
 
-    response.write(
-        response_message.format(message="OK", response_time=int(time.time() - start)),
-    )
     return response
 
 
