@@ -3,7 +3,6 @@ import pytest
 from pytest_bdd import scenarios
 from pytest_bdd import then
 from pytest_bdd import when
-from rest_framework.reverse import reverse
 
 from geo_areas import models
 
@@ -15,14 +14,14 @@ scenarios("features/detail_geo_areas.feature")
 
 @pytest.fixture
 @when("I view a geographical_area with id 1001")
-def geo_area_detail(client):
-    return client.get(reverse("geoarea-ui-detail", args=(1001,)))
+def geo_area_detail(client, geographical_area_1001):
+    return client.get(geographical_area_1001.get_url())
 
 
 @pytest.fixture
 @when("I view a geographical_area with id 1002")
-def geo_area_group_detail(client):
-    return client.get(reverse("geoarea-ui-detail", args=(1002,)))
+def geo_area_group_detail(client, geographical_area_1002):
+    return client.get(geographical_area_1002.get_url())
 
 
 @then("the core data of the geographical_area should be presented")
@@ -31,12 +30,9 @@ def geo_area_core_data(geo_area_detail, geographical_area_1001):
 
     assert str(geographical_area_1001.area_id) in content
     assert geographical_area_1001.get_description().description in content
-    assert (
-        f"{geographical_area_1001.area_code} - {geographical_area_1001.get_area_code_display()}"
-        in content
-    )
+    assert geographical_area_1001.get_area_code_display() in content
 
-    assert "{:%d %b %Y}".format(geographical_area_1001.valid_between.lower) in content
+    assert f"{geographical_area_1001.valid_between.lower:%d %b %Y}" in content
 
 
 @then("the descriptions against the geographical_area should be presented")
@@ -47,13 +43,13 @@ def geo_area_description_data(geo_area_detail, geographical_area_1001):
 
     for description in descriptions:
         assert description.description in content
-        assert "{:%d %b %Y}".format(description.valid_between.lower) in content
+        assert f"{description.valid_between.lower:%d %b %Y}" in content
 
 
 def compare_members_to_html(members, html, is_group):
     for member in members:
         obj = member.geo_group if is_group else member.member
-        assert "{:%d %b %Y}".format(member.valid_between.lower) in html
+        assert f"{member.valid_between.lower:%d %b %Y}" in html
         assert str(obj.area_id) in html
         assert obj.get_description().description in html
 
@@ -61,18 +57,22 @@ def compare_members_to_html(members, html, is_group):
 @then("the memberships against the geographical_area should be presented")
 def geo_area_membership_data(geo_area_detail, geographical_area_1001):
     memberships = models.GeographicalMembership.objects.filter(
-        member=geographical_area_1001
+        member=geographical_area_1001,
     )
     compare_members_to_html(
-        memberships, geo_area_detail.content.decode(), is_group=True
+        memberships,
+        geo_area_detail.content.decode(),
+        is_group=True,
     )
 
 
 @then("the members against the geographical_area should be presented")
 def geo_area_group_members_data(geo_area_group_detail, geographical_area_1002):
     members = models.GeographicalMembership.objects.filter(
-        geo_group=geographical_area_1002
+        geo_group=geographical_area_1002,
     )
     compare_members_to_html(
-        members, geo_area_group_detail.content.decode(), is_group=False
+        members,
+        geo_area_group_detail.content.decode(),
+        is_group=False,
     )
