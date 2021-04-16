@@ -119,7 +119,7 @@ class UpdateView(PermissionRequiredMixin, generic.UpdateView):
     """Create an updated version of a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.UPDATE
-    permission_required = "common.change_trackedmodel"
+    permission_required = "common.add_trackedmodel"
     template_name = "common/edit.jinja"
 
     def get_success_url(self):
