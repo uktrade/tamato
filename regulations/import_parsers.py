@@ -34,6 +34,8 @@ class RegulationGroupParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("regulation.group")
 
     group_id = TextElement(Tag("regulation.group.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("regulation_group_description")
@@ -105,12 +107,15 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("base.regulation")
 
     role_type = IntElement(Tag("base.regulation.role"))
-    regulation_group__group_id = TextElement(Tag("regulation.group.id"))
     regulation_id = TextElement(Tag("base.regulation.id"))
     published_at = TextElement(Tag("published.date"))
     official_journal_number = TextElement(Tag("officialjournal.number"))
     official_journal_page = IntElement(Tag("officialjournal.page"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
+    effective_end_date = TextElement(Tag("effective.end.date"))
     community_code = IntElement(Tag("community.code"))
+    regulation_group__group_id = TextElement(Tag("regulation.group.id"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
     stopped = BooleanElement(Tag("stopped.flag"))
     information_text = CompoundElement(
@@ -119,7 +124,6 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
         "url",
     )
     approved = BooleanElement(Tag("approved.flag"))
-    effective_end_date = TextElement(Tag("effective.end.date"))
 
 
 @RecordParser.register_child("modification_regulation")
@@ -165,6 +169,8 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     published_at = TextElement(Tag("published.date"))
     official_journal_number = TextElement(Tag("officialjournal.number"))
     official_journal_page = IntElement(Tag("officialjournal.page"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     effective_end_date = TextElement(Tag("effective.end.date"))
     target_regulation__role_type = TextElement(Tag("base.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag("base.regulation.id"))
@@ -218,6 +224,8 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
     published_at = TextElement(Tag("published.date"))
     official_journal_number = TextElement(Tag("officialjournal.number"))
     official_journal_page = IntElement(Tag("officialjournal.page"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     effective_end_date = TextElement(Tag("effective.enddate"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
     information_text = CompoundElement(

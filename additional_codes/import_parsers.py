@@ -37,8 +37,8 @@ class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
     sid = IntElement(Tag("additional.code.sid"))
     type__sid = TextElement(Tag("additional.code.type.id"))
     code = TextElement(Tag("additional.code"))
-    valid_between_lower = TextElement(Tag("validity.start.date"))
-    valid_between_upper = TextElement(Tag("validity.end.date"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("additional_code_description_period")
@@ -71,9 +71,10 @@ class AdditionalCodeDescriptionPeriodParser(
     tag = Tag("additional.code.description.period")
 
     sid = TextElement(Tag("additional.code.description.period.sid"))
-    described_additionalcode_sid = TextElement(Tag("additional.code.sid"))
-    described_additionalcode_type_id = TextElement(Tag("additional.code.type.id"))
-    described_additionalcode = TextElement(Tag("additional.code"))
+    described_additionalcode__sid = TextElement(Tag("additional.code.sid"))
+    described_additionalcode__type__sid = TextElement(Tag("additional.code.type.id"))
+    described_additionalcode__code = TextElement(Tag("additional.code"))
+    validity_start = ValidityStartMixin.validity_start
 
 
 @RecordParser.register_child("additional_code_description")
@@ -136,13 +137,13 @@ class AdditionalCodeTypeParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("additional.code.type")
 
     sid = TextElement(Tag("additional.code.type.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     application_code = TextElement(Tag("application.code"))
-    valid_between_lower = TextElement(Tag("validity.start.date"))
-    valid_between_upper = TextElement(Tag("validity.end.date"))
 
 
 @RecordParser.register_child("additional_code_type_description")
-class AdditionalCodeTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
+class AdditionalCodeTypeDescriptionParser(Writable, ElementParser):
     """
     Example XML:
 
@@ -199,5 +200,7 @@ class FootnoteAssociationAdditionalCodeParser(ValidityMixin, Writable, ElementPa
     additional_code__sid = TextElement(Tag("additional.code.sid"))
     associated_footnote__footnote_type__sid = TextElement(Tag("footnote.type.id"))
     associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     additional_code__type__sid = TextElement(Tag("additional.code.type.id"))
     additional_code__code = TextElement(Tag("additional.code"))

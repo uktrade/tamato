@@ -43,8 +43,8 @@ class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
     sid = TextElement(Tag("goods.nomenclature.sid"))
     item_id = TextElement(Tag("goods.nomenclature.item.id"))
     suffix = TextElement(Tag("producline.suffix"))  # XXX not a typo
-    valid_between_lower = TextElement(Tag("validity.start.date"))
-    valid_between_upper = TextElement(Tag("validity.end.date"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     statistical = BooleanElement(Tag("statistical.indicator"))
 
 
@@ -191,6 +191,7 @@ class GoodsNomenclatureDescriptionPeriodParser(
 
     sid = TextElement(Tag("goods.nomenclature.description.period.sid"))
     described_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
+    validity_start = ValidityStartMixin.validity_start
     described_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
     )
@@ -227,6 +228,7 @@ class GoodsNomenclatureIndentParser(ValidityStartMixin, Writable, ElementParser)
 
     sid = TextElement(Tag("goods.nomenclature.indent.sid"))
     indented_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
+    validity_start = ValidityStartMixin.validity_start
     indent = IntElement(Tag("number.indents"), format="FM00")
     indented_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
@@ -266,7 +268,11 @@ class FootnoteAssociationGoodsNomenclatureParser(
     tag = Tag("footnote.association.goods.nomenclature")
 
     goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
-    associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
     associated_footnote__footnote_type__footnote_type_id = TextElement(
         Tag("footnote.type"),
     )
+    associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
+    goods_nomenclature__item_id = TextElement(Tag("goods.nomenclature.item.id"))
+    goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))

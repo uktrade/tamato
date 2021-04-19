@@ -1,8 +1,10 @@
 from importer.namespaces import RegexTag
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
-from importer.parsers import InvalidDataError
+from importer.parsers import RangeLowerElement
+from importer.parsers import RangeUpperElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import Writable
@@ -32,8 +34,11 @@ class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
     subrecord_code = "00"
 
     tag = Tag("quota.order.number")
+
     sid = TextElement(Tag("quota.order.number.sid"))
     order_number = TextElement(Tag("quota.order.number.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
     def clean(self):
         super().clean()
@@ -71,6 +76,8 @@ class QuotaOrderNumberOriginParser(ValidityMixin, Writable, ElementParser):
     sid = TextElement(Tag("quota.order.number.origin.sid"))
     order_number__sid = TextElement(Tag("quota.order.number.sid"))
     geographical_area__area_id = TextElement(Tag("geographical.area.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     geographical_area__sid = TextElement(Tag("geographical.area.sid"))
 
 
@@ -136,6 +143,8 @@ class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
 
     sid = TextElement(Tag("quota.definition.sid"))
     order_number__order_number = TextElement(Tag("quota.order.number.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     order_number__sid = TextElement(Tag("quota.order.number.sid"))
     volume = TextElement(Tag("volume"))
     initial_volume = TextElement(Tag("initial.volume"))
@@ -145,18 +154,13 @@ class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
         Tag("measurement.unit.qualifier.code"),
     )
     maximum_precision = TextElement(Tag("maximum.precision"))
-    quota_critical = TextElement(Tag("critical.state"))
+    quota_critical = BooleanElement(
+        Tag("critical.state"),
+        true_value="Y",
+        false_value="N",
+    )
     quota_critical_threshold = TextElement(Tag("critical.threshold"))
     description = TextElement(Tag("description"))
-
-    def clean(self):
-        super().clean()
-        quota_critical = self.data.get("quota_critical")
-        if quota_critical not in {"Y", "N"}:
-            raise InvalidDataError(
-                '"critical.state" tag must contain either "Y" or "N"',
-            )
-        self.data["quota_critical"] = quota_critical == "Y"
 
 
 @RecordParser.register_child("quota_association")
@@ -217,10 +221,10 @@ class QuotaBlockingParser(ValidityMixin, Writable, ElementParser):
 
     sid = IntElement(Tag("quota.blocking.period.sid"))
     quota_definition__sid = IntElement(Tag("quota.definition.sid"))
-    valid_between_lower = TextElement(Tag("blocking.start.date"))
-    valid_between_upper = TextElement(Tag("blocking.end.date"))
-    description = TextElement(Tag("description"))
+    valid_between_lower = RangeLowerElement(Tag("blocking.start.date"))
+    valid_between_upper = RangeUpperElement(Tag("blocking.end.date"))
     blocking_period_type = IntElement(Tag("blocking.period.type"))
+    description = TextElement(Tag("description"))
 
 
 @RecordParser.register_child("quota_suspension_period")
@@ -250,8 +254,8 @@ class QuotaSuspensionParser(ValidityMixin, Writable, ElementParser):
 
     sid = IntElement(Tag("quota.suspension.period.sid"))
     quota_definition__sid = IntElement(Tag("quota.definition.sid"))
-    valid_between_lower = TextElement(Tag("suspension.start.date"))
-    valid_between_upper = TextElement(Tag("suspension.end.date"))
+    valid_between_lower = RangeLowerElement(Tag("suspension.start.date"))
+    valid_between_upper = RangeUpperElement(Tag("suspension.end.date"))
     description = TextElement(Tag("description"))
 
 

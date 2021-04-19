@@ -41,6 +41,8 @@ class GeographicalAreaParser(ValidityMixin, Writable, ElementParser):
 
     sid = TextElement(Tag("geographical.area.sid"))
     area_id = TextElement(Tag("geographical.area.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     area_code = TextElement(Tag("geographical.code"))
     parent__sid = TextElement(Tag("parent.geographical.area.group.sid"))
 
@@ -107,6 +109,7 @@ class GeographicalAreaDescriptionPeriodParser(
 
     sid = IntElement(Tag("geographical.area.description.period.sid"))
     area__sid = TextElement(Tag("geographical.area.sid"))
+    validity_start = ValidityStartMixin.validity_start
     area__area_id = TextElement(Tag("geographical.area.id"))
 
 
@@ -136,3 +139,5 @@ class GeographicalMembershipParser(ValidityMixin, Writable, ElementParser):
 
     member__sid = IntElement(Tag("geographical.area.sid"))
     geo_group__sid = IntElement(Tag("geographical.area.group.sid"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper

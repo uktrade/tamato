@@ -38,13 +38,13 @@ class FootnoteTypeParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("footnote.type")
 
     footnote_type_id = TextElement(Tag("footnote.type.id"))
-    valid_between_lower = TextElement(Tag("validity.start.date"))
-    valid_between_upper = TextElement(Tag("validity.end.date"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     application_code = TextElement(Tag("application.code"))
 
 
 @RecordParser.register_child("footnote_type_description")
-class FootnoteTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
+class FootnoteTypeDescriptionParser(Writable, ElementParser):
     """
     Example XML:
 
@@ -97,10 +97,12 @@ class FootnoteParser(ValidityMixin, Writable, ElementParser):
 
     footnote_type__footnote_type_id = TextElement(Tag("footnote.type.id"))
     footnote_id = TextElement(Tag("footnote.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("footnote_description")
-class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
+class FootnoteDescriptionParser(Writable, ElementParser):
     """
     Example XML:
 
@@ -162,3 +164,4 @@ class FootnoteDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParse
         Tag("footnote.type.id"),
     )
     described_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    validity_start = ValidityStartMixin.validity_start

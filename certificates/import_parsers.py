@@ -33,6 +33,8 @@ class CertificateTypeParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("certificate.type")
 
     sid = TextElement(Tag("certificate.type.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("certificate_type_description")
@@ -87,8 +89,10 @@ class CertificateParser(ValidityMixin, Writable, ElementParser):
 
     tag = Tag("certificate")
 
-    sid = TextElement(Tag("certificate.code"))
     certificate_type__sid = TextElement(Tag("certificate.type.code"))
+    sid = TextElement(Tag("certificate.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("certificate_description")
@@ -118,11 +122,11 @@ class CertificateDescriptionParser(Writable, ElementParser):
 
     sid = IntElement(Tag("certificate.description.period.sid"))
     language_id = ConstantElement(Tag("language.id"), value="EN")
-    description = TextElement(Tag("description"))
-    described_certificate__sid = TextElement(Tag("certificate.code"))
     described_certificate__certificate_type__sid = TextElement(
         Tag("certificate.type.code"),
     )
+    described_certificate__sid = TextElement(Tag("certificate.code"))
+    description = TextElement(Tag("description"))
 
 
 @RecordParser.register_child("certificate_description_period")
@@ -150,7 +154,8 @@ class CertificateDescriptionPeriodParser(ValidityStartMixin, Writable, ElementPa
     tag = Tag("certificate.description.period")
 
     sid = IntElement(Tag("certificate.description.period.sid"))
-    described_certificate__sid = TextElement(Tag("certificate.code"))
     described_certificate__certificate_type__sid = TextElement(
         Tag("certificate.type.code"),
     )
+    described_certificate__sid = TextElement(Tag("certificate.code"))
+    validity_start = ValidityStartMixin.validity_start
