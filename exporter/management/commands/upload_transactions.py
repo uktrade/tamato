@@ -5,6 +5,7 @@ import kombu
 from django.core.management import BaseCommand
 
 from exporter.tasks import upload_workbaskets
+from exporter.util import UploadStatus
 
 logger = logging.getLogger(__name__)
 
@@ -55,16 +56,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         local = options["local"]
-        success, messages_dict = run_task_or_exit(upload_workbaskets, local=local)
+        upload_status = UploadStatus(
+            **run_task_or_exit(upload_workbaskets, local=local)
+        )
+        upload_status.output(self.stdout)
 
-        if None in messages_dict:
-            # Messages not associated with an envelope
-            self.stdout.write(messages_dict.pop(None))
-
-        if messages_dict:
-            # Envelope statuses
-            self.stdout.write("Envelope:         Message:")
-            for envelope_id, message in messages_dict.items():
-                self.stdout.write(f"{envelope_id}            {message}")
-
-        sys.exit(0 if success else 1)
+        sys.exit(0 if upload_status.success else 1)

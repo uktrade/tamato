@@ -1,7 +1,9 @@
 import logging
 import os
+from collections import defaultdict
 from collections import namedtuple
 from typing import Dict
+from typing import List
 from typing import Sequence
 
 from lxml import etree
@@ -118,16 +120,18 @@ class EnvelopeTooLarge(Exception):
 
 def validate_rendered_envelopes(
     rendered_envelopes: Sequence[RenderedTransactions],
-) -> Dict[int, Exception]:
+) -> Dict[int, List[Exception]]:
     """
     :param rendered_envelopes: sequence of RenderedEnvelope
     :return: dict of {envelope_id: Exception}
     """
-    invalid_envelopes = {}
+    envelope_errors = defaultdict()
     for rendered_envelope in rendered_envelopes:
         if rendered_envelope.is_oversize:
-            invalid_envelopes[rendered_envelope.envelope_id] = EnvelopeTooLarge(
-                "Envelope Too Big: {rendered_envelope.envelope_id} > {rendered_envelope.max_envelope_size}",
+            envelope_errors[rendered_envelope.envelope_id].append(
+                EnvelopeTooLarge(
+                    "Envelope Too Big: {rendered_envelope.envelope_id} > {rendered_envelope.max_envelope_size}",
+                ),
             )
 
         envelope_file = rendered_envelope.output
@@ -136,8 +140,8 @@ def validate_rendered_envelopes(
             validate_envelope(envelope_file)
         except (TaricDataAssertionError, etree.DocumentInvalid) as e:
             # Nothing to log here - validate_envelope has already logged the issue.
-            invalid_envelopes[rendered_envelope.envelope_id] = e
+            envelope_errors[rendered_envelope.envelope_id].append(e)
         except BaseException as e:
             logger.exception(e)
-            invalid_envelopes[rendered_envelope.envelope_id] = e
-    return invalid_envelopes
+            envelope_errors[rendered_envelope.envelope_id].append(e)
+    return dict(envelope_errors)

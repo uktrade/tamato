@@ -140,16 +140,16 @@ def get_field_tuple(model, field):
 
 
 def lock_tables(*models):
-    @atomic
     @wrapt.decorator
     def wrapper(wrapped, instance, args, kwargs):
-        cursor = transaction.get_connection().cursor()
-        for model in models:
-            cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+        with atomic():
+            cursor = transaction.get_connection().cursor()
+            for model in models:
+                cursor.execute(f"LOCK TABLE {model._meta.db_table}")
 
-        try:
-            return wrapped(*args, **kwargs)
-        finally:
-            cursor.close()
+            try:
+                return wrapped(*args, **kwargs)
+            finally:
+                cursor.close()
 
     return wrapper

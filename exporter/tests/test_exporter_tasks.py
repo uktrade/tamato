@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 import pytest
+from apiclient.exceptions import APIRequestError
 from botocore.exceptions import ConnectionError
 from lxml import etree
 
@@ -14,6 +15,11 @@ from common.tests.util import validate_taric_xml_record_order
 from exporter.tasks import upload_workbaskets
 
 pytestmark = pytest.mark.django_db
+
+
+class SentinelError(Exception):
+    # Special exception to signify test should exit.
+    pass
 
 
 def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
@@ -64,11 +70,6 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
     assert codes == expected_codes
 
 
-class SentinelError(Exception):
-    # Special exception to signify test should exit.
-    pass
-
-
 @mock.patch(
     "exporter.storages.HMRCStorage.save",
     side_effect=[
@@ -97,3 +98,44 @@ def test_upload_workbaskets_retries(mock_save, settings):
         upload_workbaskets.apply().get()
 
     assert mock_save.call_count == 2
+
+
+@mock.patch(
+    "apiclient.client.APIClient.post",
+    side_effect=[
+        APIRequestError(message="", info="", status_code=500),
+        SentinelError(),
+    ],
+)
+def test_notify_hmrc_retries(mock_post, settings, hmrc_storage, responses):
+    """Verify if HMRCStorage.save raises a boto.ConnectionError the task
+    upload_workflow task retries based on
+    settings.EXPORTER_UPLOAD_MAX_RETRIES."""
+    responses.add(
+        responses.POST,
+        url="https://test-api.service.hmrc.gov.uk/oauth/token",
+        json={
+            "access_token": "access_token",
+            "token_type": "bearer",
+            "expires_in": 3600,
+            "refresh_token": "refresh_token",
+            "scope": "write:transfer-complete write:transfer-ready",
+        },
+    )
+
+    settings.EXPORTER_DISABLE_NOTIFICATION = False
+    # Notifications are disabled, as they are not being tested here.
+    settings.EXPORTER_UPLOAD_MAX_RETRIES = 1
+
+    approved_workbasket = ApprovedWorkBasketFactory.create()
+    with ApprovedTransactionFactory.create(workbasket=approved_workbasket):
+        RegulationFactory.create(),
+        FootnoteTypeFactory.create()
+
+    # On the first run, the test makes .save trigger APIRequestError which
+    # causes the task to retry, raising SentinelError.
+
+    with pytest.raises(SentinelError):
+        upload_workbaskets.apply().get()
+
+    assert mock_post.call_count == 2

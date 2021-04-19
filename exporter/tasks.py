@@ -1,12 +1,10 @@
 import logging
 import os
 import tempfile
+from collections import defaultdict
 from hashlib import md5
 from typing import Dict
-from typing import Optional
 from typing import Sequence
-from typing import Tuple
-from typing import Union
 
 from apiclient.exceptions import APIRequestError
 from botocore.exceptions import ConnectionError
@@ -21,7 +19,9 @@ from exporter.models import Upload
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
 from exporter.serializers import validate_rendered_envelopes
+from exporter.util import UploadStatus
 from exporter.util import dit_file_generator
+from exporter.util import exceptions_as_messages
 from taric.models import Envelope
 from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
@@ -39,15 +39,19 @@ def upload_and_create_envelopes(
     workbaskets: QuerySet,
     rendered_envelopes: Sequence[RenderedTransactions],
     first_envelope_id,
-) -> Dict[Union[int, None], str]:
+) -> UploadStatus:
     """
     Upload envelopes.
 
     This function locks the Envelope table so that Envelope.envelope_id remains
     in sequence.
+
+    :return: dict of user messages indexed by envelope_id as an int.
     """
-    # {envelope_id: message} User messages can be returned to the caller of the task.
-    user_messages = {}
+    # {envelope_id: message} User messages can used to propagate messages back to this user.
+    envelope_messages = defaultdict(list)
+    upload_pks = []
+
     current_envelope_id = first_envelope_id
     for rendered_envelope in rendered_envelopes:
         envelope = Envelope.new_envelope()
@@ -78,22 +82,14 @@ def upload_and_create_envelopes(
         upload.checksum = md5(rendered_envelope.output.read()).hexdigest()
 
         upload.file.save(upload.filename, content_file)
-        if settings.EXPORTER_DISABLE_NOTIFICATION:
-            logger.info("HMRC notification disabled.")
-        else:
-            logger.info("Notify HMRC of upload, %s", upload.filename)
-            try:
-                upload.notify_hmrc()
-            except APIRequestError:
-                logger.info("Contacting endpoint")
-                raise
+        upload_pks.append(upload.pk)
 
-        logger.info("Workbasket sent to CDS")
+        logger.info("Workbasket saved to CDS S3 bucket")
         workbaskets.update(status=WorkflowStatus.SENT_TO_CDS)
 
         logger.debug("Uploaded: %s", upload.filename)
-        user_messages[envelope.envelope_id] = f"Uploaded {upload.filename}"
-    return user_messages
+        envelope_messages[envelope.envelope_id].append(f"Uploaded {upload.filename}")
+    return UploadStatus(envelope_messages=envelope_messages, upload_pks=upload_pks)
 
 
 @shared_task(
@@ -105,18 +101,19 @@ def upload_and_create_envelopes(
     retry_jitter=True,
 )
 @lock_tables(Envelope)
-def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]]]:
+def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     """
     Upload workbaskets.
 
     Returns a bool for success and dict of user messages keyed by envelope_id or
     None.
     """
+    upload_status = UploadStatus(**upload_status_data)
     workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
     if not workbaskets:
         msg = "Nothing to upload:  No workbaskets with status READY_FOR_EXPORT."
         logger.info(msg)
-        return False, {None: msg}
+        return UploadStatus(initial_status=upload_status, messages=[msg]).serialize()
 
     # transactions:  will be serialized, then added to an envelope for uploaded.
     transactions = workbaskets.ordered_transactions()
@@ -124,7 +121,7 @@ def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]
     if not transactions:
         msg = f"Nothing to upload:  {workbaskets.count()} Workbaskets READY_FOR_EXPORT but none contain any transactions."
         logger.info(msg)
-        return False, {None: msg}
+        return UploadStatus(initial_status=upload_status, messages=[msg]).serialize()
 
     first_envelope_id = int(Envelope.next_envelope_id())
     # Write files to a temporary, so they can all be validated before uploading.
@@ -142,22 +139,24 @@ def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]
 
         rendered_envelopes = list(serializer.split_render_transactions(transactions))
 
-        invalid_envelopes = validate_rendered_envelopes(rendered_envelopes)
-        error_messages = {
-            envelope_id: f"Envelope {envelope_id:06} was invalid {exception}"
-            for envelope_id, exception in invalid_envelopes.items()
-        }
-
-        if error_messages:
-            return False, error_messages
+        envelope_errors = validate_rendered_envelopes(rendered_envelopes)
+        if envelope_errors:
+            return UploadStatus(
+                initial_status=upload_status,
+                envelope_errors=exceptions_as_messages(envelope_errors),
+            ).serialize()
 
         # Transactions envelopes are all valid, and ready for upload.
         try:
-            user_messages = upload_and_create_envelopes(
-                workbaskets,
-                rendered_envelopes,
-                first_envelope_id,
+            result = UploadStatus(
+                initial_status=upload_status,
+                **upload_and_create_envelopes(
+                    workbaskets,
+                    rendered_envelopes,
+                    first_envelope_id,
+                ).serialize(),
             )
+            return result.serialize()
         except ConnectionError as e:
             # Connection issue during upload.
             if settings.EXPORTER_UPLOAD_MAX_RETRIES:
@@ -170,15 +169,54 @@ def upload_workbaskets(self) -> Tuple[bool, Optional[Dict[Union[str, None], str]
                 self.retry()
             else:
                 raise
+
+
+@shared_task(
+    bind=True,
+    default_retry_delay=settings.EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY,
+    max_retries=settings.EXPORTER_UPLOAD_MAX_RETRIES,
+    retry_backoff=True,
+    retry_backoff_max=settings.EXPORTER_UPLOAD_RETRY_BACKOFF_MAX,
+    retry_jitter=True,
+)
+def send_upload_notifications(self, upload_status_data):
+    upload_status = UploadStatus(**upload_status_data)
+    if not upload_status.upload_pks:
+        return UploadStatus(
+            upload_status,
+            messages=["No uploads to notify HMRC about."],
+        ).serialize()
+
+    if settings.EXPORTER_DISABLE_NOTIFICATION:
+        logger.debug("Notificaitons are disabled.")
+        return UploadStatus(
+            upload_status,
+            messages=["Notificaitons are disabled."],
+        ).serialize()
+
+    for upload in Upload.objects.filter(
+        pk__in=upload_status.upload_pks,
+        notification_sent__isnull=True,
+    ):
+        try:
+            upload.notify_hmrc()
         except APIRequestError as e:
-            # Connection issue during notification
+            # Connection issue during notification.
             logger.info(f"{type(e)} notifying HMRC {e.message} {e.info}")
             if settings.EXPORTER_UPLOAD_MAX_RETRIES and (
                 e.status_code is None or e.status_code >= 500
             ):
-                # This is similar logic to that used in 'retrying': https://github.com/MikeWooster/api-client/blob/master/apiclient/retrying.py#L25
+                # This logic was ported from 'retrying' and applied to celery [1]
+                # [1] https://github.com/MikeWooster/api-client/blob/master/apiclient/retrying.py#L25
                 self.retry()
             else:
                 raise
-        else:
-            return True, user_messages
+
+    return upload_status.serialize()
+
+
+# Run upload and notification as separate tasks, so the task queue isn't blocked by a failure in either.
+upload_workbaskets = (
+    upload_workbasket_envelopes.s(UploadStatus().serialize())
+    | send_upload_notifications.s()
+)

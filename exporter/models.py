@@ -24,7 +24,6 @@ class Upload(models.Model):
     envelope = models.ForeignKey(Envelope, on_delete=models.PROTECT)
     correlation_id = models.UUIDField(default=uuid.uuid4, editable=False)
     checksum = models.CharField(max_length=32, editable=False)
-    etag = models.CharField(max_length=32, editable=False)
     notification_sent = models.DateTimeField(editable=False, null=True)
 
     # Max size is 50 megabytes
