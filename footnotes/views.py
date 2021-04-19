@@ -1,8 +1,5 @@
-from typing import Optional
 from typing import Type
 
-from django.db.models import Model
-from django.db.models import QuerySet
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -97,17 +94,6 @@ class FootnoteUpdate(
 ):
     form_class = forms.FootnoteForm
 
-    def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
-        obj = super().get_object(queryset)
-
-        if self.request.method == "POST":
-            obj = obj.new_draft(
-                WorkBasket.current(self.request),
-                save=False,
-            )
-
-        return obj
-
 
 class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
@@ -120,17 +106,6 @@ class FootnoteUpdateDescription(
 ):
     form_class = forms.FootnoteDescriptionForm
     template_name = "common/edit_description.jinja"
-
-    def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
-        obj = super().get_object(queryset)
-
-        if self.request.method == "POST":
-            obj = obj.new_draft(
-                WorkBasket.current(self.request),
-                save=False,
-            )
-
-        return obj
 
 
 class FootnoteDescriptionConfirmUpdate(

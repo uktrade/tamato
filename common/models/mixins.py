@@ -1,5 +1,7 @@
 """Mixins for models."""
 from django.db import models
+from django.urls import NoReverseMatch
+from django.urls import reverse
 
 from common.fields import TaricDateRangeField
 
@@ -59,3 +61,20 @@ class DescriptionMixin:
             if rel.name.startswith("described_"):
                 return getattr(self, rel.name)
         raise AttributeError()
+
+    def get_url(self, action="detail"):
+        kwargs = {}
+        if action != "list":
+            kwargs = self.get_identifying_fields()
+            described_object = self.get_described_object()
+            for field, value in described_object.get_identifying_fields().items():
+                kwargs[
+                    f"described_{described_object._meta.model_name}__{field}"
+                ] = value
+        try:
+            return reverse(
+                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
+                kwargs=kwargs,
+            )
+        except NoReverseMatch:
+            return

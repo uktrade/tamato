@@ -1,7 +1,5 @@
-from typing import Optional
 from typing import Type
 
-from django.db import models
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -98,17 +96,6 @@ class AdditionalCodeUpdate(
 ):
     form_class = AdditionalCodeForm
 
-    def get_object(self, queryset: Optional[models.QuerySet] = None) -> models.Model:
-        obj = super().get_object(queryset)
-
-        if self.request.method == "POST":
-            obj = obj.new_draft(
-                WorkBasket.current(self.request),
-                save=False,
-            )
-
-        return obj
-
 
 class AdditionalCodeUpdateDescription(
     AdditionalCodeDescriptionMixin,
@@ -117,17 +104,6 @@ class AdditionalCodeUpdateDescription(
 ):
     form_class = AdditionalCodeDescriptionForm
     template_name = "common/edit_description.jinja"
-
-    def get_object(self, queryset: Optional[models.QuerySet] = None) -> models.Model:
-        obj = super().get_object(queryset)
-
-        if self.request.method == "POST":
-            obj = obj.new_draft(
-                WorkBasket.current(self.request),
-                save=False,
-            )
-
-        return obj
 
 
 class AdditionalCodeDescriptionConfirmUpdate(

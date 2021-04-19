@@ -1,6 +1,4 @@
 from django.db import models
-from django.urls import NoReverseMatch
-from django.urls import reverse
 
 from additional_codes import business_rules
 from additional_codes import validators
@@ -99,7 +97,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         )
 
 
-class AdditionalCodeDescription(TrackedModel, ValidityMixin, DescriptionMixin):
+class AdditionalCodeDescription(DescriptionMixin, ValidityMixin, TrackedModel):
     """
     The additional code description contains the description of the additional
     code for a particular period.
@@ -115,40 +113,21 @@ class AdditionalCodeDescription(TrackedModel, ValidityMixin, DescriptionMixin):
 
     # Store the additional code description period sid so that we can send it in TARIC3
     # updates to systems that expect it.
-    description_period_sid = SignedIntSID(db_index=True)
+    sid = SignedIntSID(db_index=True)
 
-    described_additional_code = models.ForeignKey(
+    described_additionalcode = models.ForeignKey(
         AdditionalCode,
         on_delete=models.PROTECT,
         related_name="descriptions",
     )
     description = models.TextField()
 
-    identifying_fields = ("description_period_sid",)
-
     indirect_business_rules = (business_rules.ACN5,)
 
     def __str__(self):
         return self.identifying_fields_to_string(
-            identifying_fields=("described_additional_code", "valid_between"),
+            identifying_fields=("described_additionalcode", "valid_between"),
         )
-
-    def get_url(self, action="detail"):
-        kwargs = {}
-        if action != "list":
-            kwargs = self.get_identifying_fields()
-        if action == "edit" or "confirm-update":
-            kwargs = {
-                "described_additional_code__sid": self.described_additional_code.sid,
-                "description_period_sid": self.description_period_sid,
-            }
-        try:
-            return reverse(
-                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
-                kwargs=kwargs,
-            )
-        except NoReverseMatch:
-            return
 
     class Meta:
         ordering = ("valid_between",)

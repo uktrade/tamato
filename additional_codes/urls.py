@@ -11,7 +11,7 @@ api_router.register(r"additional_codes", views.AdditionalCodeViewSet)
 api_router.register(r"additional_code_types", views.AdditionalCodeTypeViewSet)
 
 detail = r"^(?P<sid>\d*)"
-description_detail = r"^(?P<described_additional_code__sid>\d*)"
+description_detail = r"^(?P<described_additionalcode__sid>\d*)"
 
 ui_patterns = [
     path(
