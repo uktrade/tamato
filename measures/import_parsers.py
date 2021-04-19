@@ -34,6 +34,8 @@ class MeasureTypeSeriesParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("measure.type.series")
 
     sid = TextElement(Tag("measure.type.series.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     measure_type_combination = IntElement(Tag("measure.type.combination"))
 
 
@@ -89,6 +91,8 @@ class MeasurementUnitParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("measurement.unit")
 
     code = TextElement(Tag("measurement.unit.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measurement_unit_description")
@@ -143,6 +147,8 @@ class MeasurementUnitQualifierParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("measurement.unit.qualifier")
 
     code = TextElement(Tag("measurement.unit.qualifier.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measurement_unit_qualifier_description")
@@ -201,6 +207,8 @@ class MeasurementParser(ValidityMixin, Writable, ElementParser):
     measurement_unit_qualifier__code = TextElement(
         Tag("measurement.unit.qualifier.code"),
     )
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("monetary_unit")
@@ -227,6 +235,8 @@ class MonetaryUnitParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("monetary.unit")
 
     code = TextElement(Tag("monetary.unit.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("monetary_unit_description")
@@ -284,6 +294,8 @@ class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("duty.expression")
 
     sid = IntElement(Tag("duty.expression.id"), format="FM00")
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     duty_amount_applicability_code = IntElement(Tag("duty.amount.applicability.code"))
     measurement_unit_applicability_code = IntElement(
         Tag("measurement.unit.applicability.code"),
@@ -352,6 +364,8 @@ class MeasureTypeParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("measure.type")
 
     sid = TextElement(Tag("measure.type.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     trade_movement_code = IntElement(Tag("trade.movement.code"))
     priority_code = IntElement(Tag("priority.code"))
     measure_component_applicability_code = IntElement(
@@ -417,6 +431,8 @@ class AdditionalCodeTypeMeasureTypeParser(ValidityMixin, Writable, ElementParser
 
     measure_type__sid = TextElement(Tag("measure.type.id"))
     additional_code_type__sid = TextElement(Tag("additional.code.type.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measure_condition_code")
@@ -443,6 +459,8 @@ class MeasureConditionCodeParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("measure.condition.code")
 
     code = TextElement(Tag("condition.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measure_condition_code_description")
@@ -497,6 +515,8 @@ class MeasureActionParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("measure.action")
 
     code = TextElement(Tag("action.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measure_action_description")
@@ -574,12 +594,14 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
     additional_code__code = TextElement(Tag("additional.code"))
     order_number__order_number = TextElement(Tag("ordernumber"))
     reduction = IntElement(Tag("reduction.indicator"))
+    valid_between_lower = ValidityMixin.valid_between_lower
     generating_regulation__role_type = IntElement(
         Tag("measure.generating.regulation.role"),
     )
     generating_regulation__regulation_id = TextElement(
         Tag("measure.generating.regulation.id"),
     )
+    valid_between_upper = ValidityMixin.valid_between_upper
     terminating_regulation__role_type = IntElement(Tag("justification.regulation.role"))
     terminating_regulation__regulation_id = TextElement(
         Tag("justification.regulation.id"),

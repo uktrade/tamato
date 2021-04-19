@@ -361,10 +361,8 @@ class CompoundElement(ValueElementMixin, ElementParser):
 class ValidityMixin:
     """Parse validity start and end dates."""
 
-    _additional_components = {
-        RangeLowerElement(Tag("validity.start.date")): "valid_between_lower",
-        RangeUpperElement(Tag("validity.end.date")): "valid_between_upper",
-    }
+    valid_between_lower = RangeLowerElement(Tag("validity.start.date"))
+    valid_between_upper = RangeUpperElement(Tag("validity.end.date"))
 
     def clean(self):
         super().clean()
@@ -383,12 +381,7 @@ class ValidityMixin:
 class ValidityStartMixin:
     """Parse validity start date."""
 
-    _additional_components = {
-        TextElement(Tag("validity.start.date")): "validity_start",
-    }
-
-    def clean(self):
-        super().clean()
+    validity_start = TextElement(Tag("validity.start.date"))
 
 
 class Writable:
