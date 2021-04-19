@@ -1,6 +1,7 @@
 import logging
 
 from importer.namespaces import Tag
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -64,6 +65,7 @@ class GeographicalAreaDescriptionParser(Writable, ElementParser):
     tag = Tag("geographical.area.description")
 
     sid = IntElement(Tag("geographical.area.description.period.sid"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     area__sid = TextElement(Tag("geographical.area.sid"))
     area__area_id = TextElement(Tag("geographical.area.id"))
     description = TextElement(Tag("description"))

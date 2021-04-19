@@ -214,6 +214,25 @@ class ValueElementMixin:
         self.data = self.native_type(self.text)
 
 
+class ConstantElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element that is always a constant value in the XML.
+
+    The actual value is ignored and not put into the database. The value
+    specified in the constructor will be put back into the XML.
+    """
+
+    def __init__(
+        self,
+        tag: Tag,
+        value: str,  # pylint: disable=unused-argument
+    ) -> None:
+        super().__init__(tag)
+
+    def clean(self):
+        pass
+
+
 class TextElement(ValueElementMixin, ElementParser):
     """
     Represents an element which contains a text value.

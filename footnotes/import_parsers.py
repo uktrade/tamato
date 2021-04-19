@@ -1,6 +1,7 @@
 import logging
 
 from importer.namespaces import Tag
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -60,6 +61,7 @@ class FootnoteTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("footnote.type.description")
 
     footnote_type_id = TextElement(Tag("footnote.type.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -111,6 +113,7 @@ class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("footnote.description")
 
     sid = IntElement(Tag("footnote.description.period.sid"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     described_footnote__footnote_type__footnote_type_id = TextElement(
         Tag("footnote.type.id"),
     )
