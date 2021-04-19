@@ -2,6 +2,7 @@ import logging
 
 from importer.namespaces import Tag
 from importer.parsers import BooleanElement
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -136,7 +137,7 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
     tag = Tag("goods.nomenclature.description")
 
     sid = TextElement(Tag("goods.nomenclature.description.period.sid"))
-    language_id = TextElement(Tag("language.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     described_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     described_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),

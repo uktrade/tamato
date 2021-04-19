@@ -1,6 +1,7 @@
 from importer.namespaces import Tag
 from importer.parsers import BooleanElement
 from importer.parsers import CompoundElement
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -53,6 +54,7 @@ class RegulationGroupDescriptionParser(Writable, ElementParser):
     tag = Tag("regulation.group.description")
 
     group_id = TextElement(Tag("regulation.group.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 

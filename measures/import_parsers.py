@@ -1,5 +1,6 @@
 from importer.namespaces import Tag
 from importer.parsers import BooleanElement
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -54,6 +55,7 @@ class MeasureTypeSeriesDescriptionParser(Writable, ElementParser):
     tag = Tag("measure.type.series.description")
 
     sid = TextElement(Tag("measure.type.series.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -101,6 +103,7 @@ class MeasurementUnitDescriptionParser(Writable, ElementParser):
     tag = Tag("measurement.unit.description")
 
     code = TextElement(Tag("measurement.unit.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -148,6 +151,7 @@ class MeasurementUnitQualifierDescriptionParser(Writable, ElementParser):
     tag = Tag("measurement.unit.qualifier.description")
 
     code = TextElement(Tag("measurement.unit.qualifier.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -222,6 +226,7 @@ class MonetaryUnitDescriptionParser(Writable, ElementParser):
     tag = Tag("monetary.unit.description")
 
     code = TextElement(Tag("monetary.unit.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -279,6 +284,7 @@ class DutyExpressionDescriptionParser(Writable, ElementParser):
     tag = Tag("duty.expression.description")
 
     sid = DutyExpressionParser.sid
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -342,6 +348,7 @@ class MeasureTypeDescriptionParser(Writable, ElementParser):
     tag = Tag("measure.type.description")
 
     sid = TextElement(Tag("measure.type.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -414,6 +421,7 @@ class MeasureConditionCodeDescriptionParser(Writable, ElementParser):
     tag = Tag("measure.condition.code.description")
 
     code = TextElement(Tag("condition.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -461,6 +469,7 @@ class MeasureActionDescriptionParser(Writable, ElementParser):
     tag = Tag("measure.action.description")
 
     code = TextElement(Tag("action.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 

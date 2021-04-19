@@ -1,4 +1,5 @@
 from importer.namespaces import Tag
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -52,6 +53,7 @@ class CertificateTypeDescriptionParser(Writable, ElementParser):
     tag = Tag("certificate.type.description")
 
     sid = TextElement(Tag("certificate.type.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -103,9 +105,12 @@ class CertificateDescriptionParser(Writable, ElementParser):
     tag = Tag("certificate.description")
 
     sid = IntElement(Tag("certificate.description.period.sid"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
     described_certificate__sid = TextElement(Tag("certificate.code"))
-    described_certificate__certificate_type__sid = TextElement(Tag("certificate.type.code"))
+    described_certificate__certificate_type__sid = TextElement(
+        Tag("certificate.type.code"),
+    )
 
 
 @RecordParser.register_child("certificate_description_period")

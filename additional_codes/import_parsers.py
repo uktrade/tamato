@@ -1,4 +1,5 @@
 from importer.namespaces import Tag
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -93,6 +94,7 @@ class AdditionalCodeDescriptionParser(Writable, ElementParser):
     tag = Tag("additional.code.description")
 
     sid = TextElement(Tag("additional.code.description.period.sid"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     described_additionalcode__sid = TextElement(Tag("additional.code.sid"))
     described_additionalcode__type__sid = TextElement(Tag("additional.code.type.id"))
     described_additionalcode__code = TextElement(Tag("additional.code"))
@@ -148,6 +150,7 @@ class AdditionalCodeTypeDescriptionParser(ValidityMixin, Writable, ElementParser
     tag = Tag("additional.code.type.description")
 
     sid = TextElement(Tag("additional.code.type.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
