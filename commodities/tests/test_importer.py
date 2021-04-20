@@ -542,6 +542,68 @@ def test_goods_nomenclature_indent_importer_create_with_triple_00_indent(
     compare_indent(indent, db_indent, indent_level=0, count=1, depth=3)
 
 
+def test_goods_nomenclature_indent_importer_create_out_of_order(valid_user):
+    """
+    This test checks that if indents are loaded out of order (i.e. children
+    first) then when the actual parents are loaded they will correctly inherit
+    the children and nodes will be removed from any of the previous parents.
+
+    Observed in the wild:
+
+        Goods nomenclature:  0106900010 created in txn 294652
+            Goods Nomenclature Indent: 2 - 0106900010 valid: [2021-01-01, None) txn: 294652
+        Goods nomenclature:  0106900010 created in txn 294651
+            Goods Nomenclature Indent: 3 - 0106900010 valid: [2021-01-01, None) txn: 294651
+        Goods nomenclature:  0106900019 created in txn 294650
+            Goods Nomenclature Indent: 3 - 0106900019 valid: [2021-01-01, None) txn: 294650
+    """
+
+    root_indent = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__item_id="7700000000",
+        indented_goods_nomenclature__suffix="80",
+    )
+
+    not_parent = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__item_id="7710000000",
+        indented_goods_nomenclature__suffix="80",
+        node__parent=root_indent.nodes.first(),
+    )
+
+    child2_indent = factories.GoodsNomenclatureIndentFactory.build(
+        indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
+            item_id="7790000000",
+            suffix="80",
+        ),
+        update_type=UpdateType.CREATE,
+    )
+    db_child2_indent = make_and_get_indent(child2_indent, valid_user, depth=1)
+    assert db_child2_indent.nodes.get().get_parent() == not_parent.nodes.get()
+
+    child1_indent = factories.GoodsNomenclatureIndentFactory.build(
+        indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
+            item_id="7720000000",
+            suffix="80",
+        ),
+        update_type=UpdateType.CREATE,
+    )
+    db_child1_indent = make_and_get_indent(child1_indent, valid_user, depth=1)
+    assert db_child2_indent.nodes.get().get_parent() == not_parent.nodes.get()
+
+    parent_indent = factories.GoodsNomenclatureIndentFactory.build(
+        indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
+            item_id="7720000000",
+            suffix="10",
+        ),
+        update_type=UpdateType.CREATE,
+    )
+    db_parent_indent = make_and_get_indent(parent_indent, valid_user, depth=0)
+
+    assert db_parent_indent.nodes.get().get_parent() == root_indent.nodes.get()
+    assert db_child1_indent.nodes.get().get_parent() == db_parent_indent.nodes.get()
+    assert db_child2_indent.nodes.get().get_parent() == db_parent_indent.nodes.get()
+    assert not not_parent.nodes.get().get_descendants().exists()
+
+
 @pytest.mark.parametrize("item_id,suffix", [("1402000000", "80"), ("1401010000", "20")])
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_with_triple_00_indent(
