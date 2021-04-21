@@ -79,7 +79,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
             self.measures.model.objects.filter(
                 goods_nomenclature__sid=self.sid,
             )
-            .latest_approved()
+            .approved_up_to_transaction(self.transaction)
             .exists()
         )
 

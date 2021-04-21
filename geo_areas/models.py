@@ -80,16 +80,22 @@ class GeographicalArea(TrackedModel, ValidityMixin):
         )
 
     def in_use(self):
-        # TODO handle deletes
-        return self.measures.model.objects.filter(
-            geographical_area__sid=self.sid,
-        ).exists()
+        return (
+            self.measures.model.objects.filter(
+                geographical_area__sid=self.sid,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
     def is_a_parent(self):
-        # TODO handle deletes
-        return GeographicalArea.objects.filter(
-            parent__sid=self.sid,
-        ).exists()
+        return (
+            GeographicalArea.objects.filter(
+                parent__sid=self.sid,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
     def __str__(self):
         return f"{self.get_area_code_display()} {self.area_id}"
@@ -157,10 +163,13 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
             raise ValueError(f"{area} is not part of membership {self}")
 
     def member_used_in_measure_exclusion(self):
-        # TODO handle deletes
-        return self.member.measureexcludedgeographicalarea_set.model.objects.filter(
-            excluded_geographical_area__sid=self.member.sid,
-        ).exists()
+        return (
+            self.member.measureexcludedgeographicalarea_set.model.objects.filter(
+                excluded_geographical_area__sid=self.member.sid,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
 class GeographicalAreaDescription(TrackedModel, ValidityMixin):

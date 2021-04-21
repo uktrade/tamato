@@ -61,10 +61,13 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         return self.order_number
 
     def in_use(self):
-        # TODO this should respect deletes
-        return self.measure_set.model.objects.filter(
-            order_number__sid=self.sid,
-        ).exists()
+        return (
+            self.measure_set.model.objects.filter(
+                order_number__sid=self.sid,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
     class Meta:
         verbose_name = "quota"
@@ -103,10 +106,13 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     )
 
     def in_use(self):
-        # TODO this should respect deletes
-        return self.order_number.measure_set.model.objects.filter(
-            order_number__sid=self.order_number.sid,
-        ).exists()
+        return (
+            self.order_number.measure_set.model.objects.filter(
+                order_number__sid=self.order_number.sid,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
 class QuotaOrderNumberOriginExclusion(TrackedModel):

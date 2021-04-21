@@ -49,10 +49,13 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     )
 
     def in_use(self):
-        # TODO handle deletes
-        return MeasureType.objects.filter(
-            measure_type_series__sid=self.sid,
-        ).exists()
+        return (
+            MeasureType.objects.filter(
+                measure_type_series__sid=self.sid,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
 class MeasurementUnit(TrackedModel, ValidityMixin):
@@ -266,8 +269,11 @@ class MeasureType(TrackedModel, ValidityMixin):
     )
 
     def in_use(self):
-        # TODO handle deletes
-        return Measure.objects.filter(measure_type__sid=self.sid).exists()
+        return (
+            Measure.objects.filter(measure_type__sid=self.sid)
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
     @property
     def components_mandatory(self):
@@ -336,11 +342,13 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
     )
 
     def used_in_component(self):
-        # TODO handle deletes
-        # TODO handle MeasureConditionCode versions
-        return MeasureConditionComponent.objects.filter(
-            condition__condition_code__code=self.code,
-        ).exists()
+        return (
+            MeasureConditionComponent.objects.filter(
+                condition__condition_code__code=self.code,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
 class MeasureAction(TrackedModel, ValidityMixin):
@@ -376,10 +384,13 @@ class MeasureAction(TrackedModel, ValidityMixin):
     )
 
     def in_use(self):
-        # TODO handle deletes
-        return MeasureConditionComponent.objects.filter(
-            condition__action__code=self.code,
-        ).exists()
+        return (
+            MeasureConditionComponent.objects.filter(
+                condition__action__code=self.code,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
 class Measure(TrackedModel, ValidityMixin):

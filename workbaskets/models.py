@@ -243,5 +243,5 @@ class WorkBasket(TimestampedMixin):
 
         if "composite_key" not in kwargs:
             kwargs["composite_key"] = f"{self.pk}-{kwargs['order']}"
-        transaction = self.transactions.model.objects.create(workbasket=self, **kwargs)
-        return transaction
+
+        return self.transactions.model.objects.create(workbasket=self, **kwargs)

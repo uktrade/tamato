@@ -50,10 +50,13 @@ class FootnoteType(TrackedModel, ValidityMixin):
         return self.footnote_type_id
 
     def in_use(self):
-        # TODO this needs to repect deletes
-        return Footnote.objects.filter(
-            footnote_type__footnote_type_id=self.footnote_type_id,
-        ).exists()
+        return (
+            Footnote.objects.filter(
+                footnote_type__footnote_type_id=self.footnote_type_id,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
 class Footnote(TrackedModel, ValidityMixin):
@@ -93,11 +96,14 @@ class Footnote(TrackedModel, ValidityMixin):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
 
     def _used_in(self, dependent_type: Type[TrackedModel]):
-        # TODO this should respect deletes
-        return dependent_type.objects.filter(
-            associated_footnote__footnote_id=self.footnote_id,
-            associated_footnote__footnote_type__footnote_type_id=self.footnote_type.footnote_type_id,
-        ).exists()
+        return (
+            dependent_type.objects.filter(
+                associated_footnote__footnote_id=self.footnote_id,
+                associated_footnote__footnote_type__footnote_type_id=self.footnote_type.footnote_type_id,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
     def used_in_additional_code(self):
         return self._used_in(self.footnoteassociationadditionalcode_set.model)
