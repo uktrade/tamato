@@ -132,3 +132,31 @@ def test_measure_termination(workbasket, measure_to_terminate, termination_date)
         assert terminated_measure.valid_between.upper_inf is False
         assert terminated_measure.valid_between.upper <= termination_date
     terminated_measure.clean()
+
+
+def test_measure_type_series_in_use(in_use_check_respects_deletes):
+    assert in_use_check_respects_deletes(
+        factories.MeasureTypeSeriesFactory,
+        "in_use",
+        factories.MeasureTypeFactory,
+        "measure_type_series",
+    )
+
+
+def test_measure_type_in_use(in_use_check_respects_deletes):
+    assert in_use_check_respects_deletes(
+        factories.MeasureTypeFactory,
+        "in_use",
+        factories.MeasureFactory,
+        "measure_type",
+        leave_measure=True,
+    )
+
+
+def test_measure_action_in_use(in_use_check_respects_deletes):
+    assert in_use_check_respects_deletes(
+        factories.MeasureActionFactory,
+        "in_use",
+        factories.MeasureConditionComponentFactory,
+        "condition__action",
+    )

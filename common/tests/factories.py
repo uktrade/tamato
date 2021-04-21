@@ -764,7 +764,7 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
     measure_type = factory.SubFactory(MeasureTypeFactory)
     additional_code = None
     order_number = None
-    reduction = factory.Sequence(lambda x: (x + 1) % 4)
+    reduction = factory.Sequence(lambda x: x % 4 + 1)
     generating_regulation = factory.SubFactory(RegulationFactory)
     stopped = False
     export_refund_nomenclature_sid = None

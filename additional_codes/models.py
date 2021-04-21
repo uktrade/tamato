@@ -92,7 +92,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
             self.measure_set.model.objects.filter(
                 additional_code__sid=self.sid,
             )
-            .latest_approved()
+            .approved_up_to_transaction(self.transaction)
             .exists()
         )
 
