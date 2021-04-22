@@ -2,12 +2,14 @@ from decimal import Decimal
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from polymorphic.managers import PolymorphicManager
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from quotas import business_rules
+from quotas import querysets
 from quotas import validators
 
 
@@ -43,19 +45,28 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         related_name="quotas",
     )
 
+    required_certificates = models.ManyToManyField(
+        "certificates.Certificate",
+        related_name="quotas",
+    )
+
     indirect_business_rules = (
         business_rules.ON7,
         business_rules.ON8,
         business_rules.QBP2,
         business_rules.QD1,
         business_rules.QD7,
+        business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber,
     )
     business_rules = (
         business_rules.ON1,
         business_rules.ON2,
         business_rules.ON9,
         business_rules.ON11,
+        business_rules.CertificatesMustExist,
     )
+
+    objects = PolymorphicManager.from_queryset(querysets.QuotaOrderNumberQuerySet)()
 
     def __str__(self):
         return self.order_number
@@ -68,6 +79,10 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
             .approved_up_to_transaction(self.transaction)
             .exists()
         )
+
+    @property
+    def is_origin_quota(self):
+        return any(self.required_certificates.all())
 
     class Meta:
         verbose_name = "quota"

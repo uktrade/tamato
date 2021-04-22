@@ -35,7 +35,8 @@ class QuotaOrderNumberSerializer(TrackedModelSerializerMixin, ValiditySerializer
 
 @TrackedModelSerializer.register_polymorphic_model
 class QuotaOrderNumberOriginSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     sid = serializers.IntegerField()
     order_number = QuotaOrderNumberSerializer(read_only=True)
@@ -59,7 +60,8 @@ class QuotaOrderNumberOriginSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class QuotaOrderNumberOriginExclusionSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     origin = QuotaOrderNumberOriginSerializer(read_only=True)
     excluded_geographical_area = GeographicalAreaSerializer(read_only=True)
@@ -77,7 +79,8 @@ class QuotaOrderNumberOriginExclusionSerializer(
 
 
 class SimpleQuotaDefinitionSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     class Meta:
         model = models.QuotaDefinition
@@ -88,7 +91,8 @@ class SimpleQuotaDefinitionSerializer(
 
 
 class QuotaDefinitionImporterSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     order_number = QuotaOrderNumberSerializer(required=False)
     sid = serializers.IntegerField()
@@ -126,7 +130,9 @@ class QuotaDefinitionSerializer(TrackedModelSerializerMixin, ValiditySerializerM
     measurement_unit_qualifier = MeasurementUnitQualifierSerializer(read_only=True)
     monetary_unit = MonetaryUnitSerializer(read_only=True)
     sub_quotas = SimpleQuotaDefinitionSerializer(
-        many=True, read_only=True, required=False
+        many=True,
+        read_only=True,
+        required=False,
     )
 
     class Meta:

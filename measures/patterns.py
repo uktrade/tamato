@@ -172,7 +172,7 @@ class MeasureCreationPattern:
             ),
         ]
 
-    def get_proof_of_origin_condition(
+    def get_origin_quota_conditions(
         self,
         measure: Measure,
         certificates: Sequence[Certificate],
@@ -312,7 +312,6 @@ class MeasureCreationPattern:
         authorised_use: bool = False,
         additional_code: AdditionalCode = None,
         footnotes: Sequence[Footnote] = [],
-        proofs_of_origin: Sequence[Certificate] = [],
         condition_sentence: Optional[str] = None,
     ) -> Iterator[TrackedModel]:
         """
@@ -330,8 +329,8 @@ class MeasureCreationPattern:
         If `footnotes` are passed, footnote associations will be added to the
         measure.
 
-        If `proofs_of_origin` are passed, measure conditions requiring the
-        proofs will be added to the measure.
+        If an `order_number` with `required_conditions` is passed, measure
+        conditions requiring the certificates will be added to the measure.
         """
 
         assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
@@ -393,9 +392,12 @@ class MeasureCreationPattern:
             yield from self.get_authorised_use_measure_conditions(new_measure)
 
         # If this is a measure for an origin quota, we need to add
-        # some measure conditions with the passed proof of origin.
-        if any(proofs_of_origin):
-            yield from self.get_proof_of_origin_condition(new_measure, proofs_of_origin)
+        # some measure conditions with the origin quota required certificates.
+        if order_number and order_number.required_certificates.exists():
+            yield from self.get_origin_quota_conditions(
+                new_measure,
+                order_number.required_certificates.all(),
+            )
 
         # If we have a condition sentence, parse and add to the measure.
         if condition_sentence:

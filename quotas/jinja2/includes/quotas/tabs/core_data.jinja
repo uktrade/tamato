@@ -40,6 +40,11 @@
                 "value": {"text": object.get_mechanism_display()},
                 "actions": {"items": []}
             },
+            {
+                "key": {"text": "Required certificates"},
+                "value": {"text": object.required_certificates.all()|join(", ") if object.is_origin_quota else "-"},
+                "actions": {"items": []}
+            },
             ]
         })}}
     </div>

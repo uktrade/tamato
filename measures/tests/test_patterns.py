@@ -70,18 +70,23 @@ def authorised_use_measure_data(measure_data: Dict, authorised_use_objects) -> D
 
 
 @pytest.fixture
-def proofs_of_origin_objects():
+def order_number_objects():
     factories.MeasureConditionCodeFactory(code="Q")
     factories.MeasureActionFactory(code="27")
     factories.MeasureActionFactory(code="07")
 
 
 @pytest.fixture
-def proofs_of_origin_measure_data(measure_data: Dict, proofs_of_origin_objects) -> Dict:
+def required_certificates_data(measure_data: Dict, order_number_objects) -> Dict:
     return {
-        "proofs_of_origin": [
-            factories.CertificateFactory(sid="123", certificate_type__sid="U"),
-        ],
+        "order_number": factories.QuotaOrderNumberFactory.create(
+            required_certificates=[
+                factories.CertificateFactory(
+                    sid="123",
+                    certificate_type__sid="U",
+                )
+            ]
+        ),
         **measure_data,
     }
 
@@ -223,11 +228,11 @@ def test_attaches_authorised_use_conditions(
     assert conditions[1].component_sequence_number == 2
 
 
-def test_attaches_proof_of_origin_conditions(
-    proofs_of_origin_measure_data,
+def test_attaches_origin_quota_conditions(
+    required_certificates_data,
     measure_creation_pattern: MeasureCreationPattern,
 ):
-    models = list(measure_creation_pattern.create(**proofs_of_origin_measure_data))
+    models = list(measure_creation_pattern.create(**required_certificates_data))
     conditions = models[0].conditions.all()
     assert len(conditions) == 2
     assert conditions[0].condition_code.code == "Q"
