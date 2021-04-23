@@ -14,12 +14,12 @@ from django.core.files.base import ContentFile
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 
-from common.util import lock_tables
+from common.util import require_lock
 from exporter.models import Upload
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
 from exporter.serializers import validate_rendered_envelopes
-from exporter.util import UploadStatus
+from exporter.util import UploadTaskResultData
 from exporter.util import dit_file_generator
 from exporter.util import exceptions_as_messages
 from taric.models import Envelope
@@ -39,16 +39,16 @@ def upload_and_create_envelopes(
     workbaskets: QuerySet,
     rendered_envelopes: Sequence[RenderedTransactions],
     first_envelope_id,
-) -> UploadStatus:
+) -> UploadTaskResultData:
     """
-    Upload envelopes.
+    Upload Envelope data to the the s3 and create artifacts in the database.
 
-    This function locks the Envelope table so that Envelope.envelope_id remains
-    in sequence.
+    Side effects on success:
+    Create Envelope, EnvelopeTransaction and Upload objects in the database and upload envelope XML to an S3 object.
 
-    :return: dict of user messages indexed by envelope_id as an int.
+    :return: :class:`~exporter.util.UploadTaskResultData`.
     """
-    # {envelope_id: message} User messages can used to propagate messages back to this user.
+    # {envelope_id: [message..]} User messages
     envelope_messages = defaultdict(list)
     upload_pks = []
 
@@ -57,7 +57,8 @@ def upload_and_create_envelopes(
         envelope = Envelope.new_envelope()
         if current_envelope_id != int(envelope.envelope_id):
             logger.error(
-                "Envelope created out of sequence: %s != %s this may due to simultaneous updates causing a race condition.",
+                "Envelope created out of sequence: %s != %s this may be due to simultaneous updates causing a race "
+                "condition.",
                 (current_envelope_id, int(envelope.envelope_id)),
             )
             raise RaceCondition(
@@ -89,7 +90,10 @@ def upload_and_create_envelopes(
 
         logger.debug("Uploaded: %s", upload.filename)
         envelope_messages[envelope.envelope_id].append(f"Uploaded {upload.filename}")
-    return UploadStatus(envelope_messages=envelope_messages, upload_pks=upload_pks)
+    return UploadTaskResultData(
+        envelope_messages=envelope_messages,
+        upload_pks=upload_pks,
+    )
 
 
 @shared_task(
@@ -100,31 +104,37 @@ def upload_and_create_envelopes(
     retry_backoff_max=settings.EXPORTER_UPLOAD_RETRY_BACKOFF_MAX,
     retry_jitter=True,
 )
-@lock_tables(Envelope)
+@require_lock(Envelope, lock="SHARE")
 def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     """
     Upload workbaskets.
 
-    Returns a bool for success and dict of user messages keyed by envelope_id or
-    None.
+    :return :class:`~exporter.util.UserFeedback`: object with user readable feedback on task status.
     """
-    upload_status = UploadStatus(**upload_status_data)
+    upload_status = UploadTaskResultData(**upload_status_data)
     workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
     if not workbaskets:
         msg = "Nothing to upload:  No workbaskets with status READY_FOR_EXPORT."
         logger.info(msg)
-        return UploadStatus(initial_status=upload_status, messages=[msg]).serialize()
+        return UploadTaskResultData(
+            initial_status=upload_status,
+            messages=[msg],
+        ).serialize()
 
-    # transactions:  will be serialized, then added to an envelope for uploaded.
+    # transactions: will be serialized, then added to an envelope for upload.
     transactions = workbaskets.ordered_transactions()
 
     if not transactions:
         msg = f"Nothing to upload:  {workbaskets.count()} Workbaskets READY_FOR_EXPORT but none contain any transactions."
         logger.info(msg)
-        return UploadStatus(initial_status=upload_status, messages=[msg]).serialize()
+        return UploadTaskResultData(
+            initial_status=upload_status,
+            messages=[msg],
+        ).serialize()
 
     first_envelope_id = int(Envelope.next_envelope_id())
-    # Write files to a temporary, so they can all be validated before uploading.
+    # Envelope XML is written to temporary files for validation before anything is created
+    # in the database or uploaded to s3.
     with tempfile.TemporaryDirectory(prefix="dit-tamato_") as temporary_directory:
         output_file_constructor = dit_file_generator(
             temporary_directory,
@@ -141,14 +151,18 @@ def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
 
         envelope_errors = validate_rendered_envelopes(rendered_envelopes)
         if envelope_errors:
-            return UploadStatus(
+            return UploadTaskResultData(
                 initial_status=upload_status,
                 envelope_errors=exceptions_as_messages(envelope_errors),
             ).serialize()
 
-        # Transactions envelopes are all valid, and ready for upload.
+        # Transaction envelope data XML is valid, ready for upload to s3 and creation
+        # of corresponding database objects.
+        #
+        # Feedback for the user is added to a :class:`~exporter.util.UserFeedback` and serialized
+        # so that it can be safely returned in the Celery task result.
         try:
-            result = UploadStatus(
+            result = UploadTaskResultData(
                 initial_status=upload_status,
                 **upload_and_create_envelopes(
                     workbaskets,
@@ -180,18 +194,18 @@ def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     retry_jitter=True,
 )
 def send_upload_notifications(self, upload_status_data):
-    upload_status = UploadStatus(**upload_status_data)
+    upload_status = UploadTaskResultData(**upload_status_data)
     if not upload_status.upload_pks:
-        return UploadStatus(
+        return UploadTaskResultData(
             upload_status,
             messages=["No uploads to notify HMRC about."],
         ).serialize()
 
     if settings.EXPORTER_DISABLE_NOTIFICATION:
-        logger.debug("Notificaitons are disabled.")
-        return UploadStatus(
+        logger.debug("Notifications are disabled.")
+        return UploadTaskResultData(
             upload_status,
-            messages=["Notificaitons are disabled."],
+            messages=["Notifications are disabled."],
         ).serialize()
 
     for upload in Upload.objects.filter(
@@ -217,6 +231,6 @@ def send_upload_notifications(self, upload_status_data):
 
 # Run upload and notification as separate tasks, so the task queue isn't blocked by a failure in either.
 upload_workbaskets = (
-    upload_workbasket_envelopes.s(UploadStatus().serialize())
+    upload_workbasket_envelopes.s(UploadTaskResultData().serialize())
     | send_upload_notifications.s()
 )

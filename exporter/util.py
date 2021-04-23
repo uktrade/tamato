@@ -28,11 +28,18 @@ def dit_file_generator(directory: str, start: int = 1):
     return lambda: next(files)
 
 
-class UploadStatus:
+class UploadTaskResultData:
     """
-    Updatable envelope errors and messages, using default dicts.
+    Class to hold data passed between tasks used by the exporter including data
+    messages ultimately displayed to the user.
 
-    Once data is ready for returning from serialize will output data as a dict.
+    Allows serializing data to a a dict containing only dicts, strings and
+    lists to simplify pickling when sent between celery tasks.
+
+    On the users end inside a management command the GUI [TBD] messages can be
+    read out displayed to the user, showing the status of uploads and notifications.
+
+    :param initial_status: Optional UploadTaskResultData instance to merge data from.
     """
 
     def __init__(
@@ -73,6 +80,7 @@ class UploadStatus:
             self.upload_pks.extend(upload_pks)
 
     def output(self, output_file=None):
+        """Output user messages and errors to a stream (usually stdout)."""
         if output_file is None:
             output_file = sys.stdout
 

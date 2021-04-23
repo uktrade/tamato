@@ -19,6 +19,18 @@ RenderedTransactions = namedtuple(
     "RenderedTransactions",
     "envelope_id output transactions is_oversize max_envelope_size",
 )
+RenderedTransactions.__doc__ = """\
+Transient object that linking Transaction objects to the file like object they were rendered to as Envelope XML.
+
+This enables separation of serializing, validating and saving to the database: any of the first steps can
+fail without incurring a database roll-back.
+
+:param envelope_id: Envelope ID, to use later, when creating Envelope objects in the database.
+:param output:  file, or file like object Envelope XML was streamed to.
+:param transactions: Transaction objects that were rendered to XML in this Envelope.
+:param is_oversize: True if the rendered XML was larger than max_size when rendered.
+:param max_envelope_size: Maximum envelope size used when rendering this Envelope.
+"""
 
 
 class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
@@ -115,17 +127,20 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
 
 
 class EnvelopeTooLarge(Exception):
-    pass
+    """Envelope was bigger than max_envelope_size."""
 
 
 def validate_rendered_envelopes(
     rendered_envelopes: Sequence[RenderedTransactions],
 ) -> Dict[int, List[Exception]]:
     """
+    Given a sequence of RenderedTransactions, check the envelope data in their
+    `output` file objects is valid Envelope XML.
+
     :param rendered_envelopes: sequence of RenderedEnvelope
-    :return: dict of {envelope_id: Exception}
+    :return: dict of {envelope_id: [Exception,...]}
     """
-    envelope_errors = defaultdict()
+    envelope_errors = defaultdict(list)
     for rendered_envelope in rendered_envelopes:
         if rendered_envelope.is_oversize:
             envelope_errors[rendered_envelope.envelope_id].append(

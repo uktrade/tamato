@@ -139,17 +139,41 @@ def get_field_tuple(model, field):
     return field, value
 
 
-def lock_tables(*models):
+LOCK_MODES = (
+    "ACCESS SHARE",
+    "ROW SHARE",
+    "ROW EXCLUSIVE",
+    "SHARE UPDATE EXCLUSIVE",
+    "SHARE",
+    "SHARE ROW EXCLUSIVE",
+    "EXCLUSIVE",
+    "ACCESS EXCLUSIVE",
+)
+
+
+def require_lock(*models, lock="ACCESS EXCLUSIVE"):
+    """
+    Decorator for PostgreSQL's table-level lock functionality.
+
+    Example:
+        @transaction.commit_on_success
+        @require_lock(MyModel, lock='ACCESS EXCLUSIVE')
+        def myview(request)
+            ...
+
+    PostgreSQL's LOCK Documentation:
+    http://www.postgresql.org/docs/8.3/interactive/sql-lock.html
+    """
+    if lock not in LOCK_MODES:
+        raise ValueError("%s is not a PostgreSQL supported lock mode.")
+
     @wrapt.decorator
     def wrapper(wrapped, instance, args, kwargs):
         with atomic():
-            cursor = transaction.get_connection().cursor()
-            for model in models:
-                cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+            with transaction.get_connection().cursor() as cursor:
+                for model in models:
+                    cursor.execute(f"LOCK TABLE {model._meta.db_table}")
 
-            try:
                 return wrapped(*args, **kwargs)
-            finally:
-                cursor.close()
 
     return wrapper

@@ -5,7 +5,7 @@ import kombu
 from django.core.management import BaseCommand
 
 from exporter.tasks import upload_workbaskets
-from exporter.util import UploadStatus
+from exporter.util import UploadTaskResultData
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +56,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         local = options["local"]
-        upload_status = UploadStatus(
+        upload_result = UploadTaskResultData(
             **run_task_or_exit(upload_workbaskets, local=local)
         )
-        upload_status.output(self.stdout)
+        upload_result.output(self.stdout)
 
-        sys.exit(0 if upload_status.success else 1)
+        sys.exit(0 if upload_result.success else 1)
