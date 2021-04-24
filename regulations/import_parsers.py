@@ -28,6 +28,9 @@ class RegulationGroupParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "150"
+    subrecord_code = "00"
+
     tag = Tag("regulation.group")
 
     group_id = TextElement(Tag("regulation.group.id"))
@@ -50,6 +53,9 @@ class RegulationGroupDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "150"
+    subrecord_code = "05"
 
     tag = Tag("regulation.group.description")
 
@@ -92,6 +98,9 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "285"
+    subrecord_code = "00"
 
     tag = Tag("base.regulation")
 
@@ -146,6 +155,9 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "290"
+    subrecord_code = "00"
+
     tag = Tag("modification.regulation")
 
     role_type = IntElement(Tag("modification.regulation.role"))
@@ -196,6 +208,9 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "300"
+    subrecord_code = "00"
+
     tag = Tag("full.temporary.stop.regulation")
 
     role_type = IntElement(Tag("full.temporary.stop.regulation.role"))
@@ -232,6 +247,9 @@ class FullTemporaryStopActionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "305"
+    subrecord_code = "00"
+
     tag = Tag("fts.regulation.action")
 
     role_type = IntElement(Tag("fts.regulation.role"))
@@ -261,6 +279,9 @@ class RegulationReplacementParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "305"
+    subrecord_code = "00"
 
     tag = Tag("regulation.replacement")
 

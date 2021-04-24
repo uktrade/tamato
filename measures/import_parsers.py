@@ -28,6 +28,9 @@ class MeasureTypeSeriesParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "140"
+    subrecord_code = "00"
+
     tag = Tag("measure.type.series")
 
     sid = TextElement(Tag("measure.type.series.id"))
@@ -51,6 +54,9 @@ class MeasureTypeSeriesDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "140"
+    subrecord_code = "05"
 
     tag = Tag("measure.type.series.description")
 
@@ -77,6 +83,9 @@ class MeasurementUnitParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "210"
+    subrecord_code = "00"
+
     tag = Tag("measurement.unit")
 
     code = TextElement(Tag("measurement.unit.code"))
@@ -99,6 +108,9 @@ class MeasurementUnitDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "210"
+    subrecord_code = "05"
 
     tag = Tag("measurement.unit.description")
 
@@ -125,6 +137,9 @@ class MeasurementUnitQualifierParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "215"
+    subrecord_code = "00"
+
     tag = Tag("measurement.unit.qualifier")
 
     code = TextElement(Tag("measurement.unit.qualifier.code"))
@@ -147,6 +162,9 @@ class MeasurementUnitQualifierDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "215"
+    subrecord_code = "05"
 
     tag = Tag("measurement.unit.qualifier.description")
 
@@ -174,6 +192,9 @@ class MeasurementParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "220"
+    subrecord_code = "00"
+
     tag = Tag("measurement")
 
     measurement_unit__code = TextElement(Tag("measurement.unit.code"))
@@ -200,6 +221,9 @@ class MonetaryUnitParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "225"
+    subrecord_code = "00"
+
     tag = Tag("monetary.unit")
 
     code = TextElement(Tag("monetary.unit.code"))
@@ -222,6 +246,9 @@ class MonetaryUnitDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "225"
+    subrecord_code = "05"
 
     tag = Tag("monetary.unit.description")
 
@@ -250,6 +277,9 @@ class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "230"
+    subrecord_code = "00"
 
     tag = Tag("duty.expression")
 
@@ -280,6 +310,9 @@ class DutyExpressionDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "230"
+    subrecord_code = "05"
 
     tag = Tag("duty.expression.description")
 
@@ -313,6 +346,9 @@ class MeasureTypeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "235"
+    subrecord_code = "00"
+
     tag = Tag("measure.type")
 
     sid = TextElement(Tag("measure.type.id"))
@@ -345,6 +381,9 @@ class MeasureTypeDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "235"
+    subrecord_code = "05"
+
     tag = Tag("measure.type.description")
 
     sid = TextElement(Tag("measure.type.id"))
@@ -371,6 +410,9 @@ class AdditionalCodeTypeMeasureTypeParser(ValidityMixin, Writable, ElementParser
         </xs:element>
     """
 
+    record_code = "240"
+    subrecord_code = "00"
+
     tag = Tag("additional.code.type.measure.type")
 
     measure_type__sid = TextElement(Tag("measure.type.id"))
@@ -395,6 +437,9 @@ class MeasureConditionCodeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "350"
+    subrecord_code = "00"
+
     tag = Tag("measure.condition.code")
 
     code = TextElement(Tag("condition.code"))
@@ -417,6 +462,9 @@ class MeasureConditionCodeDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "350"
+    subrecord_code = "05"
 
     tag = Tag("measure.condition.code.description")
 
@@ -443,6 +491,9 @@ class MeasureActionParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "355"
+    subrecord_code = "00"
+
     tag = Tag("measure.action")
 
     code = TextElement(Tag("action.code"))
@@ -465,6 +516,9 @@ class MeasureActionDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "355"
+    subrecord_code = "05"
 
     tag = Tag("measure.action.description")
 
@@ -506,6 +560,9 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "430"
+    subrecord_code = "00"
 
     tag = Tag("measure")
 
@@ -554,6 +611,9 @@ class MeasureComponentParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "430"
+    subrecord_code = "05"
+
     tag = Tag("measure.component")
 
     component_measure__sid = TextElement(Tag("measure.sid"))
@@ -593,6 +653,9 @@ class MeasureConditionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "430"
+    subrecord_code = "10"
 
     tag = Tag("measure.condition")
 
@@ -636,6 +699,9 @@ class MeasureConditionComponentParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "430"
+    subrecord_code = "11"
+
     tag = Tag("measure.condition.component")
 
     condition__sid = TextElement(Tag("measure.condition.sid"))
@@ -668,6 +734,9 @@ class MeasureExcludedGeographicalAreaParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "430"
+    subrecord_code = "15"
+
     tag = Tag("measure.excluded.geographical.area")
 
     modified_measure__sid = TextElement(Tag("measure.sid"))
@@ -692,6 +761,9 @@ class FootnoteAssociationMeasureParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "430"
+    subrecord_code = "20"
 
     tag = Tag("footnote.association.measure")
 

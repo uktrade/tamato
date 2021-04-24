@@ -28,6 +28,9 @@ class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "360"
+    subrecord_code = "00"
+
     tag = Tag("quota.order.number")
     sid = TextElement(Tag("quota.order.number.sid"))
     order_number = TextElement(Tag("quota.order.number.id"))
@@ -60,6 +63,9 @@ class QuotaOrderNumberOriginParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "360"
+    subrecord_code = "10"
+
     tag = Tag("quota.order.number.origin")
 
     sid = TextElement(Tag("quota.order.number.origin.sid"))
@@ -84,6 +90,9 @@ class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "360"
+    subrecord_code = "15"
 
     tag = Tag("quota.order.number.origin.exclusions")
 
@@ -119,6 +128,9 @@ class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "370"
+    subrecord_code = "00"
 
     tag = Tag("quota.definition")
 
@@ -166,6 +178,9 @@ class QuotaAssociationParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "370"
+    subrecord_code = "05"
+
     tag = Tag("quota.association")
 
     main_quota__sid = TextElement(Tag("main.quota.definition.sid"))
@@ -194,6 +209,9 @@ class QuotaBlockingParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "370"
+    subrecord_code = "10"
 
     tag = Tag("quota.blocking.period")
 
@@ -224,6 +242,9 @@ class QuotaSuspensionParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "370"
+    subrecord_code = "15"
 
     tag = Tag("quota.suspension.period")
 
@@ -315,6 +336,9 @@ class QuotaEventParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "375"
+    subrecord_code = "subrecord_code"
 
     tag = RegexTag(r"quota.([a-z.]+).event")
 

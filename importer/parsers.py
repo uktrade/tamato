@@ -77,6 +77,30 @@ class ElementParser:
         {"child": {"id": 2, "field": "Text"}}
     """
 
+    record_code: str
+    """
+    The type id of this model's type family in the TARIC specification.
+
+    This number groups together a number of different models into 'records'.
+    Where two models share a record code, they are conceptually expressing
+    different properties of the same logical model.
+
+    In theory each :class:`~common.transactions.Transaction` should only contain
+    models with a single :attr:`record_code` (but differing
+    :attr:`subrecord_code`.)
+    """
+
+    subrecord_code: str
+    """
+    The type id of this model in the TARIC specification. The
+    :attr:`subrecord_code` when combined with the :attr:`record_code` uniquely
+    identifies the type within the specification.
+
+    The subrecord code gives the intended order for models in a transaction,
+    with comparatively smaller subrecord codes needing to come before larger
+    ones.
+    """
+
     tag: Optional[Tag] = None
     data_class: type = dict
     end_hook: Optional[Callable[[Any, Element], None]] = None

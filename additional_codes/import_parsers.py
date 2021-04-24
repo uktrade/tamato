@@ -29,6 +29,9 @@ class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "245"
+    subrecord_code = "00"
+
     tag = Tag("additional.code")
 
     sid = IntElement(Tag("additional.code.sid"))
@@ -62,6 +65,9 @@ class AdditionalCodeDescriptionPeriodParser(
         </xs:element>
     """
 
+    record_code = "245"
+    subrecord_code = "05"
+
     tag = Tag("additional.code.description.period")
 
     sid = TextElement(Tag("additional.code.description.period.sid"))
@@ -90,6 +96,9 @@ class AdditionalCodeDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "245"
+    subrecord_code = "10"
 
     tag = Tag("additional.code.description")
 
@@ -121,6 +130,9 @@ class AdditionalCodeTypeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "120"
+    subrecord_code = "00"
+
     tag = Tag("additional.code.type")
 
     sid = TextElement(Tag("additional.code.type.id"))
@@ -146,6 +158,9 @@ class AdditionalCodeTypeDescriptionParser(ValidityMixin, Writable, ElementParser
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "120"
+    subrecord_code = "05"
 
     tag = Tag("additional.code.type.description")
 
@@ -175,6 +190,9 @@ class FootnoteAssociationAdditionalCodeParser(ValidityMixin, Writable, ElementPa
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "245"
+    subrecord_code = "15"
 
     tag = Tag("footnote.association.additional.code")
 

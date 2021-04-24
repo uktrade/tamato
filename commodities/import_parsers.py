@@ -35,6 +35,9 @@ class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "400"
+    subrecord_code = "00"
+
     tag = Tag("goods.nomenclature")
 
     sid = TextElement(Tag("goods.nomenclature.sid"))
@@ -64,6 +67,9 @@ class GoodsNomenclatureOriginParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "400"
+    subrecord_code = "35"
 
     tag = Tag("goods.nomenclature.origin")
 
@@ -97,6 +103,9 @@ class GoodsNomenclatureSuccessorParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "400"
+    subrecord_code = "40"
 
     tag = Tag("goods.nomenclature.successor")
 
@@ -133,6 +142,9 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "400"
+    subrecord_code = "15"
 
     tag = Tag("goods.nomenclature.description")
 
@@ -172,6 +184,9 @@ class GoodsNomenclatureDescriptionPeriodParser(
         </xs:element>
     """
 
+    record_code = "400"
+    subrecord_code = "10"
+
     tag = Tag("goods.nomenclature.description.period")
 
     sid = TextElement(Tag("goods.nomenclature.description.period.sid"))
@@ -204,6 +219,9 @@ class GoodsNomenclatureIndentParser(ValidityStartMixin, Writable, ElementParser)
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "400"
+    subrecord_code = "05"
 
     tag = Tag("goods.nomenclature.indents")
 
@@ -241,6 +259,9 @@ class FootnoteAssociationGoodsNomenclatureParser(
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "400"
+    subrecord_code = "20"
 
     tag = Tag("footnote.association.goods.nomenclature")
 

@@ -34,6 +34,9 @@ class GeographicalAreaParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "250"
+    subrecord_code = "00"
+
     tag = Tag("geographical.area")
 
     sid = TextElement(Tag("geographical.area.sid"))
@@ -61,6 +64,9 @@ class GeographicalAreaDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "250"
+    subrecord_code = "10"
 
     tag = Tag("geographical.area.description")
 
@@ -94,6 +100,9 @@ class GeographicalAreaDescriptionPeriodParser(
         </xs:element>
     """
 
+    record_code = "250"
+    subrecord_code = "05"
+
     tag = Tag("geographical.area.description.period")
 
     sid = IntElement(Tag("geographical.area.description.period.sid"))
@@ -119,6 +128,9 @@ class GeographicalMembershipParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "250"
+    subrecord_code = "15"
 
     tag = Tag("geographical.area.membership")
 
