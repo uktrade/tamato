@@ -32,6 +32,9 @@ class FootnoteTypeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "100"
+    subrecord_code = "00"
+
     tag = Tag("footnote.type")
 
     footnote_type_id = TextElement(Tag("footnote.type.id"))
@@ -57,6 +60,9 @@ class FootnoteTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "100"
+    subrecord_code = "05"
 
     tag = Tag("footnote.type.description")
 
@@ -84,6 +90,9 @@ class FootnoteParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "200"
+    subrecord_code = "00"
+
     tag = Tag("footnote")
 
     footnote_type__footnote_type_id = TextElement(Tag("footnote.type.id"))
@@ -109,6 +118,9 @@ class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "200"
+    subrecord_code = "10"
 
     tag = Tag("footnote.description")
 
@@ -139,6 +151,9 @@ class FootnoteDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParse
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "200"
+    subrecord_code = "05"
 
     tag = Tag("footnote.description.period")
 

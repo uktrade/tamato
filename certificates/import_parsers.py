@@ -27,6 +27,9 @@ class CertificateTypeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "110"
+    subrecord_code = "00"
+
     tag = Tag("certificate.type")
 
     sid = TextElement(Tag("certificate.type.code"))
@@ -49,6 +52,9 @@ class CertificateTypeDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "110"
+    subrecord_code = "05"
 
     tag = Tag("certificate.type.description")
 
@@ -76,6 +82,9 @@ class CertificateParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "205"
+    subrecord_code = "00"
+
     tag = Tag("certificate")
 
     sid = TextElement(Tag("certificate.code"))
@@ -101,6 +110,9 @@ class CertificateDescriptionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "205"
+    subrecord_code = "10"
 
     tag = Tag("certificate.description")
 
@@ -131,6 +143,9 @@ class CertificateDescriptionPeriodParser(ValidityStartMixin, Writable, ElementPa
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "205"
+    subrecord_code = "05"
 
     tag = Tag("certificate.description.period")
 
