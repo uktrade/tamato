@@ -238,15 +238,15 @@ class ElementParser:
     attributes: Dict[str, str | Expression] = {}
 
     def serializer(
-        self, field_name: str = None, *extra_children, for_model=None
+        self,
+        field_name: str = None,
+        *extra_children,
+        **kwargs,
     ) -> Expression:
         children = self._field_lookup.items()
         return XMLElement(
             self.tag.for_xml,
-            *(
-                child.serializer(field, for_model=for_model)
-                for (child, field) in children
-            ),
+            *(child.serializer(field, **kwargs) for (child, field) in children),
             *extra_children,
             **self.attributes,
         )

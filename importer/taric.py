@@ -19,6 +19,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.db.models.functions import Cast
+from django.db.models.functions.text import Concat
 from django.db.transaction import atomic
 from lxml import etree
 
@@ -145,14 +146,25 @@ class MessageParser(ElementParser):
     """Parser for TARIC3 `message` element."""
 
     tag = Tag("app.message", prefix=ENVELOPE)
-    # "message_id" refers to an annotation added in another CTE, which is
-    # difficult to get Django to understand is present. So instead a literal SQL
-    # value that will be correctly interpreted as the column name is used.
-    attributes = {
-        "id": RawSQL("message_id", []),
-    }
 
     record = TransmissionParser()  # TODO: many?
+
+    def serializer(self, *args, message_seq: int = 0, **kwargs) -> Expression:
+        # The window function we use to get the message ID generates one new ID
+        # per model. However, some models (e.g. those with description fields)
+        # require multiple message elements per model so XML would end up with
+        # duplicate message IDs.
+        #
+        # The solution to this is to manually append a digit to each message ID
+        # at SQL-generation time based on the order in which the messages are
+        # output. This ensures that the message IDs are unique.
+        #
+        # "message_id" refers to an annotation added in another CTE, which is
+        # difficult to get Django to understand is present. So instead a literal
+        # SQL value that will be correctly interpreted as the column name is
+        # used.
+        self.attributes = {"id": Concat(RawSQL("message_id", []), Value(message_seq))}
+        return super().serializer(*args, **kwargs)
 
 
 class TransactionParser(ElementParser):

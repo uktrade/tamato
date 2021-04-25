@@ -516,19 +516,33 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         return seen
 
     @classmethod
-    def xml_serializer(cls, recurse: bool = True) -> Expression:
+    def xml_serializer(cls, recurse: bool = True, message_seq: int = 0) -> Expression:
         from importer.taric import MessageParser
 
-        dependencies = [
-            h for h in cls.resolve_dependent_handlers() if h != cls and recurse is True
-        ]
+        dependencies = sorted(
+            (
+                h
+                for h in cls.resolve_dependent_handlers()
+                if h != cls and recurse is True
+            ),
+            key=lambda c: (c.xml_model.record_code, c.xml_model.subrecord_code),
+        )
         order = sorted(
             (cls, *(h for h in dependencies)),
             key=lambda c: (c.xml_model.record_code, c.xml_model.subrecord_code),
         )
         expressions = {
-            cls: MessageParser().serializer(for_model=cls.xml_model()),
-            **{h: h.xml_serializer(recurse=False) for h in dependencies},
+            cls: MessageParser().serializer(
+                for_model=cls.xml_model(),
+                message_seq=order.index(cls) + message_seq,
+            ),
+            **{
+                h: h.xml_serializer(
+                    recurse=False,
+                    message_seq=order.index(h) + message_seq,
+                )
+                for h in dependencies
+            },
         }
         return XMLConcat(
             *(expressions[handler] for handler in order),
