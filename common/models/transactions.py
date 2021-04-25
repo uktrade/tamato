@@ -9,6 +9,8 @@ from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models.aggregates import Count
+from django.db.models.expressions import Window
+from django.db.models.functions.window import RowNumber
 from django_cte import CTEManager
 from django_cte import With
 from django_cte.cte import CTEQuerySet
@@ -44,9 +46,52 @@ class TransactionQueryset(CTEQuerySet):
     def with_xml(self):
         from importer.taric import TransactionParser
 
-        cte = With(TrackedModel.objects.with_xml().filter(transaction__in=self))
-        return self.with_cte(cte).annotate(
-            xml=xml.XMLSerialize(TransactionParser().serializer(cte)),
+        assert any(
+            self.query.where.children,
+        ), """TransactionQuerySet.with_xml was called on an unfiltered queryset.
+        This will result in a very slow query that generates XML for all
+        database models. Instead of filtering the queryset after the call, you
+        need to filter the Transaction queryset before calling with_xml()."""
+
+        # The "message id" field is a sequential number unique per envelope
+        # (e.g. each envelope starts a new sequence). That behaviour can be
+        # achieved by using a window function in SQL, but to do that all of the
+        # models need to be generated up front and together (rather than in
+        # separate subqueries). So first a CTE is of all the models is used.
+        #
+        # Note that this means the caller needs to be very careful about
+        # filtering: if the list of transactions is not filtered before the call
+        # to `with_xml()`, this will result in the DB trying to generate XML for
+        # _all_ of the TrackedModels. So transactions need to be filtered first.
+        models = With(
+            TrackedModel.objects.all()
+            .annotate(message_id=Window(expression=RowNumber()))
+            .filter(transaction__in=self),
+            name="models",
+        )
+
+        # Django is too clever with expressions – any annotation is knows about
+        # it tries to substitute in any place it is referenced. This doesn't
+        # work here because it results in the window function being substituted
+        # inside the subquery, which defeats the point. So instead 2 levels of
+        # CTEs need to be used – the first above, and the second to actually
+        # generate the XML.
+        xml_models = With(
+            models.join(TrackedModel, pk=models.col.pk)
+            .annotate(message_id=models.col.message_id)
+            .with_xml(),
+            name="xml_models",
+        )
+
+        return (
+            xml_models.join(self, pk=xml_models.col.transaction_id)
+            .with_cte(models)
+            .with_cte(xml_models)
+            .annotate(
+                xml=xml.XMLSerialize(
+                    TransactionParser().serializer(xml_models.col.xml),
+                ),
+            )
         )
 
     def not_empty(self):

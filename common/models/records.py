@@ -364,7 +364,6 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
                         polymorphic_ctype=types[model],
                         then=Subquery(
                             model.objects.annotate(
-                                message_id=OuterRef("message_id"),
                                 sequence_number=Value(
                                     1,
                                     output_field=SmallIntegerField(),

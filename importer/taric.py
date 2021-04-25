@@ -14,9 +14,11 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models.expressions import Expression
-from django.db.models.expressions import OuterRef
-from django.db.models.expressions import Subquery
-from django.db.models.fields import TextField
+from django.db.models.expressions import F
+from django.db.models.expressions import RawSQL
+from django.db.models.expressions import Value
+from django.db.models.fields import CharField
+from django.db.models.functions import Cast
 from django.db.transaction import atomic
 from lxml import etree
 
@@ -143,7 +145,12 @@ class MessageParser(ElementParser):
     """Parser for TARIC3 `message` element."""
 
     tag = Tag("app.message", prefix=ENVELOPE)
-    attributes = {"id": "message_id"}
+    # "message_id" refers to an annotation added in another CTE, which is
+    # difficult to get Django to understand is present. So instead a literal SQL
+    # value that will be correctly interpreted as the column name is used.
+    attributes = {
+        "id": RawSQL("message_id", []),
+    }
 
     record = TransmissionParser()  # TODO: many?
 
@@ -223,28 +230,11 @@ class TransactionParser(ElementParser):
             return True
 
     def serializer(
-        self, cte, field_name: str = None, *extra_children, for_model=None
+        self, xml_column, field_name: str = None, *extra_children, for_model=None
     ) -> Expression:
         return XMLElement(
             self.tag.for_xml,
-            Subquery(
-                (
-                    # https://stackoverflow.com/questions/55925437/django-subquery-with-aggregate
-                    # TODO: This may not be necessary since Django introduced
-                    # `alias` on querysets?
-                    cte.queryset()
-                    .filter(transaction=OuterRef("pk"))
-                    .values("transaction__pk")
-                    .annotate(xmldoc=XMLAgg("xml"))
-                    .values("xmldoc")
-                    # TODO – need to change this to select a specific record + subrecord code
-                    # at the moment it does one call into the tree for each tracked model and things are resolved at the record parser layer
-                    # instead what we need to do is collect the dependencies at this level and then make one call to MessageParser()
-                    # with a specific type
-                    # ACTUALLY NO, in handlers.py, instead of calling the xml_serializer, we need to call MessageParser and pass it downwards to RecordParser
-                ),
-                output_field=TextField(),
-            ),
+            XMLAgg(xml_column),
             **self.attributes,
         )
 

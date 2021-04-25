@@ -7,18 +7,38 @@ not to include these alongside their JSON counterparts. Is that still true? If
 not, should we be opening a PR to merge the XML functions in?
 """
 
+from typing import List
+
 from django.db.models import Aggregate
 from django.db.models import Func
+from django.db.models.expressions import BaseExpression
 from django.db.models.fields import TextField
 
 
-class XMLAttribute(Func):
+class XMLSyntax(Func):
+    """
+    Base class for XML features defined by XML/SQL standard to use special
+    syntax.
+
+    These are things which are not really functions and cannot be treated like
+    them, but for which :class:`~django.db.models.Func` is the easiest way to
+    generate the SQL we need.
+    """
+
+    def get_group_by_cols(self) -> List[BaseExpression]:
+        cols = []
+        for source in self.get_source_expressions():
+            cols.extend(source.get_group_by_cols())
+        return cols
+
+
+class XMLAttribute(XMLSyntax):
     arity = 1
     template = '%(expressions)s AS "%(name)s"'
 
 
-class XMLAttributes(Func):
-    function = "xmlattributes"
+class XMLAttributes(XMLSyntax):
+    function = "XMLATTRIBUTES"
 
 
 class XMLComment(Func):
