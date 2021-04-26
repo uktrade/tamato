@@ -10,7 +10,12 @@ pytestmark = pytest.mark.django_db
 
 
 @mock.patch("importer.tasks.find_and_run_next_batch_chunks")
-def test_import_chunk(mock_find_and_run: mock.MagicMock, valid_user, chunk):
+def test_import_chunk(
+    mock_find_and_run: mock.MagicMock,
+    valid_user,
+    chunk,
+    object_nursery,
+):
     tasks.import_chunk(chunk.pk, "PUBLISHED", valid_user.username)
 
     chunk.refresh_from_db()
