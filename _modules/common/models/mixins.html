@@ -40,6 +40,8 @@
   <h1>Source code for common.models.mixins</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Mixins for models.&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">NoReverseMatch</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
 
 <span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">TaricDateRangeField</span>
 
@@ -99,6 +101,23 @@
             <span class="k">if</span> <span class="n">rel</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;described_&quot;</span><span class="p">):</span>
                 <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;detail&quot;</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">action</span> <span class="o">!=</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span>
+            <span class="n">described_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_described_object</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">described_object</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">kwargs</span><span class="p">[</span>
+                    <span class="sa">f</span><span class="s2">&quot;described_</span><span class="si">{</span><span class="n">described_object</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_url_pattern_name_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2">-ui-</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">NoReverseMatch</span><span class="p">:</span>
+            <span class="k">return</span>
 </pre></div>
 
             <div class="clearer"></div>
