@@ -224,13 +224,13 @@ def test_ACN5_first_description_must_have_same_start_date(date_ranges):
     date of the additional code."""
 
     description = factories.AdditionalCodeDescriptionFactory.create(
-        described_additional_code__valid_between=date_ranges.no_end,
+        described_additionalcode__valid_between=date_ranges.no_end,
         valid_between=date_ranges.later,
     )
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ACN5(description.transaction).validate(
-            description.described_additional_code,
+            description.described_additionalcode,
         )
 
 
@@ -239,13 +239,13 @@ def test_ACN5_start_dates_cannot_match():
 
     existing = factories.AdditionalCodeDescriptionFactory.create()
     duplicate = factories.AdditionalCodeDescriptionFactory.create(
-        described_additional_code=existing.described_additional_code,
+        described_additionalcode=existing.described_additionalcode,
         valid_between=existing.valid_between,
     )
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ACN5(duplicate.transaction).validate(
-            existing.described_additional_code,
+            existing.described_additionalcode,
         )
 
 
@@ -254,17 +254,17 @@ def test_ACN5_description_start_before_additional_code_end(date_ranges):
     additional code."""
 
     description = factories.AdditionalCodeDescriptionFactory.create(
-        described_additional_code__valid_between=date_ranges.normal,
+        described_additionalcode__valid_between=date_ranges.normal,
         valid_between=date_ranges.later,
     )
     next_description = factories.AdditionalCodeDescriptionFactory.create(
-        described_additional_code=description.described_additional_code,
+        described_additionalcode=description.described_additionalcode,
         valid_between=date_ranges.starts_with_normal,
     )
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ACN5(next_description.transaction).validate(
-            description.described_additional_code,
+            description.described_additionalcode,
         )
 
 

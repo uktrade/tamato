@@ -3,7 +3,7 @@
 
 {% call base_record(message_counter(), record.period_record_code, record.period_subrecord_code, sequence(), transaction_id, record.update_type) %}
     <oub:footnote.description.period>
-        <oub:footnote.description.period.sid>{{ record.description_period_sid }}</oub:footnote.description.period.sid>
+        <oub:footnote.description.period.sid>{{ record.sid }}</oub:footnote.description.period.sid>
         <oub:footnote.type.id>{{ record.described_footnote.footnote_type.footnote_type_id }}</oub:footnote.type.id>
         <oub:footnote.id>{{ record.described_footnote.footnote_id }}</oub:footnote.id>
         <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
@@ -11,7 +11,7 @@
 {% endcall %}
 {% call standard_record(message_counter(), sequence(), transaction_id, record) %}
     <oub:footnote.description>
-        <oub:footnote.description.period.sid>{{ record.description_period_sid }}</oub:footnote.description.period.sid>
+        <oub:footnote.description.period.sid>{{ record.sid }}</oub:footnote.description.period.sid>
         <oub:language.id>EN</oub:language.id>
         <oub:footnote.type.id>{{ record.described_footnote.footnote_type.footnote_type_id }}</oub:footnote.type.id>
         <oub:footnote.id>{{ record.described_footnote.footnote_id }}</oub:footnote.id>

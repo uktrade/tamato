@@ -4,6 +4,7 @@ from certificates import business_rules
 from certificates import validators
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
+from common.models import DescriptionMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from measures import business_rules as measures_business_rules
@@ -84,7 +85,7 @@ class Certificate(TrackedModel, ValidityMixin):
         ).exists()
 
 
-class CertificateDescription(TrackedModel, ValidityMixin):
+class CertificateDescription(DescriptionMixin, ValidityMixin, TrackedModel):
     record_code = "205"
     subrecord_code = "10"
 

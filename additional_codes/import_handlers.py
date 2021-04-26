@@ -32,15 +32,15 @@ class BaseAdditionalCodeDescriptionHandler(BaseHandler):
         {
             "identifying_fields": ("sid", "code", "type__sid"),
             "model": models.AdditionalCode,
-            "name": "described_additional_code",
+            "name": "described_additionalcode",
         },
     )
     serializer_class = serializers.AdditionalCodeDescriptionImporterSerializer
     tag = "BaseAdditionalCodeDescriptionHandler"
 
-    def get_described_additional_code_link(self, model, kwargs):
+    def get_described_additionalcode_link(self, model, kwargs):
         code_type = models.AdditionalCodeType.objects.get_latest_version(
-            sid=kwargs.pop("type__sid")
+            sid=kwargs.pop("type__sid"),
         )
         obj = model.objects.get_latest_version(type=code_type, **kwargs)
         return obj

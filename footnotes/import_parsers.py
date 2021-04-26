@@ -109,7 +109,7 @@ class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
 
     tag = Tag("footnote.description")
 
-    description_period_sid = IntElement(Tag("footnote.description.period.sid"))
+    sid = IntElement(Tag("footnote.description.period.sid"))
     described_footnote__footnote_type__footnote_type_id = TextElement(
         Tag("footnote.type.id"),
     )
@@ -138,7 +138,7 @@ class FootnoteDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
 
     tag = Tag("footnote.description.period")
 
-    description_period_sid = IntElement(Tag("footnote.description.period.sid"))
+    sid = IntElement(Tag("footnote.description.period.sid"))
     described_footnote__footnote_type__footnote_type_id = TextElement(
         Tag("footnote.type.id"),
     )
