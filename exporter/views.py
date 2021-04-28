@@ -1,12 +1,16 @@
 from collections import defaultdict
+from contextlib import redirect_stdout
 from typing import Dict
 from typing import List
 from typing import Type
 
+from django.conf import settings
 from django.http import HttpRequest
+from django.http import HttpResponse
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_GET
+from django_dbml.management.commands import dbml
 
 from common.models import TrackedModel
 from common.serializers import TrackedModelSerializer
@@ -162,3 +166,17 @@ def activity_stream(request):
         data=page,
         status=200,
     )
+
+
+@require_GET
+def dbml_schema(request):
+    response = HttpResponse(
+        content_type="text/dbml; charset=utf-8",
+        status=200,
+    )
+
+    with redirect_stdout(response):
+        apps = [app.split(".")[0] for app in settings.DOMAIN_APPS]
+        dbml.Command().handle(*apps)
+
+    return response

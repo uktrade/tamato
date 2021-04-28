@@ -7,6 +7,7 @@ coverage[toml]==5.4
 crispy-forms-gds==0.2.2
 dj-database-url==0.5.0
 django==3.1.8
+django_dbml==0.5.0
 django-dotenv==1.4.2
 drf-extra-fields==3.0.2
 django-extensions==3.1.1

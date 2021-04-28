@@ -58,6 +58,7 @@ DJANGO_CORE_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "django_dbml",
     "django_extensions",
     "django_filters",
     "polymorphic",
@@ -82,18 +83,21 @@ if os.getenv("ELASTIC_TOKEN"):
         "SERVER_TIMEOUT": os.getenv("ELASTIC_TIMEOUT", "20s"),
     }
 
-TAMATO_APPS = [
-    "common",
+DOMAIN_APPS = [
     "additional_codes.apps.AdditionalCodesConfig",
     "certificates.apps.CertificatesConfig",
     "commodities.apps.CommoditiesConfig",
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
-    "hmrc_sdes",
-    "importer",
     "measures.apps.MeasuresConfig",
     "quotas.apps.QuotasConfig",
     "regulations.apps.RegulationsConfig",
+]
+
+TAMATO_APPS = [
+    "common",
+    "hmrc_sdes",
+    "importer",
     # XXX need to keep this for migrations. delete later.
     "taric",
     "workbaskets",
@@ -102,7 +106,7 @@ TAMATO_APPS = [
     "crispy_forms_gds",
 ]
 
-INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS]
+INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS, *DOMAIN_APPS]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -413,3 +417,7 @@ USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", True))
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = ["gds"]
 CRISPY_TEMPLATE_PACK = "gds"
+
+NOTEBOOK_ARGUMENTS = [
+    f"--notebook-dir='{os.getenv('MIGRATION_DIR', '.')}'",
+]

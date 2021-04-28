@@ -37,3 +37,12 @@ def test_activity_stream(admin_client: Client):
         len(next_data["orderedItems"]) == 1
     )  # Should just be the CertificateType as that is the 51st item.
     assert "next" not in next_data
+
+
+@pytest.mark.django_db
+def test_dbml_schema(admin_client: Client):
+    response = admin_client.get(reverse("dbml-schema"))
+
+    assert response.status_code == 200
+    assert b"Table Measure" in response.content, "Domain models should appear"
+    assert b"Table User" not in response.content, "System models should not appear"

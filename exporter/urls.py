@@ -8,4 +8,9 @@ urlpatterns = [
         views.activity_stream,
         name="activity-stream",
     ),
+    path(
+        "api/schema.dbml",
+        views.dbml_schema,
+        name="dbml-schema",
+    ),
 ]
