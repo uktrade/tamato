@@ -3,6 +3,7 @@ from django.contrib.postgres.aggregates import StringAgg
 from django.urls import reverse_lazy
 
 from certificates import models
+from certificates.validators import COMBINED_CERTIFICATE_AND_TYPE_ID
 from common.filters import ActiveStateMixin
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import TamatoFilter
@@ -11,9 +12,12 @@ from common.filters import type_choices
 
 class CertificateFilter(TamatoFilter, ActiveStateMixin):
     search_fields = (
+        StringAgg("certificate_type__sid", delimiter=" "),
         "sid",
         StringAgg("descriptions__description", delimiter=" "),
-    )  # XXX order is important
+    )
+
+    search_regex = COMBINED_CERTIFICATE_AND_TYPE_ID
 
     certificate_type = LazyMultipleChoiceFilter(
         choices=type_choices(models.CertificateType.objects.latest_approved()),
