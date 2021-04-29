@@ -1,19 +1,21 @@
 from django.urls import include
 from django.urls import path
-from django.urls import re_path
+from django.urls import register_converter
 from rest_framework import routers
 
-from common.urls import DESCRIPTION_ID_PATTERN
 from footnotes import views
-from footnotes.validators import FOOTNOTE_ID_PATTERN
-from footnotes.validators import FOOTNOTE_TYPE_ID_PATTERN
+from footnotes.path_converters import FootnoteIdConverter
+from footnotes.path_converters import FootnoteTypeIdConverter
+
+register_converter(FootnoteIdConverter, "footnote_id")
+register_converter(FootnoteTypeIdConverter, "footnote_type_id")
 
 api_router = routers.DefaultRouter()
 api_router.register(r"footnotes", views.FootnoteViewSet)
 api_router.register(r"footnote_types", views.FootnoteTypeViewSet)
 
-detail = fr"(?P<footnote_type__footnote_type_id>{FOOTNOTE_TYPE_ID_PATTERN})(?P<footnote_id>{FOOTNOTE_ID_PATTERN})"
-description_detail = fr"(?P<described_footnote__footnote_type__footnote_type_id>{FOOTNOTE_TYPE_ID_PATTERN})(?P<described_footnote__footnote_id>{FOOTNOTE_ID_PATTERN})/"
+detail = "<footnote_type_id:footnote_type__footnote_type_id><footnote_id:footnote_id>"
+description_detail = "<footnote_type_id:described_footnote__footnote_type__footnote_type_id><footnote_id:described_footnote__footnote_id>/description/<sid:sid>"
 
 ui_patterns = [
     path(
@@ -21,28 +23,28 @@ ui_patterns = [
         views.FootnoteList.as_view(),
         name="footnote-ui-list",
     ),
-    re_path(
-        fr"{detail}/$",
+    path(
+        f"{detail}/",
         views.FootnoteDetail.as_view(),
         name="footnote-ui-detail",
     ),
-    re_path(
-        fr"{detail}/edit/$",
+    path(
+        f"{detail}/edit/",
         views.FootnoteUpdate.as_view(),
         name="footnote-ui-edit",
     ),
-    re_path(
-        fr"{detail}/confirm-update/$",
+    path(
+        f"{detail}/confirm-update/",
         views.FootnoteConfirmUpdate.as_view(),
         name="footnote-ui-confirm-update",
     ),
-    re_path(
-        fr"{description_detail}/description/{DESCRIPTION_ID_PATTERN}/edit/$",
+    path(
+        f"{description_detail}/edit/",
         views.FootnoteUpdateDescription.as_view(),
         name="footnote_description-ui-edit",
     ),
-    re_path(
-        fr"{description_detail}/description/{DESCRIPTION_ID_PATTERN}/confirm-update/$",
+    path(
+        f"{description_detail}/confirm-update/",
         views.FootnoteDescriptionConfirmUpdate.as_view(),
         name="footnote_description-ui-confirm-update",
     ),

@@ -17,10 +17,10 @@ class ApplicationCode(models.IntegerChoices):
 
 
 FOOTNOTE_TYPE_ID_PATTERN = r"[A-Z0-9]{2}[A-Z0-9 ]?"
-footnote_type_id_validator = RegexValidator(r"^" + FOOTNOTE_TYPE_ID_PATTERN + "$")
+footnote_type_id_validator = RegexValidator(fr"^{FOOTNOTE_TYPE_ID_PATTERN}$")
 
 FOOTNOTE_ID_PATTERN = r"([0-9]{3}|[0-9]{5})"
-footnote_id_validator = RegexValidator(r"^" + FOOTNOTE_ID_PATTERN + "$")
+footnote_id_validator = RegexValidator(fr"^{FOOTNOTE_ID_PATTERN}$")
 
 
 FootnoteIDValidator = None
