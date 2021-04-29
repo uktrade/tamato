@@ -1,6 +1,5 @@
 from django.urls import include
 from django.urls import path
-from django.urls import re_path
 from rest_framework import routers
 
 from quotas import views
@@ -24,8 +23,8 @@ ui_patterns = [
         views.QuotaList.as_view(),
         name="quota-ui-list",
     ),
-    re_path(
-        r"^(?P<sid>\d*)$",
+    path(
+        "<sid:sid>/",
         views.QuotaDetail.as_view(),
         name="quota-ui-detail",
     ),
