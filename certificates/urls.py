@@ -1,17 +1,21 @@
 from django.urls import include
 from django.urls import path
-from django.urls import re_path
+from django.urls import register_converter
 from rest_framework import routers
 
 from certificates import views
-from certificates.validators import CERTIFICATE_SID_REGEX
-from certificates.validators import CERTIFICATE_TYPE_SID_REGEX
+from certificates.path_converters import CertificateSIDConverter
+from certificates.path_converters import CertificateTypeSIDConverter
+
+register_converter(CertificateSIDConverter, "cert_sid")
+register_converter(CertificateTypeSIDConverter, "ctype_sid")
 
 api_router = routers.DefaultRouter()
 api_router.register(r"certificates", views.CertificatesViewSet)
 api_router.register(r"certificate_types", views.CertificateTypeViewSet)
 
-detail = fr"(?P<certificate_type__sid>{CERTIFICATE_TYPE_SID_REGEX[1:-1]})(?P<sid>{CERTIFICATE_SID_REGEX[1:-1]})"
+detail = "<ctype_sid:certificate_type__sid><cert_sid:sid>"
+description_detail = "<ctype_sid:described_certificate__certificate_type__sid><cert_sid:described_certificate__sid>/description/<sid:sid>"
 
 ui_patterns = [
     path(
@@ -19,18 +23,28 @@ ui_patterns = [
         views.CertificatesList.as_view(),
         name="certificate-ui-list",
     ),
-    re_path(
-        fr"{detail}/$",
+    path(
+        f"{detail}/",
         views.CertificateDetail.as_view(),
         name="certificate-ui-detail",
     ),
-    re_path(
-        fr"{detail}/edit/$",
+    path(
+        f"{description_detail}/edit/",
+        views.CertificateUpdateDescription.as_view(),
+        name="certificate_description-ui-edit",
+    ),
+    path(
+        f"{description_detail}/confirm-update/",
+        views.CertificateDescriptionConfirmUpdate.as_view(),
+        name="certificate_description-ui-confirm-update",
+    ),
+    path(
+        f"{detail}/edit/",
         views.CertificateUpdate.as_view(),
         name="certificate-ui-edit",
     ),
-    re_path(
-        fr"{detail}/confirm-update/$",
+    path(
+        f"{detail}/confirm-update/",
         views.CertificateConfirmUpdate.as_view(),
         name="certificate-ui-confirm-update",
     ),

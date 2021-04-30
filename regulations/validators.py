@@ -62,19 +62,12 @@ class CommunityCode(models.IntegerChoices):
 #     split regulations logically although they have been published as one piece of
 #     legislation (for instance, for supporting different validity periods within the
 #     one regulation)
-regulation_id_validator = RegexValidator(
-    r"""(?x)
-    ((?P<prefix>C|R|D|A|I|J|P|U|S|X|N|M|Q|0)
-    (?P<year>\d{2})
-    (?P<number>\d{4})
-    (?P<suffix>[0-9A-Z]))|
-    ((?P<national_prefix>Z|V)
-    (?P<national_year>\d{4})
-    (?P<national_suffix>[A-Z]{3}))|
-    ((?P<dummy_prefix>IYY)
-    (?P<dummy_suffix>\d{5}))
-""",
-)
+TARIC_ID = r"[CRDAIJ]\d{2}\d{4}[0-9A-Z]"
+UK_ID = r"[CPUSXNMQA]\d{2}\d{4}[0-9A-Z]"
+NATIONAL_ID = r"[ZV]\d{4}[A-Z]{3}"
+DUMMY_ID = r"IYY\d{5}"
+REGULATION_ID_REGEX = fr"({TARIC_ID}|{UK_ID}|{NATIONAL_ID}|{DUMMY_ID})"
+regulation_id_validator = RegexValidator(fr"^{REGULATION_ID_REGEX}$")
 
 no_information_text_delimiters = RegexValidator(
     r"^[^|\xA0]*$",

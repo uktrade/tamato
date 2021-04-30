@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 
 from certificates import models
 from common.forms import DateInputFieldFixed
+from common.forms import DescriptionForm
 from common.forms import GovukDateRangeField
 from common.util import TaricDateRange
 
@@ -98,7 +99,7 @@ class CertificateForm(forms.ModelForm):
         fields = ("certificate_type", "sid", "valid_between")
 
 
-class CertificateDescriptionForm(forms.ModelForm):
+class CertificateDescriptionForm(DescriptionForm):
     valid_between = GovukDateRangeField()
 
     class Meta:

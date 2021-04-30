@@ -59,3 +59,12 @@ def test_other_on_membership():
         membership.other(factories.GeoGroupFactory())
     with pytest.raises(ValueError):
         membership.other(factories.CountryFactory())
+
+
+def test_geo_area_in_use(in_use_check_respects_deletes):
+    assert in_use_check_respects_deletes(
+        factories.GeographicalAreaFactory,
+        "in_use",
+        factories.MeasureFactory,
+        "geographical_area",
+    )

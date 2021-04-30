@@ -584,3 +584,41 @@ def reference_nonexistent_record():
             record.delete()
 
     return make_record
+
+
+@pytest.fixture
+def in_use_check_respects_deletes(valid_user):
+    """Provides a test function for creating a pair of records with a dependency
+    and checking that the "in_use" method of the dependee returns False when all
+    dependant records are unapproved or deleted."""
+
+    def check(
+        factory, in_use_check, dependant_factory, relation, through=None, **extra_kwargs
+    ):
+        instance = factory.create()
+        in_use = getattr(instance, in_use_check)
+        assert not in_use(), f"New {instance!r} already in use"
+
+        workbasket = factories.WorkBasketFactory.create(
+            status=WorkflowStatus.AWAITING_APPROVAL,
+        )
+        with workbasket.new_transaction():
+            create_kwargs = {relation: instance}
+            if through:
+                create_kwargs = {relation: getattr(instance, through)}
+            dependant = dependant_factory.create(**create_kwargs, **extra_kwargs)
+        assert not in_use(), f"Unapproved {instance!r} already in use"
+
+        workbasket.approve(valid_user)
+        workbasket.save()
+        assert in_use(), f"Approved {instance!r} not in use"
+
+        dependant.new_draft(
+            workbasket,
+            update_type=UpdateType.DELETE,
+        )
+        assert not in_use(), f"Deleted {instance!r} in use"
+
+        return True
+
+    return check

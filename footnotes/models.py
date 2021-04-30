@@ -1,8 +1,6 @@
 from typing import Type
 
 from django.db import models
-from django.urls import NoReverseMatch
-from django.urls import reverse
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -52,10 +50,13 @@ class FootnoteType(TrackedModel, ValidityMixin):
         return self.footnote_type_id
 
     def in_use(self):
-        # TODO this needs to repect deletes
-        return Footnote.objects.filter(
-            footnote_type__footnote_type_id=self.footnote_type_id,
-        ).exists()
+        return (
+            Footnote.objects.filter(
+                footnote_type__footnote_type_id=self.footnote_type_id,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
 class Footnote(TrackedModel, ValidityMixin):
@@ -95,11 +96,14 @@ class Footnote(TrackedModel, ValidityMixin):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
 
     def _used_in(self, dependent_type: Type[TrackedModel]):
-        # TODO this should respect deletes
-        return dependent_type.objects.filter(
-            associated_footnote__footnote_id=self.footnote_id,
-            associated_footnote__footnote_type__footnote_type_id=self.footnote_type.footnote_type_id,
-        ).exists()
+        return (
+            dependent_type.objects.filter(
+                associated_footnote__footnote_id=self.footnote_id,
+                associated_footnote__footnote_type__footnote_type_id=self.footnote_type.footnote_type_id,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
     def used_in_additional_code(self):
         return self._used_in(self.footnoteassociationadditionalcode_set.model)
@@ -121,7 +125,7 @@ class Footnote(TrackedModel, ValidityMixin):
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
 
 
-class FootnoteDescription(TrackedModel, ValidityMixin, DescriptionMixin):
+class FootnoteDescription(DescriptionMixin, ValidityMixin, TrackedModel):
     """
     The footnote description contains the text associated with a footnote, for a
     given language and for a particular period.
@@ -144,29 +148,9 @@ class FootnoteDescription(TrackedModel, ValidityMixin, DescriptionMixin):
         related_name="descriptions",
     )
     description = models.TextField()
-    description_period_sid = SignedIntSID(db_index=True)
-
-    identifying_fields = ("description_period_sid",)
+    sid = SignedIntSID(db_index=True)
 
     indirect_business_rules = (business_rules.FO4,)
-
-    def get_url(self, action="detail"):
-        kwargs = {}
-        if action != "list":
-            kwargs = self.get_identifying_fields()
-        if action == "edit" or "confirm-update":
-            kwargs = {
-                "described_footnote__footnote_type__footnote_type_id": self.described_footnote.footnote_type.footnote_type_id,
-                "described_footnote__footnote_id": self.described_footnote.footnote_id,
-                "description_period_sid": self.description_period_sid,
-            }
-        try:
-            return reverse(
-                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
-                kwargs=kwargs,
-            )
-        except NoReverseMatch:
-            return
 
     def __str__(self):
         return f"for Footnote {self.described_footnote}"

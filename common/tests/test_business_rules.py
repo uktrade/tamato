@@ -9,8 +9,10 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import NoOverlapping
+from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.tests import factories
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -116,3 +118,26 @@ def test_unique_identifying_fields_with_custom_fields():
     other = factories.TestModel2Factory.create(custom_sid=model.custom_sid)
     with pytest.raises(BusinessRuleViolation):
         UniqueIdentifyingFields(other.transaction).validate(other)
+
+
+class TestInUse(PreventDeleteIfInUse):
+    __test__ = False
+
+
+def test_prevent_delete_if_in_use(approved_transaction):
+    with approved_transaction:
+        model = factories.TestModel3Factory.create()
+
+    with add_business_rules(model, [TestInUse]):
+
+        # skips because not a DELETE
+        BusinessRuleChecker([model], model.transaction).validate()
+
+        workbasket = factories.WorkBasketFactory.create()
+        model = model.new_draft(workbasket, update_type=UpdateType.DELETE)
+        model.in_use = MagicMock(return_value=True)
+
+        with pytest.raises(BusinessRuleViolation):
+            BusinessRuleChecker([model], model.transaction).validate()
+
+    assert model.in_use.called

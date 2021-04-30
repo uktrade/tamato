@@ -4,6 +4,7 @@ from certificates import business_rules
 from certificates import validators
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
+from common.models import DescriptionMixin
 from common.models import TrackedModel
 from common.models import ValidityMixin
 from measures import business_rules as measures_business_rules
@@ -30,8 +31,11 @@ class CertificateType(TrackedModel, ValidityMixin):
     )
 
     def in_use(self):
-        # TODO handle deletes
-        return Certificate.objects.filter(certificate_type__sid=self.sid).exists()
+        return (
+            Certificate.objects.filter(certificate_type__sid=self.sid)
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
     def __str__(self):
         return self.sid
@@ -77,14 +81,17 @@ class Certificate(TrackedModel, ValidityMixin):
         return self.code
 
     def in_use(self):
-        # TODO handle deletes
-        return self.measurecondition_set.model.objects.filter(
-            required_certificate__sid=self.sid,
-            required_certificate__certificate_type=self.certificate_type,
-        ).exists()
+        return (
+            self.measurecondition_set.model.objects.filter(
+                required_certificate__sid=self.sid,
+                required_certificate__certificate_type=self.certificate_type,
+            )
+            .approved_up_to_transaction(self.transaction)
+            .exists()
+        )
 
 
-class CertificateDescription(TrackedModel, ValidityMixin):
+class CertificateDescription(DescriptionMixin, ValidityMixin, TrackedModel):
     record_code = "205"
     subrecord_code = "10"
 

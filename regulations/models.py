@@ -216,7 +216,6 @@ class Regulation(TrackedModel):
         if self.role_type != validators.RoleType.BASE:
             return
 
-        # TODO handle deletes
         return (
             self.measure_set.model.objects.filter(
                 terminating_regulation__regulation_id=self.regulation_id,

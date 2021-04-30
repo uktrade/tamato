@@ -8,20 +8,22 @@ pytestmark = pytest.mark.django_db
 
 def test_additional_code_type_importer_create(imported_fields_match):
     assert imported_fields_match(
-        factories.AdditionalCodeTypeFactory, serializers.AdditionalCodeTypeSerializer
+        factories.AdditionalCodeTypeFactory,
+        serializers.AdditionalCodeTypeSerializer,
     )
 
 
 def test_additional_code_type_importer_update(update_imported_fields_match):
     assert update_imported_fields_match(
-        factories.AdditionalCodeTypeFactory, serializers.AdditionalCodeTypeSerializer
+        factories.AdditionalCodeTypeFactory,
+        serializers.AdditionalCodeTypeSerializer,
     )
 
 
 def test_additional_code_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.AdditionalCodeFactory.build(
-            type=factories.AdditionalCodeTypeFactory.create()
+            type=factories.AdditionalCodeTypeFactory.create(),
         ),
         serializers.AdditionalCodeSerializer,
     )
@@ -38,7 +40,7 @@ def test_additional_code_importer_update(update_imported_fields_match):
 def test_additional_code_description_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.AdditionalCodeDescriptionFactory.build(
-            described_additional_code=factories.AdditionalCodeFactory.create()
+            described_additionalcode=factories.AdditionalCodeFactory.create(),
         ),
         serializers.AdditionalCodeDescriptionSerializer,
     )
@@ -48,5 +50,5 @@ def test_additional_code_description_importer_update(update_imported_fields_matc
     assert update_imported_fields_match(
         factories.AdditionalCodeDescriptionFactory,
         serializers.AdditionalCodeDescriptionSerializer,
-        dependencies={"described_additional_code": factories.AdditionalCodeFactory},
+        dependencies={"described_additionalcode": factories.AdditionalCodeFactory},
     )

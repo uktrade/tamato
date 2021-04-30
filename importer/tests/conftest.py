@@ -14,7 +14,9 @@ from importer.utils import DispatchedObjectType
 
 @pytest.fixture
 def object_nursery() -> TariffObjectNursery:
-    return get_nursery()
+    nursery = get_nursery()
+    yield nursery
+    nursery.cache.clear()
 
 
 @pytest.fixture

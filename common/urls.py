@@ -1,9 +1,11 @@
 from django.urls import include
 from django.urls import path
+from django.urls import register_converter
 
-from . import views
+from common import views
+from common.path_converters import NumericSIDConverter
 
-DESCRIPTION_ID_PATTERN = r"(?P<description_period_sid>[0-9]{1,8})"
+register_converter(NumericSIDConverter, "sid")
 
 urlpatterns = [
     path("", views.index, name="index"),

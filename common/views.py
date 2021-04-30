@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 from typing import Type
 
 import django.contrib.auth.views
@@ -9,6 +10,8 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import OperationalError
 from django.db import connection
+from django.db.models import Model
+from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -176,7 +179,7 @@ class TrackedModelDetailMixin:
     model: Type[TrackedModel]
     required_url_kwargs = None
 
-    def get_object(self, queryset=None):
+    def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
         if queryset is None:
             queryset = self.get_queryset()
 
@@ -190,9 +193,17 @@ class TrackedModelDetailMixin:
         queryset = queryset.filter(**self.kwargs)
 
         try:
-            return queryset.get()
+            obj = queryset.get()
         except queryset.model.DoesNotExist:
             raise Http404(f"No {self.model.__name__} matching the query {self.kwargs}")
+
+        if self.request.method == "POST":
+            obj = obj.new_draft(
+                WorkBasket.current(self.request),
+                save=False,
+            )
+
+        return obj
 
 
 class TrackedModelDetailView(

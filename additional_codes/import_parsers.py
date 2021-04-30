@@ -58,7 +58,7 @@ class AdditionalCodeDescriptionPeriodParser(ValidityMixin, Writable, ElementPars
 
     tag = Tag("additional.code.description.period")
 
-    description_period_sid = TextElement(Tag("additional.code.description.period.sid"))
+    sid = TextElement(Tag("additional.code.description.period.sid"))
     additional_code_sid = TextElement(Tag("additional.code.sid"))
     additional_code_type_id = TextElement(Tag("additional.code.type.id"))
     additional_code = TextElement(Tag("additional.code"))
@@ -88,10 +88,10 @@ class AdditionalCodeDescriptionParser(Writable, ElementParser):
 
     tag = Tag("additional.code.description")
 
-    description_period_sid = TextElement(Tag("additional.code.description.period.sid"))
-    described_additional_code__sid = TextElement(Tag("additional.code.sid"))
-    described_additional_code__type__sid = TextElement(Tag("additional.code.type.id"))
-    described_additional_code__code = TextElement(Tag("additional.code"))
+    sid = TextElement(Tag("additional.code.description.period.sid"))
+    described_additionalcode__sid = TextElement(Tag("additional.code.sid"))
+    described_additionalcode__type__sid = TextElement(Tag("additional.code.type.id"))
+    described_additionalcode__code = TextElement(Tag("additional.code"))
     description = TextElement(Tag("description"))
 
 
