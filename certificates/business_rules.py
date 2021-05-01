@@ -1,11 +1,9 @@
 """Business rules for certificates."""
-from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import ValidityPeriodContains
-from common.models import TrackedModel
 
 
 class CET1(UniqueIdentifyingFields):
@@ -53,41 +51,3 @@ class CE7(ValidityPeriodContained):
     of the certificate."""
 
     container_field_name = "certificate_type"
-
-
-class NoOverlappingDescriptions(BusinessRule):
-    """Validity periods for descriptions with the same SID cannot overlap."""
-
-    def validate(self, description):
-        if (
-            type(description)
-            .objects.filter(
-                described_certificate__sid=description.described_certificate.sid,
-                sid=description.sid,
-                valid_between__overlap=description.valid_between,
-            )
-            .approved_up_to_transaction(description.transaction)
-            .exclude(id=description.id)
-            .exists()
-        ):
-            raise self.violation(description)
-
-
-class ContiguousDescriptions(BusinessRule):
-    """Certificate description validity period must be adjacent to the previous
-    description's validity period."""
-
-    def validate(self, description: TrackedModel):
-        # XXX Predecessor is previous version of the same description. Shouldn't this
-        # check that all current descriptions are adjacent to each other?
-
-        if (
-            type(description)
-            .objects.filter(
-                version_group=description.version_group,
-                valid_between__startswith=description.valid_between.lower,
-            )
-            .exclude(pk=description.pk)
-            .exists()
-        ):
-            raise self.violation(description)

@@ -3,6 +3,7 @@ from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
+from importer.parsers import ValidityStartMixin
 from importer.parsers import Writable
 from importer.taric import RecordParser
 
@@ -108,7 +109,7 @@ class CertificateDescriptionParser(Writable, ElementParser):
 
 
 @RecordParser.register_child("certificate_description_period")
-class CertificateDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
+class CertificateDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParser):
     """
     Example XML:
 

@@ -522,7 +522,7 @@ class TrackedModel(PolymorphicModel):
         }
 
         query = descriptions_model.objects.filter(**filter_kwargs).order_by(
-            "valid_between",
+            *descriptions_model._meta.ordering
         )
 
         if transaction:

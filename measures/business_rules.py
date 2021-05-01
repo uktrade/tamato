@@ -356,11 +356,15 @@ class ME32(BusinessRule):
 
         # for each goods nomenclature version, get all indents
         for good in goods:
-            indents = Indent.objects.approved_up_to_transaction(
-                measure.transaction,
-            ).filter(
-                valid_between__overlap=measure.effective_valid_between,
-                indented_goods_nomenclature=good,
+            indents = (
+                Indent.objects.with_end_date()
+                .approved_up_to_transaction(
+                    measure.transaction,
+                )
+                .filter(
+                    valid_between__overlap=measure.effective_valid_between,
+                    indented_goods_nomenclature=good,
+                )
             )
 
             nodes = Node.objects.filter(

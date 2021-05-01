@@ -3,6 +3,7 @@ from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
+from importer.parsers import ValidityStartMixin
 from importer.parsers import Writable
 from importer.taric import RecordParser
 
@@ -37,7 +38,11 @@ class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
 
 
 @RecordParser.register_child("additional_code_description_period")
-class AdditionalCodeDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
+class AdditionalCodeDescriptionPeriodParser(
+    ValidityStartMixin,
+    Writable,
+    ElementParser,
+):
     """
     Example XML:
 
@@ -62,7 +67,6 @@ class AdditionalCodeDescriptionPeriodParser(ValidityMixin, Writable, ElementPars
     additional_code_sid = TextElement(Tag("additional.code.sid"))
     additional_code_type_id = TextElement(Tag("additional.code.type.id"))
     additional_code = TextElement(Tag("additional.code"))
-    valid_between_lower = TextElement(Tag("validity.start.date"))
 
 
 @RecordParser.register_child("additional_code_description")

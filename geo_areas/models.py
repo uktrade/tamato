@@ -5,7 +5,8 @@ from django.db.models import Q
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.description import DescriptionMixin
+from common.models.mixins.validity import ValidityMixin
 from geo_areas import business_rules
 from geo_areas import validators
 from measures import business_rules as measures_business_rules
@@ -172,7 +173,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         )
 
 
-class GeographicalAreaDescription(TrackedModel, ValidityMixin):
+class GeographicalAreaDescription(TrackedModel, DescriptionMixin):
     record_code = "250"
     subrecord_code = "10"
 
@@ -187,8 +188,5 @@ class GeographicalAreaDescription(TrackedModel, ValidityMixin):
     description = ShortDescription()
     sid = SignedIntSID(db_index=True)
 
-    def __str__(self):
-        return f'description ({self.sid}) - "{self.description}" for {self.area}'
-
     class Meta:
-        ordering = ("valid_between",)
+        ordering = ("validity_start",)

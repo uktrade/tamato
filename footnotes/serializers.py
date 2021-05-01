@@ -3,6 +3,7 @@ from rest_framework import serializers
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.serializers import ValidityStartSerializerMixin
 from footnotes import models
 from footnotes import validators
 
@@ -34,20 +35,19 @@ class FootnoteTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixi
 
 class SimpleFootnoteDescriptionSerializer(
     TrackedModelSerializerMixin,
-    ValiditySerializerMixin,
+    ValidityStartSerializerMixin,
 ):
     class Meta:
         model = models.FootnoteDescription
         fields = [
             "id",
             "description",
-            "valid_between",
+            "validity_start",
             "update_type",
             "record_code",
             "subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
         ]
 
 
@@ -76,7 +76,7 @@ class FootnoteSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
 @TrackedModelSerializer.register_polymorphic_model
 class FootnoteDescriptionSerializer(
     TrackedModelSerializerMixin,
-    ValiditySerializerMixin,
+    ValidityStartSerializerMixin,
 ):
     described_footnote = FootnoteSerializer(read_only=True)
     sid = serializers.IntegerField()
@@ -87,7 +87,7 @@ class FootnoteDescriptionSerializer(
             "sid",
             "described_footnote",
             "description",
-            "valid_between",
+            "validity_start",
             "update_type",
             "record_code",
             "subrecord_code",
@@ -95,5 +95,4 @@ class FootnoteDescriptionSerializer(
             "period_subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
         ]

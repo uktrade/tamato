@@ -7,7 +7,7 @@ from polymorphic.managers import PolymorphicManager
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.validity import ValidityMixin
 from quotas import business_rules
 from quotas import querysets
 from quotas import validators

@@ -5,6 +5,7 @@ from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
+from importer.parsers import ValidityStartMixin
 from importer.parsers import Writable
 from importer.taric import RecordParser
 
@@ -118,7 +119,7 @@ class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
 
 
 @RecordParser.register_child("footnote_description_period")
-class FootnoteDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
+class FootnoteDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParser):
     """
     Example XML:
 

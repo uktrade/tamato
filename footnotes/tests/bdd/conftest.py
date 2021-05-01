@@ -15,11 +15,11 @@ def footnote_NC000(date_ranges, approved_transaction):
         valid_between=date_ranges.normal,
         transaction=approved_transaction,
         description__description="This is NC000",
-        description__valid_between=date_ranges.starts_with_normal,
+        description__validity_start=date_ranges.starts_with_normal.lower,
     )
     factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,
-        valid_between=date_ranges.ends_with_normal,
+        validity_start=date_ranges.ends_with_normal.lower,
         transaction=approved_transaction,
     )
     return footnote

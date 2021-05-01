@@ -4,9 +4,9 @@ from django.db import models
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
-from common.models import DescriptionMixin
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.description import DescriptionMixin
+from common.models.mixins.validity import ValidityMixin
 from footnotes import business_rules
 from footnotes import validators
 from measures import business_rules as measures_business_rules
@@ -125,7 +125,7 @@ class Footnote(TrackedModel, ValidityMixin):
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
 
 
-class FootnoteDescription(DescriptionMixin, ValidityMixin, TrackedModel):
+class FootnoteDescription(DescriptionMixin, TrackedModel):
     """
     The footnote description contains the text associated with a footnote, for a
     given language and for a particular period.
@@ -152,8 +152,5 @@ class FootnoteDescription(DescriptionMixin, ValidityMixin, TrackedModel):
 
     indirect_business_rules = (business_rules.FO4,)
 
-    def __str__(self):
-        return f"for Footnote {self.described_footnote}"
-
     class Meta:
-        ordering = ("valid_between",)
+        ordering = ("validity_start",)

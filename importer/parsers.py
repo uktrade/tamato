@@ -254,6 +254,17 @@ class ValidityMixin:
             self.data["valid_between"] = valid_between
 
 
+class ValidityStartMixin:
+    """Parse validity start date."""
+
+    _additional_components = {
+        TextElement(Tag("validity.start.date")): "validity_start",
+    }
+
+    def clean(self):
+        super().clean()
+
+
 class Writable:
     """
     A parser which implements the Writable interface can write its changes to

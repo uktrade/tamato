@@ -195,9 +195,12 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         item_id = data["indented_goods_nomenclature"].item_id
 
         indent = super().save(data)
+        indent = models.GoodsNomenclatureIndent.objects.with_end_date().get(
+            pk=indent.pk,
+        )
         node_data = {
             "indent": indent,
-            "valid_between": data["valid_between"],
+            "valid_between": indent.valid_between,
             "creating_transaction_id": data["transaction_id"],
         }
 
@@ -233,9 +236,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         ):
             parent_depth += 1
 
-        start_date = data["valid_between"].lower
+        start_date = data["validity_start"]
         end_date = maybe_min(
-            data["valid_between"].upper,
+            indent.validity_end,
             data["indented_goods_nomenclature"].valid_between.upper,
         )
 
@@ -255,7 +258,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                         indent__indented_goods_nomenclature__item_id__lte=item_id,
                         indent__indented_goods_nomenclature__item_id__startswith=chapter_heading,
                         indent__indented_goods_nomenclature__valid_between__contains=start_date,
-                        indent__valid_between__contains=start_date,
+                        indent__validity_start__lte=start_date,
                         valid_between__contains=start_date,
                         depth=parent_depth,
                     )
@@ -270,7 +273,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             indent_start = start_date
             indent_end = maybe_min(
                 next_parent.valid_between.upper,
-                next_parent.indent.valid_between.upper,
+                models.GoodsNomenclatureIndent.objects.with_end_date()
+                .get(pk=next_parent.indent.pk)
+                .validity_end,
                 next_parent.indent.indented_goods_nomenclature.valid_between.upper,
                 end_date,
             )
@@ -396,7 +401,8 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         # This is because they are one level deeper than the new indent
         # and have item IDs greater than the new indent.
         possible_children = (
-            models.GoodsNomenclatureIndent.objects.approved_up_to_transaction(
+            models.GoodsNomenclatureIndent.objects.with_end_date()
+            .approved_up_to_transaction(
                 obj.transaction,
             )
             .filter(
@@ -414,9 +420,13 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             # A child can only be moved to the new node if it has parents which can be replaced.
             # A parent can only be replaced if it is the current parent of this possible child, and
             # it's item_id is considered lesser than the new indents item_id.
-            replaceable_parents = child.get_parent_indents().filter(
-                indented_goods_nomenclature__item_id__lt=obj.indented_goods_nomenclature.item_id,
-                valid_between__overlap=obj.valid_between,
+            replaceable_parents = (
+                child.get_parent_indents()
+                .with_end_date()
+                .filter(
+                    indented_goods_nomenclature__item_id__lt=obj.indented_goods_nomenclature.item_id,
+                    valid_between__overlap=obj.valid_between,
+                )
             )
 
             if not replaceable_parents.exists():
@@ -452,6 +462,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         will need to have its children copied across to the new updated node.
         """
 
+        obj = models.GoodsNomenclatureIndent.objects.with_end_date().get(pk=obj.pk)
         self.find_and_replace_inappropriate_parent_nodes(obj)
 
         if self.data["update_type"] == UpdateType.CREATE:

@@ -5,6 +5,7 @@ from additional_codes import validators
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.serializers import ValidityStartSerializerMixin
 
 
 @TrackedModelSerializer.register_polymorphic_model
@@ -36,7 +37,7 @@ class AdditionalCodeTypeSerializer(
 
 
 class SimpleAdditionalCodeDescriptionSerializer(
-    ValiditySerializerMixin,
+    ValidityStartSerializerMixin,
     TrackedModelSerializerMixin,
 ):
     class Meta:
@@ -44,7 +45,8 @@ class SimpleAdditionalCodeDescriptionSerializer(
         fields = [
             "id",
             "description",
-            "valid_between",
+            "start_date",
+            "validity_start",
         ]
 
 
@@ -93,7 +95,7 @@ class AdditionalCodeImporterSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class AdditionalCodeDescriptionSerializer(
-    ValiditySerializerMixin,
+    ValidityStartSerializerMixin,
     TrackedModelSerializerMixin,
 ):
     described_additionalcode = AdditionalCodeSerializer(read_only=True)
@@ -103,8 +105,8 @@ class AdditionalCodeDescriptionSerializer(
         fields = [
             "described_additionalcode",
             "description",
+            "validity_start",
             "sid",
-            "valid_between",
             "update_type",
             "record_code",
             "subrecord_code",
@@ -112,7 +114,6 @@ class AdditionalCodeDescriptionSerializer(
             "period_subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
         ]
 
 
@@ -129,8 +130,7 @@ class AdditionalCodeDescriptionImporterSerializer(
             "described_additionalcode",
             "description",
             "sid",
-            "valid_between",
+            "validity_start",
             "update_type",
             "start_date",
-            "end_date",
         ]

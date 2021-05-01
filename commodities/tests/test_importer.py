@@ -24,7 +24,7 @@ def compare_indent(indent, db_indent, indent_level, count, depth):
         db_indent.indented_goods_nomenclature.sid
         == indent.indented_goods_nomenclature.sid
     )
-    assert db_indent.valid_between.lower == indent.valid_between.lower
+    assert db_indent.validity_start == indent.validity_start
 
 
 def compare_updated_indent(
@@ -62,7 +62,7 @@ def make_and_get_indent(indent, valid_user, depth):
         "taric_template": "taric/goods_nomenclature_indent.xml",
         "update_type": indent.update_type,
         "sid": indent.sid,
-        "start_date": f"{indent.valid_between.lower:%Y-%m-%d}",
+        "start_date": f"{indent.validity_start:%Y-%m-%d}",
         "indent": depth,
     }
 
@@ -260,14 +260,14 @@ def test_goods_nomenclature_indent_importer_update(
         indented_goods_nomenclature=factories.SimpleGoodsNomenclatureFactory.create(
             item_id="2100000000",
         ),
-        valid_between=date_ranges.normal,
+        validity_start=date_ranges.normal.lower,
     )
 
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=indent.sid,
         indented_goods_nomenclature=indent.indented_goods_nomenclature,
         update_type=update_type,
-        valid_between=date_ranges.adjacent_no_end,
+        validity_start=date_ranges.adjacent_no_end.lower,
     )
 
     db_indent = make_and_get_indent(updated_indent, valid_user, depth=0)
@@ -309,13 +309,13 @@ def test_goods_nomenclature_indent_importer_update_with_parent_low_indent(
             item_id="1201000000",
         ),
         node__parent=parent_indent,
-        valid_between=date_ranges.normal,
+        validity_start=date_ranges.normal.lower,
     )
 
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=indent.sid,
         indented_goods_nomenclature=indent.indented_goods_nomenclature,
-        valid_between=date_ranges.adjacent_no_end,
+        validity_start=date_ranges.adjacent_no_end.lower,
         update_type=update_type,
     )
 
@@ -375,13 +375,13 @@ def test_goods_nomenclature_indent_importer_update_with_parent_high_indent(
         indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
             item_id="1212121215",
         ),
-        valid_between=date_ranges.normal,
+        validity_start=date_ranges.normal.lower,
     )
 
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=indent.sid,
         indented_goods_nomenclature=indent.indented_goods_nomenclature,
-        valid_between=date_ranges.adjacent_no_end,
+        validity_start=date_ranges.adjacent_no_end.lower,
         update_type=update_type,
     )
 
@@ -406,7 +406,7 @@ def test_goods_nomenclature_indent_importer_create_multiple_parents(
         date_ranges.adjacent_later.upper,
     )
     parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
-        valid_between=indent_validity,
+        validity_start=indent_validity.lower,
         indented_goods_nomenclature__valid_between=indent_validity,
         indented_goods_nomenclature__item_id="1300000000",
     )
@@ -431,7 +431,7 @@ def test_goods_nomenclature_indent_importer_create_multiple_parents(
             item_id="1301000000",
             valid_between=indent_validity,
         ),
-        valid_between=indent_validity,
+        validity_start=indent_validity.lower,
     )
 
     db_indent = make_and_get_indent(indent, valid_user, depth=0)
@@ -444,7 +444,7 @@ def test_goods_nomenclature_indent_importer_create_multiple_parents(
         db_indent.indented_goods_nomenclature.sid
         == indent.indented_goods_nomenclature.sid
     )
-    assert db_indent.valid_between.lower == indent.valid_between.lower
+    assert db_indent.validity_start == indent.validity_start
 
 
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
@@ -454,7 +454,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
     update_type,
 ):
     parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
-        valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 12, 1)),
+        validity_start=date(2020, 1, 1),
         indented_goods_nomenclature__valid_between=TaricDateRange(
             date(2020, 1, 1),
             date(2020, 12, 1),
@@ -479,7 +479,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
             item_id="1301000000",
             valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 12, 1)),
         ),
-        valid_between=TaricDateRange(date(2020, 1, 1), date(2020, 6, 1)),
+        validity_start=date(2020, 1, 1),
     )
 
     first_indent = make_and_get_indent(indent, valid_user, depth=0)
@@ -490,7 +490,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=first_indent.sid,
         indented_goods_nomenclature=indent.indented_goods_nomenclature,
-        valid_between=TaricDateRange(date(2020, 6, 2), date(2020, 12, 1)),
+        validity_start=date(2020, 6, 2),
         update_type=update_type,
     )
     second_indent = make_and_get_indent(updated_indent, valid_user, depth=0)
@@ -504,7 +504,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
         second_indent.indented_goods_nomenclature.sid
         == indent.indented_goods_nomenclature.sid
     )
-    assert second_indent.valid_between.lower == updated_indent.valid_between.lower
+    assert second_indent.validity_start == updated_indent.validity_start
 
 
 @pytest.mark.parametrize("item_id,suffix", [("1402000000", "80"), ("1401010000", "20")])
@@ -628,14 +628,14 @@ def test_goods_nomenclature_indent_importer_update_with_triple_00_indent(
             item_id=item_id,
             suffix=suffix,
         ),
-        valid_between=date_ranges.normal,
+        validity_start=date_ranges.normal.lower,
     )
 
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=indent.sid,
         update_type=update_type,
         indented_goods_nomenclature=indent.indented_goods_nomenclature,
-        valid_between=date_ranges.adjacent_no_end,
+        validity_start=date_ranges.adjacent_no_end.lower,
     )
 
     db_indent = make_and_get_indent(updated_indent, valid_user, depth=0)
@@ -656,7 +656,7 @@ def make_inappropriate_family(date_ranges, valid_user):
         grand_parent_indent = factories.GoodsNomenclatureIndentFactory.create(
             indented_goods_nomenclature__item_id=f"{chapter}00000000",
             indented_goods_nomenclature__valid_between=date_ranges.no_end,
-            valid_between=date_ranges.no_end,
+            validity_start=date_ranges.no_end.lower,
             indent="0",
             node__valid_between=date_ranges.no_end,
         )
@@ -665,14 +665,14 @@ def make_inappropriate_family(date_ranges, valid_user):
             node__parent=grand_parent_indent.nodes.first(),
             indented_goods_nomenclature__item_id=f"{chapter}01000000",
             indented_goods_nomenclature__valid_between=date_ranges.no_end,
-            valid_between=date_ranges.no_end,
+            validity_start=date_ranges.no_end.lower,
             indent="0",
             node__valid_between=date_ranges.no_end,
         )
 
         child_indent = factories.GoodsNomenclatureIndentFactory.create(
             node__parent=bad_parent.nodes.first(),
-            valid_between=date_ranges.no_end,
+            validity_start=date_ranges.no_end.lower,
             indent="1",
             indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
                 item_id=f"{chapter}02020000",
@@ -702,7 +702,7 @@ def test_goods_nomenclature_indent_importer_with_branch_shift(
 
     grand_child_indent = factories.GoodsNomenclatureIndentFactory.create(
         node__parent=child_indent.nodes.first(),
-        valid_between=date_ranges.no_end,
+        validity_start=date_ranges.no_end.lower,
         indent="2",
         indented_goods_nomenclature=factories.GoodsNomenclatureFactory.create(
             item_id="4502020000",
@@ -728,7 +728,7 @@ def test_goods_nomenclature_indent_importer_with_branch_shift(
                 item_id="4502000000",
                 valid_between=date_ranges.no_end,
             ),
-            valid_between=date_ranges.no_end,
+            validity_start=date_ranges.no_end.lower,
             update_type=UpdateType.CREATE,
         ),
         valid_user,
@@ -773,7 +773,7 @@ def test_goods_nomenclature_indent_importer_with_overlapping_branch_shift(
                 item_id="4602000000",
                 valid_between=date_ranges.adjacent_no_end,
             ),
-            valid_between=date_ranges.adjacent_no_end,
+            validity_start=date_ranges.adjacent_no_end.lower,
             update_type=UpdateType.CREATE,
         ),
         valid_user,
@@ -803,13 +803,13 @@ def test_goods_nomenclature_indent_importer_update_with_children(
 ):
     parent_indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__item_id="4400000000",
-        valid_between=date_ranges.no_end,
+        validity_start=date_ranges.no_end.lower,
     )
 
     indent = factories.GoodsNomenclatureIndentFactory.create(
         node__parent=parent_indent.nodes.first(),
         indented_goods_nomenclature__item_id="4401000000",
-        valid_between=date_ranges.no_end,
+        validity_start=date_ranges.no_end.lower,
     )
 
     indent_node = indent.nodes.first()
@@ -818,7 +818,7 @@ def test_goods_nomenclature_indent_importer_update_with_children(
         factories.GoodsNomenclatureIndentFactory.create(
             indented_goods_nomenclature__item_id=f"44010{idx}0000",
             node__parent=indent_node,
-            valid_between=date_ranges.no_end,
+            validity_start=date_ranges.no_end.lower,
         ).nodes.first()
         for idx in range(1, 6)
     }
@@ -826,7 +826,7 @@ def test_goods_nomenclature_indent_importer_update_with_children(
     updated_indent = factories.GoodsNomenclatureIndentFactory.build(
         sid=indent.sid,
         indented_goods_nomenclature=indent.indented_goods_nomenclature,
-        valid_between=date_ranges.adjacent_no_end,
+        validity_start=date_ranges.adjacent_no_end.lower,
         update_type=update_type,
     )
 
@@ -839,11 +839,11 @@ def test_goods_nomenclature_indent_importer_update_with_children(
     assert children.count() == 5
 
     assert any(
-        child.valid_between.lower == indent.valid_between.lower
+        child.valid_between.lower == indent.validity_start
         for child in child_indent_nodes
     )
     assert not any(
-        child.valid_between.lower == indent.valid_between.lower for child in children
+        child.valid_between.lower == indent.validity_start for child in children
     )
     assert {child.indent for child in children} == {
         child.indent for child in child_indent_nodes

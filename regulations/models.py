@@ -5,7 +5,7 @@ from django.db import models
 from common.fields import ShortDescription
 from common.fields import TaricDateRangeField
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.validity import ValidityMixin
 from geo_areas.validators import area_id_validator
 from measures.validators import measure_type_id_validator
 from regulations import business_rules

@@ -156,7 +156,7 @@ def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
 
     indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+        validity_start=date_ranges.overlap_normal.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -171,7 +171,7 @@ def test_NIG11_no_overlapping_indents():
     existing = factories.GoodsNomenclatureIndentFactory.create()
     duplicate = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=existing.indented_goods_nomenclature,
-        valid_between=existing.valid_between,
+        validity_start=existing.validity_start,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.NIG11(duplicate.transaction).validate(
@@ -185,7 +185,7 @@ def test_NIG11_start_date_less_than_end_date(date_ranges):
 
     indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=date_ranges.normal,
-        valid_between=date_ranges.later,
+        validity_start=date_ranges.later.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -206,7 +206,7 @@ def test_NIG12_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the nomenclature."""
     good = factories.GoodsNomenclatureFactory.create(
-        description__valid_between=date_ranges.later,
+        description__validity_start=date_ranges.later.lower,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.NIG12(good.transaction).validate(good)
@@ -218,7 +218,7 @@ def test_NIG12_start_dates_cannot_match():
     goods_nomenclature = factories.GoodsNomenclatureFactory.create()
     duplicate = factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=goods_nomenclature,
-        valid_between=goods_nomenclature.valid_between,
+        validity_start=goods_nomenclature.valid_between.lower,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.NIG12(duplicate.transaction).validate(goods_nomenclature)
@@ -233,12 +233,12 @@ def test_NIG12_description_start_before_nomenclature_end(
 
     goods_nomenclature = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.normal,
-        description__valid_between=date_ranges.starts_with_normal,
+        description__validity_start=date_ranges.starts_with_normal.lower,
         transaction=unapproved_transaction,
     )
     early_description = factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=goods_nomenclature,
-        valid_between=date_ranges.later,
+        validity_start=date_ranges.later.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):

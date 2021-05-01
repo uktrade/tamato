@@ -43,7 +43,7 @@ def geo_area_description_data(geo_area_detail, geographical_area_1001):
 
     for description in descriptions:
         assert description.description in content
-        assert f"{description.valid_between.lower:%d %b %Y}" in content
+        assert f"{description.validity_start:%d %b %Y}" in content
 
 
 def compare_members_to_html(members, html, is_group):

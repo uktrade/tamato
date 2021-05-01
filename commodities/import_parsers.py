@@ -4,6 +4,7 @@ from importer.namespaces import Tag
 from importer.parsers import ElementParser
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
+from importer.parsers import ValidityStartMixin
 from importer.parsers import Writable
 from importer.taric import RecordParser
 
@@ -145,7 +146,11 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
 
 
 @RecordParser.register_child("goods_nomenclature_description_period")
-class GoodsNomenclatureDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
+class GoodsNomenclatureDescriptionPeriodParser(
+    ValidityStartMixin,
+    Writable,
+    ElementParser,
+):
     """
     Example XML:
 
@@ -177,7 +182,7 @@ class GoodsNomenclatureDescriptionPeriodParser(ValidityMixin, Writable, ElementP
 
 
 @RecordParser.register_child("goods_nomenclature_indent")
-class GoodsNomenclatureIndentsParser(ValidityMixin, Writable, ElementParser):
+class GoodsNomenclatureIndentsParser(ValidityStartMixin, Writable, ElementParser):
     """
     Example XML:
 

@@ -3,7 +3,7 @@ database outside of a test environment."""
 from django.db import models
 
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.validity import ValidityMixin
 
 
 class TestModel1(TrackedModel, ValidityMixin):

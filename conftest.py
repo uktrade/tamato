@@ -26,6 +26,8 @@ from pytest_bdd import parsers
 from rest_framework.test import APIClient
 
 from common.models import TrackedModel
+from common.models.mixins.validity import ValidityMixin
+from common.models.mixins.validity import ValidityStartMixin
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
@@ -414,13 +416,25 @@ def update_imported_fields_match(
                     kwargs[name] = dependency_model
 
             if validity:
-                kwargs["valid_between"] = validity[0]
+                if issubclass(model, (ValidityMixin, factories.ValidityFactoryMixin)):
+                    kwargs["valid_between"] = validity[0]
+                elif issubclass(
+                    model,
+                    (ValidityStartMixin, factories.ValidityStartFactoryMixin),
+                ):
+                    kwargs["validity_start"] = validity[0].lower
 
             parent_model = model.create(**kwargs)
 
             kwargs.update(parent_model.get_identifying_fields())
             if validity:
-                kwargs["valid_between"] = validity[1]
+                if issubclass(model, (ValidityMixin, factories.ValidityFactoryMixin)):
+                    kwargs["valid_between"] = validity[1]
+                elif issubclass(
+                    model,
+                    (ValidityStartMixin, factories.ValidityStartFactoryMixin),
+                ):
+                    kwargs["validity_start"] = validity[1].lower
 
             model = model.build(
                 update_type=update_type,

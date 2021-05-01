@@ -3,7 +3,6 @@ from datetime import date
 from datetime import timedelta
 
 from django.db.models import Count
-from django.db.models.functions import Lower
 
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
@@ -159,7 +158,7 @@ class NIG11(BusinessRule):
             )
 
         if not indents.filter(
-            valid_between__startswith=good.valid_between.lower,
+            validity_start=good.valid_between.lower,
         ).exists():
             raise self.violation(
                 model=good,
@@ -173,12 +172,9 @@ class NIG11(BusinessRule):
             GoodsNomenclatureIndent.objects.filter(
                 pk__in=indents.values_list("pk", flat=True),
             )
+            .values("validity_start")
             .annotate(
-                start_date=Lower("valid_between"),
-            )
-            .values("start_date")
-            .annotate(
-                start_date_matches=Count("start_date"),
+                start_date_matches=Count("validity_start"),
             )
             .filter(
                 start_date_matches__gt=1,
@@ -190,7 +186,7 @@ class NIG11(BusinessRule):
                 message="No two associated indentations may have the same start date",
             )
 
-        if indents.filter(valid_between__fully_gt=good.valid_between).exists():
+        if indents.filter(validity_start__gt=good.valid_between.upper).exists():
             raise self.violation(
                 model=good,
                 message=(

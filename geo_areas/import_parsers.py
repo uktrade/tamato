@@ -5,6 +5,7 @@ from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
+from importer.parsers import ValidityStartMixin
 from importer.parsers import Writable
 from importer.taric import RecordParser
 
@@ -69,7 +70,11 @@ class GeographicalAreaDescriptionParser(Writable, ElementParser):
 
 
 @RecordParser.register_child("geographical_area_description_period")
-class GeographicalAreaDescriptionPeriodParser(ValidityMixin, Writable, ElementParser):
+class GeographicalAreaDescriptionPeriodParser(
+    ValidityStartMixin,
+    Writable,
+    ElementParser,
+):
     """
     Example XML:
 

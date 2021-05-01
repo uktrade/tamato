@@ -62,7 +62,7 @@ def test_GA3_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the geographical_area."""
     area = factories.GeographicalAreaFactory.create(
-        description__valid_between=date_ranges.later,
+        description__validity_start=date_ranges.later.lower,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.GA3(area.transaction).validate(area)
@@ -74,7 +74,7 @@ def test_GA3_start_dates_cannot_match():
     existing = factories.GeographicalAreaDescriptionFactory.create()
     duplicate = factories.GeographicalAreaDescriptionFactory.create(
         area=existing.area,
-        valid_between=existing.valid_between,
+        validity_start=existing.validity_start,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.GA3(duplicate.transaction).validate(existing.area)
@@ -86,7 +86,7 @@ def test_GA3_description_start_before_geographical_area_end(date_ranges):
 
     geographical_area = factories.GeographicalAreaFactory.create(
         valid_between=date_ranges.normal,
-        description__valid_between=date_ranges.later,
+        description__validity_start=date_ranges.later.lower,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.GA3(geographical_area.transaction).validate(geographical_area)
