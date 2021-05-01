@@ -4,11 +4,13 @@ from commodities import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.serializers import ValidityStartSerializerMixin
 from footnotes.serializers import FootnoteSerializer
 
 
 class SimpleGoodsNomenclatureSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     class Meta:
         model = models.GoodsNomenclature
@@ -46,7 +48,8 @@ class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerialize
 
 @TrackedModelSerializer.register_polymorphic_model
 class GoodsNomenclatureIndentSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValidityStartSerializerMixin,
 ):
     indented_goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
     sid = serializers.IntegerField()
@@ -62,14 +65,14 @@ class GoodsNomenclatureIndentSerializer(
             "subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
-            "valid_between",
+            "validity_start",
         ]
 
 
 @TrackedModelSerializer.register_polymorphic_model
 class GoodsNomenclatureDescriptionSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValidityStartSerializerMixin,
 ):
     described_goods_nomenclature = GoodsNomenclatureSerializer(read_only=True)
     sid = serializers.IntegerField()
@@ -87,8 +90,7 @@ class GoodsNomenclatureDescriptionSerializer(
             "period_subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
-            "valid_between",
+            "validity_start",
         ]
 
 
@@ -128,7 +130,8 @@ class GoodsNomenclatureSuccessorSerializer(TrackedModelSerializerMixin):
 
 @TrackedModelSerializer.register_polymorphic_model
 class FootnoteAssociationGoodsNomenclatureSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     goods_nomenclature = SimpleGoodsNomenclatureSerializer(read_only=True)
     associated_footnote = FootnoteSerializer(read_only=True)

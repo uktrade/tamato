@@ -3,25 +3,26 @@ from rest_framework import serializers
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.serializers import ValidityStartSerializerMixin
 from geo_areas import models
 
 
 class GeographicalAreaDescriptionSerializer(
-    ValiditySerializerMixin, TrackedModelSerializerMixin
+    ValidityStartSerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     class Meta:
         model = models.GeographicalAreaDescription
         fields = [
             "sid",
             "description",
-            "valid_between",
+            "validity_start",
             "record_code",
             "period_record_code",
             "subrecord_code",
             "period_subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
         ]
 
 
@@ -55,7 +56,8 @@ class GeographicalAreaSerializer(ValiditySerializerMixin, TrackedModelSerializer
 
 
 class GeographicalAreaImporterSerializer(
-    ValiditySerializerMixin, TrackedModelSerializerMixin
+    ValiditySerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     sid = serializers.IntegerField()
     parent = ParentGeographicalAreaSerializer(read_only=True)
@@ -78,7 +80,8 @@ class GeographicalAreaImporterSerializer(
 
 
 class GeographicalAreaBasicSerializer(
-    ValiditySerializerMixin, TrackedModelSerializerMixin
+    ValiditySerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     class Meta:
         model = models.GeographicalArea
@@ -97,7 +100,8 @@ class GeographicalAreaBasicSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class GeographicalAreaDescriptionTaricSerializer(
-    ValiditySerializerMixin, TrackedModelSerializerMixin
+    ValidityStartSerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     area = GeographicalAreaBasicSerializer(read_only=True)
 
@@ -107,20 +111,20 @@ class GeographicalAreaDescriptionTaricSerializer(
             "sid",
             "area",
             "description",
-            "valid_between",
+            "validity_start",
             "record_code",
             "period_record_code",
             "subrecord_code",
             "period_subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
             "update_type",
         ]
 
 
 class GeographicalAreaDescriptionImporterSerializer(
-    ValiditySerializerMixin, TrackedModelSerializerMixin
+    ValidityStartSerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     sid = serializers.IntegerField()
     area = GeographicalAreaBasicSerializer(read_only=True)
@@ -131,21 +135,21 @@ class GeographicalAreaDescriptionImporterSerializer(
             "sid",
             "description",
             "area",
-            "valid_between",
+            "validity_start",
             "record_code",
             "period_record_code",
             "subrecord_code",
             "period_subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
             "update_type",
         ]
 
 
 @TrackedModelSerializer.register_polymorphic_model
 class GeographicalMembershipSerializer(
-    ValiditySerializerMixin, TrackedModelSerializerMixin
+    ValiditySerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     geo_group = GeographicalAreaSerializer(read_only=True)
     member = GeographicalAreaSerializer(read_only=True)

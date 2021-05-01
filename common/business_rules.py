@@ -159,7 +159,11 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
 
         @wraps(_original_validate)
         def validate(self, model):
-            if model.valid_between.lower > cutoff:
+            rule_should_apply = (
+                hasattr(model, "valid_between") and model.valid_between.lower > cutoff
+            ) or (hasattr(model, "validity_start") and model.validity_start > cutoff)
+
+            if rule_should_apply:
                 _original_validate(self, model)
             else:
                 log.debug("Skipping %s: Start date before cutoff", cls.__name__)
@@ -365,24 +369,22 @@ class DescriptionsRules(BusinessRule):
         return model.get_descriptions(transaction=self.transaction)
 
     def validate(self, model):
-        descriptions = self.get_descriptions(model).order_by("valid_between")
+        descriptions = self.get_descriptions(model).order_by("validity_start")
 
         if descriptions.count() < 1:
             raise self.generate_violation(model, "at least one")
 
-        valid_betweens = descriptions.values_list("valid_between", flat=True)
+        valid_froms = descriptions.values_list("validity_start", flat=True)
 
         if not any(
-            filter(lambda x: x.lower == model.valid_between.lower, valid_betweens),
+            filter(lambda x: x == model.valid_between.lower, valid_froms),
         ):
             raise self.generate_violation(model, "first start date")
 
-        if len({vb.lower for vb in valid_betweens}) != len(
-            [vb.lower for vb in valid_betweens],
-        ):
+        if len(set(valid_froms)) != len(valid_froms):
             raise self.generate_violation(model, "duplicate start dates")
 
         if not model.valid_between.upper_inf and any(
-            filter(lambda x: x.lower > model.valid_between.upper, valid_betweens),
+            filter(lambda x: x > model.valid_between.upper, valid_froms),
         ):
             raise self.generate_violation(model, "start after end")

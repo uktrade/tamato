@@ -68,7 +68,7 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the footnote."""
     footnote = factories.FootnoteFactory.create(
-        description__valid_between=date_ranges.later,
+        description__validity_start=date_ranges.later.lower,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.FO4(footnote.transaction).validate(footnote)
@@ -80,7 +80,7 @@ def test_FO4_start_dates_cannot_match():
     footnote = factories.FootnoteFactory.create()
     duplicate = factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,
-        valid_between=footnote.valid_between,
+        validity_start=footnote.valid_between.lower,
     )
     with pytest.raises(BusinessRuleViolation):
         business_rules.FO4(duplicate.transaction).validate(footnote)
@@ -92,11 +92,11 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
 
     footnote = factories.FootnoteFactory.create(
         valid_between=date_ranges.normal,
-        description__valid_between=date_ranges.starts_with_normal,
+        description__validity_start=date_ranges.starts_with_normal.lower,
     )
     early_description = factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,
-        valid_between=date_ranges.later,
+        validity_start=date_ranges.later.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):

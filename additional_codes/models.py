@@ -4,9 +4,9 @@ from additional_codes import business_rules
 from additional_codes import validators
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
-from common.models import DescriptionMixin
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.description import DescriptionMixin
+from common.models.mixins.validity import ValidityMixin
 from footnotes import business_rules as footnotes_business_rules
 from measures import business_rules as measures_business_rules
 
@@ -97,7 +97,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         )
 
 
-class AdditionalCodeDescription(DescriptionMixin, ValidityMixin, TrackedModel):
+class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
     """
     The additional code description contains the description of the additional
     code for a particular period.
@@ -124,13 +124,8 @@ class AdditionalCodeDescription(DescriptionMixin, ValidityMixin, TrackedModel):
 
     indirect_business_rules = (business_rules.ACN5,)
 
-    def __str__(self):
-        return self.identifying_fields_to_string(
-            identifying_fields=("described_additionalcode", "valid_between"),
-        )
-
     class Meta:
-        ordering = ("valid_between",)
+        ordering = ("validity_start",)
 
 
 class FootnoteAssociationAdditionalCode(TrackedModel, ValidityMixin):

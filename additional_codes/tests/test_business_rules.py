@@ -225,7 +225,7 @@ def test_ACN5_first_description_must_have_same_start_date(date_ranges):
 
     description = factories.AdditionalCodeDescriptionFactory.create(
         described_additionalcode__valid_between=date_ranges.no_end,
-        valid_between=date_ranges.later,
+        validity_start=date_ranges.later.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -240,7 +240,7 @@ def test_ACN5_start_dates_cannot_match():
     existing = factories.AdditionalCodeDescriptionFactory.create()
     duplicate = factories.AdditionalCodeDescriptionFactory.create(
         described_additionalcode=existing.described_additionalcode,
-        valid_between=existing.valid_between,
+        validity_start=existing.validity_start,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -255,11 +255,11 @@ def test_ACN5_description_start_before_additional_code_end(date_ranges):
 
     description = factories.AdditionalCodeDescriptionFactory.create(
         described_additionalcode__valid_between=date_ranges.normal,
-        valid_between=date_ranges.later,
+        validity_start=date_ranges.later.lower,
     )
     next_description = factories.AdditionalCodeDescriptionFactory.create(
         described_additionalcode=description.described_additionalcode,
-        valid_between=date_ranges.starts_with_normal,
+        validity_start=date_ranges.starts_with_normal.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):

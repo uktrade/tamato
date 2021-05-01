@@ -9,6 +9,7 @@ dj-database-url==0.5.0
 django==3.1.8
 django-dotenv==1.4.2
 drf-extra-fields==3.0.2
+django-cte==1.1.5
 django-extensions==3.1.1
 django-filter==2.4.0
 django-fsm==2.7.1

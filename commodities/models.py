@@ -3,13 +3,17 @@ from __future__ import annotations
 from django.db import models
 from django.db import transaction
 from django.db.models import Q
+from polymorphic.managers import PolymorphicManager
 from treebeard.mp_tree import MP_Node
 
 from commodities import business_rules
 from commodities import validators
+from commodities.querysets import GoodsNomenclatureIndentQuerySet
 from common.models import NumericSID
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.description import DescriptionMixin
+from common.models.mixins.validity import ValidityMixin
+from common.models.mixins.validity import ValidityStartMixin
 from common.util import TaricDateRange
 from measures import business_rules as measures_business_rules
 
@@ -84,9 +88,13 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         )
 
 
-class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
+class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"
     subrecord_code = "05"
+
+    objects: GoodsNomenclatureIndentQuerySet = PolymorphicManager.from_queryset(
+        GoodsNomenclatureIndentQuerySet,
+    )()
 
     sid = NumericSID()
 
@@ -100,6 +108,8 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityMixin):
 
     indirect_business_rules = (business_rules.NIG11,)
     business_rules = (business_rules.NIG2,)
+
+    validity_over = "indented_goods_nomenclature"
 
     def get_parent_indents(self):
         parent_path_query = Q()
@@ -267,7 +277,7 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         return f"path={self.path}, indent=({self.indent})"
 
 
-class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
+class GoodsNomenclatureDescription(TrackedModel, DescriptionMixin):
     record_code = "400"
     subrecord_code = "15"
     period_record_code = "400"
@@ -284,7 +294,7 @@ class GoodsNomenclatureDescription(TrackedModel, ValidityMixin):
     indirect_business_rules = (business_rules.NIG12,)
 
     class Meta:
-        ordering = ("valid_between",)
+        ordering = ("validity_start",)
 
 
 class GoodsNomenclatureOrigin(TrackedModel):

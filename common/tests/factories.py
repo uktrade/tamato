@@ -49,6 +49,10 @@ class ValidityFactoryMixin(factory.django.DjangoModelFactory):
     valid_between = date_ranges("no_end")
 
 
+class ValidityStartFactoryMixin(factory.django.DjangoModelFactory):
+    validity_start = date_ranges("now")
+
+
 class UserFactory(factory.django.DjangoModelFactory):
     """User factory."""
 
@@ -159,11 +163,11 @@ class FootnoteFactory(TrackedModelMixin, ValidityFactoryMixin):
         "common.tests.factories.FootnoteDescriptionFactory",
         factory_related_name="described_footnote",
         transaction=factory.SelfAttribute("..transaction"),
-        valid_between=factory.SelfAttribute("..valid_between"),
+        validity_start=factory.SelfAttribute("..valid_between.lower"),
     )
 
 
-class FootnoteDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+class FootnoteDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
         model = "footnotes.FootnoteDescription"
 
@@ -172,16 +176,15 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
 
 
-class RegulationGroupFactory(TrackedModelMixin):
+class RegulationGroupFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "regulations.Group"
 
     group_id = string_sequence(3, characters=string.ascii_uppercase)
     description = short_description()
-    valid_between = date_ranges("no_end")
 
 
-class RegulationFactory(TrackedModelMixin):
+class RegulationFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "regulations.Regulation"
 
@@ -208,7 +211,6 @@ class RegulationFactory(TrackedModelMixin):
 class BaseRegulationFactory(RegulationFactory):
     regulation_group = factory.SubFactory(RegulationGroupFactory)
     role_type = 1
-    valid_between = Dates().no_end
 
 
 class AmendmentFactory(TrackedModelMixin):
@@ -250,7 +252,7 @@ class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
         "common.tests.factories.GeographicalAreaDescriptionFactory",
         factory_related_name="area",
         transaction=factory.SelfAttribute("..transaction"),
-        valid_between=factory.SelfAttribute("..valid_between"),
+        validity_start=factory.SelfAttribute("..valid_between.lower"),
     )
 
 
@@ -274,7 +276,7 @@ class GeographicalMembershipFactory(TrackedModelMixin, ValidityFactoryMixin):
     member = factory.SubFactory(GeographicalAreaFactory)
 
 
-class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
         model = "geo_areas.GeographicalAreaDescription"
 
@@ -299,7 +301,7 @@ class CertificateFactory(TrackedModelMixin, ValidityFactoryMixin):
     sid = string_sequence(3)
 
 
-class CertificateDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+class CertificateDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
         model = "certificates.CertificateDescription"
 
@@ -363,7 +365,7 @@ class AdditionalCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
     code = string_sequence(3)
 
 
-class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
         model = "additional_codes.AdditionalCodeDescription"
 
@@ -398,14 +400,14 @@ class GoodsNomenclatureFactory(SimpleGoodsNomenclatureFactory):
         "common.tests.factories.GoodsNomenclatureIndentFactory",
         factory_related_name="indented_goods_nomenclature",
         transaction=factory.SelfAttribute("..transaction"),
-        valid_between=factory.SelfAttribute("..valid_between"),
+        validity_start=factory.SelfAttribute("..valid_between.lower"),
     )
 
     description = factory.RelatedFactory(
         "common.tests.factories.GoodsNomenclatureDescriptionFactory",
         factory_related_name="described_goods_nomenclature",
         transaction=factory.SelfAttribute("..transaction"),
-        valid_between=factory.SelfAttribute("..valid_between"),
+        validity_start=factory.SelfAttribute("..valid_between.lower"),
     )
 
     origin = factory.RelatedFactory(
@@ -426,7 +428,10 @@ class GoodsNomenclatureWithSuccessorFactory(GoodsNomenclatureFactory):
     )
 
 
-class SimpleGoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
+class SimpleGoodsNomenclatureIndentFactory(
+    TrackedModelMixin,
+    ValidityStartFactoryMixin,
+):
     class Meta:
         model = "commodities.GoodsNomenclatureIndent"
 
@@ -435,7 +440,7 @@ class SimpleGoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMix
     indent = 0
 
 
-class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
+class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
         model = "commodities.GoodsNomenclatureIndent"
 
@@ -445,7 +450,9 @@ class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityFactoryMixin):
     node = factory.RelatedFactory(
         "common.tests.factories.GoodsNomenclatureIndentNodeFactory",
         factory_related_name="indent",
-        valid_between=factory.SelfAttribute("..valid_between"),
+        valid_between=factory.SelfAttribute(
+            "..indented_goods_nomenclature.valid_between",
+        ),
         creating_transaction=factory.SelfAttribute("..transaction"),
     )
 
@@ -479,7 +486,7 @@ class GoodsNomenclatureIndentNodeFactory(ValidityFactoryMixin):
     creating_transaction = factory.SubFactory(ApprovedTransactionFactory)
 
 
-class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityFactoryMixin):
+class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
         model = "commodities.GoodsNomenclatureDescription"
 

@@ -4,6 +4,7 @@ from certificates import models
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.serializers import ValidityStartSerializerMixin
 
 
 @TrackedModelSerializer.register_polymorphic_model
@@ -46,7 +47,8 @@ class CertificateSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin
 
 @TrackedModelSerializer.register_polymorphic_model
 class CertificateDescriptionSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValidityStartSerializerMixin,
 ):
     described_certificate = CertificateSerializer(read_only=True)
     sid = serializers.IntegerField()
@@ -64,6 +66,5 @@ class CertificateDescriptionSerializer(
             "period_subrecord_code",
             "taric_template",
             "start_date",
-            "end_date",
-            "valid_between",
+            "validity_start",
         ]

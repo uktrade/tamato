@@ -94,6 +94,22 @@ class ValiditySerializerMixin(serializers.ModelSerializer):
             return self.date_format_string.format(obj.valid_between.upper)
 
 
+class ValidityStartSerializerMixin(serializers.ModelSerializer):
+    date_format_string = "{:%Y-%m-%d}"
+
+    validity_start = serializers.DateField(
+        input_formats=[
+            "iso-8601",
+            "%Y-%m-%d",
+        ],  # default  # TARIC3 date format
+    )
+    start_date = serializers.SerializerMethodField()
+
+    def get_start_date(self, obj):
+        if obj.validity_start:
+            return self.date_format_string.format(obj.validity_start)
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

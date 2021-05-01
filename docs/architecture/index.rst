@@ -78,7 +78,11 @@ time. Most models use a pair of validity dates, implemented using the
 Description models have a requirement that there must always be one live
 description at any time. For this reason, descriptions do not have end dates and
 only have start dates. The description is live up until the start date of the
-next description record.
+next description record. This is implemented using the
+:class:`~common.models.mixins.ValidityStartMixin`.
+
+.. autoclass:: common.models.mixins.ValidityStartMixin
+  :members:
 
 Tracked models as version control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

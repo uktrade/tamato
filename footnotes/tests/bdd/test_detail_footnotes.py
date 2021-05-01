@@ -25,7 +25,7 @@ def footnote_core_data(footnote_detail, footnote_NC000):
     assert str(f) in content
     assert f.get_description().description in content
     assert str(ft) in content
-    assert "{:%d %b %Y}".format(f.valid_between.lower) in content
+    assert f"{f.valid_between.lower:%d %b %Y}" in content
 
 
 @then("the descriptions against the footnote should be presented")
@@ -35,4 +35,4 @@ def footnote_description_data(footnote_detail, footnote_NC000):
 
     for description in f.descriptions.all():
         assert description.description in content
-        assert "{:%d %b %Y}".format(description.valid_between.lower) in content
+        assert f"{description.validity_start:%d %b %Y}" in content

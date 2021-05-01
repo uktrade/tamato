@@ -4,9 +4,9 @@ from certificates import business_rules
 from certificates import validators
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
-from common.models import DescriptionMixin
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.description import DescriptionMixin
+from common.models.mixins.validity import ValidityMixin
 from measures import business_rules as measures_business_rules
 
 
@@ -91,7 +91,7 @@ class Certificate(TrackedModel, ValidityMixin):
         )
 
 
-class CertificateDescription(DescriptionMixin, ValidityMixin, TrackedModel):
+class CertificateDescription(DescriptionMixin, TrackedModel):
     record_code = "205"
     subrecord_code = "10"
 
@@ -108,15 +108,7 @@ class CertificateDescription(DescriptionMixin, ValidityMixin, TrackedModel):
     )
 
     indirect_business_rules = (business_rules.CE6,)
-    business_rules = (
-        business_rules.NoOverlappingDescriptions,
-        business_rules.ContiguousDescriptions,
-    )
-
-    def __str__(self):
-        return self.identifying_fields_to_string(
-            identifying_fields=("described_certificate", "valid_between"),
-        )
+    business_rules = ()
 
     class Meta:
-        ordering = ("valid_between",)
+        ordering = ("validity_start",)

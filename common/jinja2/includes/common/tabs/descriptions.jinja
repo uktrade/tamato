@@ -1,11 +1,11 @@
 {% from "components/table/macro.njk" import govukTable %}
-{% from 'macros/create_link.jinja' import create_link %} 
+{% from 'macros/create_link.jinja' import create_link %}
 
 {% set description_rows = [] %}
 {% for description in object.get_descriptions() %}
 	{% set edit_url = description.get_url("edit") %}
 	{% set description_row = [
-		{"text": "{:%d %b %Y}".format(description.valid_between.lower)},
+		{"text": "{:%d %b %Y}".format(description.validity_start)},
 		{"text": description.description},
 	]%}
 	{% if edit_url %}
@@ -26,4 +26,3 @@
 	"head": head,
 	"rows": description_rows
 }) }}
-	

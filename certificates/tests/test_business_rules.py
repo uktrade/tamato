@@ -96,7 +96,7 @@ def test_CE6_first_description_must_have_same_start_date(date_ranges):
 
     description = factories.CertificateDescriptionFactory.create(
         described_certificate__valid_between=date_ranges.no_end,
-        valid_between=date_ranges.later,
+        validity_start=date_ranges.later.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -112,7 +112,7 @@ def test_CE6_start_dates_cannot_match():
     existing = factories.CertificateDescriptionFactory.create()
     new_description = factories.CertificateDescriptionFactory.create(
         described_certificate=existing.described_certificate,
-        valid_between=existing.valid_between,
+        validity_start=existing.validity_start,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -127,7 +127,7 @@ def test_CE6_certificate_validity_period_must_span_description(date_ranges):
 
     description = factories.CertificateDescriptionFactory.create(
         described_certificate__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+        validity_start=date_ranges.overlap_normal.lower,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -146,25 +146,3 @@ def test_CE7(date_ranges):
             valid_between=date_ranges.overlap_normal,
         )
         business_rules.CE7(certificate.transaction).validate(certificate)
-
-
-@pytest.mark.xfail(reason="rule disabled")
-def test_certificate_description_periods_cannot_overlap(date_ranges):
-    """Ensure validity periods for descriptions with a given SID cannot
-    overlap."""
-    # XXX All versions of a description will have the same SID. Won't this prevent
-    # updates and deletes?
-
-    existing = factories.CertificateDescriptionFactory.create(
-        valid_between=date_ranges.normal,
-    )
-    description = factories.CertificateDescriptionFactory.create(
-        described_certificate=existing.described_certificate,
-        sid=existing.sid,
-        valid_between=date_ranges.overlap_normal,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NoOverlappingDescriptions(description.transaction).validate(
-            description,
-        )

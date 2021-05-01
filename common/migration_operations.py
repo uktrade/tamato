@@ -1,4 +1,8 @@
 from django.db.migrations.operations.base import Operation
+from django.db.models import F
+from django.db.models import Func
+from django.db.models.expressions import Value
+from django.db.models.functions import Lower
 
 from common.fields import TaricDateRangeField
 
@@ -92,3 +96,26 @@ class ConvertTaricDateRange(Operation):
     @property
     def migration_name_fragment(self):
         return f"convert_taric_date_range_{self.name}"
+
+
+def copy_start_date_to_validity_start(app_name, model_name):
+    def copy(apps, schema_editor):
+        Model = apps.get_model(app_name, model_name)
+        Model.objects.update(validity_start=Lower("valid_between"))
+
+    return copy
+
+
+def copy_start_date_to_valid_between(app_name, model_name):
+    def copy(apps, schema_editor):
+        Model = apps.get_model(app_name, model_name)
+        Model.objects.update(
+            valid_between=Func(
+                F("validity_start"),
+                None,
+                Value("[]"),
+                function="DATERANGE",
+            ),
+        )
+
+    return copy

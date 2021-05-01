@@ -20,11 +20,11 @@ def additional_code_X000(date_ranges):
     factories.AdditionalCodeDescriptionFactory.create(
         described_additionalcode=ac,
         description="This is X000",
-        valid_between=date_ranges.starts_with_normal,
+        validity_start=date_ranges.starts_with_normal.lower,
     )
     factories.AdditionalCodeDescriptionFactory.create(
         described_additionalcode=ac,
         description="Another description",
-        valid_between=date_ranges.overlap_normal,
+        validity_start=date_ranges.overlap_normal.lower,
     )
     return ac

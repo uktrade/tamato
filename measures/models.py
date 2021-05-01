@@ -7,7 +7,7 @@ from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
-from common.models import ValidityMixin
+from common.models.mixins.validity import ValidityMixin
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures import business_rules
