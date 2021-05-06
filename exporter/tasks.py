@@ -14,7 +14,7 @@ from django.core.files.base import ContentFile
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 
-from common.util import require_lock
+from common.util import TableLock
 from exporter.models import Upload
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
@@ -104,7 +104,7 @@ def upload_and_create_envelopes(
     retry_backoff_max=settings.EXPORTER_UPLOAD_RETRY_BACKOFF_MAX,
     retry_jitter=True,
 )
-@require_lock(Envelope, lock="SHARE")
+@TableLock.acquire_lock(Envelope, lock="SHARE")
 def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     """
     Upload workbaskets.
@@ -202,7 +202,7 @@ def send_upload_notifications(self, upload_status_data):
         ).serialize()
 
     if settings.EXPORTER_DISABLE_NOTIFICATION:
-        logger.debug("Notifications are disabled.")
+        logger.info("Notifications are disabled.")
         return UploadTaskResultData(
             upload_status,
             messages=["Notifications are disabled."],
@@ -216,7 +216,7 @@ def send_upload_notifications(self, upload_status_data):
             upload.notify_hmrc()
         except APIRequestError as e:
             # Connection issue during notification.
-            logger.info(f"{type(e)} notifying HMRC {e.message} {e.info}")
+            logger.warning(f"{type(e)} notifying HMRC {e.message} {e.info}")
             if settings.EXPORTER_UPLOAD_MAX_RETRIES and (
                 e.status_code is None or e.status_code >= 500
             ):

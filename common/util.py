@@ -139,41 +139,54 @@ def get_field_tuple(model, field):
     return field, value
 
 
-LOCK_MODES = (
-    "ACCESS SHARE",
-    "ROW SHARE",
-    "ROW EXCLUSIVE",
-    "SHARE UPDATE EXCLUSIVE",
-    "SHARE",
-    "SHARE ROW EXCLUSIVE",
-    "EXCLUSIVE",
-    "ACCESS EXCLUSIVE",
-)
+class TableLock:
+    ACCESS_SHARE = "ACCESS SHARE"
+    ROW_SHARE = "ROW SHARE"
+    ROW_EXCLUSIVE = "ROW EXCLUSIVE"
+    SHARE_UPDATE_EXCLUSIVE = "SHARE UPDATE EXCLUSIVE"
+    SHARE = "SHARE"
+    SHARE_ROW_EXCLUSIVE = "SHARE ROW EXCLUSIVE"
+    EXCLUSIVE = "EXCLUSIVE"
+    ACCESS_EXCLUSIVE = "ACCESS EXCLUSIVE"
 
+    LOCK_TYPES = (
+        ACCESS_SHARE,
+        ROW_SHARE,
+        ROW_EXCLUSIVE,
+        SHARE_UPDATE_EXCLUSIVE,
+        SHARE,
+        SHARE_ROW_EXCLUSIVE,
+        EXCLUSIVE,
+        ACCESS_EXCLUSIVE,
+    )
 
-def require_lock(*models, lock="ACCESS EXCLUSIVE"):
-    """
-    Decorator for PostgreSQL's table-level lock functionality.
+    @classmethod
+    def acquire_lock(cls, *models, lock=None):
+        """
+        Decorator for PostgreSQL's table-level lock functionality.
 
-    Example:
-        @transaction.commit_on_success
-        @require_lock(MyModel, lock='ACCESS EXCLUSIVE')
-        def myview(request)
-            ...
+        Example:
+            @transaction.commit_on_success
+            @require_lock(MyModel, lock=TableLock.ACCESS_EXCLUSIVE)
+            def myview(request)
+                ...
 
-    PostgreSQL's LOCK Documentation:
-    http://www.postgresql.org/docs/8.3/interactive/sql-lock.html
-    """
-    if lock not in LOCK_MODES:
-        raise ValueError("%s is not a PostgreSQL supported lock mode.")
+        PostgreSQL's LOCK Documentation:
+        http://www.postgresql.org/docs/8.3/interactive/sql-lock.html
+        """
+        if lock is None:
+            lock = cls.ACCESS_EXCLUSIVE
 
-    @wrapt.decorator
-    def wrapper(wrapped, instance, args, kwargs):
-        with atomic():
-            with transaction.get_connection().cursor() as cursor:
-                for model in models:
-                    cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+        if lock not in cls.LOCK_TYPES:
+            raise ValueError("%s is not a PostgreSQL supported lock mode.")
 
-                return wrapped(*args, **kwargs)
+        @wrapt.decorator
+        def wrapper(wrapped, instance, args, kwargs):
+            with atomic():
+                with transaction.get_connection().cursor() as cursor:
+                    for model in models:
+                        cursor.execute(f"LOCK TABLE {model._meta.db_table}")
 
-    return wrapper
+                    return wrapped(*args, **kwargs)
+
+        return wrapper

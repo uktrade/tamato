@@ -7,7 +7,6 @@ from botocore.exceptions import ConnectionError
 from lxml import etree
 
 from common.tests.factories import ApprovedTransactionFactory
-from common.tests.factories import ApprovedWorkBasketFactory
 from common.tests.factories import FootnoteTypeFactory
 from common.tests.factories import RegulationFactory
 from common.tests.util import taric_xml_record_codes
@@ -85,8 +84,7 @@ def test_upload_workbaskets_retries(mock_save, settings):
     # Notifications are disabled, as they are not being tested here.
     settings.EXPORTER_UPLOAD_MAX_RETRIES = 1
 
-    approved_workbasket = ApprovedWorkBasketFactory.create()
-    with ApprovedTransactionFactory.create(workbasket=approved_workbasket) as tx:
+    with ApprovedTransactionFactory.create():
         RegulationFactory.create(),
         FootnoteTypeFactory.create()
 
@@ -127,8 +125,7 @@ def test_notify_hmrc_retries(mock_post, settings, hmrc_storage, responses):
     # Notifications are disabled, as they are not being tested here.
     settings.EXPORTER_UPLOAD_MAX_RETRIES = 1
 
-    approved_workbasket = ApprovedWorkBasketFactory.create()
-    with ApprovedTransactionFactory.create(workbasket=approved_workbasket):
+    with ApprovedTransactionFactory.create():
         RegulationFactory.create(),
         FootnoteTypeFactory.create()
 
