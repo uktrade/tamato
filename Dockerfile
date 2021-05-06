@@ -1,4 +1,4 @@
-FROM node:13.12-buster-slim AS jsdeps
+FROM node:lts-buster-slim AS jsdeps
 
 RUN apt-get update -y
 RUN apt-get install -y g++ build-essential python3
