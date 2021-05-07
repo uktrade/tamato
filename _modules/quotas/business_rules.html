@@ -43,10 +43,12 @@
 <span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">MustExist</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodSpansContainer</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
@@ -193,6 +195,19 @@
             <span class="n">geo_group__sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CertificatesMustExist"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.CertificatesMustExist">[docs]</a><span class="k">class</span> <span class="nc">CertificatesMustExist</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced certificates must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;certificate&quot;</span></div>
+
+
+<div class="viewcode-block" id="CertificateValidityPeriodMustSpanQuotaOrderNumber"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber">[docs]</a><span class="k">class</span> <span class="nc">CertificateValidityPeriodMustSpanQuotaOrderNumber</span><span class="p">(</span><span class="n">ValidityPeriodSpansContainer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the required certificates must span the validity</span>
+<span class="sd">    period of the quota order number.&quot;&quot;&quot;</span>
+
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;required_certificates&quot;</span></div>
 
 
 <div class="viewcode-block" id="QD1"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.QD1">[docs]</a><span class="k">class</span> <span class="nc">QD1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>

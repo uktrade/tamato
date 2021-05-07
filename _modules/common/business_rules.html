@@ -340,6 +340,26 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="ValidityPeriodSpansContainer"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.ValidityPeriodSpansContainer">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodSpansContainer</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Rule enforcing validity period of each contained value spans the validity</span>
+<span class="sd">    period of the container.&quot;&quot;&quot;</span>
+
+    <span class="n">contained_field_name</span><span class="p">:</span> <span class="nb">str</span>
+
+<div class="viewcode-block" id="ValidityPeriodSpansContainer.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.ValidityPeriodSpansContainer.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="n">container</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">contained</span> <span class="o">=</span> <span class="n">get_field_tuple</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">contained</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">container</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="MustExist"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.MustExist">[docs]</a><span class="k">class</span> <span class="nc">MustExist</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Rule enforcing a referenced record exists.&quot;&quot;&quot;</span>
 
