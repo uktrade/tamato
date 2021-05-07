@@ -8,13 +8,15 @@ pytestmark = pytest.mark.django_db
 
 def test_quota_order_number_importer_create(imported_fields_match):
     assert imported_fields_match(
-        factories.QuotaOrderNumberFactory, serializers.QuotaOrderNumberSerializer
+        factories.QuotaOrderNumberFactory,
+        serializers.QuotaOrderNumberSerializer,
     )
 
 
 def test_quota_order_number_importer_update(update_imported_fields_match):
     assert update_imported_fields_match(
-        factories.QuotaOrderNumberFactory, serializers.QuotaOrderNumberSerializer
+        factories.QuotaOrderNumberFactory,
+        serializers.QuotaOrderNumberSerializer,
     )
 
 
@@ -113,7 +115,7 @@ def test_quota_association_importer_update(update_imported_fields_match):
 def test_quota_suspension_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.QuotaSuspensionFactory.build(
-            quota_definition=factories.QuotaDefinitionFactory.create()
+            quota_definition=factories.QuotaDefinitionFactory.create(),
         ),
         serializers.QuotaSuspensionSerializer,
     )
@@ -133,7 +135,7 @@ def test_quota_suspension_importer_update(update_imported_fields_match, date_ran
 def test_quota_blocking_importer_create(imported_fields_match):
     assert imported_fields_match(
         factories.QuotaBlockingFactory.build(
-            quota_definition=factories.QuotaDefinitionFactory.create()
+            quota_definition=factories.QuotaDefinitionFactory.create(),
         ),
         serializers.QuotaBlockingSerializer,
     )

@@ -247,6 +247,38 @@ def test_ON14():
     business_rules.ON14(exclusion.transaction).validate(exclusion)
 
 
+def test_CertificatesMustExist():
+    """The referenced certificates must exist."""
+    quota_order_number = factories.QuotaOrderNumberFactory.create(
+        required_certificates=[factories.CertificateFactory.create()],
+    )
+
+    certificate = quota_order_number.required_certificates.first()
+    certificate.delete()
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.CertificatesMustExist(certificate.transaction).validate(
+            certificate,
+        )
+
+
+def test_CertificateValidityPeriodMustSpanQuotaOrderNumber(date_ranges):
+    """The validity period of the required certificates must span the validity
+    period of the quota order number."""
+
+    quota_order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+        required_certificates=[
+            factories.CertificateFactory.create(valid_between=date_ranges.earlier),
+        ],
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber(
+            quota_order_number.transaction,
+        ).validate(quota_order_number)
+
+
 def test_QD1(make_duplicate_record):
     """Quota order number id + start date must be unique."""
 

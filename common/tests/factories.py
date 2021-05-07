@@ -571,6 +571,15 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
         transaction=factory.SelfAttribute("..transaction"),
     )
 
+    @factory.post_generation
+    def required_certificates(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for certificate in extracted:
+                self.required_certificates.add(certificate)
+
 
 class QuotaOrderNumberOriginFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:

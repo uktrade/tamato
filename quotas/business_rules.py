@@ -3,10 +3,12 @@ from datetime import date
 from decimal import Decimal
 
 from common.business_rules import BusinessRule
+from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import ValidityPeriodContains
+from common.business_rules import ValidityPeriodSpansContainer
 from common.business_rules import only_applicable_after
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
@@ -153,6 +155,19 @@ class ON14(BusinessRule):
             geo_group__sid=exclusion.origin.geographical_area.sid,
         ).exists():
             raise self.violation(exclusion)
+
+
+class CertificatesMustExist(MustExist):
+    """The referenced certificates must exist."""
+
+    reference_field_name = "certificate"
+
+
+class CertificateValidityPeriodMustSpanQuotaOrderNumber(ValidityPeriodSpansContainer):
+    """The validity period of the required certificates must span the validity
+    period of the quota order number."""
+
+    contained_field_name = "required_certificates"
 
 
 class QD1(UniqueIdentifyingFields):

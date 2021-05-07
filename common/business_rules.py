@@ -300,6 +300,26 @@ class ValidityPeriodContains(BusinessRule):
             raise self.violation(model)
 
 
+class ValidityPeriodSpansContainer(BusinessRule):
+    """Rule enforcing validity period of each contained value spans the validity
+    period of the container."""
+
+    contained_field_name: str
+
+    def validate(self, model):
+        container = model
+        _, contained = get_field_tuple(model, self.contained_field_name)
+
+        if (
+            contained.approved_up_to_transaction(self.transaction)
+            .exclude(
+                valid_between__contains=container.valid_between,
+            )
+            .exists()
+        ):
+            raise self.violation(model)
+
+
 class MustExist(BusinessRule):
     """Rule enforcing a referenced record exists."""
 
