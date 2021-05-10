@@ -20,6 +20,7 @@ from django.views import generic
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from common.business_rules import BusinessRuleViolation
 from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
@@ -212,3 +213,26 @@ class TrackedModelDetailView(
     generic.DetailView,
 ):
     pass
+
+
+class BusinessRulesMixin:
+    """Check business rules on form_submission."""
+
+    validate_business_rules = []
+
+    def form_valid(self, form):
+        violations = False
+        workbasket = WorkBasket.current(self.request)
+        transaction = workbasket.transactions.last()
+
+        for rule in self.validate_business_rules:
+            try:
+                rule(transaction).validate(form.instance)
+            except BusinessRuleViolation as v:
+                form.add_error(None, v.args[0])
+                violations = True
+
+        if violations:
+            return self.form_invalid(form)
+
+        return super().form_valid(form)

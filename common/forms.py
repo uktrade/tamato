@@ -10,6 +10,8 @@ from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
 
+from common.util import TaricDateRange
+
 
 class DateInputFieldFixed(DateInputField):
     def compress(self, data_list):
@@ -92,3 +94,45 @@ class DescriptionForm(forms.ModelForm):
 
     class Meta:
         fields = ("description", "validity_start")
+
+
+class ValidityPeriodForm(forms.ModelForm):
+    start_date = DateInputFieldFixed(label="Start date")
+    end_date = DateInputFieldFixed(
+        label="End date",
+        required=False,
+    )
+    valid_between = GovukDateRangeField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["end_date"].help_text = (
+            f"Leave empty if {self.instance.get_indefinite_article()} "
+            f"{self.instance._meta.verbose_name} is needed for an unlimited time"
+        )
+
+        if self.instance.valid_between.lower:
+            self.fields["start_date"].initial = self.instance.valid_between.lower
+        if self.instance.valid_between.upper:
+            self.fields["end_date"].initial = self.instance.valid_between.upper
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        start_date = cleaned_data.pop("start_date", None)
+        end_date = cleaned_data.pop("end_date", None)
+        if end_date and start_date and end_date < start_date:
+            if start_date != self.initial["valid_between"].lower:
+                self.add_error(
+                    "start_date",
+                    "The start date must be the same as or before the end date.",
+                )
+            if end_date != self.initial["valid_between"].upper:
+                self.add_error(
+                    "end_date",
+                    "The end date must be the same as or after the start date.",
+                )
+        cleaned_data["valid_between"] = TaricDateRange(start_date, end_date)
+
+        return cleaned_data

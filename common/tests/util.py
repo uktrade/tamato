@@ -1,4 +1,5 @@
 import contextlib
+from datetime import date
 from datetime import datetime
 from datetime import timezone
 from functools import wraps
@@ -307,3 +308,28 @@ def only_applicable_after(cutoff):
         return do_test
 
     return decorator
+
+
+def validity_period_post_data(start: date, end: date) -> dict[str, int]:
+    """
+    Construct a POST data fragment for the validity period start and end dates
+    of a ValidityPeriodForm from the given date objects, eg:
+
+    >>> validity_period_post_data(
+    >>>     datetime.date(2021, 1, 2),
+    >>>     datetime.date(2022, 3, 4),
+    >>> )
+    {
+        "start_date_0": 1,
+        "start_date_1": 2,
+        "start_date_2": 2021,
+        "end_date_0": 4,
+        "end_date_1": 3,
+        "end_date_2": 2022,
+    }
+    """
+    return {
+        f"{name}_{i}": part
+        for name, date in (("start_date", start), ("end_date", end))
+        for i, part in enumerate([date.day, date.month, date.year])
+    }

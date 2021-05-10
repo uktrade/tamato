@@ -28,3 +28,18 @@ def additional_code_X000(date_ranges):
         validity_start=date_ranges.overlap_normal.lower,
     )
     return ac
+
+
+@given("a previous additional code X000", target_fixture="old_additional_code")
+def old_additional_code(date_ranges, additional_code_X000):
+    ac = factories.AdditionalCodeFactory.create(
+        code=additional_code_X000.code,
+        type=additional_code_X000.type,
+        valid_between=date_ranges.earlier,
+    )
+    factories.AdditionalCodeDescriptionFactory.create(
+        described_additionalcode=ac,
+        description="This was an older usage of X000",
+        validity_start=date_ranges.earlier.lower,
+    )
+    return ac

@@ -16,8 +16,8 @@ class CT1(UniqueIdentifyingFields):
 
 
 class ACN1(UniqueIdentifyingFields):
-    """The combination of additional code type + additional code + start date
-    must be unique."""
+    """The combination of additional code type, additional code ID and start
+    date must be unique."""
 
     identifying_fields = ("type", "code", "valid_between__lower")
 
@@ -50,8 +50,8 @@ class ACN2(BusinessRule):
 
 class ACN4(NoOverlapping):
     """The validity period of the additional code must not overlap any other
-    additional code with the same additional code type + additional code + start
-    date."""
+    additional code with the same additional code type, additional code ID and
+    start date."""
 
     identifying_fields = (
         "type__sid",

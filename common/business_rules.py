@@ -87,7 +87,7 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
     Violation: Type[BusinessRuleViolation]
 
-    def __init__(self, transaction):
+    def __init__(self, transaction=None):
         self.transaction = transaction
 
     @classmethod
@@ -186,7 +186,7 @@ class UniqueIdentifyingFields(BusinessRule):
         if (
             model.__class__.objects.filter(**query)
             .approved_up_to_transaction(self.transaction)
-            .exclude(id=model.id)
+            .exclude(version_group=model.version_group)
             .exists()
         ):
             raise self.violation(model)
@@ -206,7 +206,7 @@ class NoOverlapping(BusinessRule):
         if (
             model.__class__.objects.filter(**query)
             .approved_up_to_transaction(self.transaction)
-            .exclude(id=model.id)
+            .exclude(version_group=model.version_group)
             .exists()
         ):
             raise self.violation(model)
