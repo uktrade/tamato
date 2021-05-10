@@ -43,6 +43,8 @@ class GovukFrontendExtension(NunjucksExtension):
                 r"params.countMessage",
                 r"params.formGroup",
                 r"params.legend",
+                r"params.prefix",
+                r"params.suffix",
             ]
             source = re.sub(
                 r"(" + r"|".join(nested_attrs) + r")\.",

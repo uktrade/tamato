@@ -312,6 +312,8 @@ class CertificateDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin
 
 
 class TestModel1Factory(TrackedModelMixin, ValidityFactoryMixin):
+    __test__ = False
+
     class Meta:
         model = TestModel1
 
@@ -328,6 +330,8 @@ class TestModelDescription1Factory(TrackedModelMixin, ValidityFactoryMixin):
 
 
 class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
+    __test__ = False
+
     class Meta:
         model = TestModel2
 
@@ -336,6 +340,8 @@ class TestModel2Factory(TrackedModelMixin, ValidityFactoryMixin):
 
 
 class TestModel3Factory(TrackedModelMixin, ValidityFactoryMixin):
+    __test__ = False
+
     class Meta:
         model = TestModel3
 

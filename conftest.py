@@ -17,11 +17,13 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
+from django.test.html import parse_html
 from factory.django import DjangoModelFactory
 from lxml import etree
 from moto import mock_s3
 from pytest_bdd import given
 from pytest_bdd import parsers
+from pytest_bdd import then
 from rest_framework.test import APIClient
 
 from common.models import TrackedModel
@@ -644,3 +646,15 @@ def in_use_check_respects_deletes(valid_user):
         return True
 
     return check
+
+
+@pytest.fixture
+def response():
+    """Hacky fixture to enable passing the client response between BDD steps."""
+    return {}
+
+
+@then(parsers.parse('I see the form error message "{error_message}"'))
+def form_error_shown(response, error_message):
+    response_html = parse_html(response["response"].content.decode())
+    assert error_message in response_html

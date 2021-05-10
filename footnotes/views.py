@@ -4,9 +4,11 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.models import TrackedModel
+from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from footnotes import business_rules
 from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilter
@@ -89,10 +91,20 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
 
 class FootnoteUpdate(
     FootnoteMixin,
+    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
     form_class = forms.FootnoteForm
+
+    validate_business_rules = (
+        business_rules.FO2,
+        # business_rules.FO4,  # XXX should it be checked here?
+        business_rules.FO5,
+        business_rules.FO6,
+        business_rules.FO9,
+        business_rules.FO17,
+    )
 
 
 class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):

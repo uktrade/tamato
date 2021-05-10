@@ -1,4 +1,4 @@
-@bdd @todo
+@bdd
 Feature: Edit Footnote
 
 Background:
@@ -8,25 +8,19 @@ Background:
     And there is a current workbasket
 
 
-Scenario: View Footnote edit screen
+Scenario: Edit permission granted
     Given I am logged in as Bob
-    When I go to edit footnote NC000
-    Then I should be presented with a form with an <enabled> <field> field
-
-    Examples:
-    | field | enabled |
-    | id_footnote_type | disabled |
-    | id_footnote_id | disabled |
-    | id_valid_between_0 | enabled |
-    | id_valid_between_1 | enabled |
+    When I edit footnote NC000
+    Then I see an edit form
 
 
-Scenario: Update Footnote
+Scenario: Setting end date before start date errors
     Given I am logged in as Bob
-    When I submit a <change> to footnote NC000
-    Then I should be presented with a footnote update screen
+    When I set the end date before the start date on footnote NC000
+    Then I see the form error message "The end date must be the same as or after the start date."
 
-    Examples:
-    | change     |
-    | start date |
-    | end date   |
+
+Scenario: Violate business rule
+    Given I am logged in as Bob
+    When I set the start date of footnote NC000 to predate the footnote type
+    Then I see the form error message "The validity period of the footnote type must span the validity period of the footnote."

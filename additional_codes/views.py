@@ -3,6 +3,7 @@ from typing import Type
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from additional_codes import business_rules
 from additional_codes.filters import AdditionalCodeFilter
 from additional_codes.filters import AdditionalCodeFilterBackend
 from additional_codes.forms import AdditionalCodeDescriptionForm
@@ -13,6 +14,7 @@ from additional_codes.models import AdditionalCodeType
 from additional_codes.serializers import AdditionalCodeSerializer
 from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.models import TrackedModel
+from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -91,10 +93,20 @@ class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):
 
 class AdditionalCodeUpdate(
     AdditionalCodeMixin,
+    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
     form_class = AdditionalCodeForm
+
+    validate_business_rules = (
+        business_rules.ACN1,
+        business_rules.ACN2,
+        business_rules.ACN4,
+        business_rules.ACN13,
+        business_rules.ACN17,
+        # business_rules.ACN5,  # XXX should it be checked here?
+    )
 
 
 class AdditionalCodeUpdateDescription(
