@@ -20,10 +20,10 @@ RenderedTransactions = namedtuple(
     "envelope_id output transactions is_oversize max_envelope_size",
 )
 RenderedTransactions.__doc__ = """\
-Transient object that linking Transaction objects to the file like object they were rendered to as Envelope XML.
+Transient object that links Transaction objects to the file like object they were rendered to as Envelope XML.
 
-This enables separation of serializing, validating and saving to the database: any of the first steps can
-fail without incurring a database roll-back.
+This enables separation of serialization, validation and saving to the database.
+Any of the steps prior to saving to the database may fail fail without incurring a roll-back.
 
 :param envelope_id: Envelope ID, to use later, when creating Envelope objects in the database.
 :param output:  file, or file like object Envelope XML was streamed to.
@@ -154,7 +154,7 @@ def validate_rendered_envelopes(
         try:
             validate_envelope(envelope_file)
         except (TaricDataAssertionError, etree.DocumentInvalid) as e:
-            # Nothing to log here - validate_envelope has already logged the issue.
+            # Nothing to log here; validate_envelope already logged the issue.
             envelope_errors[rendered_envelope.envelope_id].append(e)
         except BaseException as e:
             logger.exception(e)

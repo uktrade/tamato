@@ -83,7 +83,7 @@ As well as database models, plain old classes are used to represent ephemeral da
 RenderedTransactions
 --------------------
 
-RenderedTransactions link Transaction objects with rendered envelops in an XML file, before it has been validated or added to the database as Envelope and EnvelopeTransaction objects for upload.
+RenderedTransactions link Transaction objects with rendered envelopes in an XML file, before it has been validated or added to the database as Envelope and EnvelopeTransaction objects for upload.
 
 MultiFileEnvelopeTransactionSerializer.split_render_transactions, generates instances of RenderedTransactions, a namedtuple holding:
  - envelope_id: TARIC envelope id, to use when later when Envelope object is created.

@@ -1,5 +1,4 @@
 import sys
-from collections import defaultdict
 from itertools import count
 from pathlib import Path
 from typing import Dict
@@ -28,99 +27,100 @@ def dit_file_generator(directory: str, start: int = 1):
     return lambda: next(files)
 
 
-class UploadTaskResultData:
+class UploadTaskResultData(dict):
     """
-    Class to hold data passed between tasks used by the exporter including data
-    messages ultimately displayed to the user.
+    Manage an underlying dict that is used to pass data from Task to Task that
+    will eventually be displayed to the user, whether on the commandline or in
+    the GUI.
 
-    Allows serializing data to a a dict containing only dicts, strings and
-    lists to simplify pickling when sent between celery tasks.
-
-    On the users end inside a management command the GUI [TBD] messages can be
-    read out displayed to the user, showing the status of uploads and notifications.
-
-    :param initial_status: Optional UploadTaskResultData instance to merge data from.
+    By allowing conversion to / from a dict this sidesteps issues that can come
+    up using more complex classes in Celery.
     """
 
-    def __init__(
-        self,
-        initial_status=None,
-        envelope_errors=None,
-        envelope_messages=None,
-        errors=None,
-        messages=None,
-        upload_pks=None,
-    ):
-        self.envelope_errors = defaultdict(list)
-        self.envelope_messages = defaultdict(list)
-        self.errors = []
-        self.messages = []
-        self.upload_pks = []
+    def add_messages(self, messages: list):
+        """
+        :param messages:  list of messages as strings.
 
-        if initial_status is not None:
-            self.errors.extend(initial_status.errors)
-            self.messages.extend(initial_status.messages)
-            self.envelope_errors.update(initial_status.envelope_errors)
-            self.envelope_messages.update(initial_status.envelope_messages)
-            self.upload_pks.extend(initial_status.upload_pks)
+        Add a list of general messages for display to the user, associated with something other than an Envelope in the upload.
+        """
 
-        if envelope_errors is not None:
-            self.envelope_errors.update(envelope_errors)
+        self.setdefault("messages", [])
+        self["messages"].extend(messages)
+        return self
 
-        if envelope_messages is not None:
-            self.envelope_messages.update(envelope_messages)
+    def add_errors(self, errors: list):
+        """
+        :param errors:  list of errors as strings.
 
-        if errors:
-            self.errors.extend(errors)
+        Add a list of general errors for display to the user, associated with something other than an Envelope in the upload.
 
-        if messages:
-            self.messages.extend(messages)
+        Adding errors, will also make the .success property return False.
+        """
+        self.setdefault("errors", [])
+        self["errors"].extend(errors)
+        return self
 
-        if upload_pks:
-            self.upload_pks.extend(upload_pks)
+    def add_envelope_messages(self, envelope_id, messages):
+        """
+        :param envelope_id:  envelope_id as integer
+        :param messages:  list of messages associated with an Envelope
+
+        Add a list of messages for display to the user, associated with an Envelope in an upload.
+        """
+        self.setdefault("envelope_messages", {})
+        self["envelope_messages"].setdefault(envelope_id, [])
+        self["envelope_messages"][envelope_id].extend(messages)
+        return self
+
+    def add_envelope_errors(self, envelope_id, errors: List[str]):
+        """
+        :param envelope_id:  envelope_id as integer
+        :param errors:  list of errors associated with an Envelope
+
+        Add a list of errors for display to the user, associated with an upload.
+
+        Adding envelope errors, will also make the .success property return False.
+        """
+        self.setdefault("envelope_errors", {})
+        self["envelope_errors"].setdefault(envelope_id, [])
+        self["envelope_errors"][envelope_id].extend(errors)
+        return self
+
+    def add_upload_pk(self, pk):
+        """Store the primary key of an Upload object associated with an
+        upload."""
+        self.setdefault("upload_pks", [])
+        self["upload_pks"].append(pk)
+        return self
 
     def output(self, output_file=None):
         """Output user messages and errors to a stream (usually stdout)."""
         if output_file is None:
             output_file = sys.stdout
 
-        if self.errors:
-            for message in self.errors:
-                # Messages not associated with an envelope
-                output_file.write(message)
+        for message in self.get("errors", []):
+            # Errors not associated with an envelope
+            output_file.write(message)
 
-        if self.messages:
-            for message in self.messages:
-                # Messages not associated with an envelope
-                output_file.write(message)
+        for message in self.get("messages", []):
+            # Messages not associated with an envelope
+            output_file.write(message)
 
-        if self.envelope_messages:
-            # Envelope statuses
+        if "envelope_errors" in self:
+            # Error messages and the Envelope ids they are associated with.
             output_file.write("Envelope:         Error:")
-            for envelope_id, message in self.envelope_messages.items():
+            for envelope_id, message in self.get("envelope_errors", {}).items():
                 output_file.write(f"{envelope_id}            {message}")
 
-        if self.envelope_messages:
-            # Envelope statuses
+        if "envelope_messages" in self:
+            # User messages and the Envelope ids they are associated with.
             output_file.write("Envelope:         Message:")
-            for envelope_id, message in self.envelope_messages.items():
+            for envelope_id, message in self.get("envelope_messages", {}).items():
                 output_file.write(f"{envelope_id}            {message}")
 
     @property
     def success(self) -> bool:
-        return not (self.errors or self.envelope_errors)
-
-    def serialize(self):
-        """
-        :return:  class serialized to dict, suitable for returning over celery.
-        """
-        return {
-            "envelope_errors": dict(self.envelope_errors),
-            "envelope_messages": dict(self.envelope_messages),
-            "errors": self.errors,
-            "messages": self.messages,
-            "upload_pks": self.upload_pks,
-        }
+        return not (self.get("errors") or self.get("envelope_errors"))
 
 
 def exceptions_as_messages(
