@@ -9,7 +9,7 @@ from common import migration_operations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("footnotes", "0003_auto_20210219_0955"),
+        ("footnotes", "0004_auto_20210419_1247"),
     ]
 
     operations = [

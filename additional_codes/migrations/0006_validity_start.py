@@ -9,7 +9,7 @@ from common import migration_operations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("additional_codes", "0003_auto_20210219_0955"),
+        ("additional_codes", "0005_auto_20210422_1349"),
     ]
 
     operations = [

@@ -100,8 +100,6 @@ class CertificateForm(forms.ModelForm):
 
 
 class CertificateDescriptionForm(DescriptionForm):
-    valid_between = GovukDateRangeField()
-
     class Meta:
         model = models.CertificateDescription
-        fields = ("description", "valid_between")
+        fields = DescriptionForm.Meta.fields
