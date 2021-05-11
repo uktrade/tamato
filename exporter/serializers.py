@@ -1,7 +1,9 @@
 import logging
 import os
+from collections import defaultdict
 from collections import namedtuple
 from typing import Dict
+from typing import List
 from typing import Sequence
 
 from lxml import etree
@@ -17,6 +19,18 @@ RenderedTransactions = namedtuple(
     "RenderedTransactions",
     "envelope_id output transactions is_oversize max_envelope_size",
 )
+RenderedTransactions.__doc__ = """\
+Transient object that links Transaction objects to the file like object they were rendered to as Envelope XML.
+
+This enables separation of serialization, validation and saving to the database.
+Any of the steps prior to saving to the database may fail fail without incurring a roll-back.
+
+:param envelope_id: Envelope ID, to use later, when creating Envelope objects in the database.
+:param output:  file, or file like object Envelope XML was streamed to.
+:param transactions: Transaction objects that were rendered to XML in this Envelope.
+:param is_oversize: True if the rendered XML was larger than max_size when rendered.
+:param max_envelope_size: Maximum envelope size used when rendering this Envelope.
+"""
 
 
 class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
@@ -113,21 +127,26 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
 
 
 class EnvelopeTooLarge(Exception):
-    pass
+    """Envelope was bigger than max_envelope_size."""
 
 
 def validate_rendered_envelopes(
     rendered_envelopes: Sequence[RenderedTransactions],
-) -> Dict[int, Exception]:
+) -> Dict[int, List[Exception]]:
     """
+    Given a sequence of RenderedTransactions, check the envelope data in their
+    `output` file objects is valid Envelope XML.
+
     :param rendered_envelopes: sequence of RenderedEnvelope
-    :return: dict of {envelope_id: Exception}
+    :return: dict of {envelope_id: [Exception,...]}
     """
-    invalid_envelopes = {}
+    envelope_errors = defaultdict(list)
     for rendered_envelope in rendered_envelopes:
         if rendered_envelope.is_oversize:
-            invalid_envelopes[rendered_envelope.envelope_id] = EnvelopeTooLarge(
-                "Envelope Too Big: {rendered_envelope.envelope_id} > {rendered_envelope.max_envelope_size}",
+            envelope_errors[rendered_envelope.envelope_id].append(
+                EnvelopeTooLarge(
+                    "Envelope Too Big: {rendered_envelope.envelope_id} > {rendered_envelope.max_envelope_size}",
+                ),
             )
 
         envelope_file = rendered_envelope.output
@@ -135,9 +154,9 @@ def validate_rendered_envelopes(
         try:
             validate_envelope(envelope_file)
         except (TaricDataAssertionError, etree.DocumentInvalid) as e:
-            # Nothing to log here - validate_envelope has already logged the issue.
-            invalid_envelopes[rendered_envelope.envelope_id] = e
+            # Nothing to log here; validate_envelope already logged the issue.
+            envelope_errors[rendered_envelope.envelope_id].append(e)
         except BaseException as e:
             logger.exception(e)
-            invalid_envelopes[rendered_envelope.envelope_id] = e
-    return invalid_envelopes
+            envelope_errors[rendered_envelope.envelope_id].append(e)
+    return dict(envelope_errors)

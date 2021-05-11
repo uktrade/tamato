@@ -13,7 +13,7 @@ from taric.models import Envelope
 
 
 def to_hmrc(instance: "Upload", filename: str):
-    """Generate the filepath to upload to HMRC"""
+    """Generate the filepath to upload to HMRC."""
     return str(Path(settings.HMRC_STORAGE_DIRECTORY) / filename)
 
 
@@ -30,6 +30,11 @@ class Upload(models.Model):
     MAX_FILE_SIZE = 50 * 1024 * 1024
 
     def notify_hmrc(self, now: Optional[datetime] = None):
+        """
+        :param now: datetime to set notification_sent to, defaults to now.
+
+        :throws and APIRequestError: if the end-point cannot be contacted.
+        """
         client = HmrcSdesClient()
         client.notify_transfer_ready(self)
 

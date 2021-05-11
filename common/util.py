@@ -5,6 +5,9 @@ from typing import Optional
 from typing import TypeVar
 from typing import Union
 
+import wrapt
+from django.db import transaction
+from django.db.transaction import atomic
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
 
@@ -134,3 +137,56 @@ def get_field_tuple(model, field):
         value = getattr(model, field)
 
     return field, value
+
+
+class TableLock:
+    ACCESS_SHARE = "ACCESS SHARE"
+    ROW_SHARE = "ROW SHARE"
+    ROW_EXCLUSIVE = "ROW EXCLUSIVE"
+    SHARE_UPDATE_EXCLUSIVE = "SHARE UPDATE EXCLUSIVE"
+    SHARE = "SHARE"
+    SHARE_ROW_EXCLUSIVE = "SHARE ROW EXCLUSIVE"
+    EXCLUSIVE = "EXCLUSIVE"
+    ACCESS_EXCLUSIVE = "ACCESS EXCLUSIVE"
+
+    LOCK_TYPES = (
+        ACCESS_SHARE,
+        ROW_SHARE,
+        ROW_EXCLUSIVE,
+        SHARE_UPDATE_EXCLUSIVE,
+        SHARE,
+        SHARE_ROW_EXCLUSIVE,
+        EXCLUSIVE,
+        ACCESS_EXCLUSIVE,
+    )
+
+    @classmethod
+    def acquire_lock(cls, *models, lock=None):
+        """
+        Decorator for PostgreSQL's table-level lock functionality.
+
+        Example:
+            @transaction.commit_on_success
+            @require_lock(MyModel, lock=TableLock.ACCESS_EXCLUSIVE)
+            def myview(request)
+                ...
+
+        PostgreSQL's LOCK Documentation:
+        http://www.postgresql.org/docs/8.3/interactive/sql-lock.html
+        """
+        if lock is None:
+            lock = cls.ACCESS_EXCLUSIVE
+
+        if lock not in cls.LOCK_TYPES:
+            raise ValueError("%s is not a PostgreSQL supported lock mode.")
+
+        @wrapt.decorator
+        def wrapper(wrapped, instance, args, kwargs):
+            with atomic():
+                with transaction.get_connection().cursor() as cursor:
+                    for model in models:
+                        cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+
+                    return wrapped(*args, **kwargs)
+
+        return wrapper

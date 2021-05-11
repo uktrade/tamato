@@ -20,6 +20,7 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.renderers import Counter
 from common.renderers import counter_generator
+from common.tests.util import validate_taric_xml_record_order
 from common.util import TaricDateRange
 
 logger = logging.getLogger(__name__)

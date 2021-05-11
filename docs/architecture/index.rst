@@ -282,6 +282,10 @@ cross-cutting concerns to the rest of the system.
 ^^^^^^^^^^^^^^^
 .. automodule:: exporter
 
+See the documentation on :ref:`the exporter <the-exporter>` for a full
+description.
+
+
 :mod:`hmrc_sdes`
 ^^^^^^^^^^^^^^^^
 .. automodule:: hmrc_sdes
