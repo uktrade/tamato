@@ -95,4 +95,4 @@ class FootnoteForm(forms.ModelForm):
 class FootnoteDescriptionForm(DescriptionForm):
     class Meta:
         model = models.FootnoteDescription
-        fields = ("description", "valid_between")
+        fields = DescriptionForm.Meta.fields

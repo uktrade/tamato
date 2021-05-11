@@ -92,4 +92,4 @@ class AdditionalCodeForm(forms.ModelForm):
 class AdditionalCodeDescriptionForm(DescriptionForm):
     class Meta:
         model = models.AdditionalCodeDescription
-        fields = ("description", "valid_between")
+        fields = DescriptionForm.Meta.fields

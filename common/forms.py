@@ -10,8 +10,6 @@ from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
 
-from common.util import TaricDateRange
-
 
 class DateInputFieldFixed(DateInputField):
     def compress(self, data_list):
@@ -73,7 +71,7 @@ class GovukDateRangeField(DateRangeField):
 
 
 class DescriptionForm(forms.ModelForm):
-    start_date = DateInputFieldFixed(
+    validity_start = DateInputFieldFixed(
         label="Start date",
     )
 
@@ -82,33 +80,15 @@ class DescriptionForm(forms.ModelForm):
         widget=forms.Textarea,
     )
 
-    valid_between = GovukDateRangeField(required=False)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if self.instance.valid_between.lower:
-            self.fields["start_date"].initial = self.instance.valid_between.lower
-        if self.instance.valid_between.upper:
-            self.fields["end_date"].initial = self.instance.valid_between.upper
-
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
-            Field("start_date", context={"legend_size": "govuk-label--s"}),
+            Field("validity_start", context={"legend_size": "govuk-label--s"}),
             Field.textarea("description", label_size=Size.SMALL, rows=5),
             Submit("submit", "Save"),
         )
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        start_date = cleaned_data.pop("start_date", None)
-        cleaned_data["valid_between"] = TaricDateRange(
-            start_date,
-            self.instance.valid_between.upper,
-        )
-
-        return cleaned_data
-
     class Meta:
-        fields = ("description", "valid_between")
+        fields = ("description", "validity_start")

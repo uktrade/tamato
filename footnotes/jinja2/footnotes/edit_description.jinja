@@ -27,7 +27,7 @@
   {% call django_form(action=object.get_url("edit")) %}
     {{ date_range_limit_input({
       "form": form,
-      "field": "valid_between.lower",
+      "field": "validity_start",
       "label": "When does this description start?",
     }) }}
 
