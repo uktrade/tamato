@@ -453,13 +453,15 @@ and <a class="reference internal" href="../importer/taric.html#module-importer.t
 transaction stream into TARIC XML envelopes and handles the process by which
 these envelopes are marshalled to CDS.</p>
 <p>This module also makes available the objects in the system as an <a class="reference external" href="https://www.w3.org/TR/activitypub/">ActivityPub</a> endpoint.</p>
+<p>See the documentation on <a class="reference internal" href="../exporter/index.html#the-exporter"><span class="std std-ref">the exporter</span></a> for a full
+description.</p>
 </section>
 <section id="module-hmrc_sdes">
 <span id="hmrc-sdes"></span><h3><a class="reference internal" href="#module-hmrc_sdes" title="hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a><a class="headerlink" href="#module-hmrc_sdes" title="Permalink to this headline">¶</a></h3>
 <p>Provides the ability to communicate with HMRC’s Secure Data Exchange Service
 (SDES).</p>
 <p>When TaMaTo wants to send tariff updates to CDS, it must first make an
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Envelope</span></code> file available from an SFTP endpoint. It must
+<a class="reference internal" href="../exporter/celery-tasks.html#taric.models.Envelope" title="taric.models.Envelope"><code class="xref py py-class docutils literal notranslate"><span class="pre">Envelope</span></code></a> file available from an SFTP endpoint. It must
 then notify SDES via an HTTPS API that a file is ready to be downloaded. This
 module makes available the API client library to make the call.</p>
 <p>More information about SDES is available from <a class="reference external" href="https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0">the HMRC developer hub</a>.</p>
