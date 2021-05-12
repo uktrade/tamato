@@ -294,6 +294,17 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;valid_between&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">valid_between</span></div>
 
 
+<div class="viewcode-block" id="ValidityStartMixin"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.ValidityStartMixin">[docs]</a><span class="k">class</span> <span class="nc">ValidityStartMixin</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Parse validity start date.&quot;&quot;&quot;</span>
+
+    <span class="n">_additional_components</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.start.date&quot;</span><span class="p">)):</span> <span class="s2">&quot;validity_start&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span></div>
+
+
 <div class="viewcode-block" id="Writable"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.Writable">[docs]</a><span class="k">class</span> <span class="nc">Writable</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A parser which implements the Writable interface can write its changes to</span>

@@ -104,44 +104,12 @@ documentation on <a class="reference internal" href="../adr/0012-ordering-of-tar
 of the tariff are live on the border on a given day. This allows a tariff update
 to be sent to border systems in advance and take effect correctly at some future
 time. Most models use a pair of validity dates, implemented using the
-<a class="reference internal" href="#common.models.mixins.ValidityMixin" title="common.models.mixins.ValidityMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code></a>.</p>
-<dl class="py class">
-<dt id="common.models.mixins.ValidityMixin">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.models.mixins.</span></code><code class="sig-name descname"><span class="pre">ValidityMixin</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins.html#ValidityMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.ValidityMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>The model is live after the validity start date
-(<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.lower</span></code>) and before the validity end date
-(<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.upper</span></code>).</p>
-<p>Start and end validity dates are inclusive – meaning that the model is live
-from the beginning of the start date to the end of the end date. A model
-with the same start and end date is therefore live for 1 day. If the
-validity end date is blank (<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.upper_inf</span></code>) then the model
-is live indefinitely after the start date.</p>
-<p>Validity dates can be modified with a new version of a model, so a model
-that initially has a blank end date can be updated to subsequently add one.</p>
-<dl class="py method">
-<dt id="common.models.mixins.ValidityMixin.objects_with_validity_field">
-<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">objects_with_validity_field</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins.html#ValidityMixin.objects_with_validity_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.ValidityMixin.objects_with_validity_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a QuerySet which will have this model’s validity date field (as
-specified by <a class="reference internal" href="#common.models.mixins.ValidityMixin.validity_field_name" title="common.models.mixins.ValidityMixin.validity_field_name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_field_name</span></code></a>) present on the returned
-models.</p>
-<p>The need for this is that some models (e.g.
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Measure</span></code>) use a validity date that is computed
-on demand as part of a database query and hence is not present on the
-default queryset.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="common.models.mixins.ValidityMixin.validity_field_name">
-<code class="sig-name descname"><span class="pre">validity_field_name</span></code><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><em class="property"> <span class="pre">=</span> <span class="pre">'valid_between'</span></em><a class="headerlink" href="#common.models.mixins.ValidityMixin.validity_field_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>The name of the field that should be used for validity date checking.</p>
-</dd></dl>
-
-</dd></dl>
-
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code>.</p>
 <p>Description models have a requirement that there must always be one live
 description at any time. For this reason, descriptions do not have end dates and
 only have start dates. The description is live up until the start date of the
-next description record.</p>
+next description record. This is implemented using the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityStartMixin</span></code>.</p>
 </section>
 <section id="tracked-models-as-version-control">
 <h3>Tracked models as version control<a class="headerlink" href="#tracked-models-as-version-control" title="Permalink to this headline">¶</a></h3>

@@ -396,11 +396,15 @@
 
         <span class="c1"># for each goods nomenclature version, get all indents</span>
         <span class="k">for</span> <span class="n">good</span> <span class="ow">in</span> <span class="n">goods</span><span class="p">:</span>
-            <span class="n">indents</span> <span class="o">=</span> <span class="n">Indent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
-                <span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
-                <span class="n">indented_goods_nomenclature</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+            <span class="n">indents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">Indent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_end_date</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                    <span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                    <span class="n">indented_goods_nomenclature</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
 
             <span class="n">nodes</span> <span class="o">=</span> <span class="n">Node</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>

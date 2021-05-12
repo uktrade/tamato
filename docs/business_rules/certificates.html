@@ -150,44 +150,6 @@ of the certificate.</p>
 
 </dd></dl>
 
-<dl class="py class">
-<dt id="certificates.business_rules.ContiguousDescriptions">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">certificates.business_rules.</span></code><code class="sig-name descname"><span class="pre">ContiguousDescriptions</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/certificates/business_rules.html#ContiguousDescriptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#certificates.business_rules.ContiguousDescriptions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Certificate description validity period must be adjacent to the previous
-description’s validity period.</p>
-<dl class="py exception">
-<dt id="certificates.business_rules.ContiguousDescriptions.Violation">
-<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#certificates.business_rules.ContiguousDescriptions.Violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Certificate description validity period must be adjacent to the previous
-description’s validity period.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="certificates.business_rules.ContiguousDescriptions.validate">
-<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/certificates/business_rules.html#ContiguousDescriptions.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#certificates.business_rules.ContiguousDescriptions.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt id="certificates.business_rules.NoOverlappingDescriptions">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">certificates.business_rules.</span></code><code class="sig-name descname"><span class="pre">NoOverlappingDescriptions</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/certificates/business_rules.html#NoOverlappingDescriptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#certificates.business_rules.NoOverlappingDescriptions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Validity periods for descriptions with the same SID cannot overlap.</p>
-<dl class="py exception">
-<dt id="certificates.business_rules.NoOverlappingDescriptions.Violation">
-<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#certificates.business_rules.NoOverlappingDescriptions.Violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Validity periods for descriptions with the same SID cannot overlap.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="certificates.business_rules.NoOverlappingDescriptions.validate">
-<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/certificates/business_rules.html#NoOverlappingDescriptions.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#certificates.business_rules.NoOverlappingDescriptions.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 
 

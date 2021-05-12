@@ -39,13 +39,11 @@
             
   <h1>Source code for certificates.business_rules</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Business rules for certificates.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
-<span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
 
 
 <div class="viewcode-block" id="CET1"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.CET1">[docs]</a><span class="k">class</span> <span class="nc">CET1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
@@ -93,44 +91,6 @@
 <span class="sd">    of the certificate.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;certificate_type&quot;</span></div>
-
-
-<div class="viewcode-block" id="NoOverlappingDescriptions"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.NoOverlappingDescriptions">[docs]</a><span class="k">class</span> <span class="nc">NoOverlappingDescriptions</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Validity periods for descriptions with the same SID cannot overlap.&quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="NoOverlappingDescriptions.validate"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.NoOverlappingDescriptions.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">type</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">described_certificate__sid</span><span class="o">=</span><span class="n">description</span><span class="o">.</span><span class="n">described_certificate</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-                <span class="n">sid</span><span class="o">=</span><span class="n">description</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">description</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">description</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">description</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">description</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="ContiguousDescriptions"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.ContiguousDescriptions">[docs]</a><span class="k">class</span> <span class="nc">ContiguousDescriptions</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Certificate description validity period must be adjacent to the previous</span>
-<span class="sd">    description&#39;s validity period.&quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="ContiguousDescriptions.validate"><a class="viewcode-back" href="../../docs/business_rules/certificates.html#certificates.business_rules.ContiguousDescriptions.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">):</span>
-        <span class="c1"># XXX Predecessor is previous version of the same description. Shouldn&#39;t this</span>
-        <span class="c1"># check that all current descriptions are adjacent to each other?</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">type</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">version_group</span><span class="o">=</span><span class="n">description</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
-                <span class="n">valid_between__startswith</span><span class="o">=</span><span class="n">description</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">description</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">description</span><span class="p">)</span></div></div>
 </pre></div>
 
             <div class="clearer"></div>
