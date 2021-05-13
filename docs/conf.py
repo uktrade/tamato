@@ -35,6 +35,17 @@ django.setup()
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
+    "sphinx.ext.graphviz",
+]
+
+# Output in accessible SVG by default
+graphviz_output_format = "svg"
+graphviz_dot_args = [
+    "-Gfontname=Arial",
+    "-Nfontname=Arial",
+    "-Efontname=Arial",
+    "-Nstyle=filled",
+    "-Nfillcolor=white",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
