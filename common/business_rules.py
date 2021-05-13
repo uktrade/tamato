@@ -388,3 +388,26 @@ class DescriptionsRules(BusinessRule):
             filter(lambda x: x > model.valid_between.upper, valid_froms),
         ):
             raise self.generate_violation(model, "start after end")
+
+
+class FootnoteApplicability(BusinessRule):
+    """Check that a footnote type can be applied to a certain model, based on
+    the set of :class:`~footnote.validators.ApplicationCode` that the model
+    reports is valid for itself."""
+
+    applicable_field: str
+    """The field containing a model to check applicability for. It must have a
+    property or attribute called :attr:`footnote_application_codes`."""
+
+    footnote_type_field: str = "associated_footnote__footnote_type"
+    """The field containing a footnote type to check for applicability."""
+
+    def validate(self, model):
+        applicable_model = get_field_tuple(model, self.applicable_field)[1]
+        footnote_type = get_field_tuple(model, self.footnote_type_field)[1]
+
+        if (
+            footnote_type.application_code
+            not in applicable_model.footnote_application_codes
+        ):
+            raise self.violation(model)

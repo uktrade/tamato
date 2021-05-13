@@ -8,6 +8,7 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import only_applicable_after
+from common.tests.util import raises_if
 from common.tests.util import requires_export_refund_nomenclature
 from common.tests.util import requires_meursing_tables
 from common.tests.util import requires_partial_temporary_stop
@@ -1648,29 +1649,30 @@ def test_ME70():
         business_rules.ME70(assoc.transaction).validate(existing)
 
 
-def test_ME71():
-    """Footnotes with a footnote type for which the application type = "CN footnotes"
-    cannot be associated with TARIC codes (codes with pos. 9-10 different from 00)"""
+@pytest.mark.parametrize(
+    ("application_code", "item_id", "error_expected"),
+    (
+        (ApplicationCode.CN_MEASURES, "0123456789", True),
+        (ApplicationCode.CN_MEASURES, "0123456700", False),
+        (ApplicationCode.OTHER_MEASURES, "0123456789", False),
+        (ApplicationCode.OTHER_MEASURES, "0123456700", False),
+        (ApplicationCode.DYNAMIC_FOOTNOTE, "0123456789", False),
+        (ApplicationCode.DYNAMIC_FOOTNOTE, "0123456700", False),
+    ),
+)
+def test_ME71_ME72(application_code, item_id, error_expected):
+    """Footnotes with a footnote type for which the application type = "CN
+    footnotes" cannot be associated with TARIC codes (codes with pos. 9-10
+    different from 00). Footnotes with a footnote type for which the application
+    type = "measure footnotes" can be associated at any level."""
 
     assoc = factories.FootnoteAssociationMeasureFactory.create(
-        associated_footnote__footnote_type__application_code=ApplicationCode.CN_MEASURES,
-        footnoted_measure__goods_nomenclature__item_id="0123456789",
+        associated_footnote__footnote_type__application_code=application_code,
+        footnoted_measure__goods_nomenclature__item_id=item_id,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME71(assoc.transaction).validate(assoc)
-
-
-@pytest.mark.skip(reason="No way to test violation")
-def test_ME72():
-    """Footnotes with a footnote type for which the application type = "measure
-    footnotes" can be associated at any level.
-
-    This refers to footnotes of type PB, IS, CD, MX, TM, EU, CG, TR, CO, OZ, MG, which
-    have an application code of “7”.
-    """
-
-    assert False
 
 
 def test_ME73(date_ranges):

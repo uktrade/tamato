@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Set
+
 from django.db import models
 from django.db import transaction
 from django.db.models import Q
@@ -15,6 +17,7 @@ from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from common.models.mixins.validity import ValidityStartMixin
 from common.util import TaricDateRange
+from footnotes.validators import ApplicationCode
 from measures import business_rules as measures_business_rules
 
 
@@ -53,8 +56,20 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         ),
     )
 
+    @property
+    def is_taric_code(self) -> bool:
+        return self.item_id[8:] != "00"
+
+    @property
+    def footnote_application_codes(self) -> Set[ApplicationCode]:
+        codes = {ApplicationCode.TARIC_NOMENCLATURE, ApplicationCode.DYNAMIC_FOOTNOTE}
+        if not self.is_taric_code:
+            codes.add(ApplicationCode.CN_NOMENCLATURE)
+        return codes
+
     indirect_business_rules = (
         business_rules.NIG10,
+        business_rules.NIG18,
         business_rules.NIG2,
         business_rules.NIG22,
         business_rules.NIG7,
@@ -388,6 +403,7 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
     )
 
     business_rules = (
+        business_rules.NIG18,
         business_rules.NIG22,
         business_rules.NIG23,
         business_rules.NIG24,

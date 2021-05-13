@@ -6,6 +6,7 @@ from django.db.models import Count
 
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
+from common.business_rules import FootnoteApplicability
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
@@ -207,6 +208,13 @@ class NIG12(DescriptionsRules):
     """
 
     model_name = "goods nomenclature"
+
+
+class NIG18(FootnoteApplicability):
+    """Footnotes with a footnote type for which the application type = "CN
+    footnotes" must be linked to CN lines (all codes up to 8 digits)."""
+
+    applicable_field = "goods_nomenclature"
 
 
 class NIG22(ValidityPeriodContained):

@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 
 from common.business_rules import BusinessRule
+from common.business_rules import FootnoteApplicability
 from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
@@ -17,7 +18,6 @@ from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
-from footnotes.validators import ApplicationCode
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
 
@@ -1145,25 +1145,12 @@ class ME70(BusinessRule):
             raise self.violation(association)
 
 
-class ME71(BusinessRule):
+class ME71(FootnoteApplicability):
     """Footnotes with a footnote type for which the application type = "CN footnotes"
     cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).
     """
 
-    def validate(self, association):
-        measure = association.footnoted_measure
-        if measure.goods_nomenclature is None:
-            return
-
-        commodity_code = measure.goods_nomenclature.item_id
-
-        is_taric_code = len(commodity_code) <= 8 or commodity_code[8:] != "00"
-        application_code = (
-            association.associated_footnote.footnote_type.application_code
-        )
-
-        if is_taric_code and application_code == ApplicationCode.CN_MEASURES:
-            raise self.violation(measure)
+    applicable_field = "footnoted_measure"
 
 
 class ME73(MeasureValidityPeriodContained):
