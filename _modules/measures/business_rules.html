@@ -47,6 +47,7 @@
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">FootnoteApplicability</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">MustExist</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
@@ -57,7 +58,6 @@
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">ApplicabilityCode</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
-<span class="kn">from</span> <span class="nn">footnotes.validators</span> <span class="kn">import</span> <span class="n">ApplicationCode</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
 
@@ -1185,25 +1185,12 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ME71"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME71">[docs]</a><span class="k">class</span> <span class="nc">ME71</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ME71"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME71">[docs]</a><span class="k">class</span> <span class="nc">ME71</span><span class="p">(</span><span class="n">FootnoteApplicability</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Footnotes with a footnote type for which the application type = &quot;CN footnotes&quot;</span>
 <span class="sd">    cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ME71.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME71.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
-        <span class="n">measure</span> <span class="o">=</span> <span class="n">association</span><span class="o">.</span><span class="n">footnoted_measure</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">commodity_code</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">item_id</span>
-
-        <span class="n">is_taric_code</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">commodity_code</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">8</span> <span class="ow">or</span> <span class="n">commodity_code</span><span class="p">[</span><span class="mi">8</span><span class="p">:]</span> <span class="o">!=</span> <span class="s2">&quot;00&quot;</span>
-        <span class="n">application_code</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">association</span><span class="o">.</span><span class="n">associated_footnote</span><span class="o">.</span><span class="n">footnote_type</span><span class="o">.</span><span class="n">application_code</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">is_taric_code</span> <span class="ow">and</span> <span class="n">application_code</span> <span class="o">==</span> <span class="n">ApplicationCode</span><span class="o">.</span><span class="n">CN_MEASURES</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+    <span class="n">applicable_field</span> <span class="o">=</span> <span class="s2">&quot;footnoted_measure&quot;</span></div>
 
 
 <div class="viewcode-block" id="ME73"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME73">[docs]</a><span class="k">class</span> <span class="nc">ME73</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>

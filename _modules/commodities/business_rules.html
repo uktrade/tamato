@@ -46,6 +46,7 @@
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">FootnoteApplicability</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">NoOverlapping</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
@@ -247,6 +248,13 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;goods nomenclature&quot;</span></div>
+
+
+<div class="viewcode-block" id="NIG18"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG18">[docs]</a><span class="k">class</span> <span class="nc">NIG18</span><span class="p">(</span><span class="n">FootnoteApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Footnotes with a footnote type for which the application type = &quot;CN</span>
+<span class="sd">    footnotes&quot; must be linked to CN lines (all codes up to 8 digits).&quot;&quot;&quot;</span>
+
+    <span class="n">applicable_field</span> <span class="o">=</span> <span class="s2">&quot;goods_nomenclature&quot;</span></div>
 
 
 <div class="viewcode-block" id="NIG22"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG22">[docs]</a><span class="k">class</span> <span class="nc">NIG22</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
