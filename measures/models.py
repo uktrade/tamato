@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Set
 
 from django.db import models
 from polymorphic.managers import PolymorphicManager
@@ -10,6 +11,7 @@ from common.models import TrackedModel
 from common.models.mixins.validity import ValidityMixin
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from footnotes import validators as footnote_validators
 from measures import business_rules
 from measures import validators
 from measures.querysets import MeasureConditionQuerySet
@@ -525,6 +527,15 @@ class Measure(TrackedModel, ValidityMixin):
     )
 
     objects = PolymorphicManager.from_queryset(MeasuresQuerySet)()
+
+    @property
+    def footnote_application_codes(self) -> Set[footnote_validators.ApplicationCode]:
+        codes = {footnote_validators.ApplicationCode.DYNAMIC_FOOTNOTE}
+        if self.goods_nomenclature:
+            codes.add(footnote_validators.ApplicationCode.OTHER_MEASURES)
+        if not self.goods_nomenclature.is_taric_code:
+            codes.add(footnote_validators.ApplicationCode.CN_MEASURES)
+        return codes
 
     validity_field_name = "db_effective_valid_between"
 

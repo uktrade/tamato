@@ -6,6 +6,7 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import raises_if
 from common.validators import UpdateType
+from footnotes.validators import ApplicationCode
 
 pytestmark = pytest.mark.django_db
 
@@ -243,6 +244,32 @@ def test_NIG12_description_start_before_nomenclature_end(
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.NIG12(early_description.transaction).validate(goods_nomenclature)
+
+
+@pytest.mark.parametrize(
+    ("application_code", "item_id", "error_expected"),
+    (
+        (ApplicationCode.CN_NOMENCLATURE, "0123456789", True),
+        (ApplicationCode.CN_NOMENCLATURE, "0123456700", False),
+        (ApplicationCode.TARIC_NOMENCLATURE, "0123456789", False),
+        (ApplicationCode.TARIC_NOMENCLATURE, "0123456700", False),
+        (ApplicationCode.DYNAMIC_FOOTNOTE, "0123456789", False),
+        (ApplicationCode.DYNAMIC_FOOTNOTE, "0123456700", False),
+    ),
+)
+def test_NIG18_NIG19(application_code, item_id, error_expected):
+    """Footnotes with a footnote type for which the application type = "CN
+    footnotes" must be linked to CN lines (all codes up to 8 digits). Footnotes
+    with a footnote type for which the application type = "TARIC footnotes" can
+    be associated at any level."""
+
+    assoc = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote__footnote_type__application_code=application_code,
+        goods_nomenclature__item_id=item_id,
+    )
+
+    with raises_if(BusinessRuleViolation, error_expected):
+        business_rules.NIG18(assoc.transaction).validate(assoc)
 
 
 def test_NIG21(date_ranges):

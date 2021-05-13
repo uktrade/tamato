@@ -21,7 +21,3 @@ footnote_type_id_validator = RegexValidator(fr"^{FOOTNOTE_TYPE_ID_PATTERN}$")
 
 FOOTNOTE_ID_PATTERN = r"([0-9]{3}|[0-9]{5})"
 footnote_id_validator = RegexValidator(fr"^{FOOTNOTE_ID_PATTERN}$")
-
-
-FootnoteIDValidator = None
-FootnoteTypeIDValidator = None
