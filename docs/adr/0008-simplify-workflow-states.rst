@@ -56,9 +56,10 @@ The interactions between these states are simpler – once approved there
 is a single happy path with branches to a single final state for the
 various unhappy paths. This is represented in the directed graph:
 
-.. code:: dot
+.. digraph:: WorkflowStates
 
-   digraph WorkflowStates {
+     graph [rankdir=LR, splines=ortho]
+
      editing [group=happy]
      editing -> proposed;
      editing -> archived;
@@ -76,9 +77,6 @@ various unhappy paths. This is represented in the directed graph:
      sent -> errored;
 
      published [group=happy]
-   }
-
-|Simplified States|
 
 Consequences
 ------------
@@ -101,5 +99,3 @@ submitted with the same ID there may have to be additional complexity to
 handle this. It is worth noting that this is **not** supported by TTM,
 which always numbers transactions sequentially in an envelope starting
 from 1.
-
-.. |Simplified States| image:: ./images/simplified-states.png
