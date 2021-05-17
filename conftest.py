@@ -6,7 +6,6 @@ from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Type
-from typing import Union
 from unittest.mock import PropertyMock
 from unittest.mock import patch
 
@@ -26,8 +25,6 @@ from pytest_bdd import parsers
 from rest_framework.test import APIClient
 
 from common.models import TrackedModel
-from common.models.mixins.validity import ValidityMixin
-from common.models.mixins.validity import ValidityStartMixin
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
@@ -312,9 +309,9 @@ def validity_period_contained(date_ranges):
 
 
 @pytest.fixture
-def imported_fields_match(valid_user, settings):
+def run_xml_import(valid_user, settings):
     """
-    Provides a function for checking a model can be imported correctly.
+    Returns a function for checking a model can be imported correctly.
 
     The function takes the following parameters:
         model: A model instance, or a factory class used to build the model.
@@ -331,18 +328,17 @@ def imported_fields_match(valid_user, settings):
     """
 
     def check(
-        model: Union[TrackedModel, Type[DjangoModelFactory]],
+        factory: Callable[[], TrackedModel],
         serializer: Type[TrackedModelSerializer],
     ) -> TrackedModel:
         get_nursery().cache.clear()
         settings.SKIP_WORKBASKET_VALIDATION = True
-        if isinstance(model, type) and issubclass(model, DjangoModelFactory):
-            model = model.build(update_type=UpdateType.CREATE)
 
+        model = factory()
         assert isinstance(
             model,
             TrackedModel,
-        ), "Either a factory or an object instance needs to be provided"
+        ), "A factory that returns an object instance needs to be provided"
 
         xml = generate_test_import_xml(
             serializer(model, context={"format": "xml"}).data,
@@ -375,89 +371,101 @@ def imported_fields_match(valid_user, settings):
     return check
 
 
-@pytest.fixture(params=(UpdateType.UPDATE, UpdateType.DELETE))
-def update_imported_fields_match(
-    imported_fields_match,
+@pytest.fixture(
+    params=[v for v in UpdateType],
+    ids=[v.name for v in UpdateType],
+)
+def update_type(request):
+    return request.param
+
+
+@pytest.fixture
+def imported_fields_match(
+    run_xml_import,
     date_ranges,
-    request,
+    update_type,
 ):
     """
-    Provides much the same functionality as imported_fields_match, however makes
-    some adjustments for updates and deletes.
+    Returns a function that serializes a model to TARIC XML, inputs this to the
+    importer, then fetches the newly created model from the database and
+    compares the fields. This is much the same functionality as `run_xml_import`
+    but with some adjustments for updates and deletes.
 
-    In addition to imported_fields_match a previously created object is
-    generated. The data around version groups is also tested.
+    A dict of dependencies can also be injected which will be added to the model
+    when it is built. For any of the values that are factories, they will be
+    built into real models and saved before the import is carried out.
+
+    In addition to `run_xml_import` a previous version of the object is
+    generated when testing updates or deletes as these can only occur after a
+    create. The data around version groups is also tested.
     """
 
     def check(
-        model: Union[TrackedModel, Type[DjangoModelFactory]],
+        factory: Type[DjangoModelFactory],
         serializer: Type[TrackedModelSerializer],
-        parent_model: TrackedModel = None,
-        dependencies: Dict[str, Union[TrackedModel, Type[DjangoModelFactory]]] = None,
-        kwargs: Dict[str, Any] = None,
+        dependencies: Optional[Dict[str, Any]] = None,
         validity=(date_ranges.normal, date_ranges.adjacent_no_end),
     ):
-        update_type = request.param
-        if isinstance(model, type) and issubclass(model, DjangoModelFactory):
-            if parent_model:
-                raise ValueError("Can't have parent_model and a factory defined")
+        Model: Type[TrackedModel] = factory._meta.model
+        previous_version: TrackedModel = None
 
-            # Build kwargs and dependencies needed to make a complete model.
-            # This can't rely on the factory itself as the dependencies need
-            # to be in the database and .build does not save anything.
-            kwargs = kwargs or {}
-            for name, dependency_model in (dependencies or {}).items():
-                if isinstance(dependency_model, type) and issubclass(
-                    dependency_model,
-                    DjangoModelFactory,
-                ):
-                    kwargs[name] = dependency_model.create()
-                else:
-                    kwargs[name] = dependency_model
+        # Build kwargs and dependencies needed to make a complete model. This
+        # can't rely on the factory itself as the dependencies need to be in the
+        # database before the import else they will also appear in the XML.
+        kwargs = {}
+        for name, dependency_model in (dependencies or {}).items():
+            if isinstance(dependency_model, type) and issubclass(
+                dependency_model,
+                DjangoModelFactory,
+            ):
+                kwargs[name] = dependency_model.create()
+            else:
+                kwargs[name] = dependency_model
 
+        if update_type in (UpdateType.UPDATE, UpdateType.DELETE):
             if validity:
-                if issubclass(model, (ValidityMixin, factories.ValidityFactoryMixin)):
+                if issubclass(factory, factories.ValidityFactoryMixin):
                     kwargs["valid_between"] = validity[0]
                 elif issubclass(
-                    model,
-                    (ValidityStartMixin, factories.ValidityStartFactoryMixin),
+                    factory,
+                    factories.ValidityStartFactoryMixin,
                 ):
                     kwargs["validity_start"] = validity[0].lower
 
-            parent_model = model.create(**kwargs)
+            previous_version = factory.create(**kwargs)
+            kwargs.update(previous_version.get_identifying_fields())
 
-            kwargs.update(parent_model.get_identifying_fields())
-            if validity:
-                if issubclass(model, (ValidityMixin, factories.ValidityFactoryMixin)):
-                    kwargs["valid_between"] = validity[1]
-                elif issubclass(
-                    model,
-                    (ValidityStartMixin, factories.ValidityStartFactoryMixin),
-                ):
-                    kwargs["validity_start"] = validity[1].lower
-
-            model = model.build(
-                update_type=update_type,
-                **kwargs,
-            )
-        elif not parent_model:
-            raise ValueError("parent_model must be defined if an instance is provided")
+        if validity:
+            if issubclass(factory, factories.ValidityFactoryMixin):
+                kwargs["valid_between"] = validity[1]
+            elif issubclass(
+                factory,
+                factories.ValidityStartFactoryMixin,
+            ):
+                kwargs["validity_start"] = validity[1].lower
 
         try:
-            updated_model = imported_fields_match(
-                model,
+            updated_model = run_xml_import(
+                lambda: factory.build(
+                    update_type=update_type,
+                    **kwargs,
+                ),
                 serializer,
             )
-        except model.__class__.DoesNotExist:
-            if update_type == UpdateType.UPDATE:
+        except Model.DoesNotExist:
+            if update_type == UpdateType.DELETE:
+                updated_model = Model.objects.get(
+                    update_type=UpdateType.DELETE,
+                    **previous_version.get_identifying_fields(),
+                )
+            else:
                 raise
-            updated_model = model.__class__.objects.get(
-                update_type=UpdateType.DELETE, **model.get_identifying_fields()
-            )
 
-        version_group = parent_model.version_group
+        version_group = (previous_version or updated_model).version_group
         version_group.refresh_from_db()
-        assert version_group.versions.count() == 2
+        assert version_group.versions.count() == (
+            1 if update_type == UpdateType.CREATE else 2
+        )
         assert version_group == updated_model.version_group
         assert version_group.current_version == updated_model
         assert version_group.current_version.update_type == update_type
