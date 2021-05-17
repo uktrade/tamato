@@ -68,7 +68,6 @@ def test_quota_suspension_importer(imported_fields_match, date_ranges):
         dependencies={
             "quota_definition": factories.QuotaDefinitionFactory,
         },
-        validity=[date_ranges.normal, date_ranges.adjacent_later],
     )
 
 
@@ -79,7 +78,6 @@ def test_quota_blocking_importer(imported_fields_match, date_ranges):
         dependencies={
             "quota_definition": factories.QuotaDefinitionFactory,
         },
-        validity=[date_ranges.normal, date_ranges.adjacent_later],
     )
 
 
@@ -92,5 +90,4 @@ def test_quota_event_importer(subrecord_code, imported_fields_match):
             "quota_definition": factories.QuotaDefinitionFactory,
             "subrecord_code": subrecord_code,
         },
-        validity=False,
     )

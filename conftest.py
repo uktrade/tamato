@@ -404,7 +404,6 @@ def imported_fields_match(
         factory: Type[DjangoModelFactory],
         serializer: Type[TrackedModelSerializer],
         dependencies: Optional[Dict[str, Any]] = None,
-        validity=(date_ranges.normal, date_ranges.adjacent_no_end),
     ):
         Model: Type[TrackedModel] = factory._meta.model
         previous_version: TrackedModel = None
@@ -423,26 +422,8 @@ def imported_fields_match(
                 kwargs[name] = dependency_model
 
         if update_type in (UpdateType.UPDATE, UpdateType.DELETE):
-            if validity:
-                if issubclass(factory, factories.ValidityFactoryMixin):
-                    kwargs["valid_between"] = validity[0]
-                elif issubclass(
-                    factory,
-                    factories.ValidityStartFactoryMixin,
-                ):
-                    kwargs["validity_start"] = validity[0].lower
-
             previous_version = factory.create(**kwargs)
             kwargs.update(previous_version.get_identifying_fields())
-
-        if validity:
-            if issubclass(factory, factories.ValidityFactoryMixin):
-                kwargs["valid_between"] = validity[1]
-            elif issubclass(
-                factory,
-                factories.ValidityStartFactoryMixin,
-            ):
-                kwargs["validity_start"] = validity[1].lower
 
         try:
             updated_model = run_xml_import(
