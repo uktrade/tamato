@@ -2,66 +2,57 @@ import pytest
 
 from common.tests import factories
 from common.tests.util import validate_taric_xml
+from common.xml.namespaces import nsmap
 from quotas.validators import QuotaEventType
 
 pytestmark = pytest.mark.django_db
 
 
 @validate_taric_xml(factories.QuotaOrderNumberFactory, factory_kwargs={"origin": None})
-def test_quota_order_number_xml(api_client, taric_schema, approved_transaction, xml):
-    element = xml.find(".//quota.order.number", xml.nsmap)
+def test_quota_order_number_xml(xml):
+    element = xml.find(".//oub:quota.order.number", nsmap)
     assert element is not None
 
 
 @validate_taric_xml(factories.QuotaOrderNumberOriginFactory)
-def test_quota_order_number_origin_xml(
-    api_client,
-    taric_schema,
-    approved_transaction,
-    xml,
-):
-    element = xml.find(".//quota.order.number.origin", xml.nsmap)
+def test_quota_order_number_origin_xml(xml):
+    element = xml.find(".//oub:quota.order.number.origin", nsmap)
     assert element is not None
 
 
 @validate_taric_xml(factories.QuotaOrderNumberOriginExclusionFactory)
-def test_quota_order_number_origin_exclusion_xml(
-    api_client,
-    taric_schema,
-    approved_transaction,
-    xml,
-):
-    element = xml.find(".//quota.order.number.origin.exclusions", xml.nsmap)
+def test_quota_order_number_origin_exclusion_xml(xml):
+    element = xml.find(".//oub:quota.order.number.origin.exclusions", nsmap)
     assert element is not None
 
 
 @validate_taric_xml(factories.QuotaDefinitionWithQualifierFactory)
-def test_quota_definition_xml(api_client, taric_schema, approved_transaction, xml):
-    element = xml.find(".//quota.definition", xml.nsmap)
+def test_quota_definition_xml(xml):
+    element = xml.find(".//oub:quota.definition", nsmap)
     assert element is not None
-    element = xml.find(".//monetary.unit.code", xml.nsmap)
+    element = xml.find(".//oub:monetary.unit.code", nsmap)
     assert element is not None
-    element = xml.find(".//measurement.unit.code", xml.nsmap)
+    element = xml.find(".//oub:measurement.unit.code", nsmap)
     assert element is not None
-    element = xml.find(".//measurement.unit.qualifier.code", xml.nsmap)
+    element = xml.find(".//oub:measurement.unit.qualifier.code", nsmap)
     assert element is not None
 
 
 @validate_taric_xml(factories.QuotaAssociationFactory)
-def test_quota_association_xml(api_client, taric_schema, approved_transaction, xml):
-    element = xml.find(".//quota.association", xml.nsmap)
+def test_quota_association_xml(xml):
+    element = xml.find(".//oub:quota.association", nsmap)
     assert element is not None
 
 
 @validate_taric_xml(factories.QuotaSuspensionFactory)
-def test_quota_suspension_xml(api_client, taric_schema, approved_transaction, xml):
-    element = xml.find(".//quota.suspension.period", xml.nsmap)
+def test_quota_suspension_xml(xml):
+    element = xml.find(".//oub:quota.suspension.period", nsmap)
     assert element is not None
 
 
 @validate_taric_xml(factories.QuotaBlockingFactory)
-def test_quota_blocking_xml(api_client, taric_schema, approved_transaction, xml):
-    element = xml.find(".//quota.blocking.period", xml.nsmap)
+def test_quota_blocking_xml(xml):
+    element = xml.find(".//oub:quota.blocking.period", nsmap)
     assert element is not None
 
 
@@ -94,7 +85,7 @@ def test_quota_event_xml(
             transaction=approved_transaction,
         ),
     )
-    def test_event_type(api_client, taric_schema, approved_transaction, xml):
+    def test_event_type(xml):
         element = xml.find(f".//{tag}", xml.nsmap)
         assert element is not None
 

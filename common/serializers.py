@@ -20,8 +20,8 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.renderers import Counter
 from common.renderers import counter_generator
-from common.tests.util import validate_taric_xml_record_order
 from common.util import TaricDateRange
+from common.xml.namespaces import nsmap
 
 logger = logging.getLogger(__name__)
 
@@ -364,3 +364,18 @@ def validate_envelope(envelope_file, skip_declaration=False):
         except TaricDataAssertionError as e:
             logger.error(e.args[0])
             raise
+
+
+def validate_taric_xml_record_order(xml):
+    """Raise AssertionError if any record codes are not in order."""
+    for transaction in xml.findall(".//env:transaction", namespaces=nsmap):
+        last_code = "00000"
+        for record in transaction.findall(".//oub:record", namespaces=nsmap):
+            record_code = record.findtext(".//oub:record.code", namespaces=nsmap)
+            subrecord_code = record.findtext(".//oub:subrecord.code", namespaces=nsmap)
+            full_code = record_code + subrecord_code
+            if full_code < last_code:
+                raise TaricDataAssertionError(
+                    f"Elements out of order in XML: {last_code}, {full_code}",
+                )
+            last_code = full_code
