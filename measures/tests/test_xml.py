@@ -2,146 +2,144 @@ import pytest
 
 from common.tests import factories
 from common.tests.util import validate_taric_xml
+from common.xml.namespaces import nsmap
 
 pytestmark = pytest.mark.django_db
 
 
 @validate_taric_xml(factories.AdditionalCodeTypeMeasureTypeFactory)
-def test_additional_code_type_measure_type_xml(
-    api_client, taric_schema, approved_transaction, xml
-):
-    assert xml.find(".//additional.code.type.measure.type", xml.nsmap) is not None
+def test_additional_code_type_measure_type_xml(xml):
+    assert xml.find(".//oub:additional.code.type.measure.type", nsmap) is not None
 
 
 @validate_taric_xml(factories.DutyExpressionFactory)
-def test_duty_expression_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//duty.expression", xml.nsmap) is not None
-    assert xml.find(".//duty.expression.description", xml.nsmap) is not None
+def test_duty_expression_xml(xml):
+    assert xml.find(".//oub:duty.expression", nsmap) is not None
+    assert xml.find(".//oub:duty.expression.description", nsmap) is not None
     assert (
-        xml.findtext(".//duty.expression.description/language.id", namespaces=xml.nsmap)
+        xml.findtext(
+            ".//oub:duty.expression.description/oub:language.id", namespaces=nsmap
+        )
         == "EN"
     )
 
 
 @validate_taric_xml(factories.FootnoteAssociationMeasureFactory)
-def test_footnote_association_measure_xml(
-    api_client, taric_schema, approved_transaction, xml
-):
-    assert xml.find(".//footnote.association.measure", xml.nsmap) is not None
+def test_footnote_association_measure_xml(xml):
+    assert xml.find(".//oub:footnote.association.measure", nsmap) is not None
 
 
 @validate_taric_xml(factories.MeasureWithQuotaFactory, check_order=False)
-def test_measure_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measure", xml.nsmap) is not None
+def test_measure_xml(xml):
+    assert xml.find(".//oub:measure", nsmap) is not None
 
 
 @validate_taric_xml(factories.MeasureActionFactory)
-def test_measure_action_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measure.action", xml.nsmap) is not None
-    assert xml.find(".//measure.action.description", xml.nsmap) is not None
+def test_measure_action_xml(xml):
+    assert xml.find(".//oub:measure.action", nsmap) is not None
+    assert xml.find(".//oub:measure.action.description", nsmap) is not None
     assert (
-        xml.findtext(".//measure.action.description/language.id", namespaces=xml.nsmap)
+        xml.findtext(
+            ".//oub:measure.action.description/oub:language.id", namespaces=nsmap
+        )
         == "EN"
     )
 
 
 @validate_taric_xml(factories.MeasureComponentFactory)
-def test_measure_component_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measure.component", xml.nsmap) is not None
+def test_measure_component_xml(xml):
+    assert xml.find(".//oub:measure.component", nsmap) is not None
 
 
 @validate_taric_xml(factories.MeasureConditionFactory)
-def test_measure_condition_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measure.condition", xml.nsmap) is not None
+def test_measure_condition_xml(xml):
+    assert xml.find(".//oub:measure.condition", nsmap) is not None
 
 
 @validate_taric_xml(factories.MeasureConditionCodeFactory)
-def test_measure_condition_code_xml(
-    api_client, taric_schema, approved_transaction, xml
-):
-    assert xml.find(".//measure.condition.code", xml.nsmap) is not None
-    assert xml.find(".//measure.condition.code.description", xml.nsmap) is not None
+def test_measure_condition_code_xml(xml):
+    assert xml.find(".//oub:measure.condition.code", nsmap) is not None
+    assert xml.find(".//oub:measure.condition.code.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//measure.condition.code.description/language.id", namespaces=xml.nsmap
+            ".//oub:measure.condition.code.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )
 
 
 @validate_taric_xml(factories.MeasureConditionComponentFactory)
-def test_measure_condition_component_xml(
-    api_client, taric_schema, approved_transaction, xml
-):
-    assert xml.find(".//measure.condition.component", xml.nsmap) is not None
+def test_measure_condition_component_xml(xml):
+    assert xml.find(".//oub:measure.condition.component", nsmap) is not None
 
 
 @validate_taric_xml(factories.MeasureExcludedGeographicalMembershipFactory)
-def test_measure_excluded_geographical_area_xml(
-    api_client, taric_schema, approved_transaction, xml
-):
-    assert xml.find(".//measure.excluded.geographical.area", xml.nsmap) is not None
+def test_measure_excluded_geographical_area_xml(xml):
+    assert xml.find(".//oub:measure.excluded.geographical.area", nsmap) is not None
 
 
 @validate_taric_xml(factories.MeasureTypeFactory)
-def test_measure_type_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measure.type", xml.nsmap) is not None
-    assert xml.find(".//measure.type.description", xml.nsmap) is not None
+def test_measure_type_xml(xml):
+    assert xml.find(".//oub:measure.type", nsmap) is not None
+    assert xml.find(".//oub:measure.type.description", nsmap) is not None
     assert (
-        xml.findtext(".//measure.type.description/language.id", namespaces=xml.nsmap)
+        xml.findtext(
+            ".//oub:measure.type.description/oub:language.id", namespaces=nsmap
+        )
         == "EN"
     )
 
 
 @validate_taric_xml(factories.MeasureTypeSeriesFactory)
-def test_measure_type_series_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measure.type.series", xml.nsmap) is not None
-    assert xml.find(".//measure.type.series.description", xml.nsmap) is not None
+def test_measure_type_series_xml(xml):
+    assert xml.find(".//oub:measure.type.series", nsmap) is not None
+    assert xml.find(".//oub:measure.type.series.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//measure.type.series.description/language.id", namespaces=xml.nsmap
+            ".//oub:measure.type.series.description/oub:language.id", namespaces=nsmap
         )
         == "EN"
     )
 
 
 @validate_taric_xml(factories.MeasurementFactory)
-def test_measurement_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measurement", xml.nsmap) is not None
+def test_measurement_xml(xml):
+    assert xml.find(".//oub:measurement", nsmap) is not None
 
 
 @validate_taric_xml(factories.MeasurementUnitFactory)
-def test_measurement_unit_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//measurement.unit", xml.nsmap) is not None
-    assert xml.find(".//measurement.unit.description", xml.nsmap) is not None
+def test_measurement_unit_xml(xml):
+    assert xml.find(".//oub:measurement.unit", nsmap) is not None
+    assert xml.find(".//oub:measurement.unit.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//measurement.unit.description/language.id", namespaces=xml.nsmap
+            ".//oub:measurement.unit.description/oub:language.id", namespaces=nsmap
         )
         == "EN"
     )
 
 
 @validate_taric_xml(factories.MeasurementUnitQualifierFactory)
-def test_measurement_unit_qualifier_xml(
-    api_client, taric_schema, approved_transaction, xml
-):
-    assert xml.find(".//measurement.unit.qualifier", xml.nsmap) is not None
-    assert xml.find(".//measurement.unit.qualifier.description", xml.nsmap) is not None
+def test_measurement_unit_qualifier_xml(xml):
+    assert xml.find(".//oub:measurement.unit.qualifier", nsmap) is not None
+    assert xml.find(".//oub:measurement.unit.qualifier.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//measurement.unit.qualifier.description/language.id",
-            namespaces=xml.nsmap,
+            ".//oub:measurement.unit.qualifier.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )
 
 
 @validate_taric_xml(factories.MonetaryUnitFactory)
-def test_monetary_unit_xml(api_client, taric_schema, approved_transaction, xml):
-    assert xml.find(".//monetary.unit", xml.nsmap) is not None
-    assert xml.find(".//monetary.unit.description", xml.nsmap) is not None
+def test_monetary_unit_xml(xml):
+    assert xml.find(".//oub:monetary.unit", nsmap) is not None
+    assert xml.find(".//oub:monetary.unit.description", nsmap) is not None
     assert (
-        xml.findtext(".//monetary.unit.description/language.id", namespaces=xml.nsmap)
+        xml.findtext(
+            ".//oub:monetary.unit.description/oub:language.id", namespaces=nsmap
+        )
         == "EN"
     )
