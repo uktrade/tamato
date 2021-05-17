@@ -7,6 +7,7 @@ from django.db import DataError
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
+from common.tests.util import raises_if
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas import business_rules
@@ -380,34 +381,41 @@ def test_QD15():
     definition."""
 
 
-def test_prevent_quota_definition_deletion(unapproved_transaction, date_ranges):
+@pytest.mark.parametrize(
+    ("date_range", "error_expected"),
+    (
+        ("future", False),
+        ("earlier", True),
+    ),
+)
+def test_prevent_quota_definition_deletion(
+    unapproved_transaction,
+    date_ranges,
+    update_type,
+    date_range,
+    error_expected,
+):
     """
     QAM does not like handling deletions of active Quota Definitions.
 
     Ensure an active Quota Definition cannot be deleted.
     """
     quota_definition = factories.QuotaDefinitionFactory.create(
-        valid_between=date_ranges.future,
+        valid_between=getattr(date_ranges, date_range),
     )
+
     deleted = quota_definition.new_draft(
         workbasket=unapproved_transaction.workbasket,
         transaction=unapproved_transaction,
-        update_type=UpdateType.DELETE,
+        update_type=update_type,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    error_expected = error_expected and update_type == UpdateType.DELETE
+
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.PreventQuotaDefinitionDeletion(deleted.transaction).validate(
             deleted,
         )
-
-    quota_definition.valid_between = date_ranges.earlier
-    deleted = quota_definition.new_draft(
-        workbasket=unapproved_transaction.workbasket,
-        transaction=unapproved_transaction,
-        update_type=UpdateType.DELETE,
-    )
-
-    business_rules.PreventQuotaDefinitionDeletion(deleted.transaction).validate(deleted)
 
 
 @pytest.mark.parametrize(

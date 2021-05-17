@@ -217,7 +217,7 @@ class PreventQuotaDefinitionDeletion(BusinessRule):
 
     def validate(self, quota_definition):
         if quota_definition.update_type == UpdateType.DELETE:
-            if quota_definition.valid_between.lower >= date.today():
+            if quota_definition.valid_between.lower <= date.today():
                 raise self.violation(quota_definition)
 
 
