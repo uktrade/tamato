@@ -56,9 +56,9 @@
 
 <span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
-<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
+<span class="kn">from</span> <span class="nn">common.xml.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
+<span class="kn">from</span> <span class="nn">common.xml.namespaces</span> <span class="kn">import</span> <span class="n">nsmap</span>
 <span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">Tag</span>
-<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">nsmap</span>
 <span class="kn">from</span> <span class="nn">importer.nursery</span> <span class="kn">import</span> <span class="n">get_nursery</span>
 <span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ElementParser</span>
 <span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ParserError</span>
