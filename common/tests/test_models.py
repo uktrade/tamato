@@ -12,6 +12,7 @@ from common.tests import models
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
+from common.tests.models import TestModelDescription1
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
 from regulations.models import Group
@@ -364,3 +365,29 @@ def test_get_descriptions_with_update(sample_model, valid_user):
 
     assert new_description in description_queryset
     assert description not in description_queryset
+
+
+def test_get_description_dates(sample_model, date_ranges):
+    early_description = factories.TestModelDescription1Factory.create(
+        described_record=sample_model,
+        validity_start=date_ranges.adjacent_earlier.lower,
+    )
+    current_description = factories.TestModelDescription1Factory.create(
+        described_record=sample_model,
+        validity_start=date_ranges.normal.lower,
+    )
+    future_description = factories.TestModelDescription1Factory.create(
+        described_record=sample_model,
+        validity_start=date_ranges.adjacent_later.lower,
+    )
+
+    objects = TestModelDescription1.objects.with_end_date()
+    earlier = objects.as_at(date_ranges.adjacent_earlier.upper).get()
+    assert earlier.validity_end == date_ranges.adjacent_earlier.upper
+    assert earlier == early_description
+    current = objects.as_at(date_ranges.normal.upper).get()
+    assert current.validity_end == date_ranges.normal.upper
+    assert current == current_description
+    future = objects.as_at(date_ranges.adjacent_later.upper).get()
+    assert future.validity_end is None
+    assert future == future_description

@@ -3,6 +3,7 @@ database outside of a test environment."""
 from django.db import models
 
 from common.models import TrackedModel
+from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 
 
@@ -37,7 +38,7 @@ class TestModel3(TrackedModel, ValidityMixin):
     linked_model = models.ForeignKey(TestModel1, null=True, on_delete=models.PROTECT)
 
 
-class TestModelDescription1(TrackedModel, ValidityMixin):
+class TestModelDescription1(DescriptionMixin, TrackedModel):
     __test__ = False
     record_code = "01"
     subrecord_code = "02"

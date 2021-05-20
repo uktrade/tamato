@@ -5,15 +5,18 @@ from typing import Set
 from django.db import models
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.manager import Manager
 from polymorphic.managers import PolymorphicManager
 from treebeard.mp_tree import MP_Node
 
 from commodities import business_rules
 from commodities import validators
+from commodities.querysets import GoodsNomenclatureIndentNodeQuerySet
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
 from common.models import NumericSID
 from common.models import TrackedModel
 from common.models.mixins.description import DescriptionMixin
+from common.models.mixins.description import DescriptionQueryset
 from common.models.mixins.validity import ValidityMixin
 from common.models.mixins.validity import ValidityStartMixin
 from common.util import TaricDateRange
@@ -291,12 +294,16 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
     def __str__(self):
         return f"path={self.path}, indent=({self.indent})"
 
+    objects = Manager.from_queryset(GoodsNomenclatureIndentNodeQuerySet)()
 
-class GoodsNomenclatureDescription(TrackedModel, DescriptionMixin):
+
+class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     record_code = "400"
     subrecord_code = "15"
     period_record_code = "400"
     period_subrecord_code = "10"
+
+    objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
 
     sid = NumericSID()
     described_goods_nomenclature = models.ForeignKey(

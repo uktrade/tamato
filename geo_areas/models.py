@@ -173,7 +173,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         )
 
 
-class GeographicalAreaDescription(TrackedModel, DescriptionMixin):
+class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
     record_code = "250"
     subrecord_code = "10"
 
@@ -187,6 +187,11 @@ class GeographicalAreaDescription(TrackedModel, DescriptionMixin):
     )
     description = ShortDescription()
     sid = SignedIntSID(db_index=True)
+
+    @classmethod
+    @property
+    def described_object_field(cls):
+        return cls.area.field
 
     class Meta:
         ordering = ("validity_start",)
