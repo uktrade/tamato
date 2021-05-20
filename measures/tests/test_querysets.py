@@ -1,5 +1,8 @@
+from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import List
+from typing import Sequence
 from typing import Tuple
 
 import factory
@@ -29,11 +32,23 @@ pytestmark = pytest.mark.django_db
         factories.MeasureConditionFactory._meta.model.__name__,
     ),
 )
+@pytest.mark.parametrize(
+    ("reorder"),
+    (
+        lambda x: x,
+        lambda x: reversed(x),
+    ),
+    ids=(
+        "normal",
+        "reversed",
+    ),
+)
 def test_duty_sentence_generation(
     component_factory: factory.django.DjangoModelFactory,
     model_factory: factory.django.DjangoModelFactory,
     field: str,
     reversible_duty_sentence_data: Tuple[str, List[Dict]],
+    reorder: Callable[[Sequence[Any]], Sequence[Any]],
 ):
     """
     Links components to the same model and tests the resulting single duty
@@ -47,7 +62,7 @@ def test_duty_sentence_generation(
     expected, component_data = reversible_duty_sentence_data
 
     model = model_factory()
-    for kwargs in component_data:
+    for kwargs in reorder(component_data):
         component_factory(
             **{field: model},
             **kwargs,
