@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from django.db.models.fields import Field
 from django.urls import NoReverseMatch
 from django.urls import reverse
@@ -10,6 +8,7 @@ from common.business_rules import UpdateValidity
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.records import TrackedModelQuerySet
+from common.util import classproperty
 
 
 class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
@@ -24,12 +23,16 @@ class DescriptionMixin(ValidityStartMixin):
         UpdateValidity,
     )
 
-    @cached_property
-    def described_object_field(self) -> Field:
-        for rel, _ in self.get_relations():
+    @classproperty
+    def described_object_field(cls) -> Field:
+        for rel, _ in cls.get_relations():
             if rel.name.startswith("described_"):
                 return rel
-        raise TypeError(f"{self} should have a described field.")
+        raise TypeError(f"{cls} should have a described field.")
+
+    @classproperty
+    def validity_over(cls):
+        return cls.described_object_field.name
 
     def get_described_object(self):
         return getattr(self, self.described_object_field.name)

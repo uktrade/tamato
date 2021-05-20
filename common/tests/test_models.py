@@ -370,6 +370,51 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     assert description not in description_queryset
 
 
+def test_get_description_dates(description_factory, date_ranges):
+    """Verify that description models know how to calculate their end dates,
+    which should be up until the next description model starts or inifnite if
+    there is no later one."""
+    early_description = description_factory.create(
+        validity_start=date_ranges.adjacent_earlier.lower,
+    )
+
+    unrelated_description = description_factory.create(
+        # Note this doesn't share a described_record with above.
+        validity_start=date_ranges.adjacent_earlier.upper,
+    )
+
+    described_record = early_description.get_described_object()
+    current_description = description_factory.create(
+        **{early_description.described_object_field.name: described_record},
+        validity_start=date_ranges.normal.lower,
+    )
+
+    future_description = description_factory.create(
+        **{early_description.described_object_field.name: described_record},
+        validity_start=date_ranges.adjacent_later.lower,
+    )
+
+    objects = (
+        type(early_description)
+        .objects.filter(
+            **{early_description.described_object_field.name: described_record},
+        )
+        .with_end_date()
+    )
+
+    earlier = objects.as_at(date_ranges.adjacent_earlier.upper).get()
+    assert earlier.validity_end == date_ranges.adjacent_earlier.upper
+    assert earlier == early_description
+
+    current = objects.as_at(date_ranges.normal.upper).get()
+    assert current.validity_end == date_ranges.normal.upper
+    assert current == current_description
+
+    future = objects.as_at(date_ranges.adjacent_later.upper).get()
+    assert future.validity_end is None
+    assert future == future_description
+
+
 def test_trackedmodel_str(trackedmodel_factory):
     """Verify no __str__ methods of TrackedModel classes crash or return non-
     strings."""
