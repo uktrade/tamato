@@ -19,6 +19,7 @@ from django.db.transaction import atomic
 from django.template import loader
 from django.urls import NoReverseMatch
 from django.urls import reverse
+from django_cte.cte import CTEQuerySet
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
@@ -32,7 +33,7 @@ from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
 
-class TrackedModelQuerySet(PolymorphicQuerySet):
+class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
