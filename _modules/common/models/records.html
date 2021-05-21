@@ -727,7 +727,13 @@
         <span class="n">prefix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;url_pattern_name_prefix&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
             <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">prefix</span></div>
+        <span class="k">return</span> <span class="n">prefix</span>
+
+    <span class="k">def</span> <span class="nf">get_indefinite_article</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns &quot;a&quot; or &quot;an&quot; based on the verbose_name.&quot;&quot;&quot;</span>
+
+        <span class="c1"># XXX naive, but works for all current models</span>
+        <span class="k">return</span> <span class="s2">&quot;an&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="s2">&quot;u&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;a&quot;</span></div>
 </pre></div>
 
             <div class="clearer"></div>

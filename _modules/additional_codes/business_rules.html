@@ -56,8 +56,8 @@
 
 
 <div class="viewcode-block" id="ACN1"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN1">[docs]</a><span class="k">class</span> <span class="nc">ACN1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The combination of additional code type + additional code + start date</span>
-<span class="sd">    must be unique.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;The combination of additional code type, additional code ID and start</span>
+<span class="sd">    date must be unique.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
 
@@ -90,8 +90,8 @@
 
 <div class="viewcode-block" id="ACN4"><a class="viewcode-back" href="../../docs/business_rules/additional_codes.html#additional_codes.business_rules.ACN4">[docs]</a><span class="k">class</span> <span class="nc">ACN4</span><span class="p">(</span><span class="n">NoOverlapping</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The validity period of the additional code must not overlap any other</span>
-<span class="sd">    additional code with the same additional code type + additional code + start</span>
-<span class="sd">    date.&quot;&quot;&quot;</span>
+<span class="sd">    additional code with the same additional code type, additional code ID and</span>
+<span class="sd">    start date.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">&quot;type__sid&quot;</span><span class="p">,</span>
