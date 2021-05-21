@@ -15,7 +15,6 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Regulation.objects.latest_approved().select_related("regulation_group")
     serializer_class = RegulationSerializer
     filter_backends = [RegulationFilterBackend]
-    search_fields = ["regulation_id", "pk"]
 
 
 class RegulationList(TamatoListView):

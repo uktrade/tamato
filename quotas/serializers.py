@@ -19,6 +19,7 @@ class QuotaOrderNumberSerializer(TrackedModelSerializerMixin, ValiditySerializer
     class Meta:
         model = models.QuotaOrderNumber
         fields = [
+            "id",
             "sid",
             "order_number",
             "mechanism",

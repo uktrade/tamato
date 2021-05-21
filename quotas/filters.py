@@ -5,9 +5,14 @@ from django_filters import MultipleChoiceFilter
 
 from common.filters import MultiValueCharFilter
 from common.filters import TamatoFilter
+from common.filters import TamatoFilterBackend
 from quotas import models
 from quotas import validators
 from quotas.forms import QuotaFilterForm
+
+
+class OrderNumberFilterBackend(TamatoFilterBackend):
+    search_fields = ("order_number",)  # XXX order is significant
 
 
 class QuotaFilter(TamatoFilter):

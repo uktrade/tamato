@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import DateField
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -10,6 +11,7 @@ from django_filters import DateFilter
 
 from additional_codes.filters import COMBINED_ADDITIONAL_CODE_AND_TYPE_ID
 from common.filters import TamatoFilter
+from common.filters import TamatoFilterBackend
 from common.forms import DateInputFieldFixed
 from footnotes.filters import COMBINED_FOOTNOTE_AND_TYPE_ID
 from measures.forms import MeasureFilterForm
@@ -24,6 +26,13 @@ BEFORE_EXACT_AFTER_CHOICES = (
 
 class GovUKDateFilter(DateFilter):
     field_class = DateInputFieldFixed
+
+
+class MeasureTypeFilterBackend(TamatoFilterBackend):
+    search_fields = (
+        StringAgg("sid", delimiter=" "),
+        StringAgg("description", delimiter=" "),
+    )  # XXX order is significant
 
 
 class MeasureFilter(TamatoFilter):

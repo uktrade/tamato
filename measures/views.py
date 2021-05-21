@@ -1,7 +1,19 @@
+from rest_framework import viewsets
+
 from common.views import TamatoListView
 from common.views import TrackedModelDetailView
 from measures import models
 from measures.filters import MeasureFilter
+from measures.filters import MeasureTypeFilterBackend
+from measures.serializers import MeasureTypeSerializer
+
+
+class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    """API endpoint that allows measure types to be viewed."""
+
+    queryset = models.MeasureType.objects.latest_approved()
+    serializer_class = MeasureTypeSerializer
+    filter_backends = [MeasureTypeFilterBackend]
 
 
 class MeasureList(TamatoListView):
