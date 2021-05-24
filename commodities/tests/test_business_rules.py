@@ -78,7 +78,7 @@ def test_NIG5(workbasket):
     with pytest.raises(BusinessRuleViolation):
         business_rules.NIG5(bad_good.transaction).validate(bad_good)
 
-    deleted_good = bad_good.new_draft(workbasket, update_type=UpdateType.DELETE)
+    deleted_good = bad_good.new_version(workbasket, update_type=UpdateType.DELETE)
     business_rules.NIG5(deleted_good.transaction).validate(deleted_good)
 
     good_good = factories.GoodsNomenclatureFactory.create(

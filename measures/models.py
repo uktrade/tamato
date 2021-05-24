@@ -637,7 +637,7 @@ class Measure(TrackedModel, ValidityMixin):
             if not self.terminating_regulation:
                 update_params["terminating_regulation"] = self.generating_regulation
 
-        return self.new_draft(workbasket, **update_params)
+        return self.new_version(workbasket, **update_params)
 
 
 class MeasureComponent(TrackedModel):

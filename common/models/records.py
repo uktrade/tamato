@@ -450,7 +450,31 @@ class TrackedModel(PolymorphicModel):
 
         return template_name
 
-    def new_draft(self, workbasket, save=True, **kwargs):
+    def new_version(
+        self,
+        workbasket,
+        transaction=None,
+        save: bool = True,
+        update_type: UpdateType = UpdateType.UPDATE,
+        **overrides,
+    ):
+        """
+        Return a new version of the object. Callers can override existing data
+        by passing in keyword args.
+
+        The new version is added to a transaction which is created and added to the passed in workbasket
+        (or may be supplied as a keyword arg).
+
+        update_type must be UPDATE or DELETE, with UPDATE as the default.
+
+        By default the new object is saved; this can be disabled by passing save=False.
+        """
+        if update_type not in (
+            validators.UpdateType.UPDATE,
+            validators.UpdateType.DELETE,
+        ):
+            raise ValueError("update_type must be UPDATE or DELETE")
+
         cls = self.__class__
 
         new_object_kwargs = {
@@ -466,12 +490,12 @@ class TrackedModel(PolymorphicModel):
             )
         }
 
-        new_object_kwargs["update_type"] = validators.UpdateType.UPDATE
-        new_object_kwargs.update(kwargs)
+        new_object_kwargs["update_type"] = update_type
+        new_object_kwargs.update(overrides)
 
-        if "transaction" not in new_object_kwargs:
-            # Only create a transaction if the user didn't specify one.
-            new_object_kwargs["transaction"] = workbasket.new_transaction()
+        if transaction is None:
+            transaction = workbasket.new_transaction()
+        new_object_kwargs["transaction"] = transaction
 
         new_object = cls(**new_object_kwargs)
 

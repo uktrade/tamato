@@ -296,7 +296,7 @@ def test_save(sample_model):
 def test_new_draft_uses_passed_transaction(sample_model):
     transaction_count = Transaction.objects.count()
     new_transaction = sample_model.transaction.workbasket.new_transaction()
-    new_model = sample_model.new_draft(
+    new_model = sample_model.new_version(
         sample_model.transaction.workbasket,
         transaction=new_transaction,
     )
@@ -345,7 +345,7 @@ def test_get_descriptions_with_update(sample_model, valid_user):
         described_record=sample_model,
     )
     workbasket = factories.WorkBasketFactory.create()
-    new_description = description.new_draft(workbasket)
+    new_description = description.new_version(workbasket)
 
     description_queryset = sample_model.get_descriptions()
     assert description in description_queryset

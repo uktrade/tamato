@@ -97,7 +97,7 @@ def test_rule_with_no_overlaps(rule):
 
 def test_rule_with_versions(rule, workbasket):
     version1 = factories.TestModel1Factory.create()
-    version2 = version1.new_draft(workbasket)
+    version2 = version1.new_version(workbasket)
     rule(version1.transaction).validate(version1)
     rule(version2.transaction).validate(version2)
 
@@ -134,7 +134,7 @@ def test_prevent_delete_if_in_use(approved_transaction):
         BusinessRuleChecker([model], model.transaction).validate()
 
         workbasket = factories.WorkBasketFactory.create()
-        model = model.new_draft(workbasket, update_type=UpdateType.DELETE)
+        model = model.new_version(workbasket, update_type=UpdateType.DELETE)
         model.in_use = MagicMock(return_value=True)
 
         with pytest.raises(BusinessRuleViolation):

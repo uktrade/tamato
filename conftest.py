@@ -569,7 +569,7 @@ def delete_record():
     """Provides a function for deleting a record."""
 
     def delete(model):
-        return model.new_draft(
+        return model.new_version(
             factories.WorkBasketFactory(),
             update_type=UpdateType.DELETE,
         )
@@ -637,7 +637,7 @@ def in_use_check_respects_deletes(valid_user):
         workbasket.save()
         assert in_use(), f"Approved {instance!r} not in use"
 
-        dependant.new_draft(
+        dependant.new_version(
             workbasket,
             update_type=UpdateType.DELETE,
         )

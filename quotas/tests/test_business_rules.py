@@ -391,7 +391,6 @@ def test_QD15():
 def test_prevent_quota_definition_deletion(
     unapproved_transaction,
     date_ranges,
-    update_type,
     date_range,
     error_expected,
 ):
@@ -404,13 +403,11 @@ def test_prevent_quota_definition_deletion(
         valid_between=getattr(date_ranges, date_range),
     )
 
-    deleted = quota_definition.new_draft(
+    deleted = quota_definition.new_version(
         workbasket=unapproved_transaction.workbasket,
         transaction=unapproved_transaction,
-        update_type=update_type,
+        update_type=UpdateType.DELETE,
     )
-
-    error_expected = error_expected and update_type == UpdateType.DELETE
 
     with raises_if(BusinessRuleViolation, error_expected):
         business_rules.PreventQuotaDefinitionDeletion(deleted.transaction).validate(
@@ -450,7 +447,7 @@ def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
     linking_model = factory.create()
     quota_definition = getattr(linking_model, quota_attr)
 
-    deleted = quota_definition.new_draft(
+    deleted = quota_definition.new_version(
         workbasket=unapproved_transaction.workbasket,
         transaction=unapproved_transaction,
         update_type=UpdateType.DELETE,
@@ -460,7 +457,7 @@ def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
 
     linking_model.update_type = UpdateType.DELETE
     linking_model.save(force_write=True)
-    deleted = quota_definition.new_draft(
+    deleted = quota_definition.new_version(
         workbasket=unapproved_transaction.workbasket,
         transaction=unapproved_transaction,
         update_type=UpdateType.DELETE,
