@@ -82,18 +82,21 @@ if os.getenv("ELASTIC_TOKEN"):
         "SERVER_TIMEOUT": os.getenv("ELASTIC_TIMEOUT", "20s"),
     }
 
-TAMATO_APPS = [
+DOMAIN_APPS = [
     "common",
     "additional_codes.apps.AdditionalCodesConfig",
     "certificates.apps.CertificatesConfig",
     "commodities.apps.CommoditiesConfig",
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
-    "hmrc_sdes",
-    "importer",
     "measures.apps.MeasuresConfig",
     "quotas.apps.QuotasConfig",
     "regulations.apps.RegulationsConfig",
+]
+
+TAMATO_APPS = [
+    "hmrc_sdes",
+    "importer",
     # XXX need to keep this for migrations. delete later.
     "taric",
     "workbaskets",
@@ -102,7 +105,7 @@ TAMATO_APPS = [
     "crispy_forms_gds",
 ]
 
-INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS]
+INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS, *DOMAIN_APPS]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -202,14 +205,21 @@ DEBUG = is_truthy(os.environ.get("DEBUG", False))
 
 # -- Database
 
+SQLITE = is_truthy(os.environ.get("SQLITE", "0"))
+
 if VCAP_SERVICES.get("postgres"):
     DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
 else:
     DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
 
-DATABASES = {
-    "default": dj_database_url.parse(DB_URL),
-}
+if SQLITE:
+    DATABASES = {
+        "default": dj_database_url.parse("sqlite:///cool.db"),
+    }
+else:
+    DATABASES = {
+        "default": dj_database_url.parse(DB_URL),
+    }
 
 # -- Cache
 
@@ -252,6 +262,7 @@ EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY = int(
 
 
 EXPORTER_MAXIMUM_ENVELOPE_SIZE = 39 * 1024 * 1024
+EXPORTER_MAXIMUM_DATABASE_CHUNK = 32 * 1024
 EXPORTER_DISABLE_NOTIFICATION = is_truthy(
     os.environ.get("EXPORTER_DISABLE_NOTIFICATION", "false"),
 )
