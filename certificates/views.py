@@ -3,12 +3,14 @@ from typing import Type
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from certificates import business_rules
 from certificates import forms
 from certificates import models
 from certificates.filters import CertificateFilter
 from certificates.serializers import CertificateSerializer
 from certificates.serializers import CertificateTypeSerializer
 from common.models import TrackedModel
+from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -66,10 +68,18 @@ class CertificateDetail(CertificateMixin, TrackedModelDetailView):
 
 class CertificateUpdate(
     CertificateMixin,
+    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
     form_class = forms.CertificateForm
+
+    validate_business_rules = (
+        business_rules.CE2,
+        business_rules.CE4,
+        # business_rules.CE6,  # XXX should it be checked here?
+        business_rules.CE7,
+    )
 
 
 class CertificateConfirmUpdate(CertificateMixin, TrackedModelDetailView):

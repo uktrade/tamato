@@ -8,27 +8,17 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from certificates import models
-from common.forms import DateInputFieldFixed
 from common.forms import DescriptionForm
 from common.forms import GovukDateRangeField
-from common.util import TaricDateRange
+from common.forms import ValidityPeriodForm
 
 
-class CertificateForm(forms.ModelForm):
+class CertificateForm(ValidityPeriodForm):
     code = forms.CharField(
         label="Certificate ID",
         required=False,
     )
-    start_date = DateInputFieldFixed(
-        label="Start date",
-    )
-    end_date = DateInputFieldFixed(
-        help_text="Leave empty if a certificate is needed for an unlimited time",
-        label="End date",
-        required=False,
-    )
     sid = forms.CharField(required=False)
-    valid_between = GovukDateRangeField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,11 +35,6 @@ class CertificateForm(forms.ModelForm):
 
             self.fields["certificate_type"].disabled = True
             self.fields["certificate_type"].help_text = "You can't edit this"
-
-            if self.instance.valid_between.lower:
-                self.fields["start_date"].initial = self.instance.valid_between.lower
-            if self.instance.valid_between.upper:
-                self.fields["end_date"].initial = self.instance.valid_between.upper
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -86,11 +71,6 @@ class CertificateForm(forms.ModelForm):
 
         if not ctype:
             raise ValidationError({"certificate_type": "Certificate type is required"})
-
-        # combine start and end dates into date range
-        start_date = cleaned_data.pop("start_date", None)
-        end_date = cleaned_data.pop("end_date", None)
-        cleaned_data["valid_between"] = TaricDateRange(start_date, end_date)
 
         return cleaned_data
 

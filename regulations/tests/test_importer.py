@@ -54,7 +54,7 @@ def create_and_test_m2m_regulation(
                     test_regulation.information_text,
                     test_regulation.public_identifier,
                     test_regulation.url,
-                ]
+                ],
             ),
             "approved": test_regulation.approved,
         },
@@ -69,7 +69,9 @@ def create_and_test_m2m_regulation(
 
     xml = generate_test_import_xml(data)
     process_taric_xml_stream(
-        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+        xml,
+        username=valid_user.username,
+        status=WorkflowStatus.PUBLISHED.value,
     )
 
     through_table_instance = through_model.objects.get(
@@ -108,31 +110,15 @@ def create_and_test_m2m_regulation(
     return through_table_instance
 
 
-def test_regulation_group_importer_create(imported_fields_match):
+def test_regulation_group_importer(imported_fields_match):
     assert imported_fields_match(
-        factories.RegulationGroupFactory, serializers.GroupSerializer
+        factories.RegulationGroupFactory,
+        serializers.GroupSerializer,
     )
 
 
-def test_regulation_group_importer_update(update_imported_fields_match):
-    assert update_imported_fields_match(
-        factories.RegulationGroupFactory, serializers.GroupSerializer
-    )
-
-
-def test_regulation_importer_create(imported_fields_match):
-    regulation = factories.RegulationFactory.build(
-        regulation_group=factories.RegulationGroupFactory.create()
-    )
-
+def test_regulation_importer(imported_fields_match):
     assert imported_fields_match(
-        regulation,
-        serializers.RegulationImporterSerializer,
-    )
-
-
-def test_regulation_importer_update(update_imported_fields_match):
-    assert update_imported_fields_match(
         factories.RegulationFactory,
         serializers.RegulationImporterSerializer,
         dependencies={"regulation_group": factories.RegulationGroupFactory},
@@ -141,7 +127,10 @@ def test_regulation_importer_update(update_imported_fields_match):
 
 def test_amendment_importer_create(valid_user):
     create_and_test_m2m_regulation(
-        RoleType.MODIFICATION, "taric/amendment.xml", models.Amendment, valid_user
+        RoleType.MODIFICATION,
+        "taric/amendment.xml",
+        models.Amendment,
+        valid_user,
     )
 
 
@@ -233,7 +222,9 @@ def test_replacement_importer_create(valid_user):
 
     xml = generate_test_import_xml(data)
     process_taric_xml_stream(
-        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+        xml,
+        username=valid_user.username,
+        status=WorkflowStatus.PUBLISHED.value,
     )
 
     replacement = models.Replacement.objects.get(
@@ -269,7 +260,9 @@ def test_replacement_importer_update(valid_user):
 
     xml = generate_test_import_xml(data)
     process_taric_xml_stream(
-        xml, username=valid_user.username, status=WorkflowStatus.PUBLISHED.value
+        xml,
+        username=valid_user.username,
+        status=WorkflowStatus.PUBLISHED.value,
     )
 
     replacements = models.Replacement.objects.filter(

@@ -688,3 +688,9 @@ class TrackedModel(PolymorphicModel):
         if not prefix:
             prefix = self._meta.verbose_name.replace(" ", "_")
         return prefix
+
+    def get_indefinite_article(self):
+        """Returns "a" or "an" based on the verbose_name."""
+
+        # XXX naive, but works for all current models
+        return "an" if self._meta.verbose_name[0] in ["a", "e", "i", "o", "u"] else "a"

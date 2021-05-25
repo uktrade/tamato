@@ -79,31 +79,15 @@ def make_and_get_indent(indent, valid_user, depth):
     ).last()
 
 
-def test_goods_nomenclature_importer_create(imported_fields_match):
+def test_goods_nomenclature_importer(imported_fields_match):
     assert imported_fields_match(
         factories.GoodsNomenclatureFactory,
         serializers.GoodsNomenclatureSerializer,
     )
 
 
-def test_goods_nomenclature_importer_update(update_imported_fields_match):
-    assert update_imported_fields_match(
-        factories.GoodsNomenclatureFactory,
-        serializers.GoodsNomenclatureSerializer,
-    )
-
-
-def test_goods_nomenclature_description_importer_create(imported_fields_match):
+def test_goods_nomenclature_description_importer(imported_fields_match):
     assert imported_fields_match(
-        factories.GoodsNomenclatureDescriptionFactory.build(
-            described_goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
-        ),
-        serializers.GoodsNomenclatureDescriptionSerializer,
-    )
-
-
-def test_goods_nomenclature_description_importer_update(update_imported_fields_match):
-    assert update_imported_fields_match(
         factories.GoodsNomenclatureDescriptionFactory,
         serializers.GoodsNomenclatureDescriptionSerializer,
         dependencies={
@@ -112,7 +96,11 @@ def test_goods_nomenclature_description_importer_update(update_imported_fields_m
     )
 
 
-def test_goods_nomenclature_origin_importer_create(valid_user, date_ranges):
+def test_goods_nomenclature_origin_importer(
+    update_type,
+    date_ranges,
+    imported_fields_match,
+):
     origin = factories.GoodsNomenclatureFactory.create(
         update_type=UpdateType.CREATE.value,
         valid_between=date_ranges.big,
@@ -122,32 +110,24 @@ def test_goods_nomenclature_origin_importer_create(valid_user, date_ranges):
         update_type=UpdateType.CREATE.value,
         origin=None,
     )
-    origin_link = factories.GoodsNomenclatureOriginFactory.build(
-        derived_from_goods_nomenclature=origin,
-        new_goods_nomenclature=good,
-        update_type=UpdateType.CREATE.value,
-    )
 
-    xml = generate_test_import_xml(
-        serializers.GoodsNomenclatureOriginSerializer(
-            origin_link,
-            context={"format": "xml"},
-        ).data,
+    assert imported_fields_match(
+        factories.GoodsNomenclatureOriginFactory,
+        serializers.GoodsNomenclatureOriginSerializer,
+        dependencies={
+            "derived_from_goods_nomenclature": origin,
+            "new_goods_nomenclature": good,
+        },
     )
-
-    process_taric_xml_stream(
-        xml,
-        username=valid_user.username,
-        status=WorkflowStatus.PUBLISHED.value,
-    )
-
-    db_link = models.GoodsNomenclatureOrigin.objects.get(
-        new_goods_nomenclature__sid=good.sid,
-    )
-    assert db_link
 
     db_good = models.GoodsNomenclature.objects.get(sid=good.sid)
-    assert db_good.origins.get() == origin
+    origins = models.GoodsNomenclatureOrigin.objects.filter(
+        new_goods_nomenclature=db_good,
+    ).latest_approved()
+    if update_type == UpdateType.DELETE:
+        assert not origins.exists()
+    else:
+        assert origins.get().derived_from_goods_nomenclature == origin
 
 
 def test_goods_nomenclature_successor_importer_create(valid_user, date_ranges):
@@ -850,20 +830,8 @@ def test_goods_nomenclature_indent_importer_update_with_children(
     }
 
 
-def test_footnote_association_goods_nomenclature_importer_create(imported_fields_match):
+def test_footnote_association_goods_nomenclature_importer(imported_fields_match):
     assert imported_fields_match(
-        factories.FootnoteAssociationGoodsNomenclatureFactory.build(
-            goods_nomenclature=factories.GoodsNomenclatureFactory.create(),
-            associated_footnote=factories.FootnoteFactory.create(),
-        ),
-        serializers.FootnoteAssociationGoodsNomenclatureSerializer,
-    )
-
-
-def test_footnote_association_goods_nomenclature_importer_update(
-    update_imported_fields_match,
-):
-    assert update_imported_fields_match(
         factories.FootnoteAssociationGoodsNomenclatureFactory,
         serializers.FootnoteAssociationGoodsNomenclatureSerializer,
         dependencies={
