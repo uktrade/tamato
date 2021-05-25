@@ -70,19 +70,17 @@ The domain model implements a version control system that specifies which models
 of the tariff are live on the border on a given day. This allows a tariff update
 to be sent to border systems in advance and take effect correctly at some future
 time. Most models use a pair of validity dates, implemented using the
-:class:`~common.models.mixins.ValidityMixin`.
+:class:`~common.models.mixins.validity.ValidityMixin`.
 
-.. autoclass:: common.models.mixins.ValidityMixin
-  :members:
+.. autoclass:: common.models.mixins.validity.ValidityMixin
 
 Description models have a requirement that there must always be one live
 description at any time. For this reason, descriptions do not have end dates and
 only have start dates. The description is live up until the start date of the
 next description record. This is implemented using the
-:class:`~common.models.mixins.ValidityStartMixin`.
+:class:`~common.models.mixins.validity.ValidityStartMixin`.
 
-.. autoclass:: common.models.mixins.ValidityStartMixin
-  :members:
+.. autoclass:: common.models.mixins.validity.ValidityStartMixin
 
 Tracked models as version control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

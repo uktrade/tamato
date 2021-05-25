@@ -9,6 +9,7 @@
     <title>Architecture &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -104,12 +105,49 @@ documentation on <a class="reference internal" href="../adr/0012-ordering-of-tar
 of the tariff are live on the border on a given day. This allows a tariff update
 to be sent to border systems in advance and take effect correctly at some future
 time. Most models use a pair of validity dates, implemented using the
-<code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code>.</p>
+<a class="reference internal" href="#common.models.mixins.validity.ValidityMixin" title="common.models.mixins.validity.ValidityMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code></a>.</p>
+<dl class="py class">
+<dt id="common.models.mixins.validity.ValidityMixin">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.models.mixins.validity.</span></code><code class="sig-name descname"><span class="pre">ValidityMixin</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.validity.ValidityMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>The model is live after the validity start date
+(<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.lower</span></code>) and before the validity end date
+(<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.upper</span></code>).</p>
+<p>Start and end validity dates are inclusive – meaning that the model is live
+from the beginning of the start date to the end of the end date. A model
+with the same start and end date is therefore live for 1 day. If the
+validity end date is blank (<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.upper_inf</span></code>) then the model
+is live indefinitely after the start date.</p>
+<p>Validity dates can be modified with a new version of a model, so a model
+that initially has a blank end date can be updated to subsequently add one.</p>
+</dd></dl>
+
 <p>Description models have a requirement that there must always be one live
 description at any time. For this reason, descriptions do not have end dates and
 only have start dates. The description is live up until the start date of the
 next description record. This is implemented using the
-<code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityStartMixin</span></code>.</p>
+<a class="reference internal" href="#common.models.mixins.validity.ValidityStartMixin" title="common.models.mixins.validity.ValidityStartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityStartMixin</span></code></a>.</p>
+<dl class="py class">
+<dt id="common.models.mixins.validity.ValidityStartMixin">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.models.mixins.validity.</span></code><code class="sig-name descname"><span class="pre">ValidityStartMixin</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityStartMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.validity.ValidityStartMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>The model is live after the <code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_start</span></code> date and before the
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_start</span></code> date of the next model in the same series.</p>
+<p>This is broadly the same as the <code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code>
+but the lack of an end date enforces that there is always one model of this
+type active at any one time for a given series.</p>
+<p>This validity method is used when this model tracks some time-varying
+property of a related model. For example, this model may carry a description
+of the related model, and the description can be updated independently of
+the related model. The “series” is then defined by
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">identifing_fields</span></code> of the related model,
+such that for each related model there can be multiple of this model, each
+with their own validity period.</p>
+<p>Start and end validity dates are inclusive – meaning that the model is live
+from the beginning of the start date to the end of the end date. A model
+with the same start and end date is therefore live for 1 day. If the
+validity end date is blank then the model is live indefinitely after the
+start date.</p>
+</dd></dl>
+
 </section>
 <section id="tracked-models-as-version-control">
 <h3>Tracked models as version control<a class="headerlink" href="#tracked-models-as-version-control" title="Permalink to this headline">¶</a></h3>

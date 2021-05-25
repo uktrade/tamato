@@ -9,6 +9,7 @@
     <title>8. Simplify workflow states &#8212; TaMaTo 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -114,28 +115,28 @@ be reduced to only those necessary for the product to function.</p>
 <p>The interactions between these states are simpler – once approved there
 is a single happy path with branches to a single final state for the
 various unhappy paths. This is represented in the directed graph:</p>
-<div class="highlight-dot notranslate"><div class="highlight"><pre><span></span><span class="k">digraph</span><span class="w"> </span><span class="nt">WorkflowStates</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">editing</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
-<span class="w">  </span><span class="nt">editing</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">proposed</span><span class="p">;</span><span class="w"></span>
-<span class="w">  </span><span class="nt">editing</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">archived</span><span class="p">;</span><span class="w"></span>
-<span class="w">  </span><span class="nt">archived</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">editing</span><span class="p">;</span><span class="w"></span>
+<div class="graphviz"><object data="../../_images/graphviz-ea97cf7b34f8044c6fff4a6f2ca1143add42f832.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph WorkflowStates {
+graph [rankdir=LR, splines=ortho]
 
-<span class="w">  </span><span class="nt">proposed</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
-<span class="w">  </span><span class="nt">proposed</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">approved</span><span class="p">;</span><span class="w"></span>
-<span class="w">  </span><span class="nt">proposed</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">editing</span><span class="p">;</span><span class="w"></span>
+editing [group=happy]
+editing -&gt; proposed;
+editing -&gt; archived;
+archived -&gt; editing;
 
-<span class="w">  </span><span class="nt">approved</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
-<span class="w">  </span><span class="nt">approved</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">sent</span><span class="p">;</span><span class="w"></span>
+proposed [group=happy]
+proposed -&gt; approved;
+proposed -&gt; editing;
 
-<span class="w">  </span><span class="nt">sent</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
-<span class="w">  </span><span class="nt">sent</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">published</span><span class="p">;</span><span class="w"></span>
-<span class="w">  </span><span class="nt">sent</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nt">errored</span><span class="p">;</span><span class="w"></span>
+approved [group=happy]
+approved -&gt; sent;
 
-<span class="w">  </span><span class="nt">published</span><span class="w"> </span><span class="p">[</span><span class="na">group</span><span class="p">=</span><span class="s">happy</span><span class="p">]</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-</pre></div>
-</div>
-<p><img alt="Simplified States" src="../../_images/simplified-states.png" /></p>
+sent [group=happy]
+sent -&gt; published;
+sent -&gt; errored;
+
+published [group=happy]
+}</p></object></div>
 </section>
 <section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
