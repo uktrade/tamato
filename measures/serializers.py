@@ -20,10 +20,10 @@ from regulations.serializers import RegulationSerializer
 @TrackedModelSerializer.register_polymorphic_model
 class MeasureTypeSeriesSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     sid = serializers.CharField(
-        validators=[validators.measure_type_series_id_validator]
+        validators=[validators.measure_type_series_id_validator],
     )
     measure_type_combination = serializers.ChoiceField(
-        choices=validators.MeasureTypeCombination.choices
+        choices=validators.MeasureTypeCombination.choices,
     )
 
     class Meta:
@@ -48,13 +48,13 @@ class MeasureTypeSeriesSerializer(TrackedModelSerializerMixin, ValiditySerialize
 class DutyExpressionSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     sid = serializers.ChoiceField(choices=validators.DutyExpressionId.choices)
     duty_amount_applicability_code = serializers.ChoiceField(
-        choices=validators.ApplicabilityCode.choices
+        choices=validators.ApplicabilityCode.choices,
     )
     measurement_unit_applicability_code = serializers.ChoiceField(
-        choices=validators.ApplicabilityCode.choices
+        choices=validators.ApplicabilityCode.choices,
     )
     monetary_unit_applicability_code = serializers.ChoiceField(
-        choices=validators.ApplicabilityCode.choices
+        choices=validators.ApplicabilityCode.choices,
     )
 
     class Meta:
@@ -82,24 +82,25 @@ class MeasureTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin
     measure_type_series = MeasureTypeSeriesSerializer(read_only=True)
     sid = serializers.CharField(validators=[validators.measure_type_id_validator])
     trade_movement_code = serializers.ChoiceField(
-        choices=validators.ImportExportCode.choices
+        choices=validators.ImportExportCode.choices,
     )
     priority_code = serializers.IntegerField(
-        validators=[validators.validate_priority_code]
+        validators=[validators.validate_priority_code],
     )
     measure_component_applicability_code = serializers.ChoiceField(
-        choices=validators.ApplicabilityCode.choices
+        choices=validators.ApplicabilityCode.choices,
     )
     order_number_capture_code = serializers.ChoiceField(
-        choices=validators.OrderNumberCaptureCode.choices
+        choices=validators.OrderNumberCaptureCode.choices,
     )
     measure_explosion_level = serializers.IntegerField(
-        validators=[validators.validate_measure_explosion_level]
+        validators=[validators.validate_measure_explosion_level],
     )
 
     class Meta:
         model = models.MeasureType
         fields = [
+            "id",
             "sid",
             "trade_movement_code",
             "priority_code",
@@ -124,7 +125,8 @@ class MeasureTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin
 
 @TrackedModelSerializer.register_polymorphic_model
 class AdditionalCodeTypeMeasureTypeSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     measure_type = MeasureTypeSerializer(read_only=True)
     additional_code_type = AdditionalCodeTypeSerializer(read_only=True)
@@ -146,10 +148,11 @@ class AdditionalCodeTypeMeasureTypeSerializer(
 
 @TrackedModelSerializer.register_polymorphic_model
 class MeasureConditionCodeSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     code = serializers.CharField(
-        validators=[validators.measure_condition_code_validator]
+        validators=[validators.measure_condition_code_validator],
     )
 
     class Meta:
@@ -205,7 +208,9 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
         required=False,
     )
     export_refund_nomenclature_sid = serializers.IntegerField(
-        min_value=1, max_value=99999999, required=False
+        min_value=1,
+        max_value=99999999,
+        required=False,
     )
 
     class Meta:
@@ -266,7 +271,7 @@ class MeasureConditionSerializer(TrackedModelSerializerMixin):
     action = MeasureActionSerializer(read_only=True)
     required_certificate = CertificateSerializer(read_only=True)
     component_sequence_number = serializers.IntegerField(
-        validators=[validators.validate_component_sequence_number]
+        validators=[validators.validate_component_sequence_number],
     )
 
     class Meta:

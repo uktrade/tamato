@@ -3,12 +3,15 @@ from rest_framework import viewsets
 
 from commodities import models
 from commodities import serializers
+from commodities.filters import GoodsNomenclatureFilterBackend
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows Goods Nomenclature to be viewed."""
 
-    queryset = models.GoodsNomenclature.objects.all()
+    queryset = models.GoodsNomenclature.objects.latest_approved().prefetch_related(
+        "descriptions",
+    )
     serializer_class = serializers.GoodsNomenclatureSerializer
     permission_classes = [permissions.IsAuthenticated]
-    search_fields = ["sid", "item_id"]
+    filter_backends = [GoodsNomenclatureFilterBackend]

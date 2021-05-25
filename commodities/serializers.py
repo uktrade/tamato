@@ -25,13 +25,38 @@ class SimpleGoodsNomenclatureSerializer(
         ]
 
 
+class SimpleGoodsNomenclatureDescriptionSerializer(
+    TrackedModelSerializerMixin,
+    ValidityStartSerializerMixin,
+):
+    class Meta:
+        model = models.GoodsNomenclatureDescription
+        fields = [
+            "sid",
+            "description",
+            "update_type",
+            "record_code",
+            "subrecord_code",
+            "period_record_code",
+            "period_subrecord_code",
+            "taric_template",
+            "start_date",
+            "validity_start",
+        ]
+
+
 @TrackedModelSerializer.register_polymorphic_model
 class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     sid = serializers.IntegerField()
+    descriptions = SimpleGoodsNomenclatureDescriptionSerializer(
+        many=True,
+        required=False,
+    )
 
     class Meta:
         model = models.GoodsNomenclature
         fields = [
+            "id",
             "sid",
             "item_id",
             "suffix",
@@ -40,6 +65,7 @@ class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerialize
             "record_code",
             "subrecord_code",
             "taric_template",
+            "descriptions",
             "start_date",
             "end_date",
             "valid_between",

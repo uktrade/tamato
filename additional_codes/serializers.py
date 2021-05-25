@@ -59,6 +59,7 @@ class AdditionalCodeSerializer(ValiditySerializerMixin, TrackedModelSerializerMi
     class Meta:
         model = models.AdditionalCode
         fields = [
+            "id",
             "sid",
             "type",
             "code",

@@ -5,14 +5,17 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailView
 from quotas import models
 from quotas import serializers
+from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
+    """API endpoint that allows quota order numbers to be viewed."""
+
     queryset = models.QuotaOrderNumber.objects.has_approved_state()
     serializer_class = serializers.QuotaOrderNumberSerializer
     permission_classes = [permissions.IsAuthenticated]
-    search_fields = ["sid", "order_number", "mechanism", "category"]
+    filter_backends = [OrderNumberFilterBackend]
 
 
 class QuotaOrderNumberOriginViewset(viewsets.ReadOnlyModelViewSet):

@@ -12,7 +12,8 @@ from regulations import validators
 @TrackedModelSerializer.register_polymorphic_model
 class GroupSerializer(ValiditySerializerMixin, TrackedModelSerializerMixin):
     group_id = serializers.CharField(
-        max_length=3, validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")]
+        max_length=3,
+        validators=[RegexValidator(r"[A-Z][A-Z][A-Z]")],
     )
 
     class Meta:
@@ -39,7 +40,8 @@ class NestedRegulationSerializer(serializers.HyperlinkedModelSerializer):
 
 @TrackedModelSerializer.register_polymorphic_model
 class AmendmentSerializer(
-    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+    serializers.HyperlinkedModelSerializer,
+    TrackedModelSerializerMixin,
 ):
     class Meta:
         model = models.Amendment
@@ -63,7 +65,8 @@ class NestedAmendmentSerializer(serializers.HyperlinkedModelSerializer):
 
 @TrackedModelSerializer.register_polymorphic_model
 class ReplacementSerializer(
-    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+    serializers.HyperlinkedModelSerializer,
+    TrackedModelSerializerMixin,
 ):
     class Meta:
         model = models.Replacement
@@ -90,7 +93,8 @@ class NestedReplacementSerializer(serializers.HyperlinkedModelSerializer):
 
 @TrackedModelSerializer.register_polymorphic_model
 class ExtensionSerializer(
-    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+    serializers.HyperlinkedModelSerializer,
+    TrackedModelSerializerMixin,
 ):
     class Meta:
         model = models.Extension
@@ -115,7 +119,8 @@ class NestedExtensionSerializer(serializers.HyperlinkedModelSerializer):
 
 @TrackedModelSerializer.register_polymorphic_model
 class SuspensionSerializer(
-    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+    serializers.HyperlinkedModelSerializer,
+    TrackedModelSerializerMixin,
 ):
     class Meta:
         model = models.Suspension
@@ -140,7 +145,8 @@ class NestedSuspensionSerializer(serializers.HyperlinkedModelSerializer):
 
 @TrackedModelSerializer.register_polymorphic_model
 class TerminationSerializer(
-    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+    serializers.HyperlinkedModelSerializer,
+    TrackedModelSerializerMixin,
 ):
     class Meta:
         model = models.Termination
@@ -164,7 +170,8 @@ class NestedTerminationSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class RegulationImporterSerializer(
-    ValiditySerializerMixin, TrackedModelSerializerMixin
+    ValiditySerializerMixin,
+    TrackedModelSerializerMixin,
 ):
     role_type = serializers.IntegerField(read_only=False)
     regulation_group = GroupSerializer(required=False)
@@ -253,6 +260,7 @@ class RegulationSerializer(
     class Meta:
         model = models.Regulation
         fields = [
+            "id",
             "url",
             "role_type",
             "regulation_id",
@@ -289,7 +297,8 @@ class RegulationSerializer(
 
 
 class ReplacementImporterSerializer(
-    serializers.HyperlinkedModelSerializer, TrackedModelSerializerMixin
+    serializers.HyperlinkedModelSerializer,
+    TrackedModelSerializerMixin,
 ):
     enacting_regulation = RegulationSerializer(required=False)
     target_regulation = RegulationSerializer(required=False)

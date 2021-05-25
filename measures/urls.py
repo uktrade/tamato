@@ -1,7 +1,11 @@
 from django.urls import include
 from django.urls import path
+from rest_framework import routers
 
 from measures import views
+
+api_router = routers.DefaultRouter()
+api_router.register(r"measure_types", views.MeasureTypeViewSet)
 
 ui_patterns = [
     path(
@@ -19,4 +23,5 @@ ui_patterns = [
 
 urlpatterns = [
     path("measures/", include(ui_patterns)),
+    path("api/", include(api_router.urls)),
 ]

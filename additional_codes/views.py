@@ -32,12 +32,6 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
     )
     serializer_class = AdditionalCodeSerializer
     filter_backends = [AdditionalCodeFilterBackend]
-    search_fields = [
-        "type__sid",
-        "code",
-        "sid",
-        "descriptions__description",
-    ]
 
 
 class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
