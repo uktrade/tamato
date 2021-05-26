@@ -105,7 +105,7 @@ class CertificateDescriptionParser(Writable, ElementParser):
     sid = IntElement(Tag("certificate.description.period.sid"))
     description = TextElement(Tag("description"))
     described_certificate__sid = TextElement(Tag("certificate.code"))
-    described_certificate__type__sid = TextElement(Tag("certificate.type.code"))
+    described_certificate__certificate_type__sid = TextElement(Tag("certificate.type.code"))
 
 
 @RecordParser.register_child("certificate_description_period")

@@ -52,4 +52,4 @@ class GeographicalMembershipHandler(BaseHandler):
         },
     )
     serializer_class = serializers.GeographicalMembershipSerializer
-    tag = parsers.GeographicalAreaMembershipParser.tag.name
+    tag = parsers.GeographicalMembershipParser.tag.name

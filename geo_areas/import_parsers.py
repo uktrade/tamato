@@ -100,7 +100,7 @@ class GeographicalAreaDescriptionPeriodParser(
 
 
 @RecordParser.register_child("geographical_area_membership")
-class GeographicalAreaMembershipParser(ValidityMixin, Writable, ElementParser):
+class GeographicalMembershipParser(ValidityMixin, Writable, ElementParser):
     """
     Example XML:
 
