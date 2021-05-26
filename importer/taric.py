@@ -9,13 +9,23 @@ from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models.expressions import Case
+from django.db.models.expressions import Expression
+from django.db.models.expressions import OuterRef
+from django.db.models.expressions import Subquery
+from django.db.models.expressions import When
+from django.db.models.fields import TextField
 from django.db.transaction import atomic
 from lxml import etree
 
 from common import models
+from common.models.records import TrackedModel
 from common.validators import UpdateType
+from common.xml import XMLAgg
+from common.xml import XMLElement
 from common.xml.namespaces import ENVELOPE
 from common.xml.namespaces import nsmap
 from importer.namespaces import Tag
@@ -42,7 +52,7 @@ class RecordParser(ElementParser):
     """Parser for TARIC3 `record` element."""
 
     tag = Tag("record")
-    transaction_id = TextElement(Tag("transaction.id"))
+    transaction__order = TextElement(Tag("transaction.id"))
     record_code = TextElement(Tag("record.code"))
     subrecord_code = TextElement(Tag("subrecord.code"))
     sequence_number = TextElement(Tag("record.sequence.number"))
@@ -66,11 +76,58 @@ class RecordParser(ElementParser):
             if record_data and hasattr(parser, method_name):
                 getattr(parser, method_name)(record_data, transaction_id)
 
+    def serializer(self, field_name: str = None, *extra_children) -> Expression:
+        """
+        This builds a massive CASE WHEN that covers each possible content type,
+        and then wraps getting the XML in a subquery.
 
-class MessageParser(ElementParser):
-    """Parser for TARIC3 `message` element."""
+        For some reason, this does not seem to be horrendously slow.
+        """
+        # TODO: We should be auto-generating this – how do we map them back? An
+        # attribute on the model perhaps? Or a decorator that declares a given parser as
+        # representative? Given that we're using these for more than parsing now, should
+        # we be renaming them – e.g. `measures.xml_models.MeasureXMLModel` or something?
+        import measures.import_parsers
+        import measures.models
 
-    tag = Tag("app.message", prefix=ENVELOPE)
+        MAPPING = {
+            measures.models.Measure: measures.import_parsers.MeasureParser,
+            measures.models.MeasureComponent: measures.import_parsers.MeasureComponentParser,
+            measures.models.MeasureCondition: measures.import_parsers.MeasureConditionParser,
+            measures.models.MeasureConditionComponent: measures.import_parsers.MeasureConditionComponentParser,
+        }
+
+        types = {c.model_class(): c for c in ContentType.objects.all()}
+        return XMLElement(
+            self.tag.name,
+            *(
+                parser.serializer(field)
+                for field, parser in self.__class__.__dict__.items()
+                if isinstance(parser, ElementParser)
+            ),
+            Case(
+                *(
+                    When(
+                        polymorphic_ctype=types[model],
+                        then=Subquery(
+                            model.objects.annotate(xml=parser().serializer())
+                            .filter(pk=OuterRef("pk"))
+                            .values_list("xml"),
+                            output_field=TextField(),
+                        ),
+                    )
+                    for (model, parser) in MAPPING.items()
+                ),
+                default=None,
+                output_field=TextField(),
+            ),
+        )
+
+
+class TransmissionParser(ElementParser):
+    """Parser for TARIC3 `transmission` element."""
+
+    tag = Tag("transmission")
     record = RecordParser(many=True)
 
     def save(self, data: Mapping[str, Any], transaction_id: int):
@@ -83,11 +140,41 @@ class MessageParser(ElementParser):
         for record_data in data["record"]:
             self.record.save(record_data, transaction_id)
 
+    def serializer(self, field_name: str, *extra_children) -> Expression:
+        return XMLElement(
+            self.tag.for_xml,
+            Subquery(
+                (
+                    # https://stackoverflow.com/questions/55925437/django-subquery-with-aggregate
+                    # TODO: This may not be necessary since Django
+                    # introduced `alias` on querysets?
+                    TrackedModel.objects.with_xml()
+                    .filter(transaction=OuterRef("pk"))
+                    .values("transaction__pk")
+                    .annotate(xmldoc=XMLAgg("xml"))
+                    .values("xmldoc")
+                ),
+                output_field=TextField(),
+            ),
+            *extra_children,
+        )
+
+
+class MessageParser(ElementParser):
+    """Parser for TARIC3 `message` element."""
+
+    tag = Tag("app.message", prefix=ENVELOPE)
+    attributes = {"id": "message_id"}
+
+    record = TransmissionParser()  # TODO: many?
+
 
 class TransactionParser(ElementParser):
     """Parser for TARIC3 `transaction` element."""
 
     tag = Tag("transaction", prefix=ENVELOPE)
+    attributes = {"id": "order"}
+
     message = MessageParser(many=True)
 
     workbasket_status = None

@@ -16,6 +16,7 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
+from django.db.models.fields import SmallIntegerField
 from django.db.models.expressions import Expression
 from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
@@ -332,6 +333,14 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
             )
             for model in TrackedModel.__subclasses__()
         ]
+
+    def with_xml(self):
+        from importer.taric import RecordParser
+
+        return self.annotate_record_codes().annotate(
+            sequence_number=Value(1, output_field=SmallIntegerField()),
+            xml=RecordParser().serializer(),
+        )
 
 
 class VersionGroup(TimestampedMixin):

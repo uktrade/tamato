@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import json
+from typing import Iterator
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.models.expressions import Window
+from django.db.models.functions.window import RowNumber
 
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
@@ -40,6 +43,22 @@ class TransactionQueryset(models.QuerySet):
             "transaction__order",
         )  # order_by record_code, subrecord_code already happened in get_queryset
         return tracked_models
+
+    def with_xml(self):
+        from importer.taric import TransactionParser
+
+        return self.annotate(message_id=Window(expression=RowNumber())).annotate(
+            xml=TransactionParser().serializer(),
+        )
+
+    def get_xml(self) -> Iterator[bytes]:
+        return (
+            self.with_xml()
+            .values_list("xml", flat=True)
+            .iterator(
+                chunk_size=settings.EXPORTER_MAXIMUM_DATABASE_CHUNK,
+            )
+        )
 
 
 class Transaction(TimestampedMixin):

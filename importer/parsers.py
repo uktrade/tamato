@@ -9,7 +9,16 @@ from typing import Mapping
 from typing import Optional
 from xml.etree.ElementTree import Element
 
+from django.db.models.expressions import Case
+from django.db.models.expressions import Expression
+from django.db.models.expressions import Value
+from django.db.models.expressions import When
+from django.db.models.functions.text import Lower
+from django.db.models.functions.text import Upper
+
 from common.validators import UpdateType
+from common.xml import Identity
+from common.xml import XMLElement
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
 
@@ -225,6 +234,17 @@ class ElementParser:
 
         return wraps
 
+    attributes: Dict[str, str | Expression] = {}
+
+    def serializer(self, field_name: str = None, *extra_children) -> Expression:
+        children = self._field_lookup.items()
+        return XMLElement(
+            self.tag.for_xml,
+            *(child.serializer(field) for (child, field) in children),
+            *extra_children,
+            **self.attributes,
+        )
+
 
 class ValueElementMixin:
     """Provides a convenient way to define a parser for elements that contain
@@ -232,6 +252,21 @@ class ValueElementMixin:
 
     native_type: type
     """The Python type that most closely matches the type of the XML element."""
+    
+    null_condition: str = "isnull"
+    format_expression: Expression = Identity
+
+    def serializer(self, field_name: str) -> Expression:
+        return Case(
+            When(
+                **{f"{field_name}__{self.null_condition}": False},
+                then=XMLElement(
+                    self.tag.for_xml,
+                    self.format_expression(field_name),
+                ),
+            ),
+            default=Value(""),
+        )
 
     def clean(self):
         super().clean()
@@ -320,9 +355,23 @@ class BooleanElement(ValueElementMixin, ElementParser):
 class RangeLowerElement(TextElement):
     """Represents an element that is the lower part of a range."""
 
+    null_condition = "lower_inf"
+    format_expression = Lower
+
+    def serializer(self, field_name: str) -> Expression:
+        real_field = "_".join(field_name.split("_")[0:2])
+        return super().serializer(real_field)
+
 
 class RangeUpperElement(TextElement):
     """Represents an element that is the upper part of a range."""
+    
+    null_condition = "upper_inf"
+    format_expression = Upper
+
+    def serializer(self, field_name: str) -> Expression:
+        real_field = "_".join(field_name.split("_")[0:2])
+        return super().serializer(real_field)
 
 
 class CompoundElement(ValueElementMixin, ElementParser):
