@@ -30,11 +30,6 @@ class Group(TrackedModel, ValidityMixin):
     Regulation groups must not be modified.
     """
 
-    record_code = "150"
-    subrecord_code = "00"
-
-    description_subrecord_code = "05"
-
     group_id = models.CharField(
         max_length=3,
         editable=False,
@@ -68,9 +63,6 @@ class Regulation(TrackedModel):
     """
 
     identifying_fields = ("role_type", "regulation_id")
-
-    record_code = "285"
-    subrecord_code = "00"
 
     role_type = models.PositiveIntegerField(
         choices=validators.RoleType.choices,
@@ -268,9 +260,6 @@ class Amendment(TrackedModel):
     by the end date of the regulations it modifies.
     """
 
-    record_code = "290"
-    subrecord_code = "00"
-
     enacting_regulation = models.ForeignKey(
         Regulation,
         on_delete=models.PROTECT,
@@ -336,11 +325,6 @@ class Suspension(TrackedModel):
     again.
     """
 
-    record_code = "300"
-    subrecord_code = "00"
-    action_record_code = "305"
-    action_subrecord_code = "00"
-
     enacting_regulation = models.ForeignKey(
         Regulation,
         on_delete=models.PROTECT,
@@ -405,9 +389,6 @@ class Replacement(TrackedModel):
     of the following three elements: measure type id, geographical area id and
     chapter heading.
     """
-
-    record_code = "305"
-    subrecord_code = "00"
 
     enacting_regulation = models.ForeignKey(
         Regulation,

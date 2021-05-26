@@ -506,8 +506,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     @classmethod
     def resolve_dependent_handlers(
         cls,
-        seen: Set[Type[BaseHandler]] = set(),
+        seen: Set[Type[BaseHandler]] = None,
     ) -> Set[Type[BaseHandler]]:
+        seen = seen or set()
         seen.add(cls)
         for handler in cls.dependencies:
             if handler not in seen:
@@ -523,7 +524,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         ]
         order = sorted(
             (cls, *(h for h in dependencies)),
-            key=lambda c: (c.model.record_code, c.model.subrecord_code),
+            key=lambda c: (c.xml_model.record_code, c.xml_model.subrecord_code),
         )
         expressions = {
             cls: MessageParser().serializer(for_model=cls.xml_model()),

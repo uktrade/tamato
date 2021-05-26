@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import defaultdict
+from functools import lru_cache
 from hashlib import sha256
 from typing import Any
 from typing import Dict
@@ -8,7 +10,7 @@ from typing import Optional
 from typing import Set
 from typing import TypedDict
 
-from common.models import TrackedModel
+from common.models.records import TrackedModel
 
 
 class LinksType(TypedDict):
@@ -64,6 +66,18 @@ def generate_key(
     return sha256(hash_input.encode()).hexdigest()
 
 
+@lru_cache
+def get_record_code(model: TrackedModel):
+    from importer.taric import RecordParser
+
+    try:
+        handler = RecordParser.serializer_map[model]
+        return handler.xml_model.record_code
+    except KeyError:
+        return None
+
+
+@lru_cache(maxsize=1)
 def build_dependency_tree() -> Dict[str, Set[str]]:
     """
     Build a dependency tree of all the TrackedModel subclasses mapped by record
@@ -81,19 +95,23 @@ def build_dependency_tree() -> Dict[str, Set[str]]:
             "220": {"215", "210"},
         }
     """
-    dependency_map = {}
-    record_codes = {subclass.record_code for subclass in TrackedModel.__subclasses__()}
-    for subclass in TrackedModel.__subclasses__():
-        if subclass.record_code not in dependency_map:
-            dependency_map[subclass.record_code] = set()
+
+    dependency_map = defaultdict(set)
+
+    record_codes = {
+        subclass: get_record_code(subclass)
+        for subclass in TrackedModel.__subclasses__()
+        if get_record_code(subclass) is not None
+    }
+
+    for subclass in record_codes.keys():
+        subclass_record_code = record_codes[subclass]
         for _, relation in subclass.get_relations():
+            relation_record_code = get_record_code(relation)
             if (
-                relation.record_code != subclass.record_code
-                and relation.record_code in record_codes
+                relation_record_code != subclass_record_code
+                and relation_record_code in record_codes.values()
             ):
-                dependency_map[subclass.record_code].add(relation.record_code)
+                dependency_map[subclass_record_code].add(relation_record_code)
 
-    return dependency_map
-
-
-dependency_tree = build_dependency_tree()
+    return dict(dependency_map)

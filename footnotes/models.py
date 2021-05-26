@@ -25,12 +25,6 @@ class FootnoteType(TrackedModel, ValidityMixin):
     CN-related footnotes.
     """
 
-    record_code = "100"
-    subrecord_code = "00"
-
-    description_record_code = "100"
-    description_subrecord_code = "05"
-
     identifying_fields = ("footnote_type_id",)
 
     footnote_type_id = models.CharField(
@@ -67,9 +61,6 @@ class Footnote(TrackedModel, ValidityMixin):
     """A footnote relates to a piece of text, and either clarifies it (in the
     case of nomenclature) or limits its application (as in the case of
     measures)."""
-
-    record_code = "200"
-    subrecord_code = "00"
 
     footnote_id = models.CharField(
         max_length=5,
@@ -144,12 +135,6 @@ class FootnoteDescription(DescriptionMixin, TrackedModel):
     description period contains the validity start date of the footnote
     description.
     """
-
-    record_code = "200"
-    subrecord_code = "10"
-
-    period_record_code = "200"
-    period_subrecord_code = "05"
 
     described_footnote = models.ForeignKey(
         Footnote,

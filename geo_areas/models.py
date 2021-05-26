@@ -34,9 +34,6 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     separate foreign key for group to group relations.
     """
 
-    record_code = "250"
-    subrecord_code = "00"
-
     url_pattern_name_prefix = "geoarea"
 
     sid = SignedIntSID(db_index=True)
@@ -133,9 +130,6 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     The validity ranges of all memberships must also fit completely within the validity
     ranges of the groups.
     """
-
-    record_code = "250"
-    subrecord_code = "15"
 
     geo_group = models.ForeignKey(
         GeographicalArea,

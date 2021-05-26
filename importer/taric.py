@@ -48,13 +48,26 @@ now = time.time()
 START_TRANSACTION = int(os.getenv("STARTING_TRANSACTION", 0))
 
 
+class RecordCodeElement(TextElement):
+    def serializer(self, field_name: str, **kwargs) -> Expression:
+        if field_name in kwargs and kwargs[field_name].isnumeric():
+            expression = Value(kwargs[field_name])
+        else:
+            expression = Cast(F(field_name), CharField())
+
+        return XMLElement(
+            self.tag.for_xml,
+            expression,
+        )
+
+
 class RecordParser(ElementParser):
     """Parser for TARIC3 `record` element."""
 
     tag = Tag("record")
     transaction__order = TextElement(Tag("transaction.id"))
-    record_code = TextElement(Tag("record.code"))
-    subrecord_code = TextElement(Tag("subrecord.code"))
+    record_code = RecordCodeElement(Tag("record.code"))
+    subrecord_code = RecordCodeElement(Tag("subrecord.code"))
     sequence_number = TextElement(Tag("record.sequence.number"))
     update_type = TextElement(Tag("update.type"))
 
@@ -92,11 +105,16 @@ class RecordParser(ElementParser):
 
         For some reason, this does not seem to be horrendously slow.
         """
-
         return XMLElement(
             self.tag.for_xml,
             *(
-                parser.serializer(field)
+                parser.serializer(
+                    field,
+                    **{
+                        "record_code": for_model.record_code,
+                        "subrecord_code": for_model.subrecord_code,
+                    },
+                )
                 for field, parser in self.__class__.__dict__.items()
                 if isinstance(parser, ElementParser)
             ),

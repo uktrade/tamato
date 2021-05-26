@@ -25,12 +25,6 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
     measures).
     """
 
-    record_code = "120"
-    subrecord_code = "00"
-
-    description_record_code = "120"
-    description_subrecord_code = "05"
-
     sid = models.CharField(
         max_length=1,
         validators=[validators.additional_code_type_sid_validator],
@@ -61,9 +55,6 @@ class AdditionalCode(TrackedModel, ValidityMixin):
 
     An additional code can be re-used over time.
     """
-
-    record_code = "245"
-    subrecord_code = "00"
 
     sid = SignedIntSID(db_index=True)
     type = models.ForeignKey(AdditionalCodeType, on_delete=models.PROTECT)
@@ -114,11 +105,6 @@ class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
     description period domain objects, because we only care about 1 language.
     """
 
-    record_code = "245"
-    subrecord_code = "10"
-    period_record_code = "245"
-    period_subrecord_code = "05"
-
     # Store the additional code description period sid so that we can send it in TARIC3
     # updates to systems that expect it.
     sid = SignedIntSID(db_index=True)
@@ -151,9 +137,6 @@ class FootnoteAssociationAdditionalCode(TrackedModel, ValidityMixin):
     additional code."""
 
     # This is not used and here only for historical data
-
-    record_code = "245"
-    subrecord_code = "15"
 
     identifying_fields = (
         "additional_code__sid",

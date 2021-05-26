@@ -13,12 +13,6 @@ from measures import business_rules as measures_business_rules
 
 
 class CertificateType(TrackedModel, ValidityMixin):
-    record_code = "110"
-    subrecord_code = "00"
-
-    description_record_code = "110"
-    description_subrecord_code = "05"
-
     sid = models.CharField(
         max_length=1,
         validators=[validators.certificate_type_sid_validator],
@@ -45,8 +39,6 @@ class CertificateType(TrackedModel, ValidityMixin):
 
 
 class Certificate(TrackedModel, ValidityMixin):
-    record_code = "205"
-    subrecord_code = "00"
     sid = models.CharField(
         max_length=3,
         validators=[validators.certificate_sid_validator],
@@ -100,11 +92,6 @@ class Certificate(TrackedModel, ValidityMixin):
 
 
 class CertificateDescription(DescriptionMixin, TrackedModel):
-    record_code = "205"
-    subrecord_code = "10"
-
-    period_record_code = "205"
-    period_subrecord_code = "05"
 
     sid = SignedIntSID(db_index=True)
 

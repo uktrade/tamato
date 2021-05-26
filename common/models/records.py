@@ -283,9 +283,6 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
             "version_group", "version_group__current_version", *related_lookups
         )
 
-    def get_queryset(self):
-        return self.annotate_record_codes().order_by("record_code", "subrecord_code")
-
     def approved_query_filter(self, prefix=""):
         return Q(
             **{
@@ -348,8 +345,19 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
             c.model_class(): c for c in ContentType.objects.all()
         }  # TODO limit to defined serializers
 
-        return self.annotate_record_codes().annotate(
+        return self.annotate(
             message_id=Window(expression=RowNumber()),
+            record_code=Case(
+                *(
+                    When(
+                        polymorphic_ctype=types[model],
+                        then=Value(handler.xml_model.record_code),
+                    )
+                    for (model, handler) in RecordParser.serializer_map.items()
+                ),
+                default=None,
+                output_field=CharField(),
+            ),
             xml=Case(
                 *(
                     When(
@@ -357,14 +365,6 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
                         then=Subquery(
                             model.objects.annotate(
                                 message_id=OuterRef("message_id"),
-                                record_code=Value(
-                                    "000",
-                                    output_field=CharField(),
-                                ),  # OuterRef("record_code"),
-                                subrecord_code=Value(
-                                    "00",
-                                    output_field=CharField(),
-                                ),  # OuterRef("subrecord_code"),
                                 sequence_number=Value(
                                     1,
                                     output_field=SmallIntegerField(),
@@ -381,7 +381,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
                 default=None,
                 output_field=TextField(),
             ),
-        )
+        ).order_by("record_code")
 
 
 class VersionGroup(TimestampedMixin):
@@ -439,30 +439,6 @@ class TrackedModel(PolymorphicModel):
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
-
-    record_code: int
-    """
-    The type id of this model's type family in the TARIC specification.
-
-    This number groups together a number of different models into 'records'.
-    Where two models share a record code, they are conceptually expressing
-    different properties of the same logical model.
-
-    In theory each :class:`~common.transactions.Transaction` should only contain
-    models with a single :attr:`record_code` (but differing
-    :attr:`subrecord_code`.)
-    """
-
-    subrecord_code: int
-    """
-    The type id of this model in the TARIC specification. The
-    :attr:`subrecord_code` when combined with the :attr:`record_code` uniquely
-    identifies the type within the specification.
-
-    The subrecord code gives the intended order for models in a transaction,
-    with comparatively smaller subrecord codes needing to come before larger
-    ones.
-    """
 
     identifying_fields: Iterable[str] = ("sid",)
     """

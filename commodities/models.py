@@ -25,9 +25,6 @@ from measures import business_rules as measures_business_rules
 
 
 class GoodsNomenclature(TrackedModel, ValidityMixin):
-    record_code = "400"
-    subrecord_code = "00"
-
     sid = NumericSID()
 
     # These are character fields as they often has leading 0s
@@ -112,8 +109,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
-    record_code = "400"
-    subrecord_code = "05"
 
     objects: GoodsNomenclatureIndentQuerySet = PolymorphicManager.from_queryset(
         GoodsNomenclatureIndentQuerySet,
@@ -301,10 +296,6 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
 
 
 class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
-    record_code = "400"
-    subrecord_code = "15"
-    period_record_code = "400"
-    period_subrecord_code = "10"
 
     objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
 
@@ -331,9 +322,6 @@ class GoodsNomenclatureOrigin(TrackedModel):
     have multiple origins when the hierarchy has been reorganised and the new
     classification was previously covered by multiple codes.
     """
-
-    record_code = "400"
-    subrecord_code = "35"
 
     new_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature,
@@ -369,9 +357,6 @@ class GoodsNomenclatureSuccessor(TrackedModel):
     covered.
     """
 
-    record_code = "400"
-    subrecord_code = "40"
-
     replaced_goods_nomenclature = models.ForeignKey(
         GoodsNomenclature,
         related_name="successor_links",
@@ -397,9 +382,6 @@ class GoodsNomenclatureSuccessor(TrackedModel):
 
 
 class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
-    record_code = "400"
-    subrecord_code = "20"
-
     goods_nomenclature = models.ForeignKey(GoodsNomenclature, on_delete=models.PROTECT)
     associated_footnote = models.ForeignKey(
         "footnotes.Footnote",

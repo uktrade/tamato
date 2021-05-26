@@ -30,12 +30,6 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     cumulative effect of other applicable measures.
     """
 
-    record_code = "140"
-    subrecord_code = "00"
-
-    description_record_code = "140"
-    description_subrecord_code = "05"
-
     sid = models.CharField(
         max_length=2,
         validators=[validators.measure_type_series_id_validator],
@@ -66,12 +60,6 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
 class MeasurementUnit(TrackedModel, ValidityMixin):
     """The measurement unit refers to the ISO measurement unit code."""
 
-    record_code = "210"
-    subrecord_code = "00"
-
-    description_record_code = "210"
-    description_subrecord_code = "05"
-
     code = models.CharField(
         max_length=3,
         validators=[validators.measurement_unit_code_validator],
@@ -97,12 +85,6 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
     For example the measurement unit "kilogram" may be qualified as "net" or
     "gross".
     """
-
-    record_code = "215"
-    subrecord_code = "00"
-
-    description_record_code = "215"
-    description_subrecord_code = "05"
 
     code = models.CharField(
         max_length=1,
@@ -134,9 +116,6 @@ class Measurement(TrackedModel, ValidityMixin):
     is null. These do not appear in output XML.
     """
 
-    record_code = "220"
-    subrecord_code = "00"
-
     measurement_unit = models.ForeignKey("MeasurementUnit", on_delete=models.PROTECT)
     measurement_unit_qualifier = models.ForeignKey(
         "MeasurementUnitQualifier",
@@ -157,12 +136,6 @@ class Measurement(TrackedModel, ValidityMixin):
 
 class MonetaryUnit(TrackedModel, ValidityMixin):
     """The monetary unit identifies the currency code used in the system."""
-
-    record_code = "225"
-    subrecord_code = "00"
-
-    description_record_code = "225"
-    description_subrecord_code = "05"
 
     code = models.CharField(
         max_length=3,
@@ -192,12 +165,6 @@ class DutyExpression(TrackedModel, ValidityMixin):
     It will also control how the duty will be expressed, for example whether an
     amount is "permitted" or "mandatory".
     """
-
-    record_code = "230"
-    subrecord_code = "00"
-
-    description_record_code = "230"
-    description_subrecord_code = "05"
 
     sid = models.IntegerField(
         choices=validators.DutyExpressionId.choices,
@@ -233,12 +200,6 @@ class MeasureType(TrackedModel, ValidityMixin):
     measures (such as levies and anti-dumping duties), and non-tariff measures
     (such as quantitative restrictions and prohibitions).
     """
-
-    record_code = "235"
-    subrecord_code = "00"
-
-    description_record_code = "235"
-    description_subrecord_code = "05"
 
     sid = models.CharField(
         max_length=6,
@@ -327,9 +288,6 @@ class AdditionalCodeTypeMeasureType(TrackedModel, ValidityMixin):
     """The relation between an additional code type and a measure type ensures a
     coherent association between additional codes and measures."""
 
-    record_code = "240"
-    subrecord_code = "00"
-
     measure_type = models.ForeignKey(MeasureType, on_delete=models.PROTECT)
     additional_code_type = models.ForeignKey(
         "additional_codes.AdditionalCodeType",
@@ -345,12 +303,6 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
     """A measure condition code identifies a broad area where conditions are
     required, for example "C" will have the description "required to present a
     certificate"."""
-
-    record_code = "350"
-    subrecord_code = "00"
-
-    description_record_code = "350"
-    description_subrecord_code = "05"
 
     code = models.CharField(
         max_length=2,
@@ -384,12 +336,6 @@ class MeasureAction(TrackedModel, ValidityMixin):
 
     For example, the description of "01" will be "apply ACTION AMOUNT".
     """
-
-    record_code = "355"
-    subrecord_code = "00"
-
-    description_record_code = "355"
-    description_subrecord_code = "05"
 
     code = models.CharField(
         max_length=3,
@@ -435,9 +381,6 @@ class Measure(TrackedModel, ValidityMixin):
     data capture workload (thus diminishing the possibility of introducing
     errors) and the transmission volumes.
     """
-
-    record_code = "430"
-    subrecord_code = "00"
 
     sid = SignedIntSID(db_index=True)
     measure_type = models.ForeignKey(MeasureType, on_delete=models.PROTECT)
@@ -675,9 +618,6 @@ class Measure(TrackedModel, ValidityMixin):
 class MeasureComponent(TrackedModel):
     """Contains the duty information or part of the duty information."""
 
-    record_code = "430"
-    subrecord_code = "05"
-
     component_measure = models.ForeignKey(
         Measure,
         on_delete=models.PROTECT,
@@ -732,9 +672,6 @@ class MeasureCondition(TrackedModel):
     components. Conditions for the same condition type will have sequence
     numbers. Conditions of different types may be combined.
     """
-
-    record_code = "430"
-    subrecord_code = "10"
 
     sid = SignedIntSID(db_index=True)
     dependent_measure = models.ForeignKey(
@@ -869,9 +806,6 @@ class MeasureConditionComponent(TrackedModel):
     """Contains the duty information or part of the duty information of the
     measure condition."""
 
-    record_code = "430"
-    subrecord_code = "11"
-
     condition = models.ForeignKey(
         MeasureCondition,
         on_delete=models.PROTECT,
@@ -924,9 +858,6 @@ class MeasureExcludedGeographicalArea(TrackedModel):
     """The measure excluded geographical area modifies the applicable
     geographical area of a measure, which must be a geographical area group."""
 
-    record_code = "430"
-    subrecord_code = "15"
-
     identifying_fields = ("modified_measure__sid", "excluded_geographical_area__sid")
 
     modified_measure = models.ForeignKey(
@@ -951,9 +882,6 @@ class MeasureExcludedGeographicalArea(TrackedModel):
 class FootnoteAssociationMeasure(TrackedModel):
     """The association of a footnote and a measure is always applicable for the
     entire period of the measure."""
-
-    record_code = "430"
-    subrecord_code = "20"
 
     footnoted_measure = models.ForeignKey(Measure, on_delete=models.PROTECT)
     associated_footnote = models.ForeignKey(

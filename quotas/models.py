@@ -24,9 +24,6 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     definitions, for example to divide a quota over several time periods.
     """
 
-    record_code = "360"
-    subrecord_code = "00"
-
     sid = SignedIntSID(db_index=True)
     order_number = models.CharField(
         max_length=6,
@@ -98,9 +95,6 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to
     imports from a specific origin, usually a country or group of countries."""
 
-    record_code = "360"
-    subrecord_code = "10"
-
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
@@ -141,9 +135,6 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
     """Origin exclusions specify countries (or groups of countries, or other
     origins) to exclude from the quota number origin."""
 
-    record_code = "360"
-    subrecord_code = "15"
-
     origin = models.ForeignKey(QuotaOrderNumberOrigin, on_delete=models.PROTECT)
     excluded_geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea",
@@ -168,9 +159,6 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     The monetary unit code and the measurement unit code (with its optional unit
     qualifier code) are mutually exclusive.
     """
-
-    record_code = "370"
-    subrecord_code = "00"
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
@@ -238,9 +226,6 @@ class QuotaAssociation(TrackedModel):
     """The quota association defines the relation between quota and sub-
     quotas."""
 
-    record_code = "370"
-    subrecord_code = "05"
-
     main_quota = models.ForeignKey(
         QuotaDefinition,
         on_delete=models.PROTECT,
@@ -277,9 +262,6 @@ class QuotaAssociation(TrackedModel):
 class QuotaSuspension(TrackedModel, ValidityMixin):
     """Defines a suspension period for a quota."""
 
-    record_code = "370"
-    subrecord_code = "15"
-
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
@@ -289,9 +271,6 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
     """Defines a blocking period for a (sub-)quota."""
-
-    record_code = "370"
-    subrecord_code = "10"
 
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
@@ -310,7 +289,6 @@ class QuotaEvent(TrackedModel):
     So this model stores all events in a single table.
     """
 
-    record_code = "375"
     subrecord_code = models.CharField(
         max_length=2,
         choices=validators.QuotaEventType.choices,

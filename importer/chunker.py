@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 
 from importer import models
 from importer.namespaces import nsmap
-from importer.utils import dependency_tree
+from importer.utils import build_dependency_tree
 
 MAX_FILE_SIZE = 1024 * 1024 * 50  # Will keep chunks roughly close to 50MB
 
@@ -213,7 +213,7 @@ def write_transaction_to_chunk(
             code.text for code in transaction.findall("*/*/*/ns2:record.code", nsmap)
         )
 
-        if record_code not in dependency_tree:
+        if record_code not in build_dependency_tree():
             return
 
         # Commodities and measures are special cases which can be split on chapter heading as well.

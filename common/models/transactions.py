@@ -24,10 +24,7 @@ class TransactionManager(CTEManager):
     """Sorts TrackedModels by record_number and subrecord_number."""
 
     def get_queryset(self):
-        annotate_record_code = self.model.tracked_models.rel.related_model.objects.annotate_record_codes().order_by(
-            "record_code",
-            "subrecord_code",
-        )
+        annotate_record_code = self.model.tracked_models.rel.related_model.objects
         return TransactionQueryset(self.model, using=self._db).prefetch_related(
             models.Prefetch("tracked_models", queryset=annotate_record_code),
         )
