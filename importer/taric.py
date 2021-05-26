@@ -87,6 +87,8 @@ class RecordParser(ElementParser):
         # attribute on the model perhaps? Or a decorator that declares a given parser as
         # representative? Given that we're using these for more than parsing now, should
         # we be renaming them – e.g. `measures.xml_models.MeasureXMLModel` or something?
+        import commodities.import_parsers
+        import commodities.models
         import measures.import_parsers
         import measures.models
 
@@ -95,11 +97,12 @@ class RecordParser(ElementParser):
             measures.models.MeasureComponent: measures.import_parsers.MeasureComponentParser,
             measures.models.MeasureCondition: measures.import_parsers.MeasureConditionParser,
             measures.models.MeasureConditionComponent: measures.import_parsers.MeasureConditionComponentParser,
+            commodities.models.GoodsNomenclatureIndent: commodities.import_parsers.GoodsNomenclatureIndentsParser,
         }
 
         types = {c.model_class(): c for c in ContentType.objects.all()}
         return XMLElement(
-            self.tag.name,
+            self.tag.for_xml,
             *(
                 parser.serializer(field)
                 for field, parser in self.__class__.__dict__.items()

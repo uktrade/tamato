@@ -18,6 +18,7 @@ from django.db.models.functions.text import Upper
 
 from common.validators import UpdateType
 from common.xml import Identity
+from common.xml import ToChar
 from common.xml import XMLElement
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
@@ -254,7 +255,7 @@ class ValueElementMixin:
     """The Python type that most closely matches the type of the XML element."""
     
     null_condition: str = "isnull"
-    format_expression: Expression = Identity
+    format_expression: Callable[[Expression], Expression] = Identity
 
     def serializer(self, field_name: str) -> Expression:
         return Case(
@@ -262,7 +263,7 @@ class ValueElementMixin:
                 **{f"{field_name}__{self.null_condition}": False},
                 then=XMLElement(
                     self.tag.for_xml,
-                    self.format_expression(field_name),
+                    getattr(self, "format_expression")(field_name),
                 ),
             ),
             default=Value(""),
@@ -287,6 +288,13 @@ class ConstantElement(ValueElementMixin, ElementParser):
         value: str,  # pylint: disable=unused-argument
     ) -> None:
         super().__init__(tag)
+        self.format_expression = lambda _: Value(value)
+
+    def serializer(self, field_name: str, **kwargs) -> Expression:
+        return XMLElement(
+            self.tag.for_xml,
+            getattr(self, "format_expression")(field_name),
+        )
 
     def clean(self):
         pass
@@ -315,11 +323,8 @@ class IntElement(ValueElementMixin, ElementParser):
 
     native_type = int
 
-    def __init__(
-        self,
-        *args,
-        format: str = "FM99999999999999999999",  # pylint: disable=unused-argument
-    ):
+    def __init__(self, *args, format: str = "FM99999999999999999999"):
+        self.format_expression = lambda f: ToChar(f, format=format)
         super().__init__(*args)
 
 
@@ -341,6 +346,10 @@ class BooleanElement(ValueElementMixin, ElementParser):
     def __init__(self, *args, true_value: str = "1", false_value: str = "0", **kwargs):
         self.true_value = true_value
         self.false_value = false_value
+        self.format_expression = lambda f: Case(
+            When(**{f: True}, then=Value(true_value)),
+            default=Value(false_value),
+        )
         super().__init__(*args, **kwargs)
 
     def clean(self):
