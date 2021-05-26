@@ -1,10 +1,10 @@
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-from django.shortcuts import redirect
-from django.shortcuts import render
-from django.views.decorators.http import require_GET
-from django_filters import rest_framework as filters
+from django.urls import reverse
+from django.views.generic.base import RedirectView
+from django.views.generic.detail import DetailView
+from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.list import ListView
 from rest_framework import renderers
 from rest_framework import viewsets
 
@@ -17,7 +17,6 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
     """API endpoint that allows workbaskets to be viewed and edited."""
 
     queryset = WorkBasket.objects.prefetch_related("transactions")
-    filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ("status",)
     serializer_class = WorkBasketSerializer
     renderer_classes = [
@@ -26,7 +25,6 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
         TaricXMLRenderer,
     ]
     search_fields = ["title"]
-    template_name = "workbaskets/taric/workbasket_list.xml"
 
     def get_template_names(self, *args, **kwargs):
         if self.detail:
@@ -34,47 +32,34 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
         return ["workbaskets/taric/workbasket_list.xml"]
 
 
-class WorkBasketUIViewSet(WorkBasketViewSet):
-    """UI endpoint that allows workbaskets to be viewed and edited."""
+class WorkBasketList(ListView):
+    """UI endpoint for viewing and filtering workbaskets."""
 
-    renderer_classes = [renderers.TemplateHTMLRenderer]
-
-    def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
-        return render(
-            request,
-            "workbaskets/list.jinja",
-            context={"workbaskets": queryset},
-        )
-
-    def retrieve(self, request, *args, **kwargs):
-        # XXX needs updating to use TrackedModel
-        # items = self.get_object().items.prefetch_related("existing_record").all()
-        # groups = dict()
-        # for item in items:
-        #     group_name = item.existing_record.__class__._meta.verbose_name_plural
-        #     groups.setdefault(group_name, []).append(item.existing_record)
-        # groups = sorted(list(groups.items()), key=lambda tup: tup[0])
-        groups = []
-        return render(
-            request,
-            "workbaskets/detail.jinja",
-            context={"workbasket": self.get_object(), "workbasketitem_groups": groups},
-        )
+    model = WorkBasket
+    template_name = "workbaskets/list.jinja"
 
 
-@permission_required("workbaskets.change_workbasket")
-@require_GET
-@transaction.atomic
-def submit_workbasket_view(request, workbasket_pk):
-    workbasket = get_object_or_404(WorkBasket, pk=workbasket_pk)
+class WorkBasketDetail(DetailView):
+    """UI endpoint for viewing a specified workbasket."""
 
-    workbasket.full_clean()
+    model = WorkBasket
+    template_name = "workbaskets/detail.jinja"
 
-    workbasket.submit_for_approval()
-    workbasket.approve(request.user)
 
-    workbasket.export_to_cds()
-    workbasket.save()
+class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
+    """UI endpoint for submitting a workbasket to HMRC CDS."""
 
-    return redirect("index")
+    model = WorkBasket
+    permission_required = "workbaskets.change_workbasket"
+
+    @transaction.atomic
+    def get_redirect_url(self, *args, **kwargs):
+        workbasket: WorkBasket = self.get_object()
+
+        workbasket.submit_for_approval()
+        workbasket.approve(self.request.user)
+        workbasket.export_to_cds()
+        workbasket.save()
+        self.request.session["workbasket"] = workbasket.to_json()
+
+        return reverse("index")

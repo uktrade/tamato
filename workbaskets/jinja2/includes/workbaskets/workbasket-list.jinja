@@ -3,7 +3,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 <div class="filter-layout">
-  <form class="filter-layout__filters" method="get" action="{{ url("workbasket-ui-list") }}">
+  <form class="filter-layout__filters" method="get" action="{{ url("workbaskets:workbasket-ui-list") }}">
     {{ govukInput({
       "id": "search",
       "name": "search",

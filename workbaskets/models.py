@@ -223,7 +223,13 @@ class WorkBasket(TimestampedMixin):
         """Get the current workbasket in the session."""
 
         if "workbasket" in request.session:
-            return cls.from_json(request.session["workbasket"])
+            workbasket = cls.from_json(request.session["workbasket"])
+
+            if workbasket.status in WorkflowStatus.approved_statuses():
+                del request.session["workbasket"]
+                return None
+
+            return workbasket
 
     def clean(self):
         errors = []

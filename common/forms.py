@@ -46,7 +46,10 @@ class DateInputFieldFixed(DateInputField):
     def compress(self, data_list):
         day, month, year = data_list or [None, None, None]
         if day and month and year:
-            return date(day=int(day), month=int(month), year=int(year))
+            try:
+                return date(day=int(day), month=int(month), year=int(year))
+            except ValueError as e:
+                raise ValidationError(str(e).capitalize()) from e
         else:
             return None
 
