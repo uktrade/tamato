@@ -196,6 +196,10 @@ class Regulation(TrackedModel):
         business_rules.ROIMB47,
     )
 
+    @property
+    def structure_description(self):
+        return self.information_text
+
     @classmethod
     def from_db(cls, db, field_names, values):
         instance = super().from_db(db, field_names, values)
@@ -208,7 +212,7 @@ class Regulation(TrackedModel):
         return self.regulation_id.startswith("C")
 
     def __str__(self):
-        return f"{self.regulation_id} ({self.get_role_type_display()})"
+        return str(self.regulation_id)
 
     def used_as_terminating_regulation_or_draft_generating_and_terminating_regulation(
         self,

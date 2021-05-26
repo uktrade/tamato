@@ -1,0 +1,3 @@
+{% from "components/autocomplete/macro.jinja" import autocomplete %}
+
+{{ autocomplete({'name': widget.name,'initial_value': widget.value, 'label': widget.label, 'help_text': widget.help_text, 'display_value': widget.display_value})}}

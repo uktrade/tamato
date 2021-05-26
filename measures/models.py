@@ -270,6 +270,9 @@ class MeasureType(TrackedModel, ValidityMixin):
         business_rules.MT10,
     )
 
+    def __str__(self):
+        return str(self.sid)
+
     def in_use(self):
         return (
             Measure.objects.filter(measure_type__sid=self.sid)
@@ -570,6 +573,9 @@ class Measure(TrackedModel, ValidityMixin):
             return effective_end_date
 
         return self.valid_between.upper
+
+    def __str__(self):
+        return str(self.sid)
 
     @property
     def effective_valid_between(self):

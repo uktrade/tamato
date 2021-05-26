@@ -596,7 +596,7 @@ class TrackedModel(PolymorphicModel):
                 description = description.description
         if hasattr(self, "description"):
             description = self.description
-        return description or "-"
+        return description or None
 
     @property
     def current_version(self) -> TrackedModel:

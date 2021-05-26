@@ -10,9 +10,12 @@ $govuk-font-url-function: frontend-font-url;
 $govuk-image-url-function: frontend-image-url;
 
 @import "~govuk-frontend/govuk/all";
+@import "accessible-autocomplete";
 
 @import "icon-action-list";
 @import "layout";
+@import "autocomplete";
+@import "accordion";
 @import "_table";
 @import "additional_codes";
 @import "footnotes";

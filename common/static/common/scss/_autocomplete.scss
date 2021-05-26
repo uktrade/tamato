@@ -1,0 +1,9 @@
+.autocomplete__menu > input,
+li {
+  font-family: "GDS Transport", arial, sans-serif;
+}
+
+.autocomplete__wrapper,
+hr {
+  @extend .govuk-\!-margin-bottom-6;
+}
