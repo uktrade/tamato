@@ -6,6 +6,7 @@ from rest_framework import viewsets
 from additional_codes import business_rules
 from additional_codes.filters import AdditionalCodeFilter
 from additional_codes.filters import AdditionalCodeFilterBackend
+from additional_codes.forms import AdditionalCodeCreateDescriptionForm
 from additional_codes.forms import AdditionalCodeDescriptionForm
 from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
@@ -19,6 +20,7 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
+from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -54,6 +56,17 @@ class AdditionalCodeMixin:
         return AdditionalCode.objects.approved_up_to_transaction(tx).select_related(
             "type",
         )
+
+
+class AdditionalCodeCreateDescriptionMixin:
+    model: Type[TrackedModel] = AdditionalCodeDescription
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["described_object"] = AdditionalCode.objects.get(
+            sid=(self.kwargs.get("described_additionalcode__sid")),
+        )
+        return context
 
 
 class AdditionalCodeDescriptionMixin:
@@ -101,6 +114,22 @@ class AdditionalCodeUpdate(
         business_rules.ACN17,
         # business_rules.ACN5,  # XXX should it be checked here?
     )
+
+
+class AdditionalCodeCreateDescription(
+    AdditionalCodeCreateDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftCreateView,
+):
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["described_additionalcode"] = AdditionalCode.objects.get(
+            sid=(self.kwargs.get("described_additionalcode__sid")),
+        )
+        return initial
+
+    form_class = AdditionalCodeCreateDescriptionForm
+    template_name = "common/create_description.jinja"
 
 
 class AdditionalCodeUpdateDescription(

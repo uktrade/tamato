@@ -7,6 +7,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 
 from additional_codes import models
+from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
 from common.forms import ValidityPeriodForm
 
@@ -72,3 +73,24 @@ class AdditionalCodeDescriptionForm(DescriptionForm):
     class Meta:
         model = models.AdditionalCodeDescription
         fields = DescriptionForm.Meta.fields
+
+
+class AdditionalCodeCreateDescriptionForm(CreateDescriptionForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper.layout.insert(
+            0,
+            Field(
+                "described_additionalcode",
+                context={"legend_size": "govuk-label--s"},
+            ),
+        )
+
+        self.fields["described_additionalcode"].label = "Described additional code"
+        self.fields["described_additionalcode"].disabled = True
+        self.fields["described_additionalcode"].help_text = "You can't edit this"
+
+    class Meta:
+        model = models.AdditionalCodeDescription
+        fields = ("described_additionalcode", "description", "valid_between")
