@@ -175,7 +175,7 @@ class QuotaAssociationParser(Writable, ElementParser):
 
 
 @RecordParser.register_child("quota_blocking_period")
-class QuotaBlockingPeriodParser(ValidityMixin, Writable, ElementParser):
+class QuotaBlockingParser(ValidityMixin, Writable, ElementParser):
     """
     Example XML:
 
@@ -206,7 +206,7 @@ class QuotaBlockingPeriodParser(ValidityMixin, Writable, ElementParser):
 
 
 @RecordParser.register_child("quota_suspension_period")
-class QuotaSuspensionPeriodParser(ValidityMixin, Writable, ElementParser):
+class QuotaSuspensionParser(ValidityMixin, Writable, ElementParser):
     """
     Example XML:
 

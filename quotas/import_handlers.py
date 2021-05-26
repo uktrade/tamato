@@ -83,7 +83,7 @@ class QuotaSuspensionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.QuotaSuspensionSerializer
-    tag = parsers.QuotaSuspensionPeriodParser.tag.name
+    tag = parsers.QuotaSuspensionParser.tag.name
 
 
 class QuotaBlockingHandler(BaseHandler):
@@ -94,7 +94,7 @@ class QuotaBlockingHandler(BaseHandler):
         },
     )
     serializer_class = serializers.QuotaBlockingSerializer
-    tag = parsers.QuotaBlockingPeriodParser.tag.name
+    tag = parsers.QuotaBlockingParser.tag.name
 
 
 class QuotaEventHandler(BaseHandler):
@@ -105,7 +105,7 @@ class QuotaEventHandler(BaseHandler):
 
     def clean(self, data: dict) -> dict:
         data["occurrence_timestamp"] = datetime.fromisoformat(
-            data["occurrence_timestamp"]
+            data["occurrence_timestamp"],
         )
         return super().clean(data)
 

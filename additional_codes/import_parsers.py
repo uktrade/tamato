@@ -64,9 +64,9 @@ class AdditionalCodeDescriptionPeriodParser(
     tag = Tag("additional.code.description.period")
 
     sid = TextElement(Tag("additional.code.description.period.sid"))
-    additional_code_sid = TextElement(Tag("additional.code.sid"))
-    additional_code_type_id = TextElement(Tag("additional.code.type.id"))
-    additional_code = TextElement(Tag("additional.code"))
+    described_additionalcode_sid = TextElement(Tag("additional.code.sid"))
+    described_additionalcode_type_id = TextElement(Tag("additional.code.type.id"))
+    described_additionalcode = TextElement(Tag("additional.code"))
 
 
 @RecordParser.register_child("additional_code_description")

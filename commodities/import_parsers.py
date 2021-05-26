@@ -141,7 +141,7 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
     described_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
     )
-    described_goods_nomenclature__productline_suffix = TextElement(
+    described_goods_nomenclature__suffix = TextElement(
         Tag("productline.suffix"),
     )
     description = TextElement(Tag("description"))
@@ -178,13 +178,13 @@ class GoodsNomenclatureDescriptionPeriodParser(
     described_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
     )
-    described_goods_nomenclature__productline_suffix = TextElement(
+    described_goods_nomenclature__suffix = TextElement(
         Tag("productline.suffix"),
     )
 
 
 @RecordParser.register_child("goods_nomenclature_indent")
-class GoodsNomenclatureIndentsParser(ValidityStartMixin, Writable, ElementParser):
+class GoodsNomenclatureIndentParser(ValidityStartMixin, Writable, ElementParser):
     """
     Example XML:
 
