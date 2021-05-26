@@ -8,7 +8,7 @@
     {% set change_count = workbasket.tracked_models.count() %}
     <p class="govuk-body align-left">{{ change_count }} change{{ pluralize(change_count) }}</p>
     <p class="govuk-body align-right">
-        <a href="{{ url('workbaskets:submit_workbasket', args=[workbasket.pk] ) }}" class="govuk-link">Publish all changes</a>
+        <a href="{{ url('workbaskets:workbasket-ui-submit', args=[workbasket.pk] ) }}" class="govuk-link">Publish all changes</a>
     </p>
     {% set table_rows = [] %}
     {% for obj in page_obj.object_list %}

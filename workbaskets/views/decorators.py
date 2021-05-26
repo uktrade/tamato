@@ -10,9 +10,15 @@ def require_current_workbasket(view_func):
     @wraps(view_func)
     def check_for_current_workbasket(request, *args, **kwargs):
         if WorkBasket.current(request) is None:
-            request.session["workbasket"] = (
-                WorkBasket.objects.is_not_approved().get().to_json()
-            )
+            try:
+                workbasket = WorkBasket.objects.is_not_approved().get()
+            except WorkBasket.DoesNotExist:
+                workbasket = WorkBasket.objects.create(
+                    author=request.user,
+                )
+
+            request.session["workbasket"] = workbasket.to_json()
+
         return view_func(request, *args, **kwargs)
 
     return check_for_current_workbasket
