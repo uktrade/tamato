@@ -8,6 +8,7 @@ from typing import Optional
 from typing import Set
 from typing import TypeVar
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case
 from django.db.models import F
@@ -16,8 +17,14 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
-from django.db.models.fields import SmallIntegerField
 from django.db.models.expressions import Expression
+from django.db.models.expressions import OuterRef
+from django.db.models.expressions import Subquery
+from django.db.models.expressions import Window
+from django.db.models.fields import CharField
+from django.db.models.fields import SmallIntegerField
+from django.db.models.fields import TextField
+from django.db.models.functions.window import RowNumber
 from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
@@ -335,11 +342,45 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
         ]
 
     def with_xml(self):
-        from importer.taric import RecordParser
+        from importer.taric import RecordParser  # TODO: move the serializer map
+
+        types = {
+            c.model_class(): c for c in ContentType.objects.all()
+        }  # TODO limit to defined serializers
 
         return self.annotate_record_codes().annotate(
-            sequence_number=Value(1, output_field=SmallIntegerField()),
-            xml=RecordParser().serializer(),
+            message_id=Window(expression=RowNumber()),
+            xml=Case(
+                *(
+                    When(
+                        polymorphic_ctype=types[model],
+                        then=Subquery(
+                            model.objects.annotate(
+                                message_id=OuterRef("message_id"),
+                                record_code=Value(
+                                    "000",
+                                    output_field=CharField(),
+                                ),  # OuterRef("record_code"),
+                                subrecord_code=Value(
+                                    "00",
+                                    output_field=CharField(),
+                                ),  # OuterRef("subrecord_code"),
+                                sequence_number=Value(
+                                    1,
+                                    output_field=SmallIntegerField(),
+                                ),
+                                xml=handler.xml_serializer(),
+                            )
+                            .filter(pk=OuterRef("pk"))
+                            .values_list("xml"),
+                            output_field=TextField(),
+                        ),
+                    )
+                    for (model, handler) in RecordParser.serializer_map.items()
+                ),
+                default=None,
+                output_field=TextField(),
+            ),
         )
 
 

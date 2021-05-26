@@ -9,16 +9,18 @@ from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models.aggregates import Count
-from django.db.models.expressions import Window
-from django.db.models.functions.window import RowNumber
+from django_cte import CTEManager
+from django_cte import With
+from django_cte.cte import CTEQuerySet
 
 from common import xml
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
+from common.models.records import TrackedModel
 
 
-class TransactionManager(models.Manager):
+class TransactionManager(CTEManager):
     """Sorts TrackedModels by record_number and subrecord_number."""
 
     def get_queryset(self):
@@ -26,16 +28,12 @@ class TransactionManager(models.Manager):
             "record_code",
             "subrecord_code",
         )
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related(
-                models.Prefetch("tracked_models", queryset=annotate_record_code),
-            )
+        return TransactionQueryset(self.model, using=self._db).prefetch_related(
+            models.Prefetch("tracked_models", queryset=annotate_record_code),
         )
 
 
-class TransactionQueryset(models.QuerySet):
+class TransactionQueryset(CTEQuerySet):
     def ordered_tracked_models(self):
         """TrackedModel in order of their transactions creation order."""
 
@@ -49,9 +47,9 @@ class TransactionQueryset(models.QuerySet):
     def with_xml(self):
         from importer.taric import TransactionParser
 
-        return self.annotate(
-            message_id=Window(expression=RowNumber()),
-            xml=xml.XMLSerialize(TransactionParser().serializer()),
+        cte = With(TrackedModel.objects.with_xml().filter(transaction__in=self))
+        return self.with_cte(cte).annotate(
+            xml=xml.XMLSerialize(TransactionParser().serializer(cte)),
         )
 
     def not_empty(self):

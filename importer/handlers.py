@@ -8,11 +8,13 @@ from typing import Set
 from typing import Type
 
 from django.conf import settings
+from django.db.models.expressions import Expression
 from django.utils.functional import classproperty
 from rest_framework.serializers import ModelSerializer
 
 from common.models import TrackedModel
 from common.validators import UpdateType
+from common.xml import XMLConcat
 from importer import parsers
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
@@ -500,3 +502,33 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     @classproperty
     def model(self) -> Type[TrackedModel]:
         return self.serializer_class.Meta.model
+
+    @classmethod
+    def resolve_dependent_handlers(
+        cls,
+        seen: Set[Type[BaseHandler]] = set(),
+    ) -> Set[Type[BaseHandler]]:
+        seen.add(cls)
+        for handler in cls.dependencies:
+            if handler not in seen:
+                handler.resolve_dependent_handlers(seen)
+        return seen
+
+    @classmethod
+    def xml_serializer(cls, recurse: bool = True) -> Expression:
+        from importer.taric import MessageParser
+
+        dependencies = [
+            h for h in cls.resolve_dependent_handlers() if h != cls and recurse is True
+        ]
+        order = sorted(
+            (cls, *(h for h in dependencies)),
+            key=lambda c: (c.model.record_code, c.model.subrecord_code),
+        )
+        expressions = {
+            cls: MessageParser().serializer(for_model=cls.xml_model()),
+            **{h: h.xml_serializer(recurse=False) for h in dependencies},
+        }
+        return XMLConcat(
+            *(expressions[handler] for handler in order),
+        )

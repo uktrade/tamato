@@ -11,6 +11,7 @@ from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 from measures import import_parsers as parsers
 from measures import models
 from measures import serializers
@@ -90,6 +91,7 @@ class BaseMeasurementUnitHandler(BaseHandler):
         return super().post_save(obj)
 
 
+@RecordParser.use_for_xml_serialization
 class MeasurementUnitHandler(BaseMeasurementUnitHandler):
     xml_model = parsers.MeasurementUnitParser
 

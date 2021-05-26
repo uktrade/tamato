@@ -237,11 +237,16 @@ class ElementParser:
 
     attributes: Dict[str, str | Expression] = {}
 
-    def serializer(self, field_name: str = None, *extra_children) -> Expression:
+    def serializer(
+        self, field_name: str = None, *extra_children, for_model=None
+    ) -> Expression:
         children = self._field_lookup.items()
         return XMLElement(
             self.tag.for_xml,
-            *(child.serializer(field) for (child, field) in children),
+            *(
+                child.serializer(field, for_model=for_model)
+                for (child, field) in children
+            ),
             *extra_children,
             **self.attributes,
         )
@@ -263,7 +268,7 @@ class ValueElementMixin:
     def field_not_present(self, field_name: str):
         return {f"{field_name}__{self.null_condition}": True}
 
-    def serializer(self, field_name: str) -> Expression:
+    def serializer(self, field_name: str, **kwargs) -> Expression:
         return Case(
             When(
                 **self.field_present(field_name),
@@ -373,7 +378,7 @@ class RangeLowerElement(TextElement):
     null_condition = "lower_inf"
     format_expression = Lower
 
-    def serializer(self, field_name: str) -> Expression:
+    def serializer(self, field_name: str, **kwargs) -> Expression:
         real_field = "_".join(field_name.split("_")[0:2])
         return super().serializer(real_field)
 
@@ -384,7 +389,7 @@ class RangeUpperElement(TextElement):
     null_condition = "upper_inf"
     format_expression = Upper
 
-    def serializer(self, field_name: str) -> Expression:
+    def serializer(self, field_name: str, **kwargs) -> Expression:
         real_field = "_".join(field_name.split("_")[0:2])
         return super().serializer(real_field)
 
@@ -421,7 +426,7 @@ class CompoundElement(ValueElementMixin, ElementParser):
         missing = len(self.extra_fields) - len(parts) + 1
         self.data = self.native_type([*parts, *([None] * missing)])
 
-    def serializer(self, field_name: str) -> Expression:
+    def serializer(self, field_name: str, **kwargs) -> Expression:
         all = (field_name, *self.children)
         fmt = getattr(self, "format_expression")
         return XMLElement(
@@ -433,7 +438,7 @@ class CompoundElement(ValueElementMixin, ElementParser):
                     **{
                         k: v
                         for child in self.children
-                        for k, v in self.field_not_present(child).items
+                        for k, v in self.field_not_present(child).items()
                     },
                     then=fmt(field_name),
                 ),

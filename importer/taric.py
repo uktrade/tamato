@@ -4,19 +4,18 @@ import os
 import time
 import xml.etree.ElementTree as etree
 from typing import Any
+from typing import Dict
 from typing import Mapping
 from typing import Optional
+from typing import Type
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.db.models.expressions import Case
 from django.db.models.expressions import Expression
 from django.db.models.expressions import OuterRef
 from django.db.models.expressions import Subquery
-from django.db.models.expressions import When
 from django.db.models.fields import TextField
 from django.db.transaction import atomic
 from lxml import etree
@@ -28,6 +27,7 @@ from common.xml import XMLAgg
 from common.xml import XMLElement
 from common.xml.namespaces import ENVELOPE
 from common.xml.namespaces import nsmap
+from importer.handlers import BaseHandler
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
 from importer.parsers import ElementParser
@@ -58,6 +58,13 @@ class RecordParser(ElementParser):
     sequence_number = TextElement(Tag("record.sequence.number"))
     update_type = TextElement(Tag("update.type"))
 
+    serializer_map: Dict[Type[TrackedModel], Type[BaseHandler]] = {}
+
+    @classmethod
+    def use_for_xml_serialization(cls, handler: Type[BaseHandler]):
+        cls.serializer_map[handler.model] = handler
+        return handler
+
     def save(self, data: Mapping[str, Any], transaction_id: int):
         """
         Save the Record to the database.
@@ -76,20 +83,15 @@ class RecordParser(ElementParser):
             if record_data and hasattr(parser, method_name):
                 getattr(parser, method_name)(record_data, transaction_id)
 
-    def serializer(self, field_name: str = None, *extra_children) -> Expression:
+    def serializer(
+        self, field_name: str = None, *extra_children, for_model: ElementParser
+    ) -> Expression:
         """
         This builds a massive CASE WHEN that covers each possible content type,
         and then wraps getting the XML in a subquery.
 
         For some reason, this does not seem to be horrendously slow.
         """
-        types = {c.model_class(): c for c in ContentType.objects.all()}
-        parsers = {p.__name__: p for p in ElementParser.__subclasses__()}
-        mapping = {
-            c: parsers[f"{c.__name__}Parser"]
-            for c in types
-            if issubclass(c, TrackedModel) and c is not TrackedModel
-        }
 
         return XMLElement(
             self.tag.for_xml,
@@ -98,22 +100,7 @@ class RecordParser(ElementParser):
                 for field, parser in self.__class__.__dict__.items()
                 if isinstance(parser, ElementParser)
             ),
-            Case(
-                *(
-                    When(
-                        polymorphic_ctype=types[model],
-                        then=Subquery(
-                            model.objects.annotate(xml=parser().serializer())
-                            .filter(pk=OuterRef("pk"))
-                            .values_list("xml"),
-                            output_field=TextField(),
-                        ),
-                    )
-                    for (model, parser) in mapping.items()
-                ),
-                default=None,
-                output_field=TextField(),
-            ),
+            for_model.serializer(),
         )
 
 
@@ -132,25 +119,6 @@ class TransmissionParser(ElementParser):
         """
         for record_data in data["record"]:
             self.record.save(record_data, transaction_id)
-
-    def serializer(self, field_name: str, *extra_children) -> Expression:
-        return XMLElement(
-            self.tag.for_xml,
-            Subquery(
-                (
-                    # https://stackoverflow.com/questions/55925437/django-subquery-with-aggregate
-                    # TODO: This may not be necessary since Django introduced
-                    # `alias` on querysets?
-                    TrackedModel.objects.with_xml()
-                    .filter(transaction=OuterRef("pk"))
-                    .values("transaction__pk")
-                    .annotate(xmldoc=XMLAgg("xml"))
-                    .values("xmldoc")
-                ),
-                output_field=TextField(),
-            ),
-            *extra_children,
-        )
 
 
 class MessageParser(ElementParser):
@@ -235,6 +203,32 @@ class TransactionParser(ElementParser):
                     envelope=self.parent.envelope,
                 )
             return True
+
+    def serializer(
+        self, cte, field_name: str = None, *extra_children, for_model=None
+    ) -> Expression:
+        return XMLElement(
+            self.tag.for_xml,
+            Subquery(
+                (
+                    # https://stackoverflow.com/questions/55925437/django-subquery-with-aggregate
+                    # TODO: This may not be necessary since Django introduced
+                    # `alias` on querysets?
+                    cte.queryset()
+                    .filter(transaction=OuterRef("pk"))
+                    .values("transaction__pk")
+                    .annotate(xmldoc=XMLAgg("xml"))
+                    .values("xmldoc")
+                    # TODO – need to change this to select a specific record + subrecord code
+                    # at the moment it does one call into the tree for each tracked model and things are resolved at the record parser layer
+                    # instead what we need to do is collect the dependencies at this level and then make one call to MessageParser()
+                    # with a specific type
+                    # ACTUALLY NO, in handlers.py, instead of calling the xml_serializer, we need to call MessageParser and pass it downwards to RecordParser
+                ),
+                output_field=TextField(),
+            ),
+            **self.attributes,
+        )
 
 
 class EnvelopeError(ParserError):
