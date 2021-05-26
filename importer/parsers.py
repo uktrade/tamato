@@ -11,6 +11,7 @@ from xml.etree.ElementTree import Element
 
 from django.db.models.expressions import Case
 from django.db.models.expressions import Expression
+from django.db.models.expressions import Func
 from django.db.models.expressions import Value
 from django.db.models.expressions import When
 from django.db.models.functions.text import Lower
@@ -18,7 +19,6 @@ from django.db.models.functions.text import Upper
 
 from common.validators import UpdateType
 from common.xml import Identity
-from common.xml import ToChar
 from common.xml import XMLElement
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
@@ -230,7 +230,7 @@ class ElementParser:
             cls._additional_components = {}
 
         def wraps(parser):
-            cls._additional_components[parser(*args, **kwargs)] = name
+            cls._additional_components[parser(*args, **kwargs)] = parser.__name__
             return parser
 
         return wraps
@@ -257,10 +257,16 @@ class ValueElementMixin:
     null_condition: str = "isnull"
     format_expression: Callable[[Expression], Expression] = Identity
 
+    def field_present(self, field_name: str):
+        return {f"{field_name}__{self.null_condition}": False}
+
+    def field_not_present(self, field_name: str):
+        return {f"{field_name}__{self.null_condition}": True}
+
     def serializer(self, field_name: str) -> Expression:
         return Case(
             When(
-                **{f"{field_name}__{self.null_condition}": False},
+                **self.field_present(field_name),
                 then=XMLElement(
                     self.tag.for_xml,
                     getattr(self, "format_expression")(field_name),
@@ -324,7 +330,7 @@ class IntElement(ValueElementMixin, ElementParser):
     native_type = int
 
     def __init__(self, *args, format: str = "FM99999999999999999999"):
-        self.format_expression = lambda f: ToChar(f, format=format)
+        self.format_expression = lambda f: Func(f, Value(format), function="TO_CHAR")
         super().__init__(*args)
 
 
@@ -414,6 +420,41 @@ class CompoundElement(ValueElementMixin, ElementParser):
         parts = self.text.split(self.separator, len(self.extra_fields))
         missing = len(self.extra_fields) - len(parts) + 1
         self.data = self.native_type([*parts, *([None] * missing)])
+
+    def serializer(self, field_name: str) -> Expression:
+        all = (field_name, *self.children)
+        fmt = getattr(self, "format_expression")
+        return XMLElement(
+            self.tag.for_xml,
+            Case(
+                # If all of the child fields are not present, just pass through the
+                # default field value.
+                When(
+                    **{
+                        k: v
+                        for child in self.children
+                        for k, v in self.field_not_present(child).items
+                    },
+                    then=fmt(field_name),
+                ),
+                # Else, if any of the children are present, output the children
+                # separated by the separator, even if any single one of them is null.
+                default=Func(
+                    Value(self.separator),
+                    (
+                        Case(
+                            When(
+                                **self.field_present(field),
+                                then=fmt(field),
+                            ),
+                            default=Value(""),
+                        )
+                        for field in all
+                    ),
+                    function="CONCAT_WS",
+                ),
+            ),
+        )
 
 
 class ValidityMixin:

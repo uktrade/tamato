@@ -83,24 +83,14 @@ class RecordParser(ElementParser):
 
         For some reason, this does not seem to be horrendously slow.
         """
-        # TODO: We should be auto-generating this – how do we map them back? An
-        # attribute on the model perhaps? Or a decorator that declares a given parser as
-        # representative? Given that we're using these for more than parsing now, should
-        # we be renaming them – e.g. `measures.xml_models.MeasureXMLModel` or something?
-        import commodities.import_parsers
-        import commodities.models
-        import measures.import_parsers
-        import measures.models
-
-        MAPPING = {
-            measures.models.Measure: measures.import_parsers.MeasureParser,
-            measures.models.MeasureComponent: measures.import_parsers.MeasureComponentParser,
-            measures.models.MeasureCondition: measures.import_parsers.MeasureConditionParser,
-            measures.models.MeasureConditionComponent: measures.import_parsers.MeasureConditionComponentParser,
-            commodities.models.GoodsNomenclatureIndent: commodities.import_parsers.GoodsNomenclatureIndentsParser,
+        types = {c.model_class(): c for c in ContentType.objects.all()}
+        parsers = {p.__name__: p for p in ElementParser.__subclasses__()}
+        mapping = {
+            c: parsers[f"{c.__name__}Parser"]
+            for c in types
+            if issubclass(c, TrackedModel) and c is not TrackedModel
         }
 
-        types = {c.model_class(): c for c in ContentType.objects.all()}
         return XMLElement(
             self.tag.for_xml,
             *(
@@ -119,7 +109,7 @@ class RecordParser(ElementParser):
                             output_field=TextField(),
                         ),
                     )
-                    for (model, parser) in MAPPING.items()
+                    for (model, parser) in mapping.items()
                 ),
                 default=None,
                 output_field=TextField(),
@@ -149,8 +139,8 @@ class TransmissionParser(ElementParser):
             Subquery(
                 (
                     # https://stackoverflow.com/questions/55925437/django-subquery-with-aggregate
-                    # TODO: This may not be necessary since Django
-                    # introduced `alias` on querysets?
+                    # TODO: This may not be necessary since Django introduced
+                    # `alias` on querysets?
                     TrackedModel.objects.with_xml()
                     .filter(transaction=OuterRef("pk"))
                     .values("transaction__pk")

@@ -9,7 +9,6 @@ not, should we be opening a PR to merge the XML functions in?
 
 from django.db.models import Aggregate
 from django.db.models import Func
-from django.db.models.fields import CharField
 from django.db.models.fields import TextField
 
 
@@ -66,11 +65,4 @@ class XMLSerialize(Func):
 class Identity(Func):
     function = ""
     template = "%(expressions)s"
-    arity = 1
-
-
-class ToChar(Func):
-    function = "TO_CHAR"
-    template = "%(function)s(%(expressions)s, '%(format)s')"
-    output_field = CharField()
     arity = 1
