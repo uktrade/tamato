@@ -12,7 +12,7 @@ from quotas import serializers
 
 class QuotaOrderNumberHandler(BaseHandler):
     serializer_class = serializers.QuotaOrderNumberSerializer
-    tag = parsers.QuotaOrderNumberParser.tag.name
+    xml_model = parsers.QuotaOrderNumberParser
 
 
 class QuotaOrderNumberOriginHandler(BaseHandler):
@@ -27,7 +27,7 @@ class QuotaOrderNumberOriginHandler(BaseHandler):
         },
     )
     serializer_class = serializers.QuotaOrderNumberOriginSerializer
-    tag = parsers.QuotaOrderNumberOriginParser.tag.name
+    xml_model = parsers.QuotaOrderNumberOriginParser
 
 
 class QuotaOrderNumberOriginExclusionHandler(BaseHandler):
@@ -44,7 +44,7 @@ class QuotaOrderNumberOriginExclusionHandler(BaseHandler):
     )
 
     serializer_class = serializers.QuotaOrderNumberOriginExclusionSerializer
-    tag = parsers.QuotaOrderNumberOriginExclusionParser.tag.name
+    xml_model = parsers.QuotaOrderNumberOriginExclusionParser
 
 
 class QuotaDefinitionHandler(BaseHandler):
@@ -59,7 +59,7 @@ class QuotaDefinitionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.QuotaDefinitionImporterSerializer
-    tag = parsers.QuotaDefinitionParser.tag.name
+    xml_model = parsers.QuotaDefinitionParser
 
 
 class QuotaAssociationHandler(BaseHandler):
@@ -72,7 +72,7 @@ class QuotaAssociationHandler(BaseHandler):
         {"model": models.QuotaDefinition, "name": "sub_quota"},
     )
     serializer_class = serializers.QuotaAssociationSerializer
-    tag = parsers.QuotaAssociationParser.tag.name
+    xml_model = parsers.QuotaAssociationParser
 
 
 class QuotaSuspensionHandler(BaseHandler):
@@ -83,7 +83,7 @@ class QuotaSuspensionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.QuotaSuspensionSerializer
-    tag = parsers.QuotaSuspensionParser.tag.name
+    xml_model = parsers.QuotaSuspensionParser
 
 
 class QuotaBlockingHandler(BaseHandler):
@@ -94,14 +94,14 @@ class QuotaBlockingHandler(BaseHandler):
         },
     )
     serializer_class = serializers.QuotaBlockingSerializer
-    tag = parsers.QuotaBlockingParser.tag.name
+    xml_model = parsers.QuotaBlockingParser
 
 
 class QuotaEventHandler(BaseHandler):
     identifying_fields = ("subrecord_code", "quota_definition__sid")
     links = ({"model": models.QuotaDefinition, "name": "quota_definition"},)
     serializer_class = serializers.QuotaEventImporterSerializer
-    tag = parsers.QuotaEventParser.tag.name
+    xml_model = parsers.QuotaEventParser
 
     def clean(self, data: dict) -> dict:
         data["occurrence_timestamp"] = datetime.fromisoformat(

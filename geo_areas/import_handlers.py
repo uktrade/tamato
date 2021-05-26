@@ -13,7 +13,7 @@ class GeographicalAreaHandler(BaseHandler):
         },
     )
     serializer_class = serializers.GeographicalAreaImporterSerializer
-    tag = parsers.GeographicalAreaParser.tag.name
+    xml_model = parsers.GeographicalAreaParser
 
 
 class BaseGeographicalAreaDescriptionHandler(BaseHandler):
@@ -24,19 +24,19 @@ class BaseGeographicalAreaDescriptionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.GeographicalAreaDescriptionSerializer
-    tag = "BaseGeographicalAreaDescriptionHandler"
+    abstract = True
 
 
 class GeographicalAreaDescriptionHandler(BaseGeographicalAreaDescriptionHandler):
     serializer_class = serializers.GeographicalAreaDescriptionImporterSerializer
-    tag = parsers.GeographicalAreaDescriptionParser.tag.name
+    xml_model = parsers.GeographicalAreaDescriptionParser
 
 
 @GeographicalAreaDescriptionHandler.register_dependant
 class GeographicalAreaDescriptionPeriodHandler(BaseGeographicalAreaDescriptionHandler):
     dependencies = [GeographicalAreaDescriptionHandler]
     serializer_class = serializers.GeographicalAreaDescriptionImporterSerializer
-    tag = parsers.GeographicalAreaDescriptionPeriodParser.tag.name
+    xml_model = parsers.GeographicalAreaDescriptionPeriodParser
 
 
 class GeographicalMembershipHandler(BaseHandler):
@@ -52,4 +52,4 @@ class GeographicalMembershipHandler(BaseHandler):
         },
     )
     serializer_class = serializers.GeographicalMembershipSerializer
-    tag = parsers.GeographicalMembershipParser.tag.name
+    xml_model = parsers.GeographicalMembershipParser

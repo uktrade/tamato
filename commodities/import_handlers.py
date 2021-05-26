@@ -22,12 +22,12 @@ logger = logging.getLogger(__name__)
 
 class GoodsNomenclatureHandler(BaseHandler):
     serializer_class = serializers.GoodsNomenclatureSerializer
-    tag = parsers.GoodsNomenclatureParser.tag.name
+    xml_model = parsers.GoodsNomenclatureParser
 
 
 class GoodsNomenclatureOriginHandler(BaseHandler):
     serializer_class = serializers.GoodsNomenclatureOriginSerializer
-    tag = parsers.GoodsNomenclatureOriginParser.tag.name
+    xml_model = parsers.GoodsNomenclatureOriginParser
 
     identifying_fields = (
         "new_goods_nomenclature__sid",
@@ -71,7 +71,7 @@ class GoodsNomenclatureOriginHandler(BaseHandler):
 
 class GoodsNomenclatureSuccessorHandler(BaseHandler):
     serializer_class = serializers.GoodsNomenclatureSuccessorSerializer
-    tag = parsers.GoodsNomenclatureSuccessorParser.tag.name
+    xml_model = parsers.GoodsNomenclatureSuccessorParser
 
     identifying_fields = (
         "replaced_goods_nomenclature__sid",
@@ -137,12 +137,12 @@ class BaseGoodsNomenclatureDescriptionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
-    tag = "BaseGoodsNomenclatureDescriptionHandler"
+    abstract = True
 
 
 class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandler):
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
-    tag = parsers.GoodsNomenclatureDescriptionParser.tag.name
+    xml_model = parsers.GoodsNomenclatureDescriptionParser
 
 
 @GoodsNomenclatureDescriptionHandler.register_dependant
@@ -151,7 +151,7 @@ class GoodsNomenclatureDescriptionPeriodHandler(
 ):
     dependencies = [GoodsNomenclatureDescriptionHandler]
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
-    tag = parsers.GoodsNomenclatureDescriptionPeriodParser.tag.name
+    xml_model = parsers.GoodsNomenclatureDescriptionPeriodParser
 
 
 class GoodsNomenclatureIndentHandler(BaseHandler):
@@ -159,7 +159,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         {"model": models.GoodsNomenclature, "name": "indented_goods_nomenclature"},
     )
     serializer_class = serializers.GoodsNomenclatureIndentSerializer
-    tag = parsers.GoodsNomenclatureIndentParser.tag.name
+    xml_model = parsers.GoodsNomenclatureIndentParser
 
     # It is sadly necessary to correct some mistakes in the TARIC data.
     # These codes all do not meet the assumption that the child indent
@@ -517,4 +517,4 @@ class FootnoteAssociationGoodsNomenclatureHandler(BaseHandler):
         },
     )
     serializer_class = serializers.FootnoteAssociationGoodsNomenclatureSerializer
-    tag = parsers.FootnoteAssociationGoodsNomenclatureParser.tag.name
+    xml_model = parsers.FootnoteAssociationGoodsNomenclatureParser

@@ -6,14 +6,14 @@ from importer.handlers import BaseHandler
 
 class FootnoteTypeHandler(BaseHandler):
     serializer_class = serializers.FootnoteTypeSerializer
-    tag = parsers.FootnoteTypeParser.tag.name
+    xml_model = parsers.FootnoteTypeParser
 
 
 @FootnoteTypeHandler.register_dependant
 class FootnoteTypeDescriptionHandler(BaseHandler):
     dependencies = [FootnoteTypeHandler]
     serializer_class = serializers.FootnoteTypeSerializer
-    tag = parsers.FootnoteTypeDescriptionParser.tag.name
+    xml_model = parsers.FootnoteTypeDescriptionParser
 
 
 class FootnoteHandler(BaseHandler):
@@ -25,7 +25,7 @@ class FootnoteHandler(BaseHandler):
         },
     )
     serializer_class = serializers.FootnoteSerializer
-    tag = parsers.FootnoteParser.tag.name
+    xml_model = parsers.FootnoteParser
 
 
 class BaseFootnoteDescriptionHandler(BaseHandler):
@@ -37,16 +37,16 @@ class BaseFootnoteDescriptionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.FootnoteDescriptionSerializer
-    tag = "BaseFootnoteDescriptionHandler"
+    abstract = True
 
 
 class FootnoteDescriptionHandler(BaseFootnoteDescriptionHandler):
     serializer_class = serializers.FootnoteDescriptionSerializer
-    tag = parsers.FootnoteDescriptionParser.tag.name
+    xml_model = parsers.FootnoteDescriptionParser
 
 
 @FootnoteDescriptionHandler.register_dependant
 class FootnoteDescriptionPeriodHandler(BaseFootnoteDescriptionHandler):
     dependencies = [FootnoteDescriptionHandler]
     serializer_class = serializers.FootnoteDescriptionSerializer
-    tag = parsers.FootnoteDescriptionPeriodParser.tag.name
+    xml_model = parsers.FootnoteDescriptionPeriodParser

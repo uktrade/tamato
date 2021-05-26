@@ -63,14 +63,14 @@ def get_measurement_link(model, kwargs):
 
 class MeasureTypeSeriesHandler(BaseHandler):
     serializer_class = serializers.MeasureTypeSeriesSerializer
-    tag = parsers.MeasureTypeSeriesParser.tag.name
+    xml_model = parsers.MeasureTypeSeriesParser
 
 
 @MeasureTypeSeriesHandler.register_dependant
 class MeasureTypeSeriesDescriptionHandler(BaseHandler):
     dependencies = [MeasureTypeSeriesHandler]
     serializer_class = serializers.MeasureTypeSeriesSerializer
-    tag = parsers.MeasureTypeSeriesDescriptionParser.tag.name
+    xml_model = parsers.MeasureTypeSeriesDescriptionParser
 
 
 class BaseMeasurementUnitHandler(BaseHandler):
@@ -91,25 +91,25 @@ class BaseMeasurementUnitHandler(BaseHandler):
 
 
 class MeasurementUnitHandler(BaseMeasurementUnitHandler):
-    tag = parsers.MeasurementUnitParser.tag.name
+    xml_model = parsers.MeasurementUnitParser
 
 
-@MeasurementUnitHandler.register_dependant
+@MeasurementUnitHandler.register_dependant  # TODO is this used in the db???
 class MeasurementUnitDescriptionHandler(BaseMeasurementUnitHandler):
     dependencies = [MeasurementUnitHandler]
-    tag = parsers.MeasurementUnitDescriptionParser.tag.name
+    xml_model = parsers.MeasurementUnitDescriptionParser
 
 
 class MeasurementUnitQualifierHandler(BaseHandler):
     serializer_class = unit_serializers.MeasurementUnitQualifierSerializer
-    tag = parsers.MeasurementUnitQualifierParser.tag.name
+    xml_model = parsers.MeasurementUnitQualifierParser
 
 
 @MeasurementUnitQualifierHandler.register_dependant
 class MeasurementUnitQualifierDescriptionHandler(BaseHandler):
     dependencies = [MeasurementUnitQualifierHandler]
     serializer_class = unit_serializers.MeasurementUnitQualifierSerializer
-    tag = parsers.MeasurementUnitQualifierDescriptionParser.tag.name
+    xml_model = parsers.MeasurementUnitQualifierDescriptionParser
 
 
 class MeasurementHandler(BaseHandler):
@@ -125,31 +125,31 @@ class MeasurementHandler(BaseHandler):
         },
     )
     serializer_class = unit_serializers.MeasurementSerializer
-    tag = parsers.MeasurementParser.tag.name
+    xml_model = parsers.MeasurementParser
 
 
 class MonetaryUnitHandler(BaseHandler):
     serializer_class = unit_serializers.MonetaryUnitSerializer
-    tag = parsers.MonetaryUnitParser.tag.name
+    xml_model = parsers.MonetaryUnitParser
 
 
 @MonetaryUnitHandler.register_dependant
 class MonetaryUnitDescriptionHandler(BaseHandler):
     dependencies = [MonetaryUnitHandler]
     serializer_class = unit_serializers.MonetaryUnitSerializer
-    tag = parsers.MonetaryUnitDescriptionParser.tag.name
+    xml_model = parsers.MonetaryUnitDescriptionParser
 
 
 class DutyExpressionHandler(BaseHandler):
     serializer_class = serializers.DutyExpressionSerializer
-    tag = parsers.DutyExpressionParser.tag.name
+    xml_model = parsers.DutyExpressionParser
 
 
 @DutyExpressionHandler.register_dependant
 class DutyExpressionDescriptionHandler(BaseHandler):
     dependencies = [DutyExpressionHandler]
     serializer_class = serializers.DutyExpressionSerializer
-    tag = parsers.DutyExpressionDescriptionParser.tag.name
+    xml_model = parsers.DutyExpressionDescriptionParser
 
 
 class BaseMeasureTypeHandler(BaseHandler):
@@ -160,19 +160,19 @@ class BaseMeasureTypeHandler(BaseHandler):
         },
     )
     serializer_class = serializers.MeasureTypeSerializer
-    tag = "BaseMeasureTypeHandler"
+    abstract = True
 
 
 class MeasureTypeHandler(BaseMeasureTypeHandler):
     serializer_class = serializers.MeasureTypeSerializer
-    tag = parsers.MeasureTypeParser.tag.name
+    xml_model = parsers.MeasureTypeParser
 
 
 @MeasureTypeHandler.register_dependant
 class MeasureTypeDescriptionHandler(BaseMeasureTypeHandler):
     dependencies = [MeasureTypeHandler]
     serializer_class = serializers.MeasureTypeSerializer
-    tag = parsers.MeasureTypeDescriptionParser.tag.name
+    xml_model = parsers.MeasureTypeDescriptionParser
 
 
 class AdditionalCodeTypeMeasureTypeHandler(BaseHandler):
@@ -188,31 +188,31 @@ class AdditionalCodeTypeMeasureTypeHandler(BaseHandler):
         },
     )
     serializer_class = serializers.AdditionalCodeTypeMeasureTypeSerializer
-    tag = parsers.AdditionalCodeTypeMeasureTypeParser.tag.name
+    xml_model = parsers.AdditionalCodeTypeMeasureTypeParser
 
 
 class MeasureConditionCodeHandler(BaseHandler):
     serializer_class = serializers.MeasureConditionCodeSerializer
-    tag = parsers.MeasureConditionCodeParser.tag.name
+    xml_model = parsers.MeasureConditionCodeParser
 
 
 @MeasureConditionCodeHandler.register_dependant
 class MeasureConditionCodeDescriptionHandler(BaseHandler):
     dependencies = [MeasureConditionCodeHandler]
     serializer_class = serializers.MeasureConditionCodeSerializer
-    tag = parsers.MeasureConditionCodeDescriptionParser.tag.name
+    xml_model = parsers.MeasureConditionCodeDescriptionParser
 
 
 class MeasureActionHandler(BaseHandler):
     serializer_class = serializers.MeasureActionSerializer
-    tag = parsers.MeasureActionParser.tag.name
+    xml_model = parsers.MeasureActionParser
 
 
 @MeasureActionHandler.register_dependant
 class MeasureActionDescriptionHandler(BaseHandler):
     dependencies = [MeasureActionHandler]
     serializer_class = serializers.MeasureActionSerializer
-    tag = parsers.MeasureActionDescriptionParser.tag.name
+    xml_model = parsers.MeasureActionDescriptionParser
 
 
 class MeasureHandler(BaseHandler):
@@ -261,7 +261,7 @@ class MeasureHandler(BaseHandler):
         },
     )
     serializer_class = serializers.MeasureSerializer
-    tag = parsers.MeasureParser.tag.name
+    xml_model = parsers.MeasureParser
 
     def load_link(self, name, model, identifying_fields=None, optional=False):
         if name == "terminating_regulation" and self.data.get(
@@ -331,7 +331,7 @@ class MeasureComponentHandler(HandlerWithDutyAmount):
         },
     )
     serializer_class = serializers.MeasureComponentSerializer
-    tag = parsers.MeasureComponentParser.tag.name
+    xml_model = parsers.MeasureComponentParser
 
     def get_component_measurement_link(self, model, kwargs):
         return get_measurement_link(model, kwargs)
@@ -377,7 +377,7 @@ class MeasureConditionHandler(HandlerWithDutyAmount):
         },
     )
     serializer_class = serializers.MeasureConditionSerializer
-    tag = parsers.MeasureConditionParser.tag.name
+    xml_model = parsers.MeasureConditionParser
 
     def get_condition_measurement_link(self, model, kwargs):
         if not any(kwargs.values()):
@@ -412,7 +412,7 @@ class MeasureConditionComponentHandler(HandlerWithDutyAmount):
         },
     )
     serializer_class = serializers.MeasureConditionComponentSerializer
-    tag = parsers.MeasureConditionComponentParser.tag.name
+    xml_model = parsers.MeasureConditionComponentParser
 
     def get_component_measurement_link(self, model, kwargs):
         return get_measurement_link(model, kwargs)
@@ -434,7 +434,7 @@ class MeasureExcludedGeographicalAreaHandler(BaseHandler):
         },
     )
     serializer_class = serializers.MeasureExcludedGeographicalAreaSerializer
-    tag = parsers.MeasureExcludedGeographicalAreaParser.tag.name
+    xml_model = parsers.MeasureExcludedGeographicalAreaParser
 
 
 class FootnoteAssociationMeasureHandler(BaseHandler):
@@ -459,4 +459,4 @@ class FootnoteAssociationMeasureHandler(BaseHandler):
         },
     )
     serializer_class = serializers.FootnoteAssociationMeasureSerializer
-    tag = parsers.FootnoteAssociationMeasureParser.tag.name
+    xml_model = parsers.FootnoteAssociationMeasureParser

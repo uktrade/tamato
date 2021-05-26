@@ -8,14 +8,14 @@ from regulations import serializers
 
 class RegulationGroupHandler(BaseHandler):
     serializer_class = serializers.GroupSerializer
-    tag = parsers.RegulationGroupParser.tag.name
+    xml_model = parsers.RegulationGroupParser
 
 
 @RegulationGroupHandler.register_dependant
 class RegulationGroupDescriptionHandler(BaseHandler):
     dependencies = [RegulationGroupHandler]
     serializer_class = serializers.GroupSerializer
-    tag = parsers.RegulationGroupDescriptionParser.tag.name
+    xml_model = parsers.RegulationGroupDescriptionParser
 
 
 class RegulationHandler(BaseHandler):
@@ -27,7 +27,7 @@ class RegulationHandler(BaseHandler):
         },
     )
     serializer_class = serializers.RegulationImporterSerializer
-    tag = parsers.BaseRegulationParser.tag.name
+    xml_model = parsers.BaseRegulationParser
 
     def clean(self, data: dict) -> dict:
         data["information_text"], data["public_identifier"], data["url"] = data[
@@ -39,13 +39,13 @@ class RegulationHandler(BaseHandler):
 class BaseRegulationThroughTableHandler(BaseHandler):
     links = ({"model": models.Regulation, "name": "target_regulation"},)
     serializer_class = serializers.RegulationImporterSerializer
-    tag = "BaseRegulationThroughTableHandler"
+    abstract = True
 
 
 class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
     identifying_fields = ("role_type", "regulation_id")
     serializer_class = serializers.RegulationImporterSerializer
-    tag = parsers.ModificationRegulationParser.tag.name
+    xml_model = parsers.ModificationRegulationParser
 
     def clean(self, data: dict) -> dict:
         data["information_text"], data["public_identifier"], data["url"] = data[
@@ -69,7 +69,7 @@ class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
 
 class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
     serializer_class = serializers.RegulationImporterSerializer
-    tag = "BaseSuspensionRegulationHandler"
+    abstract = True
 
     def clean(self, data: dict) -> dict:
         self.suspension_data = {}
@@ -99,7 +99,7 @@ class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
 class SuspensionRegulationHandler(BaseSuspensionRegulationHandler):
     identifying_fields = ("role_type", "regulation_id")
     serializer_class = serializers.RegulationImporterSerializer
-    tag = parsers.FullTemporaryStopRegulationParser.tag.name
+    xml_model = parsers.FullTemporaryStopRegulationParser
 
 
 @SuspensionRegulationHandler.register_dependant
@@ -107,7 +107,7 @@ class SuspensionRegulationActionHandler(BaseSuspensionRegulationHandler):
     identifying_fields = ("role_type", "regulation_id")
     dependencies = [SuspensionRegulationHandler]
     serializer_class = serializers.RegulationImporterSerializer
-    tag = parsers.FullTemporaryStopActionParser.tag.name
+    xml_model = parsers.FullTemporaryStopActionParser
 
 
 class ReplacementHandler(BaseRegulationThroughTableHandler):
@@ -126,4 +126,4 @@ class ReplacementHandler(BaseRegulationThroughTableHandler):
         },
     )
     serializer_class = serializers.ReplacementImporterSerializer
-    tag = parsers.RegulationReplacementParser.tag.name
+    xml_model = parsers.RegulationReplacementParser

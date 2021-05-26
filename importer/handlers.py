@@ -13,6 +13,7 @@ from rest_framework.serializers import ModelSerializer
 
 from common.models import TrackedModel
 from common.validators import UpdateType
+from importer import parsers
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
 from importer.utils import LinksType
@@ -57,8 +58,13 @@ class BaseHandlerMeta(type):
 
         handler_class.abstract = False
 
-        if not isinstance(getattr(handler_class, "tag"), str):
-            raise AttributeError(f'{name} requires attribute "tag" to be a str.')
+        if not issubclass(
+            getattr(handler_class, "xml_model", type),
+            parsers.ElementParser,
+        ):
+            raise AttributeError(
+                f'{name} requires attribute "xml_model" to be a subclass of `ElementParser`.',
+            )
 
         if not issubclass(
             getattr(handler_class, "serializer_class", type),
@@ -117,7 +123,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         class SimpleObjectHandler(BaseHandler):
             serializer_class = serializers.SimpleObjectSerializer
-            tag = parsers.SimpleObjectParser.tag.name
+            xml_model = parsers.SimpleObjectParser
 
     Any object like this would be immediately processed when run through the nursery as, without any dependencies
     or links, there should be nothing it needs to wait on.
@@ -131,14 +137,14 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         class DependentModelAHandler(BaseHandler):
             serializer_class = serializers.DependentModelSerializer
-            tag = parser.DependentModelAParser.tag.name
+            xml_model = parser.DependentModelAParser
 
 
         @DependentModelAHandler.register_dependant
         class DependentModelBHandler(BaseHandler):
             dependencies = [DependentModelAHandler]
             serializer_class = serializers.DependentModelSerializer
-            tag = parser.DependentModelBParser.tag.name
+            xml_model = parser.DependentModelBParser
 
     Dependencies in this case means two pre-existing models have been merged into one. Sadly the data import
     doesn't account for this and therefore it is expected to receive the complete set of data for this object
@@ -226,6 +232,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     identifying_fields: Iterable[str] = None
     links: Iterable[LinksType] = None
     serializer_class: Type[ModelSerializer] = None
+    xml_model: Type[parsers.ElementParser] = None
     tag: str = None
 
     def __init__(
@@ -233,6 +240,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         dispatched_object: DispatchedObjectType,
         nursery: TariffObjectNursery,
     ):
+        self.tag = self.xml_model.tag.name
         self.nursery = nursery
 
         self.data = dispatched_object["data"]

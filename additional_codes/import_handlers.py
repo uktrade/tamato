@@ -6,14 +6,14 @@ from importer.handlers import BaseHandler
 
 class AdditionalCodeTypeHandler(BaseHandler):
     serializer_class = serializers.AdditionalCodeTypeSerializer
-    tag = parsers.AdditionalCodeTypeParser.tag.name
+    xml_model = parsers.AdditionalCodeTypeParser
 
 
 @AdditionalCodeTypeHandler.register_dependant
 class AdditionalCodeTypeDescriptionHandler(BaseHandler):
     dependencies = [AdditionalCodeTypeHandler]
     serializer_class = serializers.AdditionalCodeTypeSerializer
-    tag = parsers.AdditionalCodeTypeDescriptionParser.tag.name
+    xml_model = parsers.AdditionalCodeTypeDescriptionParser
 
 
 class AdditionalCodeHandler(BaseHandler):
@@ -24,7 +24,7 @@ class AdditionalCodeHandler(BaseHandler):
         },
     )
     serializer_class = serializers.AdditionalCodeImporterSerializer
-    tag = parsers.AdditionalCodeParser.tag.name
+    xml_model = parsers.AdditionalCodeParser
 
 
 class BaseAdditionalCodeDescriptionHandler(BaseHandler):
@@ -36,7 +36,7 @@ class BaseAdditionalCodeDescriptionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.AdditionalCodeDescriptionImporterSerializer
-    tag = "BaseAdditionalCodeDescriptionHandler"
+    abstract = True
 
     def get_described_additionalcode_link(self, model, kwargs):
         code_type = models.AdditionalCodeType.objects.get_latest_version(
@@ -48,11 +48,11 @@ class BaseAdditionalCodeDescriptionHandler(BaseHandler):
 
 class AdditionalCodeDescriptionHandler(BaseAdditionalCodeDescriptionHandler):
     serializer_class = serializers.AdditionalCodeDescriptionImporterSerializer
-    tag = parsers.AdditionalCodeDescriptionParser.tag.name
+    xml_model = parsers.AdditionalCodeDescriptionParser
 
 
 @AdditionalCodeDescriptionHandler.register_dependant
 class AdditionalCodeDescriptionPeriodHandler(BaseAdditionalCodeDescriptionHandler):
     dependencies = [AdditionalCodeDescriptionHandler]
     serializer_class = serializers.AdditionalCodeDescriptionImporterSerializer
-    tag = parsers.AdditionalCodeDescriptionPeriodParser.tag.name
+    xml_model = parsers.AdditionalCodeDescriptionPeriodParser

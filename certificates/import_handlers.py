@@ -6,7 +6,7 @@ from importer.handlers import BaseHandler
 
 class CertificateTypeHandler(BaseHandler):
     serializer_class = serializers.CertificateTypeSerializer
-    tag = parsers.CertificateTypeParser.tag.name
+    xml_model = parsers.CertificateTypeParser
 
 
 @CertificateTypeHandler.register_dependant
@@ -15,7 +15,7 @@ class CertificateTypeDescriptionHandler(BaseHandler):
         CertificateTypeHandler,
     ]
     serializer_class = serializers.CertificateTypeSerializer
-    tag = parsers.CertificateTypeDescriptionParser.tag.name
+    xml_model = parsers.CertificateTypeDescriptionParser
 
 
 class CertificateHandler(BaseHandler):
@@ -28,7 +28,7 @@ class CertificateHandler(BaseHandler):
     )
 
     serializer_class = serializers.CertificateSerializer
-    tag = parsers.CertificateParser.tag.name
+    xml_model = parsers.CertificateParser
 
 
 class BaseCertificateDescriptionHandler(BaseHandler):
@@ -40,12 +40,12 @@ class BaseCertificateDescriptionHandler(BaseHandler):
         },
     )
     serializer_class = serializers.CertificateDescriptionSerializer
-    tag = "BaseCertificateDescriptionHandler"
+    abstract = True
 
 
 class CertificateDescriptionHandler(BaseCertificateDescriptionHandler):
     serializer_class = serializers.CertificateDescriptionSerializer
-    tag = parsers.CertificateDescriptionParser.tag.name
+    xml_model = parsers.CertificateDescriptionParser
 
 
 @CertificateDescriptionHandler.register_dependant
@@ -54,4 +54,4 @@ class CertificateDescriptionPeriodHandler(BaseCertificateDescriptionHandler):
         CertificateDescriptionHandler,
     ]
     serializer_class = serializers.CertificateDescriptionSerializer
-    tag = parsers.CertificateDescriptionPeriodParser.tag.name
+    xml_model = parsers.CertificateDescriptionPeriodParser
