@@ -491,7 +491,31 @@
 
         <span class="k">return</span> <span class="n">template_name</span>
 
-    <span class="k">def</span> <span class="nf">new_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workbasket</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">new_version</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">workbasket</span><span class="p">,</span>
+        <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">update_type</span><span class="p">:</span> <span class="n">UpdateType</span> <span class="o">=</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">overrides</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a new version of the object. Callers can override existing data</span>
+<span class="sd">        by passing in keyword args.</span>
+
+<span class="sd">        The new version is added to a transaction which is created and added to the passed in workbasket</span>
+<span class="sd">        (or may be supplied as a keyword arg).</span>
+
+<span class="sd">        update_type must be UPDATE or DELETE, with UPDATE as the default.</span>
+
+<span class="sd">        By default the new object is saved; this can be disabled by passing save=False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">update_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span>
+            <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;update_type must be UPDATE or DELETE&quot;</span><span class="p">)</span>
+
         <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
 
         <span class="n">new_object_kwargs</span> <span class="o">=</span> <span class="p">{</span>
@@ -507,12 +531,12 @@
             <span class="p">)</span>
         <span class="p">}</span>
 
-        <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span>
-        <span class="n">new_object_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_type</span>
+        <span class="n">new_object_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="s2">&quot;transaction&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_object_kwargs</span><span class="p">:</span>
-            <span class="c1"># Only create a transaction if the user didn&#39;t specify one.</span>
-            <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;transaction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">workbasket</span><span class="o">.</span><span class="n">new_transaction</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">transaction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">transaction</span> <span class="o">=</span> <span class="n">workbasket</span><span class="o">.</span><span class="n">new_transaction</span><span class="p">()</span>
+        <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;transaction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">transaction</span>
 
         <span class="n">new_object</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">new_object_kwargs</span><span class="p">)</span>
 
