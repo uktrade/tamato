@@ -9,7 +9,6 @@ api_router.register(r"additional_codes", views.AdditionalCodeViewSet)
 api_router.register(r"additional_code_types", views.AdditionalCodeTypeViewSet)
 
 detail = "<sid:sid>"
-detail_with_descriptions = "<sid:described_additionalcode__sid>/descriptions"
 description_detail = "<sid:described_additionalcode__sid>/description/<sid:sid>"
 
 ui_patterns = [
@@ -34,9 +33,9 @@ ui_patterns = [
         name="additional_code-ui-confirm-update",
     ),
     path(
-        f"{detail_with_descriptions}/create/",
+        f"{detail}/create-description/",
         views.AdditionalCodeCreateDescription.as_view(),
-        name="additional_code_description-ui-create",
+        name="additional_code-ui-create-description",
     ),
     path(
         f"{description_detail}/edit/",

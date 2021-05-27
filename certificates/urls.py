@@ -29,6 +29,11 @@ ui_patterns = [
         name="certificate-ui-detail",
     ),
     path(
+        f"{detail}/create-description/",
+        views.CertificateCreateDescription.as_view(),
+        name="certificate-ui-create-description",
+    ),
+    path(
         f"{description_detail}/edit/",
         views.CertificateUpdateDescription.as_view(),
         name="certificate_description-ui-edit",

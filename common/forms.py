@@ -170,37 +170,8 @@ class ValidityPeriodForm(forms.ModelForm):
         return cleaned_data
 
 
-class CreateDescriptionForm(forms.ModelForm):
-    start_date = DateInputFieldFixed(
-        label="Start date",
-    )
-
+class CreateDescriptionForm(DescriptionForm):
     description = forms.CharField(
-        help_text="Write new description",  # TODO: check this copy against prototype
+        help_text="Write the new description",
         widget=forms.Textarea,
     )
-
-    valid_between = GovukDateRangeField(required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.helper = FormHelper(self)
-        self.helper.layout = Layout(
-            Field("start_date", context={"legend_size": "govuk-label--s"}),
-            Field.textarea("description", label_size=Size.SMALL, rows=5),
-            Submit("submit", "Save"),
-        )
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        start_date = cleaned_data.pop("start_date", None)
-        cleaned_data["valid_between"] = TaricDateRange(
-            start_date,
-        )
-
-        return cleaned_data
-
-    class Meta:
-        fields = ("description", "valid_between")

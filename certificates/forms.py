@@ -8,8 +8,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from certificates import models
+from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
-from common.forms import GovukDateRangeField
 from common.forms import ValidityPeriodForm
 
 
@@ -83,3 +83,23 @@ class CertificateDescriptionForm(DescriptionForm):
     class Meta:
         model = models.CertificateDescription
         fields = DescriptionForm.Meta.fields
+
+
+class CertificateCreateDescriptionForm(CreateDescriptionForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields["described_certificate"].disabled = True
+            self.fields["described_certificate"].help_text = "You can't edit this"
+
+        self.helper.layout.insert(
+            0,
+            Field(
+                "described_certificate",
+                context={"label_size": "govuk-label--s"},
+            ),
+        )
+
+    class Meta:
+        model = models.CertificateDescription
+        fields = ("described_certificate", "description", "validity_start")
