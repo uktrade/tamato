@@ -66,6 +66,11 @@ class MeasureUpdate(
     template_name = "measures/edit.jinja"
     queryset = Measure.objects.with_duty_sentence()
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
