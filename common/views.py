@@ -199,7 +199,7 @@ class TrackedModelDetailMixin:
             raise Http404(f"No {self.model.__name__} matching the query {self.kwargs}")
 
         if self.request.method == "POST":
-            obj = obj.new_draft(
+            obj = obj.new_version(
                 WorkBasket.current(self.request),
                 save=False,
             )

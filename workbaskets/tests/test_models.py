@@ -577,7 +577,7 @@ def test_get_tracked_models(new_workbasket):
 
 def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, valid_user):
     original_footnote = factories.FootnoteFactory.create()
-    new_footnote = original_footnote.new_draft(workbasket=new_workbasket)
+    new_footnote = original_footnote.new_version(workbasket=new_workbasket)
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
     new_workbasket.submit_for_approval()
@@ -590,7 +590,7 @@ def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, vali
 
 def test_workbasket_errored_updates_tracked_models(new_workbasket, valid_user):
     original_footnote = factories.FootnoteFactory.create()
-    new_footnote = original_footnote.new_draft(workbasket=new_workbasket)
+    new_footnote = original_footnote.new_version(workbasket=new_workbasket)
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
     new_workbasket.submit_for_approval()

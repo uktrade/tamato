@@ -126,7 +126,7 @@ def test_ROIMB44(id, approved, change_flag, expect_error):
     )
 
     if change_flag:
-        regulation = regulation.new_draft(
+        regulation = regulation.new_version(
             approved=not regulation.approved,
             workbasket=factories.WorkBasketFactory.create(),
         )
