@@ -1,0 +1,12 @@
+{% extends 'layouts/form.jinja' %}
+
+{% block form %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% call django_form() %}
+        {{ crispy(form) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}
+

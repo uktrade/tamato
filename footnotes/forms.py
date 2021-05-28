@@ -8,8 +8,11 @@ from django import forms
 
 from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
+from common.forms import DescriptionHelpBox
 from common.forms import ValidityPeriodForm
+from common.util import get_next_id
 from footnotes import models
+from workbaskets.models import WorkBasket
 
 
 class FootnoteForm(ValidityPeriodForm):
@@ -68,6 +71,77 @@ class FootnoteForm(ValidityPeriodForm):
             self.add_error("footnote_type", "Footnote type is required")
 
         return cleaned_data
+
+    class Meta:
+        model = models.Footnote
+        fields = ("footnote_type", "valid_between")
+
+
+class FootnoteCreateForm(ValidityPeriodForm):
+
+    footnote_type = forms.ModelChoiceField(
+        label="Footnote type",
+        help_text="Selecting the right footnote type will determine whether it can be associated with measures, commodity codes, or both",
+        queryset=models.FootnoteType.objects.latest_approved(),
+        empty_label="Select a footnote type",
+    )
+
+    description = forms.CharField(
+        label="Footnote description",
+        help_text="You may enter HTML formatting if required. See the guide below for more information.",
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        self.fields[
+            "footnote_type"
+        ].label_from_instance = (
+            lambda obj: f"{obj.footnote_type_id} - {obj.description}"
+        )
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "footnote_type",
+            "start_date",
+            Field.textarea("description", rows=5),
+            DescriptionHelpBox(),
+            Submit("submit", "Save"),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["footnote_description"] = models.FootnoteDescription(
+            description=cleaned_data["description"],
+            validity_start=cleaned_data["valid_between"].lower,
+        )
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super(FootnoteCreateForm, self).save(commit=False)
+
+        workbasket = WorkBasket.current(self.request)
+        tx = None
+        if workbasket:
+            tx = workbasket.transactions.order_by("order").last()
+
+        instance.footnote_id = get_next_id(
+            models.Footnote.objects.filter(
+                footnote_type__footnote_type_id=instance.footnote_type.footnote_type_id,
+            )
+            .filter(valid_between__overlap=instance.valid_between)
+            .approved_up_to_transaction(tx),
+            instance._meta.get_field("footnote_id"),
+            max_len=3,
+        )
+        if commit:
+            instance.save()
+        return instance
 
     class Meta:
         model = models.Footnote

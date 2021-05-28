@@ -1,7 +1,4 @@
-{% extends "layouts/layout.jinja" %}
-
-{% from "components/panel/macro.njk" import govukPanel %}
-{% from "components/button/macro.njk" import govukButton %}
+{% extends "layouts/confirm.jinja" %}
 
 {% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
 
@@ -16,30 +13,10 @@
   }) }}
 {% endblock %}
 
-{% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <span class="govuk-caption-l">Confirmation</span>
-      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-      
-      {{ govukPanel({
-        "titleText": object._meta.verbose_name|capitalize ~ " " ~ object|string ~ " has been updated",
-        "text": "This change has been added to your tariff changes",
-        "classes": "govuk-!-margin-bottom-7"
-      }) }}
-
-      <h2 class="govuk-heading-m">Next steps</h2>
-      <p class="govuk-body">To complete your task you must publish your change. </p>
-      {{ govukButton({
-        "text": "Go to your tariff changes",
-        "href": url("index"),
-        "classes": "govuk-button--secondary"
-      }) }}
-      <ul class="govuk-list govuk-list-spaced">
-        <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
-        <li><a href="{{ object.get_url("list") }}">Manage more {{ object._meta.verbose_name_plural }}</a></li>
-        <li><a href="{{ url("index") }}">Return to main menu</a></li>
-      </ul>
-    </div>
-  </div>
+{% block panel %}
+  {{ govukPanel({
+    "titleText": object._meta.verbose_name|capitalize ~ " " ~ object|string ~ " has been updated",
+    "text": "This change has been added to your tariff changes",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
 {% endblock %}

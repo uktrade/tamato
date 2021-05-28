@@ -1,9 +1,11 @@
 from typing import Type
 
+from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.models import TrackedModel
+from common.validators import UpdateType
 from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -98,6 +100,35 @@ class FootnoteList(FootnoteMixin, TamatoListView):
         "descriptions__description",
         "footnote_type__description",
     ]
+
+
+class FootnoteCreate(DraftCreateView):
+    template_name = "footnotes/create.jinja"
+    form_class = forms.FootnoteCreateForm
+
+    def form_valid(self, form):
+        transaction = self.get_transaction()
+        transaction.save()
+        self.object = form.save(commit=False)
+        self.object.update_type = UpdateType.CREATE
+        self.object.transaction = transaction
+        self.object.save()
+
+        description = form.cleaned_data["footnote_description"]
+        description.described_footnote = self.object
+        description.update_type = UpdateType.CREATE
+        description.transaction = transaction
+        description.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class FootnoteConfirmCreate(FootnoteMixin, TrackedModelDetailView):
+    template_name = "common/confirm_create.jinja"
 
 
 class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
