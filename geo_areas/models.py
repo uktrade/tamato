@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import CheckConstraint
+from django.db.models import Max
 from django.db.models import Q
 
 from common.fields import ShortDescription
@@ -173,20 +174,29 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         )
 
 
-class GeographicalAreaDescription(TrackedModel, DescriptionMixin):
+class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
     record_code = "250"
     subrecord_code = "10"
 
     period_record_code = "250"
     period_subrecord_code = "05"
 
-    area = models.ForeignKey(
+    described_geographicalarea = models.ForeignKey(
         GeographicalArea,
         on_delete=models.CASCADE,
         related_name="descriptions",
     )
     description = ShortDescription()
     sid = SignedIntSID(db_index=True)
+
+    def save(self, *args, **kwargs):
+        if getattr(self, "sid") is None:
+            highest_sid = GeographicalAreaDescription.objects.aggregate(Max("sid"))[
+                "sid__max"
+            ]
+            self.sid = highest_sid + 1
+
+        return super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("validity_start",)

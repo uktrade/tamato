@@ -6,6 +6,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 
+from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
 from common.forms import ValidityPeriodForm
 from footnotes import models
@@ -77,3 +78,24 @@ class FootnoteDescriptionForm(DescriptionForm):
     class Meta:
         model = models.FootnoteDescription
         fields = DescriptionForm.Meta.fields
+
+
+class FootnoteCreateDescriptionForm(CreateDescriptionForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields["described_footnote"].disabled = True
+            self.fields["described_footnote"].help_text = "You can't edit this"
+            self.fields["described_footnote"].label = "Described footnote"
+
+        self.helper.layout.insert(
+            0,
+            Field(
+                "described_footnote",
+                context={"label_size": "govuk-label--s"},
+            ),
+        )
+
+    class Meta:
+        model = models.FootnoteDescription
+        fields = ("described_footnote", "description", "validity_start")

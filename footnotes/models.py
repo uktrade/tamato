@@ -1,6 +1,7 @@
 from typing import Type
 
 from django.db import models
+from django.db.models import Max
 
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -151,6 +152,13 @@ class FootnoteDescription(DescriptionMixin, TrackedModel):
     sid = SignedIntSID(db_index=True)
 
     indirect_business_rules = (business_rules.FO4,)
+
+    def save(self, *args, **kwargs):
+        if getattr(self, "sid") is None:
+            highest_sid = FootnoteDescription.objects.aggregate(Max("sid"))["sid__max"]
+            self.sid = highest_sid + 1
+
+        return super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("validity_start",)
