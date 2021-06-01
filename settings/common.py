@@ -212,14 +212,9 @@ if VCAP_SERVICES.get("postgres"):
 else:
     DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
 
-if SQLITE:
-    DATABASES = {
-        "default": dj_database_url.parse("sqlite:///cool.db"),
-    }
-else:
-    DATABASES = {
-        "default": dj_database_url.parse(DB_URL),
-    }
+DATABASES = {
+    "default": dj_database_url.parse(DB_URL),
+}
 
 # -- Cache
 
