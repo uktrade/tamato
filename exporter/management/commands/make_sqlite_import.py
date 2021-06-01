@@ -1,4 +1,8 @@
+import sys
+from io import StringIO
 from itertools import chain
+from os import path
+from pathlib import Path
 from subprocess import run
 from typing import Any
 from typing import Iterator
@@ -44,24 +48,62 @@ def read_sqlite_column_order(filename: str, table: str) -> Iterator[str]:
 
 class Command(BaseCommand):
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
-        names = (name.split(".")[0] for name in settings.DOMAIN_APPS)
-        models = chain(*[apps.get_app_config(name).get_models() for name in names])
-        database = settings.DATABASES["default"]
+        assert not path.exists("cool.db")
 
-        print(".echo on")
-        print(".mode csv")
-        for model in models:
-            columns = read_sqlite_column_order("cool.db", model._meta.db_table)
-            fields = (column_name_to_expr(name, model) for name in columns)
-            field_names = ", ".join(fields)
+        run(
+            [sys.executable, sys.argv[0], "makemigrations", "--name", "sqlite_export"],
+            capture_output=False,
+            env={
+                "SQLITE": "1",
+            },
+        )
 
-            print(
-                ".import '|psql -c \"COPY (SELECT {1} FROM {2}) TO STDOUT (FORMAT csv);\" {0[NAME]}' {2}".format(
-                    database,
-                    field_names,
-                    model._meta.db_table,
-                ),
+        try:
+            run(
+                [sys.executable, sys.argv[0], "migrate"],
+                capture_output=False,
+                env={
+                    "SQLITE": "1",
+                },
             )
 
-        print("VACUUM;")
-        print("PRAGMA optimize;")
+            names = (name.split(".")[0] for name in settings.DOMAIN_APPS)
+            models = chain(*[apps.get_app_config(name).get_models() for name in names])
+            database = settings.DATABASES["default"]
+
+            import_script = StringIO()
+            print(".echo on", file=import_script)
+            print(".mode csv", file=import_script)
+            for model in models:
+                columns = read_sqlite_column_order("cool.db", model._meta.db_table)
+                fields = (column_name_to_expr(name, model) for name in columns)
+                field_names = ", ".join(fields)
+
+                print(
+                    ".import '|psql -c \"COPY (SELECT {1} FROM {2}) TO STDOUT (FORMAT csv);\"' {2}".format(
+                        database,
+                        field_names,
+                        model._meta.db_table,
+                    ),
+                    file=import_script,
+                )
+
+            print("VACUUM;", file=import_script)
+            print("PRAGMA optimize;", file=import_script)
+
+            run(
+                ["sqlite3", "cool.db"],
+                capture_output=False,
+                input=import_script.getvalue().encode("utf-8"),
+                env={
+                    "PGHOST": database["HOST"],
+                    "PGPORT": str(database["PORT"]),
+                    "PGUSER": database["USER"],
+                    "PGPASSWORD": database["PASSWORD"],
+                    "PGDATABASE": database["NAME"],
+                },
+            )
+
+        finally:
+            for file in Path(".").rglob("**/migrations/*sqlite_export.py"):
+                file.unlink()
