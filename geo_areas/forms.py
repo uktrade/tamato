@@ -12,7 +12,7 @@ class GeographicalAreaCreateDescriptionForm(CreateDescriptionForm):
             self.fields["described_geographicalarea"].help_text = "You can't edit this"
             self.fields[
                 "described_geographicalarea"
-            ].label = "Described additional code"
+            ].label = "Described geographical area"
 
         self.helper.layout.insert(
             0,

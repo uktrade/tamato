@@ -20,7 +20,7 @@ class BaseGeographicalAreaDescriptionHandler(BaseHandler):
     links = (
         {
             "model": models.GeographicalArea,
-            "name": "area",
+            "name": "described_geographicalarea",
         },
     )
     serializer_class = serializers.GeographicalAreaDescriptionSerializer

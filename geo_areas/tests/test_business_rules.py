@@ -73,11 +73,13 @@ def test_GA3_start_dates_cannot_match():
 
     existing = factories.GeographicalAreaDescriptionFactory.create()
     duplicate = factories.GeographicalAreaDescriptionFactory.create(
-        area=existing.area,
+        described_geographicalarea=existing.described_geographicalarea,
         validity_start=existing.validity_start,
     )
     with pytest.raises(BusinessRuleViolation):
-        business_rules.GA3(duplicate.transaction).validate(existing.area)
+        business_rules.GA3(duplicate.transaction).validate(
+            existing.described_geographicalarea,
+        )
 
 
 def test_GA3_description_start_before_geographical_area_end(date_ranges):
