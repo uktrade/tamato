@@ -159,7 +159,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         {"model": models.GoodsNomenclature, "name": "indented_goods_nomenclature"},
     )
     serializer_class = serializers.GoodsNomenclatureIndentSerializer
-    tag = parsers.GoodsNomenclatureIndentsParser.tag.name
+    tag = parsers.GoodsNomenclatureIndentParser.tag.name
 
     # It is sadly necessary to correct some mistakes in the TARIC data.
     # These codes all do not meet the assumption that the child indent

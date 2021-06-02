@@ -77,6 +77,30 @@ class ElementParser:
         {"child": {"id": 2, "field": "Text"}}
     """
 
+    record_code: str
+    """
+    The type id of this model's type family in the TARIC specification.
+
+    This number groups together a number of different models into 'records'.
+    Where two models share a record code, they are conceptually expressing
+    different properties of the same logical model.
+
+    In theory each :class:`~common.transactions.Transaction` should only contain
+    models with a single :attr:`record_code` (but differing
+    :attr:`subrecord_code`.)
+    """
+
+    subrecord_code: str
+    """
+    The type id of this model in the TARIC specification. The
+    :attr:`subrecord_code` when combined with the :attr:`record_code` uniquely
+    identifies the type within the specification.
+
+    The subrecord code gives the intended order for models in a transaction,
+    with comparatively smaller subrecord codes needing to come before larger
+    ones.
+    """
+
     tag: Optional[Tag] = None
     data_class: type = dict
     end_hook: Optional[Callable[[Any, Element], None]] = None
@@ -202,43 +226,143 @@ class ElementParser:
         return wraps
 
 
-class TextElement(ElementParser):
-    """
-    Parse elements which contain a text value.
+class ValueElementMixin:
+    """Provides a convenient way to define a parser for elements that contain
+    only a text value and have no attributes or children."""
 
-    This class provides a convenient way to define a parser for elements that contain
-    only a text value and have no attributes or children, eg:
+    native_type: type
+    """The Python type that most closely matches the type of the XML element."""
+
+    def clean(self):
+        super().clean()
+        self.data = self.native_type(self.text)
+
+
+class ConstantElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element that is always a constant value in the XML.
+
+    The actual value is ignored and not put into the database. The value
+    specified in the constructor will be put back into the XML.
+    """
+
+    def __init__(
+        self,
+        tag: Tag,
+        value: str,  # pylint: disable=unused-argument
+    ) -> None:
+        super().__init__(tag)
+
+    def clean(self):
+        pass
+
+
+class TextElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element which contains a text value.
+
+    .. code-block:: XML
 
         <msg:record.code>Example Text</msg:record.code>
     """
 
-    def clean(self):
-        super().clean()
-        self.data = self.text
+    native_type = str
 
 
-class IntElement(ElementParser):
+class IntElement(ValueElementMixin, ElementParser):
     """
-    Parse elements which contain an integer value.
+    Represents an element which contains an integer value.
 
-    This class provides a convenient way to define a parser for elements that contain
-    only an integer value and have no attributes or children, eg:
+    .. code-block:: XML
 
         <msg:record.code>430</msg:record.code>
     """
 
+    native_type = int
+
+    def __init__(
+        self,
+        *args,
+        format: str = "FM99999999999999999999",  # pylint: disable=unused-argument
+    ):
+        super().__init__(*args)
+
+
+class BooleanElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element which contains a true or false value.
+
+    The actual value in the XML by default is assumed to be a 1 for True and a 0
+    for False. This can be customised by passing in different values.
+
+    .. code-block:: XML
+
+        <msg:some.value>1</msg:some.value>
+        <msg:some.value>0</msg:some.value>
+    """
+
+    native_type = bool
+
+    def __init__(self, *args, true_value: str = "1", false_value: str = "0", **kwargs):
+        self.true_value = true_value
+        self.false_value = false_value
+        super().__init__(*args, **kwargs)
+
     def clean(self):
-        super().clean()
-        self.data = int(self.text)
+        if self.text == self.true_value:
+            self.data = True
+        elif self.text == self.false_value:
+            self.data = False
+        else:
+            self.data = None
+
+
+class RangeLowerElement(TextElement):
+    """Represents an element that is the lower part of a range."""
+
+
+class RangeUpperElement(TextElement):
+    """Represents an element that is the upper part of a range."""
+
+
+class CompoundElement(ValueElementMixin, ElementParser):
+    """
+    Represents an element in XML that is actually a concatenation of one or more
+    logical values and separators.
+
+    The separator by default is assumed to be a pipe character. The parsed data
+    will always contain a tuple that is the size of the number of expected
+    fields (the original field and any extras) – if less than the specified
+    number of separators occur the rightmost fields will have value ``None``.
+
+    .. code-block:: XML
+
+        <msg:some.value>one|two|three</msg:some.value>
+    """
+
+    native_type = tuple
+
+    def __init__(
+        self,
+        tag: Tag,
+        *extra_fields: str,
+        separator: str = "|",
+    ):
+        super().__init__(tag)
+        self.extra_fields = extra_fields
+        self.separator = separator
+
+    def clean(self):
+        parts = self.text.split(self.separator, len(self.extra_fields))
+        missing = len(self.extra_fields) - len(parts) + 1
+        self.data = self.native_type([*parts, *([None] * missing)])
 
 
 class ValidityMixin:
     """Parse validity start and end dates."""
 
-    _additional_components = {
-        TextElement(Tag("validity.start.date")): "valid_between_lower",
-        TextElement(Tag("validity.end.date")): "valid_between_upper",
-    }
+    valid_between_lower = RangeLowerElement(Tag("validity.start.date"))
+    valid_between_upper = RangeUpperElement(Tag("validity.end.date"))
 
     def clean(self):
         super().clean()
@@ -257,12 +381,7 @@ class ValidityMixin:
 class ValidityStartMixin:
     """Parse validity start date."""
 
-    _additional_components = {
-        TextElement(Tag("validity.start.date")): "validity_start",
-    }
-
-    def clean(self):
-        super().clean()
+    validity_start = TextElement(Tag("validity.start.date"))
 
 
 class Writable:

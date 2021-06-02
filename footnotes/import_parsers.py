@@ -1,6 +1,7 @@
 import logging
 
 from importer.namespaces import Tag
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -31,16 +32,19 @@ class FootnoteTypeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "100"
+    subrecord_code = "00"
+
     tag = Tag("footnote.type")
 
     footnote_type_id = TextElement(Tag("footnote.type.id"))
-    valid_between_lower = TextElement(Tag("validity.start.date"))
-    valid_between_upper = TextElement(Tag("validity.end.date"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     application_code = TextElement(Tag("application.code"))
 
 
 @RecordParser.register_child("footnote_type_description")
-class FootnoteTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
+class FootnoteTypeDescriptionParser(Writable, ElementParser):
     """
     Example XML:
 
@@ -57,9 +61,13 @@ class FootnoteTypeDescriptionParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "100"
+    subrecord_code = "05"
+
     tag = Tag("footnote.type.description")
 
     footnote_type_id = TextElement(Tag("footnote.type.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -82,14 +90,19 @@ class FootnoteParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "200"
+    subrecord_code = "00"
+
     tag = Tag("footnote")
 
     footnote_type__footnote_type_id = TextElement(Tag("footnote.type.id"))
     footnote_id = TextElement(Tag("footnote.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("footnote_description")
-class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
+class FootnoteDescriptionParser(Writable, ElementParser):
     """
     Example XML:
 
@@ -108,9 +121,13 @@ class FootnoteDescriptionParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "200"
+    subrecord_code = "10"
+
     tag = Tag("footnote.description")
 
     sid = IntElement(Tag("footnote.description.period.sid"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     described_footnote__footnote_type__footnote_type_id = TextElement(
         Tag("footnote.type.id"),
     )
@@ -137,6 +154,9 @@ class FootnoteDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParse
         </xs:element>
     """
 
+    record_code = "200"
+    subrecord_code = "05"
+
     tag = Tag("footnote.description.period")
 
     sid = IntElement(Tag("footnote.description.period.sid"))
@@ -144,3 +164,4 @@ class FootnoteDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParse
         Tag("footnote.type.id"),
     )
     described_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    validity_start = ValidityStartMixin.validity_start

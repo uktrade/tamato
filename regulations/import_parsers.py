@@ -1,4 +1,7 @@
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
+from importer.parsers import CompoundElement
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -25,9 +28,14 @@ class RegulationGroupParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "150"
+    subrecord_code = "00"
+
     tag = Tag("regulation.group")
 
     group_id = TextElement(Tag("regulation.group.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("regulation_group_description")
@@ -48,9 +56,13 @@ class RegulationGroupDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "150"
+    subrecord_code = "05"
+
     tag = Tag("regulation.group.description")
 
     group_id = TextElement(Tag("regulation.group.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -89,20 +101,29 @@ class BaseRegulationParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "285"
+    subrecord_code = "00"
+
     tag = Tag("base.regulation")
 
     role_type = IntElement(Tag("base.regulation.role"))
-    regulation_group__group_id = TextElement(Tag("regulation.group.id"))
     regulation_id = TextElement(Tag("base.regulation.id"))
     published_at = TextElement(Tag("published.date"))
     official_journal_number = TextElement(Tag("officialjournal.number"))
     official_journal_page = IntElement(Tag("officialjournal.page"))
-    community_code = IntElement(Tag("community.code"))
-    replacement_indicator = IntElement(Tag("replacement.indicator"))
-    stopped = TextElement(Tag("stopped.flag"))
-    information_text = TextElement(Tag("information.text"))
-    approved = TextElement(Tag("approved.flag"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     effective_end_date = TextElement(Tag("effective.end.date"))
+    community_code = IntElement(Tag("community.code"))
+    regulation_group__group_id = TextElement(Tag("regulation.group.id"))
+    replacement_indicator = IntElement(Tag("replacement.indicator"))
+    stopped = BooleanElement(Tag("stopped.flag"))
+    information_text = CompoundElement(
+        Tag("information.text"),
+        "public_identifier",
+        "url",
+    )
+    approved = BooleanElement(Tag("approved.flag"))
 
 
 @RecordParser.register_child("modification_regulation")
@@ -138,6 +159,9 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "290"
+    subrecord_code = "00"
+
     tag = Tag("modification.regulation")
 
     role_type = IntElement(Tag("modification.regulation.role"))
@@ -145,13 +169,19 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     published_at = TextElement(Tag("published.date"))
     official_journal_number = TextElement(Tag("officialjournal.number"))
     official_journal_page = IntElement(Tag("officialjournal.page"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     effective_end_date = TextElement(Tag("effective.end.date"))
     target_regulation__role_type = TextElement(Tag("base.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag("base.regulation.id"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
-    stopped = TextElement(Tag("stopped.flag"))
-    information_text = TextElement(Tag("information.text"))
-    approved = TextElement(Tag("approved.flag"))
+    stopped = BooleanElement(Tag("stopped.flag"))
+    information_text = CompoundElement(
+        Tag("information.text"),
+        "public_identifier",
+        "url",
+    )
+    approved = BooleanElement(Tag("approved.flag"))
 
 
 @RecordParser.register_child("fts_regulation")
@@ -184,6 +214,9 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "300"
+    subrecord_code = "00"
+
     tag = Tag("full.temporary.stop.regulation")
 
     role_type = IntElement(Tag("full.temporary.stop.regulation.role"))
@@ -191,10 +224,16 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
     published_at = TextElement(Tag("published.date"))
     official_journal_number = TextElement(Tag("officialjournal.number"))
     official_journal_page = IntElement(Tag("officialjournal.page"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     effective_end_date = TextElement(Tag("effective.enddate"))
     replacement_indicator = IntElement(Tag("replacement.indicator"))
-    information_text = TextElement(Tag("information.text"))
-    approved = TextElement(Tag("approved.flag"))
+    information_text = CompoundElement(
+        Tag("information.text"),
+        "public_identifier",
+        "url",
+    )
+    approved = BooleanElement(Tag("approved.flag"))
 
 
 @RecordParser.register_child("fts_action")
@@ -215,6 +254,9 @@ class FullTemporaryStopActionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "305"
+    subrecord_code = "00"
 
     tag = Tag("fts.regulation.action")
 
@@ -245,6 +287,9 @@ class RegulationReplacementParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "305"
+    subrecord_code = "00"
 
     tag = Tag("regulation.replacement")
 

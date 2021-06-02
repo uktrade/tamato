@@ -1,4 +1,6 @@
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
 from importer.parsers import IntElement
 from importer.parsers import TextElement
@@ -26,9 +28,14 @@ class MeasureTypeSeriesParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "140"
+    subrecord_code = "00"
+
     tag = Tag("measure.type.series")
 
     sid = TextElement(Tag("measure.type.series.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     measure_type_combination = IntElement(Tag("measure.type.combination"))
 
 
@@ -50,9 +57,13 @@ class MeasureTypeSeriesDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "140"
+    subrecord_code = "05"
+
     tag = Tag("measure.type.series.description")
 
     sid = TextElement(Tag("measure.type.series.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -74,9 +85,14 @@ class MeasurementUnitParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "210"
+    subrecord_code = "00"
+
     tag = Tag("measurement.unit")
 
     code = TextElement(Tag("measurement.unit.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measurement_unit_description")
@@ -97,9 +113,13 @@ class MeasurementUnitDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "210"
+    subrecord_code = "05"
+
     tag = Tag("measurement.unit.description")
 
     code = TextElement(Tag("measurement.unit.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -121,9 +141,14 @@ class MeasurementUnitQualifierParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "215"
+    subrecord_code = "00"
+
     tag = Tag("measurement.unit.qualifier")
 
     code = TextElement(Tag("measurement.unit.qualifier.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measurement_unit_qualifier_description")
@@ -144,9 +169,13 @@ class MeasurementUnitQualifierDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "215"
+    subrecord_code = "05"
+
     tag = Tag("measurement.unit.qualifier.description")
 
     code = TextElement(Tag("measurement.unit.qualifier.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -169,12 +198,17 @@ class MeasurementParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "220"
+    subrecord_code = "00"
+
     tag = Tag("measurement")
 
     measurement_unit__code = TextElement(Tag("measurement.unit.code"))
     measurement_unit_qualifier__code = TextElement(
         Tag("measurement.unit.qualifier.code"),
     )
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("monetary_unit")
@@ -195,9 +229,14 @@ class MonetaryUnitParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "225"
+    subrecord_code = "00"
+
     tag = Tag("monetary.unit")
 
     code = TextElement(Tag("monetary.unit.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("monetary_unit_description")
@@ -218,9 +257,13 @@ class MonetaryUnitDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "225"
+    subrecord_code = "05"
+
     tag = Tag("monetary.unit.description")
 
     code = TextElement(Tag("monetary.unit.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -245,9 +288,14 @@ class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "230"
+    subrecord_code = "00"
+
     tag = Tag("duty.expression")
 
-    sid = IntElement(Tag("duty.expression.id"))
+    sid = IntElement(Tag("duty.expression.id"), format="FM00")
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     duty_amount_applicability_code = IntElement(Tag("duty.amount.applicability.code"))
     measurement_unit_applicability_code = IntElement(
         Tag("measurement.unit.applicability.code"),
@@ -275,9 +323,13 @@ class DutyExpressionDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "230"
+    subrecord_code = "05"
+
     tag = Tag("duty.expression.description")
 
-    sid = IntElement(Tag("duty.expression.id"))
+    sid = DutyExpressionParser.sid
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -306,9 +358,14 @@ class MeasureTypeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "235"
+    subrecord_code = "00"
+
     tag = Tag("measure.type")
 
     sid = TextElement(Tag("measure.type.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
     trade_movement_code = IntElement(Tag("trade.movement.code"))
     priority_code = IntElement(Tag("priority.code"))
     measure_component_applicability_code = IntElement(
@@ -338,9 +395,13 @@ class MeasureTypeDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "235"
+    subrecord_code = "05"
+
     tag = Tag("measure.type.description")
 
     sid = TextElement(Tag("measure.type.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -363,10 +424,15 @@ class AdditionalCodeTypeMeasureTypeParser(ValidityMixin, Writable, ElementParser
         </xs:element>
     """
 
+    record_code = "240"
+    subrecord_code = "00"
+
     tag = Tag("additional.code.type.measure.type")
 
     measure_type__sid = TextElement(Tag("measure.type.id"))
     additional_code_type__sid = TextElement(Tag("additional.code.type.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measure_condition_code")
@@ -387,9 +453,14 @@ class MeasureConditionCodeParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "350"
+    subrecord_code = "00"
+
     tag = Tag("measure.condition.code")
 
     code = TextElement(Tag("condition.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measure_condition_code_description")
@@ -410,9 +481,13 @@ class MeasureConditionCodeDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "350"
+    subrecord_code = "05"
+
     tag = Tag("measure.condition.code.description")
 
     code = TextElement(Tag("condition.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -434,9 +509,14 @@ class MeasureActionParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "355"
+    subrecord_code = "00"
+
     tag = Tag("measure.action")
 
     code = TextElement(Tag("action.code"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
 
 
 @RecordParser.register_child("measure_action_description")
@@ -457,9 +537,13 @@ class MeasureActionDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "355"
+    subrecord_code = "05"
+
     tag = Tag("measure.action.description")
 
     code = TextElement(Tag("action.code"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     description = TextElement(Tag("description"))
 
 
@@ -497,6 +581,9 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "430"
+    subrecord_code = "00"
+
     tag = Tag("measure")
 
     sid = TextElement(Tag("measure.sid"))
@@ -507,17 +594,19 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
     additional_code__code = TextElement(Tag("additional.code"))
     order_number__order_number = TextElement(Tag("ordernumber"))
     reduction = IntElement(Tag("reduction.indicator"))
+    valid_between_lower = ValidityMixin.valid_between_lower
     generating_regulation__role_type = IntElement(
         Tag("measure.generating.regulation.role"),
     )
     generating_regulation__regulation_id = TextElement(
         Tag("measure.generating.regulation.id"),
     )
+    valid_between_upper = ValidityMixin.valid_between_upper
     terminating_regulation__role_type = IntElement(Tag("justification.regulation.role"))
     terminating_regulation__regulation_id = TextElement(
         Tag("justification.regulation.id"),
     )
-    stopped = TextElement(Tag("stopped.flag"))
+    stopped = BooleanElement(Tag("stopped.flag"))
     geographical_area__sid = TextElement(Tag("geographical.area.sid"))
     goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     additional_code__sid = TextElement(Tag("additional.code.sid"))
@@ -544,10 +633,13 @@ class MeasureComponentParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "430"
+    subrecord_code = "05"
+
     tag = Tag("measure.component")
 
     component_measure__sid = TextElement(Tag("measure.sid"))
-    duty_expression__sid = IntElement(Tag("duty.expression.id"))
+    duty_expression__sid = DutyExpressionParser.sid
     duty_amount = TextElement(Tag("duty.amount"))
     monetary_unit__code = TextElement(Tag("monetary.unit.code"))
     component_measurement__measurement_unit__code = TextElement(
@@ -583,6 +675,9 @@ class MeasureConditionParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "430"
+    subrecord_code = "10"
 
     tag = Tag("measure.condition")
 
@@ -626,10 +721,13 @@ class MeasureConditionComponentParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "430"
+    subrecord_code = "11"
+
     tag = Tag("measure.condition.component")
 
     condition__sid = TextElement(Tag("measure.condition.sid"))
-    duty_expression__sid = IntElement(Tag("duty.expression.id"))
+    duty_expression__sid = DutyExpressionParser.sid
     duty_amount = TextElement(Tag("duty.amount"))
     monetary_unit__code = TextElement(Tag("monetary.unit.code"))
     component_measurement__measurement_unit__code = TextElement(
@@ -658,6 +756,9 @@ class MeasureExcludedGeographicalAreaParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "430"
+    subrecord_code = "15"
+
     tag = Tag("measure.excluded.geographical.area")
 
     modified_measure__sid = TextElement(Tag("measure.sid"))
@@ -682,6 +783,9 @@ class FootnoteAssociationMeasureParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "430"
+    subrecord_code = "20"
 
     tag = Tag("footnote.association.measure")
 

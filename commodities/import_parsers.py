@@ -1,7 +1,10 @@
 import logging
 
 from importer.namespaces import Tag
+from importer.parsers import BooleanElement
+from importer.parsers import ConstantElement
 from importer.parsers import ElementParser
+from importer.parsers import IntElement
 from importer.parsers import TextElement
 from importer.parsers import ValidityMixin
 from importer.parsers import ValidityStartMixin
@@ -32,14 +35,17 @@ class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "400"
+    subrecord_code = "00"
+
     tag = Tag("goods.nomenclature")
 
     sid = TextElement(Tag("goods.nomenclature.sid"))
     item_id = TextElement(Tag("goods.nomenclature.item.id"))
     suffix = TextElement(Tag("producline.suffix"))  # XXX not a typo
-    valid_between_lower = TextElement(Tag("validity.start.date"))
-    valid_between_upper = TextElement(Tag("validity.end.date"))
-    statistical = TextElement(Tag("statistical.indicator"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
+    statistical = BooleanElement(Tag("statistical.indicator"))
 
 
 @RecordParser.register_child("goods_nomenclature_origin")
@@ -61,6 +67,9 @@ class GoodsNomenclatureOriginParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "400"
+    subrecord_code = "35"
 
     tag = Tag("goods.nomenclature.origin")
 
@@ -94,6 +103,9 @@ class GoodsNomenclatureSuccessorParser(Writable, ElementParser):
             </xs:complexType>
         </xs:element>
     """
+
+    record_code = "400"
+    subrecord_code = "40"
 
     tag = Tag("goods.nomenclature.successor")
 
@@ -131,15 +143,18 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
         </xs:element>
     """
 
+    record_code = "400"
+    subrecord_code = "15"
+
     tag = Tag("goods.nomenclature.description")
 
     sid = TextElement(Tag("goods.nomenclature.description.period.sid"))
-    language_id = TextElement(Tag("language.id"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
     described_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     described_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
     )
-    described_goods_nomenclature__productline_suffix = TextElement(
+    described_goods_nomenclature__suffix = TextElement(
         Tag("productline.suffix"),
     )
     description = TextElement(Tag("description"))
@@ -169,20 +184,24 @@ class GoodsNomenclatureDescriptionPeriodParser(
         </xs:element>
     """
 
+    record_code = "400"
+    subrecord_code = "10"
+
     tag = Tag("goods.nomenclature.description.period")
 
     sid = TextElement(Tag("goods.nomenclature.description.period.sid"))
     described_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
+    validity_start = ValidityStartMixin.validity_start
     described_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
     )
-    described_goods_nomenclature__productline_suffix = TextElement(
+    described_goods_nomenclature__suffix = TextElement(
         Tag("productline.suffix"),
     )
 
 
 @RecordParser.register_child("goods_nomenclature_indent")
-class GoodsNomenclatureIndentsParser(ValidityStartMixin, Writable, ElementParser):
+class GoodsNomenclatureIndentParser(ValidityStartMixin, Writable, ElementParser):
     """
     Example XML:
 
@@ -202,11 +221,15 @@ class GoodsNomenclatureIndentsParser(ValidityStartMixin, Writable, ElementParser
         </xs:element>
     """
 
+    record_code = "400"
+    subrecord_code = "05"
+
     tag = Tag("goods.nomenclature.indents")
 
     sid = TextElement(Tag("goods.nomenclature.indent.sid"))
     indented_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
-    indent = TextElement(Tag("number.indents"))
+    validity_start = ValidityStartMixin.validity_start
+    indent = IntElement(Tag("number.indents"), format="FM00")
     indented_goods_nomenclature__item_id = TextElement(
         Tag("goods.nomenclature.item.id"),
     )
@@ -239,10 +262,17 @@ class FootnoteAssociationGoodsNomenclatureParser(
         </xs:element>
     """
 
+    record_code = "400"
+    subrecord_code = "20"
+
     tag = Tag("footnote.association.goods.nomenclature")
 
     goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
-    associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
     associated_footnote__footnote_type__footnote_type_id = TextElement(
         Tag("footnote.type"),
     )
+    associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    valid_between_lower = ValidityMixin.valid_between_lower
+    valid_between_upper = ValidityMixin.valid_between_upper
+    goods_nomenclature__item_id = TextElement(Tag("goods.nomenclature.item.id"))
+    goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
