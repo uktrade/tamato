@@ -51,6 +51,70 @@
   <section id="module-importer.parsers">
 <span id="the-importer-parsers-and-namespaces"></span><h1>The Importer - Parsers and Namespaces<a class="headerlink" href="#module-importer.parsers" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
+<dt id="importer.parsers.BooleanElement">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">BooleanElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'0'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#BooleanElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.BooleanElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an element which contains a true or false value.</p>
+<p>The actual value in the XML by default is assumed to be a 1 for True and a 0
+for False. This can be customised by passing in different values.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;msg:some.value&gt;</span>1<span class="nt">&lt;/msg:some.value&gt;</span>
+<span class="nt">&lt;msg:some.value&gt;</span>0<span class="nt">&lt;/msg:some.value&gt;</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="importer.parsers.BooleanElement.clean">
+<code class="sig-name descname"><span class="pre">clean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#BooleanElement.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.BooleanElement.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up data.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="importer.parsers.BooleanElement.native_type">
+<code class="sig-name descname"><span class="pre">native_type</span></code><a class="headerlink" href="#importer.parsers.BooleanElement.native_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="importer.parsers.CompoundElement">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">CompoundElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#importer.namespaces.Tag" title="importer.namespaces.Tag"><span class="pre">importer.namespaces.Tag</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">extra_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">separator</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'|'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#CompoundElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.CompoundElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an element in XML that is actually a concatenation of one or more
+logical values and separators.</p>
+<p>The separator by default is assumed to be a pipe character. The parsed data
+will always contain a tuple that is the size of the number of expected
+fields (the original field and any extras) – if less than the specified
+number of separators occur the rightmost fields will have value <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;msg:some.value&gt;</span>one|two|three<span class="nt">&lt;/msg:some.value&gt;</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="importer.parsers.CompoundElement.clean">
+<code class="sig-name descname"><span class="pre">clean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#CompoundElement.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.CompoundElement.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up data.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="importer.parsers.CompoundElement.native_type">
+<code class="sig-name descname"><span class="pre">native_type</span></code><a class="headerlink" href="#importer.parsers.CompoundElement.native_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="importer.parsers.ConstantElement">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">ConstantElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#importer.namespaces.Tag" title="importer.namespaces.Tag"><span class="pre">importer.namespaces.Tag</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ConstantElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.ConstantElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an element that is always a constant value in the XML.</p>
+<p>The actual value is ignored and not put into the database. The value
+specified in the constructor will be put back into the XML.</p>
+<dl class="py method">
+<dt id="importer.parsers.ConstantElement.clean">
+<code class="sig-name descname"><span class="pre">clean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ConstantElement.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.ConstantElement.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="importer.parsers.ElementParser">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">ElementParser</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#importer.namespaces.Tag" title="importer.namespaces.Tag"><span class="pre">importer.namespaces.Tag</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">many</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.ElementParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for element specific parsers.</p>
@@ -109,6 +173,18 @@ the following structure:</p>
 <dd><p>Check if the parser matches the element.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="importer.parsers.ElementParser.record_code">
+<code class="sig-name descname"><span class="pre">record_code</span></code><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#importer.parsers.ElementParser.record_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>The type id of this model’s type family in the TARIC specification.</p>
+<p>This number groups together a number of different models into ‘records’.
+Where two models share a record code, they are conceptually expressing
+different properties of the same logical model.</p>
+<p>In theory each <code class="xref py py-class docutils literal notranslate"><span class="pre">Transaction</span></code> should only contain
+models with a single <a class="reference internal" href="#importer.parsers.ElementParser.record_code" title="importer.parsers.ElementParser.record_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">record_code</span></code></a> (but differing
+<a class="reference internal" href="#importer.parsers.ElementParser.subrecord_code" title="importer.parsers.ElementParser.subrecord_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">subrecord_code</span></code></a>.)</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="importer.parsers.ElementParser.start">
 <code class="sig-name descname"><span class="pre">start</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">xml.etree.ElementTree.Element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#importer.parsers.ElementParser" title="importer.parsers.ElementParser"><span class="pre">importer.parsers.ElementParser</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.ElementParser.start" title="Permalink to this definition">¶</a></dt>
@@ -130,6 +206,17 @@ don’t want to select any child parsers. If it is not, we know that this
 is an element that this parser should be parsing.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="importer.parsers.ElementParser.subrecord_code">
+<code class="sig-name descname"><span class="pre">subrecord_code</span></code><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#importer.parsers.ElementParser.subrecord_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>The type id of this model in the TARIC specification. The
+<a class="reference internal" href="#importer.parsers.ElementParser.subrecord_code" title="importer.parsers.ElementParser.subrecord_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">subrecord_code</span></code></a> when combined with the <a class="reference internal" href="#importer.parsers.ElementParser.record_code" title="importer.parsers.ElementParser.record_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">record_code</span></code></a> uniquely
+identifies the type within the specification.</p>
+<p>The subrecord code gives the intended order for models in a transaction,
+with comparatively smaller subrecord codes needing to come before larger
+ones.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="importer.parsers.ElementParser.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#ElementParser.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.ElementParser.validate" title="Permalink to this definition">¶</a></dt>
@@ -140,17 +227,15 @@ is an element that this parser should be parsing.</p>
 
 <dl class="py class">
 <dt id="importer.parsers.IntElement">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">IntElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#importer.namespaces.Tag" title="importer.namespaces.Tag"><span class="pre">importer.namespaces.Tag</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">many</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#IntElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.IntElement" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse elements which contain an integer value.</p>
-<p>This class provides a convenient way to define a parser for elements that contain
-only an integer value and have no attributes or children, eg:</p>
-<blockquote>
-<div><p>&lt;msg:record.code&gt;430&lt;/msg:record.code&gt;</p>
-</div></blockquote>
-<dl class="py method">
-<dt id="importer.parsers.IntElement.clean">
-<code class="sig-name descname"><span class="pre">clean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#IntElement.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.IntElement.clean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clean up data.</p>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">IntElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'FM99999999999999999999'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#IntElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.IntElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an element which contains an integer value.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;msg:record.code&gt;</span>430<span class="nt">&lt;/msg:record.code&gt;</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt id="importer.parsers.IntElement.native_type">
+<code class="sig-name descname"><span class="pre">native_type</span></code><a class="headerlink" href="#importer.parsers.IntElement.native_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
 </dd></dl>
 
 </dd></dl>
@@ -166,18 +251,28 @@ only an integer value and have no attributes or children, eg:</p>
 <dd></dd></dl>
 
 <dl class="py class">
+<dt id="importer.parsers.RangeLowerElement">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">RangeLowerElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#importer.namespaces.Tag" title="importer.namespaces.Tag"><span class="pre">importer.namespaces.Tag</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">many</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#RangeLowerElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.RangeLowerElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an element that is the lower part of a range.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="importer.parsers.RangeUpperElement">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">RangeUpperElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#importer.namespaces.Tag" title="importer.namespaces.Tag"><span class="pre">importer.namespaces.Tag</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">many</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#RangeUpperElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.RangeUpperElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an element that is the upper part of a range.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt id="importer.parsers.TextElement">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">TextElement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#importer.namespaces.Tag" title="importer.namespaces.Tag"><span class="pre">importer.namespaces.Tag</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">many</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#TextElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.TextElement" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse elements which contain a text value.</p>
-<p>This class provides a convenient way to define a parser for elements that contain
-only a text value and have no attributes or children, eg:</p>
-<blockquote>
-<div><p>&lt;msg:record.code&gt;Example Text&lt;/msg:record.code&gt;</p>
-</div></blockquote>
-<dl class="py method">
-<dt id="importer.parsers.TextElement.clean">
-<code class="sig-name descname"><span class="pre">clean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/parsers.html#TextElement.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.TextElement.clean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clean up data.</p>
+<dd><p>Represents an element which contains a text value.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;msg:record.code&gt;</span>Example Text<span class="nt">&lt;/msg:record.code&gt;</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt id="importer.parsers.TextElement.native_type">
+<code class="sig-name descname"><span class="pre">native_type</span></code><a class="headerlink" href="#importer.parsers.TextElement.native_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
 </dd></dl>
 
 </dd></dl>
@@ -192,6 +287,19 @@ only a text value and have no attributes or children, eg:</p>
 <dt id="importer.parsers.ValidityStartMixin">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">ValidityStartMixin</span></code><a class="reference internal" href="../../_modules/importer/parsers.html#ValidityStartMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.ValidityStartMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse validity start date.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="importer.parsers.ValueElementMixin">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.parsers.</span></code><code class="sig-name descname"><span class="pre">ValueElementMixin</span></code><a class="reference internal" href="../../_modules/importer/parsers.html#ValueElementMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.parsers.ValueElementMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a convenient way to define a parser for elements that contain
+only a text value and have no attributes or children.</p>
+<dl class="py attribute">
+<dt id="importer.parsers.ValueElementMixin.native_type">
+<code class="sig-name descname"><span class="pre">native_type</span></code><em class="property"><span class="pre">:</span> <span class="pre">type</span></em><a class="headerlink" href="#importer.parsers.ValueElementMixin.native_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Python type that most closely matches the type of the XML element.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">

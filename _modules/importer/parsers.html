@@ -118,6 +118,30 @@
 <span class="sd">        {&quot;child&quot;: {&quot;id&quot;: 2, &quot;field&quot;: &quot;Text&quot;}}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">record_code</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The type id of this model&#39;s type family in the TARIC specification.</span>
+
+<span class="sd">    This number groups together a number of different models into &#39;records&#39;.</span>
+<span class="sd">    Where two models share a record code, they are conceptually expressing</span>
+<span class="sd">    different properties of the same logical model.</span>
+
+<span class="sd">    In theory each :class:`~common.transactions.Transaction` should only contain</span>
+<span class="sd">    models with a single :attr:`record_code` (but differing</span>
+<span class="sd">    :attr:`subrecord_code`.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">subrecord_code</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The type id of this model in the TARIC specification. The</span>
+<span class="sd">    :attr:`subrecord_code` when combined with the :attr:`record_code` uniquely</span>
+<span class="sd">    identifies the type within the specification.</span>
+
+<span class="sd">    The subrecord code gives the intended order for models in a transaction,</span>
+<span class="sd">    with comparatively smaller subrecord codes needing to come before larger</span>
+<span class="sd">    ones.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tag</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">data_class</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="nb">dict</span>
     <span class="n">end_hook</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Element</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -243,43 +267,143 @@
         <span class="k">return</span> <span class="n">wraps</span></div>
 
 
-<div class="viewcode-block" id="TextElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.TextElement">[docs]</a><span class="k">class</span> <span class="nc">TextElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parse elements which contain a text value.</span>
+<div class="viewcode-block" id="ValueElementMixin"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.ValueElementMixin">[docs]</a><span class="k">class</span> <span class="nc">ValueElementMixin</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Provides a convenient way to define a parser for elements that contain</span>
+<span class="sd">    only a text value and have no attributes or children.&quot;&quot;&quot;</span>
 
-<span class="sd">    This class provides a convenient way to define a parser for elements that contain</span>
-<span class="sd">    only a text value and have no attributes or children, eg:</span>
+    <span class="n">native_type</span><span class="p">:</span> <span class="nb">type</span>
+    <span class="sd">&quot;&quot;&quot;The Python type that most closely matches the type of the XML element.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">native_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConstantElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.ConstantElement">[docs]</a><span class="k">class</span> <span class="nc">ConstantElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents an element that is always a constant value in the XML.</span>
+
+<span class="sd">    The actual value is ignored and not put into the database. The value</span>
+<span class="sd">    specified in the constructor will be put back into the XML.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>  <span class="c1"># pylint: disable=unused-argument</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ConstantElement.clean"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.ConstantElement.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="TextElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.TextElement">[docs]</a><span class="k">class</span> <span class="nc">TextElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents an element which contains a text value.</span>
+
+<span class="sd">    .. code-block:: XML</span>
 
 <span class="sd">        &lt;msg:record.code&gt;Example Text&lt;/msg:record.code&gt;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="TextElement.clean"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.TextElement.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span></div></div>
+    <span class="n">native_type</span> <span class="o">=</span> <span class="nb">str</span></div>
 
 
-<div class="viewcode-block" id="IntElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.IntElement">[docs]</a><span class="k">class</span> <span class="nc">IntElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<div class="viewcode-block" id="IntElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.IntElement">[docs]</a><span class="k">class</span> <span class="nc">IntElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parse elements which contain an integer value.</span>
+<span class="sd">    Represents an element which contains an integer value.</span>
 
-<span class="sd">    This class provides a convenient way to define a parser for elements that contain</span>
-<span class="sd">    only an integer value and have no attributes or children, eg:</span>
+<span class="sd">    .. code-block:: XML</span>
 
 <span class="sd">        &lt;msg:record.code&gt;430&lt;/msg:record.code&gt;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="IntElement.clean"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.IntElement.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div></div>
+    <span class="n">native_type</span> <span class="o">=</span> <span class="nb">int</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;FM99999999999999999999&quot;</span><span class="p">,</span>  <span class="c1"># pylint: disable=unused-argument</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BooleanElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.BooleanElement">[docs]</a><span class="k">class</span> <span class="nc">BooleanElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents an element which contains a true or false value.</span>
+
+<span class="sd">    The actual value in the XML by default is assumed to be a 1 for True and a 0</span>
+<span class="sd">    for False. This can be customised by passing in different values.</span>
+
+<span class="sd">    .. code-block:: XML</span>
+
+<span class="sd">        &lt;msg:some.value&gt;1&lt;/msg:some.value&gt;</span>
+<span class="sd">        &lt;msg:some.value&gt;0&lt;/msg:some.value&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">native_type</span> <span class="o">=</span> <span class="nb">bool</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">true_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="n">false_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">true_value</span> <span class="o">=</span> <span class="n">true_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">false_value</span> <span class="o">=</span> <span class="n">false_value</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BooleanElement.clean"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.BooleanElement.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">true_value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">false_value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="kc">None</span></div></div>
+
+
+<div class="viewcode-block" id="RangeLowerElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.RangeLowerElement">[docs]</a><span class="k">class</span> <span class="nc">RangeLowerElement</span><span class="p">(</span><span class="n">TextElement</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents an element that is the lower part of a range.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="RangeUpperElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.RangeUpperElement">[docs]</a><span class="k">class</span> <span class="nc">RangeUpperElement</span><span class="p">(</span><span class="n">TextElement</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents an element that is the upper part of a range.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CompoundElement"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.CompoundElement">[docs]</a><span class="k">class</span> <span class="nc">CompoundElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents an element in XML that is actually a concatenation of one or more</span>
+<span class="sd">    logical values and separators.</span>
+
+<span class="sd">    The separator by default is assumed to be a pipe character. The parsed data</span>
+<span class="sd">    will always contain a tuple that is the size of the number of expected</span>
+<span class="sd">    fields (the original field and any extras) – if less than the specified</span>
+<span class="sd">    number of separators occur the rightmost fields will have value ``None``.</span>
+
+<span class="sd">    .. code-block:: XML</span>
+
+<span class="sd">        &lt;msg:some.value&gt;one|two|three&lt;/msg:some.value&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">native_type</span> <span class="o">=</span> <span class="nb">tuple</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">extra_fields</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_fields</span> <span class="o">=</span> <span class="n">extra_fields</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">separator</span> <span class="o">=</span> <span class="n">separator</span>
+
+<div class="viewcode-block" id="CompoundElement.clean"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.CompoundElement.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">))</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">native_type</span><span class="p">([</span><span class="o">*</span><span class="n">parts</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">missing</span><span class="p">)])</span></div></div>
 
 
 <div class="viewcode-block" id="ValidityMixin"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.ValidityMixin">[docs]</a><span class="k">class</span> <span class="nc">ValidityMixin</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Parse validity start and end dates.&quot;&quot;&quot;</span>
 
-    <span class="n">_additional_components</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.start.date&quot;</span><span class="p">)):</span> <span class="s2">&quot;valid_between_lower&quot;</span><span class="p">,</span>
-        <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.end.date&quot;</span><span class="p">)):</span> <span class="s2">&quot;valid_between_upper&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
+    <span class="n">valid_between_lower</span> <span class="o">=</span> <span class="n">RangeLowerElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.start.date&quot;</span><span class="p">))</span>
+    <span class="n">valid_between_upper</span> <span class="o">=</span> <span class="n">RangeUpperElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.end.date&quot;</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
@@ -298,12 +422,7 @@
 <div class="viewcode-block" id="ValidityStartMixin"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.ValidityStartMixin">[docs]</a><span class="k">class</span> <span class="nc">ValidityStartMixin</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Parse validity start date.&quot;&quot;&quot;</span>
 
-    <span class="n">_additional_components</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.start.date&quot;</span><span class="p">)):</span> <span class="s2">&quot;validity_start&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
-
-    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span></div>
+    <span class="n">validity_start</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.start.date&quot;</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="Writable"><a class="viewcode-back" href="../../docs/importer/parsers_and_namespaces.html#importer.parsers.Writable">[docs]</a><span class="k">class</span> <span class="nc">Writable</span><span class="p">:</span>
