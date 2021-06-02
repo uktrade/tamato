@@ -18,7 +18,8 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 5
+   :maxdepth: 2
 
    adr/index
    business_rules/index
+   taric/index
