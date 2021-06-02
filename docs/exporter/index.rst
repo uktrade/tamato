@@ -1,6 +1,6 @@
 .. _the-exporter:
 
-Introduction
+The Exporter
 ^^^^^^^^^^^^
 
 At a high level, the TARIC exporter has responsibility to:
@@ -9,11 +9,6 @@ At a high level, the TARIC exporter has responsibility to:
  - Call the HMRC notification API for each uploaded file.
 
 These are handled by the Celery Tasks.
-
-
-The Exporter
-============
-
 
 .. toctree::
    :maxdepth: 5
