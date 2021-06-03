@@ -16,6 +16,7 @@ from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
+from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -72,6 +73,20 @@ class FootnoteDescriptionMixin:
         return models.FootnoteDescription.objects.approved_up_to_transaction(tx)
 
 
+class FootnoteCreateDescriptionMixin:
+    model: Type[TrackedModel] = models.FootnoteDescription
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["described_object"] = models.Footnote.objects.get(
+            footnote_type__footnote_type_id=(
+                self.kwargs.get("footnote_type__footnote_type_id")
+            ),
+            footnote_id=(self.kwargs.get("footnote_id")),
+        )
+        return context
+
+
 class FootnoteList(FootnoteMixin, TamatoListView):
     """UI endpoint for viewing and filtering Footnotes."""
 
@@ -111,6 +126,25 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
 
 
+class FootnoteCreateDescription(
+    FootnoteCreateDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftCreateView,
+):
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["described_footnote"] = models.Footnote.objects.get(
+            footnote_type__footnote_type_id=(
+                self.kwargs.get("footnote_type__footnote_type_id")
+            ),
+            footnote_id=(self.kwargs.get("footnote_id")),
+        )
+        return initial
+
+    form_class = forms.FootnoteCreateDescriptionForm
+    template_name = "common/create_description.jinja"
+
+
 class FootnoteUpdateDescription(
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
@@ -118,6 +152,13 @@ class FootnoteUpdateDescription(
 ):
     form_class = forms.FootnoteDescriptionForm
     template_name = "common/edit_description.jinja"
+
+
+class FootnoteDescriptionConfirmCreate(
+    FootnoteDescriptionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "common/confirm_create_description.jinja"
 
 
 class FootnoteDescriptionConfirmUpdate(

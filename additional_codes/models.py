@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Max
 
 from additional_codes import business_rules
 from additional_codes import validators
@@ -123,6 +124,15 @@ class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
     description = models.TextField()
 
     indirect_business_rules = (business_rules.ACN5,)
+
+    def save(self, *args, **kwargs):
+        if getattr(self, "sid") is None:
+            highest_sid = AdditionalCodeDescription.objects.aggregate(Max("sid"))[
+                "sid__max"
+            ]
+            self.sid = highest_sid + 1
+
+        return super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("validity_start",)

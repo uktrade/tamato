@@ -103,13 +103,13 @@ class GeographicalAreaDescriptionTaricSerializer(
     ValidityStartSerializerMixin,
     TrackedModelSerializerMixin,
 ):
-    area = GeographicalAreaBasicSerializer(read_only=True)
+    described_geographicalarea = GeographicalAreaBasicSerializer(read_only=True)
 
     class Meta:
         model = models.GeographicalAreaDescription
         fields = [
             "sid",
-            "area",
+            "described_geographicalarea",
             "description",
             "validity_start",
             "record_code",
@@ -127,14 +127,14 @@ class GeographicalAreaDescriptionImporterSerializer(
     TrackedModelSerializerMixin,
 ):
     sid = serializers.IntegerField()
-    area = GeographicalAreaBasicSerializer(read_only=True)
+    described_geographicalarea = GeographicalAreaBasicSerializer(read_only=True)
 
     class Meta:
         model = models.GeographicalAreaDescription
         fields = [
             "sid",
             "description",
-            "area",
+            "described_geographicalarea",
             "validity_start",
             "record_code",
             "period_record_code",

@@ -168,3 +168,13 @@ class ValidityPeriodForm(forms.ModelForm):
         cleaned_data["valid_between"] = TaricDateRange(start_date, end_date)
 
         return cleaned_data
+
+
+class CreateDescriptionForm(DescriptionForm):
+    description = forms.CharField(
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["validity_start"].label = "Description start date"

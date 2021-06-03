@@ -74,8 +74,8 @@ class GeographicalAreaDescriptionParser(Writable, ElementParser):
 
     sid = IntElement(Tag("geographical.area.description.period.sid"))
     language_id = ConstantElement(Tag("language.id"), value="EN")
-    area__sid = TextElement(Tag("geographical.area.sid"))
-    area__area_id = TextElement(Tag("geographical.area.id"))
+    described_geographicalarea__sid = TextElement(Tag("geographical.area.sid"))
+    described_geographicalarea__area_id = TextElement(Tag("geographical.area.id"))
     description = TextElement(Tag("description"))
 
 
@@ -108,9 +108,9 @@ class GeographicalAreaDescriptionPeriodParser(
     tag = Tag("geographical.area.description.period")
 
     sid = IntElement(Tag("geographical.area.description.period.sid"))
-    area__sid = TextElement(Tag("geographical.area.sid"))
+    described_geographicalarea__sid = TextElement(Tag("geographical.area.sid"))
     validity_start = ValidityStartMixin.validity_start
-    area__area_id = TextElement(Tag("geographical.area.id"))
+    described_geographicalarea__area_id = TextElement(Tag("geographical.area.id"))
 
 
 @RecordParser.register_child("geographical_area_membership")

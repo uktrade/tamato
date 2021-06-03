@@ -18,6 +18,16 @@ ui_patterns = [
         views.GeographicalAreaDetail.as_view(),
         name="geoarea-ui-detail",
     ),
+    path(
+        "<sid:sid>/create-description/",
+        views.GeographicalAreaCreateDescription.as_view(),
+        name="geoarea-ui-create-description",
+    ),
+    path(
+        "<sid:described_geographicalarea__sid>/description/<sid:sid>/confirm-create/",
+        views.GeographicalAreaDescriptionConfirmCreate.as_view(),
+        name="geographical_area_description-ui-confirm-create",
+    ),
 ]
 
 

@@ -250,7 +250,7 @@ class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
 
     description = factory.RelatedFactory(
         "common.tests.factories.GeographicalAreaDescriptionFactory",
-        factory_related_name="area",
+        factory_related_name="described_geographicalarea",
         transaction=factory.SelfAttribute("..transaction"),
         validity_start=factory.SelfAttribute("..valid_between.lower"),
     )
@@ -281,7 +281,7 @@ class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityStartFactory
         model = "geo_areas.GeographicalAreaDescription"
 
     sid = numeric_sid()
-    area = factory.SubFactory(GeographicalAreaFactory)
+    described_geographicalarea = factory.SubFactory(GeographicalAreaFactory)
     description = short_description()
 
 

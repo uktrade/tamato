@@ -25,7 +25,7 @@ def test_geo_area_description_importer(imported_fields_match):
     assert imported_fields_match(
         factories.GeographicalAreaDescriptionFactory,
         serializers.GeographicalAreaDescriptionImporterSerializer,
-        dependencies={"area": factories.GeographicalAreaFactory},
+        dependencies={"described_geographicalarea": factories.GeographicalAreaFactory},
     )
 
 

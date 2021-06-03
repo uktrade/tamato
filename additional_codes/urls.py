@@ -33,9 +33,19 @@ ui_patterns = [
         name="additional_code-ui-confirm-update",
     ),
     path(
+        f"{detail}/create-description/",
+        views.AdditionalCodeCreateDescription.as_view(),
+        name="additional_code-ui-create-description",
+    ),
+    path(
         f"{description_detail}/edit/",
         views.AdditionalCodeUpdateDescription.as_view(),
         name="additional_code_description-ui-edit",
+    ),
+    path(
+        f"{description_detail}/confirm-create/",
+        views.AdditionalCodeDescriptionConfirmCreate.as_view(),
+        name="additional_code_description-ui-confirm-create",
     ),
     path(
         f"{description_detail}/confirm-update/",

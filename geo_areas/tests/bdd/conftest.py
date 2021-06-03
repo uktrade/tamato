@@ -9,9 +9,14 @@ from common.tests import factories
 )
 def geographical_area_1001():
     area = factories.GeographicalAreaFactory(id=1001, area_id=1001, area_code=0)
-    factories.GeographicalAreaDescriptionFactory(area=area, description="This is 1001")
     factories.GeographicalAreaDescriptionFactory(
-        area=factories.GeographicalMembershipFactory(member=area).geo_group,
+        described_geographicalarea=area,
+        description="This is 1001",
+    )
+    factories.GeographicalAreaDescriptionFactory(
+        described_geographicalarea=factories.GeographicalMembershipFactory(
+            member=area,
+        ).geo_group,
         description="random group description",
     )
     return area
@@ -23,8 +28,12 @@ def geographical_area_1001():
 )
 def geographical_area_1002(geographical_area_1001):
     area = factories.GeographicalAreaFactory(id=1002, area_id=1002, area_code=1)
-    factories.GeographicalAreaDescriptionFactory(area=area, description="This is 1002")
+    factories.GeographicalAreaDescriptionFactory(
+        described_geographicalarea=area,
+        description="This is 1002",
+    )
     factories.GeographicalMembershipFactory(
-        member=geographical_area_1001, geo_group=area
+        member=geographical_area_1001,
+        geo_group=area,
     )
     return area

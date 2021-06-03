@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Max
 
 from certificates import business_rules
 from certificates import validators
@@ -109,6 +110,15 @@ class CertificateDescription(DescriptionMixin, TrackedModel):
 
     indirect_business_rules = (business_rules.CE6,)
     business_rules = ()
+
+    def save(self, *args, **kwargs):
+        if getattr(self, "sid") is None:
+            highest_sid = CertificateDescription.objects.aggregate(Max("sid"))[
+                "sid__max"
+            ]
+            self.sid = highest_sid + 1
+
+        return super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("validity_start",)
