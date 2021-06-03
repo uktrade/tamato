@@ -83,18 +83,15 @@ class FootnoteDescriptionForm(DescriptionForm):
 class FootnoteCreateDescriptionForm(CreateDescriptionForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance:
-            self.fields["described_footnote"].disabled = True
-            self.fields["described_footnote"].help_text = "You can't edit this"
-            self.fields["described_footnote"].label = "Described footnote"
 
         self.helper.layout.insert(
             0,
             Field(
                 "described_footnote",
-                context={"label_size": "govuk-label--s"},
+                type="hidden",
             ),
         )
+        self.fields["description"].label = "Footnote description"
 
     class Meta:
         model = models.FootnoteDescription

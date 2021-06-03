@@ -7,20 +7,14 @@ from geo_areas import models
 class GeographicalAreaCreateDescriptionForm(CreateDescriptionForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance:
-            self.fields["described_geographicalarea"].disabled = True
-            self.fields["described_geographicalarea"].help_text = "You can't edit this"
-            self.fields[
-                "described_geographicalarea"
-            ].label = "Described geographical area"
-
         self.helper.layout.insert(
             0,
             Field(
                 "described_geographicalarea",
-                context={"label_size": "govuk-label--s"},
+                type="hidden",
             ),
         )
+        self.fields["description"].label = "Geographical area description"
 
     class Meta:
         model = models.GeographicalAreaDescription

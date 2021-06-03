@@ -172,6 +172,9 @@ class ValidityPeriodForm(forms.ModelForm):
 
 class CreateDescriptionForm(DescriptionForm):
     description = forms.CharField(
-        help_text="Write the new description",
         widget=forms.Textarea,
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["validity_start"].label = "Description start date"

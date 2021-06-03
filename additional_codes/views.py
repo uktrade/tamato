@@ -141,6 +141,13 @@ class AdditionalCodeUpdateDescription(
     template_name = "common/edit_description.jinja"
 
 
+class AdditionalCodeDescriptionConfirmCreate(
+    AdditionalCodeDescriptionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "common/confirm_create_description.jinja"
+
+
 class AdditionalCodeDescriptionConfirmUpdate(
     AdditionalCodeDescriptionMixin,
     TrackedModelDetailView,

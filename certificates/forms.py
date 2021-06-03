@@ -88,17 +88,14 @@ class CertificateDescriptionForm(DescriptionForm):
 class CertificateCreateDescriptionForm(CreateDescriptionForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance:
-            self.fields["described_certificate"].disabled = True
-            self.fields["described_certificate"].help_text = "You can't edit this"
-
         self.helper.layout.insert(
             0,
             Field(
                 "described_certificate",
-                context={"label_size": "govuk-label--s"},
+                type="hidden",
             ),
         )
+        self.fields["description"].label = "Certificate description"
 
     class Meta:
         model = models.CertificateDescription

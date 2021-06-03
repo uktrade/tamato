@@ -78,18 +78,14 @@ class AdditionalCodeDescriptionForm(DescriptionForm):
 class AdditionalCodeCreateDescriptionForm(CreateDescriptionForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance:
-            self.fields["described_additionalcode"].disabled = True
-            self.fields["described_additionalcode"].help_text = "You can't edit this"
-            self.fields["described_additionalcode"].label = "Described additional code"
-
         self.helper.layout.insert(
             0,
             Field(
                 "described_additionalcode",
-                context={"label_size": "govuk-label--s"},
+                type="hidden",
             ),
         )
+        self.fields["description"].label = "Additional code description"
 
     class Meta:
         model = models.AdditionalCodeDescription

@@ -128,7 +128,7 @@ class CreateView(PermissionRequiredMixin, generic.CreateView):
         return Transaction()
 
     def get_success_url(self):
-        return self.object.get_url("confirm-update")
+        return self.object.get_url("confirm-create")
 
 
 class UpdateView(PermissionRequiredMixin, generic.UpdateView):

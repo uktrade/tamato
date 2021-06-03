@@ -39,6 +39,11 @@ ui_patterns = [
         name="certificate_description-ui-edit",
     ),
     path(
+        f"{description_detail}/confirm-create/",
+        views.CertificateDescriptionConfirmCreate.as_view(),
+        name="certificate_description-ui-confirm-create",
+    ),
+    path(
         f"{description_detail}/confirm-update/",
         views.CertificateDescriptionConfirmUpdate.as_view(),
         name="certificate_description-ui-confirm-update",

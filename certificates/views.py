@@ -137,6 +137,13 @@ class CertificateUpdateDescription(
     template_name = "common/edit_description.jinja"
 
 
+class CertificateDescriptionConfirmCreate(
+    CertificateDescriptionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "common/confirm_create_description.jinja"
+
+
 class CertificateDescriptionConfirmUpdate(
     CertificateDescriptionMixin,
     TrackedModelDetailView,

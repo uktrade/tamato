@@ -49,6 +49,11 @@ ui_patterns = [
         name="footnote_description-ui-edit",
     ),
     path(
+        f"{description_detail}/confirm-create/",
+        views.FootnoteDescriptionConfirmCreate.as_view(),
+        name="footnote_description-ui-confirm-create",
+    ),
+    path(
         f"{description_detail}/confirm-update/",
         views.FootnoteDescriptionConfirmUpdate.as_view(),
         name="footnote_description-ui-confirm-update",

@@ -154,6 +154,13 @@ class FootnoteUpdateDescription(
     template_name = "common/edit_description.jinja"
 
 
+class FootnoteDescriptionConfirmCreate(
+    FootnoteDescriptionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "common/confirm_create_description.jinja"
+
+
 class FootnoteDescriptionConfirmUpdate(
     FootnoteDescriptionMixin,
     TrackedModelDetailView,

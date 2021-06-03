@@ -24,9 +24,9 @@ ui_patterns = [
         name="geoarea-ui-create-description",
     ),
     path(
-        "<sid:described_geographicalarea__sid>/description/<sid:sid>/confirm-update/",
-        views.GeographicalAreaDescriptionConfirmUpdate.as_view(),
-        name="geographical_area_description-ui-confirm-update",
+        "<sid:described_geographicalarea__sid>/description/<sid:sid>/confirm-create/",
+        views.GeographicalAreaDescriptionConfirmCreate.as_view(),
+        name="geographical_area_description-ui-confirm-create",
     ),
 ]
 

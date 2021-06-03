@@ -80,8 +80,8 @@ class GeographicalAreaCreateDescription(
     template_name = "common/create_description.jinja"
 
 
-class GeographicalAreaDescriptionConfirmUpdate(
+class GeographicalAreaDescriptionConfirmCreate(
     GeographicalAreaDescriptionMixin,
     TrackedModelDetailView,
 ):
-    template_name = "common/confirm_update_description.jinja"
+    template_name = "common/confirm_create_description.jinja"
