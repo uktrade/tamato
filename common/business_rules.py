@@ -4,6 +4,7 @@ from datetime import date
 from datetime import datetime
 from functools import wraps
 from typing import Iterable
+from typing import Iterator
 from typing import Mapping
 from typing import Optional
 from typing import Set
@@ -93,16 +94,27 @@ class BusinessRule(metaclass=BusinessRuleBase):
         self.transaction = transaction
 
     @classmethod
-    def get_linked_models(cls, model: TrackedModel) -> Iterable[TrackedModel]:
-        for link in model._meta.related_objects:
-            business_rules = getattr(link.related_model, "business_rules", [])
+    def get_linked_models(
+        cls,
+        model: TrackedModel,
+        transaction,
+    ) -> Iterator[TrackedModel]:
+        for field, related_model in model.get_relations():
+            business_rules = getattr(related_model, "business_rules", [])
             if cls in business_rules:
-                return getattr(
-                    model,
-                    link.related_name or f"{link.related_model._meta.model_name}_set",
-                ).latest_approved()
-
-        return []
+                current_related_instances = (
+                    related_model.objects.approved_up_to_transaction(transaction)
+                )
+                if field.one_to_many or field.many_to_many:
+                    related_instances = getattr(model, f"{field.name}_set")
+                    yield from current_related_instances.filter(
+                        version_group__in=related_instances.values("version_group"),
+                    )
+                else:
+                    related_instance = getattr(model, field.name)
+                    yield current_related_instances.get(
+                        version_group=related_instance.version_group,
+                    )
 
     def validate(self, *args):
         """Perform business rule validation."""
@@ -123,21 +135,18 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
 class BusinessRuleChecker:
     def __init__(self, models: Iterable[TrackedModel], transaction):
-        self.checks: Set[Tuple[Type[BusinessRule], TrackedModel]] = set()
-
+        self.models = models
         self.transaction = transaction
 
-        for model in models:
+    def validate(self):
+        for model in self.models:
             for rule in model.business_rules:
-                self.checks.add((rule, model))
+                rule(self.transaction).validate(model)
 
             for rule in model.indirect_business_rules:
-                for linked_model in rule.get_linked_models(model):
-                    self.checks.add((rule, linked_model))
-
-    def validate(self):
-        for rule, model in self.checks:
-            rule(self.transaction).validate(model)
+                rule_instance = rule(self.transaction)
+                for linked_model in rule.get_linked_models(model, self.transaction):
+                    rule_instance.validate(linked_model)
 
 
 def only_applicable_after(cutoff: Union[date, datetime, str]):
