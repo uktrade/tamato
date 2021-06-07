@@ -33,6 +33,7 @@ from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import generate_test_import_xml
+from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
@@ -348,6 +349,82 @@ def validity_period_contained(date_ranges):
         return True
 
     return check
+
+
+@pytest.fixture
+def use_update_form(valid_user_api_client: APIClient):
+    """
+    Uses the default edit form and view for a model to update an object to have
+    the passed new data and returns the new version of the object.
+
+    The ``new_data`` dictionary should contain callable objects that when passed
+    the existing value will return a new value to be sent with the form.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if form thinks
+    that the passed data contains errors.
+    """
+
+    def use(object: TrackedModel, new_data: Dict[str, Callable[[Any], Any]]):
+        model = type(object)
+        versions = set(
+            model.objects.filter(**object.get_identifying_fields()).values_list(
+                "pk",
+                flat=True,
+            ),
+        )
+
+        # Visit the edit page and ensure it is a success
+        edit_url = object.get_url("edit")
+        assert edit_url, f"No edit page found for {object}"
+        response = valid_user_api_client.get(edit_url)
+        assert response.status_code == 200
+
+        # Get the data out of the edit page
+        # and override it with any data that has been passed in
+        data = get_form_data(response.context_data["form"])
+        assert set(new_data.keys()).issubset(data.keys())
+
+        # Submit the edited data and if we expect success ensure we are redirected
+        realised_data = {key: new_data[key](data[key]) for key in new_data}
+        data.update(realised_data)
+        response = valid_user_api_client.post(edit_url, data)
+
+        # Check that if we expect failure that the new data was not persisted
+        if response.status_code not in (301, 302):
+            assert (
+                set(
+                    model.objects.filter(**object.get_identifying_fields()).values_list(
+                        "pk",
+                        flat=True,
+                    ),
+                )
+                == versions
+            )
+            raise ValidationError(
+                "Update form contained errors",
+                response.context_data["form"].errors,
+            )
+
+        # Check that what we asked to be changed has been persisted
+        response = valid_user_api_client.get(edit_url)
+        assert response.status_code == 200
+        data = get_form_data(response.context_data["form"])
+        for key in realised_data:
+            assert data[key] == realised_data[key]
+
+        # Check that if success was expected that the new version was persisted
+        new_version = model.objects.exclude(pk=object.pk).get(
+            version_group=object.version_group,
+        )
+        assert new_version != object
+
+        # Check that the new version is an update and is not approved yet
+        assert new_version.update_type == UpdateType.UPDATE
+        assert new_version.transaction != object.transaction
+        assert not new_version.transaction.workbasket.approved
+        return new_version
+
+    return use
 
 
 @pytest.fixture
