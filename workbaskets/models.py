@@ -94,6 +94,10 @@ class WorkBasket(TimestampedMixin):
         db_index=True,
     )
 
+    @property
+    def approved(self):
+        return self.status in WorkflowStatus.approved_statuses()
+
     def __str__(self):
         return f"({self.pk}) [{self.status}]"
 

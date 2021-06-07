@@ -5,11 +5,13 @@ from datetime import timezone
 from functools import wraps
 from io import BytesIO
 from itertools import count
+from typing import Any
 from typing import Dict
 
 import pytest
 from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
+from django import forms
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -366,3 +368,27 @@ def validity_period_post_data(start: date, end: date) -> Dict[str, int]:
         for name, date in (("start_date", start), ("end_date", end))
         for i, part in enumerate([date.day, date.month, date.year])
     }
+
+
+def get_form_data(form: forms.ModelForm) -> Dict[str, Any]:
+    """Returns a dictionary of the fields that the form will put onto a page and
+    their current values, taking account of any fields that have sub-fields and
+    hence result in multiple HTML <input> objects."""
+
+    data = {**form.initial}
+    for field in form.rendered_fields:
+        value = data[field] if field in data else form.fields[field].initial
+        if hasattr(form.fields[field].widget, "decompress"):
+            # If the widget can be decompressed, then it is not just a simple
+            # value and has some internal structure. So we need to generate one
+            # form item per decompressed value and append the name with _0, _1,
+            # etc. This mirrors the MultiValueWidget in django/forms/widgets.py.
+            if field in data:
+                del data[field]
+            value = form.fields[field].widget.decompress(value)
+            data.update(
+                **{f"{field}_{i}": v for i, v in enumerate(value) if v is not None}
+            )
+        elif value is not None:
+            data.setdefault(field, value)
+    return data
