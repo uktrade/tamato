@@ -633,7 +633,10 @@ def in_use_check_respects_deletes(valid_user):
             dependant = dependant_factory.create(**create_kwargs, **extra_kwargs)
         assert not in_use(), f"Unapproved {instance!r} already in use"
 
-        workbasket.approve(valid_user)
+        with patch(
+            "exporter.tasks.upload_workbaskets.delay",
+        ):
+            workbasket.approve(valid_user)
         workbasket.save()
         assert in_use(), f"Approved {instance!r} not in use"
 

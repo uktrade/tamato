@@ -1,7 +1,7 @@
 Celery Tasks
 ^^^^^^^^^^^^
 
-Celery Tasks for the exporter are triggered on setting Workbaskets READY_FOR_EXPORT [TBD], the upload_transactions management command, or via the celery commandline or GUI.
+Celery Tasks for the exporter are triggered on setting Workbaskets READY_FOR_EXPORT, the upload_transactions management command, or via the celery commandline or GUI.
 
 upload_workbaskets
 ------------------
