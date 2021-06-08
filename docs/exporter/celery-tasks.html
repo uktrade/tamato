@@ -50,7 +50,7 @@
             
   <section id="celery-tasks">
 <h1>Celery Tasks<a class="headerlink" href="#celery-tasks" title="Permalink to this headline">¶</a></h1>
-<p>Celery Tasks for the exporter are triggered on setting Workbaskets READY_FOR_EXPORT [TBD], the upload_transactions management command, or via the celery commandline or GUI.</p>
+<p>Celery Tasks for the exporter are triggered on setting Workbaskets READY_FOR_EXPORT, the upload_transactions management command, or via the celery commandline or GUI.</p>
 <section id="upload-workbaskets">
 <h2>upload_workbaskets<a class="headerlink" href="#upload-workbaskets" title="Permalink to this headline">¶</a></h2>
 <p><cite>upload_workbaskets</cite> is the main Task, delegating to two subtasks: <cite>upload_workbasket_envelopes</cite> and <cite>send_upload_notifications</cite>.</p>
