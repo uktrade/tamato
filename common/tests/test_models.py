@@ -1,5 +1,4 @@
 from typing import List
-from unittest.mock import patch
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual  # noqa
@@ -360,10 +359,7 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     assert description not in description_queryset
 
     workbasket.submit_for_approval()
-    with patch(
-        "exporter.tasks.upload_workbaskets.delay",
-    ):
-        workbasket.approve(valid_user)
+    workbasket.approve(valid_user)
     description_queryset = sample_model.get_descriptions()
 
     assert new_description in description_queryset
