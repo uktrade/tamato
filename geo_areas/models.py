@@ -10,6 +10,7 @@ from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from geo_areas import business_rules
 from geo_areas import validators
+from geo_areas.validators import AreaCode
 from measures import business_rules as measures_business_rules
 from quotas import business_rules as quotas_business_rules
 
@@ -98,6 +99,15 @@ class GeographicalArea(TrackedModel, ValidityMixin):
             .approved_up_to_transaction(self.transaction)
             .exists()
         )
+
+    def is_single_region_or_country(self):
+        return self.area_code == AreaCode.COUNTRY or self.area_code == AreaCode.REGION
+
+    def is_all_countries(self):
+        return self.area_code == AreaCode.GROUP and self.area_id == "1011"
+
+    def is_group(self):
+        return self.area_code == AreaCode.GROUP
 
     def __str__(self):
         return f"{self.get_area_code_display()} {self.area_id}"

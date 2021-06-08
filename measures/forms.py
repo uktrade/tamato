@@ -12,9 +12,11 @@ from additional_codes.models import AdditionalCode
 from commodities.models import GoodsNomenclature
 from common.forms import AutocompleteWidget
 from common.forms import ValidityPeriodForm
+from geo_areas.models import GeographicalArea
 from measures import models
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
+from workbaskets.models import WorkBasket
 
 
 class AutoCompleteField(forms.ModelChoiceField):
@@ -57,9 +59,107 @@ class MeasureForm(ValidityPeriodForm):
         queryset=QuotaOrderNumber.objects.latest_approved(),
         required=False,
     )
+    geographical_area = forms.ModelChoiceField(
+        queryset=GeographicalArea.objects.latest_approved(),
+        required=False,
+    )
+    geographical_area_group = forms.ModelChoiceField(
+        queryset=GeographicalArea.objects.latest_approved().filter(
+            area_code=1,
+        ),
+        required=False,
+        widget=forms.Select(attrs={"class": "govuk-select"}),
+        empty_label=None,
+    )
+    geographical_area_country_or_region = forms.ModelChoiceField(
+        queryset=GeographicalArea.objects.latest_approved().exclude(
+            area_code=1,
+        ),
+        widget=forms.Select(attrs={"class": "govuk-select"}),
+        required=False,
+        empty_label=None,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        workbasket = WorkBasket.current(self.request)
+        tx = None
+        if workbasket:
+            tx = workbasket.transactions.order_by("order").last()
+
+        self.fields[
+            "order_number"
+        ].queryset = QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        self.fields[
+            "measure_type"
+        ].queryset = models.MeasureType.objects.approved_up_to_transaction(tx)
+        self.fields[
+            "generating_regulation"
+        ].queryset = Regulation.objects.approved_up_to_transaction(tx)
+        self.fields[
+            "goods_nomenclature"
+        ].queryset = GoodsNomenclature.objects.approved_up_to_transaction(tx)
+        self.fields[
+            "order_number"
+        ].queryset = QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        self.fields[
+            "additional_code"
+        ].queryset = AdditionalCode.objects.approved_up_to_transaction(tx)
+        self.fields[
+            "geographical_area"
+        ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx)
+        self.fields[
+            "geographical_area_group"
+        ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx).filter(
+            area_code=1,
+        )
+        self.fields[
+            "geographical_area_country_or_region"
+        ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx).exclude(
+            area_code=1,
+        )
+
+        self.initial_geographical_area = self.instance.geographical_area
+
+        for field in ["geographical_area_group", "geographical_area_country_or_region"]:
+            self.fields[
+                field
+            ].label_from_instance = lambda obj: obj.structure_description
+
+        if self.instance.geographical_area.is_group():
+            self.fields[
+                "geographical_area_group"
+            ].initial = self.instance.geographical_area
+
+        if self.instance.geographical_area.is_single_region_or_country():
+            self.fields[
+                "geographical_area_country_or_region"
+            ].initial = self.instance.geographical_area
 
     def clean(self):
         cleaned_data = super().clean()
+
+        erga_omnes_instance = (
+            GeographicalArea.objects.latest_approved()
+            .as_at(self.instance.valid_between.lower)
+            .get(
+                area_code=1,
+                area_id=1011,
+            )
+        )
+
+        geographical_area_fields = {
+            "all": erga_omnes_instance,
+            "group": cleaned_data.get("geographical_area_group"),
+            "single": cleaned_data.get("geographical_area_country_or_region"),
+        }
+
+        if self.data.get("geographical_area_choice"):
+            cleaned_data["geographical_area"] = geographical_area_fields[
+                self.data.get("geographical_area_choice")
+            ]
 
         cleaned_data["sid"] = self.instance.sid
 
@@ -74,6 +174,7 @@ class MeasureForm(ValidityPeriodForm):
             "goods_nomenclature",
             "additional_code",
             "order_number",
+            "geographical_area",
         )
 
 
