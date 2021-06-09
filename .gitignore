@@ -144,3 +144,6 @@ webpack-stats.json
 .vscode/
 
 *.gz
+
+# temporary db credentials files
+*-db.json
