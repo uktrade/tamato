@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from django.urls import reverse
 
@@ -11,24 +13,29 @@ pytestmark = pytest.mark.django_db
 
 
 def test_submit_workbasket(unapproved_transaction, valid_user, client):
-    workbasket = unapproved_transaction.workbasket
+    with mock.patch(
+        "exporter.tasks.upload_workbaskets",
+    ) as mock_save:
+        workbasket = unapproved_transaction.workbasket
 
-    url = reverse(
-        "workbaskets:workbasket-ui-submit",
-        kwargs={"pk": workbasket.pk},
-    )
+        url = reverse(
+            "workbaskets:workbasket-ui-submit",
+            kwargs={"pk": workbasket.pk},
+        )
 
-    client.force_login(valid_user)
-    response = client.get(url)
+        client.force_login(valid_user)
+        response = client.get(url)
 
-    assert response.status_code == 302
-    assert response.url == reverse("index")
+        assert response.status_code == 302
+        assert response.url == reverse("index")
 
-    workbasket.refresh_from_db()
-    assert workbasket.status == WorkflowStatus.SENT_TO_CDS
-    assert workbasket.approver is not None
+        workbasket.refresh_from_db()
+        assert workbasket.status == WorkflowStatus.SENT_TO_CDS
+        assert workbasket.approver is not None
 
-    assert client.session["workbasket"]["status"] == WorkflowStatus.SENT_TO_CDS
+        assert client.session["workbasket"]["status"] == WorkflowStatus.SENT_TO_CDS
+
+        mock_save.delay.assert_called_once_with()
 
 
 def test_edit_after_submit(workbasket, valid_user, client, date_ranges):
@@ -39,13 +46,17 @@ def test_edit_after_submit(workbasket, valid_user, client, date_ranges):
         footnote = factories.FootnoteFactory.create(
             update_type=UpdateType.CREATE,
         )
-    response = client.get(
-        reverse(
-            "workbaskets:workbasket-ui-submit",
-            kwargs={"pk": workbasket.pk},
-        ),
-    )
-    assert response.status_code == 302
+
+    with mock.patch(
+        "exporter.tasks.upload_workbaskets.delay",
+    ):
+        response = client.get(
+            reverse(
+                "workbaskets:workbasket-ui-submit",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
+        assert response.status_code == 302
 
     # edit the footnote
     response = client.post(

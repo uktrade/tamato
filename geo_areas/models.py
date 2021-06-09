@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import CheckConstraint
+from django.db.models import Max
 from django.db.models import Q
 
 from common.fields import ShortDescription
@@ -9,6 +10,7 @@ from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from geo_areas import business_rules
 from geo_areas import validators
+from geo_areas.validators import AreaCode
 from measures import business_rules as measures_business_rules
 from quotas import business_rules as quotas_business_rules
 
@@ -98,6 +100,15 @@ class GeographicalArea(TrackedModel, ValidityMixin):
             .exists()
         )
 
+    def is_single_region_or_country(self):
+        return self.area_code == AreaCode.COUNTRY or self.area_code == AreaCode.REGION
+
+    def is_all_countries(self):
+        return self.area_code == AreaCode.GROUP and self.area_id == "1011"
+
+    def is_group(self):
+        return self.area_code == AreaCode.GROUP
+
     def __str__(self):
         return f"{self.get_area_code_display()} {self.area_id}"
 
@@ -173,20 +184,29 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         )
 
 
-class GeographicalAreaDescription(TrackedModel, DescriptionMixin):
+class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
     record_code = "250"
     subrecord_code = "10"
 
     period_record_code = "250"
     period_subrecord_code = "05"
 
-    area = models.ForeignKey(
+    described_geographicalarea = models.ForeignKey(
         GeographicalArea,
         on_delete=models.CASCADE,
         related_name="descriptions",
     )
     description = ShortDescription()
     sid = SignedIntSID(db_index=True)
+
+    def save(self, *args, **kwargs):
+        if getattr(self, "sid") is None:
+            highest_sid = GeographicalAreaDescription.objects.aggregate(Max("sid"))[
+                "sid__max"
+            ]
+            self.sid = highest_sid + 1
+
+        return super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("validity_start",)

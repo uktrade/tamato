@@ -15,6 +15,7 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
+from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -98,6 +99,35 @@ class CertificateDescriptionMixin:
         return models.CertificateDescription.objects.approved_up_to_transaction(tx)
 
 
+class CertificateCreateDescriptionMixin:
+    model: Type[TrackedModel] = models.CertificateDescription
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["described_object"] = models.Certificate.objects.get(
+            certificate_type__sid=(self.kwargs.get("certificate_type__sid")),
+            sid=(self.kwargs.get("sid")),
+        )
+        return context
+
+
+class CertificateCreateDescription(
+    CertificateCreateDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftCreateView,
+):
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["described_certificate"] = models.Certificate.objects.get(
+            certificate_type__sid=(self.kwargs.get("certificate_type__sid")),
+            sid=(self.kwargs.get("sid")),
+        )
+        return initial
+
+    form_class = forms.CertificateCreateDescriptionForm
+    template_name = "common/create_description.jinja"
+
+
 class CertificateUpdateDescription(
     CertificateDescriptionMixin,
     TrackedModelDetailMixin,
@@ -105,6 +135,13 @@ class CertificateUpdateDescription(
 ):
     form_class = forms.CertificateDescriptionForm
     template_name = "common/edit_description.jinja"
+
+
+class CertificateDescriptionConfirmCreate(
+    CertificateDescriptionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "common/confirm_create_description.jinja"
 
 
 class CertificateDescriptionConfirmUpdate(

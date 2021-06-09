@@ -127,6 +127,9 @@ class CreateView(PermissionRequiredMixin, generic.CreateView):
     def get_transaction(self):
         return Transaction()
 
+    def get_success_url(self):
+        return self.object.get_url("confirm-create")
+
 
 class UpdateView(PermissionRequiredMixin, generic.UpdateView):
     """Create an updated version of a TrackedModel."""
