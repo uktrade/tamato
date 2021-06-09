@@ -178,6 +178,51 @@ Output defaults to stdout if filename is - or is not supplied.
 
 The app is hosted using GOV.UK PaaS and is deployed with Jenkins.
 
+### Accessing databases in GOV.UK PaaS
+
+To access databases hosted in GOV.UK PaaS directly, you will need a PaaS login and the
+[cf CLI tool](https://docs.cloudfoundry.org/cf-cli/install-go-cli.html). There are a couple of useful `Makefile` targets to make creating an SSH
+tunnel to the databases easier.
+
+NB this requires [`jq`](https://stedolan.github.io/jq/) to be installed too.
+
+```sh
+$ make paas-login
+> Login to PaaS
+API endpoint: api.london.cloud.service.gov.uk
+
+Temporary Authentication Code ( Get one at https://login.london.cloud.service.gov.uk/passcode ): 
+```
+Open the URL above to login and get a code, then paste it into the terminal. You will then be prompted to select a space:
+```sh
+Targeted org dit-staging.
+
+Select a space:
+1. tariffs-dev
+2. tariffs-staging
+3. tariffs-training
+4. tariffs-uat
+
+Space (enter to skip):
+```
+
+Then, start the SSH tunnel
+```sh
+$ make paas-db-tunnel app=tamato-staging
+> Get tamato-staging-db service key...
+> SSH Tunnel to tamato-staging-db...
+```
+At this point, you can connect your local database client to `127.0.0.1:54321`, the credentials are stored in `${app}-db.json` in the current directory - **DO NOT ADD THIS FILE TO THE REPO!**
+
+To close the tunnel, hit Ctrl-c.
+
+For convenience, the following command parses the JSON file and connects using the `psql` client. Run this in another terminal, in the same directory as the JSON file.
+```sh
+$ make paas-db-tunnel-shell app=tamato-staging
+```
+
+Make sure to delete the `${app}-db.json` file after use.
+
 ## How to write tests
 
 Tests are written with Pytest
