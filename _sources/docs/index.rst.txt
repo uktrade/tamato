@@ -8,7 +8,7 @@ Welcome to TaMaTo's documentation!
    ./project
 
 .. toctree::
-   :maxdepth: 5
+   :maxdepth: 3
    :caption: Code docs:
 
    ./code

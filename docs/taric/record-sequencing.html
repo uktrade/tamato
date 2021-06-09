@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Record sequencing &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Code Documentation" href="../code.html" />
+    <link rel="prev" title="Interpretation of dates" href="interpretation-of-dates.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../code.html" title="Code Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="interpretation-of-dates.html" title="Interpretation of dates"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Record sequencing</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="record-sequencing">
+<h1>Record sequencing<a class="headerlink" href="#record-sequencing" title="Permalink to this headline">¶</a></h1>
+<p>One of the major objectives of TARIC is to extract at regular intervals all
+amendments to the database and to send them to the Member States. The
+transmitted data should be in such a format that upon receipt it can be
+processed automatically by a computer, and provide the source for national
+tariff updates.</p>
+<p>In order to allow Member States to process (and to validate if they wish) the
+data in a meaningful way, it is important that the sequence of the data is
+properly understood.</p>
+<p>All records contain the following common information:</p>
+<ul class="simple">
+<li><p>a record sequence number; this controls the physical sequence of the records</p></li>
+<li><p>a transaction identifier, record identifier, update type: these fields
+identify the record from a logical point of view.</p></li>
+</ul>
+<p>A particular problem is that a logical unit of work for a user can be
+distributed over several tables in the database; for instance, closing a goods
+nomenclature code results in changing the end date but this also closes any
+footnote associations, nomenclature group memberships, etc., information which
+is held in different tables.</p>
+<p>A transaction identifier will be used to group together all database actions
+covering a logical unit of work. As a result, all records involved in closing a
+goods nomenclature code will be tagged with the same (unique) value, ie the
+transaction identifier. As a result, records can be extracted in any sequence.
+Subsequently they will be sorted by transaction identifier and record
+identifier. In this way the interface file will reflect all data capture work
+and system updates.</p>
+<p>The Member States should process the file based on this transaction principle.</p>
+<section id="inserts">
+<h2>Inserts<a class="headerlink" href="#inserts" title="Permalink to this headline">¶</a></h2>
+<p>All validations can be applied on a record
+by record basis for inserts, but the final acceptance should be done at
+transaction level. For example, when a goods nomenclature code is
+created, several physical records will be sent in the following order:</p>
+<ul class="simple">
+<li><p>goods nomenclature: record identifier 40000</p></li>
+<li><p>goods nomenclature indent: record identifier 40005</p></li>
+<li><p>goods nomenclature description period: record identifier 40010</p></li>
+<li><p>goods nomenclature description(s): record identifier 40015</p></li>
+<li><p>potential relationships with nomenclature groups, footnotes: record identifiers 40020, 40025</p></li>
+<li><p>goods nomenclature origin: record identifier 40035</p></li>
+</ul>
+<p>Validations can be applied at record level as the records are sent in a logical
+order, but the transaction should be refused as a whole if a validation fails.</p>
+</section>
+<section id="updates">
+<h2>Updates<a class="headerlink" href="#updates" title="Permalink to this headline">¶</a></h2>
+<p>Validations must be applied at transaction level for updates.</p>
+<p>For example, when a nomenclature code is closed, several physical records will
+be sent in the following order:</p>
+<ul class="simple">
+<li><p>goods nomenclature with the new end of validity date: record identifier 40000</p></li>
+<li><p>relationships with nomenclature groups, footnotes: record identifiers 40020, 40025</p></li>
+<li><p>goods nomenclature successor: record identifier 40040</p></li>
+</ul>
+<p>Validations cannot be applied at record level. Validating the goods nomenclature
+code means, among other things, that its validity period must span the validity
+periods of its relationships. This is not the case when processing the goods
+nomenclature record, but MUST be the case when all the records of that
+transaction are processed.</p>
+</section>
+<section id="deletes">
+<h2>Deletes<a class="headerlink" href="#deletes" title="Permalink to this headline">¶</a></h2>
+<p>Validations must be applied
+at transaction level for deletes. For example, when a goods nomenclature
+code is deleted, several physical records will be sent in the following
+order:</p>
+<ul class="simple">
+<li><p>goods nomenclature: record identifier 40000</p></li>
+<li><p>goods nomenclature indent(s): record identifier 40005</p></li>
+<li><p>goods nomenclature description period(s): record identifier 40010</p></li>
+<li><p>goods nomenclature description(s): record identifier 40015</p></li>
+<li><p>relationships with nomenclature groups, footnotes: record identifiers 40020, 40025</p></li>
+<li><p>goods nomenclature origin: record identifier 40035</p></li>
+<li><p>goods nomenclature successor: record identifier 40040</p></li>
+</ul>
+<p>Validations could be applied at record level. Deleting the goods nomenclature
+code will result in deleting all its relationships. The interface file will
+contain all these deletes in detail. If validation is required at that level one
+could check at the end of the transaction if all the relationships have been
+deleted before accepting the delete as a whole.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Record sequencing</a><ul>
+<li><a class="reference internal" href="#inserts">Inserts</a></li>
+<li><a class="reference internal" href="#updates">Updates</a></li>
+<li><a class="reference internal" href="#deletes">Deletes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="interpretation-of-dates.html"
+                        title="previous chapter">Interpretation of dates</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../code.html"
+                        title="next chapter">Code Documentation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/taric/record-sequencing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../code.html" title="Code Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="interpretation-of-dates.html" title="Interpretation of dates"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Record sequencing</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
+    </div>
+  </body>
+</html>

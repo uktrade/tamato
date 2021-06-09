@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Interpretation of dates &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Record sequencing" href="record-sequencing.html" />
+    <link rel="prev" title="Extractions" href="extractions.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="record-sequencing.html" title="Record sequencing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="extractions.html" title="Extractions"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Interpretation of dates</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="interpretation-of-dates">
+<h1>Interpretation of dates<a class="headerlink" href="#interpretation-of-dates" title="Permalink to this headline">¶</a></h1>
+<p>Dates are an important source of information in the TARIC system. Handling these
+dates is critical to determine whether or not data is applicable at a given
+date.</p>
+<section id="different-types">
+<h2>Different types<a class="headerlink" href="#different-types" title="Permalink to this headline">¶</a></h2>
+<p>There are three different types of dates, as follows:</p>
+<ul class="simple">
+<li><p>explicit dates: these are fully specified dates, for example 01/01/1994</p></li>
+<li><p>implicit dates: these are sent as “spaces” and refer to other entities</p></li>
+<li><p>open end dates: these are sent as “spaces” and indicate that they are open ended</p></li>
+</ul>
+</section>
+<section id="start-dates">
+<h2>Start dates<a class="headerlink" href="#start-dates" title="Permalink to this headline">¶</a></h2>
+<p>All start dates are explicit. The only exception is the measure start date; if
+it is the same as the regulation start date, it should be considered as an
+implicit date from a validation point of view.</p>
+</section>
+<section id="end-dates">
+<h2>End dates<a class="headerlink" href="#end-dates" title="Permalink to this headline">¶</a></h2>
+<p>All end dates can be explicit.</p>
+<section id="measures">
+<h3>Measures<a class="headerlink" href="#measures" title="Permalink to this headline">¶</a></h3>
+<p>The end date can be implicit in that the real end
+date must be fetched from its generating regulation.</p>
+</section>
+<section id="modification-regulation">
+<h3>Modification regulation<a class="headerlink" href="#modification-regulation" title="Permalink to this headline">¶</a></h3>
+<p>The end date can be implicit in that the real end date must be fetched from the
+related base regulation.</p>
+</section>
+<section id="other-entities">
+<h3>Other entities<a class="headerlink" href="#other-entities" title="Permalink to this headline">¶</a></h3>
+<p>End dates for other entities can be open ended.</p>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Interpretation of dates</a><ul>
+<li><a class="reference internal" href="#different-types">Different types</a></li>
+<li><a class="reference internal" href="#start-dates">Start dates</a></li>
+<li><a class="reference internal" href="#end-dates">End dates</a><ul>
+<li><a class="reference internal" href="#measures">Measures</a></li>
+<li><a class="reference internal" href="#modification-regulation">Modification regulation</a></li>
+<li><a class="reference internal" href="#other-entities">Other entities</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="extractions.html"
+                        title="previous chapter">Extractions</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="record-sequencing.html"
+                        title="next chapter">Record sequencing</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/taric/interpretation-of-dates.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="record-sequencing.html" title="Record sequencing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="extractions.html" title="Extractions"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Interpretation of dates</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
+    </div>
+  </body>
+</html>

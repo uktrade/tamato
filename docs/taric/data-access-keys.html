@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Data access keys &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="EDIFACT" href="edifact.html" />
+    <link rel="prev" title="TARIC3 Principles" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="edifact.html" title="EDIFACT"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="TARIC3 Principles"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Data access keys</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="data-access-keys">
+<h1>Data access keys<a class="headerlink" href="#data-access-keys" title="Permalink to this headline">¶</a></h1>
+<section id="background-and-problem-statement">
+<h2>Background and problem statement<a class="headerlink" href="#background-and-problem-statement" title="Permalink to this headline">¶</a></h2>
+<p>In computer systems, a data access key consists of a single field or a
+combination of fields which provide direct access to a single record. The
+limitation of such a system is that none of the key fields can be changed
+dynamically if the amendments have to be extracted and transmitted.</p>
+<p>Another problem is that, when an access key based on the logical business data
+is too long (or consists of too many data elements), it becomes inefficient in
+performance.</p>
+</section>
+<section id="system-generated-number-sid">
+<h2>System generated number (SID)<a class="headerlink" href="#system-generated-number-sid" title="Permalink to this headline">¶</a></h2>
+<p>In the areas where there is a need to change access key data dynamically or
+where the logical key is too long, the system will generate a unique number and
+attribute it to each record occurrence. This is known as the System Identifier
+or SID. The same mechanism is used in systems using e.g. invoice and order
+numbers.</p>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>For example, in the case of the goods nomenclature record, the access key in
+logical terms is “goods nomenclature item (10) + product line (2) + validity
+start date (8)”. As the validity start date can change dynamically, a SID is
+used as the physical access key. This SID is used in all related records, e.g.
+indents, description periods, measures, etc.</p>
+<p>The benefit is that if the user changes the validity start date, and all
+validation rules are respected, there is no need to amend any related records.</p>
+</section>
+<section id="logical-keys">
+<h2>Logical keys<a class="headerlink" href="#logical-keys" title="Permalink to this headline">¶</a></h2>
+<p>One negative aspect of the use of SIDs is that the system generated number,
+created for technical purposes, has no tariff related meaning for a user when
+reading the data. To resolve this, the system will keep within the same record a
+meaningful key, i.e. the logical key. This will be the static part of the key,
+i.e. the code without the date. In the example of the goods nomenclature, the
+system will repeat the goods code in the related records in order that queries
+based on this information can be made. This causes some data redundancy.</p>
+<p>As a consequence of the extension of some fields, logical key fields may be
+implemented as characters. This means that they may contain spaces. Spaces in
+logical key fields are padded at the end of the logical key values and have no
+special validity. For example the code <code class="docutils literal notranslate"><span class="pre">XYZ</span> <span class="pre">``</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">same</span> <span class="pre">as</span> <span class="pre">``XYZ</span></code>.</p>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
+<p>Details of all records for which SIDs will be generated are shown in the records
+document, the TARIC3 Interface Data Specification. Member States’
+administrations, and other recipients of TARIC data, require this information
+for two principal reasons:</p>
+<ol class="arabic simple">
+<li><p>to take account of these keys in the design of their TARIC3 data reception
+software</p></li>
+<li><p>to enable their computer systems to accurately process these keys.</p></li>
+</ol>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Data access keys</a><ul>
+<li><a class="reference internal" href="#background-and-problem-statement">Background and problem statement</a></li>
+<li><a class="reference internal" href="#system-generated-number-sid">System generated number (SID)</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#logical-keys">Logical keys</a></li>
+<li><a class="reference internal" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">TARIC3 Principles</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="edifact.html"
+                        title="next chapter">EDIFACT</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/taric/data-access-keys.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="edifact.html" title="EDIFACT"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="TARIC3 Principles"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Data access keys</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
+    </div>
+  </body>
+</html>

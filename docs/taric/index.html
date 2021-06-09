@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>TARIC3 Principles &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Data access keys" href="data-access-keys.html" />
+    <link rel="prev" title="Regulations" href="../business_rules/regulations.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="data-access-keys.html" title="Data access keys"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../business_rules/regulations.html" title="Regulations"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" accesskey="U">Project Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TARIC3 Principles</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="taric3-principles">
+<h1>TARIC3 Principles<a class="headerlink" href="#taric3-principles" title="Permalink to this headline">¶</a></h1>
+<p>The documents here are from the DG TAXUD TARIC3 specification version 0.47-EN.</p>
+<p>As this is a document originally written by the EU, there are some references
+which do not make sense in a UK context (such as references to “Member States”
+or “the Commission”). These have been retained as-is to most accurately
+describe the original intention of the specification.</p>
+<p>There is also documentation that is not relevant to the UK Tariff and its
+ystems (such as the documentation on EDIFACT). These are retained for
+completeness and potential future interest.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="data-access-keys.html">Data access keys</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data-access-keys.html#background-and-problem-statement">Background and problem statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-access-keys.html#system-generated-number-sid">System generated number (SID)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-access-keys.html#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-access-keys.html#logical-keys">Logical keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-access-keys.html#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="edifact.html">EDIFACT</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="edifact.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edifact.html#separators">Separators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edifact.html#tags">Tags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edifact.html#character-set">Character set</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extractions.html">Extractions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extractions.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extractions.html#complete-records">Complete records</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extractions.html#null-values">Null values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extractions.html#long-descriptions">Long descriptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extractions.html#special-characters-in-descriptions">Special characters in descriptions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="interpretation-of-dates.html">Interpretation of dates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interpretation-of-dates.html#different-types">Different types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interpretation-of-dates.html#start-dates">Start dates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interpretation-of-dates.html#end-dates">End dates</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="record-sequencing.html">Record sequencing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="record-sequencing.html#inserts">Inserts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-sequencing.html#updates">Updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-sequencing.html#deletes">Deletes</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="glossary-of-terminology">
+<h2>Glossary Of Terminology<a class="headerlink" href="#glossary-of-terminology" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>EDIFACT: Electronic Data Interchange For Administration, Commerce And Transport</p></li>
+<li><p>ERN: Export Refund Nomenclature</p></li>
+<li><p>FTS: Full Temporary Stop Regulation</p></li>
+<li><p>ID: Identifier</p></li>
+<li><p>ISO: International Standards Organisation</p></li>
+<li><p>OJ: Official Journal</p></li>
+<li><p>PTS: Partial Temporary Stop Regulation</p></li>
+<li><p>SID: System Identifier</p></li>
+<li><p>UTF: Unicode transformation format</p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TARIC3 Principles</a><ul>
+<li><a class="reference internal" href="#glossary-of-terminology">Glossary Of Terminology</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../business_rules/regulations.html"
+                        title="previous chapter">Regulations</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="data-access-keys.html"
+                        title="next chapter">Data access keys</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/taric/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="data-access-keys.html" title="Data access keys"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../business_rules/regulations.html" title="Regulations"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TARIC3 Principles</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
+    </div>
+  </body>
+</html>

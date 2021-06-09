@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>EDIFACT &#8212; TaMaTo 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Extractions" href="extractions.html" />
+    <link rel="prev" title="Data access keys" href="data-access-keys.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="extractions.html" title="Extractions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="data-access-keys.html" title="Data access keys"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">EDIFACT</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="edifact">
+<h1>EDIFACT<a class="headerlink" href="#edifact" title="Permalink to this headline">¶</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>For the electronic transmission of data, EDIFACT lays down guidelines referring
+to the definition of data items, data segments and data messages in the
+following documents:</p>
+<ul class="simple">
+<li><p>UNTDED (United Nations Trade Data Elements Directory)</p></li>
+<li><p>UN/EDIFACT Syntax Implementation Guidelines</p></li>
+<li><p>UN/EDIFACT Message Design Guidelines</p></li>
+</ul>
+<p>These guidelines have been used wherever appropriate. It is assumed that a
+message equates to a file, and that a segment equates to a record.</p>
+</section>
+<section id="separators">
+<h2>Separators<a class="headerlink" href="#separators" title="Permalink to this headline">¶</a></h2>
+<p>Every record has an EDIFACT data element separator (+) immediately after the
+record identifier.</p>
+<p>The UNB, UNH and UNZ segments have, in addition, a data element separator
+between each attribute and, where an attribute is composed of two data elements,
+a different separator (:) is used between them. For example, a colon will appear
+between the syntax identifier and the syntax version number in the syntax
+identifier group of the UNB segment.</p>
+<p>Each record represents an EDIFACT segment and is terminated by an apostrophe (‘)
+and a linefeed character (decimal 010).</p>
+</section>
+<section id="tags">
+<h2>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h2>
+<p>Where a four-digit numeric TAG (as defined under UNTDED) is shown, this has been
+used to aid comprehension of the data. Where no TAG appears, there is no UNTDED
+definition of the element. These codes will not exist in the TARIC 3 database.
+The intention is to hold them in the TARIC 3 Data Dictionary System, which will
+be used for the maintenance of the TARIC 3 Interface Data Specification.</p>
+</section>
+<section id="character-set">
+<h2>Character set<a class="headerlink" href="#character-set" title="Permalink to this headline">¶</a></h2>
+<p>The TARIC3 IDS uses the multi-byte Unicode character set in order to allow the
+support of the descriptions in the languages of the candidate Member States.</p>
+<p>Physically, each character is mapped onto one or more bytes according to the
+encoding chosen. A number of encodings exist for Unicode. The TARIC3 IDS uses
+the variable-length encoding UTF-8. The “Unicode transformation format” (UTF)
+encoding is an algorithmic mapping from every Unicode scalar value to a unique
+byte sequence. Detailed information can be found on <a class="reference external" href="http://www.unicode.org">http://www.unicode.org</a>.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">EDIFACT</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#separators">Separators</a></li>
+<li><a class="reference internal" href="#tags">Tags</a></li>
+<li><a class="reference internal" href="#character-set">Character set</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="data-access-keys.html"
+                        title="previous chapter">Data access keys</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="extractions.html"
+                        title="next chapter">Extractions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/docs/taric/edifact.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="extractions.html" title="Extractions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="data-access-keys.html" title="Data access keys"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">TaMaTo 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../project.html" >Project Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >TARIC3 Principles</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">EDIFACT</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, DIT.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
+    </div>
+  </body>
+</html>
