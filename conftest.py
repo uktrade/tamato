@@ -26,13 +26,17 @@ from pytest_bdd import parsers
 from pytest_bdd import then
 from rest_framework.test import APIClient
 
+from common.business_rules import BusinessRule
+from common.business_rules import BusinessRuleViolation
 from common.models import TrackedModel
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import generate_test_import_xml
+from common.tests.util import make_duplicate_record
+from common.tests.util import make_non_duplicate_record
+from common.tests.util import raises_if
 from common.util import TaricDateRange
-from common.util import get_field_tuple
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
 from importer.nursery import get_nursery
@@ -542,26 +546,28 @@ def hmrc_storage():
             yield storage
 
 
-@pytest.fixture
-def make_duplicate_record():
-    """Provides a function for making a duplicate record to test a
-    UniqueIdentifyingFields BusinessRule."""
+@pytest.fixture(
+    params=(
+        (make_duplicate_record, True),
+        (make_non_duplicate_record, False),
+    ),
+    ids=(
+        "duplicate",
+        "not_duplicate",
+    ),
+)
+def assert_handles_duplicates(request):
+    def do_assert(
+        factory: Type[factories.TrackedModelMixin],
+        business_rule: Type[BusinessRule],
+        identifying_fields: Optional[Dict[str, Any]] = None,
+    ):
+        make_record, error_expected = request.param
+        duplicate = make_record(factory, identifying_fields)
+        with raises_if(BusinessRuleViolation, error_expected):
+            business_rule(duplicate.transaction).validate(duplicate)
 
-    def make_dupe(factory, identifying_fields=None):
-        existing = factory.create()
-
-        # allow overriding identifying_fields
-        if identifying_fields is None:
-            identifying_fields = list(factory._meta.model.identifying_fields)
-
-            if hasattr(existing, "valid_between"):
-                identifying_fields.append("valid_between")
-
-        return factory.create(
-            **dict(get_field_tuple(existing, field) for field in identifying_fields)
-        )
-
-    return make_dupe
+    return do_assert
 
 
 @pytest.fixture

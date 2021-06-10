@@ -16,14 +16,13 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.xfail(reason="CT1 disabled")
-def test_CT1(make_duplicate_record):
+def test_CT1(assert_handles_duplicates):
     """The additional code type must be unique."""
 
-    additional_code_type = make_duplicate_record(factories.AdditionalCodeTypeFactory)
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CT1(additional_code_type.transaction).validate(
-            additional_code_type,
-        )
+    assert_handles_duplicates(
+        factories.AdditionalCodeTypeFactory,
+        business_rules.CT1,
+    )
 
 
 @requires_meursing_tables
@@ -50,17 +49,15 @@ def test_CT4(date_ranges):
 # Additional Code
 
 
-def test_ACN1(make_duplicate_record):
+def test_ACN1(assert_handles_duplicates):
     """The combination of additional code type + additional code + start date
     must be unique."""
 
-    duplicate = make_duplicate_record(
+    assert_handles_duplicates(
         factories.AdditionalCodeFactory,
+        business_rules.ACN1,
         identifying_fields=["code", "type", "valid_between__lower"],
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN1(duplicate.transaction).validate(duplicate)
 
 
 def test_ACN2_type_must_exist(reference_nonexistent_record):

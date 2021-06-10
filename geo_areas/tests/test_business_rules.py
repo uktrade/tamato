@@ -20,17 +20,15 @@ def child():
 
 
 @pytest.mark.xfail(reason="GA1 disabled")
-def test_GA1(make_duplicate_record):
+def test_GA1(assert_handles_duplicates):
     """The combination geographical area id + validity start date must be
     unique."""
 
-    duplicate = make_duplicate_record(
+    assert_handles_duplicates(
         factories.GeographicalAreaFactory,
+        business_rules.GA1,
         identifying_fields=("area_id", "valid_between__lower"),
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA1(duplicate.transaction).validate(duplicate)
 
 
 def test_GA2(date_ranges):

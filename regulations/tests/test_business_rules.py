@@ -10,15 +10,15 @@ from regulations.validators import RoleType
 pytestmark = pytest.mark.django_db
 
 
-def test_ROIMB1(make_duplicate_record):
+def test_ROIMB1(assert_handles_duplicates):
     """The (regulation id + role id) must be unique."""
     # Effectively this means that the regulation ID needs to be unique as we are always
     # going to be using role ID 1.
 
-    duplicate = make_duplicate_record(factories.BaseRegulationFactory)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ROIMB1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.BaseRegulationFactory,
+        business_rules.ROIMB1,
+    )
 
 
 def test_ROIMB3(date_ranges):

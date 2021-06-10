@@ -17,34 +17,38 @@ from quotas.validators import SubQuotaType
 pytestmark = pytest.mark.django_db
 
 
-def test_ON1(make_duplicate_record):
+def test_ON1(assert_handles_duplicates):
     """Quota order number id + start date must be unique."""
 
-    duplicate = make_duplicate_record(
+    assert_handles_duplicates(
         factories.QuotaOrderNumberFactory,
+        business_rules.ON1,
         identifying_fields=business_rules.ON1.identifying_fields,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ON1(duplicate.transaction).validate(duplicate)
 
-
-def test_ON2(date_ranges, approved_transaction, unapproved_transaction):
+@pytest.mark.parametrize(
+    ("existing_range", "new_range", "ranges_overlap"),
+    (
+        ("normal", "overlap_normal", True),
+        ("big", "normal", True),
+        ("normal", "later", False),
+    ),
+)
+def test_ON2(date_ranges, existing_range, new_range, ranges_overlap):
     """There may be no overlap in time of two quota order numbers with the same
     quota order number id."""
 
     existing = factories.QuotaOrderNumberFactory.create(
-        valid_between=date_ranges.normal,
-        transaction=approved_transaction,
+        valid_between=getattr(date_ranges, existing_range),
     )
 
     order_number = factories.QuotaOrderNumberFactory.create(
         order_number=existing.order_number,
-        valid_between=date_ranges.overlap_normal,
-        transaction=unapproved_transaction,
+        valid_between=getattr(date_ranges, new_range),
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, ranges_overlap):
         business_rules.ON2(order_number.transaction).validate(order_number)
 
 
@@ -82,6 +86,13 @@ def test_ON6(date_ranges):
     Only applies to quota order numbers with a validity start date after
     2006-12-31.
     """
+
+    origin = factories.QuotaOrderNumberOriginFactory.create(
+        geographical_area__valid_between=date_ranges.normal,
+        valid_between=date_ranges.normal,
+    )
+
+    business_rules.ON6(origin.transaction).validate(origin)
 
     origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area__valid_between=date_ranges.starts_with_normal,
@@ -280,16 +291,14 @@ def test_CertificateValidityPeriodMustSpanQuotaOrderNumber(date_ranges):
         ).validate(quota_order_number)
 
 
-def test_QD1(make_duplicate_record):
+def test_QD1(assert_handles_duplicates):
     """Quota order number id + start date must be unique."""
 
-    duplicate = make_duplicate_record(
+    assert_handles_duplicates(
         factories.QuotaDefinitionFactory,
+        business_rules.QD1,
         identifying_fields=business_rules.QD1.identifying_fields,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QD1(duplicate.transaction).validate(duplicate)
 
 
 def test_QD2(date_ranges):
@@ -465,13 +474,13 @@ def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
     business_rule(deleted.transaction).validate(deleted)
 
 
-def test_QA1(make_duplicate_record):
+def test_QA1(assert_handles_duplicates):
     """The association between two quota definitions must be unique."""
 
-    duplicate = make_duplicate_record(factories.QuotaAssociationFactory)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QA1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.QuotaAssociationFactory,
+        business_rules.QA1,
+    )
 
 
 def test_QA2(date_ranges):
@@ -558,67 +567,64 @@ def test_QA4(coefficient, expect_error):
             pytest.fail("Did not raise BusinessRuleViolation")
 
 
-def test_QA5():
+@pytest.mark.parametrize(
+    ("existing_volume", "new_volume", "coeff", "type", "error_expected"),
+    (
+        ("1000.0", "1000.0", "1.200", SubQuotaType.EQUIVALENT, False),
+        ("1000.0", "1000.0", "1.000", SubQuotaType.EQUIVALENT, True),
+        ("1000.0", "2000.0", "1.200", SubQuotaType.EQUIVALENT, True),
+        ("2000.0", "1000.0", "1.000", SubQuotaType.NORMAL, False),
+        ("1000.0", "1000.0", "1.000", SubQuotaType.NORMAL, False),
+        ("2000.0", "1000.0", "1.200", SubQuotaType.NORMAL, True),
+    ),
+)
+def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
     """
     Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the
-    same volume as the ones associated with the parent quota.
+    same volume as the other sub-quotas associated with the parent quota.
 
-    Moreover it must be defined with a coefficient not equal to 1
+    Moreover it must be defined with a coefficient not equal to 1.
+
+    A sub-quota defined with the 'normal' type must have a coefficient of 1.
     """
 
-    existing = factories.EquivalentQuotaAssociationFactory.create(
-        sub_quota__volume=Decimal("1000.0"),
+    existing = factories.QuotaAssociationFactory.create(
+        sub_quota__volume=Decimal(existing_volume),
+        sub_quota_relation_type=type,
     )
-    assoc = factories.EquivalentQuotaAssociationFactory.create(
-        main_quota=existing.main_quota,
-        sub_quota__volume=Decimal("2000.0"),
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QA5(assoc.transaction).validate(assoc)
-
-
-def test_QA5_pt2():
-    """
-    Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the
-    same volume as the ones associated with the parent quota.
-
-    Moreover it must be defined with a coefficient not equal to 1
-    """
-    assoc = factories.EquivalentQuotaAssociationFactory.create(
-        coefficient=Decimal("1.00000"),
-    )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QA5(assoc.transaction).validate(assoc)
-
-
-def test_QA5_pt3(unapproved_transaction):
-    """A sub-quota defined with the 'normal' type must have a coefficient of
-    1."""
     assoc = factories.QuotaAssociationFactory.create(
-        coefficient=Decimal("1.20000"),
-        sub_quota_relation_type=SubQuotaType.NORMAL,
-        transaction=unapproved_transaction,
+        main_quota=existing.main_quota,
+        sub_quota__volume=Decimal(new_volume),
+        sub_quota_relation_type=type,
+        coefficient=Decimal(coeff),
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.QA5(assoc.transaction).validate(assoc)
 
 
-def test_QA6(unapproved_transaction):
+@pytest.mark.parametrize(
+    ("existing_relation", "new_relation", "error_expected"),
+    (
+        (SubQuotaType.NORMAL, SubQuotaType.NORMAL, False),
+        (SubQuotaType.EQUIVALENT, SubQuotaType.EQUIVALENT, False),
+        (SubQuotaType.NORMAL, SubQuotaType.EQUIVALENT, True),
+        (SubQuotaType.EQUIVALENT, SubQuotaType.NORMAL, True),
+    ),
+)
+def test_QA6(existing_relation, new_relation, error_expected):
     """Sub-quotas associated with the same main quota must have the same
     relation type."""
 
     existing = factories.QuotaAssociationFactory.create(
-        sub_quota_relation_type=SubQuotaType.NORMAL,
+        sub_quota_relation_type=existing_relation,
     )
     assoc = factories.QuotaAssociationFactory.create(
         main_quota=existing.main_quota,
-        sub_quota_relation_type=SubQuotaType.EQUIVALENT,
-        transaction=unapproved_transaction,
+        sub_quota_relation_type=new_relation,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.QA6(assoc.transaction).validate(assoc)
 
 
