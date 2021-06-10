@@ -28,11 +28,12 @@ pytestmark = pytest.mark.django_db
 # 140 - MEASURE TYPE SERIES
 
 
-def test_MTS1(make_duplicate_record):
+def test_MTS1(assert_handles_duplicates):
     """The measure type series must be unique."""
-    duplicate = make_duplicate_record(factories.MeasureTypeSeriesFactory)
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MTS1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.MeasureTypeSeriesFactory,
+        business_rules.MTS1,
+    )
 
 
 def test_MTS2(delete_record):
@@ -56,11 +57,12 @@ def test_MTS3(date_ranges):
 # 235 - MEASURE TYPE
 
 
-def test_MT1(make_duplicate_record):
+def test_MT1(assert_handles_duplicates):
     """The measure type code must be unique."""
-    duplicate = make_duplicate_record(factories.MeasureTypeFactory)
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MT1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.MeasureTypeFactory,
+        business_rules.MT1,
+    )
 
 
 def test_MT2(date_ranges):
@@ -116,12 +118,12 @@ def test_MT10(date_ranges):
 # 350 - MEASURE CONDITION CODE
 
 
-def test_MC1(make_duplicate_record):
+def test_MC1(assert_handles_duplicates):
     """The code of the measure condition code must be unique."""
-    duplicate = make_duplicate_record(factories.MeasureConditionCodeFactory)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MC1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.MeasureConditionCodeFactory,
+        business_rules.MC1,
+    )
 
 
 def test_MC2(date_ranges):
@@ -159,12 +161,12 @@ def test_MC4(delete_record):
 # 355 - MEASURE ACTION
 
 
-def test_MA1(make_duplicate_record):
+def test_MA1(assert_handles_duplicates):
     """The code of the measure action must be unique."""
-    duplicate = make_duplicate_record(factories.MeasureActionFactory)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MA1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.MeasureActionFactory,
+        business_rules.MA1,
+    )
 
 
 def test_MA2(delete_record):
@@ -199,7 +201,7 @@ def test_MA4(date_ranges):
 # 430 - MEASURE
 
 
-def test_ME1(make_duplicate_record):
+def test_ME1(assert_handles_duplicates):
     """
     The combination of measure type + geographical area + goods nomenclature
     item id.
@@ -207,8 +209,9 @@ def test_ME1(make_duplicate_record):
     + additional code type + additional code + order number + reduction
     indicator + start date must be unique.
     """
-    duplicate = make_duplicate_record(
+    assert_handles_duplicates(
         factories.MeasureFactory,
+        business_rules.ME1,
         identifying_fields=(
             "measure_type",
             "geographical_area",
@@ -219,9 +222,6 @@ def test_ME1(make_duplicate_record):
             "valid_between__lower",
         ),
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME1(duplicate.transaction).validate(duplicate)
 
 
 def test_ME2(reference_nonexistent_record):
@@ -1024,15 +1024,23 @@ def test_ME34(date_ranges):
 
 
 @pytest.mark.parametrize(
-    "applicability_code, component, condition_component",
+    ("applicability_code", "component", "condition_component", "error_expected"),
     [
-        (ApplicabilityCode.MANDATORY, False, False),
-        (ApplicabilityCode.NOT_PERMITTED, True, False),
-        (ApplicabilityCode.NOT_PERMITTED, False, True),
-        (ApplicabilityCode.MANDATORY, True, True),
+        (ApplicabilityCode.MANDATORY, False, False, True),
+        (ApplicabilityCode.MANDATORY, True, False, False),
+        (ApplicabilityCode.MANDATORY, False, True, False),
+        (ApplicabilityCode.MANDATORY, True, True, True),
+        (ApplicabilityCode.NOT_PERMITTED, True, False, True),
+        (ApplicabilityCode.NOT_PERMITTED, False, True, True),
+        (ApplicabilityCode.NOT_PERMITTED, True, True, True),
+        (ApplicabilityCode.NOT_PERMITTED, False, False, False),
+        (ApplicabilityCode.PERMITTED, False, False, False),
+        (ApplicabilityCode.PERMITTED, True, False, False),
+        (ApplicabilityCode.PERMITTED, False, True, False),
+        (ApplicabilityCode.PERMITTED, True, True, True),
     ],
 )
-def test_ME40(applicability_code, component, condition_component):
+def test_ME40(applicability_code, component, condition_component, error_expected):
     """
     If the flag "duty expression" on measure type is "mandatory" then at least
     one measure component or measure condition component record must be
@@ -1064,7 +1072,7 @@ def test_ME40(applicability_code, component, condition_component):
             condition__dependent_measure=measure,
         )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME40(measure.transaction).validate(measure)
 
 
@@ -1640,13 +1648,15 @@ def test_ME70():
     """The same footnote can only be associated once with the same measure."""
 
     existing = factories.FootnoteAssociationMeasureFactory.create()
+    business_rules.ME70(existing.transaction).validate(existing)
+
     assoc = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=existing.footnoted_measure,
         associated_footnote=existing.associated_footnote,
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ME70(assoc.transaction).validate(existing)
+        business_rules.ME70(assoc.transaction).validate(assoc)
 
 
 @pytest.mark.parametrize(

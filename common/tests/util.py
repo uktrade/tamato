@@ -18,6 +18,7 @@ from lxml import etree
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
 from common.util import TaricDateRange
+from common.util import get_field_tuple
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
 UPDATE_IMPORTER_IMPLEMENTED = True
@@ -81,6 +82,37 @@ def check_validator(validate, value, expected_valid):
     else:
         if not expected_valid:
             pytest.fail(f'Expected validation error for value "{value}"')
+
+
+def make_duplicate_record(factory, identifying_fields=None):
+    """Creates two records using the passed factory that are duplicates of each
+    other and returns the record created last."""
+    existing = factory.create()
+
+    # allow overriding identifying_fields
+    if identifying_fields is None:
+        identifying_fields = list(factory._meta.model.identifying_fields)
+
+    return factory.create(
+        **dict(get_field_tuple(existing, field) for field in identifying_fields)
+    )
+
+
+def make_non_duplicate_record(factory, identifying_fields=None):
+    """Creates two records using the passed factory that are not duplicates of
+    each other and returns the record created last."""
+    existing = factory.create()
+    not_duplicate = factory.create()
+
+    if identifying_fields is None:
+        identifying_fields = list(factory._meta.model.identifying_fields)
+
+    assert any(
+        get_field_tuple(existing, f) != get_field_tuple(not_duplicate, f)
+        for f in identifying_fields
+    )
+
+    return not_duplicate
 
 
 _transaction_counter = count(start=1)

@@ -12,13 +12,13 @@ pytestmark = pytest.mark.django_db
 # Footnote Type
 
 
-def test_FOT1(make_duplicate_record):
+def test_FOT1(assert_handles_duplicates):
     """The type of the footnote must be unique."""
 
-    duplicate = make_duplicate_record(factories.FootnoteTypeFactory)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FOT1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.FootnoteTypeFactory,
+        business_rules.FOT1,
+    )
 
 
 def test_FOT2(delete_record):
@@ -41,13 +41,13 @@ def test_FOT3(date_ranges):
 # Footnote
 
 
-def test_FO2(make_duplicate_record):
+def test_FO2(assert_handles_duplicates):
     """The combination footnote type and code must be unique."""
 
-    duplicate = make_duplicate_record(factories.FootnoteFactory)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO2(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.FootnoteFactory,
+        business_rules.FO2,
+    )
 
 
 def test_FO3(date_ranges):

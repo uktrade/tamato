@@ -8,13 +8,13 @@ from common.tests import factories
 pytestmark = pytest.mark.django_db
 
 
-def test_CET1(make_duplicate_record):
+def test_CET1(assert_handles_duplicates):
     """The type of the Certificate must be unique."""
 
-    duplicate = make_duplicate_record(factories.CertificateTypeFactory)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CET1(duplicate.transaction).validate(duplicate)
+    assert_handles_duplicates(
+        factories.CertificateTypeFactory,
+        business_rules.CET1,
+    )
 
 
 def test_CET2(delete_record):
@@ -36,16 +36,14 @@ def test_CET3(date_ranges):
 
 
 @pytest.mark.xfail(reason="CE2 disabled")
-def test_CE2(make_duplicate_record):
+def test_CE2(assert_handles_duplicates):
     """The combination certificate type and code must be unique."""
 
-    duplicate = make_duplicate_record(
+    assert_handles_duplicates(
         factories.CertificateFactory,
+        business_rules.CE2,
         identifying_fields=("sid", "certificate_type"),
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CE2(duplicate.transaction).validate(duplicate)
 
 
 def test_CE3(date_ranges):
