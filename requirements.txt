@@ -6,7 +6,7 @@ celery[redis]==5.0.5
 coverage[toml]==5.4
 crispy-forms-gds==0.2.2
 dj-database-url==0.5.0
-django==3.1.10
+django==3.1.12
 django-dotenv==1.4.2
 drf-extra-fields==3.0.2
 django-cte==1.1.5
