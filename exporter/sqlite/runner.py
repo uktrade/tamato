@@ -12,10 +12,10 @@ class Runner:
 
     def manage(self, *args: str):
         run(
-            [sys.executable, sys.argv[0], *args],
+            [sys.executable, "manage.py", *args],
+            cwd=settings.BASE_DIR,
             capture_output=False,
             env={
-                "SQLITE": "1",
                 "DATABASE_URL": f"sqlite:///{self.db}",
             },
         )

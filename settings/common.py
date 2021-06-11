@@ -205,8 +205,6 @@ DEBUG = is_truthy(os.environ.get("DEBUG", False))
 
 # -- Database
 
-SQLITE = is_truthy(os.environ.get("SQLITE", "0"))
-
 if VCAP_SERVICES.get("postgres"):
     DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
 else:
@@ -215,6 +213,8 @@ else:
 DATABASES = {
     "default": dj_database_url.parse(DB_URL),
 }
+
+SQLITE = DB_URL.startswith("sqlite")
 
 # -- Cache
 
@@ -257,7 +257,6 @@ EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY = int(
 
 
 EXPORTER_MAXIMUM_ENVELOPE_SIZE = 39 * 1024 * 1024
-EXPORTER_MAXIMUM_DATABASE_CHUNK = 32 * 1024
 EXPORTER_DISABLE_NOTIFICATION = is_truthy(
     os.environ.get("EXPORTER_DISABLE_NOTIFICATION", "false"),
 )
@@ -285,6 +284,10 @@ TIME_ZONE = "UTC"
 # HMRC AWS settings (override the defaults)
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
+
+# SQLite AWS settings
+SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME")
+SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
 
 # Default AWS settings.
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
@@ -335,6 +338,10 @@ LOGGING = {
             "level": "WARNING",
         },
         "importer": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+        },
+        "exporter": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
         },

@@ -18,6 +18,7 @@ from exporter.models import Upload
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
 from exporter.serializers import validate_rendered_envelopes
+from exporter.sqlite import tasks
 from exporter.util import UploadTaskResultData
 from exporter.util import dit_file_generator
 from exporter.util import exceptions_as_messages
@@ -217,3 +218,5 @@ def send_upload_notifications(self, upload_status_data):
 upload_workbaskets = (
     upload_workbasket_envelopes.s(upload_status_data={}) | send_upload_notifications.s()
 )
+
+export_and_upload_sqlite = tasks.export_and_upload_sqlite
