@@ -22,6 +22,16 @@ from common.models.mixins.validity import ValidityMixin
 
 
 def column_name_to_expr(column: str, model: Type[Model]) -> Union[Expression, F]:
+    """
+    Returns the expression necessary to correctly pull a column value out of a
+    database table for inclusion in an SQLite schema.
+
+    The column name passed should be the name in the SQLite schema.
+
+    Practically, this means that boolean fields are output as 1 or 0, date range
+    fields are deconstructed into their constituent parts, and all other columns
+    are output as is.
+    """
     try:
         field = model._meta.get_field(column)
         if isinstance(field, BooleanField):
@@ -48,6 +58,12 @@ def column_name_to_expr(column: str, model: Type[Model]) -> Union[Expression, F]
 
 
 def add_column_to_queryset(column: str, queryset: QuerySet) -> Tuple[QuerySet, str]:
+    """
+    Return a queryset that contains the data for the passed SQLite column name.
+
+    This will annotate the queryset for any non-material fields and also output
+    the column name that will need to be asked for.
+    """
     expr = column_name_to_expr(column, queryset.model)
     if isinstance(expr, Expression):
         column = f"{column}_out" if hasattr(queryset.model, column) else column
@@ -57,6 +73,21 @@ def add_column_to_queryset(column: str, queryset: QuerySet) -> Tuple[QuerySet, s
 
 
 class ImportScript:
+    """
+    An SQLite script that can be run from the ``sqlite3`` command-line tool to
+    import data from the attached PostgreSQL database.
+
+    By default, the script will just set up and finalize the database. Tables
+    can be added and the data for them will be queried at runtime from ``psql``.
+
+    The script requires access to a temporary directory to store supporting
+    files, and will fail if this directory is cleaned up before the script is
+    run.
+
+    This class will just `print` its output. Callers who want a string or to
+    redirect the output should make use of `contextlib.redirect_stdout`.
+    """
+
     def __init__(self, directory: Path) -> None:
         self.output_directory = directory
 
@@ -72,15 +103,22 @@ class ImportScript:
 
         queryset = queryset.values(*output_columns)
 
+        # Generate the SQL necessary to generate the queryset for psql to run later.
         compiler = queryset.query.get_compiler(using=queryset.db)
         sql: bytes = compiler.connection.cursor().mogrify(*compiler.as_sql())
 
+        # Put the SQL that Postgres should run into a temporary file. This is
+        # necessary because SQLite cannot handle escaping of quotes, so
+        # including the SQL directly in the import script is not possible.
         sql_filename = self.output_directory.joinpath(model._meta.db_table + ".sql")
         with open(sql_filename, mode="wb") as sql_file:
             sql_file.write(b"COPY (")
             sql_file.write(sql)
             sql_file.write(b") TO STDOUT (FORMAT csv);")
 
+        # Run an SQLite import statement, which will call the passed command and
+        # load a database row for every line in the CSV. The columns need to be
+        # supplied in the order they are defined in the SQLite schema.
         print(
             ".import '|psql -f \"{0}\"' {1}".format(
                 str(sql_filename.absolute()),
