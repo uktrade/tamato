@@ -29,6 +29,7 @@ class CertificateType(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.CET1,
         business_rules.CET2,
+        business_rules.UpdateValidity,
     )
 
     def in_use(self):
@@ -72,6 +73,7 @@ class Certificate(TrackedModel, ValidityMixin):
         business_rules.CE5,
         business_rules.CE6,
         business_rules.CE7,
+        business_rules.UpdateValidity,
     )
 
     @property
@@ -109,7 +111,7 @@ class CertificateDescription(DescriptionMixin, TrackedModel):
     )
 
     indirect_business_rules = (business_rules.CE6,)
-    business_rules = ()
+    business_rules = (business_rules.UpdateValidity,)
 
     def save(self, *args, **kwargs):
         if getattr(self, "sid") is None:

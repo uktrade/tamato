@@ -411,3 +411,37 @@ class FootnoteApplicability(BusinessRule):
             not in applicable_model.footnote_application_codes
         ):
             raise self.violation(model)
+
+
+class UpdateValidity(BusinessRule):
+    """
+    The update type of this object must be valid.
+
+    The first update must be of type Create. Subsequent updates must not be of
+    type Create. After an update of type Delete, there must be no further
+    updates. Only one version of the object may be updated in a single
+    transaction.
+    """
+
+    def validate(self, model):
+        existing_objects = model.__class__.objects.filter(
+            version_group=model.version_group,
+        ).exclude(sid=model.sid)
+
+        if existing_objects.exists():
+            if model.update_type == UpdateType.CREATE:
+                raise self.violation(model)
+
+            if any(
+                version.update_type == UpdateType.DELETE for version in existing_objects
+            ):
+                raise self.violation(model)
+
+            if any(
+                version.transaction == self.transaction for version in existing_objects
+            ):
+                raise self.violation(model)
+
+        else:
+            if model.update_type != UpdateType.CREATE:
+                raise self.violation(model)

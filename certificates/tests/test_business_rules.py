@@ -4,6 +4,7 @@ from django.db import DataError
 from certificates import business_rules
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -144,3 +145,59 @@ def test_CE7(date_ranges):
             valid_between=date_ranges.overlap_normal,
         )
         business_rules.CE7(certificate.transaction).validate(certificate)
+
+
+def test_CertificateUpdateValidity_first_update_must_be_Create():
+    """The first update to a certificate must be of type Create."""
+    certificate = factories.CertificateFactory.create(update_type=UpdateType.DELETE)
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.UpdateValidity(certificate.transaction).validate(certificate)
+
+
+def test_CertificateUpdateValidity_later_updates_must_not_be_Create():
+    """Updates to a Certificate after the first update must not be of type
+    Create."""
+    first_certificate = factories.CertificateFactory.create()
+    second_certificate = factories.CertificateFactory.create(
+        update_type=UpdateType.CREATE,
+        version_group=first_certificate.version_group,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.UpdateValidity(second_certificate.transaction).validate(
+            second_certificate,
+        )
+
+
+def test_CertificateUpdateValidity_must_not_update_after_Delete():
+    """There must not be updates to a Certificate version group after an update
+    of type Delete."""
+    first_certificate = factories.CertificateFactory.create(
+        update_type=UpdateType.DELETE,
+    )
+    second_certificate = factories.CertificateFactory.create(
+        update_type=UpdateType.UPDATE,
+        version_group=first_certificate.version_group,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.UpdateValidity(second_certificate.transaction).validate(
+            second_certificate,
+        )
+
+
+def test_CertificateUpdateValidity_only_one_version_per_transaction():
+    """The transaction must contain no more than one update to each Certificate
+    version group."""
+    first_certificate = factories.CertificateFactory.create()
+    second_certificate = factories.CertificateFactory.create(
+        update_type=UpdateType.UPDATE,
+        version_group=first_certificate.version_group,
+        transaction=first_certificate.transaction,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.UpdateValidity(second_certificate.transaction).validate(
+            second_certificate,
+        )
