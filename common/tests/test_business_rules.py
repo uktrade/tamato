@@ -148,7 +148,10 @@ def test_UpdateValidity_first_update_must_be_Create():
     """The first update to an object must be of type Create."""
     version = factories.TestModel1Factory.create(update_type=UpdateType.DELETE)
 
-    with pytest.raises(BusinessRuleViolation):
+    with pytest.raises(
+        BusinessRuleViolation,
+        match="The first update of an object must be of type Create.",
+    ):
         UpdateValidity(version.transaction).validate(version)
 
 
@@ -161,10 +164,11 @@ def test_UpdateValidity_later_updates_must_not_be_Create():
         version_group=first_version.version_group,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        UpdateValidity(second_version.transaction).validate(
-            second_version,
-        )
+    with pytest.raises(
+        BusinessRuleViolation,
+        match="Only the first object update can be of type Create.",
+    ):
+        UpdateValidity(second_version.transaction).validate(second_version)
 
 
 def test_UpdateValidity_must_not_update_after_Delete():
@@ -178,7 +182,10 @@ def test_UpdateValidity_must_not_update_after_Delete():
         version_group=first_version.version_group,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with pytest.raises(
+        BusinessRuleViolation,
+        match="An object must not be updated after an update version of Delete.",
+    ):
         UpdateValidity(second_version.transaction).validate(
             second_version,
         )
@@ -194,7 +201,8 @@ def test_UpdateValidity_only_one_version_per_transaction():
         transaction=first_version.transaction,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        UpdateValidity(second_version.transaction).validate(
-            second_version,
-        )
+    with pytest.raises(
+        BusinessRuleViolation,
+        match="Only one version of an object can be updated in a single transaction.",
+    ):
+        UpdateValidity(second_version.transaction).validate(second_version)

@@ -654,6 +654,168 @@ def in_use_check_respects_deletes(valid_user):
 
 
 @pytest.fixture
+def check_first_update_validation():
+    """
+    Provides a test function for creating records and checking the application
+    of update type validity business rule:
+
+    - The first update must be of type Create.
+    """
+
+    def check(factory, description_factory=None):
+        transaction = factories.TransactionFactory.create()
+        instance = factory.create(
+            transaction=transaction,
+            update_type=UpdateType.DELETE,
+        )
+
+        if description_factory:
+            instance.descriptions.set([description_factory.create()])
+
+        with pytest.raises(
+            ValidationError,
+            match="The first update of an object must be of type Create.",
+        ):
+            transaction.clean()
+
+        return True
+
+    return check
+
+
+@pytest.fixture
+def check_later_update_validation():
+    """
+    Provides a test function for creating records and checking the application
+    of update type validity business rule:
+
+    - Subsequent updates must not be of type Create.
+    """
+
+    def check(factory, description_factory=None):
+        transaction = factories.TransactionFactory.create()
+        first_instance = factory.create()
+        second_instance = factory.create(
+            transaction=transaction,
+            update_type=UpdateType.CREATE,
+            version_group=first_instance.version_group,
+        )
+
+        if description_factory:
+            second_instance.descriptions.set([description_factory.create()])
+
+        with pytest.raises(
+            ValidationError,
+            match="Only the first object update can be of type Create.",
+        ):
+            transaction.clean()
+
+        return True
+
+    return check
+
+
+@pytest.fixture
+def check_after_delete_update_validation():
+    """
+    Provides a test function for creating records and checking the application
+    of update type validity business rule:
+
+    - After an update of type Delete, there must be no further updates.
+    """
+
+    def check(factory, description_factory=None):
+        transaction = factories.TransactionFactory.create()
+        first_instance = factory.create(update_type=UpdateType.DELETE)
+        second_instance = factory.create(
+            transaction=transaction,
+            update_type=UpdateType.UPDATE,
+            version_group=first_instance.version_group,
+        )
+
+        if description_factory:
+            second_instance.descriptions.set([description_factory.create()])
+
+        with pytest.raises(
+            ValidationError,
+            match="An object must not be updated after an update version of Delete.",
+        ):
+            transaction.clean()
+
+        return True
+
+    return check
+
+
+@pytest.fixture
+def check_only_one_version_updated_in_transaction():
+    """
+    Provides a test function for creating records and checking the application
+    of update type validity business rule:
+
+    - Only one version may be updated in a single transaction.
+    """
+
+    def check(factory, description_factory=None):
+        transaction = factories.TransactionFactory.create()
+        first_instance = factory.create(
+            transaction=transaction,
+            update_type=UpdateType.UPDATE,
+        )
+        second_instance = factory.create(
+            transaction=transaction,
+            update_type=UpdateType.UPDATE,
+            version_group=first_instance.version_group,
+        )
+
+        if description_factory:
+            first_instance.descriptions.set([description_factory.create()])
+            second_instance.descriptions.set([description_factory.create()])
+
+        with pytest.raises(
+            ValidationError,
+            match="Only one version of an object can be updated in a single transaction.",
+        ):
+            transaction.clean()
+
+        return True
+
+    return check
+
+
+@pytest.fixture
+def check_update_validation(
+    check_first_update_validation,
+    check_later_update_validation,
+    check_after_delete_update_validation,
+    check_only_one_version_updated_in_transaction,
+):
+    """Provides a test function for creating records and checking the
+    application of update type validity business rules."""
+
+    def check(factory, description_factory=None):
+        assert check_first_update_validation(
+            factory,
+            description_factory=description_factory,
+        )
+        assert check_later_update_validation(
+            factory,
+            description_factory=description_factory,
+        )
+        assert check_after_delete_update_validation(
+            factory,
+            description_factory=description_factory,
+        )
+        assert check_only_one_version_updated_in_transaction(
+            factory,
+            description_factory=description_factory,
+        )
+        return True
+
+    return check
+
+
+@pytest.fixture
 def response():
     """Hacky fixture to enable passing the client response between BDD steps."""
     return {}

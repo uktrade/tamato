@@ -430,18 +430,30 @@ class UpdateValidity(BusinessRule):
 
         if existing_objects.exists():
             if model.update_type == UpdateType.CREATE:
-                raise self.violation(model)
+                raise self.violation(
+                    model,
+                    "Only the first object update can be of type Create.",
+                )
 
             if any(
                 version.update_type == UpdateType.DELETE for version in existing_objects
             ):
-                raise self.violation(model)
+                raise self.violation(
+                    model,
+                    "An object must not be updated after an update version of Delete.",
+                )
 
             if any(
                 version.transaction == self.transaction for version in existing_objects
             ):
-                raise self.violation(model)
+                raise self.violation(
+                    model,
+                    "Only one version of an object can be updated in a single transaction.",
+                )
 
         else:
             if model.update_type != UpdateType.CREATE:
-                raise self.violation(model)
+                raise self.violation(
+                    model,
+                    "The first update of an object must be of type Create.",
+                )

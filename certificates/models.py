@@ -3,6 +3,7 @@ from django.db.models import Max
 
 from certificates import business_rules
 from certificates import validators
+from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
@@ -29,7 +30,7 @@ class CertificateType(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.CET1,
         business_rules.CET2,
-        business_rules.UpdateValidity,
+        UpdateValidity,
     )
 
     def in_use(self):
@@ -73,7 +74,7 @@ class Certificate(TrackedModel, ValidityMixin):
         business_rules.CE5,
         business_rules.CE6,
         business_rules.CE7,
-        business_rules.UpdateValidity,
+        UpdateValidity,
     )
 
     @property
@@ -111,7 +112,7 @@ class CertificateDescription(DescriptionMixin, TrackedModel):
     )
 
     indirect_business_rules = (business_rules.CE6,)
-    business_rules = (business_rules.UpdateValidity,)
+    business_rules = (UpdateValidity,)
 
     def save(self, *args, **kwargs):
         if getattr(self, "sid") is None:
