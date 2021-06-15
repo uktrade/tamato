@@ -15,6 +15,7 @@ from common.tests.models import TestModelDescription1
 from common.tests.util import Dates
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from geo_areas.validators import AreaCode
 from importer.models import ImporterChunkStatus
 from measures.validators import DutyExpressionId
 from measures.validators import ImportExportCode
@@ -221,12 +222,30 @@ class AmendmentFactory(TrackedModelMixin):
     enacting_regulation = factory.SubFactory(RegulationFactory)
 
 
+class ExtensionFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Extension"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+
+
 class SuspensionFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Suspension"
 
     target_regulation = factory.SubFactory(RegulationFactory)
     enacting_regulation = factory.SubFactory(RegulationFactory)
+
+
+class TerminationFactory(TrackedModelMixin):
+    class Meta:
+        model = "regulations.Termination"
+
+    target_regulation = factory.SubFactory(RegulationFactory)
+    enacting_regulation = factory.SubFactory(RegulationFactory)
+
+    effective_date = Dates().datetime_now
 
 
 class ReplacementFactory(TrackedModelMixin):
@@ -571,6 +590,7 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     order_number = string_sequence(6, characters=string.digits)
     mechanism = 0
     category = 1
+    valid_between = date_ranges("normal")
 
     origin = factory.RelatedFactory(
         "common.tests.factories.QuotaOrderNumberOriginFactory",
@@ -605,8 +625,14 @@ class QuotaOrderNumberOriginExclusionFactory(TrackedModelMixin):
     class Meta:
         model = "quotas.QuotaOrderNumberOriginExclusion"
 
-    origin = factory.SubFactory(QuotaOrderNumberOriginFactory)
-    excluded_geographical_area = factory.SubFactory(GeographicalAreaFactory)
+    excluded_geographical_area = factory.SubFactory(
+        GeographicalAreaFactory,
+        area_code=AreaCode.GROUP,
+    )
+    origin = factory.SubFactory(
+        QuotaOrderNumberOriginFactory,
+        geographical_area=factory.SelfAttribute("..excluded_geographical_area"),
+    )
 
 
 class QuotaDefinitionFactory(TrackedModelMixin, ValidityFactoryMixin):

@@ -3,6 +3,7 @@ from typing import Type
 from django.db import models
 from django.db.models import Max
 
+from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
@@ -45,6 +46,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.FOT1,
         business_rules.FOT2,
+        UpdateValidity,
     )
 
     def __str__(self):
@@ -91,6 +93,7 @@ class Footnote(TrackedModel, ValidityMixin):
         business_rules.FO12,
         business_rules.FO15,
         business_rules.FO17,
+        UpdateValidity,
     )
 
     def __str__(self):

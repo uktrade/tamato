@@ -14,10 +14,20 @@ def test_additional_code_in_use(in_use_check_respects_deletes):
     )
 
 
-def test_additional_code_update_types(check_update_validation):
-    assert check_update_validation(factories.AdditionalCodeTypeFactory)
+@pytest.mark.parametrize(
+    ["factory", "description_factory"],
+    [
+        (factories.AdditionalCodeTypeFactory, None),
+        (factories.AdditionalCodeFactory, factories.AdditionalCodeDescriptionFactory),
+        (factories.AdditionalCodeDescriptionFactory, None),
+    ],
+)
+def test_additional_code_update_types(
+    factory,
+    description_factory,
+    check_update_validation,
+):
     assert check_update_validation(
-        factories.AdditionalCodeFactory,
-        description_factory=factories.AdditionalCodeDescriptionFactory,
+        factory,
+        description_factory=description_factory,
     )
-    assert check_update_validation(factories.AdditionalCodeDescriptionFactory)

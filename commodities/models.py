@@ -11,6 +11,7 @@ from treebeard.mp_tree import MP_Node
 from commodities import business_rules
 from commodities import validators
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
+from common.business_rules import UpdateValidity
 from common.models import NumericSID
 from common.models import TrackedModel
 from common.models.mixins.description import DescriptionMixin
@@ -85,6 +86,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
         business_rules.NIG31,
         business_rules.NIG34,
         business_rules.NIG35,
+        UpdateValidity,
     )
 
     class Meta:
@@ -122,7 +124,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     )
 
     indirect_business_rules = (business_rules.NIG11,)
-    business_rules = (business_rules.NIG2,)
+    business_rules = (business_rules.NIG2, UpdateValidity)
 
     validity_over = "indented_goods_nomenclature"
 
@@ -308,6 +310,8 @@ class GoodsNomenclatureDescription(TrackedModel, DescriptionMixin):
 
     indirect_business_rules = (business_rules.NIG12,)
 
+    business_rules = (UpdateValidity,)
+
     class Meta:
         ordering = ("validity_start",)
 
@@ -341,7 +345,7 @@ class GoodsNomenclatureOrigin(TrackedModel):
     )
 
     indirect_business_rules = (business_rules.NIG5,)
-    business_rules = (business_rules.NIG7,)
+    business_rules = (business_rules.NIG7, UpdateValidity)
 
     def __str__(self):
         return (
@@ -377,7 +381,7 @@ class GoodsNomenclatureSuccessor(TrackedModel):
         "absorbed_into_goods_nomenclature__sid",
     )
 
-    business_rules = (business_rules.NIG10,)
+    business_rules = (business_rules.NIG10, UpdateValidity)
 
     def __str__(self):
         return (
@@ -407,4 +411,5 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
         business_rules.NIG22,
         business_rules.NIG23,
         business_rules.NIG24,
+        UpdateValidity,
     )
