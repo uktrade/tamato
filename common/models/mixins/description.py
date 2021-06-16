@@ -48,7 +48,7 @@ class DescriptionMixin(ValidityStartMixin):
         return self.identifying_fields_to_string(
             identifying_fields=(
                 self.described_object_field.name,
-                "valid_between",
+                "validity_start",
             ),
         )
 

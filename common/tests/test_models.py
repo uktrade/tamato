@@ -368,3 +368,21 @@ def test_get_descriptions_with_update(sample_model, valid_user):
 
     assert new_description in description_queryset
     assert description not in description_queryset
+
+
+@pytest.mark.parametrize(
+    "factory",
+    factories.TrackedModelMixin.__subclasses__(),
+    ids=[
+        factory._meta.model.__name__
+        for factory in factories.TrackedModelMixin.__subclasses__()
+    ],
+)
+def test_trackedmodel_str(factory):
+    """Verify no __str__ methods of TrackedModel classes crash or return non-
+    strings."""
+    instance = factory.create()
+    result = instance.__str__()
+
+    assert isinstance(result, str)
+    assert len(result.strip())
