@@ -11,7 +11,6 @@ from common.business_rules import BusinessRuleViolation
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
-from common.business_rules import UpdateValidity
 from common.tests import factories
 from common.validators import UpdateType
 
@@ -142,67 +141,3 @@ def test_prevent_delete_if_in_use(approved_transaction):
             BusinessRuleChecker([model], model.transaction).validate()
 
     assert model.in_use.called
-
-
-def test_UpdateValidity_first_update_must_be_Create():
-    """The first update to an object must be of type Create."""
-    version = factories.TestModel1Factory.create(update_type=UpdateType.DELETE)
-
-    with pytest.raises(
-        BusinessRuleViolation,
-        match="The first update of an object must be of type Create.",
-    ):
-        UpdateValidity(version.transaction).validate(version)
-
-
-def test_UpdateValidity_later_updates_must_not_be_Create():
-    """Updates to an object after the first update must not be of type
-    Create."""
-    first_version = factories.TestModel1Factory.create()
-    second_version = factories.TestModel1Factory.create(
-        update_type=UpdateType.CREATE,
-        version_group=first_version.version_group,
-    )
-
-    with pytest.raises(
-        BusinessRuleViolation,
-        match="Only the first object update can be of type Create.",
-    ):
-        UpdateValidity(second_version.transaction).validate(second_version)
-
-
-def test_UpdateValidity_must_not_update_after_Delete():
-    """There must not be updates to an object version group after an update of
-    type Delete."""
-    first_version = factories.TestModel1Factory.create(
-        update_type=UpdateType.DELETE,
-    )
-    second_version = factories.TestModel1Factory.create(
-        update_type=UpdateType.UPDATE,
-        version_group=first_version.version_group,
-    )
-
-    with pytest.raises(
-        BusinessRuleViolation,
-        match="An object must not be updated after an update version of Delete.",
-    ):
-        UpdateValidity(second_version.transaction).validate(
-            second_version,
-        )
-
-
-def test_UpdateValidity_only_one_version_per_transaction():
-    """The transaction must contain no more than one update to each Certificate
-    version group."""
-    first_version = factories.TestModel1Factory.create()
-    second_version = factories.TestModel1Factory.create(
-        update_type=UpdateType.UPDATE,
-        version_group=first_version.version_group,
-        transaction=first_version.transaction,
-    )
-
-    with pytest.raises(
-        BusinessRuleViolation,
-        match="Only one version of an object can be updated in a single transaction.",
-    ):
-        UpdateValidity(second_version.transaction).validate(second_version)

@@ -28,6 +28,7 @@ from rest_framework.test import APIClient
 
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
+from common.business_rules import UpdateValidity
 from common.models import TrackedModel
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
@@ -662,21 +663,22 @@ def check_first_update_validation():
     - The first update must be of type Create.
     """
 
-    def check(factory, description_factory=None):
-        transaction = factories.TransactionFactory.create()
-        instance = factory.create(
-            transaction=transaction,
+    def check(factory):
+        invalid_instance = factory.create(
             update_type=UpdateType.DELETE,
         )
-
-        if description_factory:
-            instance.descriptions.set([description_factory.create()])
+        valid_instance = factory.create(update_type=UpdateType.CREATE)
 
         with pytest.raises(
-            ValidationError,
+            BusinessRuleViolation,
             match="The first update of an object must be of type Create.",
         ):
-            transaction.clean()
+            UpdateValidity(invalid_instance.transaction).validate(invalid_instance)
+
+        try:
+            UpdateValidity(valid_instance.transaction).validate(valid_instance)
+        except BusinessRuleViolation:
+            pytest.fail()
 
         return True
 
@@ -692,23 +694,27 @@ def check_later_update_validation():
     - Subsequent updates must not be of type Create.
     """
 
-    def check(factory, description_factory=None):
-        transaction = factories.TransactionFactory.create()
+    def check(factory):
         first_instance = factory.create()
-        second_instance = factory.create(
-            transaction=transaction,
+        invalid_instance = factory.create(
             update_type=UpdateType.CREATE,
             version_group=first_instance.version_group,
         )
-
-        if description_factory:
-            second_instance.descriptions.set([description_factory.create()])
+        valid_instance = factory.create(
+            update_type=UpdateType.UPDATE,
+            version_group=first_instance.version_group,
+        )
 
         with pytest.raises(
-            ValidationError,
+            BusinessRuleViolation,
             match="Only the first object update can be of type Create.",
         ):
-            transaction.clean()
+            UpdateValidity(invalid_instance.transaction).validate(invalid_instance)
+
+        try:
+            UpdateValidity(valid_instance.transaction).validate(valid_instance)
+        except BusinessRuleViolation:
+            pytest.fail()
 
         return True
 
@@ -724,7 +730,7 @@ def check_after_delete_update_validation():
     - After an update of type Delete, there must be no further updates.
     """
 
-    def check(factory, description_factory=None):
+    def check(factory):
         transaction = factories.TransactionFactory.create()
         first_instance = factory.create(update_type=UpdateType.DELETE)
         second_instance = factory.create(
@@ -733,14 +739,13 @@ def check_after_delete_update_validation():
             version_group=first_instance.version_group,
         )
 
-        if description_factory:
-            second_instance.descriptions.set([description_factory.create()])
-
         with pytest.raises(
-            ValidationError,
+            BusinessRuleViolation,
             match="An object must not be updated after an update version of Delete.",
         ):
-            transaction.clean()
+            UpdateValidity(second_instance.transaction).validate(
+                second_instance,
+            )
 
         return True
 
@@ -756,7 +761,7 @@ def check_only_one_version_updated_in_transaction():
     - Only one version may be updated in a single transaction.
     """
 
-    def check(factory, description_factory=None):
+    def check(factory):
         transaction = factories.TransactionFactory.create()
         first_instance = factory.create(
             transaction=transaction,
@@ -768,15 +773,11 @@ def check_only_one_version_updated_in_transaction():
             version_group=first_instance.version_group,
         )
 
-        if description_factory:
-            first_instance.descriptions.set([description_factory.create()])
-            second_instance.descriptions.set([description_factory.create()])
-
         with pytest.raises(
-            ValidationError,
+            BusinessRuleViolation,
             match="Only one version of an object can be updated in a single transaction.",
         ):
-            transaction.clean()
+            UpdateValidity(second_instance.transaction).validate(second_instance)
 
         return True
 
@@ -793,22 +794,18 @@ def check_update_validation(
     """Provides a test function for creating records and checking the
     application of update type validity business rules."""
 
-    def check(factory, description_factory=None):
+    def check(factory):
         assert check_first_update_validation(
             factory,
-            description_factory=description_factory,
         )
         assert check_later_update_validation(
             factory,
-            description_factory=description_factory,
         )
         assert check_after_delete_update_validation(
             factory,
-            description_factory=description_factory,
         )
         assert check_only_one_version_updated_in_transaction(
             factory,
-            description_factory=description_factory,
         )
         return True
 

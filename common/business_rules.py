@@ -424,12 +424,9 @@ class UpdateValidity(BusinessRule):
     """
 
     def validate(self, model):
-        identifying_fields = model.identifying_fields
-        query = dict(get_field_tuple(model, field) for field in identifying_fields)
-
         existing_objects = model.__class__.objects.filter(
             version_group=model.version_group,
-        ).exclude(**query)
+        ).exclude(id=model.id)
 
         if existing_objects.exists():
             if model.update_type == UpdateType.CREATE:

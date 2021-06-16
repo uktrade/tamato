@@ -1,6 +1,9 @@
+from decimal import Decimal
+
 import pytest
 
 from common.tests import factories
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
