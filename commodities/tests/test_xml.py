@@ -7,7 +7,7 @@ from common.xml.namespaces import nsmap
 pytestmark = pytest.mark.django_db
 
 
-@validate_taric_xml(factories.GoodsNomenclatureFactory)
+@validate_taric_xml(factories.SimpleGoodsNomenclatureFactory)
 def test_goods_nomenclature_xml(xml):
     element = xml.find(".//oub:goods.nomenclature", nsmap)
     assert element is not None

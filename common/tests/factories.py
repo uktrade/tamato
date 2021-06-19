@@ -103,7 +103,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "common.Transaction"
 
-    order = 1
+    order = factory.Sequence(lambda x: x + 1)
     import_transaction_id = factory.Sequence(lambda x: x + 1)
     workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
     composite_key = factory.Sequence(str)
@@ -116,7 +116,7 @@ class UnapprovedTransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "common.Transaction"
 
-    order = 1
+    order = factory.Sequence(lambda x: x + 1)
     import_transaction_id = factory.Sequence(lambda x: x + 1)
     workbasket = factory.SubFactory(WorkBasketFactory)
 
@@ -446,12 +446,9 @@ class SimpleGoodsNomenclatureIndentFactory(
     indent = 0
 
 
-class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityStartFactoryMixin):
+class GoodsNomenclatureIndentFactory(SimpleGoodsNomenclatureIndentFactory):
     class Meta:
         model = "commodities.GoodsNomenclatureIndent"
-
-    sid = numeric_sid()
-    indented_goods_nomenclature = factory.SubFactory(SimpleGoodsNomenclatureFactory)
 
     node = factory.RelatedFactory(
         "common.tests.factories.GoodsNomenclatureIndentNodeFactory",
@@ -461,8 +458,6 @@ class GoodsNomenclatureIndentFactory(TrackedModelMixin, ValidityStartFactoryMixi
         ),
         creating_transaction=factory.SelfAttribute("..transaction"),
     )
-
-    indent = 0
 
 
 indent_path_generator = string_generator(4)

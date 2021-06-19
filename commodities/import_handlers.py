@@ -193,6 +193,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                 pk=data.pop("indented_goods_nomenclature_id"),
             )
         item_id = data["indented_goods_nomenclature"].item_id
+        suffix = data["indented_goods_nomenclature"].suffix
 
         indent = super().save(data)
         indent = models.GoodsNomenclatureIndent.objects.with_end_date().get(
@@ -255,7 +256,11 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             else:
                 next_parent = (
                     models.GoodsNomenclatureIndentNode.objects.filter(
-                        indent__indented_goods_nomenclature__item_id__lte=item_id,
+                        Q(indent__indented_goods_nomenclature__item_id__lt=item_id)
+                        | Q(
+                            indent__indented_goods_nomenclature__item_id=item_id,
+                            indent__indented_goods_nomenclature__suffix__lt=suffix,
+                        ),
                         indent__indented_goods_nomenclature__item_id__startswith=chapter_heading,
                         indent__indented_goods_nomenclature__valid_between__contains=start_date,
                         indent__validity_start__lte=start_date,

@@ -341,6 +341,7 @@ def run_xml_import(valid_user, settings):
         settings.SKIP_WORKBASKET_VALIDATION = True
 
         model = factory()
+        model_class = model.__class__
         assert isinstance(
             model,
             TrackedModel,
@@ -357,7 +358,15 @@ def run_xml_import(valid_user, settings):
         )
 
         db_kwargs = model.get_identifying_fields()
-        imported = model.__class__.objects.get_latest_version(**db_kwargs)
+        try:
+            imported = model_class.objects.get_latest_version(**db_kwargs)
+        except model_class.DoesNotExist:
+            if model.update_type == UpdateType.DELETE:
+                imported = (
+                    model_class.objects.get_versions(**db_kwargs).latest_deleted().get()
+                )
+            else:
+                raise
 
         checked_fields = (
             set(field.name for field in imported._meta.fields)
@@ -386,11 +395,7 @@ def update_type(request):
 
 
 @pytest.fixture
-def imported_fields_match(
-    run_xml_import,
-    date_ranges,
-    update_type,
-):
+def imported_fields_match(run_xml_import, update_type):
     """
     Returns a function that serializes a model to TARIC XML, inputs this to the
     importer, then fetches the newly created model from the database and
@@ -431,22 +436,13 @@ def imported_fields_match(
             previous_version = factory.create(**kwargs)
             kwargs.update(previous_version.get_identifying_fields())
 
-        try:
-            updated_model = run_xml_import(
-                lambda: factory.build(
-                    update_type=update_type,
-                    **kwargs,
-                ),
-                serializer,
-            )
-        except Model.DoesNotExist:
-            if update_type == UpdateType.DELETE:
-                updated_model = Model.objects.get(
-                    update_type=UpdateType.DELETE,
-                    **previous_version.get_identifying_fields(),
-                )
-            else:
-                raise
+        updated_model = run_xml_import(
+            lambda: factory.build(
+                update_type=update_type,
+                **kwargs,
+            ),
+            serializer,
+        )
 
         version_group = (previous_version or updated_model).version_group
         version_group.refresh_from_db()
