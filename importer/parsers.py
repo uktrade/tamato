@@ -17,6 +17,7 @@ from django.db.models.expressions import When
 from django.db.models.functions.text import Lower
 from django.db.models.functions.text import Upper
 
+from common.fields import ShortDescription
 from common.validators import UpdateType
 from common.xml.sql import Identity
 from common.xml.sql import XMLElement
@@ -258,7 +259,7 @@ class ValueElementMixin:
 
     native_type: type
     """The Python type that most closely matches the type of the XML element."""
-    
+
     null_condition: str = "isnull"
     format_expression: Callable[[Expression], Expression] = Identity
 
@@ -385,7 +386,7 @@ class RangeLowerElement(TextElement):
 
 class RangeUpperElement(TextElement):
     """Represents an element that is the upper part of a range."""
-    
+
     null_condition = "upper_inf"
     format_expression = Upper
 
@@ -427,7 +428,7 @@ class CompoundElement(ValueElementMixin, ElementParser):
         self.data = self.native_type([*parts, *([None] * missing)])
 
     def serializer(self, field_name: str, **kwargs) -> Expression:
-        all = (field_name, *self.children)
+        all = (field_name, *self.extra_fields)
         fmt = getattr(self, "format_expression")
         return XMLElement(
             self.tag.for_xml,
@@ -437,7 +438,7 @@ class CompoundElement(ValueElementMixin, ElementParser):
                 When(
                     **{
                         k: v
-                        for child in self.children
+                        for child in self.extra_fields
                         for k, v in self.field_not_present(child).items()
                     },
                     then=fmt(field_name),
@@ -446,7 +447,7 @@ class CompoundElement(ValueElementMixin, ElementParser):
                 # separated by the separator, even if any single one of them is null.
                 default=Func(
                     Value(self.separator),
-                    (
+                    *(
                         Case(
                             When(
                                 **self.field_present(field),
@@ -457,6 +458,7 @@ class CompoundElement(ValueElementMixin, ElementParser):
                         for field in all
                     ),
                     function="CONCAT_WS",
+                    output_field=ShortDescription(),
                 ),
             ),
         )
