@@ -1,8 +1,0 @@
-{% from "macros/record.xml" import standard_record %}
-{% import "taric/quota_event_types.jinja" as event_macros %}
-
-{% call standard_record(message_counter(), sequence(), transaction_id, record) %}
-    {% with event_type = "event_type_" ~ record.subrecord_code -%}
-        {{ event_macros[event_type](record) }}
-    {%- endwith %}
-{% endcall %}

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from geo_areas.models import GeographicalArea
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
@@ -10,11 +11,13 @@ from quotas import models
 from quotas import serializers
 
 
+@RecordParser.use_for_xml_serialization
 class QuotaOrderNumberHandler(BaseHandler):
     serializer_class = serializers.QuotaOrderNumberSerializer
     xml_model = parsers.QuotaOrderNumberParser
 
 
+@RecordParser.use_for_xml_serialization
 class QuotaOrderNumberOriginHandler(BaseHandler):
     links = (
         {
@@ -30,6 +33,7 @@ class QuotaOrderNumberOriginHandler(BaseHandler):
     xml_model = parsers.QuotaOrderNumberOriginParser
 
 
+@RecordParser.use_for_xml_serialization
 class QuotaOrderNumberOriginExclusionHandler(BaseHandler):
     identifying_fields = ("origin__sid", "excluded_geographical_area__sid")
     links = (
@@ -47,6 +51,7 @@ class QuotaOrderNumberOriginExclusionHandler(BaseHandler):
     xml_model = parsers.QuotaOrderNumberOriginExclusionParser
 
 
+@RecordParser.use_for_xml_serialization
 class QuotaDefinitionHandler(BaseHandler):
     links = (
         {"model": models.QuotaOrderNumber, "name": "order_number"},
@@ -62,6 +67,7 @@ class QuotaDefinitionHandler(BaseHandler):
     xml_model = parsers.QuotaDefinitionParser
 
 
+@RecordParser.use_for_xml_serialization
 class QuotaAssociationHandler(BaseHandler):
     identifying_fields = "main_quota__sid", "sub_quota__sid"
     links = (
@@ -75,6 +81,7 @@ class QuotaAssociationHandler(BaseHandler):
     xml_model = parsers.QuotaAssociationParser
 
 
+@RecordParser.use_for_xml_serialization
 class QuotaSuspensionHandler(BaseHandler):
     links = (
         {
@@ -86,6 +93,7 @@ class QuotaSuspensionHandler(BaseHandler):
     xml_model = parsers.QuotaSuspensionParser
 
 
+@RecordParser.use_for_xml_serialization
 class QuotaBlockingHandler(BaseHandler):
     links = (
         {

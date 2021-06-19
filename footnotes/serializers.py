@@ -23,11 +23,6 @@ class FootnoteTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixi
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -44,9 +39,6 @@ class SimpleFootnoteDescriptionSerializer(
             "description",
             "validity_start",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
         ]
 
@@ -65,9 +57,6 @@ class FootnoteSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
             "descriptions",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -89,10 +78,5 @@ class FootnoteDescriptionSerializer(
             "description",
             "validity_start",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "period_record_code",
-            "period_subrecord_code",
-            "taric_template",
             "start_date",
         ]

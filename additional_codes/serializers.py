@@ -26,11 +26,6 @@ class AdditionalCodeTypeSerializer(
             "application_code",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -66,9 +61,6 @@ class AdditionalCodeSerializer(ValiditySerializerMixin, TrackedModelSerializerMi
             "descriptions",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -109,11 +101,6 @@ class AdditionalCodeDescriptionSerializer(
             "validity_start",
             "sid",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "period_record_code",
-            "period_subrecord_code",
-            "taric_template",
             "start_date",
         ]
 

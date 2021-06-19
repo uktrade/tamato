@@ -9,7 +9,6 @@ from common.tests.util import generate_test_import_xml
 from common.validators import UpdateType
 from importer.taric import process_taric_xml_stream
 from regulations import models
-from regulations import serializers
 from regulations.validators import RoleType
 from workbaskets.validators import WorkflowStatus
 
@@ -113,14 +112,12 @@ def create_and_test_m2m_regulation(
 def test_regulation_group_importer(imported_fields_match):
     assert imported_fields_match(
         factories.RegulationGroupFactory,
-        serializers.GroupSerializer,
     )
 
 
 def test_regulation_importer(imported_fields_match):
     assert imported_fields_match(
         factories.RegulationFactory,
-        serializers.RegulationImporterSerializer,
         dependencies={"regulation_group": factories.RegulationGroupFactory},
     )
 

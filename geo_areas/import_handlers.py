@@ -2,8 +2,10 @@ from geo_areas import import_parsers as parsers
 from geo_areas import models
 from geo_areas import serializers
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 
 
+@RecordParser.use_for_xml_serialization
 class GeographicalAreaHandler(BaseHandler):
     links = (
         {
@@ -27,6 +29,7 @@ class BaseGeographicalAreaDescriptionHandler(BaseHandler):
     abstract = True
 
 
+@RecordParser.use_for_xml_serialization
 class GeographicalAreaDescriptionHandler(BaseGeographicalAreaDescriptionHandler):
     serializer_class = serializers.GeographicalAreaDescriptionImporterSerializer
     xml_model = parsers.GeographicalAreaDescriptionParser
@@ -39,6 +42,7 @@ class GeographicalAreaDescriptionPeriodHandler(BaseGeographicalAreaDescriptionHa
     xml_model = parsers.GeographicalAreaDescriptionPeriodParser
 
 
+@RecordParser.use_for_xml_serialization
 class GeographicalMembershipHandler(BaseHandler):
     identifying_fields = ("geo_group__sid", "member__sid")
     links = (

@@ -23,10 +23,6 @@ class GroupSerializer(ValiditySerializerMixin, TrackedModelSerializerMixin):
             "description",
             "update_type",
             "valid_between",
-            "record_code",
-            "subrecord_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -49,9 +45,6 @@ class AmendmentSerializer(
             "enacting_regulation",
             "target_regulation",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -77,9 +70,6 @@ class ReplacementSerializer(
             "geographical_area_id",
             "chapter_heading",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -103,9 +93,6 @@ class ExtensionSerializer(
             "target_regulation",
             "effective_end_date",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -129,9 +116,6 @@ class SuspensionSerializer(
             "target_regulation",
             "effective_end_date",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -155,9 +139,6 @@ class TerminationSerializer(
             "target_regulation",
             "effective_date",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -216,7 +197,6 @@ class RegulationImporterSerializer(
             "valid_between",
             "effective_end_date",
             "update_type",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -288,9 +268,6 @@ class RegulationSerializer(
             "replaces",
             "replacements",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -312,7 +289,4 @@ class ReplacementImporterSerializer(
             "geographical_area_id",
             "chapter_heading",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]

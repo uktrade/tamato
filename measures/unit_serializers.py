@@ -10,7 +10,7 @@ from measures import validators
 @TrackedModelSerializer.register_polymorphic_model
 class MeasurementUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     code = serializers.CharField(
-        validators=[validators.measurement_unit_code_validator]
+        validators=[validators.measurement_unit_code_validator],
     )
 
     class Meta:
@@ -20,11 +20,6 @@ class MeasurementUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerM
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -32,10 +27,11 @@ class MeasurementUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerM
 
 @TrackedModelSerializer.register_polymorphic_model
 class MeasurementUnitQualifierSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     code = serializers.CharField(
-        validators=[validators.measurement_unit_qualifier_code_validator]
+        validators=[validators.measurement_unit_qualifier_code_validator],
     )
 
     class Meta:
@@ -45,11 +41,6 @@ class MeasurementUnitQualifierSerializer(
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -67,9 +58,6 @@ class MeasurementSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin
             "measurement_unit_qualifier",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -86,11 +74,6 @@ class MonetaryUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerMixi
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]

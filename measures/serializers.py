@@ -34,11 +34,6 @@ class MeasureTypeSeriesSerializer(TrackedModelSerializerMixin, ValiditySerialize
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -67,11 +62,6 @@ class DutyExpressionSerializer(TrackedModelSerializerMixin, ValiditySerializerMi
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -113,11 +103,6 @@ class MeasureTypeSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin
             "additional_code_types",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -138,9 +123,6 @@ class AdditionalCodeTypeMeasureTypeSerializer(
             "additional_code_type",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -162,11 +144,6 @@ class MeasureConditionCodeSerializer(
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -183,11 +160,6 @@ class MeasureActionSerializer(TrackedModelSerializerMixin, ValiditySerializerMix
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "description_record_code",
-            "description_subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -231,9 +203,6 @@ class MeasureSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
             "export_refund_nomenclature_sid",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -255,9 +224,6 @@ class MeasureComponentSerializer(TrackedModelSerializerMixin):
             "monetary_unit",
             "component_measurement",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -287,9 +253,6 @@ class MeasureConditionSerializer(TrackedModelSerializerMixin):
             "action",
             "required_certificate",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -309,9 +272,6 @@ class MeasureConditionComponentSerializer(TrackedModelSerializerMixin):
             "monetary_unit",
             "component_measurement",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -326,9 +286,6 @@ class MeasureExcludedGeographicalAreaSerializer(TrackedModelSerializerMixin):
             "modified_measure",
             "excluded_geographical_area",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -343,7 +300,4 @@ class FootnoteAssociationMeasureSerializer(TrackedModelSerializerMixin):
             "footnoted_measure",
             "associated_footnote",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]

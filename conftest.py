@@ -14,6 +14,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
+from django.db import transaction
 from django.test.html import parse_html
 from factory.django import DjangoModelFactory
 from lxml import etree
@@ -27,10 +28,9 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UpdateValidity
 from common.models import TrackedModel
-from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
-from common.tests.util import generate_test_import_xml
+from common.tests.util import get_taric_xml
 from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
@@ -275,21 +275,21 @@ def run_xml_import(valid_user, settings):
 
     def check(
         factory: Callable[[], TrackedModel],
-        serializer: Type[TrackedModelSerializer],
     ) -> TrackedModel:
         get_nursery().cache.clear()
         settings.SKIP_WORKBASKET_VALIDATION = True
 
-        model = factory()
-        model_class = model.__class__
-        assert isinstance(
-            model,
-            TrackedModel,
-        ), "A factory that returns an object instance needs to be provided"
+        with transaction.atomic():
+            model = factory()
+            model_class = model.__class__
 
-        xml = generate_test_import_xml(
-            serializer(model, context={"format": "xml"}).data,
-        )
+            assert isinstance(
+                model,
+                TrackedModel,
+            ), "Either a factory or an object instance needs to be provided"
+
+            xml = get_taric_xml(model.transaction)
+            transaction.set_rollback(True)
 
         process_taric_xml_stream(
             xml,
@@ -353,7 +353,6 @@ def imported_fields_match(run_xml_import, update_type):
 
     def check(
         factory: Type[DjangoModelFactory],
-        serializer: Type[TrackedModelSerializer],
         dependencies: Optional[Dict[str, Any]] = None,
     ):
         Model: Type[TrackedModel] = factory._meta.model

@@ -16,15 +16,18 @@ from common.util import maybe_min
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 
 logger = logging.getLogger(__name__)
 
 
+@RecordParser.use_for_xml_serialization
 class GoodsNomenclatureHandler(BaseHandler):
     serializer_class = serializers.GoodsNomenclatureSerializer
     xml_model = parsers.GoodsNomenclatureParser
 
 
+@RecordParser.use_for_xml_serialization
 class GoodsNomenclatureOriginHandler(BaseHandler):
     serializer_class = serializers.GoodsNomenclatureOriginSerializer
     xml_model = parsers.GoodsNomenclatureOriginParser
@@ -69,6 +72,7 @@ class GoodsNomenclatureOriginHandler(BaseHandler):
         )
 
 
+@RecordParser.use_for_xml_serialization
 class GoodsNomenclatureSuccessorHandler(BaseHandler):
     serializer_class = serializers.GoodsNomenclatureSuccessorSerializer
     xml_model = parsers.GoodsNomenclatureSuccessorParser
@@ -140,6 +144,7 @@ class BaseGoodsNomenclatureDescriptionHandler(BaseHandler):
     abstract = True
 
 
+@RecordParser.use_for_xml_serialization
 class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandler):
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
     xml_model = parsers.GoodsNomenclatureDescriptionParser
@@ -154,6 +159,7 @@ class GoodsNomenclatureDescriptionPeriodHandler(
     xml_model = parsers.GoodsNomenclatureDescriptionPeriodParser
 
 
+@RecordParser.use_for_xml_serialization
 class GoodsNomenclatureIndentHandler(BaseHandler):
     links = (
         {"model": models.GoodsNomenclature, "name": "indented_goods_nomenclature"},
@@ -496,6 +502,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         return super(GoodsNomenclatureIndentHandler, self).post_save(obj)
 
 
+@RecordParser.use_for_xml_serialization
 class FootnoteAssociationGoodsNomenclatureHandler(BaseHandler):
     identifying_fields = (
         "goods_nomenclature__sid",

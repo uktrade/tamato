@@ -1,8 +1,0 @@
-{% from "macros/record.xml" import standard_record %}
-
-{% call standard_record(message_counter(), sequence(), transaction_id, record) %}
-    <oub:quota.order.number.origin.exclusions>
-        <oub:quota.order.number.origin.sid>{{ record.origin.sid }}</oub:quota.order.number.origin.sid>
-        <oub:excluded.geographical.area.sid>{{ record.excluded_geographical_area.sid }}</oub:excluded.geographical.area.sid>
-    </oub:quota.order.number.origin.exclusions>
-{% endcall %}

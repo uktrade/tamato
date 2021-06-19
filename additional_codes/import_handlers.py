@@ -2,8 +2,10 @@ from additional_codes import import_parsers as parsers
 from additional_codes import models
 from additional_codes import serializers
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 
 
+@RecordParser.use_for_xml_serialization
 class AdditionalCodeTypeHandler(BaseHandler):
     serializer_class = serializers.AdditionalCodeTypeSerializer
     xml_model = parsers.AdditionalCodeTypeParser
@@ -16,6 +18,7 @@ class AdditionalCodeTypeDescriptionHandler(BaseHandler):
     xml_model = parsers.AdditionalCodeTypeDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class AdditionalCodeHandler(BaseHandler):
     links = (
         {
@@ -46,6 +49,7 @@ class BaseAdditionalCodeDescriptionHandler(BaseHandler):
         return obj
 
 
+@RecordParser.use_for_xml_serialization
 class AdditionalCodeDescriptionHandler(BaseAdditionalCodeDescriptionHandler):
     serializer_class = serializers.AdditionalCodeDescriptionImporterSerializer
     xml_model = parsers.AdditionalCodeDescriptionParser

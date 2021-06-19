@@ -3,7 +3,6 @@ import logging
 import os
 from functools import cached_property
 from typing import IO
-from typing import Iterator
 from typing import Optional
 
 from django.conf import settings
@@ -26,6 +25,25 @@ from common.xml.namespaces import nsmap
 logger = logging.getLogger(__name__)
 
 
+class TaricDataAssertionError(AssertionError):
+    pass
+
+
+def validate_taric_xml_record_order(xml):
+    """Raise AssertionError if any record codes are not in order."""
+    for transaction in xml.findall(".//transaction"):
+        last_code = "00000"
+        for record in transaction.findall(".//record", namespaces=xml.nsmap):
+            record_code = record.findtext(".//record.code", namespaces=xml.nsmap)
+            subrecord_code = record.findtext(".//subrecord.code", namespaces=xml.nsmap)
+            full_code = record_code + subrecord_code
+            if full_code < last_code:
+                raise TaricDataAssertionError(
+                    f"Elements out of order in XML: {last_code}, {full_code}",
+                )
+            last_code = full_code
+
+
 class TARIC3DateRangeField(DateRangeField):
     child = serializers.DateField(
         input_formats=[
@@ -37,12 +55,7 @@ class TARIC3DateRangeField(DateRangeField):
 
 
 class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
-    taric_template = serializers.SerializerMethodField()
-
     formats_with_template = {"xml"}
-
-    def get_taric_template(self, object):
-        return object.get_taric_template()
 
     def get_format(self):
         """
@@ -62,21 +75,6 @@ class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
         for data_format in self.formats_with_template:
             if data_format in self.context["request"].accepted_media_type.lower():
                 return data_format
-
-    def to_representation(self, *args, **kwargs):
-        """
-        Removes the taric template field from formats that don't require it.
-
-        By default the only format which keeps the taric_tempalte field is XML.
-        """
-        data = super().to_representation(*args, **kwargs)
-        data_format = self.get_format()
-
-        if data_format not in self.formats_with_template:
-            if "taric_template" in data:
-                data.pop("taric_template")
-
-        return data
 
 
 class ValiditySerializerMixin(serializers.ModelSerializer):
@@ -162,10 +160,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def get_tracked_models(self, obj):
         return TrackedModelSerializer(
-            obj.tracked_models.annotate_record_codes().order_by(
-                "record_code",
-                "subrecord_code",
-            ),
+            obj.tracked_models.annotate_record_codes().order_by(),
             many=True,
             read_only=True,
             context=self.context,
@@ -258,9 +253,9 @@ class EnvelopeSerializer:
 
     def render_envelope_body(
         self,
-        transactions: TransactionQueryset,
-    ) -> Iterator[str]:
-        return transactions.get_xml()
+        transaction: Transaction,
+    ) -> str:
+        return transaction.xml
 
     def render_envelope_end(self) -> str:
         return render_to_string(template_name="common/taric/end_envelope.xml")
@@ -302,7 +297,7 @@ class EnvelopeSerializer:
         transactions: TransactionQueryset,
     ) -> None:
         """Render TrackedModels, splitting to a new Envelope if over-size."""
-        for envelope_body in self.render_envelope_body(transactions.not_empty()):
+        for envelope_body in transactions.not_empty().get_xml():
 
             if self.is_envelope_full(len(envelope_body.encode())):
                 self.write(self.render_envelope_end())
@@ -310,10 +305,6 @@ class EnvelopeSerializer:
                 self.write(self.render_envelope_start())
 
             self.write(envelope_body)
-
-
-class TaricDataAssertionError(AssertionError):
-    pass
 
 
 def validate_envelope(envelope_file, skip_declaration=False):

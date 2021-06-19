@@ -1,5 +1,0 @@
-{%- for transaction in transactions -%}
-{%- set transaction_id = transaction.order -%}
-{%- set tracked_models = transaction.tracked_models -%}
-{%- include "workbaskets/taric/transaction.xml" -%}
-{%- endfor -%}

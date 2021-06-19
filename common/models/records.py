@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from datetime import date
 from typing import Any
 from typing import Iterable
@@ -28,7 +27,6 @@ from django.db.models.functions.window import RowNumber
 from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
-from django.template import loader
 from django.urls import NoReverseMatch
 from django.urls import reverse
 from django_cte import CTEQuerySet
@@ -448,42 +446,6 @@ class TrackedModel(PolymorphicModel):
     (Note that because mutliple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
     """
-
-    taric_template = None
-
-    def get_taric_template(self):
-        """
-        Generate a TARIC XML template name for the given class.
-
-        Any TrackedModel must be representable via a TARIC compatible XML
-        record.
-        """
-
-        if self.taric_template:
-            return self.taric_template
-        class_name = self.__class__.__name__
-
-        # replace namesLikeThis to names_Like_This
-        name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", class_name)
-        # replace names_LIKEthis to names_like_this
-        name = re.sub(r"([A-Z]{2,})([a-z0-9_])", r"\1_\2", name).lower()
-
-        template_name = f"taric/{name}.xml"
-        try:
-            loader.get_template(template_name)
-        except loader.TemplateDoesNotExist as e:
-            raise loader.TemplateDoesNotExist(
-                f"Taric template does not exist for {class_name}. All classes that "
-                "inherit TrackedModel must either:\n"
-                "    1) Have a matching taric template with a snake_case name matching "
-                'the class at "taric/{snake_case_class_name}.xml". In this case it '
-                f'should be: "{template_name}".\n'
-                "    2) A taric_template attribute, pointing to the correct template.\n"
-                "    3) Override the get_taric_template method, returning an existing "
-                "template.",
-            ) from e
-
-        return template_name
 
     def new_version(
         self: Cls,

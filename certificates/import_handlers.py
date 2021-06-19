@@ -2,8 +2,10 @@ from certificates import import_parsers as parsers
 from certificates import models
 from certificates import serializers
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 
 
+@RecordParser.use_for_xml_serialization
 class CertificateTypeHandler(BaseHandler):
     serializer_class = serializers.CertificateTypeSerializer
     xml_model = parsers.CertificateTypeParser
@@ -18,6 +20,7 @@ class CertificateTypeDescriptionHandler(BaseHandler):
     xml_model = parsers.CertificateTypeDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class CertificateHandler(BaseHandler):
     identifying_fields = "sid", "certificate_type__sid"
     links = (
@@ -43,6 +46,7 @@ class BaseCertificateDescriptionHandler(BaseHandler):
     abstract = True
 
 
+@RecordParser.use_for_xml_serialization
 class CertificateDescriptionHandler(BaseCertificateDescriptionHandler):
     serializer_class = serializers.CertificateDescriptionSerializer
     xml_model = parsers.CertificateDescriptionParser

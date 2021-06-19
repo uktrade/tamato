@@ -12,11 +12,12 @@ from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from django.urls import reverse
 from freezegun import freeze_time
 from lxml import etree
 
+from common.models.transactions import Transaction
 from common.renderers import counter_generator
+from common.serializers import EnvelopeSerializer
 from common.serializers import validate_taric_xml_record_order
 from common.util import TaricDateRange
 from common.util import get_field_tuple
@@ -146,6 +147,18 @@ def taric_xml_record_codes(xml):
     ]
 
 
+def get_taric_xml(approved_transaction) -> BytesIO:
+    content = BytesIO()
+    with EnvelopeSerializer(content, 0) as env:
+        env.render_transaction(
+            Transaction.objects.filter(pk=approved_transaction.pk),
+        )
+    content.seek(0)
+    print(content.getvalue())
+    content.seek(0)
+    return content
+
+
 def validate_taric_xml(
     factory=None,
     instance=None,
@@ -174,21 +187,8 @@ def validate_taric_xml(
                 transaction=approved_transaction, **factory_kwargs or {}
             )
 
-            api_client.force_login(user=valid_user)
-            response = api_client.get(
-                reverse(
-                    "workbaskets:workbasket-detail",
-                    kwargs={"pk": approved_transaction.workbasket.pk},
-                ),
-                {"format": "xml"},
-            )
-
-            assert response.status_code == 200
-
-            content = response.content
-
-            xml = etree.XML(content)
-
+            xml_str = get_taric_xml(approved_transaction).getvalue()
+            xml = etree.XML(xml_str, parser=None)
             taric_schema.validate(xml)
 
             assert not taric_schema.error_log, f"XML errors: {taric_schema.error_log}"

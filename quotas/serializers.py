@@ -26,9 +26,6 @@ class QuotaOrderNumberSerializer(TrackedModelSerializerMixin, ValiditySerializer
             "category",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -51,9 +48,6 @@ class QuotaOrderNumberOriginSerializer(
             "geographical_area",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -73,9 +67,6 @@ class QuotaOrderNumberOriginExclusionSerializer(
             "origin",
             "excluded_geographical_area",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -117,7 +108,6 @@ class QuotaDefinitionImporterSerializer(
             "description",
             "update_type",
             "valid_between",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -153,9 +143,6 @@ class QuotaDefinitionSerializer(TrackedModelSerializerMixin, ValiditySerializerM
             "sub_quotas",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -174,9 +161,6 @@ class QuotaAssociationSerializer(TrackedModelSerializerMixin):
             "sub_quota_relation_type",
             "coefficient",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -193,9 +177,6 @@ class QuotaSuspensionSerializer(TrackedModelSerializerMixin, ValiditySerializerM
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
         ]
@@ -216,9 +197,6 @@ class QuotaBlockingSerializer(TrackedModelSerializerMixin, ValiditySerializerMix
             "description",
             "valid_between",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
             "valid_between",
@@ -235,9 +213,6 @@ class QuotaEventImporterSerializer(TrackedModelSerializerMixin):
             "occurrence_timestamp",
             "data",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -258,7 +233,4 @@ class QuotaEventSerializer(TrackedModelSerializerMixin):
             "occurrence_timestamp",
             "data",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]

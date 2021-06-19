@@ -2,8 +2,10 @@ from footnotes import import_parsers as parsers
 from footnotes import models
 from footnotes import serializers
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 
 
+@RecordParser.use_for_xml_serialization
 class FootnoteTypeHandler(BaseHandler):
     serializer_class = serializers.FootnoteTypeSerializer
     xml_model = parsers.FootnoteTypeParser
@@ -16,6 +18,7 @@ class FootnoteTypeDescriptionHandler(BaseHandler):
     xml_model = parsers.FootnoteTypeDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class FootnoteHandler(BaseHandler):
     identifying_fields = "footnote_id", "footnote_type__footnote_type_id"
     links = (
@@ -40,6 +43,7 @@ class BaseFootnoteDescriptionHandler(BaseHandler):
     abstract = True
 
 
+@RecordParser.use_for_xml_serialization
 class FootnoteDescriptionHandler(BaseFootnoteDescriptionHandler):
     serializer_class = serializers.FootnoteDescriptionSerializer
     xml_model = parsers.FootnoteDescriptionParser

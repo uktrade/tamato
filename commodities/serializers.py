@@ -18,8 +18,6 @@ class SimpleGoodsNomenclatureSerializer(
             "sid",
             "item_id",
             "suffix",
-            "record_code",
-            "subrecord_code",
             "start_date",
             "end_date",
         ]
@@ -62,9 +60,6 @@ class GoodsNomenclatureSerializer(TrackedModelSerializerMixin, ValiditySerialize
             "suffix",
             "statistical",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "descriptions",
             "start_date",
             "end_date",
@@ -87,9 +82,6 @@ class GoodsNomenclatureIndentSerializer(
             "indent",
             "indented_goods_nomenclature",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "validity_start",
         ]
@@ -110,11 +102,6 @@ class GoodsNomenclatureDescriptionSerializer(
             "described_goods_nomenclature",
             "description",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "period_record_code",
-            "period_subrecord_code",
-            "taric_template",
             "start_date",
             "validity_start",
         ]
@@ -131,9 +118,6 @@ class GoodsNomenclatureOriginSerializer(TrackedModelSerializerMixin):
             "new_goods_nomenclature",
             "derived_from_goods_nomenclature",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -148,9 +132,6 @@ class GoodsNomenclatureSuccessorSerializer(TrackedModelSerializerMixin):
             "replaced_goods_nomenclature",
             "absorbed_into_goods_nomenclature",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
         ]
 
 
@@ -168,9 +149,6 @@ class FootnoteAssociationGoodsNomenclatureSerializer(
             "goods_nomenclature",
             "associated_footnote",
             "update_type",
-            "record_code",
-            "subrecord_code",
-            "taric_template",
             "start_date",
             "end_date",
             "valid_between",

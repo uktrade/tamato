@@ -1,6 +1,0 @@
-<env:transaction id="{{ transaction_id }}">
-{%- for record in tracked_models -%}
-    {%- set sequence = counter_generator() -%}
-    {%- include record.taric_template -%}
-{%- endfor %}
-</env:transaction>

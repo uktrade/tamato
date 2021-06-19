@@ -62,6 +62,7 @@ def get_measurement_link(model, kwargs):
     return model.objects.latest_approved().get(**kwargs)
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureTypeSeriesHandler(BaseHandler):
     serializer_class = serializers.MeasureTypeSeriesSerializer
     xml_model = parsers.MeasureTypeSeriesParser
@@ -102,6 +103,7 @@ class MeasurementUnitDescriptionHandler(BaseMeasurementUnitHandler):
     xml_model = parsers.MeasurementUnitDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class MeasurementUnitQualifierHandler(BaseHandler):
     serializer_class = unit_serializers.MeasurementUnitQualifierSerializer
     xml_model = parsers.MeasurementUnitQualifierParser
@@ -114,6 +116,7 @@ class MeasurementUnitQualifierDescriptionHandler(BaseHandler):
     xml_model = parsers.MeasurementUnitQualifierDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class MeasurementHandler(BaseHandler):
     identifying_fields = ("measurement_unit__code", "measurement_unit_qualifier__code")
     links = (
@@ -130,6 +133,7 @@ class MeasurementHandler(BaseHandler):
     xml_model = parsers.MeasurementParser
 
 
+@RecordParser.use_for_xml_serialization
 class MonetaryUnitHandler(BaseHandler):
     serializer_class = unit_serializers.MonetaryUnitSerializer
     xml_model = parsers.MonetaryUnitParser
@@ -142,6 +146,7 @@ class MonetaryUnitDescriptionHandler(BaseHandler):
     xml_model = parsers.MonetaryUnitDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class DutyExpressionHandler(BaseHandler):
     serializer_class = serializers.DutyExpressionSerializer
     xml_model = parsers.DutyExpressionParser
@@ -165,6 +170,7 @@ class BaseMeasureTypeHandler(BaseHandler):
     abstract = True
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureTypeHandler(BaseMeasureTypeHandler):
     serializer_class = serializers.MeasureTypeSerializer
     xml_model = parsers.MeasureTypeParser
@@ -177,6 +183,7 @@ class MeasureTypeDescriptionHandler(BaseMeasureTypeHandler):
     xml_model = parsers.MeasureTypeDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class AdditionalCodeTypeMeasureTypeHandler(BaseHandler):
     identifying_fields = ("measure_type__sid", "additional_code_type__sid")
     links = (
@@ -193,6 +200,7 @@ class AdditionalCodeTypeMeasureTypeHandler(BaseHandler):
     xml_model = parsers.AdditionalCodeTypeMeasureTypeParser
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureConditionCodeHandler(BaseHandler):
     serializer_class = serializers.MeasureConditionCodeSerializer
     xml_model = parsers.MeasureConditionCodeParser
@@ -205,6 +213,7 @@ class MeasureConditionCodeDescriptionHandler(BaseHandler):
     xml_model = parsers.MeasureConditionCodeDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureActionHandler(BaseHandler):
     serializer_class = serializers.MeasureActionSerializer
     xml_model = parsers.MeasureActionParser
@@ -217,6 +226,7 @@ class MeasureActionDescriptionHandler(BaseHandler):
     xml_model = parsers.MeasureActionDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureHandler(BaseHandler):
     identifying_fields = (
         "sid",
@@ -303,6 +313,7 @@ class MeasureHandler(BaseHandler):
             raise
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureComponentHandler(HandlerWithDutyAmount):
     identifying_fields = (
         "component_measure__sid",
@@ -339,6 +350,7 @@ class MeasureComponentHandler(HandlerWithDutyAmount):
         return get_measurement_link(model, kwargs)
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureConditionHandler(HandlerWithDutyAmount):
     links = (
         {
@@ -387,6 +399,7 @@ class MeasureConditionHandler(HandlerWithDutyAmount):
         return get_measurement_link(model, kwargs)
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureConditionComponentHandler(HandlerWithDutyAmount):
     identifying_fields = ("condition__sid", "duty_expression__sid")
     links = (
@@ -420,6 +433,7 @@ class MeasureConditionComponentHandler(HandlerWithDutyAmount):
         return get_measurement_link(model, kwargs)
 
 
+@RecordParser.use_for_xml_serialization
 class MeasureExcludedGeographicalAreaHandler(BaseHandler):
     identifying_fields = (
         "modified_measure__sid",
@@ -439,6 +453,7 @@ class MeasureExcludedGeographicalAreaHandler(BaseHandler):
     xml_model = parsers.MeasureExcludedGeographicalAreaParser
 
 
+@RecordParser.use_for_xml_serialization
 class FootnoteAssociationMeasureHandler(BaseHandler):
     identifying_fields = (
         "footnoted_measure__sid",

@@ -268,10 +268,6 @@ def test_get_latest_relation_without_latest_links(
     assert latest_link == fetched_latest_link
 
 
-def test_get_taric_template(sample_model):
-    assert sample_model.get_taric_template() == "test_template"
-
-
 def test_current_version(sample_model):
     assert sample_model.current_version == sample_model
 

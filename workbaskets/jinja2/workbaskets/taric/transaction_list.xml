@@ -1,8 +1,0 @@
-{%- extends "common/taric/base.xml" -%}
-{%- block transactions -%}
-{%- for transaction in items -%}
-    {%- set transaction_id = transaction.import_transaction_id -%}
-    {%- set tracked_models = transaction.tracked_models -%}
-    {%- include "workbaskets/taric/transaction.xml" -%}
-{%- endfor -%}
-{%- endblock -%}

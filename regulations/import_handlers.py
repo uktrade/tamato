@@ -1,11 +1,13 @@
 from django.db import transaction
 
 from importer.handlers import BaseHandler
+from importer.taric import RecordParser
 from regulations import import_parsers as parsers
 from regulations import models
 from regulations import serializers
 
 
+@RecordParser.use_for_xml_serialization
 class RegulationGroupHandler(BaseHandler):
     serializer_class = serializers.GroupSerializer
     xml_model = parsers.RegulationGroupParser
@@ -18,6 +20,7 @@ class RegulationGroupDescriptionHandler(BaseHandler):
     xml_model = parsers.RegulationGroupDescriptionParser
 
 
+@RecordParser.use_for_xml_serialization  # FIXME
 class RegulationHandler(BaseHandler):
     links = (
         {
