@@ -14,7 +14,7 @@ from rest_framework.serializers import ModelSerializer
 
 from common.models import TrackedModel
 from common.validators import UpdateType
-from common.xml import XMLConcat
+from common.xml.sql import XMLConcat
 from importer import parsers
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType

@@ -26,8 +26,8 @@ from lxml import etree
 from common import models
 from common.models.records import TrackedModel
 from common.validators import UpdateType
-from common.xml import XMLAgg
-from common.xml import XMLElement
+from common.xml.sql import XMLAgg
+from common.xml.sql import XMLElement
 from common.xml.namespaces import ENVELOPE
 from common.xml.namespaces import nsmap
 from importer.handlers import BaseHandler

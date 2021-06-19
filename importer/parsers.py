@@ -18,8 +18,8 @@ from django.db.models.functions.text import Lower
 from django.db.models.functions.text import Upper
 
 from common.validators import UpdateType
-from common.xml import Identity
-from common.xml import XMLElement
+from common.xml.sql import Identity
+from common.xml.sql import XMLElement
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
 

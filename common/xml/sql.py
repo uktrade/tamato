@@ -42,11 +42,39 @@ class XMLAttributes(XMLSyntax):
 
 
 class XMLComment(Func):
+    """
+    The function `XMLComment` creates an XML value containing an XML comment
+    with the specified text as content.
+
+    The text cannot contain "--" or end with a "-", otherwise the resulting
+    construct would not be a valid XML comment. If the argument is null, the
+    result is null.
+    """
+
+    # xmlcomment ( text ) -> xml
+
     arity = 1
     function = "XMLCOMMENT"
 
 
 class XMLElement(Func):
+    """
+    The `XMLElement` expression produces an XML element with the given name,
+    attributes, and children.
+
+    The name and attname items shown in the syntax are simple identifiers, not
+    values. The attvalue and content items are expressions, which can yield any
+    PostgreSQL data type. The argument(s) within XMLATTRIBUTES generate
+    attributes of the XML element; the content value(s) are concatenated to form
+    its content.
+    """
+
+    # xmlelement (
+    #   NAME name
+    #   [, XMLATTRIBUTES ( attvalue [ AS attname ] [, ...] ) ]
+    #   [, content [, ...]]
+    # ) -> xml
+
     def __init__(self, name, *children, **attributes):
         if any(attributes):
             children = [
@@ -66,16 +94,46 @@ class XMLElement(Func):
 
 
 class XMLAgg(Aggregate):
+    """
+    The function `XMLAgg` is an aggregate function that concatenates the input
+    values to the aggregate function call much like
+    :class:`~common.xml.sql.XMLConcat` does.
+
+    As this is an aggregate function concatenation occurs across rows rather
+    than across expressions in a single row.
+    """
+
+    # xmlagg ( xml ) -> xml
+
     function = "XMLAGG"
     output_field = TextField()
 
 
 class XMLConcat(Func):
+    """
+    The function `XMLConcat` concatenates a list of individual XML values to
+    create a single value containing an XML content fragment.
+
+    Null values are omitted; the result is only null if there are no nonnull
+    arguments.
+    """
+
+    # xmlconcat ( xml [, ...] ) -> xml
+
     function = "XMLCONCAT"
     output_field = TextField()
 
 
 class XMLSerialize(Func):
+    """
+    The function `XMLSerialize` produces a character string value from XML.
+
+    According to the SQL standard, this is the only way to convert between type
+    xml and character types.
+    """
+
+    # XMLSERIALIZE ( { DOCUMENT | CONTENT } value AS type )
+
     function = "XMLSERIALIZE"
     output_field = TextField()
     template = "%(function)s(CONTENT %(expressions)s AS text)"

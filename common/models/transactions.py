@@ -15,7 +15,7 @@ from django_cte import CTEManager
 from django_cte import With
 from django_cte.cte import CTEQuerySet
 
-from common import xml
+from common.xml.sql import XMLSerialize
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
@@ -88,7 +88,7 @@ class TransactionQueryset(CTEQuerySet):
             .with_cte(models)
             .with_cte(xml_models)
             .annotate(
-                xml=xml.XMLSerialize(
+                xml=XMLSerialize(
                     TransactionParser().serializer(xml_models.col.xml),
                 ),
             )
