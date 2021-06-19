@@ -26,10 +26,10 @@ from lxml import etree
 from common import models
 from common.models.records import TrackedModel
 from common.validators import UpdateType
-from common.xml.sql import XMLAgg
-from common.xml.sql import XMLElement
 from common.xml.namespaces import ENVELOPE
 from common.xml.namespaces import nsmap
+from common.xml.sql import XMLAgg
+from common.xml.sql import XMLElement
 from importer.handlers import BaseHandler
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
@@ -147,7 +147,7 @@ class MessageParser(ElementParser):
 
     tag = Tag("app.message", prefix=ENVELOPE)
 
-    record = TransmissionParser()  # TODO: many?
+    transmission = TransmissionParser()  # TODO: many?
 
     def serializer(self, *args, message_seq: int = 0, **kwargs) -> Expression:
         # The window function we use to get the message ID generates one new ID
@@ -165,6 +165,9 @@ class MessageParser(ElementParser):
         # used.
         self.attributes = {"id": Concat(RawSQL("message_id", []), Value(message_seq))}
         return super().serializer(*args, **kwargs)
+
+    def save(self, data: Mapping[str, Any], transaction_id: int):
+        self.transmission.save(data["transmission"], transaction_id)
 
 
 class TransactionParser(ElementParser):
