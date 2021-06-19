@@ -7,7 +7,10 @@ from common.xml.namespaces import nsmap
 pytestmark = pytest.mark.django_db
 
 
-@validate_taric_xml(factories.GeographicalAreaFactory)
+@validate_taric_xml(
+    factories.GeographicalAreaFactory,
+    factory_kwargs={"description": None},
+)
 def test_geographical_area_xml(xml):
     element = xml.find(".//oub:geographical.area", nsmap)
     assert element is not None
