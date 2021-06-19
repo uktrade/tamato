@@ -4,6 +4,7 @@ import logging
 from copy import deepcopy
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Set
 from typing import Type
 
@@ -50,7 +51,7 @@ class BaseHandlerMeta(type):
     """
 
     def __new__(cls, name: str, bases: tuple, dct: dict):
-        handler_class = super().__new__(cls, name, bases, dct)
+        handler_class: Type[BaseHandler] = super().__new__(cls, name, bases, dct)
         if not bases:
             # This is a top level class, we only want to register and validate subclasses
             return handler_class
@@ -75,6 +76,9 @@ class BaseHandlerMeta(type):
             raise AttributeError(
                 f'{name} requires attribute "serializer_class" to be a subclass of "ModelSerializer".',
             )
+
+        if handler_class.tag is None:
+            handler_class.tag = handler_class.xml_model.tag.name
 
         TariffObjectNursery.register_handler(handler_class)
         return handler_class
@@ -230,7 +234,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     All of the above examples can be used together, e.g. a handler can have both dependencies and links.
     """
 
-    dependencies: List[Type[BaseHandler]] = None
+    dependencies: Optional[List[Type[BaseHandler]]] = None
     identifying_fields: Iterable[str] = None
     links: Iterable[LinksType] = None
     serializer_class: Type[ModelSerializer] = None
@@ -510,7 +514,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     ) -> Set[Type[BaseHandler]]:
         seen = seen or set()
         seen.add(cls)
-        for handler in cls.dependencies:
+        for handler in cls.dependencies or []:
             if handler not in seen:
                 handler.resolve_dependent_handlers(seen)
         return seen
