@@ -11,25 +11,15 @@ from django.db import models
 from django.db.models.aggregates import Count
 from django.db.models.expressions import Window
 from django.db.models.functions.window import RowNumber
-from django_cte import CTEManager
+from django.db.models.manager import Manager
 from django_cte import With
 from django_cte.cte import CTEQuerySet
 
-from common.xml.sql import XMLSerialize
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
 from common.models.records import TrackedModel
-
-
-class TransactionManager(CTEManager):
-    """Sorts TrackedModels by record_number and subrecord_number."""
-
-    def get_queryset(self):
-        annotate_record_code = self.model.tracked_models.rel.related_model.objects
-        return TransactionQueryset(self.model, using=self._db).prefetch_related(
-            models.Prefetch("tracked_models", queryset=annotate_record_code),
-        )
+from common.xml.sql import XMLSerialize
 
 
 class TransactionQueryset(CTEQuerySet):
@@ -137,7 +127,7 @@ class Transaction(TimestampedMixin):
 
     composite_key = models.CharField(max_length=16, unique=True)
 
-    objects = TransactionManager.from_queryset(TransactionQueryset)()
+    objects = Manager.from_queryset(TransactionQueryset)()
 
     def clean(self):
         """Validate business rules against contained TrackedModels."""
