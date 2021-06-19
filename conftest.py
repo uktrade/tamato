@@ -377,11 +377,10 @@ def imported_fields_match(run_xml_import, update_type):
             kwargs.update(previous_version.get_identifying_fields())
 
         updated_model = run_xml_import(
-            lambda: factory.build(
+            lambda: factory.create(
                 update_type=update_type,
                 **kwargs,
             ),
-            serializer,
         )
 
         version_group = (previous_version or updated_model).version_group
