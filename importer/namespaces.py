@@ -3,6 +3,7 @@ from typing import TypeVar
 from typing import Union
 
 from common.xml.namespaces import SEED_MESSAGE
+from common.xml.namespaces import TARIC_MESSAGE
 from common.xml.namespaces import nsmap
 
 T = TypeVar("T", bound="Tag")
