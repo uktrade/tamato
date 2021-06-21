@@ -47,14 +47,16 @@ Browse to http://localhost:8000/
 
 Skip this section if running under docker.
 
-This web app uses Postgres 12.x and Redis 5.x
+The following dependencies are required to run this app:
+ * Python 3.9.x
+ * Node 14.16.x
+ * Postgres 12.x
+ * Redis 5.x
 
 The app requires an s3 bucket on AWS or a compatible implementation, such as Minio
 
 
 ### Running locally
-
-This app requires Python 3.8.x and Node 14.16.x
 
 Create a Python virtualenv and install the dependencies:
 
