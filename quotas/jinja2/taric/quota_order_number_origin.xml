@@ -7,9 +7,9 @@
         <oub:quota.order.number.sid>{{ record.order_number.sid }}</oub:quota.order.number.sid>
         <oub:geographical.area.id>{{ record.geographical_area.area_id }}</oub:geographical.area.id>
         <oub:validity.start.date>{{ record.start_date }}</oub:validity.start.date>
-        <oub:geographical.area.sid>{{ record.geographical_area.sid }}</oub:geographical.area.sid>
         {% if record.end_date -%}
         <oub:validity.end.date>{{ record.end_date }}</oub:validity.end.date>
         {%- endif %}
+        <oub:geographical.area.sid>{{ record.geographical_area.sid }}</oub:geographical.area.sid>
     </oub:quota.order.number.origin>
 {% endcall %}

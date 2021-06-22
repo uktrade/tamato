@@ -25,7 +25,7 @@ from common.renderers import counter_generator
 from common.validators import UpdateType, ApplicabilityCode
 from footnotes.models import Footnote, FootnoteType, FootnoteDescription
 from footnotes.validators import ApplicationCode
-from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalArea, GeographicalAreaDescription
 from geo_areas.validators import AreaCode
 from importer.management.commands import update_commodity_codes
 from importer.management.commands.import_reliefs import EUR_GBP_CONVERSION_RATE
@@ -34,7 +34,7 @@ from importer.management.commands.patterns import BREXIT, MeasureCreatingPattern
 from importer.management.commands.utils import EnvelopeSerializer, parse_duty_parts, update_geo_area_description, \
     terminate_geo_area_members, add_geo_area_members, create_geo_area, blank
 from measures.models import MeasureType, Measure, MeasurementUnit, FootnoteAssociationMeasure, \
-    AdditionalCodeTypeMeasureType
+    AdditionalCodeTypeMeasureType, MeasureExcludedGeographicalArea, MeasureCondition
 from quotas.models import QuotaDefinition, QuotaOrderNumberOrigin, QuotaOrderNumber, QuotaOrderNumberOriginExclusion, \
     QuotaAssociation, QuotaBlocking, QuotaSuspension
 from quotas.validators import QuotaCategory, AdministrationMechanism
@@ -260,8 +260,8 @@ class Command(BaseCommand):
 
             django.db.transaction.set_rollback(True)
 
-    def process_measure_sheet(self, measure_creator, measure_ender, existing_measures, new_start_date=BREXIT, update=False, raw=False):
-        rows = existing_measures if raw else (OldMeasureRow(row) for row in existing_measures)
+    def process_measure_sheet(self, measure_creator, measure_ender, existing_measures, new_start_date=BREXIT, update=False, measure_row=False):
+        rows = existing_measures if measure_row else (OldMeasureRow(row) for row in existing_measures)
         for row in rows:
             if row.measure_sid and not update:
                 yield list(
@@ -1086,7 +1086,7 @@ class Command(BaseCommand):
             new_measures,
         )
 
-    def create_transactions_tops49(self, measure_creator, measure_ender, new_measures, transaction, counters):
+    def create_transactions_tops49old(self, measure_creator, measure_ender, new_measures, transaction, counters):
         cert_1_desc = CertificateDescription(
             sid=counters['certificate_description_sid_counter'](),
             description='Certificate concerning pelts of certain wild animal species and of goods incorporating such pelts subject to The Leghold Trap and Pelt Imports (Amendment etc.) (EU Exit) Regulations 2019 No 2019/16',
@@ -2524,7 +2524,7 @@ class Command(BaseCommand):
             measure_creator,
             measure_ender,
             new_measures,
-            raw=True
+            measure_row=True
         )
 
     def create_transactions_tops153(self, measure_creator, measure_ender, data, transaction, counters):
@@ -3604,7 +3604,7 @@ class Command(BaseCommand):
             measure_creator,
             measure_ender,
             new_measures,
-            raw=True
+            measure_row=True
         )
 
     def create_transactions_tops186(self, measure_creator, measure_ender, data, transaction_model,
@@ -3648,3 +3648,491 @@ class Command(BaseCommand):
             measure_ender,
             measures1,
         )
+
+    def create_transactions_tops70(self, measure_creator, measure_ender, measures, transaction, counters):
+        # Plane
+        cert_1 = Certificate(
+            sid='080',
+            valid_between=BREXIT_TO_INFINITY,
+            certificate_type=CertificateType.objects.current().get(
+                sid='Y'
+            ),
+            transaction=transaction,
+            update_type=UpdateType.CREATE
+        )
+        cert_1.save()
+        cert_1_desc = CertificateDescription(
+            sid=counters['certificate_description_sid_counter'](),
+            description='Plane not imported from AL, AM, CH, TR.',
+            described_certificate=cert_1,
+            valid_between=BREXIT_TO_INFINITY,
+            transaction=transaction,
+            update_type=UpdateType.CREATE
+        )
+        yield [cert_1, cert_1_desc]
+
+        # Cherry
+        cert_1 = Certificate(
+            sid='081',
+            valid_between=BREXIT_TO_INFINITY,
+            certificate_type=CertificateType.objects.current().get(
+                sid='Y'
+            ),
+            transaction=transaction,
+            update_type=UpdateType.CREATE
+        )
+        cert_1.save()
+        cert_1_desc = CertificateDescription(
+            sid=counters['certificate_description_sid_counter'](),
+            description='Cherry not imported from JP, VN, MN.',
+            described_certificate=cert_1,
+            valid_between=BREXIT_TO_INFINITY,
+            transaction=transaction,
+            update_type=UpdateType.CREATE
+        )
+        yield [cert_1, cert_1_desc]
+
+        # Tropical Wood
+        cert_1 = Certificate(
+            sid='092',
+            valid_between=BREXIT_TO_INFINITY,
+            certificate_type=CertificateType.objects.current().get(
+                sid='Y'
+            ),
+            transaction=transaction,
+            update_type=UpdateType.CREATE
+        )
+        cert_1.save()
+        cert_1_desc = CertificateDescription(
+            sid=counters['certificate_description_sid_counter'](),
+            description='Tropical wood.',
+            described_certificate=cert_1,
+            valid_between=BREXIT_TO_INFINITY,
+            transaction=transaction,
+            update_type=UpdateType.CREATE
+        )
+        yield [cert_1, cert_1_desc]
+
+        # Create Country group
+        members = ('376', '142', '97', '146', '437', '439', '106', '266', '270', '156', '115', '273', '276', '161', '59', '199', '100', '102', '388', '103', '392')
+
+        yield list(create_geo_area(
+            valid_between=BREXIT_TO_INFINITY,
+            transaction=transaction,
+            description='Quarantine Release Certificate',
+            area_id='6007',
+            area_sid=counters['group_area_sid_counter'](),
+            area_description_sid=counters['group_area_description_sid_counter'](),
+            type=AreaCode.GROUP,
+            member_sids=members,
+        ))
+
+    def create_transactions_tops190(self, measure_creator, measure_ender, measures, transaction, counters):
+        yield from self.process_measure_sheet(
+            measure_creator,
+            measure_ender,
+            measures,
+        )
+
+    def create_transactions_tops49(self, measure_creator, measure_ender, measures, transaction, counters):
+
+        # Change description of CD618
+        footnote = Footnote.objects.current().get(
+            footnote_type=FootnoteType.objects.get(
+                footnote_type_id='CD',
+            ),
+            footnote_id='618'
+        )
+        new_footnote_description = FootnoteDescription.objects.create(
+            description_period_sid=counters["footnote_description_sid_counter"](),
+            described_footnote=footnote,
+            description='Imports of certain wild animal pelts and goods incorporating them can only be imported into the UK if they are accompanied by documentation issued by the exporting country, certifying that the goods originate in a country which do not use leghold traps or trapping methods that do not meet internationally agreed humane trapping standards. The applicable legislation and the species that are subject to this control are summarised in the guidance <a href="https://www.gov.uk/guidance/importing-animal-furs-skins-and-fish#import-controls-on-furs-and-products-from-animals-caught-in-leg-hold-traps">here</a>. You will need to contact the exporting country to confirm the documentation requirement.',
+            valid_between=BREXIT_TO_INFINITY,
+            transaction=transaction,
+            update_type=UpdateType.CREATE,
+        )
+        yield [new_footnote_description]
+
+        # Change description of C-056
+        cert_1_desc = CertificateDescription(
+            sid=counters['certificate_description_sid_counter'](),
+            description='Certificate concerning pelts of certain wild animal species and of goods incorporating such pelts subject to <a href="https://www.legislation.gov.uk/eur/1991/3254/contents">Council Regulation (EEC) No 3254/91 as retained in UK law</a>.',
+            described_certificate=Certificate.objects.current().get(
+                sid='056',
+                certificate_type=CertificateType.objects.current().get(
+                    sid='C'
+                ),
+
+            ),
+            valid_between=BREXIT_TO_INFINITY,
+            transaction=transaction,
+            update_type=UpdateType.CREATE
+        )
+        yield [cert_1_desc]
+
+    def create_transactions_tops192(self, measure_creator, measure_ender, measures, transaction, counters):
+        measures1, measures2 = tee(measures)
+        processed = set()
+        for row in measures2:
+            origins = QuotaOrderNumberOrigin.objects.filter(
+                order_number=QuotaOrderNumber.objects.current().get(
+                    order_number=blank(row[15].value, str)
+                ),
+                geographical_area=GeographicalArea.objects.current().get(
+                    sid=blank(row[13].value, str)
+                )
+            ).all()
+            for origin in origins:
+                if origin.sid in processed:
+                    continue
+                processed.add(origin.sid)
+                origin.sid = counters['order_number_origin_sid_counter']()
+                origin.transaction = transaction
+                origin.update_type = UpdateType.CREATE
+                yield [origin]
+
+        yield from self.process_measure_sheet(
+            measure_creator,
+            measure_ender,
+            measures1,
+        )
+
+    def create_transactions_tops198(self, measure_creator, measure_ender, measures, transaction, counters):
+        excluded_geo_areas = []
+        for area in ['36', '47', '90', '91', '92', '104', '106', '117', '118', '122', '148', '153', '169', '195', '236', '256', '264', '265', '266', '270', '317', '340', '390', '395', '397', '403', '428', '430', '286', '437', '252', '53']:
+            excluded_geo_areas.append(
+                GeographicalArea.objects.as_at(BREXIT).get(
+                    sid=area,
+                )
+            )
+
+        to_delete = []
+        for measure in [OldMeasureRow(row) for row in measures]:
+            if measure.geo_sid in [68, 400]:
+                measure_excluded_areas = []
+                for geo_area in excluded_geo_areas:
+                    measure_excluded_areas.append(
+                        MeasureExcludedGeographicalArea(
+                            modified_measure=Measure.objects.current().get(
+                                sid=measure.measure_sid
+                            ),
+                            excluded_geographical_area=geo_area,
+                            update_type=UpdateType.CREATE,
+                            transaction=transaction,
+                        )
+                    )
+                yield measure_excluded_areas
+            elif measure.geo_sid == 169:
+                to_delete.append(measure)
+            else:
+                raise ValueError('unexpected country')
+
+        # create new measures
+        yield from self.process_measure_sheet(
+            measure_creator,
+            measure_ender,
+            to_delete,
+            measure_row=True
+        )
+
+    def create_transactions_tops189(self, measure_creator, measure_ender, measures, transaction, counters):
+        new_certificate_description = CertificateDescription.objects.current().get(
+            sid=5015,
+        )
+        new_certificate_description.transaction = transaction
+        new_certificate_description.update_type = UpdateType.UPDATE
+        new_certificate_description.description = 'Proof of origin containing the following statement in English: "Product originating in accordance with the Canada-UK Trade Agreement".'
+        yield [new_certificate_description]
+
+        yield from self.process_measure_sheet(
+            measure_creator,
+            measure_ender,
+            measures,
+        )
+
+    def create_transactions_tops201(self, measure_creator, measure_ender, measures, transaction, counters):
+
+        yield from self.process_measure_sheet(
+            measure_creator,
+            measure_ender,
+            measures,
+        )
+
+    def create_transactions_tops203(self, measure_creator, measure_ender, measures, transaction, counters):
+
+        yield from self.process_measure_sheet(
+            measure_creator,
+            measure_ender,
+            measures,
+            update=True,
+        )
+
+    def create_transactions_tops180(self, measure_creator, measure_ender, measures, transaction, counters):
+
+        yield from self.process_measure_sheet(
+            measure_creator,
+            measure_ender,
+            measures,
+        )
+
+    def create_transactions_tops202(self, measure_creator, measure_ender, measures, transaction, counters):
+        description = GeographicalAreaDescription.objects.current().get(
+            sid=1423
+        )
+        description.transaction = transaction
+        description.update_type = UpdateType.UPDATE
+        description.description = 'Areas subject to VAT and excise'
+        yield [description]
+
+        yield list(add_geo_area_members(
+            valid_between=BREXIT_TO_INFINITY,
+            transaction=transaction,
+            group_area=504,
+            member_area_sids=[
+                '31',
+                '32',
+                '33',
+                '34',
+                '35',
+                '36',
+                '37',
+                '38',
+                '39',
+                '40',
+                '41',
+                '42',
+                '44',
+                '45',
+                '46',
+                '47',
+                '48',
+                '49',
+                '50',
+                '53',
+                '54',
+                '57',
+                '58',
+                '59',
+                '67',
+                '76',
+                '85',
+                '86',
+                '88',
+                '89',
+                '90',
+                '91',
+                '92',
+                '93',
+                '94',
+                '95',
+                '96',
+                '97',
+                '98',
+                '99',
+                '100',
+                '101',
+                '102',
+                '103',
+                '104',
+                '105',
+                '106',
+                '107',
+                '108',
+                '109',
+                '111',
+                '112',
+                '113',
+                '115',
+                '116',
+                '117',
+                '118',
+                '119',
+                '120',
+                '121',
+                '122',
+                '138',
+                '140',
+                '141',
+                '142',
+                '143',
+                '144',
+                '145',
+                '146',
+                '148',
+                '149',
+                '150',
+                '151',
+                '152',
+                '153',
+                '154',
+                '155',
+                '156',
+                '157',
+                '159',
+                '160',
+                '161',
+                '162',
+                '169',
+                '180',
+                '191',
+                '192',
+                '195',
+                '196',
+                '197',
+                '199',
+                '200',
+                '201',
+                '202',
+                '203',
+                '204',
+                '205',
+                '206',
+                '207',
+                '208',
+                '209',
+                '210',
+                '211',
+                '213',
+                '214',
+                '219',
+                '221',
+                '222',
+                '223',
+                '236',
+                '239',
+                '244',
+                '247',
+                '249',
+                '251',
+                '252',
+                '253',
+                '254',
+                '255',
+                '256',
+                '257',
+                '258',
+                '259',
+                '260',
+                '261',
+                '262',
+                '263',
+                '264',
+                '265',
+                '266',
+                '267',
+                '268',
+                '269',
+                '270',
+                '272',
+                '273',
+                '274',
+                '275',
+                '276',
+                '277',
+                '278',
+                '279',
+                '280',
+                '281',
+                '282',
+                '283',
+                '284',
+                '286',
+                '295',
+                '296',
+                '306',
+                '307',
+                '311',
+                '312',
+                '313',
+                '314',
+                '315',
+                '316',
+                '317',
+                '318',
+                '319',
+                '320',
+                '321',
+                '322',
+                '324',
+                '325',
+                '326',
+                '327',
+                '328',
+                '330',
+                '331',
+                '333',
+                '334',
+                '335',
+                '336',
+                '337',
+                '338',
+                '339',
+                '340',
+                '341',
+                '342',
+                '343',
+                '346',
+                '348',
+                '369',
+                '370',
+                '374',
+                '375',
+                '376',
+                '377',
+                '378',
+                '379',
+                '380',
+                '381',
+                '382',
+                '383',
+                '384',
+                '385',
+                '386',
+                '387',
+                '388',
+                '389',
+                '390',
+                '391',
+                '392',
+                '393',
+                '394',
+                '395',
+                '396',
+                '397',
+                '402',
+                '403',
+                '405',
+                '406',
+                '422',
+                '424',
+                '425',
+                '426',
+                '427',
+                '428',
+                '429',
+                '430',
+                '431',
+                '432',
+                '433',
+                '434',
+                '435',
+                '436',
+                '437',
+                '438',
+                '439',
+                '440',
+                '441',
+                '442',
+                '443',
+                '444',
+                '446',
+                '448',
+                '456',
+                '457',
+                '458',
+                '459',
+                '460',
+                '461',
+                '462',
+            ],
+        ))

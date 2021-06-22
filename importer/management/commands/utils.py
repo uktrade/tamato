@@ -991,13 +991,13 @@ def add_geo_area_members(
     group_area,
 ):
     group_area = group_area if type(group_area) == GeographicalArea \
-        else GeographicalArea.objects.get(
+        else GeographicalArea.objects.current().get(
             sid=group_area
         )
     member_sids_list = list(member_area_sids)
-    member_sids_list.sort()
+    #member_sids_list.sort()
     for member_area_sid in member_sids_list:
-        member_area = GeographicalArea.objects.get(
+        member_area = GeographicalArea.objects.current().get(
             sid=member_area_sid
         )
         existing_membership = GeographicalMembership.objects.current().filter(
