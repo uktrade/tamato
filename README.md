@@ -58,10 +58,33 @@ The app requires an s3 bucket on AWS or a compatible implementation, such as Min
 
 ### Running locally
 
+Create a database instance:
+
+    $ sudo su - postgres
+    postgres $ createdb tamato
+
+Create a user / role:
+
+    postgres $ psql
+    postgres=# CREATE USER <user> SUPERUSER PASSWORD '<password>';
+
+Import from a dump of the database:
+
+    postgres $ psql -d tamato -f /tmp/tamato-db-dump.sql
+
+You can either instruct postgres to trust local connections via settings
+in your `pg_hba.conf` file or, preferably, add an entry in your `.env` file in
+order to provide the database username and password that you have set (as
+above):
+
+    DATABASE_URL=postgres://<user>:<password>@localhost:5432/tamato
+
 Create a Python virtualenv and install the dependencies:
 
     python -m venv venv
     . venv/bin/activate
+    pip install -U pip
+    pip install wheel
     pip install -r requirements-dev.txt
 
 Create a `.env` file containing environment variables:
@@ -89,7 +112,15 @@ In the first terminal, run the app:
 
     ./manage.py runserver
 
-Then you can browse to http://localhost:8000/ to view the app
+Then you can browse to http://localhost:8000/ to view the app.
+
+In order to login, first create a Django user with superuser access:
+
+    ./manage.py createsuperuser
+
+Set the value of `SSO_ENABLED` environment variable to `false` in your `.env`
+and navigate to and sign in via the Django admin login at
+http://localhost:8000/admin/.
 
 
 ## Testing
