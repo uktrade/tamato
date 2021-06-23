@@ -61,7 +61,7 @@ The app requires an s3 bucket on AWS or a compatible implementation, such as Min
 Create a database instance:
 
     $ sudo su - postgres
-    postgres $ cretedb tamato
+    postgres $ createdb tamato
 
 Create a user / role:
 
