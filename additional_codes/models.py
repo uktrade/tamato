@@ -148,6 +148,12 @@ class FootnoteAssociationAdditionalCode(TrackedModel, ValidityMixin):
     record_code = "245"
     subrecord_code = "15"
 
+    identifying_fields = (
+        "additional_code__sid",
+        "associated_footnote__footnote_id",
+        "associated_footnote__footnote_type__footnote_type_id",
+    )
+
     additional_code = models.ForeignKey(AdditionalCode, on_delete=models.PROTECT)
     associated_footnote = models.ForeignKey(
         "footnotes.Footnote",
