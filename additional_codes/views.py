@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -7,6 +8,7 @@ from additional_codes import business_rules
 from additional_codes.filters import AdditionalCodeFilter
 from additional_codes.filters import AdditionalCodeFilterBackend
 from additional_codes.forms import AdditionalCodeCreateDescriptionForm
+from additional_codes.forms import AdditionalCodeCreateForm
 from additional_codes.forms import AdditionalCodeDescriptionForm
 from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
@@ -15,6 +17,7 @@ from additional_codes.models import AdditionalCodeType
 from additional_codes.serializers import AdditionalCodeSerializer
 from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.models import TrackedModel
+from common.validators import UpdateType
 from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -92,6 +95,35 @@ class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
         "sid",
         "descriptions__description",
     ]
+
+
+class AdditionalCodeCreate(DraftCreateView):
+    template_name = "additional_codes/create.jinja"
+    form_class = AdditionalCodeCreateForm
+
+    def form_valid(self, form):
+        transaction = self.get_transaction()
+        transaction.save()
+        self.object = form.save(commit=False)
+        self.object.update_type = UpdateType.CREATE
+        self.object.transaction = transaction
+        self.object.save()
+
+        self.object_description = form.cleaned_data["additional_code_description"]
+        self.object_description.described_additionalcode = self.object
+        self.object_description.update_type = UpdateType.CREATE
+        self.object_description.transaction = transaction
+        self.object_description.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class AdditionalCodeConfirmCreate(AdditionalCodeMixin, TrackedModelDetailView):
+    template_name = "common/confirm_create.jinja"
 
 
 class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):

@@ -18,6 +18,16 @@ ui_patterns = [
         name="additional_code-ui-list",
     ),
     path(
+        "create",
+        views.AdditionalCodeCreate.as_view(),
+        name="additional_code-ui-create",
+    ),
+    path(
+        f"{detail}/confirm-create",
+        views.AdditionalCodeConfirmCreate.as_view(),
+        name="additional_code-ui-confirm-create",
+    ),
+    path(
         f"{detail}/",
         views.AdditionalCodeDetail.as_view(),
         name="additional_code-ui-detail",
