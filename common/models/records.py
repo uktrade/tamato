@@ -689,7 +689,7 @@ class TrackedModel(PolymorphicModel):
 
     def __str__(self):
         return ", ".join(
-            f"{field}={getattr(self, field, None)}" for field in self.identifying_fields
+            f"{field}={value}" for field, value in self.get_identifying_fields().items()
         )
 
     def __hash__(self):

@@ -42,6 +42,11 @@ class TestModelDescription1(TrackedModel, ValidityMixin):
     record_code = "01"
     subrecord_code = "02"
 
+    identifying_fields = (
+        "described_record__sid",
+        "valid_between",
+    )
+
     described_record = models.ForeignKey(
         TestModel1,
         on_delete=models.PROTECT,
