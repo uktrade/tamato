@@ -4,6 +4,7 @@ from django.db.models import Max
 from additional_codes import business_rules
 from additional_codes import validators
 from common.business_rules import UpdateValidity
+from common.fields import LongDescription
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
@@ -123,7 +124,7 @@ class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
         on_delete=models.PROTECT,
         related_name="descriptions",
     )
-    description = models.TextField()
+    description = LongDescription()
 
     indirect_business_rules = (business_rules.ACN5,)
 

@@ -55,6 +55,21 @@ class ShortDescription(models.CharField):
         return name, path, args, kwargs
 
 
+class LongDescription(models.TextField):
+    def __init__(self, *args, **kwargs):
+        kwargs["max_length"] = 20000
+        kwargs["blank"] = True
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        del kwargs["max_length"]
+        del kwargs["blank"]
+        del kwargs["null"]
+        return name, path, args, kwargs
+
+
 class ApplicabilityCode(models.PositiveSmallIntegerField):
     def __init__(self, *args, **kwargs):
         kwargs["choices"] = validators.ApplicabilityCode.choices

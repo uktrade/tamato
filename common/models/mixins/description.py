@@ -5,6 +5,7 @@ from django.urls import NoReverseMatch
 from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
 
+from common.business_rules import NoBlankDescription
 from common.business_rules import UpdateValidity
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
@@ -17,7 +18,11 @@ class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
 
 class DescriptionMixin(ValidityStartMixin):
     objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
-    business_rules = (UpdateValidity,)
+
+    business_rules = (
+        NoBlankDescription,
+        UpdateValidity,
+    )
 
     @cached_property
     def described_object_field(self) -> Field:
@@ -35,9 +40,7 @@ class DescriptionMixin(ValidityStartMixin):
             kwargs = self.get_identifying_fields()
             described_object = self.get_described_object()
             for field, value in described_object.get_identifying_fields().items():
-                kwargs[
-                    f"described_{described_object._meta.model_name}__{field}"
-                ] = value
+                kwargs[f"{self.described_object_field.name}__{field}"] = value
         try:
             return reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",

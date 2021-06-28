@@ -112,7 +112,6 @@ class CertificateDescription(DescriptionMixin, TrackedModel):
     )
 
     indirect_business_rules = (business_rules.CE6,)
-    business_rules = (UpdateValidity,)
 
     def save(self, *args, **kwargs):
         if getattr(self, "sid") is None:

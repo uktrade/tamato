@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Max
 
 from common.business_rules import UpdateValidity
+from common.fields import LongDescription
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
@@ -151,7 +152,7 @@ class FootnoteDescription(DescriptionMixin, TrackedModel):
         on_delete=models.CASCADE,
         related_name="descriptions",
     )
-    description = models.TextField()
+    description = LongDescription()
     sid = SignedIntSID(db_index=True)
 
     indirect_business_rules = (business_rules.FO4,)

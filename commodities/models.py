@@ -12,6 +12,7 @@ from commodities import business_rules
 from commodities import validators
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
 from common.business_rules import UpdateValidity
+from common.fields import LongDescription
 from common.models import NumericSID
 from common.models import TrackedModel
 from common.models.mixins.description import DescriptionMixin
@@ -294,7 +295,7 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         return f"path={self.path}, indent=({self.indent})"
 
 
-class GoodsNomenclatureDescription(TrackedModel, DescriptionMixin):
+class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     record_code = "400"
     subrecord_code = "15"
     period_record_code = "400"
@@ -306,11 +307,9 @@ class GoodsNomenclatureDescription(TrackedModel, DescriptionMixin):
         on_delete=models.PROTECT,
         related_name="descriptions",
     )
-    description = models.TextField(blank=True)
+    description = LongDescription()
 
     indirect_business_rules = (business_rules.NIG12,)
-
-    business_rules = (UpdateValidity,)
 
     class Meta:
         ordering = ("validity_start",)
