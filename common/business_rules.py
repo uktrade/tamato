@@ -390,6 +390,14 @@ class DescriptionsRules(BusinessRule):
             raise self.generate_violation(model, "start after end")
 
 
+class NoBlankDescription(BusinessRule):
+    """Descriptions should not be blank."""
+
+    def validate(self, model):
+        if not model.description or not model.description.strip():
+            raise self.violation(model)
+
+
 class FootnoteApplicability(BusinessRule):
     """Check that a footnote type can be applied to a certain model, based on
     the set of :class:`~footnote.validators.ApplicationCode` that the model

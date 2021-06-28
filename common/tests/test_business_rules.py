@@ -8,10 +8,13 @@ import pytest
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
+from common.business_rules import NoBlankDescription
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
+from common.models.mixins.description import DescriptionMixin
 from common.tests import factories
+from common.tests.util import raises_if
 from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
@@ -118,6 +121,40 @@ def test_unique_identifying_fields_with_custom_fields():
     other = factories.TestModel2Factory.create(custom_sid=model.custom_sid)
     with pytest.raises(BusinessRuleViolation):
         UniqueIdentifyingFields(other.transaction).validate(other)
+
+
+@pytest.mark.parametrize(
+    ("description", "error_expected"),
+    (
+        ("Test description", False),
+        ("", True),
+        ("  ", True),
+        ("\t", True),
+        ("\n", True),
+        (None, True),
+    ),
+)
+def test_no_blank_descriptions(description, error_expected):
+    description = factories.TestModelDescription1Factory(description=description)
+    with raises_if(BusinessRuleViolation, error_expected):
+        NoBlankDescription(description.transaction).validate(description)
+
+
+@pytest.mark.parametrize(
+    ("description_model"),
+    (DescriptionMixin.__subclasses__()),
+    ids=(m.__name__ for m in DescriptionMixin.__subclasses__()),
+)
+def test_description_models_have_no_blanks_business_rule(description_model):
+    """
+    As the business rules are defined on the DescriptionMixin, it is easy to
+    override them with a model-specific attribute that doesn't include
+    NoBlankDescription.
+
+    So this test acts as a check that all of the description models actually
+    implement the business rule, either explicitly or implicitly.
+    """
+    assert NoBlankDescription in description_model.business_rules
 
 
 class TestInUse(PreventDeleteIfInUse):

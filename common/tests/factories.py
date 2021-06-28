@@ -340,7 +340,7 @@ class TestModel1Factory(TrackedModelMixin, ValidityFactoryMixin):
     sid = numeric_sid()
 
 
-class TestModelDescription1Factory(TrackedModelMixin, ValidityFactoryMixin):
+class TestModelDescription1Factory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
         model = TestModelDescription1
 
