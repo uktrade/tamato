@@ -654,67 +654,58 @@ def in_use_check_respects_deletes(valid_user):
     return check
 
 
-@pytest.fixture
-def check_first_update_validation():
+@pytest.fixture(
+    params=[
+        (UpdateType.DELETE, True),
+        (UpdateType.UPDATE, True),
+        (UpdateType.CREATE, False),
+    ],
+)
+def check_first_update_validation(request):
     """
     Provides a test function for creating records and checking the application
     of update type validity business rule:
 
     - The first update must be of type Create.
     """
+    update_type, expected_error = request.param
 
     def check(factory):
-        invalid_instance = factory.create(
-            update_type=UpdateType.DELETE,
-        )
-        valid_instance = factory.create(update_type=UpdateType.CREATE)
+        instance = factory.create(update_type=update_type)
 
-        with pytest.raises(
-            BusinessRuleViolation,
-            match="The first update of an object must be of type Create.",
-        ):
-            UpdateValidity(invalid_instance.transaction).validate(invalid_instance)
-
-        try:
-            UpdateValidity(valid_instance.transaction).validate(valid_instance)
-        except BusinessRuleViolation:
-            pytest.fail()
+        with raises_if(UpdateValidity.Violation, expected_error):
+            UpdateValidity(instance.transaction).validate(instance)
 
         return True
 
     return check
 
 
-@pytest.fixture
-def check_later_update_validation():
+@pytest.fixture(
+    params=[
+        (UpdateType.CREATE, True),
+        (UpdateType.UPDATE, False),
+        (UpdateType.DELETE, False),
+    ],
+)
+def check_later_update_validation(request):
     """
     Provides a test function for creating records and checking the application
     of update type validity business rule:
 
     - Subsequent updates must not be of type Create.
     """
+    update_type, expected_error = request.param
 
     def check(factory):
         first_instance = factory.create()
-        invalid_instance = factory.create(
-            update_type=UpdateType.CREATE,
-            version_group=first_instance.version_group,
-        )
-        valid_instance = factory.create(
-            update_type=UpdateType.UPDATE,
+        instance = factory.create(
+            update_type=update_type,
             version_group=first_instance.version_group,
         )
 
-        with pytest.raises(
-            BusinessRuleViolation,
-            match="Only the first object update can be of type Create.",
-        ):
-            UpdateValidity(invalid_instance.transaction).validate(invalid_instance)
-
-        try:
-            UpdateValidity(valid_instance.transaction).validate(valid_instance)
-        except BusinessRuleViolation:
-            pytest.fail()
+        with raises_if(UpdateValidity.Violation, expected_error):
+            UpdateValidity(instance.transaction).validate(instance)
 
         return True
 
@@ -740,8 +731,7 @@ def check_after_delete_update_validation():
         )
 
         with pytest.raises(
-            BusinessRuleViolation,
-            match="An object must not be updated after an update version of Delete.",
+            UpdateValidity.Violation,
         ):
             UpdateValidity(second_instance.transaction).validate(
                 second_instance,
@@ -774,8 +764,7 @@ def check_only_one_version_updated_in_transaction():
         )
 
         with pytest.raises(
-            BusinessRuleViolation,
-            match="Only one version of an object can be updated in a single transaction.",
+            UpdateValidity.Violation,
         ):
             UpdateValidity(second_instance.transaction).validate(second_instance)
 
