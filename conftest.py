@@ -796,6 +796,7 @@ def check_update_validation(
         assert check_only_one_version_updated_in_transaction(
             factory,
         )
+        assert UpdateValidity in factory._meta.model.business_rules
         return True
 
     return check

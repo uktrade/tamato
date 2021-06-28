@@ -161,3 +161,4 @@ class FootnoteAssociationAdditionalCode(TrackedModel, ValidityMixin):
         "footnotes.Footnote",
         on_delete=models.PROTECT,
     )
+    business_rules = (UpdateValidity,)
