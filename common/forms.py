@@ -2,6 +2,7 @@ from datetime import date
 
 from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -14,6 +15,10 @@ from django.template import loader
 from django.utils.safestring import mark_safe
 
 from common.util import TaricDateRange
+
+
+class DescriptionHelpBox(Div):
+    template = "components/description_help.jinja"
 
 
 class AutocompleteWidget(Widget):
@@ -144,10 +149,11 @@ class ValidityPeriodForm(forms.ModelForm):
             f"{self.instance._meta.verbose_name} is needed for an unlimited time"
         )
 
-        if self.instance.valid_between.lower:
-            self.fields["start_date"].initial = self.instance.valid_between.lower
-        if self.instance.valid_between.upper:
-            self.fields["end_date"].initial = self.instance.valid_between.upper
+        if self.instance.valid_between:
+            if self.instance.valid_between.lower:
+                self.fields["start_date"].initial = self.instance.valid_between.lower
+            if self.instance.valid_between.upper:
+                self.fields["end_date"].initial = self.instance.valid_between.upper
 
     def clean(self):
         cleaned_data = super().clean()

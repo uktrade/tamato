@@ -7,6 +7,13 @@ from typing import Union
 
 import wrapt
 from django.db import transaction
+from django.db.models import F
+from django.db.models import Func
+from django.db.models import Model
+from django.db.models import Value
+from django.db.models.fields import Field
+from django.db.models.fields import IntegerField
+from django.db.models.functions import Cast
 from django.db.transaction import atomic
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
@@ -190,3 +197,22 @@ class TableLock:
                     return wrapped(*args, **kwargs)
 
         return wrapper
+
+
+def get_next_id(queryset: QuerySet[Model], id_field: Field, max_len: int):
+    return (
+        queryset.annotate(
+            next_id=Func(
+                Cast(F(id_field.name), IntegerField()) + 1,
+                Value(f"FM{'0' * max_len}"),
+                function="TO_CHAR",
+                output_field=id_field,
+            ),
+        )
+        .exclude(
+            next_id__in=queryset.values(id_field.name),
+        )
+        .order_by(id_field.name)
+        .first()
+        .next_id
+    )

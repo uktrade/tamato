@@ -24,6 +24,16 @@ ui_patterns = [
         name="footnote-ui-list",
     ),
     path(
+        "create",
+        views.FootnoteCreate.as_view(),
+        name="footnote-ui-create",
+    ),
+    path(
+        f"{detail}/confirm-create",
+        views.FootnoteConfirmCreate.as_view(),
+        name="footnote-ui-confirm-create",
+    ),
+    path(
         f"{detail}/",
         views.FootnoteDetail.as_view(),
         name="footnote-ui-detail",

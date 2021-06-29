@@ -1,0 +1,20 @@
+{% extends "layouts/confirm.jinja" %}
+
+{% set page_title = "Create a new " ~ object._meta.verbose_name %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": object._meta.verbose_name|title ~ " " ~ object|string ~ " has been created",
+    "text": "This new " ~ object._meta.verbose_name ~ " has been added to your tariff changes",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}

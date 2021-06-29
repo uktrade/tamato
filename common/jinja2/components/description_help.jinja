@@ -1,0 +1,43 @@
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/details/macro.njk" import govukDetails %}
+
+{% set description_html %}
+  <p class="govuk-body">
+    It is possible to use HTML when defining descriptions. The table below shows 
+    a few examples of useful codes that you may want to use. Please use HTML sparingly and only where 
+    absolutely necessary.
+  </p>
+  {{ govukTable({
+    "head": [
+      {"text": "Code(s)"},
+      {"text": "Usage"},
+      {"text": "Example", "classes": "govuk-!-width-one-third"},
+    ],
+    "rows": [[
+      {"text": "<b></b>"},
+      {"text": "Make a piece of content bold. It is preferable to use the tag pair <strong></strong> instead of <b></b>, however many of the Taric descriptions already use standard bold tags."},
+      {"html": "This is " ~ '<b>bold</b>'|e ~ " content <br> becomes <br> This is <b>bold<b> content"},
+    ], 
+    [
+      {"text": "<em></em>"},
+      {"text": "Italicise a piece of content"},
+      {"html": "This is " ~ '<em>italicised</em>'|e ~ " content <br> becomes <br> This is <em>italicised</em> content"},
+    ],
+    [
+      {"text": "<u></u>"},
+      {"text": "Underline a piece of content"},
+      {"html": "This is " ~ '<u>underlined</u>'|e ~ " content <br> becomes <br> This is <u>underlined</u> content"},
+    ],
+    [
+      {"text": "<a href=\'\'></a>"},
+      {"text": "Add a hyperlink"},
+      {"html": 'This is <a href="https://www.gov.uk">a hyperlink to gov.uk</a>'|e ~ '<br>becomes<br> This is <a href="https://www.gov.uk">a hyperlink to gov.uk</a>'},
+    ]
+    ]
+  }) }}
+{% endset%}
+
+{{ govukDetails({
+    "summaryText": "Help with formatting description",
+    "html": description_html
+  }) }}
