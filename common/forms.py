@@ -144,10 +144,11 @@ class ValidityPeriodForm(forms.ModelForm):
             f"{self.instance._meta.verbose_name} is needed for an unlimited time"
         )
 
-        if self.instance.valid_between.lower:
-            self.fields["start_date"].initial = self.instance.valid_between.lower
-        if self.instance.valid_between.upper:
-            self.fields["end_date"].initial = self.instance.valid_between.upper
+        if self.instance.valid_between:
+            if self.instance.valid_between.lower:
+                self.fields["start_date"].initial = self.instance.valid_between.lower
+            if self.instance.valid_between.upper:
+                self.fields["end_date"].initial = self.instance.valid_between.upper
 
     def clean(self):
         cleaned_data = super().clean()

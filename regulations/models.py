@@ -91,7 +91,17 @@ class Regulation(TrackedModel):
         editable=False,
         default=1,
     )
-    published_at = models.DateField(blank=True, null=True, editable=False)
+    published_at = models.DateField(
+        blank=True,
+        null=True,
+        editable=False,
+        help_text=(
+            "The date that the source for this regulation was published. For a "
+            "Statutory Instrument (S.I.) or other peice of UK legislation, "
+            "this should be the “made date” as found in the introductory note "
+            "of the legislative text."
+        )
+    )
     information_text = ShortDescription(
         validators=[validators.no_information_text_delimiters],
     )
@@ -150,6 +160,10 @@ class Regulation(TrackedModel):
         on_delete=models.PROTECT,
         blank=True,
         null=True,
+        help_text=(
+            "If the wrong regulation group is selected, a trader's declaration "
+            "may be rejected."
+        )
     )
 
     amends = models.ManyToManyField(

@@ -69,6 +69,19 @@ DUMMY_ID = r"IYY\d{5}"
 REGULATION_ID_REGEX = fr"({TARIC_ID}|{UK_ID}|{NATIONAL_ID}|{DUMMY_ID})"
 regulation_id_validator = RegexValidator(fr"^{REGULATION_ID_REGEX}$")
 
+
+class RegulationUsage(models.TextChoices):
+    DRAFT_REGULATION = "C", "C: Draft regulation"
+    PREFERENTIAL_TRADE_AGREEMENT = "P", "P: Preferential Trade Agreement / FTA"
+    UNILATERAL_PREFERENCES = "U", "U: Unilateral preferences (GSP)"
+    SUSPENSIONS_AND_RELIEFS = "S", "S: Suspensions and reliefs"
+    IMPORT_AND_EXPORT_CONTROL = "X", "X: Import and Export control"
+    TRADE_REMEDIES = "N", "N: Trade remedies"
+    MFN = "M", "M:  MFN"
+    QUOTAS = "Q", "Q: Quotas"
+    AGRI_MEASURES = "A", "A: Agri measures"
+
+
 no_information_text_delimiters = RegexValidator(
     r"^[^|\xA0]*$",
     "Must not contain '|' or 0xA0",
