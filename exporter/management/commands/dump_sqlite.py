@@ -40,7 +40,7 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         logger.info(f"Dumping tariff database to {options['destination']}")
         if options["dry_run"]:
-            make_export_script(runner.Runner(options["destination"]))
+            print(make_export_script(runner.Runner(options["destination"])).operations)
         elif options["make_only"]:
             make_export(options["destination"])
         else:

@@ -1,9 +1,22 @@
+import decimal
+import logging
+import sqlite3
 import sys
 from pathlib import Path
 from subprocess import run
+from typing import Iterable
 from typing import Iterator
 
 from django.conf import settings
+
+from exporter.sqlite.script import Operation
+
+logger = logging.getLogger(__name__)
+
+# Cast Decimal objects to a string representation
+# to preserve their precision. They can then be cast
+# back to a Decimal without introducing error.
+sqlite3.register_adapter(decimal.Decimal, str)
 
 
 class Runner:
@@ -57,32 +70,24 @@ class Runner:
         columns in the order they are defined on the model, and there's no other
         easy way to work out what the correct order is aside from reading them.
         """
-        cmd = run(
-            ["sqlite3", str(self.db), "--cmd", f"PRAGMA table_info({table});"],
-            capture_output=True,
-            input="",
-        )
-        for column in cmd.stdout.splitlines():
-            name: bytes = column.split(b"|")[1]
-            yield name.decode("utf-8")
+        with sqlite3.connect(str(self.db)) as connection:
+            cursor = connection.cursor()
+            cursor.execute(f"PRAGMA table_info({table})")
+            for column in cursor.fetchall():
+                yield column[1]
 
-    def run_sqlite_script(self, script: str):
-        """
-        Runs the supplied SQLite script against the SQLite database.
-
-        The script is run in an environment with the same credentials as the
-        main Django instance giving it full access to the database.
-        """
-        database = settings.DATABASES["default"]
-        return run(
-            ["sqlite3", str(self.db)],
-            capture_output=False,
-            input=script.encode("utf-8"),
-            env={
-                "PGHOST": database["HOST"],
-                "PGPORT": str(database["PORT"]),
-                "PGUSER": database["USER"],
-                "PGPASSWORD": database["PASSWORD"],
-                "PGDATABASE": database["NAME"],
-            },
-        )
+    def run_sqlite_script(self, script: Iterable[Operation]):
+        """Runs the supplied sequence of operations against the SQLite
+        database."""
+        with sqlite3.connect(
+            str(self.db),
+            detect_types=sqlite3.PARSE_DECLTYPES,
+            isolation_level=None,
+        ) as connection:
+            cursor = connection.cursor()
+            for operation in script:
+                logger.debug("%s: %s", self.db, operation[0])
+                try:
+                    cursor.executemany(*operation)
+                except sqlite3.IntegrityError as e:
+                    logger.error(e)
