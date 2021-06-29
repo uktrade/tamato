@@ -431,6 +431,14 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;start after end&quot;</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="NoBlankDescription"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.NoBlankDescription">[docs]</a><span class="k">class</span> <span class="nc">NoBlankDescription</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Descriptions should not be blank.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NoBlankDescription.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.NoBlankDescription.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">description</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="FootnoteApplicability"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.FootnoteApplicability">[docs]</a><span class="k">class</span> <span class="nc">FootnoteApplicability</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Check that a footnote type can be applied to a certain model, based on</span>
 <span class="sd">    the set of :class:`~footnote.validators.ApplicationCode` that the model</span>

@@ -153,6 +153,24 @@ property or attribute called <code class="xref py py-attr docutils literal notra
 </dd></dl>
 
 <dl class="py class">
+<dt id="common.business_rules.NoBlankDescription">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">NoBlankDescription</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#NoBlankDescription"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.NoBlankDescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Descriptions should not be blank.</p>
+<dl class="py exception">
+<dt id="common.business_rules.NoBlankDescription.Violation">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">Violation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../architecture/index.html#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.business_rules.NoBlankDescription.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Descriptions should not be blank.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="common.business_rules.NoBlankDescription.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#NoBlankDescription.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.NoBlankDescription.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="common.business_rules.NoOverlapping">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.business_rules.</span></code><code class="sig-name descname"><span class="pre">NoOverlapping</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/business_rules.html#NoOverlapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.NoOverlapping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rule enforcing no overlapping validity periods of instances of a
