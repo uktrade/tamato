@@ -39,3 +39,15 @@ def test_footnote_used_in_measure(in_use_check_respects_deletes):
         factories.FootnoteAssociationMeasureFactory,
         "associated_footnote",
     )
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.FootnoteTypeFactory,
+        factories.FootnoteFactory,
+        factories.FootnoteDescriptionFactory,
+    ],
+)
+def test_footnote_update_types(factory, check_update_validation):
+    assert check_update_validation(factory)

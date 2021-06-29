@@ -160,3 +160,33 @@ def test_measure_action_in_use(in_use_check_respects_deletes):
         factories.MeasureConditionComponentFactory,
         "condition__action",
     )
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.MeasureTypeSeriesFactory,
+        factories.MeasurementUnitFactory,
+        factories.MeasurementUnitQualifierFactory,
+        factories.MeasurementFactory,
+        factories.MonetaryUnitFactory,
+        factories.DutyExpressionFactory,
+        factories.MeasureTypeFactory,
+        factories.AdditionalCodeTypeMeasureTypeFactory,
+        factories.MeasureConditionCodeFactory,
+        factories.MeasureActionFactory,
+        factories.MeasureFactory,
+        factories.MeasureComponentFactory,
+        factories.MeasureConditionFactory,
+        factories.MeasureConditionComponentFactory,
+        factories.MeasureExcludedGeographicalAreaFactory,
+        factories.FootnoteAssociationMeasureFactory,
+    ],
+)
+def test_measure_update_types(
+    factory,
+    check_update_validation,
+):
+    assert check_update_validation(
+        factory,
+    )

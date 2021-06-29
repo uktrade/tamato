@@ -3,6 +3,7 @@ from django.db.models import CheckConstraint
 from django.db.models import Max
 from django.db.models import Q
 
+from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
@@ -71,6 +72,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
         business_rules.GA11,
         business_rules.GA21,
         business_rules.GA22,
+        UpdateValidity,
     )
 
     def get_current_memberships(self):
@@ -156,6 +158,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         business_rules.GA18,
         business_rules.GA20,
         business_rules.GA23,
+        UpdateValidity,
     )
 
     def other(self, area: GeographicalArea) -> GeographicalArea:

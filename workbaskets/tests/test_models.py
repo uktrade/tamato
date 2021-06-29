@@ -6,6 +6,7 @@ from django_fsm import TransitionNotAllowed
 
 from common.models import TrackedModel
 from common.tests import factories
+from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -671,7 +672,10 @@ def test_get_tracked_models(new_workbasket):
 
 def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, valid_user):
     original_footnote = factories.FootnoteFactory.create()
-    new_footnote = original_footnote.new_version(workbasket=new_workbasket)
+    new_footnote = original_footnote.new_version(
+        workbasket=new_workbasket,
+        update_type=UpdateType.UPDATE,
+    )
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
@@ -690,8 +694,10 @@ def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, vali
 
 def test_workbasket_errored_updates_tracked_models(new_workbasket, valid_user):
     original_footnote = factories.FootnoteFactory.create()
-    new_footnote = original_footnote.new_version(workbasket=new_workbasket)
-
+    new_footnote = original_footnote.new_version(
+        workbasket=new_workbasket,
+        update_type=UpdateType.UPDATE,
+    )
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
     with mock.patch(

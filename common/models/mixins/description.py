@@ -5,6 +5,7 @@ from django.urls import NoReverseMatch
 from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
 
+from common.business_rules import UpdateValidity
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.records import TrackedModelQuerySet
@@ -16,6 +17,7 @@ class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
 
 class DescriptionMixin(ValidityStartMixin):
     objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
+    business_rules = (UpdateValidity,)
 
     @cached_property
     def described_object_field(self) -> Field:

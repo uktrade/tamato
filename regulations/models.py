@@ -2,6 +2,7 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
+from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import TaricDateRangeField
 from common.models import TrackedModel
@@ -46,6 +47,8 @@ class Group(TrackedModel, ValidityMixin):
         business_rules.ROIMB4,
         business_rules.ROIMB47,
     )
+
+    business_rules = (UpdateValidity,)
 
 
 class Regulation(TrackedModel):
@@ -194,6 +197,7 @@ class Regulation(TrackedModel):
         business_rules.ROIMB44,
         business_rules.ROIMB46,
         business_rules.ROIMB47,
+        UpdateValidity,
     )
 
     @property
@@ -265,6 +269,8 @@ class Amendment(TrackedModel):
         "target_regulation__regulation_id",
     )
 
+    business_rules = (UpdateValidity,)
+
 
 class Extension(TrackedModel):
     """
@@ -297,6 +303,8 @@ class Extension(TrackedModel):
     effective_end_date = models.DateField(null=True, blank=True)
 
     identifying_fields = ("enacting_regulation_id", "target_regulation_id")
+
+    business_rules = (UpdateValidity,)
 
 
 class Suspension(TrackedModel):
@@ -332,6 +340,8 @@ class Suspension(TrackedModel):
         "target_regulation__regulation_id",
     )
 
+    business_rules = (UpdateValidity,)
+
 
 class Termination(TrackedModel):
     """
@@ -364,6 +374,8 @@ class Termination(TrackedModel):
     effective_date = models.DateField()
 
     identifying_fields = ("enacting_regulation_id", "target_regulation_id")
+
+    business_rules = (UpdateValidity,)
 
 
 class Replacement(TrackedModel):
@@ -405,3 +417,5 @@ class Replacement(TrackedModel):
     chapter_heading = models.CharField(max_length=2, null=True, blank=True)
 
     identifying_fields = ("enacting_regulation_id", "target_regulation_id")
+
+    business_rules = (UpdateValidity,)
