@@ -4,11 +4,10 @@ from django import forms
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
-from crispy_forms_gds.layout import Fluid
+from crispy_forms_gds.layout import Fixed
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
-from django.forms import widgets
 from django.forms import ChoiceField
 
 from common.forms import DateInputFieldFixed
@@ -20,9 +19,18 @@ from regulations.validators import RegulationUsage
 class RegulationCreateForm(ValidityPeriodForm):
 
     # TODO:
-    # * regulation_group - correctly display value and descriptions.
-    # * valid_between - fix rendering and coerce between start and end dates.
-    # * published_date - fix widget rendering.
+    #
+    # Form manipulaton
+    # --
+    # * title - coerce and munge (with what?).
+    # * valid_between - manage ValidityPeriodForm cleaned data
+    #       cleaned_data = super().clean()
+    # * published_date - apply this form field to Regulation.published_at when
+    #   saving.
+    # * sequence_number - coerce and munge (with what?).
+    #
+    # Help messages
+    # --
     # * Add public_identifiers help messages.
     # * Add regulation_group help messages.
     # * Add sequence_number help messages.
@@ -50,7 +58,8 @@ class RegulationCreateForm(ValidityPeriodForm):
     )
     regulation_group = ChoiceField(
         choices= [("", "")] + [
-            (group.pk, f"{group.group_id}: {group.description}") for group in Group.objects.all().order_by("group_id")
+            (group.pk, f"{group.group_id}: {group.description}")
+                for group in Group.objects.all().order_by("group_id")
         ],
         help_text=Regulation._meta.get_field("regulation_group").help_text
     )
@@ -62,14 +71,16 @@ class RegulationCreateForm(ValidityPeriodForm):
     )
     sequence_number = forms.CharField(
         label="Sequence number",
-        required=False,
+        help_text="The sequence number published by the source of this regulation.",
     )
     approved = ChoiceField(
         choices=(
             ("", ""),
             ("0", "Approved"),
             ("1", "Not approved (draft)"),
-        )
+        ),
+        label="Status of the legislation",
+        help_text=Regulation._meta.get_field("approved").help_text,
     )
 
     def __init__(self, *args, **kwargs):
@@ -89,12 +100,9 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "published_at",
                 Field.text(
                     "sequence_number",
-                    field_width=Fluid.ONE_QUARTER
+                    field_width=Fixed.FIVE,
                 ),
                 "approved",
             ),
             Submit("submit", "Save"),
         )
-
-    def clean(self):
-        return super().clean()

@@ -128,7 +128,13 @@ class Regulation(TrackedModel):
     # measures are moved from the draft to the actual regulation.
     # It is possible for a draft regulation to be replaced by multiple actual regulations,
     # each one partially replacing the draft.
-    approved = models.BooleanField(default=False)
+    approved = models.BooleanField(
+        default=False,
+        help_text=(
+            "An unapproved status means none of the measures that link to "
+            "this regulation will be active at the border."
+        )
+    )
 
     """The code which indicates whether or not a regulation has been replaced."""
     replacement_indicator = models.PositiveIntegerField(
