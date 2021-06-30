@@ -2,11 +2,13 @@ import shutil
 import sqlite3
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
 from common.tests import factories
 from exporter.sqlite import script
+from exporter.sqlite import tasks
 from exporter.sqlite.runner import Runner
 from workbaskets.validators import WorkflowStatus
 
@@ -107,3 +109,54 @@ def test_valid_between_export(factory, date_ranges, date_range, sqlite_database:
         assert validity_end == object.valid_between.upper.strftime(r"%Y-%m-%d")
     else:
         assert validity_end is None
+
+
+def test_export_task_does_not_reupload():
+    factories.ApprovedTransactionFactory.create(order="999")  # seed file
+    factories.ApprovedTransactionFactory.create(order="123")
+
+    with mock.patch(
+        "exporter.sqlite.tasks.S3Boto3Storage",
+        autospec=True,
+    ) as mock_storage:
+        mock_storage.return_value.exists.return_value = True
+
+        returned = tasks.export_and_upload_sqlite()
+
+        assert returned is False
+        mock_storage.return_value.generate_filename.assert_called_once_with(
+            "sqlite/000000123.db",
+        )
+        mock_storage.return_value.save.assert_not_called()
+
+
+def test_export_task_uploads():
+    factories.ApprovedTransactionFactory.create(order="999")  # seed file
+    factories.ApprovedTransactionFactory.create(order="123")
+
+    with mock.patch("exporter.sqlite.tasks.S3Boto3Storage") as mock_storage:
+        mock_storage.return_value.exists.return_value = False
+
+        returned = tasks.export_and_upload_sqlite()
+
+        assert returned is True
+        mock_storage.return_value.generate_filename.assert_called_once_with(
+            "sqlite/000000123.db",
+        )
+        mock_storage.return_value.save.assert_called_once()
+
+
+def test_export_task_ignores_unapproved_transactions():
+    factories.ApprovedTransactionFactory.create(order="999")  # seed file
+    factories.ApprovedTransactionFactory.create(order="123")
+    factories.UnapprovedTransactionFactory.create(order="124")
+
+    with mock.patch("exporter.sqlite.tasks.S3Boto3Storage") as mock_storage:
+        mock_storage.return_value.exists.return_value = True
+
+        tasks.export_and_upload_sqlite()
+
+        mock_storage.return_value.generate_filename.assert_called_once_with(
+            "sqlite/000000123.db",
+        )
+        mock_storage.return_value.save.assert_not_called()

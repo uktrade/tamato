@@ -32,6 +32,7 @@ from django.conf import settings
 
 from exporter.sqlite import runner
 from exporter.sqlite import script
+from exporter.sqlite import tasks  # noqa
 
 
 def make_export_script(sqlite: runner.Runner) -> script.ImportScript:
