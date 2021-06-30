@@ -173,7 +173,10 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
         model = "footnotes.FootnoteDescription"
 
     description = short_description()
-    described_footnote = factory.SubFactory(FootnoteFactory)
+    described_footnote = factory.SubFactory(
+        FootnoteFactory,
+        description=None,
+    )
     sid = numeric_sid()
 
 
@@ -300,7 +303,10 @@ class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityStartFactory
         model = "geo_areas.GeographicalAreaDescription"
 
     sid = numeric_sid()
-    described_geographicalarea = factory.SubFactory(GeographicalAreaFactory)
+    described_geographicalarea = factory.SubFactory(
+        GeographicalAreaFactory,
+        description=None,
+    )
     description = short_description()
 
 
@@ -319,6 +325,13 @@ class CertificateFactory(TrackedModelMixin, ValidityFactoryMixin):
     certificate_type = factory.SubFactory(CertificateTypeFactory)
     sid = string_sequence(3)
 
+    description = factory.RelatedFactory(
+        "common.tests.factories.CertificateDescriptionFactory",
+        factory_related_name="described_certificate",
+        transaction=factory.SelfAttribute("..transaction"),
+        validity_start=factory.SelfAttribute("..valid_between.lower"),
+    )
+
 
 class CertificateDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
@@ -326,7 +339,10 @@ class CertificateDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin
 
     sid = numeric_sid()
 
-    described_certificate = factory.SubFactory(CertificateFactory)
+    described_certificate = factory.SubFactory(
+        CertificateFactory,
+        description=None,
+    )
     description = short_description()
 
 
@@ -511,7 +527,10 @@ class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityStartFactor
         model = "commodities.GoodsNomenclatureDescription"
 
     sid = numeric_sid()
-    described_goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
+    described_goods_nomenclature = factory.SubFactory(
+        GoodsNomenclatureFactory,
+        description=None,
+    )
     description = short_description()
 
 
@@ -614,7 +633,10 @@ class QuotaOrderNumberOriginFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "quotas.QuotaOrderNumberOrigin"
 
     sid = numeric_sid()
-    order_number = factory.SubFactory(QuotaOrderNumberFactory)
+    order_number = factory.SubFactory(
+        QuotaOrderNumberFactory,
+        origin=None,
+    )
     geographical_area = factory.SubFactory(
         GeographicalAreaFactory,
         valid_between=factory.SelfAttribute("..valid_between"),

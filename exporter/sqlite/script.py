@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Any
 from typing import Iterable
 from typing import Tuple
@@ -6,9 +7,12 @@ from typing import Union
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.base import Model
+from django.db.models.expressions import Case
 from django.db.models.expressions import Expression
 from django.db.models.expressions import F
+from django.db.models.expressions import When
 from django.db.models.fields import DateField
+from django.db.models.functions import Cast
 from django.db.models.functions import Lower
 from django.db.models.functions import Upper
 from django.db.models.query import QuerySet
@@ -28,14 +32,19 @@ def column_to_expr(column: str, model: Type[Model]) -> Union[Expression, F]:
         field = model._meta.get_field(column)
         return F(field.name)
     except FieldDoesNotExist:
+        field = ValidityMixin.valid_between.field
         if column == "validity_start":
-            return Lower(
-                ValidityMixin.valid_between.field.name,
-                output_field=DateField(),
-            )
+            return Lower(field.name, output_field=DateField())
         elif column == "validity_end":
-            return Upper(
-                ValidityMixin.valid_between.field.name,
+            # Our date ranges are inclusive but Postgres stores them as
+            # exclusive on the upper bound. Hence we need to subtract a day from
+            # the date if we want to get inclusive value.
+            return Cast(
+                Upper(field.name, output_field=DateField())
+                - Case(
+                    When(**{f"{field.name}__upper_inc": True}, then=timedelta(days=0)),
+                    default=timedelta(days=1),
+                ),
                 output_field=DateField(),
             )
         else:
