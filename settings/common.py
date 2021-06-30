@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import uuid
+from datetime import timedelta
 from os.path import abspath
 from os.path import dirname
 from os.path import join
@@ -316,6 +317,13 @@ CELERY_TRACK_STARTED = True
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    "sqlite_export": {
+        "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
+        "schedule": timedelta(minutes=30),
+    },
+}
 
 # -- Logging
 
