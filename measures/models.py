@@ -2,13 +2,13 @@ from datetime import date
 from typing import Set
 
 from django.db import models
-from polymorphic.managers import PolymorphicManager
 
 from common.business_rules import UpdateValidity
 from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from common.util import TaricDateRange
 from common.util import classproperty
@@ -530,7 +530,7 @@ class Measure(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
-    objects = PolymorphicManager.from_queryset(MeasuresQuerySet)()
+    objects = TrackedModelManager.from_queryset(MeasuresQuerySet)()
 
     @property
     def footnote_application_codes(self) -> Set[footnote_validators.ApplicationCode]:
@@ -752,7 +752,7 @@ class MeasureCondition(TrackedModel):
         blank=True,
     )
 
-    objects = PolymorphicManager.from_queryset(MeasureConditionQuerySet)()
+    objects = TrackedModelManager.from_queryset(MeasureConditionQuerySet)()
 
     indirect_business_rules = (
         business_rules.MA2,
