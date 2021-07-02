@@ -18,7 +18,6 @@ from django.db.models.query import QuerySet
 from django.db.transaction import atomic
 from django.urls import NoReverseMatch
 from django.urls import reverse
-from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 
 from common import validators
@@ -26,6 +25,7 @@ from common.exceptions import IllegalSaveError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.models.managers import TrackedModelManager
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_deferred_set_fields
 from common.models.tracked_utils import get_models_linked_to
@@ -94,7 +94,7 @@ class TrackedModel(PolymorphicModel):
     these fields.
     """
 
-    objects: TrackedModelQuerySet = PolymorphicManager.from_queryset(
+    objects: TrackedModelQuerySet = TrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
 

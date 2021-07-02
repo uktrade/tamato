@@ -2,12 +2,12 @@ from decimal import Decimal
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from polymorphic.managers import PolymorphicManager
 
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from quotas import business_rules
 from quotas import querysets
@@ -68,7 +68,7 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
-    objects = PolymorphicManager.from_queryset(querysets.QuotaOrderNumberQuerySet)()
+    objects = TrackedModelManager.from_queryset(querysets.QuotaOrderNumberQuerySet)()
 
     def __str__(self):
         return self.order_number
