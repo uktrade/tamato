@@ -34,6 +34,11 @@
     "build": "webpack --config webpack.config.js",
     "clean": "rm -f ./run/static/webpack_bundles/*",
     "heroku-prebuild": "",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm run build",
+    "cypress:open": "cypress open",
+    "cypress:headless": "CYPRESS_integrationFolder=cypress/integration/tamato cypress run --headless --browser chrome"
+  },
+  "devDependencies": {
+    "cypress": "^7.6.0"
   }
 }
