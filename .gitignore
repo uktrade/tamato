@@ -52,6 +52,9 @@ coverage.xml
 .pytest_cache/
 allure-results/
 
+cypress/screenshots
+cypress/videos
+
 # Translations
 *.mo
 *.pot
