@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models.fields import DateField
 
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
@@ -132,7 +134,11 @@ class Regulation(TrackedModel):
 
     # Complete Abrogation, Explicit Abrogation and Prorogation regulations have no
     # validity period
-    valid_between = TaricDateRangeField(blank=True, null=True)
+    if settings.SQLITE:
+        validity_start = DateField(db_index=True, null=True, blank=True)
+        validity_end = DateField(db_index=True, null=True, blank=True)
+    else:
+        valid_between = TaricDateRangeField(blank=True, null=True)
 
     # Base, Modification and FTS regulations have an effective end date
     effective_end_date = models.DateField(blank=True, null=True, editable=False)
