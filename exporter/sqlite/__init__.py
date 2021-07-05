@@ -30,13 +30,13 @@ from pathlib import Path
 from django.apps import apps
 from django.conf import settings
 
+from exporter.sqlite import plan
 from exporter.sqlite import runner
-from exporter.sqlite import script
 from exporter.sqlite import tasks  # noqa
 
 
-def make_export_script(sqlite: runner.Runner) -> script.ImportScript:
-    import_script = script.ImportScript()
+def make_export_plan(sqlite: runner.Runner) -> plan.Plan:
+    import_script = plan.Plan()
     names = (name.split(".")[0] for name in settings.DOMAIN_APPS)
     models = chain(*[apps.get_app_config(name).get_models() for name in names])
     for model in models:
@@ -52,5 +52,5 @@ def make_export(path: Path):
     sqlite = runner.Runner(path)
     sqlite.make_empty_database()
 
-    script = make_export_script(sqlite)
-    sqlite.run_sqlite_script(script.operations)
+    plan = make_export_plan(sqlite)
+    sqlite.run_operations(plan.operations)

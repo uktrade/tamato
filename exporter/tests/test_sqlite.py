@@ -7,7 +7,7 @@ from unittest import mock
 import pytest
 
 from common.tests import factories
-from exporter.sqlite import script
+from exporter.sqlite import plan
 from exporter.sqlite import tasks
 from exporter.sqlite.runner import Runner
 from workbaskets.validators import WorkflowStatus
@@ -17,6 +17,14 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(scope="module")
 def sqlite_template() -> Path:
+    """
+    Provides a template SQLite file with the correct TaMaTo schema but without
+    any data.
+
+    This makes tests quicker because it skips the (slow) step of applying
+    migrations to create a new db. This file lasts for as long as all of the
+    tests in this module are executing and is then cleaned up.
+    """
     with tempfile.TemporaryDirectory() as f:
         template_db = Path(f) / "template.db"
         Runner(template_db).make_empty_database()
@@ -25,6 +33,8 @@ def sqlite_template() -> Path:
 
 @pytest.fixture(scope="function")
 def sqlite_database(sqlite_template) -> Path:
+    """Copies the template file to a new location that will be cleaned up at the
+    end of one test."""
     with tempfile.TemporaryDirectory() as f:
         test_path = Path(f) / "test.db"
         shutil.copyfile(sqlite_template, test_path)
@@ -51,6 +61,8 @@ FACTORIES_EXPORTED = [
     ids=(f._meta.model.__name__ for f in FACTORIES_EXPORTED),
 )
 def test_table_export(factory, sqlite_database: Path):
+    """Check that it's possible to export each table that we want in the
+    output."""
     published = factory.create(
         transaction__workbasket__status=WorkflowStatus.PUBLISHED,
     )
@@ -60,9 +72,9 @@ def test_table_export(factory, sqlite_database: Path):
 
     table = factory._meta.model._meta.db_table
     run = Runner(sqlite_database)
-    ops = script.ImportScript()
+    ops = plan.Plan()
     ops.add_table(factory._meta.model, list(run.read_column_order(table)))
-    run.run_sqlite_script(ops.operations)
+    run.run_operations(ops.operations)
 
     conn = sqlite3.connect(sqlite_database)
     rows = conn.execute(f"SELECT * FROM {table}").fetchall()
@@ -88,6 +100,7 @@ VALIDITY_FACTORIES_EXPORTED = [
     ("no_end", "normal"),
 )
 def test_valid_between_export(factory, date_ranges, date_range, sqlite_database: Path):
+    """Check that the exported date range columns contain the correct values."""
     object = factory.create(
         transaction__workbasket__status=WorkflowStatus.PUBLISHED,
         valid_between=getattr(date_ranges, date_range),
@@ -95,9 +108,9 @@ def test_valid_between_export(factory, date_ranges, date_range, sqlite_database:
 
     table = factory._meta.model._meta.db_table
     run = Runner(sqlite_database)
-    ops = script.ImportScript()
+    ops = plan.Plan()
     ops.add_table(factory._meta.model, list(run.read_column_order(table)))
-    run.run_sqlite_script(ops.operations)
+    run.run_operations(ops.operations)
 
     conn = sqlite3.connect(sqlite_database)
     validity_start, validity_end = conn.execute(
@@ -112,6 +125,13 @@ def test_valid_between_export(factory, date_ranges, date_range, sqlite_database:
 
 
 def test_export_task_does_not_reupload():
+    """
+    If a file has already been generated for this database state, we don't need
+    to upload it again.
+
+    This idempotency allows us to regularly run an export check without
+    constantly uploading files and wasting bandwidth/money.
+    """
     factories.ApprovedTransactionFactory.create(order="999")  # seed file
     factories.ApprovedTransactionFactory.create(order="123")
 
@@ -131,6 +151,7 @@ def test_export_task_does_not_reupload():
 
 
 def test_export_task_uploads():
+    """The export system should actually upload a file to S3."""
     factories.ApprovedTransactionFactory.create(order="999")  # seed file
     factories.ApprovedTransactionFactory.create(order="123")
 
@@ -147,6 +168,9 @@ def test_export_task_uploads():
 
 
 def test_export_task_ignores_unapproved_transactions():
+    """Only transactions that have been approved should be included in the
+    upload as draft data may be sensitive and unpublished, and shouldn't be
+    included."""
     factories.ApprovedTransactionFactory.create(order="999")  # seed file
     factories.ApprovedTransactionFactory.create(order="123")
     factories.UnapprovedTransactionFactory.create(order="124")

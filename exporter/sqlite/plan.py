@@ -80,17 +80,17 @@ value, and the SQL will be run for every value returned by the queryset.
 """
 
 
-class ImportScript:
+class Plan:
     """
-    An SQLite script that can be run to import data from the attached PostgreSQL
-    database.
+    A set of operations that can be applied to an SQLite database to import data
+    from the attached PostgreSQL database.
 
-    By default, the script will just set up and finalize the database. Tables
-    can be added and the data for them will be queried when the script is
+    By default, the plan will just set up and finalize the database. Tables
+    can be added and the data for them will be queried when the plan is
     executed.
 
-    Once the script is finished, access the operations using the ``operations``
-    property.
+    Once the plan is finished, access the operations using the ``operations``
+    property and run them using a :class:`~exporter.sqlite.runner.Runner`.
     """
 
     def __init__(self) -> None:

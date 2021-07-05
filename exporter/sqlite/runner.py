@@ -9,7 +9,7 @@ from typing import Iterator
 
 from django.conf import settings
 
-from exporter.sqlite.script import Operation
+from exporter.sqlite.plan import Operation
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class Runner:
             for column in cursor.fetchall():
                 yield column[1]
 
-    def run_sqlite_script(self, script: Iterable[Operation]):
+    def run_operations(self, operations: Iterable[Operation]):
         """Runs the supplied sequence of operations against the SQLite
         database."""
         with sqlite3.connect(
@@ -85,7 +85,7 @@ class Runner:
             isolation_level=None,
         ) as connection:
             cursor = connection.cursor()
-            for operation in script:
+            for operation in operations:
                 logger.debug("%s: %s", self.db, operation[0])
                 try:
                     cursor.executemany(*operation)

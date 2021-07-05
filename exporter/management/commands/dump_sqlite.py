@@ -7,7 +7,7 @@ from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
 from exporter.sqlite import make_export
-from exporter.sqlite import make_export_script
+from exporter.sqlite import make_export_plan
 from exporter.sqlite import runner
 from exporter.sqlite import tasks
 
@@ -40,7 +40,7 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         logger.info(f"Dumping tariff database to {options['destination']}")
         if options["dry_run"]:
-            print(make_export_script(runner.Runner(options["destination"])).operations)
+            print(make_export_plan(runner.Runner(options["destination"])).operations)
         elif options["make_only"]:
             make_export(options["destination"])
         else:
