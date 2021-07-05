@@ -35,15 +35,16 @@ Notes
 
 
 describe('Regulations', () => {
-    context('Filters regulation', () => {
-        it('Search by ID', () => {
+    context('Filter', () => {
+        it('Regulation by ID', () => {
             // FR-001 - Verify home page can be displayed.
             // --
             cy.visit('http://localhost:8000/')
             cy.title()
                 .should('include', 'Manage trade tariffs | Manage Trade Tariffs')
 
-            // FR-02 - Verify can click link containing text “Find and edit regulations”.
+            // FR-002 - Verify can click link that navigates to
+            // "Find and edit regulations" page.
             // --
             // An example of Cypress's best practice of using a "data-""
             // attribute. Here using data-tt (tt="test target", rather than the
@@ -54,25 +55,30 @@ describe('Regulations', () => {
             //cy.get('a').contains('Find and edit regulations').click()
 
             // FR-003 - Verify “Find and edit regulations” page is displayed.
+            // --
             cy.get('h1')
                 .should('contain', 'Find and edit regulations')
 
             // FR-004 - Verify user can enter search text.
+            // --
             cy.get('input#id_search')
                 .type('R9600060')
 
             // FR-005 - Verify user can submit search text.
+            // --
             cy.get('#id_submit')
                 .click()
 
             // FR-006 - Verify search results contains regulation.
             // FR-007 - Verify user can click regulation R9600060.
+            // --
             cy.get('a')
                 .contains('R9600060')
                 .click()
 
             // FR-008 - Verify regulation details page displays regulation
             // ID “R9600060”.
+            // --
             cy.url()
                 .should('include', 'R9600060')
 
@@ -80,8 +86,24 @@ describe('Regulations', () => {
             cy.screenshot()
         })
     })
-})
 
-// 
-// filippo.raimondi@digital.trade.gov.uk
-// 
+    context('Create', () => {
+        it('Regulation', () => {
+            // FR-001 - Verify home page can be displayed.
+            // --
+            cy.visit('http://localhost:8000/')
+            cy.title()
+                .should('include', 'Manage trade tariffs | Manage Trade Tariffs')
+
+            // FR-002 - Verify can click link that navigates to
+            // “Create regulations” page.
+            // --
+            // An example of Cypress's best practice of using a "data-""
+            // attribute. Here using data-tt (tt="test target", rather than the
+            // data-cy suggested by Cypress):
+            cy.get('[data-tt="create-regulations"]')
+                .click()
+
+        })
+    })
+})
