@@ -3,13 +3,12 @@
 
 Questions
 --
+* What approaches are there to rebuilding test database - TaMaTo DB is big.
+* How is context data around failures preserved?
 * How do we persist DOM snapshots?
 * Where are DOM snapshots stored?
 * Best practices for pipeline integration.
-* What approaches are there to rebuilding test database - TaMaTo DB is big.
-* How is context data around failures preserved>
 
-Thoughts
 Notes
 --
 * Cypress best practice suggests using a 'data-cy' attribute to target
@@ -33,6 +32,7 @@ Notes
   - Visiting external sites.
   - Coupling tests.
 **/
+
 
 describe('Regulations', () => {
     context('Filters regulation', () => {
@@ -71,19 +71,17 @@ describe('Regulations', () => {
                 .contains('R9600060')
                 .click()
 
+            // FR-008 - Verify regulation details page displays regulation
+            // ID “R9600060”.
             cy.url()
                 .should('include', 'R9600060')
 
+            // We can even take screenshots.
             cy.screenshot()
         })
     })
 })
 
-// demo
-// 
-// show linda's user journey
-// show cypress running against tamato
-// 
 // 
 // filippo.raimondi@digital.trade.gov.uk
 // 
