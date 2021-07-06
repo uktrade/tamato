@@ -9,7 +9,9 @@ from common.serializers import ValiditySerializerMixin
 from common.tests import factories
 from common.tests.models import TestModel1
 from importer import models
+from importer import parsers
 from importer.handlers import BaseHandler
+from importer.namespaces import Tag
 from importer.nursery import TariffObjectNursery
 from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType
@@ -20,6 +22,20 @@ def object_nursery() -> TariffObjectNursery:
     nursery = get_nursery()
     yield nursery
     nursery.cache.clear()
+
+
+@pytest.fixture
+def mock_xml_model() -> Type[parsers.ElementParser]:
+    class TestParser(parsers.ElementParser, parsers.ValidityMixin):
+        record_code = "01"
+        subrecord_code = "01"
+
+        tag = Tag("test.model.1")
+
+        sid = parsers.IntElement(Tag("sid"))
+        name = parsers.TextElement(Tag("name"))
+
+    return TestParser
 
 
 @pytest.fixture
@@ -35,31 +51,34 @@ def mock_serializer() -> Type[ModelSerializer]:
 
 
 @pytest.fixture
-def handler_class(mock_serializer) -> Type[BaseHandler]:
+def handler_class(mock_serializer, mock_xml_model) -> Type[BaseHandler]:
     class TestHandler(BaseHandler):
         serializer_class = mock_serializer
-        tag = "test_handler"
+        xml_model = mock_xml_model
 
     return TestHandler
 
 
 @pytest.fixture
-def handler_class_with_dependencies(mock_serializer) -> Type[BaseHandler]:
+def handler_class_with_dependencies(
+    mock_serializer,
+    mock_xml_model,
+) -> Type[BaseHandler]:
     class TestHandler2(BaseHandler):
         serializer_class = mock_serializer
-        tag = "test_handler_dep2"
+        xml_model = mock_xml_model
 
     @TestHandler2.register_dependant
     class TestHandler1(BaseHandler):
         dependencies = [TestHandler2]
         serializer_class = mock_serializer
-        tag = "test_handler_dep1"
+        xml_model = mock_xml_model
 
     return TestHandler1
 
 
 @pytest.fixture
-def handler_class_with_links(mock_serializer) -> Type[BaseHandler]:
+def handler_class_with_links(mock_serializer, mock_xml_model) -> Type[BaseHandler]:
     class TestHandler(BaseHandler):
         links = [
             {
@@ -68,7 +87,7 @@ def handler_class_with_links(mock_serializer) -> Type[BaseHandler]:
             },
         ]
         serializer_class = mock_serializer
-        tag = "test_handler"
+        xml_model = mock_xml_model
 
     return TestHandler
 

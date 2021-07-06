@@ -9,19 +9,19 @@ from importer.handlers import BaseHandler
 pytestmark = pytest.mark.django_db
 
 
-def test_handler_registers_on_definition(object_nursery, mock_serializer):
+def test_handler_registers_on_definition(
+    object_nursery,
+    mock_serializer,
+    mock_xml_model,
+):
     assert "test_handler_registers_on_definition" not in object_nursery.handlers
 
     class TestHandler(handlers.BaseHandler):
         serializer_class = mock_serializer
-        tag = "test_handler_registers_on_definition"
+        xml_model = mock_xml_model
 
-    assert "test_handler_registers_on_definition" in object_nursery.handlers
-
-    assert (
-        object_nursery.get_handler("test_handler_registers_on_definition")
-        is TestHandler
-    )
+    assert mock_xml_model.tag.name in object_nursery.handlers
+    assert object_nursery.get_handler(mock_xml_model.tag.name) is TestHandler
 
 
 def test_handler_validates_clean_data(prepped_handler):
@@ -45,7 +45,12 @@ def test_handler_pre_save(prepped_handler):
     assert merged_data == {"a": 1, "b": 2, "c": 3, "d": 4}
 
 
-def test_handler_custom_pre_save(mock_serializer, handler_test_data, object_nursery):
+def test_handler_custom_pre_save(
+    mock_serializer,
+    mock_xml_model,
+    handler_test_data,
+    object_nursery,
+):
     class TestCustomPreSaveError(Exception):
         pass
 
@@ -54,10 +59,10 @@ def test_handler_custom_pre_save(mock_serializer, handler_test_data, object_nurs
             {
                 "model": TestModel1,
                 "name": "test_model_1",
-            }
+            },
         ]
         serializer_class = mock_serializer
-        tag = "test_handler"
+        xml_model = mock_xml_model
 
         def pre_save(self, data, links):
             raise TestCustomPreSaveError
@@ -68,7 +73,12 @@ def test_handler_custom_pre_save(mock_serializer, handler_test_data, object_nurs
         handler.dispatch()
 
 
-def test_handler_custom_post_save(mock_serializer, handler_test_data, object_nursery):
+def test_handler_custom_post_save(
+    mock_serializer,
+    mock_xml_model,
+    handler_test_data,
+    object_nursery,
+):
     class TestCustomPostSaveError(Exception):
         pass
 
@@ -77,10 +87,10 @@ def test_handler_custom_post_save(mock_serializer, handler_test_data, object_nur
             {
                 "model": TestModel1,
                 "name": "test_model_1",
-            }
+            },
         ]
         serializer_class = mock_serializer
-        tag = "test_handler"
+        xml_model = mock_xml_model
 
         def post_save(self, obj):
             raise TestCustomPostSaveError
@@ -92,13 +102,14 @@ def test_handler_custom_post_save(mock_serializer, handler_test_data, object_nur
 
 
 def test_generate_dependency_keys(
-    prepped_handler_with_dependencies1, prepped_handler_with_dependencies2
+    prepped_handler_with_dependencies1,
+    prepped_handler_with_dependencies2,
 ):
     assert prepped_handler_with_dependencies1.dependency_keys == {
-        prepped_handler_with_dependencies2.key
+        prepped_handler_with_dependencies2.key,
     }
     assert prepped_handler_with_dependencies2.dependency_keys == {
-        prepped_handler_with_dependencies1.key
+        prepped_handler_with_dependencies1.key,
     }
 
 
@@ -107,7 +118,8 @@ def test_failed_resolve_dependencies_returns_false(prepped_handler_with_dependen
 
 
 def test_resolve_dependencies_returns_true(
-    prepped_handler_with_dependencies1, prepped_handler_with_dependencies2
+    prepped_handler_with_dependencies1,
+    prepped_handler_with_dependencies2,
 ):
     nursery = prepped_handler_with_dependencies1.nursery
     nursery._cache_handler(prepped_handler_with_dependencies2)
@@ -118,13 +130,19 @@ def test_resolve_dependencies_returns_true(
 def test_get_generic_link(prepped_handler):
     test_instance = factories.TestModel1Factory()
     obj_instance = prepped_handler.get_generic_link(
-        TestModel1, {"sid": test_instance.sid}
+        TestModel1,
+        {"sid": test_instance.sid},
     )
 
     assert (test_instance, False) == obj_instance
 
 
-def test_get_custom_link(mock_serializer, handler_test_data, object_nursery):
+def test_get_custom_link(
+    mock_serializer,
+    mock_xml_model,
+    handler_test_data,
+    object_nursery,
+):
     class TestGetCustomLinkError(Exception):
         pass
 
@@ -133,10 +151,10 @@ def test_get_custom_link(mock_serializer, handler_test_data, object_nursery):
             {
                 "model": TestModel1,
                 "name": "test_model_1",
-            }
+            },
         ]
         serializer_class = mock_serializer
-        tag = "test_handler"
+        xml_model = mock_xml_model
 
         def get_test_model_1_link(self, model, kwargs):
             raise TestGetCustomLinkError
@@ -165,11 +183,13 @@ def test_failed_optional_resolve_links_returns_true(prepped_handler_with_link):
 
 def test_dispatch(prepped_handler):
     assert not TestModel1.objects.filter(
-        sid=prepped_handler.data["sid"], name=prepped_handler.data["name"]
+        sid=prepped_handler.data["sid"],
+        name=prepped_handler.data["name"],
     ).exists()
     prepped_handler.dispatch()
     assert TestModel1.objects.filter(
-        sid=prepped_handler.data["sid"], name=prepped_handler.data["name"]
+        sid=prepped_handler.data["sid"],
+        name=prepped_handler.data["name"],
     ).exists()
 
 
