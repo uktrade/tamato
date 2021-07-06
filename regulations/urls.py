@@ -20,12 +20,12 @@ ui_patterns = [
         name="regulation-ui-list",
     ),
     path(
-        "create",
+        "create/",
         views.RegulationCreate.as_view(),
         name="regulation-ui-create",
     ),
     path(
-        "confirm-create",
+        "confirm-create/",
         views.RegulationConfirmCreate.as_view(),
         name="regulation-ui-confirm-create",
     ),
