@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import xml.etree.ElementTree as etree
+from datetime import timedelta
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -14,6 +15,8 @@ from django.db.models.expressions import Expression
 from django.db.models.expressions import Func
 from django.db.models.expressions import Value
 from django.db.models.expressions import When
+from django.db.models.fields import DateField
+from django.db.models.functions.comparison import Cast
 from django.db.models.functions.text import Lower
 from django.db.models.functions.text import Upper
 
@@ -388,7 +391,16 @@ class RangeUpperElement(TextElement):
     """Represents an element that is the upper part of a range."""
 
     null_condition = "upper_inf"
-    format_expression = Upper
+
+    def format_expression(self, field_name: str) -> Expression:
+        return Cast(
+            Upper(field_name, output_field=DateField())
+            - Case(
+                When(**{f"{field_name}__upper_inc": True}, then=timedelta(days=0)),
+                default=timedelta(days=1),
+            ),
+            output_field=DateField(),
+        )
 
     def serializer(self, field_name: str, **kwargs) -> Expression:
         real_field = "_".join(field_name.split("_")[0:2])
