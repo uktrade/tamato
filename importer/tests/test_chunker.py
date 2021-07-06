@@ -13,7 +13,7 @@ pytestmark = pytest.mark.django_db
 def get_chunk_opener(id: str) -> bytes:
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
-        '<env:envelope xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" '
+        '<env:envelope xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" '
         f'xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" id="{id:0>6}">'
     ).encode()
 
