@@ -1,10 +1,13 @@
-from logging import disable
 from django import forms
+from django.template import Context
+from django.utils.safestring import SafeString
+
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Fixed
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -85,6 +88,37 @@ class RegulationCreateForm(ValidityPeriodForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        public_identifier_details_table = HTML.table(
+            headers=("Regulation type", "public identifier"),
+            rows=(
+                (
+                    "Secondary legislation",
+                    SafeString(
+                        "All secondary legislation is lodged on "
+                        "https://www.legislation.gov.uk and is searchable via its "
+                        "year and unique identifier. The public-facing identifier "
+                        "is written in the form <strong>2019 No. 345</strong>"
+                    )
+                ),
+                (
+                    "Tertiary legislation",
+                    SafeString(
+                        "Public notices are created on www.gov.uk. Their "
+                        "public-facing identifiers are written in the form "
+                        "<strong>Taxation Notice: 2019/007</strong>"
+                    )
+                )
+            )
+        ).render(None, None, Context({}))
+        public_identifier_details = HTML.details(
+            "Help with public identifiers",
+            SafeString(
+                "Public regulation identifiers take the following forms, "
+                "depending on the kind of regulation that is being set up."
+            ) + public_identifier_details_table
+        )
+
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -92,6 +126,7 @@ class RegulationCreateForm(ValidityPeriodForm):
             Fieldset(
                 "regulation_usage",
                 "public_identifier",
+                public_identifier_details,
                 "url",
                 "regulation_group",
                 "title",
