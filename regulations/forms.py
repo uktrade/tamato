@@ -1,5 +1,5 @@
 from django import forms
-from django.template import Context
+from django.template import loader
 from django.utils.safestring import SafeString
 
 
@@ -31,12 +31,6 @@ class RegulationCreateForm(ValidityPeriodForm):
     # * published_date - apply this form field to Regulation.published_at when
     #   saving.
     # * sequence_number - coerce and munge (with what?).
-    #
-    # Help messages
-    # --
-    # * Add public_identifiers help messages.
-    # * Add regulation_group help messages.
-    # * Add sequence_number help messages.
 
     class Meta:
         model = Regulation
@@ -86,38 +80,18 @@ class RegulationCreateForm(ValidityPeriodForm):
         help_text=Regulation._meta.get_field("approved").help_text,
     )
 
+    def _load_details_from_template(self, title, template_path):
+        public_identifier_details_content = loader.render_to_string(
+            template_path
+        )
+        return HTML.details(
+            title,
+            SafeString(public_identifier_details_content)
+        )
+
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        public_identifier_details_table = HTML.table(
-            headers=("Regulation type", "public identifier"),
-            rows=(
-                (
-                    "Secondary legislation",
-                    SafeString(
-                        "All secondary legislation is lodged on "
-                        "https://www.legislation.gov.uk and is searchable via its "
-                        "year and unique identifier. The public-facing identifier "
-                        "is written in the form <strong>2019 No. 345</strong>"
-                    )
-                ),
-                (
-                    "Tertiary legislation",
-                    SafeString(
-                        "Public notices are created on www.gov.uk. Their "
-                        "public-facing identifiers are written in the form "
-                        "<strong>Taxation Notice: 2019/007</strong>"
-                    )
-                )
-            )
-        ).render(None, None, Context({}))
-        public_identifier_details = HTML.details(
-            "Help with public identifiers",
-            SafeString(
-                "Public regulation identifiers take the following forms, "
-                "depending on the kind of regulation that is being set up."
-            ) + public_identifier_details_table
-        )
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -126,9 +100,16 @@ class RegulationCreateForm(ValidityPeriodForm):
             Fieldset(
                 "regulation_usage",
                 "public_identifier",
-                public_identifier_details,
+                self._load_details_from_template(
+                    "Help with public identifiers",
+                    "regulations/help_public_identifiers.html"
+                ),
                 "url",
                 "regulation_group",
+                self._load_details_from_template(
+                    "Help with regulation group",
+                    "regulations/help_regulation_group.html"
+                ),
                 "title",
                 "start_date",
                 "end_date",
@@ -136,6 +117,10 @@ class RegulationCreateForm(ValidityPeriodForm):
                 Field.text(
                     "sequence_number",
                     field_width=Fixed.FIVE,
+                ),
+                self._load_details_from_template(
+                    "Help with sequence number",
+                    "regulations/help_sequence_number.html"
                 ),
                 "approved",
             ),
