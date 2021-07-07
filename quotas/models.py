@@ -73,6 +73,10 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     def __str__(self):
         return self.order_number
 
+    @property
+    def autocomplete_label(self):
+        return str(self)
+
     def in_use(self):
         return (
             self.measure_set.model.objects.filter(

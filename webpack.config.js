@@ -1,9 +1,9 @@
 const path = require("path");
-const webpack = require('webpack');
 const BundleTracker = require('webpack-bundle-tracker');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
+  mode: process.env.ENV == "production" ? "production" : "development",
   context: __dirname,
   entry: {
       main: [

@@ -27,7 +27,7 @@ from common import exceptions
 from common import validators
 from common.exceptions import IllegalSaveError
 from common.exceptions import NoDescriptionError
-from common.models import TimestampedMixin
+from common.models.mixins import TimestampedMixin
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 

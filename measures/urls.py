@@ -5,7 +5,7 @@ from rest_framework import routers
 from measures import views
 
 api_router = routers.DefaultRouter()
-api_router.register(r"measure_types", views.MeasureTypeViewSet)
+api_router.register(r"measure_types", views.MeasureTypeViewSet, basename="measuretype")
 
 ui_patterns = [
     path(

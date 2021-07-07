@@ -96,6 +96,10 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     def __str__(self):
         return self.item_id
 
+    @property
+    def autocomplete_label(self):
+        return f"{self} - {self.get_description().description}"
+
     def in_use(self):
         return (
             self.measures.model.objects.filter(

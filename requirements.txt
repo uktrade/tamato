@@ -21,7 +21,7 @@ django-sequences==2.6
 django-staff-sso-client==3.1.0
 django-storages==1.11.1
 django-treebeard==4.5.1
-django-webpack-loader==0.7.0
+django-webpack-loader==1.0.0
 djangorestframework==3.12.2
 drf-flex-fields==0.8.9
 elastic-apm==6.0.0

@@ -5,6 +5,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.models import TrackedModel
+from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
 from common.views import BusinessRulesMixin
 from common.views import TamatoListView
@@ -15,22 +16,16 @@ from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilter
 from footnotes.filters import FootnoteFilterBackend
-from footnotes.serializers import FootnoteSerializer
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftUpdateView
 
 
-class FootnoteViewSet(viewsets.ModelViewSet):
+class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows footnotes to be viewed and edited."""
 
-    queryset = (
-        models.Footnote.objects.latest_approved()
-        .select_related("footnote_type")
-        .prefetch_related("descriptions")
-    )
-    serializer_class = FootnoteSerializer
+    serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [FootnoteFilterBackend]
     search_fields = [
@@ -39,6 +34,14 @@ class FootnoteViewSet(viewsets.ModelViewSet):
         "descriptions__description",
         "footnote_type__description",
     ]
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return (
+            models.Footnote.objects.approved_up_to_transaction(tx)
+            .select_related("footnote_type")
+            .prefetch_related("descriptions")
+        )
 
 
 class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -53,11 +56,7 @@ class FootnoteMixin:
     model: Type[TrackedModel] = models.Footnote
 
     def get_queryset(self):
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        tx = WorkBasket.get_current_transaction(self.request)
         return models.Footnote.objects.approved_up_to_transaction(tx).select_related(
             "footnote_type",
         )
@@ -67,11 +66,7 @@ class FootnoteDescriptionMixin:
     model: Type[TrackedModel] = models.FootnoteDescription
 
     def get_queryset(self):
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        tx = WorkBasket.get_current_transaction(self.request)
         return models.FootnoteDescription.objects.approved_up_to_transaction(tx)
 
 

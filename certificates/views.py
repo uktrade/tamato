@@ -7,9 +7,10 @@ from certificates import business_rules
 from certificates import forms
 from certificates import models
 from certificates.filters import CertificateFilter
-from certificates.serializers import CertificateSerializer
+from certificates.filters import CertificateFilterBackend
 from certificates.serializers import CertificateTypeSerializer
 from common.models import TrackedModel
+from common.serializers import AutoCompleteSerializer
 from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -22,10 +23,17 @@ from workbaskets.views.generic import DraftUpdateView
 class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows certificates to be viewed."""
 
-    queryset = models.Certificate.objects.all()
-    serializer_class = CertificateSerializer
+    serializer_class = AutoCompleteSerializer
+    filter_backends = [CertificateFilterBackend]
     permission_classes = [permissions.IsAuthenticated]
-    search_fields = ["sid", "code"]
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return (
+            models.Certificate.objects.approved_up_to_transaction(tx)
+            .select_related("certificate_type")
+            .prefetch_related("descriptions")
+        )
 
 
 class CertificateTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -40,11 +48,7 @@ class CertificateMixin:
     model: Type[TrackedModel] = models.Certificate
 
     def get_queryset(self):
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        tx = WorkBasket.get_current_transaction(self.request)
         return models.Certificate.objects.approved_up_to_transaction(tx).select_related(
             "certificate_type",
         )
@@ -91,11 +95,7 @@ class CertificateDescriptionMixin:
     model: Type[TrackedModel] = models.CertificateDescription
 
     def get_queryset(self):
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        tx = WorkBasket.get_current_transaction(self.request)
         return models.CertificateDescription.objects.approved_up_to_transaction(tx)
 
 

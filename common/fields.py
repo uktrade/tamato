@@ -5,9 +5,12 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.postgres.fields import DateRangeField
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
+from django.forms import ModelChoiceField
+from django.urls import reverse_lazy
 from psycopg2.extras import DateRange
 
 from common import validators
+from common.forms import AutocompleteWidget
 from common.util import TaricDateRange
 from common.util import TaricDateTimeRange
 
@@ -105,3 +108,20 @@ class TaricDateRangeField(DateRangeField):
 
 class TaricDateTimeRangeField(DateTimeRangeField):
     range_type = TaricDateTimeRange
+
+
+class AutoCompleteField(ModelChoiceField):
+    def __init__(self, *args, **kwargs):
+        qs = kwargs["queryset"]
+        self.widget = AutocompleteWidget(
+            attrs={
+                "label": kwargs.get("label", ""),
+                "help_text": kwargs.get("help_text"),
+                "source_url": reverse_lazy(f"{qs.model._meta.model_name}-list"),
+                **kwargs.pop("attrs", {}),
+            },
+        )
+        super().__init__(*args, **kwargs)
+
+    def prepare_value(self, value):
+        return self.to_python(value)

@@ -100,6 +100,10 @@ class Footnote(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
 
+    @property
+    def autocomplete_label(self):
+        return f"{self} - {self.get_description().description}"
+
     def _used_in(self, dependent_type: Type[TrackedModel]):
         return (
             dependent_type.objects.filter(

@@ -5,7 +5,11 @@ from rest_framework import routers
 from quotas import views
 
 api_router = routers.DefaultRouter()
-api_router.register(r"quota_order_numbers", views.QuotaOrderNumberViewset)
+api_router.register(
+    r"quota_order_numbers",
+    views.QuotaOrderNumberViewset,
+    basename="quotaordernumber",
+)
 api_router.register(r"quota_order_number_origins", views.QuotaOrderNumberOriginViewset)
 api_router.register(
     r"quota_order_number_origin_exclusions",
