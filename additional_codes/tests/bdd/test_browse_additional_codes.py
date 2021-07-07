@@ -18,9 +18,12 @@ def additional_code_search(search_term, client):
 
 
 @then("the search result should contain the additional code searched for")
-def additional_code_list(additional_code_search):
+def additional_code_list(additional_code_search, additional_code_X000):
     results = additional_code_search.json()["results"]
     assert len(results) == 1
     result = results[0]
-    assert result["code"] == "000"
-    assert result["type"]["sid"] == "X"
+    assert (
+        result["label"]
+        == f"{additional_code_X000} - {additional_code_X000.get_description().description}"
+    )
+    assert result["value"] == additional_code_X000.pk

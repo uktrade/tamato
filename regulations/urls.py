@@ -11,7 +11,7 @@ register_converter(RegulationIdConverter, "reg_id")
 register_converter(RegulationRoleTypeConverter, "reg_type")
 
 api_router = routers.DefaultRouter()
-api_router.register(r"regulations", views.RegulationViewSet)
+api_router.register(r"regulations", views.RegulationViewSet, basename="regulation")
 
 ui_patterns = [
     path(

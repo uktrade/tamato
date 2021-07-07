@@ -224,6 +224,10 @@ class Regulation(TrackedModel):
     def __str__(self):
         return str(self.regulation_id)
 
+    @property
+    def autocomplete_label(self):
+        return f"{self} - {self.information_text}"
+
     def used_as_terminating_regulation_or_draft_generating_and_terminating_regulation(
         self,
     ):

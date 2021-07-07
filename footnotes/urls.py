@@ -11,7 +11,11 @@ register_converter(FootnoteIdConverter, "footnote_id")
 register_converter(FootnoteTypeIdConverter, "footnote_type_id")
 
 api_router = routers.DefaultRouter()
-api_router.register(r"footnotes", views.FootnoteViewSet)
+api_router.register(
+    r"footnotes",
+    views.FootnoteViewSet,
+    basename="footnote",
+)
 api_router.register(r"footnote_types", views.FootnoteTypeViewSet)
 
 detail = "<footnote_type_id:footnote_type__footnote_type_id><footnote_id:footnote_id>"
