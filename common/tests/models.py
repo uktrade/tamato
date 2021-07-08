@@ -2,6 +2,7 @@
 database outside of a test environment."""
 from django.db import models
 
+from common.fields import NumericSID
 from common.fields import ShortDescription
 from common.models import TrackedModel
 from common.models.mixins.description import DescriptionMixin
@@ -15,7 +16,7 @@ class TestModel1(TrackedModel, ValidityMixin):
 
     taric_template = "test_template"
 
-    sid = models.PositiveIntegerField()
+    sid = NumericSID()
     name = models.CharField(max_length=24, null=True)
 
 
