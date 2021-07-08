@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 from datetime import date
 from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import Optional
+from typing import TypeVar
 
 from django.db import models
 from django.db.models import Case
@@ -14,6 +17,8 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
+from django.db.models.base import Model
+from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
 from django.template import loader
@@ -27,9 +32,16 @@ from common import exceptions
 from common import validators
 from common.exceptions import IllegalSaveError
 from common.exceptions import NoDescriptionError
-from common.models.mixins import TimestampedMixin
+from common.fields import NumericSID
+from common.fields import SignedIntSID
+from common.models import TimestampedMixin
+from common.renderers import Counter
+from common.renderers import counter_generator
+from common.util import classproperty
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
+
+Cls = TypeVar("Cls")
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet):
@@ -451,13 +463,13 @@ class TrackedModel(PolymorphicModel):
         return template_name
 
     def new_version(
-        self,
+        self: Cls,
         workbasket,
         transaction=None,
         save: bool = True,
         update_type: UpdateType = UpdateType.UPDATE,
         **overrides,
-    ):
+    ) -> Cls:
         """
         Return a new version of the object. Callers can override existing data
         by passing in keyword args.
@@ -480,14 +492,8 @@ class TrackedModel(PolymorphicModel):
         new_object_kwargs = {
             field.name: getattr(self, field.name)
             for field in self._meta.fields
-            if field.name
-            not in (
-                self._meta.pk.name,
-                "transaction",
-                "polymorphic_ctype",
-                "trackedmodel_ptr",
-                "id",
-            )
+            if field is self._meta.get_field("version_group")
+            or field.name not in self.system_set_field_names
         }
 
         new_object_kwargs["update_type"] = update_type
@@ -667,6 +673,189 @@ class TrackedModel(PolymorphicModel):
                 return getattr(self, field_name).current_version
 
         return self.__getattribute__(item)
+
+    _meta: Options
+
+    @classmethod
+    def get_sid_counters(cls, transaction=None) -> Dict[Model, Dict[Field, Counter]]:
+        """
+        Returns a dictionary of counter objects that when called will return the
+        next available SID for a given field (assuming that noone else has
+        written to the database at the same time – each counter uses a cached
+        value).
+
+        This also includes SIDs for any model that references this one via a
+        foreign key.
+        """
+        all_models = {
+            *(
+                field.related_model
+                for field in cls._meta.get_fields()
+                if field.one_to_many
+            ),
+            cls,
+        }
+
+        sid_fields = {
+            model: {
+                f
+                for f in model._meta.get_fields()
+                if isinstance(f, (SignedIntSID, NumericSID))
+            }
+            for model in all_models
+        }
+
+        sid_counters = defaultdict(dict)
+        for model in sid_fields:
+            for field in sid_fields[model]:
+                max_sid = model.objects.approved_up_to_transaction(
+                    transaction,
+                ).aggregate(max=Max(field.name))["max"]
+                sid_counters[model][field] = counter_generator((max_sid or 0) + 1)
+
+        return sid_counters
+
+    # Fields that we don't want to copy from one object to a new one, either
+    # because they will be set by the system automatically or because we will
+    # always want to override them.
+    system_set_field_names = {
+        "is_current",
+        "version_group",
+        "polymorphic_ctype",
+        "id",
+        "update_type",
+        "trackedmodel_ptr",
+        "transaction",
+    }
+
+    @classproperty
+    def copyable_fields(cls):
+        """
+        Return the set of fields that can have their values copied from one
+        model to another.
+
+        This is anything that is:
+        - a native value
+        - a foreign key to some other model
+        """
+        return {
+            field
+            for field in cls._meta.get_fields()
+            if not any((field.many_to_many, field.one_to_many))
+            and field.name not in cls.system_set_field_names
+        }
+
+    @classproperty
+    def subrecord_relations(cls):
+        """
+        Returns a set of relations to this model's TARIC subrecords.
+
+        E.g, a :class:`~measures.models.Measure` and a
+        :class:`measures.models.MeasureComponent` are in the same "logical
+        record" but are different data models because they are many-to-one.
+        """
+        return {
+            field
+            for field in cls._meta.get_fields()
+            if field.one_to_many
+            and field.related_model is not cls
+            and issubclass(field.related_model, TrackedModel)
+            and field.related_model.record_code == cls.record_code
+        }
+
+    def copy(
+        self: Cls,
+        transaction,
+        sid_counters: Dict[Model, Dict[Field, Counter]] = None,
+        **overrides: Any,
+    ) -> Cls:
+        """
+        Create a copy of the model as a new logical domain object – i.e. with a
+        new version group, new SID (if present) and update type of CREATE.
+
+        Any dependent models that are TARIC subrecords of this model will be
+        copied as well. Any many-to-many relationships will also be duplicated
+        if they do not have an explicit through model.
+
+        Any overrides passed in as keyword arguments will be applied to the new
+        model. If the model uses SIDs, they will be automatically set to the
+        next highest available SID. Models with other identifying fields should
+        have thier new IDs passed in through overrides.
+
+        ``sid_counters``, if specified, will be used to get the new SIDs for
+        this model and any dependent models. If ``copy`` is to be called in a
+        loop, consider calling ``cls.get_sid_counters(…)`` and passing the
+        result in to improve performance (working out max SIDs is slow).
+        """
+
+        # Remove any fields from the basic data that are overriden, because
+        # otherwise when we convert foreign keys to IDs (below) Django will
+        # ignore the object from the overrides and just take the ID from the
+        # basic data.
+        basic_fields = self.copyable_fields
+        for field_name in overrides:
+            field = self._meta.get_field(field_name)
+            basic_fields.remove(field)
+
+        if not sid_counters:
+            sid_counters = self.get_sid_counters(transaction)
+
+        # Build the dictionary of data that the new model will have. Convert any
+        # foreign key into an id because ``value_from_object`` returns PKs.
+        model_data = {
+            f.name
+            + (
+                "_id" if any((f.many_to_one, f.one_to_one)) else ""
+            ): f.value_from_object(self)
+            for f in basic_fields
+        }
+
+        # If this model has any SIDs, override them with the next highest value.
+        sid_overrides = {
+            field.name: next_sid()
+            for field, next_sid in sid_counters.get(type(self), {}).items()
+        }
+
+        new_object_data = {
+            **model_data,
+            **sid_overrides,
+            "transaction": transaction,
+            "update_type": validators.UpdateType.CREATE,
+            **overrides,
+        }
+        new_object = type(self).objects.create(**new_object_data)
+
+        # Now copy any many-to-many fields with an auto-created through model.
+        # These must be handled after creation of the new model. We only need to
+        # do this for auto-created models because others will be handled below.
+        deferred_set_fields = {
+            field
+            for field in self._meta.get_fields()
+            if field.many_to_many
+            and hasattr(field.remote_field, "through")
+            and field.remote_field.through._meta.auto_created
+        }
+        for field in deferred_set_fields:
+            getattr(new_object, field.name).set(field.value_from_object(self))
+
+        # Now go and create copies of all of the models that reference this one
+        # with a foreign key that are part of the same record family. Find all
+        # of the related models and then recursively call copy on them, but with
+        # the new model substituted in place of this one. It's done this way to
+        # give these related models a chance to increment SIDs, etc.
+        for field in self.subrecord_relations:
+            if field.related_name is not None:
+                queryset = getattr(self, field.related_name)
+            else:
+                queryset = getattr(self, field.name + "_set")
+
+            reverse_field_name = field.field.name
+            for model in queryset.approved_up_to_transaction(transaction):
+                model.copy(
+                    transaction, sid_counters, **{reverse_field_name: new_object}
+                )
+
+        return new_object
 
     @atomic
     def save(self, *args, force_write=False, **kwargs):
