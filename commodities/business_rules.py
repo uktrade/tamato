@@ -260,9 +260,12 @@ class NIG30(BusinessRule):
     period of the goods nomenclature must span the validity period of the goods
     measure."""
 
+    def matching_measures(self, good):
+        return good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
+
     def validate(self, good):
         if (
-            good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
+            self.matching_measures(good)
             .with_effective_valid_between()
             .approved_up_to_transaction(good.transaction)
             .exclude(db_effective_valid_between__contained_by=good.valid_between)
@@ -271,20 +274,13 @@ class NIG30(BusinessRule):
             raise self.violation(good)
 
 
-class NIG31(BusinessRule):
+class NIG31(NIG30):
     """When a goods nomenclature is used in an additional nomenclature measure
     then the validity period of the goods nomenclature must span the validity
     period of the additional nomenclature measure."""
 
-    def validate(self, good):
-        # XXX is this the correct interpretation?
-        if (
-            good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
-            .filter(additional_code__isnull=False)
-            .exclude(additional_code__valid_between__contained_by=good.valid_between)
-            .exists()
-        ):
-            raise self.violation(good)
+    def matching_measures(self, good):
+        return super().matching_measures(good).filter(additional_code__isnull=False)
 
 
 class NIG34(PreventDeleteIfInUse):
