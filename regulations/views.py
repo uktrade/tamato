@@ -1,4 +1,6 @@
+from common.models import transactions
 from django.http.response import HttpResponseRedirect
+from django.urls import reverse_lazy
 from rest_framework import viewsets
 
 from common.views import TamatoListView
@@ -41,6 +43,15 @@ class RegulationCreate(DraftCreateView):
     form_class = RegulationCreateForm
 
     def form_valid(self, form):
+        transaction = self.get_transaction()
+        transaction.save()
+        # CreateView.get_success_url() override relies upon a valid self.object.
+        self.object = form.save(commit=False)
+        self.object.update_type = self.UPDATE_TYPE
+        self.object.transaction = transaction
+        self.object.save()
+        # Tamato's CreateView.get_success_url() relies upon Regulation's base
+        # class generating URLs for the main views.
         return HttpResponseRedirect(self.get_success_url())
 
 

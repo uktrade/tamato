@@ -28,8 +28,6 @@ class RegulationCreateForm(ValidityPeriodForm):
     # * title - coerce and munge (with what?).
     # * valid_between - manage ValidityPeriodForm cleaned data
     #       cleaned_data = super().clean()
-    # * published_date - apply this form field to Regulation.published_at when
-    #   saving.
     # * sequence_number - coerce and munge (with what?).
 
     class Meta:
@@ -39,10 +37,7 @@ class RegulationCreateForm(ValidityPeriodForm):
             "public_identifier",
             "url",
             "regulation_group",
-            #"title",
             "valid_between",
-            #"published_at",
-            #"sequence_number",
             "approved",
         ]
 
@@ -53,7 +48,8 @@ class RegulationCreateForm(ValidityPeriodForm):
         label="URL",
         widget=forms.TextInput(attrs={"type": "url"}),
     )
-    regulation_group = ChoiceField(
+    regulation_group_proxy = ChoiceField(
+        label="Regulation group",
         choices= [("", "")] + [
             (group.pk, f"{group.group_id}: {group.description}")
                 for group in Group.objects.all().order_by("group_id")
@@ -93,6 +89,12 @@ class RegulationCreateForm(ValidityPeriodForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Tweak to default end_date help text.
+        self.fields["end_date"].help_text = (
+            "Leave the end date empty if the regulation is required for an "
+            "unlimited amount of time."
+        )
+
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -105,7 +107,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                     "regulations/help_public_identifiers.html"
                 ),
                 "url",
-                "regulation_group",
+                "regulation_group_proxy",
                 self._load_details_from_template(
                     "Help with regulation group",
                     "regulations/help_regulation_group.html"
@@ -126,3 +128,10 @@ class RegulationCreateForm(ValidityPeriodForm):
             ),
             Submit("submit", "Save"),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["regulation_group"] = Group.objects.get(
+            pk=cleaned_data["regulation_group_proxy"]
+        )
+        return cleaned_data
