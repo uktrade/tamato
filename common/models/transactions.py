@@ -1,4 +1,6 @@
 """Transaction model and manager."""
+from __future__ import annotations
+
 import json
 
 from django.conf import settings
@@ -106,6 +108,23 @@ class Transaction(TimestampedMixin):
     def add_to_transaction(self, instance, **kwargs):
         if hasattr(instance, "transaction"):
             instance.transaction = self
+
+    @classmethod
+    def latest_approved(cls) -> Transaction:
+        """Returns the transaction most recently committed to the global stream
+        of approved transactions."""
+        WorkBasket = cls._meta.get_field("workbasket").related_model
+        WorkflowStatus = type(WorkBasket._meta.get_field("status").default)
+        return (
+            cls.objects.exclude(
+                workbasket=WorkBasket.objects.first(),
+            )
+            .filter(
+                workbasket__status__in=WorkflowStatus.approved_statuses(),
+            )
+            .order_by("order")
+            .last()
+        )
 
 
 class TransactionGroup(models.Model):

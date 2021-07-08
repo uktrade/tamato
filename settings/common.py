@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import uuid
+from datetime import timedelta
 from os.path import abspath
 from os.path import dirname
 from os.path import join
@@ -82,18 +83,21 @@ if os.getenv("ELASTIC_TOKEN"):
         "SERVER_TIMEOUT": os.getenv("ELASTIC_TIMEOUT", "20s"),
     }
 
-TAMATO_APPS = [
+DOMAIN_APPS = [
     "common",
     "additional_codes.apps.AdditionalCodesConfig",
     "certificates.apps.CertificatesConfig",
     "commodities.apps.CommoditiesConfig",
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
-    "hmrc_sdes",
-    "importer",
     "measures.apps.MeasuresConfig",
     "quotas.apps.QuotasConfig",
     "regulations.apps.RegulationsConfig",
+]
+
+TAMATO_APPS = [
+    "hmrc_sdes",
+    "importer",
     # XXX need to keep this for migrations. delete later.
     "taric",
     "workbaskets",
@@ -102,7 +106,7 @@ TAMATO_APPS = [
     "crispy_forms_gds",
 ]
 
-INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS]
+INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS, *DOMAIN_APPS]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -211,6 +215,8 @@ DATABASES = {
     "default": dj_database_url.parse(DB_URL),
 }
 
+SQLITE = DB_URL.startswith("sqlite")
+
 # -- Cache
 
 CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
@@ -280,6 +286,10 @@ TIME_ZONE = "UTC"
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
+# SQLite AWS settings
+SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME")
+SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
+
 # Default AWS settings.
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
@@ -308,6 +318,13 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
+CELERY_BEAT_SCHEDULE = {
+    "sqlite_export": {
+        "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
+        "schedule": timedelta(minutes=30),
+    },
+}
+
 # -- Logging
 
 LOGGING = {
@@ -329,6 +346,10 @@ LOGGING = {
             "level": "WARNING",
         },
         "importer": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+        },
+        "exporter": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
         },

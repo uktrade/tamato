@@ -511,7 +511,7 @@ class TrackedModel(PolymorphicModel):
         return self.__class__.objects.filter(query)
 
     def get_description(self):
-        return self.get_descriptions().last()
+        return self.get_descriptions(transaction=self.transaction).last()
 
     def get_descriptions(self, transaction=None) -> TrackedModelQuerySet:
         """

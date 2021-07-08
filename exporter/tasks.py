@@ -14,6 +14,7 @@ from django.db.models import QuerySet
 from django.db.transaction import atomic
 
 from common.util import TableLock
+from exporter import sqlite
 from exporter.models import Upload
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
@@ -217,3 +218,5 @@ def send_upload_notifications(self, upload_status_data):
 upload_workbaskets = (
     upload_workbasket_envelopes.s(upload_status_data={}) | send_upload_notifications.s()
 )
+
+export_and_upload_sqlite = sqlite.tasks.export_and_upload_sqlite

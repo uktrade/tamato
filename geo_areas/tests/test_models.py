@@ -68,3 +68,18 @@ def test_geo_area_in_use(in_use_check_respects_deletes):
         factories.MeasureFactory,
         "geographical_area",
     )
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.GeographicalAreaFactory,
+        factories.GeographicalMembershipFactory,
+        factories.GeographicalAreaDescriptionFactory,
+    ],
+)
+def test_geo_area_update_types(
+    factory,
+    check_update_validation,
+):
+    assert check_update_validation(factory)

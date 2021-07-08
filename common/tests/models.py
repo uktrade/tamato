@@ -2,7 +2,9 @@
 database outside of a test environment."""
 from django.db import models
 
+from common.fields import ShortDescription
 from common.models import TrackedModel
+from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 
 
@@ -37,14 +39,14 @@ class TestModel3(TrackedModel, ValidityMixin):
     linked_model = models.ForeignKey(TestModel1, null=True, on_delete=models.PROTECT)
 
 
-class TestModelDescription1(TrackedModel, ValidityMixin):
+class TestModelDescription1(DescriptionMixin, TrackedModel):
     __test__ = False
     record_code = "01"
     subrecord_code = "02"
 
     identifying_fields = (
         "described_record__sid",
-        "valid_between",
+        "validity_start",
     )
 
     described_record = models.ForeignKey(
@@ -52,4 +54,4 @@ class TestModelDescription1(TrackedModel, ValidityMixin):
         on_delete=models.PROTECT,
         related_name="descriptions",
     )
-    description = models.CharField(max_length=500)
+    description = ShortDescription()

@@ -9,7 +9,11 @@ from exporter import views
 @pytest.mark.django_db
 def test_activity_stream(admin_client: Client):
     certificate_type = factories.CertificateTypeFactory.create()
-    factories.CertificateFactory.create_batch(50, certificate_type=certificate_type)
+    factories.CertificateFactory.create_batch(
+        50,
+        certificate_type=certificate_type,
+        description=None,
+    )
     response = admin_client.get(reverse("activity-stream"))
 
     assert response.status_code == 200

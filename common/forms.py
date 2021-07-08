@@ -2,6 +2,7 @@ from datetime import date
 
 from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -14,6 +15,10 @@ from django.template import loader
 from django.utils.safestring import mark_safe
 
 from common.util import TaricDateRange
+
+
+class DescriptionHelpBox(Div):
+    template = "components/description_help.jinja"
 
 
 class AutocompleteWidget(Widget):

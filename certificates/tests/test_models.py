@@ -21,3 +21,18 @@ def test_certificate_in_user(in_use_check_respects_deletes):
         factories.MeasureConditionFactory,
         "required_certificate",
     )
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.CertificateTypeFactory,
+        factories.CertificateFactory,
+        factories.CertificateDescriptionFactory,
+    ],
+)
+def test_certificate_update_types(
+    factory,
+    check_update_validation,
+):
+    assert check_update_validation(factory)

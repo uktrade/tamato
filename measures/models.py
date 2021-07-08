@@ -4,6 +4,7 @@ from typing import Set
 from django.db import models
 from polymorphic.managers import PolymorphicManager
 
+from common.business_rules import UpdateValidity
 from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -48,6 +49,7 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.MTS1,
         business_rules.MTS2,
+        UpdateValidity,
     )
 
     def in_use(self):
@@ -84,6 +86,8 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
         business_rules.ME63,
     )
 
+    business_rules = (UpdateValidity,)
+
 
 class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
     """
@@ -115,6 +119,8 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
         quotas_business_rules.QD11,
     )
 
+    business_rules = (UpdateValidity,)
+
 
 class Measurement(TrackedModel, ValidityMixin):
     """
@@ -145,6 +151,8 @@ class Measurement(TrackedModel, ValidityMixin):
         business_rules.ME62,
     )
 
+    business_rules = (UpdateValidity,)
+
 
 class MonetaryUnit(TrackedModel, ValidityMixin):
     """The monetary unit identifies the currency code used in the system."""
@@ -171,6 +179,8 @@ class MonetaryUnit(TrackedModel, ValidityMixin):
         business_rules.ME61,
         quotas_business_rules.QD8,
     )
+
+    business_rules = (UpdateValidity,)
 
 
 class DutyExpression(TrackedModel, ValidityMixin):
@@ -210,6 +220,8 @@ class DutyExpression(TrackedModel, ValidityMixin):
         business_rules.ME110,
         business_rules.ME111,
     )
+
+    business_rules = (UpdateValidity,)
 
 
 class MeasureType(TrackedModel, ValidityMixin):
@@ -268,6 +280,7 @@ class MeasureType(TrackedModel, ValidityMixin):
         business_rules.MT4,
         business_rules.MT7,
         business_rules.MT10,
+        UpdateValidity,
     )
 
     def __str__(self):
@@ -320,6 +333,8 @@ class AdditionalCodeTypeMeasureType(TrackedModel, ValidityMixin):
 
     identifying_fields = ("measure_type", "additional_code_type")
 
+    business_rules = (UpdateValidity,)
+
 
 class MeasureConditionCode(TrackedModel, ValidityMixin):
     """A measure condition code identifies a broad area where conditions are
@@ -344,6 +359,7 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.MC1,
         business_rules.MC4,
+        UpdateValidity,
     )
 
     def used_in_component(self):
@@ -386,6 +402,7 @@ class MeasureAction(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.MA1,
         business_rules.MA2,
+        UpdateValidity,
     )
 
     def in_use(self):
@@ -527,6 +544,7 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME110,
         business_rules.ME111,
         business_rules.ME104,
+        UpdateValidity,
     )
 
     objects = PolymorphicManager.from_queryset(MeasuresQuerySet)()
@@ -688,6 +706,7 @@ class MeasureComponent(TrackedModel):
         business_rules.ME50,
         business_rules.ME51,
         business_rules.ME52,
+        UpdateValidity,
     )
 
 
@@ -767,6 +786,7 @@ class MeasureCondition(TrackedModel):
         business_rules.ME62,
         business_rules.ME63,
         business_rules.ME64,
+        UpdateValidity,
     )
 
     class Meta:
@@ -882,6 +902,7 @@ class MeasureConditionComponent(TrackedModel):
         business_rules.ME105,
         business_rules.ME106,
         business_rules.ME108,
+        UpdateValidity,
     )
 
 
@@ -909,6 +930,7 @@ class MeasureExcludedGeographicalArea(TrackedModel):
         business_rules.ME66,
         business_rules.ME67,
         business_rules.ME68,
+        UpdateValidity,
     )
 
 
@@ -936,4 +958,5 @@ class FootnoteAssociationMeasure(TrackedModel):
         business_rules.ME70,
         business_rules.ME71,
         business_rules.ME73,
+        UpdateValidity,
     )
