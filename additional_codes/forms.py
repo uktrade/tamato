@@ -134,8 +134,9 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
             models.AdditionalCode.objects.filter(type__sid=instance.type.sid)
             .approved_up_to_transaction(tx)
             .aggregate(Max("sid"))["sid__max"]
-        )
+        ) or 0
         instance.sid = highest_sid + 1
+
         if commit:
             instance.save()
         return instance
