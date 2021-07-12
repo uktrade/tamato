@@ -1,21 +1,26 @@
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
 from common.views import TrackedModelDetailView
 from quotas import models
 from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
+from workbaskets.models import WorkBasket
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows quota order numbers to be viewed."""
 
-    queryset = models.QuotaOrderNumber.objects.has_approved_state()
-    serializer_class = serializers.QuotaOrderNumberSerializer
+    serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [OrderNumberFilterBackend]
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
 
 
 class QuotaOrderNumberOriginViewset(viewsets.ReadOnlyModelViewSet):

@@ -286,6 +286,10 @@ class MeasureType(TrackedModel, ValidityMixin):
     def __str__(self):
         return str(self.sid)
 
+    @property
+    def autocomplete_label(self):
+        return f"{self} - {self.description}"
+
     def in_use(self):
         return (
             Measure.objects.filter(measure_type__sid=self.sid)

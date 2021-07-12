@@ -31,52 +31,44 @@ def regulations_search(client):
 
 
 @then("the search result should contain the regulation searched for")
-def regulations_list(regulations_search):
+def regulations_list(regulations_search, regulation_C2000000):
     results = regulations_search.json()["results"]
     assert len(results) == 1
     result = results[0]
-    assert result["regulation_id"] == "C2000000"
+    assert (
+        result["label"]
+        == f"{regulation_C2000000.regulation_id} - {regulation_C2000000.information_text}"
+    )
+    assert result["value"] == regulation_C2000000.pk
 
 
 @pytest.fixture
 @when("I select regulation C2000000")
 def regulation_details(client, regulation_C2000000):
     return client.get(
-        reverse("regulation-detail", kwargs={"pk": regulation_C2000000.pk})
+        reverse(
+            "regulation-ui-detail",
+            kwargs={
+                "role_type": regulation_C2000000.role_type,
+                "regulation_id": regulation_C2000000.regulation_id,
+            },
+        ),
     )
 
 
 @then("a summary of the core information should be presented")
-def regulation_core_data(regulation_details):
-    result = regulation_details.json()
-    assert {
-        "url",
-        "role_type",
-        "regulation_id",
-        "information_text",
-        "approved",
-        "replacement_indicator",
-        "stopped",
-        "effective_end_date",
-        "community_code",
-        "regulation_group",
-        "valid_between",
-        "amends",
-        "amendments",
-        "extends",
-        "extensions",
-        "suspends",
-        "suspensions",
-        "terminates",
-        "terminations",
-        "replaces",
-        "replacements",
-        "subrecord_code",
-        "official_journal_page",
-        "record_code",
-        "published_date",
-        "update_type",
-        "end_date",
-        "start_date",
-        "official_journal_number",
-    } <= set(result.keys())
+def regulation_core_data(regulation_details, regulation_C2000000):
+    reg = regulation_C2000000
+    result = regulation_details.content.decode()
+    assert all(
+        value in result
+        for value in [
+            reg.regulation_id,
+            f"{reg.regulation_group.group_id}: {reg.regulation_group.description}",
+            reg.information_text,
+            reg.public_identifier,
+            reg.url,
+            f"{reg.valid_between.lower:%d %b %Y}",
+            reg.transaction.workbasket.get_status_display(),
+        ]
+    )

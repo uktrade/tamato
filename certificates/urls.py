@@ -11,7 +11,11 @@ register_converter(CertificateSIDConverter, "cert_sid")
 register_converter(CertificateTypeSIDConverter, "ctype_sid")
 
 api_router = routers.DefaultRouter()
-api_router.register(r"certificates", views.CertificatesViewSet)
+api_router.register(
+    r"certificates",
+    views.CertificatesViewSet,
+    basename="certificate",
+)
 api_router.register(r"certificate_types", views.CertificateTypeViewSet)
 
 detail = "<ctype_sid:certificate_type__sid><cert_sid:sid>"

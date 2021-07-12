@@ -7,10 +7,12 @@ from certificates.validators import COMBINED_CERTIFICATE_AND_TYPE_ID
 from common.filters import ActiveStateMixin
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import TamatoFilter
+from common.filters import TamatoFilterBackend
+from common.filters import TamatoFilterMixin
 from common.filters import type_choices
 
 
-class CertificateFilter(TamatoFilter, ActiveStateMixin):
+class CertificateFilterMixin(TamatoFilterMixin):
     search_fields = (
         StringAgg("certificate_type__sid", delimiter=" "),
         "sid",
@@ -19,6 +21,16 @@ class CertificateFilter(TamatoFilter, ActiveStateMixin):
 
     search_regex = COMBINED_CERTIFICATE_AND_TYPE_ID
 
+
+class CertificateFilterBackend(TamatoFilterBackend, CertificateFilterMixin):
+    pass
+
+
+class CertificateFilter(
+    TamatoFilter,
+    CertificateFilterMixin,
+    ActiveStateMixin,
+):
     certificate_type = LazyMultipleChoiceFilter(
         choices=type_choices(models.CertificateType.objects.latest_approved()),
         widget=forms.CheckboxSelectMultiple,

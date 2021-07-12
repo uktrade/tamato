@@ -379,3 +379,11 @@ def validate_taric_xml_record_order(xml):
                     f"Elements out of order in XML: {last_code}, {full_code}",
                 )
             last_code = full_code
+
+
+class AutoCompleteSerializer(serializers.BaseSerializer):
+    def to_representation(self, instance):
+        return {
+            "value": instance.pk,
+            "label": instance.autocomplete_label,
+        }

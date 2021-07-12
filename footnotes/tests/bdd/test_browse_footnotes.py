@@ -18,11 +18,12 @@ def footnotes_search(client):
 
 
 @then("the search result should contain the footnote searched for")
-def footnotes_list(footnotes_search):
+def footnotes_list(footnotes_search, footnote_NC000):
     results = footnotes_search.json()["results"]
     assert len(results) == 1
     result = results[0]
     assert (
-        result["footnote_type"]["footnote_type_id"] == "NC"
-        and result["footnote_id"] == "000"
+        result["label"]
+        == f"{footnote_NC000} - {footnote_NC000.get_description().description}"
+        and result["value"] == footnote_NC000.pk
     )

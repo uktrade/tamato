@@ -91,6 +91,10 @@ class AdditionalCode(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"{self.type.sid}{self.code}"
 
+    @property
+    def autocomplete_label(self):
+        return f"{self} - {self.get_description().description}"
+
     def in_use(self):
         return (
             self.measure_set.model.objects.filter(

@@ -32,11 +32,7 @@ class GeographicalAreaDescriptionMixin:
     model: Type[TrackedModel] = GeographicalAreaDescription
 
     def get_queryset(self):
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        tx = WorkBasket.get_current_transaction(self.request)
         return GeographicalAreaDescription.objects.approved_up_to_transaction(tx)
 
 
