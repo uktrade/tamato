@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from datetime import date
 from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import Optional
 from typing import Set
@@ -10,20 +11,29 @@ from typing import TypeVar
 
 from django.db import models
 from django.db.models import Case
+from django.db.models import CharField
 from django.db.models import F
 from django.db.models import Field
 from django.db.models import Max
 from django.db.models import Q
+from django.db.models import RowRange
 from django.db.models import Value
 from django.db.models import When
+from django.db.models import Window
 from django.db.models.expressions import Expression
+from django.db.models.functions import Cast
+from django.db.models.functions import Lag
+from django.db.models.functions import NullIf
 from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
+from django.forms import IntegerField
 from django.template import loader
 from django.urls import NoReverseMatch
 from django.urls import reverse
+from django.utils.functional import classproperty
 from django_cte import CTEQuerySet
+from django_cte import With
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
@@ -35,7 +45,7 @@ from common.exceptions import NoDescriptionError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
-from common.util import classproperty
+from common.util import resolve_fields
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
@@ -43,6 +53,33 @@ Cls = TypeVar("Cls")
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
+    def with_sequence_markers(self):
+
+        window = Window(
+            expression=Lag(self.model.identifying_fields[0]),
+            partition_by=[""],
+            order_by=F(self.model.identifying_fields[0]).asc(),
+            frame=RowRange(start=0, end=1),
+        )
+
+        previous_sid_field = Cast(
+            NullIf(window, F("sid")),
+            CharField(),
+        )
+
+        # partition =   assuming this may not be needed?
+
+        with_prev_added = With(
+            self.annotate(
+                previous_sid=previous_sid_field,
+            ),
+        )
+        # return (
+        #     with_prev_added.join(self.model, pk=)
+        # )
+
+        return with_prev_added
+
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
@@ -211,14 +248,59 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
         # Generates case statements to do the mapping from model to record_code and subrecord_code.
         return self.annotate(
             record_code=Case(
-                *(TrackedModelQuerySet._when_model_record_codes()),
+                *(TrackedModelQuerySet._when_model_attribute("record_code")),
                 output_field=models.CharField(),
             ),
             subrecord_code=Case(
-                *(TrackedModelQuerySet._when_model_subrecord_codes()),
+                *(TrackedModelQuerySet._when_model_field_or_value("subrecord_code")),
                 output_field=models.CharField(),
             ),
         )
+
+    def annotate_concrete_sid(self, f, alias_name):
+        # Django can only compare fields of the same type, CharField to a CharField is OK, but
+        # CharField to an IntegerField is not.
+        #
+        # Different types of field are separated by creating aliases with a prefix for each field type
+        # charfield_{fieldname}, integerfield_{fieldname}
+        #
+        # These aliases are comparable with each other, e.g. using Windowing functions.
+        #
+        # Lastly, an alias with the original alias_name is created, that casts the original field to
+        # a CharField.
+        q = self
+        for field_type in [CharField, IntegerField]:
+            for model in TrackedModel.__subclasses__():
+                print(
+                    model,
+                    f(model),
+                    isinstance(getattr(model, f(model).name), field_type),
+                )
+            print()
+            comparable_models = [
+                model
+                for model in TrackedModel.__subclasses__()
+                if isinstance(f(model), field_type)
+            ]
+
+            print("comparable_models:", comparable_models)
+            for model in comparable_models:
+                comparable_alias_name = f"{field_type.__name__.lower()}_{alias_name}"
+                real_field_name = f(model)
+                q = q.alias(
+                    **{
+                        comparable_alias_name: Case(
+                            *(
+                                TrackedModelQuerySet._when_model_field_or_value(
+                                    real_field_name,
+                                )
+                            ),
+                            output_field=field_type(),
+                        ),
+                    }
+                ).annotate(comparable_alias_name=(F(comparable_alias_name)))
+
+        return q
 
     def _get_current_related_lookups(
         self, model, *lookups, prefix="", recurse_level=0
@@ -287,7 +369,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
         )
 
     @staticmethod
-    def _when_model_record_codes():
+    def _when_model_attribute(name):
         """
         Iterate all TrackedModel subclasses, generating When statements that map
         the model to its record_code.
@@ -301,36 +383,73 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
                     polymorphic_ctype__app_label=model._meta.app_label,
                     polymorphic_ctype__model=model._meta.model_name,
                 ),
-                then=Value(model.record_code),
+                then=Value(getattr(model, name)),
             )
             for model in TrackedModel.__subclasses__()
         ]
 
     @staticmethod
-    def _subrecord_value_or_f(model):
-        """Return F function or Value to fetch subrecord_code in a query."""
-        if isinstance(model.subrecord_code, DeferredAttribute):
-            return F(f"{model._meta.model_name}__subrecord_code")
-        return Value(model.subrecord_code)
-
-    @staticmethod
-    def _when_model_subrecord_codes():
+    def _when_dynamic_model_field(f, models=None):
         """
         Iterate all TrackedModel subclasses, generating When statements that map
-        the model to its subrecord_code.
+        the model to its record_code.
 
-        This function is a little more complex than when_model_record_codes as
-        subrecord_code may be a standard class attribute or a ForeignKey.
+        If any of the models start using a foreign key then this function will
+        need to be updated.
         """
+        if models is None:
+            models = TrackedModel.__subclasses__()
+
         return [
             When(
                 Q(
                     polymorphic_ctype__app_label=model._meta.app_label,
                     polymorphic_ctype__model=model._meta.model_name,
                 ),
-                then=TrackedModelQuerySet._subrecord_value_or_f(model),
+                then=f(model),
             )
-            for model in TrackedModel.__subclasses__()
+            for model in models
+        ]
+
+    @staticmethod
+    def _create_attribute_accessor(model, name):
+        """
+        Return F(name) or Value(name) to fetch an attribute in a query.
+
+        Used in TrackedModel queries when it cannot be known ahead
+        of time which which method is appropriate.
+
+        :param name: Model instance.
+        :param name: Name of attribute.
+        """
+        value = getattr(model, name)
+        if isinstance(value, DeferredAttribute):
+            return F(f"{model._meta.model_name}__{name}")
+        return Value(value)
+
+    @staticmethod
+    def _when_model_field_or_value(field_name, models=None):
+        """
+        Iterate all TrackedModel subclasses, generating When statements that map
+        the model to its the supplied field.
+
+        This is used to retrieve subrecord_code which may be a class attribute or
+        model field.
+
+        :param field_name: Field name.
+        """
+        if models is None:
+            models = TrackedModel.__subclasses__()
+
+        return [
+            When(
+                Q(
+                    polymorphic_ctype__app_label=model._meta.app_label,
+                    polymorphic_ctype__model=model._meta.model_name,
+                ),
+                then=TrackedModelQuerySet._create_attribute_accessor(model, field_name),
+            )
+            for model in models
         ]
 
 
@@ -341,6 +460,10 @@ class VersionGroup(TimestampedMixin):
         null=True,
         related_query_name="is_current",
     )
+
+
+class TrackedModelManager(PolymorphicManager):
+    pass
 
 
 class TrackedModel(PolymorphicModel):
@@ -383,7 +506,7 @@ class TrackedModel(PolymorphicModel):
     these fields.
     """
 
-    objects: TrackedModelQuerySet = PolymorphicManager.from_queryset(
+    objects: TrackedModelQuerySet = TrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
 
@@ -610,6 +733,48 @@ class TrackedModel(PolymorphicModel):
 
         return fields
 
+    @classmethod
+    def get_class_identifying_fields(
+        cls,
+        identifying_fields: Optional[Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        """This is the same as get_identifying_fields, but for Model class not
+        the instance."""
+        identifying_fields = identifying_fields or cls.identifying_fields
+        return resolve_fields(cls, identifying_fields)
+
+    @classmethod
+    def get_sequential_field(cls) -> str:
+        """
+        Summaries output a list of changes, grouped by sequence.
+
+        By default if a field named "sid" is present and it is an IntegerField or one
+        its subclasses then this will be used.
+
+        Deriving classes can override this to use other fields.
+        """
+        for qualified_name, field in cls.get_class_identifying_fields().items():
+            from common.fields import SignedIntSID
+
+            # print("q, f", qualified_name, field, type(field), issubclass(type(field), SignedIntSID), isinstance(field, SignedIntSID))
+            if qualified_name == "sid" and (
+                issubclass(type(field), SignedIntSID)
+                or issubclass(type(field), NumericSID)
+            ):
+                return field
+
+    @classmethod
+    def get_non_sequential_identifying_fields(cls):
+        """
+        :return:  List of identifying fields other than the sequential field.
+        """
+        sequential_field = cls.get_sequential_field()
+        return [
+            qualified_name
+            for qualified_name in cls.get_class_identifying_fields().keys()
+            if qualified_name != sequential_field.name
+        ]
+
     @property
     def structure_code(self):
         return str(self)
@@ -673,6 +838,16 @@ class TrackedModel(PolymorphicModel):
         return self.__getattribute__(item)
 
     _meta: Options
+
+    @classmethod
+    def __dir__(cls):
+        keys = set(cls.__dict__.keys())
+        keys.update(f"{field.name}_current" for field, _ in cls.get_relations())
+
+        for model in cls.mro():
+            keys.update(super(model).__dir__())
+
+        return [*sorted(keys)]
 
     @classproperty
     def auto_value_fields(cls) -> Set[Field]:

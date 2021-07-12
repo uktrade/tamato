@@ -294,7 +294,7 @@ def must_exist():
     exist.
 
     Usage:
-        assert must_exist("field_name", LinkedModelFactory, ModelFactory)
+        assert must_exist("name", LinkedModelFactory, ModelFactory)
     """
 
     # TODO drop the `dependency_name` argument, as with validity_period_contained
@@ -319,11 +319,11 @@ def validity_period_contained(date_ranges):
     within the validity period of the specified model.
 
     Usage:
-        assert validity_period_contained("field_name", ContainerModelFactory, ContainedModelFactory)
+        assert validity_period_contained("name", ContainerModelFactory, ContainedModelFactory)
     """
 
     # TODO drop the `dependency_name` argument, inspect the model for a ForeignKey to
-    # the specified container model. Add `field_name` kwarg for disambiguation if
+    # the specified container model. Add `name` kwarg for disambiguation if
     # multiple ForeignKeys.
 
     def check(dependency_name, dependency_factory, dependent_factory):

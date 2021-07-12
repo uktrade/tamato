@@ -1,5 +1,10 @@
 from django.db import models
 
+# class TransactionStatus(models.TextChoices):
+#     DRAFT = "Draft"
+#
+#     PUBLISHED = ""
+
 
 class WorkflowStatus(models.TextChoices):
     # Newly started, but not yet submitted into workflow

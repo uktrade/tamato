@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django_cte import CTEQuerySet
 
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
@@ -30,7 +31,7 @@ class TransactionManager(models.Manager):
         )
 
 
-class TransactionQueryset(models.QuerySet):
+class TransactionQueryset(CTEQuerySet):
     def ordered_tracked_models(self):
         """TrackedModel in order of their transactions creation order."""
 
@@ -38,7 +39,7 @@ class TransactionQueryset(models.QuerySet):
             transaction__in=self,
         ).order_by(
             "transaction__order",
-        )  # order_by record_code, subrecord_code already happened in get_queryset
+        )  # order_by record_code, subrecord_code already happened in TransactionManager.get_queryset
         return tracked_models
 
 
@@ -60,7 +61,7 @@ class Transaction(TimestampedMixin):
         related_name="transactions",
     )
 
-    # The order this transaction appears within the workbasket
+    # For draft transactions, order is per workbasket, once published order is global.
     order = models.IntegerField()
 
     composite_key = models.CharField(max_length=16, unique=True)

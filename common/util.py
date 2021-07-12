@@ -2,20 +2,23 @@
 from __future__ import annotations
 
 from platform import python_version_tuple
+from typing import List
 from typing import Optional
 from typing import TypeVar
 from typing import Union
 
 import wrapt
-from django.db import transaction
 from django.db.models import F
+from django.db.models import ForeignObject
 from django.db.models import Func
 from django.db.models import Model
 from django.db.models import Value
 from django.db.models.fields import Field
 from django.db.models.fields import IntegerField
 from django.db.models.functions import Cast
+from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
+from django.db.transaction import get_connection
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
 
@@ -166,6 +169,31 @@ def get_field_tuple(model, field):
     return field, value
 
 
+def resolve_field(model: Model, qualified_name: str):
+    """Given a Model class and a qualified field name, return the field
+    instance."""
+    # TODO - this looks similar to get_field_tuple above, can these be merged ?
+    location = model
+    for name in qualified_name.split("__"):
+        location = location._meta.get_field(name)
+        if isinstance(location, DeferredAttribute):
+            location = location.field
+        elif isinstance(location, ForeignObject):
+            location = location.related_model
+        # TODO - raise NotImplementedError ?
+
+    return location
+
+
+def resolve_fields(model: Model, qualified_names: List[str]):
+    """Given a Model class and a a list of qualified names of fields return a
+    list of field instances."""
+    return {
+        qualified_name: resolve_field(model, qualified_name)
+        for qualified_name in qualified_names
+    }
+
+
 class TableLock:
     ACCESS_SHARE = "ACCESS SHARE"
     ROW_SHARE = "ROW SHARE"
@@ -193,7 +221,7 @@ class TableLock:
         Decorator for PostgreSQL's table-level lock functionality.
 
         Example:
-            @transaction.commit_on_success
+            @commit_on_success
             @require_lock(MyModel, lock=TableLock.ACCESS_EXCLUSIVE)
             def myview(request)
                 ...
@@ -210,7 +238,7 @@ class TableLock:
         @wrapt.decorator
         def wrapper(wrapped, instance, args, kwargs):
             with atomic():
-                with transaction.get_connection().cursor() as cursor:
+                with get_connection().cursor() as cursor:
                     for model in models:
                         cursor.execute(f"LOCK TABLE {model._meta.db_table}")
 

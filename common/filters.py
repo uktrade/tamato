@@ -41,7 +41,7 @@ def field_to_layout(field_name, field):
     """
     Converts fields into their GDS styled counterparts.
 
-    If the counterpart is unknown, return the field_name as default
+    If the counterpart is unknown, return the name as default
     """
     if isinstance(field, forms.CharField):
         return Field.text(field_name, label_size=Size.SMALL)
