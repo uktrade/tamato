@@ -8,6 +8,7 @@ module.exports = {
   entry: {
       main: [
         './common/static/common/js/application.js',
+        './common/static/common/js/step-by-step-nav.js',
         './common/static/common/scss/application.scss'
       ]
   },

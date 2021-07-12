@@ -366,6 +366,12 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
+    class Meta:
+        ordering = ["code"]
+
+    def __str__(self):
+        return f"{self.code} - {self.description}"
+
     def used_in_component(self):
         return (
             MeasureConditionComponent.objects.filter(
@@ -408,6 +414,12 @@ class MeasureAction(TrackedModel, ValidityMixin):
         business_rules.MA2,
         UpdateValidity,
     )
+
+    class Meta:
+        ordering = ["code"]
+
+    def __str__(self):
+        return f"{self.code} - {self.description}"
 
     def in_use(self):
         return (
