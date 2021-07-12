@@ -55,10 +55,10 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_deleted</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">TaricDateRange</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">ApplicabilityCode</span>
-<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
 
@@ -339,7 +339,8 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ME32"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME32">[docs]</a><span class="k">class</span> <span class="nc">ME32</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ME32"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME32">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="k">class</span> <span class="nc">ME32</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    There may be no overlap in time with other measure occurrences with a goods</span>
 <span class="sd">    code in the same nomenclature hierarchy which references the same measure</span>
@@ -349,10 +350,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME32.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME32.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">or</span> <span class="n">measure</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
         <span class="c1"># build the query for measures matching the given measure</span>

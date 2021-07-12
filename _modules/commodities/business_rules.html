@@ -51,6 +51,8 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">NoOverlapping</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_deleted</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 
@@ -79,7 +81,9 @@
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="NIG5"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG5">[docs]</a><span class="k">class</span> <span class="nc">NIG5</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="NIG5"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG5">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="n">date</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="k">class</span> <span class="nc">NIG5</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    When creating a goods nomenclature code, an origin must exist.</span>
 
@@ -99,14 +103,8 @@
 
         <span class="kn">from</span> <span class="nn">commodities.models</span> <span class="kn">import</span> <span class="n">GoodsNomenclatureOrigin</span>
 
-        <span class="k">if</span> <span class="n">good</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">date</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&lt;=</span> <span class="n">lower_bound</span>
-            <span class="ow">or</span> <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">nodes__depth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">nodes__depth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
             <span class="ow">or</span> <span class="n">GoodsNomenclatureOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">new_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="p">)</span>
@@ -147,7 +145,8 @@
             <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="NIG10"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG10">[docs]</a><span class="k">class</span> <span class="nc">NIG10</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="NIG10"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG10">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="k">class</span> <span class="nc">NIG10</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The successor must be applicable the day after the end date of the old</span>
 <span class="sd">    code.&quot;&quot;&quot;</span>
 
@@ -301,9 +300,12 @@
 <span class="sd">    period of the goods nomenclature must span the validity period of the goods</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
+    <span class="k">def</span> <span class="nf">matching_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+
 <div class="viewcode-block" id="NIG30.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG30.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">matching_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
             <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">good</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
@@ -312,20 +314,13 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">good</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="NIG31"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG31">[docs]</a><span class="k">class</span> <span class="nc">NIG31</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="NIG31"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG31">[docs]</a><span class="k">class</span> <span class="nc">NIG31</span><span class="p">(</span><span class="n">NIG30</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in an additional nomenclature measure</span>
 <span class="sd">    then the validity period of the goods nomenclature must span the validity</span>
 <span class="sd">    period of the additional nomenclature measure.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="NIG31.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG31.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="c1"># XXX is this the correct interpretation?</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">additional_code__valid_between__contained_by</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">good</span><span class="p">)</span></div></div>
+    <span class="k">def</span> <span class="nf">matching_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">matching_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NIG34"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG34">[docs]</a><span class="k">class</span> <span class="nc">NIG34</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>

@@ -215,6 +215,22 @@
     <span class="k">return</span> <span class="n">decorator</span>
 
 
+<div class="viewcode-block" id="skip_when_deleted"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.skip_when_deleted">[docs]</a><span class="k">def</span> <span class="nf">skip_when_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If the object passed to the business rule is deleted, do not run the rule</span>
+<span class="sd">    and report no violations.&quot;&quot;&quot;</span>
+    <span class="n">_original_validate</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">_original_validate</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: object is deleted&quot;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_original_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+
+    <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span> <span class="o">=</span> <span class="n">validate</span>
+    <span class="k">return</span> <span class="bp">cls</span></div>
+
+
 <div class="viewcode-block" id="UniqueIdentifyingFields"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.UniqueIdentifyingFields">[docs]</a><span class="k">class</span> <span class="nc">UniqueIdentifyingFields</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Rule enforcing identifying fields are unique.&quot;&quot;&quot;</span>
 
