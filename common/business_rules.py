@@ -6,6 +6,7 @@ from functools import wraps
 from typing import Iterable
 from typing import Mapping
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -122,7 +123,7 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
 class BusinessRuleChecker:
     def __init__(self, models: Iterable[TrackedModel], transaction):
-        self.checks: set[Tuple[Type[BusinessRule], TrackedModel]] = set()
+        self.checks: Set[Tuple[Type[BusinessRule], TrackedModel]] = set()
 
         self.transaction = transaction
 

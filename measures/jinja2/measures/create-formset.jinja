@@ -1,0 +1,29 @@
+{% extends "measures/create-wizard-step.jinja" %}
+
+{% from "components/fieldset/macro.njk" import govukFieldset %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+
+{% block form %}
+  {% set formset = form %}
+  {{ crispy(formset.management_form, no_form_tags) }}
+
+  {% for form in formset %}
+    {{ crispy(form) }}
+  {% endfor %}
+
+  {% if formset.data[formset.prefix ~ "-ADD"] %}
+    {{ crispy(formset.empty_form)|replace("__prefix__", formset.forms|length)|safe }}
+  {% endif %}
+
+  {% call govukFieldset({"legend": {}}) %}
+    {{ govukButton({
+      "text": "Add new",
+      "classes": "govuk-button--secondary",
+      "value": "1",
+      "name": formset.prefix ~ "-ADD",
+    }) }}
+  {% endcall %}
+
+  {{ govukButton({"text": "Continue"}) }}
+{% endblock %}

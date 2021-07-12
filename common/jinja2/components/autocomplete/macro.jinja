@@ -3,10 +3,6 @@
      {% if params.source_url %}data-source-url="{{ params.source_url }}"{% endif %}
      data-original-value="{{ params.display_value or "" }}"
   >
-    <label for="{{ params.name }}" class="govuk-label">{{params.label}}</label>
-    {% if params.help_text -%}
-        <div id="{{ params.name }}_hint" class="govuk-hint">{{ params.help_text }}</div>
-    {%- endif %}
     <div class="autocomplete-container"></div>
     <input name="{{ params.name }}" id="{{ params.name }}" type="hidden" value="{{ params.initial_value or "" }}">  
   </div>

@@ -1,0 +1,10 @@
+{% extends "measures/create-wizard-step.jinja" %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+
+{% block form %}
+  <p class="govuk-body">
+    It is essential to plan your activities in advance of using this measure creation functionality.
+  </p>
+  {{ govukButton({"text": "Start now", "isStartButton": True}) }}
+{% endblock %}
