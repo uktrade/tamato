@@ -109,18 +109,13 @@ def test_NIG7(date_ranges, valid_between, expect_error):
             valid_between,
         ),
     )
-    try:
+
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG7(origin.transaction).validate(origin)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 @pytest.mark.parametrize(
-    "valid_between, expect_error",
+    ("valid_between", "expect_error"),
     [
         ("later", True),
         ("earlier", True),
@@ -129,7 +124,7 @@ def test_NIG7(date_ranges, valid_between, expect_error):
         ("overlap_normal_earlier", False),
     ],
 )
-def test_NIG10(date_ranges, valid_between, expect_error):
+def test_NIG10(date_ranges, update_type, valid_between, expect_error):
     """The successor must be applicable the day after the end date of the old
     code."""
     successor = factories.GoodsNomenclatureSuccessorFactory.create(
@@ -138,7 +133,10 @@ def test_NIG10(date_ranges, valid_between, expect_error):
             date_ranges,
             valid_between,
         ),
+        update_type=update_type,
     )
+
+    expect_error = expect_error and update_type != UpdateType.DELETE
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG10(successor.transaction).validate(successor)
 

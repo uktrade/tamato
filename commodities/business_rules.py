@@ -10,6 +10,8 @@ from common.business_rules import FootnoteApplicability
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import only_applicable_after
+from common.business_rules import skip_when_deleted
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 
@@ -38,6 +40,8 @@ class NIG2(BusinessRule):
                 raise self.violation(indent)
 
 
+@skip_when_deleted
+@only_applicable_after(date(2010, 1, 1))
 class NIG5(BusinessRule):
     """
     When creating a goods nomenclature code, an origin must exist.
@@ -58,14 +62,8 @@ class NIG5(BusinessRule):
 
         from commodities.models import GoodsNomenclatureOrigin
 
-        if good.update_type == UpdateType.DELETE:
-            return
-
-        lower_bound = date(2010, 1, 1)
-
         if not (
-            good.valid_between.lower <= lower_bound
-            or good.indents.filter(nodes__depth=1).exists()
+            good.indents.filter(nodes__depth=1).exists()
             or GoodsNomenclatureOrigin.objects.filter(
                 new_goods_nomenclature__sid=good.sid,
             )
@@ -106,6 +104,7 @@ class NIG7(BusinessRule):
             )
 
 
+@skip_when_deleted
 class NIG10(BusinessRule):
     """The successor must be applicable the day after the end date of the old
     code."""
