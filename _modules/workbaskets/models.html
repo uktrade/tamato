@@ -53,10 +53,10 @@
 <span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">FSMField</span>
 <span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">transition</span>
 
-<span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
-<span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
-<span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">Transaction</span>
+<span class="kn">from</span> <span class="nn">common.models.mixins</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span> <span class="nn">common.models.records</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
 <span class="kn">from</span> <span class="nn">common.models.records</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
+<span class="kn">from</span> <span class="nn">common.models.transactions</span> <span class="kn">import</span> <span class="n">Transaction</span>
 <span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
 
@@ -276,6 +276,14 @@
                 <span class="k">return</span> <span class="kc">None</span>
 
             <span class="k">return</span> <span class="n">workbasket</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_current_transaction</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">workbasket</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">current</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">workbasket</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">workbasket</span><span class="o">.</span><span class="n">transactions</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
