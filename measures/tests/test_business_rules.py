@@ -1303,9 +1303,14 @@ def test_ME55():
 def test_ME56(reference_nonexistent_record):
     """The referenced certificate must exist."""
 
+    def delete_certificate(c):
+        c.get_descriptions().first().delete()
+        c.delete()
+
     with reference_nonexistent_record(
         factories.MeasureConditionWithCertificateFactory,
         "required_certificate",
+        delete_certificate,
     ) as condition:
         with pytest.raises(BusinessRuleViolation):
             business_rules.ME56(condition.transaction).validate(condition)

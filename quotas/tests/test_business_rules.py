@@ -262,7 +262,7 @@ def test_ON14():
 def test_CertificatesMustExist():
     """The referenced certificates must exist."""
     quota_order_number = factories.QuotaOrderNumberFactory.create(
-        required_certificates=[factories.CertificateFactory.create()],
+        required_certificates=[factories.CertificateFactory.create(description=None)],
     )
 
     certificate = quota_order_number.required_certificates.first()

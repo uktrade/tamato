@@ -82,7 +82,7 @@ def test_CE5(delete_record):
 
 def test_CE6_one_description_mandatory():
     """At least one description record is mandatory."""
-    certificate = factories.CertificateFactory.create()
+    certificate = factories.CertificateFactory.create(description=None)
     with pytest.raises(BusinessRuleViolation):
         # certificate created without description
         business_rules.CE6(certificate.transaction).validate(certificate)

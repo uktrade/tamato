@@ -1,9 +1,11 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import models
 from django.db.models import aggregates
 from django.db.models import expressions
 from django.db.models import functions
+from django.db.models.fields import DateField
 from django_cte import CTEQuerySet
 from django_cte.cte import With
 
@@ -26,7 +28,11 @@ class ValidityMixin(models.Model):
     that initially has a blank end date can be updated to subsequently add one.
     """
 
-    valid_between = TaricDateRangeField(db_index=True)
+    if settings.SQLITE:
+        validity_start = DateField(db_index=True, null=True, blank=True)
+        validity_end = DateField(db_index=True, null=True, blank=True)
+    else:
+        valid_between = TaricDateRangeField(db_index=True)
 
     validity_field_name: str = "valid_between"
     """The name of the field that should be used for validity date checking."""

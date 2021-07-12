@@ -28,6 +28,10 @@ def tstzrange_from_daterange(field_name):
 
 
 def change_range_type(table_name, field_name, to_type, conversion):
+    from django.conf import settings
+
+    if settings.SQLITE:
+        return ""
     return (
         f"ALTER TABLE {table_name} "
         f"ALTER COLUMN {field_name} "
