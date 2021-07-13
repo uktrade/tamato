@@ -24,8 +24,8 @@
     "webpack-cli": "^4.7.2"
   },
   "scripts": {
-    "dev": "npx webpack --config webpack.config.js --watch",
-    "build": "npx webpack --config webpack.config.js --stats-children",
+    "dev": "npx webpack-cli --config webpack.config.js --watch",
+    "build": "npx webpack-cli --config webpack.config.js --stats-children",
     "clean": "rm -f ./run/static/webpack_bundles/*",
     "heroku-prebuild": "",
     "heroku-postbuild": "npm run build"
