@@ -1,5 +1,4 @@
 import contextlib
-from datetime import date
 from functools import lru_cache
 from typing import Any
 from typing import Callable
@@ -37,7 +36,6 @@ from common.tests.util import generate_test_import_xml
 from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
-from common.util import TaricDateRange
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
 from importer.nursery import get_nursery
@@ -89,20 +87,31 @@ def celery_config():
 
 
 @pytest.fixture(
-    params=[
-        ("2020-05-18", "2020-05-17", True),
-        ("2020-05-18", "2020-05-18", False),
-        ("2020-05-18", "2020-05-19", False),
-    ],
+    params=(
+        ("normal", "normal", True),
+        ("normal", "overlap_normal", False),
+        ("overlap_normal", "normal", False),
+        ("big", "normal", True),
+        ("later", "normal", False),
+    ),
+    ids=(
+        "equal_dates",
+        "overlaps_end",
+        "overlaps_start",
+        "contains",
+        "no_overlap",
+    ),
 )
-def validity_range(request):
-    start, end, expect_error = request.param
+def spanning_dates(request, date_ranges):
+    """Returns a pair of date ranges for a container object and a contained
+    object, and a flag indicating whether the container date ranges completely
+    spans the contained date range."""
+
+    container_validity, contained_validity, container_spans_contained = request.param
     return (
-        TaricDateRange(
-            date.fromisoformat(start),
-            date.fromisoformat(end),
-        ),
-        expect_error,
+        getattr(date_ranges, container_validity),
+        getattr(date_ranges, contained_validity),
+        container_spans_contained,
     )
 
 

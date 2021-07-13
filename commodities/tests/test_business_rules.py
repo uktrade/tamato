@@ -109,18 +109,13 @@ def test_NIG7(date_ranges, valid_between, expect_error):
             valid_between,
         ),
     )
-    try:
+
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG7(origin.transaction).validate(origin)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 @pytest.mark.parametrize(
-    "valid_between, expect_error",
+    ("valid_between", "expect_error"),
     [
         ("later", True),
         ("earlier", True),
@@ -129,7 +124,7 @@ def test_NIG7(date_ranges, valid_between, expect_error):
         ("overlap_normal_earlier", False),
     ],
 )
-def test_NIG10(date_ranges, valid_between, expect_error):
+def test_NIG10(date_ranges, update_type, valid_between, expect_error):
     """The successor must be applicable the day after the end date of the old
     code."""
     successor = factories.GoodsNomenclatureSuccessorFactory.create(
@@ -138,7 +133,10 @@ def test_NIG10(date_ranges, valid_between, expect_error):
             date_ranges,
             valid_between,
         ),
+        update_type=update_type,
     )
+
+    expect_error = expect_error and update_type != UpdateType.DELETE
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG10(successor.transaction).validate(successor)
 
@@ -334,32 +332,33 @@ def test_NIG24(date_ranges, valid_between, expect_error):
             pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
-def test_NIG30(date_ranges):
+def test_NIG30(spanning_dates):
     """When a goods nomenclature is used in a goods measure then the validity
     period of the goods nomenclature must span the validity period of the goods
     measure."""
+    commodity_range, measure_range, fully_contained = spanning_dates
 
     measure = factories.MeasureFactory.create(
-        goods_nomenclature__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+        goods_nomenclature__valid_between=commodity_range,
+        valid_between=measure_range,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(business_rules.NIG30.Violation, not fully_contained):
         business_rules.NIG30(measure.transaction).validate(measure.goods_nomenclature)
 
 
-def test_NIG31(date_ranges):
+def test_NIG31(spanning_dates):
     """When a goods nomenclature is used in an additional nomenclature measure
     then the validity period of the goods nomenclature must span the validity
     period of the additional nomenclature measure."""
+    commodity_range, measure_range, fully_contained = spanning_dates
 
     measure = factories.MeasureWithAdditionalCodeFactory.create(
-        additional_code__valid_between=date_ranges.overlap_normal,
-        goods_nomenclature__valid_between=date_ranges.normal,
-        valid_between=date_ranges.normal,
+        goods_nomenclature__valid_between=commodity_range,
+        valid_between=measure_range,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(business_rules.NIG31.Violation, not fully_contained):
         business_rules.NIG31(measure.transaction).validate(measure.goods_nomenclature)
 
 
