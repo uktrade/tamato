@@ -27,6 +27,7 @@ class RegulationCreateForm(ValidityPeriodForm):
             "public_identifier",
             "url",
             "regulation_group",
+            "information_text",
             "valid_between",
             # published_at -- set at creation time, otherwise "cannot be
             #   specified for Regulation model form as it is a non-editable
@@ -49,7 +50,6 @@ class RegulationCreateForm(ValidityPeriodForm):
         ],
         help_text=Regulation._meta.get_field("regulation_group").help_text
     )
-    title = forms.CharField()
     published_at = DateInputFieldFixed(
         label="Published date",
         disabled=False,
@@ -83,11 +83,11 @@ class RegulationCreateForm(ValidityPeriodForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        # Tweak to default end_date help text.
         self.fields["end_date"].help_text = (
             "Leave the end date empty if the regulation is required for an "
             "unlimited amount of time."
         )
+        self.fields["information_text"].label = "Title"
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -106,7 +106,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                     "Help with regulation group",
                     "regulations/help_regulation_group.html"
                 ),
-                "title", # <-- ### save how?
+                "information_text",
                 "start_date",
                 "end_date",
                 "published_at",
@@ -124,9 +124,6 @@ class RegulationCreateForm(ValidityPeriodForm):
         )
 
     def save(self, commit=True):
-        # TODO:
-        # * title - coerce and munge (with what?).
-
         instance = super().save(commit=False)
 
         #workbasket = WorkBasket.current(self.request)
@@ -148,6 +145,7 @@ class RegulationCreateForm(ValidityPeriodForm):
         # instance.sid = highest_sid + 1
 
 
+        # role_type is currently always set to a value of one (1).
         instance.role_type = 1
         instance.published_at = self.cleaned_data["published_at"]
 
