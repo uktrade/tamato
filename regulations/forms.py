@@ -17,27 +17,20 @@ from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
 from regulations.models import Group, Regulation
 from regulations.validators import RegulationUsage
-
+from workbaskets.models import WorkBasket
 
 class RegulationCreateForm(ValidityPeriodForm):
-
-    # TODO:
-    #
-    # Form manipulaton
-    # --
-    # * title - coerce and munge (with what?).
-    # * valid_between - manage ValidityPeriodForm cleaned data
-    #       cleaned_data = super().clean()
-    # * sequence_number - coerce and munge (with what?).
 
     class Meta:
         model = Regulation
         fields = [
-            "regulation_usage",
             "public_identifier",
             "url",
             "regulation_group",
             "valid_between",
+            # published_at -- set at creation time, otherwise "cannot be
+            #   specified for Regulation model form as it is a non-editable
+            #   field.".
             "approved",
         ]
 
@@ -87,6 +80,7 @@ class RegulationCreateForm(ValidityPeriodForm):
 
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # Tweak to default end_date help text.
@@ -112,7 +106,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                     "Help with regulation group",
                     "regulations/help_regulation_group.html"
                 ),
-                "title",
+                "title", # <-- ### save how?
                 "start_date",
                 "end_date",
                 "published_at",
@@ -128,6 +122,54 @@ class RegulationCreateForm(ValidityPeriodForm):
             ),
             Submit("submit", "Save"),
         )
+
+    def save(self, commit=True):
+        # TODO:
+        # * title - coerce and munge (with what?).
+
+        instance = super().save(commit=False)
+
+        #workbasket = WorkBasket.current(self.request)
+        #tx = None
+        #if workbasket:
+        #    tx = workbasket.transactions.order_by("order").last()
+        #with WorkBasket.new_transaction():
+        #    pass
+
+        # Get the last role_type and regulation_id via
+        # .approved_up_to_transaction().
+        # AdditionalCode example, which doesn't translate so well to our case.
+        #
+        # highest_sid = (
+        #     models.AdditionalCode.objects.filter(type__sid=instance.type.sid)
+        #     .approved_up_to_transaction(tx)
+        #     .aggregate(Max("sid"))["sid__max"]
+        # )
+        # instance.sid = highest_sid + 1
+
+
+        instance.role_type = 1
+        instance.published_at = self.cleaned_data["published_at"]
+
+        publication_year = str(self.cleaned_data["published_at"].year)[-2:]
+        sequence_number = "{:0>4}".format(self.cleaned_data["sequence_number"])
+        part_number = 1
+        instance.regulation_id = (
+            "{regulation_usage}"
+            "{publication_year}"
+            "{sequence_number}"
+            "{part_number}".format(
+                regulation_usage=self.cleaned_data["regulation_usage"],
+                publication_year=publication_year,
+                sequence_number=sequence_number,
+                part_number=part_number,
+            )
+        )
+
+        if commit:
+            instance.save()
+
+        return instance
 
     def clean(self):
         cleaned_data = super().clean()

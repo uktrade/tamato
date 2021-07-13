@@ -10,6 +10,7 @@ from regulations.filters import RegulationFilterBackend
 from regulations.forms import RegulationCreateForm
 from regulations.models import Regulation
 from regulations.serializers import RegulationSerializer
+from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 
 
@@ -54,6 +55,17 @@ class RegulationCreate(DraftCreateView):
         # class generating URLs for the main views.
         return HttpResponseRedirect(self.get_success_url())
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Make the request available to the form allowing transaction management
+        # from the form.
+        kwargs["request"] = self.request
+        return kwargs
 
 class RegulationConfirmCreate(TrackedModelDetailView):
     template_name = "common/confirm_create.jinja"
+    model = Regulation
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return Regulation.objects.approved_up_to_transaction(tx)
