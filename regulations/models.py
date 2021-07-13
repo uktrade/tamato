@@ -75,6 +75,14 @@ class Regulation(TrackedModel):
         editable=False,
         db_index=True,
     )
+    # regulation_id is composed, by position, of the following elements:
+    # [0]   - RegulationUsage key (e.g. "C" for "C: Draft regulation").
+    # [1-2] - last two digits from published_at (publication date),
+    #         e.g. 21 for year 2021.
+    # [3-6] - sequence number, right padded with zeros eg. 0002.
+    # [7]   - Part number, allows same legislation to be in system several
+    #         times by adding unique trailing value, all other values being
+    #         equal.
     regulation_id = models.CharField(
         max_length=8,
         editable=False,
