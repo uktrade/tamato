@@ -84,6 +84,10 @@ class Certificate(TrackedModel, ValidityMixin):
     def __str__(self):
         return self.code
 
+    @property
+    def autocomplete_label(self):
+        return f"{self} - {self.get_description().description}"
+
     def in_use(self):
         return (
             self.measurecondition_set.model.objects.filter(

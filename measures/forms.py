@@ -10,7 +10,7 @@ from django import forms
 
 from additional_codes.models import AdditionalCode
 from commodities.models import GoodsNomenclature
-from common.forms import AutocompleteWidget
+from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
 from geo_areas.models import GeographicalArea
 from measures import models
@@ -19,52 +19,41 @@ from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 
-class AutoCompleteField(forms.ModelChoiceField):
-    def __init__(self, *args, **kwargs):
-        self.widget = AutocompleteWidget(
-            attrs={"label": kwargs["label"], "help_text": kwargs.get("help_text")},
-        )
-        super().__init__(*args, **kwargs)
-
-    def prepare_value(self, value):
-        return self.to_python(value)
-
-
 class MeasureForm(ValidityPeriodForm):
     measure_type = AutoCompleteField(
         label="Measure type",
         help_text="Select the regulation which provides the legal basis for the measure.",
-        queryset=models.MeasureType.objects.latest_approved(),
+        queryset=models.MeasureType.objects.all(),
     )
     generating_regulation = AutoCompleteField(
         label="Regulation ID",
         help_text="Select the regulation which provides the legal basis for the measure.",
-        queryset=Regulation.objects.latest_approved(),
+        queryset=Regulation.objects.all(),
     )
     goods_nomenclature = AutoCompleteField(
         label="Code and description",
         help_text="Select the 10 digit commodity code to which the measure applies.",
-        queryset=GoodsNomenclature.objects.latest_approved(),
+        queryset=GoodsNomenclature.objects.all(),
         required=False,
     )
     additional_code = AutoCompleteField(
         label="Code and description",
         help_text="If applicable, select the additional code to which the measure applies.",
-        queryset=AdditionalCode.objects.latest_approved(),
+        queryset=AdditionalCode.objects.all(),
         required=False,
     )
     order_number = AutoCompleteField(
         label="Order number",
         help_text="Enter the quota order number if a quota measure type has been selected. Leave this field blank if the measure is not a quota.",
-        queryset=QuotaOrderNumber.objects.latest_approved(),
+        queryset=QuotaOrderNumber.objects.all(),
         required=False,
     )
     geographical_area = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.latest_approved(),
+        queryset=GeographicalArea.objects.all(),
         required=False,
     )
     geographical_area_group = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.latest_approved().filter(
+        queryset=GeographicalArea.objects.filter(
             area_code=1,
         ),
         required=False,
@@ -72,7 +61,7 @@ class MeasureForm(ValidityPeriodForm):
         empty_label=None,
     )
     geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.latest_approved().exclude(
+        queryset=GeographicalArea.objects.exclude(
             area_code=1,
         ),
         widget=forms.Select(attrs={"class": "govuk-select"}),
@@ -84,42 +73,7 @@ class MeasureForm(ValidityPeriodForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
-        self.fields[
-            "order_number"
-        ].queryset = QuotaOrderNumber.objects.approved_up_to_transaction(tx)
-        self.fields[
-            "measure_type"
-        ].queryset = models.MeasureType.objects.approved_up_to_transaction(tx)
-        self.fields[
-            "generating_regulation"
-        ].queryset = Regulation.objects.approved_up_to_transaction(tx)
-        self.fields[
-            "goods_nomenclature"
-        ].queryset = GoodsNomenclature.objects.approved_up_to_transaction(tx)
-        self.fields[
-            "order_number"
-        ].queryset = QuotaOrderNumber.objects.approved_up_to_transaction(tx)
-        self.fields[
-            "additional_code"
-        ].queryset = AdditionalCode.objects.approved_up_to_transaction(tx)
-        self.fields[
-            "geographical_area"
-        ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx)
-        self.fields[
-            "geographical_area_group"
-        ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx).filter(
-            area_code=1,
-        )
-        self.fields[
-            "geographical_area_country_or_region"
-        ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx).exclude(
-            area_code=1,
-        )
+        WorkBasket.get_current_transaction(self.request)
 
         self.initial_geographical_area = self.instance.geographical_area
 
@@ -185,42 +139,37 @@ class MeasureFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             Div(
-                Field.text("sid", label_size=Size.SMALL, field_width=Fluid.TWO_THIRDS),
+                Field.text("sid", field_width=Fluid.TWO_THIRDS),
                 Field.text(
                     "goods_nomenclature",
-                    label_size=Size.SMALL,
                     field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "additional_code",
-                    label_size=Size.SMALL,
                     field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "order_number",
-                    label_size=Size.SMALL,
                     field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "measure_type",
-                    label_size=Size.SMALL,
                     field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "regulation",
-                    label_size=Size.SMALL,
                     field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "geographical_area",
-                    label_size=Size.SMALL,
                     field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "footnote",
-                    label_size=Size.SMALL,
                     field_width=Fluid.TWO_THIRDS,
                 ),
                 css_class="govuk-grid-row quarters",
@@ -232,7 +181,6 @@ class MeasureFilterForm(forms.Form):
                 Div(
                     Field.radios(
                         "start_date_modifier",
-                        legend_size=Size.SMALL,
                         inline=True,
                     ),
                     "start_date",
@@ -241,7 +189,6 @@ class MeasureFilterForm(forms.Form):
                 Div(
                     Field.radios(
                         "end_date_modifier",
-                        legend_size=Size.SMALL,
                         inline=True,
                     ),
                     "end_date",

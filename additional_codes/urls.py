@@ -5,7 +5,11 @@ from rest_framework import routers
 from additional_codes import views
 
 api_router = routers.DefaultRouter()
-api_router.register(r"additional_codes", views.AdditionalCodeViewSet)
+api_router.register(
+    r"additional_codes",
+    views.AdditionalCodeViewSet,
+    basename="additionalcode",
+)
 api_router.register(r"additional_code_types", views.AdditionalCodeTypeViewSet)
 
 detail = "<sid:sid>"

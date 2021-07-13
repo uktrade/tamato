@@ -1,75 +1,38 @@
 import accessibleAutocomplete from 'accessible-autocomplete'
 
-const getAdditionalCodeResults = (query, populateResults) => {
-    return fetch(`/api/additional_codes/?search=${query}&format=json`)
-    .then(response => response.json())
-    .then(data => populateResults(data.results.map(result => ({value: result.id, string: `${result.type.sid}${result.code} - ${result.descriptions[0].description}`}))));
-}
-
-const getMeasureTypeResults = (query, populateResults) => {
-    return fetch(`/api/measure_types/?search=${query}&format=json`)
-    .then(response => response.json())
-    .then(data => populateResults(data.results.map(result =>({value: result.id, string: `${result.sid} - ${result.description}`}))));
-}
-
-const getCommodityCodeResults = (query, populateResults) => {
-    return fetch(`/api/goods_nomenclature/?search=${query}&format=json`)
-    .then(response => response.json())
-    .then(data => populateResults(data.results.map(result => ({value: result.id, string: `${result.item_id} - ${result.descriptions[0].description}`}))));
-}
-
-const getOrderNumberResults = (query, populateResults) => {
-    return fetch(`/api/quota_order_numbers/?search=${query}&format=json`)
-    .then(response => response.json())
-    .then(data => populateResults(data.results.map(result => ({value: result.id, string:`${result.order_number}`}))));
-}
-
-const getRegulationResults = (query, populateResults) => {
-    return fetch(`/api/regulations/?search=${query}&format=json`)
-    .then(response => response.json())
-    .then(data => populateResults(data.results.map(result => ({value: result.id, string: `${result.regulation_id} - ${result.information_text}`}))));
-}
-
-
-const getResults = {
-    "AdditionalCode": getAdditionalCodeResults,
-    "MeasureType": getMeasureTypeResults,
-    "GoodsNomenclature": getCommodityCodeResults,
-    "OrderNumber": getOrderNumberResults,
-    "GeneratingRegulation": getRegulationResults,
-}
-
-const template = (result) => result && result.string
-
-const createAutocomplete = (elementName) => { 
-    let camelcaseElement = elementName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).substring(1);
-    let element = document.querySelector(`#${camelcaseElement}_view_container`);
-    let realInput = document.querySelector(`#${camelcaseElement}`)
-    if (element) {
-        accessibleAutocomplete({
-            element: element,
-            id: `${camelcaseElement}_autocomplete`,
-            source: getResults[elementName],
-            defaultValue: element.dataset.originalValue,
-            name: `${camelcaseElement}`, 
-            templates: {
-                inputValue: template,
-                suggestion: template
-              },
-            onConfirm: (val) => {
-                let autoCompleteElement = document.querySelector(`#${camelcaseElement}_autocomplete`)
-                if (val)
-                    return realInput.value = val.value
-                if (!autoCompleteElement.value) 
-                    return realInput.value = ""
-            },
-        })
-    }
-}
+const template = (result) => result && result.label
 
 const initAutocomplete = () => { 
-    const elements = ['AdditionalCode', 'MeasureType', 'GoodsNomenclature', 'OrderNumber', 'GeneratingRegulation']
-    elements.forEach((element) => createAutocomplete(element))
+  for (let element of document.querySelectorAll(".autocomplete")) {
+    const hiddenInput = element.querySelector("input[type=hidden]");
+    accessibleAutocomplete({
+      element: element.querySelector(".autocomplete-container"),
+      id: hiddenInput.id + "_autocomplete",
+      source: (query, populateResults) => {
+        const source_url = element.dataset.sourceUrl;
+        const searchParams = new URLSearchParams();
+        searchParams.set("search", query);
+        searchParams.set("format", "json");
+        fetch(`${source_url}?${searchParams}`)
+          .then(response => response.json())
+          .then(data => populateResults(data.results));
+      },
+      defaultValue: element.dataset.originalValue,
+      name: `${hiddenInput.name}_autocomplete`,
+      templates: {
+        inputValue: template,
+        suggestion: template
+      },
+      onConfirm: value => {
+        const autocomplete = document.querySelector(`#${hiddenInput.id}_autocomplete`);
+        if (value) {
+          hiddenInput.value = value.value;
+        } else if (!autocomplete.value) {
+          hiddenInput.value = "";
+        }
+      }
+    });
+  }
 }
 
 export default initAutocomplete;

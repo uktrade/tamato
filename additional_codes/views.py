@@ -12,9 +12,9 @@ from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeDescription
 from additional_codes.models import AdditionalCodeType
-from additional_codes.serializers import AdditionalCodeSerializer
 from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.models import TrackedModel
+from common.serializers import AutoCompleteSerializer
 from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -27,13 +27,16 @@ from workbaskets.views.generic import DraftUpdateView
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows additional codes to be viewed."""
 
-    queryset = (
-        AdditionalCode.objects.latest_approved()
-        .select_related("type")
-        .prefetch_related("descriptions")
-    )
-    serializer_class = AdditionalCodeSerializer
+    serializer_class = AutoCompleteSerializer
     filter_backends = [AdditionalCodeFilterBackend]
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return (
+            AdditionalCode.objects.approved_up_to_transaction(tx)
+            .select_related("type")
+            .prefetch_related("descriptions")
+        )
 
 
 class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -48,11 +51,7 @@ class AdditionalCodeMixin:
     model: Type[TrackedModel] = AdditionalCode
 
     def get_queryset(self):
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        tx = WorkBasket.get_current_transaction(self.request)
         return AdditionalCode.objects.approved_up_to_transaction(tx).select_related(
             "type",
         )
@@ -73,11 +72,7 @@ class AdditionalCodeDescriptionMixin:
     model: Type[TrackedModel] = AdditionalCodeDescription
 
     def get_queryset(self):
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        tx = WorkBasket.get_current_transaction(self.request)
         return AdditionalCodeDescription.objects.approved_up_to_transaction(tx)
 
 

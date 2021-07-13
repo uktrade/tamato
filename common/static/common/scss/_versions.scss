@@ -16,18 +16,18 @@
 .status.editing,
 .status.new_in_progress {
   &::before {
-    background-image: url("/assets/common/images/in_progress.png");
+    background-image: url("/common/static/common/images/in_progress.png");
   }
 }
 
 .status.awaiting_approval {
   &::before {
-    background-image: url("/assets/common/images/awaiting_approval.png");
+    background-image: url("/common/static/common/images/awaiting_approval.png");
   }
 }
 
 .status.published {
   &::before {
-    background-image: url("/assets/common/images/published.png");
+    background-image: url("/common/static/common/images/published.png");
   }
 }

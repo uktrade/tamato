@@ -12,10 +12,10 @@ from django.db.models import Subquery
 from django_fsm import FSMField
 from django_fsm import transition
 
-from common.models import TimestampedMixin
-from common.models import TrackedModel
-from common.models import Transaction
+from common.models.mixins import TimestampedMixin
+from common.models.records import TrackedModel
 from common.models.records import TrackedModelQuerySet
+from common.models.transactions import Transaction
 from workbaskets.validators import WorkflowStatus
 
 
@@ -235,6 +235,14 @@ class WorkBasket(TimestampedMixin):
                 return None
 
             return workbasket
+
+    @classmethod
+    def get_current_transaction(cls, request):
+        workbasket = cls.current(request)
+        if workbasket:
+            return workbasket.transactions.order_by("order").last()
+
+        return None
 
     def clean(self):
         errors = []

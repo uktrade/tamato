@@ -25,6 +25,8 @@ class AutocompleteWidget(Widget):
     template_name = "components/autocomplete.jinja"
 
     def get_context(self, name, value, attrs=None):
+        if attrs is None:
+            attrs = {}
         display_string = ""
         if value:
             display_string = value.structure_code
@@ -35,9 +37,8 @@ class AutocompleteWidget(Widget):
             "widget": {
                 "name": name,
                 "value": value.pk if value else None,
-                "label": self.attrs["label"],
-                "help_text": self.attrs["help_text"],
                 "display_value": display_string,
+                **self.attrs,
             },
         }
 

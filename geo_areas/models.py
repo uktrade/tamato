@@ -6,12 +6,12 @@ from django.db.models import Q
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
-from common.models import TrackedModel
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
+from common.models.records import TrackedModel
 from geo_areas import business_rules
-from geo_areas import validators
 from geo_areas.validators import AreaCode
+from geo_areas.validators import area_id_validator
 from measures import business_rules as measures_business_rules
 from quotas import business_rules as quotas_business_rules
 
@@ -40,8 +40,8 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     url_pattern_name_prefix = "geoarea"
 
     sid = SignedIntSID(db_index=True)
-    area_id = models.CharField(max_length=4, validators=[validators.area_id_validator])
-    area_code = models.PositiveSmallIntegerField(choices=validators.AreaCode.choices)
+    area_id = models.CharField(max_length=4, validators=[area_id_validator])
+    area_code = models.PositiveSmallIntegerField(choices=AreaCode.choices)
 
     # This deals with countries and regions belonging to area groups
     memberships = models.ManyToManyField("self", through="GeographicalMembership")
