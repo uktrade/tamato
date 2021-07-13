@@ -19,8 +19,12 @@ from regulations.models import Group, Regulation
 from regulations.validators import RegulationUsage
 from workbaskets.models import WorkBasket
 
-class RegulationCreateForm(ValidityPeriodForm):
 
+# Regulation.role_type is currently always set to a value of one (1).
+FIXED_ROLE_TYPE = 1
+
+
+class RegulationCreateForm(ValidityPeriodForm):
     class Meta:
         model = Regulation
         fields = [
@@ -58,6 +62,7 @@ class RegulationCreateForm(ValidityPeriodForm):
     sequence_number = forms.CharField(
         label="Sequence number",
         help_text="The sequence number published by the source of this regulation.",
+        max_length=4,
     )
     approved = ChoiceField(
         choices=(
@@ -123,50 +128,59 @@ class RegulationCreateForm(ValidityPeriodForm):
             Submit("submit", "Save"),
         )
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        #workbasket = WorkBasket.current(self.request)
-        #tx = None
-        #if workbasket:
-        #    tx = workbasket.transactions.order_by("order").last()
-        #with WorkBasket.new_transaction():
-        #    pass
-
-        # Get the last role_type and regulation_id via
-        # .approved_up_to_transaction().
-        # AdditionalCode example, which doesn't translate so well to our case.
-        #
-        # highest_sid = (
-        #     models.AdditionalCode.objects.filter(type__sid=instance.type.sid)
-        #     .approved_up_to_transaction(tx)
-        #     .aggregate(Max("sid"))["sid__max"]
-        # )
-        # instance.sid = highest_sid + 1
-
-
-        # role_type is currently always set to a value of one (1).
-        instance.role_type = 1
-        instance.published_at = self.cleaned_data["published_at"]
-
-        publication_year = str(self.cleaned_data["published_at"].year)[-2:]
-        sequence_number = "{:0>4}".format(self.cleaned_data["sequence_number"])
-        part_number = 1
-        instance.regulation_id = (
+    def _make_partial_regulation_id(self, cleaned_data):
+        """ Make a partial regulation_id using bound form data. The result will
+        not include the single digit at the last position of a valid
+        regulation_id, which is only applied when the regulation instance is
+        saved (the part number provides a uniqueness element among potentially
+        <11 partial regulation_ids).
+        """
+        publication_year = str(cleaned_data["published_at"].year)[-2:]
+        sequence_number = "{:0>4}".format(cleaned_data["sequence_number"])
+        return (
             "{regulation_usage}"
             "{publication_year}"
-            "{sequence_number}"
-            "{part_number}".format(
-                regulation_usage=self.cleaned_data["regulation_usage"],
+            "{sequence_number}".format(
+                regulation_usage=cleaned_data["regulation_usage"],
                 publication_year=publication_year,
                 sequence_number=sequence_number,
-                part_number=part_number,
             )
         )
 
+    def _get_next_part_number(self, partial_regulation_id):
+        """ Get the next available part number that can be appended to a partial
+        regulation_id (see RegulationCreateForm._make_partial_regulation_id()).
+        """
+        tx = WorkBasket.get_current_transaction(self.request)
+        basket_regulations = (
+            Regulation.objects.filter(
+                regulation_id__startswith=partial_regulation_id,
+                role_type=FIXED_ROLE_TYPE,
+            )
+            .approved_up_to_transaction(tx)
+            .order_by("-regulation_id")
+        )
+        if basket_regulations:
+            highest_part_number = basket_regulations[0].regulation_id[-1]
+            return int(highest_part_number) + 1
+        return 0
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        partial_regulation_id = self._make_partial_regulation_id(
+            self.cleaned_data
+        )
+        part_number = self._get_next_part_number(partial_regulation_id)
+
+        instance.role_type = FIXED_ROLE_TYPE
+        instance.published_at = self.cleaned_data["published_at"]
+        instance.regulation_id = "{partial_regulation_id}{part_number}".format(
+            partial_regulation_id=partial_regulation_id,
+            part_number=part_number,
+        )
         if commit:
             instance.save()
-
         return instance
 
     def clean(self):
