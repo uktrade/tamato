@@ -1,6 +1,4 @@
-from common.models import transactions
 from django.http.response import HttpResponseRedirect
-from django.urls import reverse_lazy
 from rest_framework import viewsets
 
 from common.serializers import AutoCompleteSerializer
