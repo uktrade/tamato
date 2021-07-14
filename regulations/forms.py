@@ -1,3 +1,5 @@
+import string
+
 from django import forms
 from django.core.validators import integer_validator
 from django.core.validators import URLValidator
@@ -151,8 +153,8 @@ class RegulationCreateForm(ValidityPeriodForm):
             )
         )
 
-    def _get_next_part_number(self, partial_regulation_id):
-        """ Get the next available part number that can be appended to a partial
+    def _get_next_part_value(self, partial_regulation_id):
+        """ Get the next available part value that can be appended to a partial
         regulation_id (see RegulationCreateForm._make_partial_regulation_id()).
         """
         tx = WorkBasket.get_current_transaction(self.request)
@@ -165,8 +167,9 @@ class RegulationCreateForm(ValidityPeriodForm):
             .order_by("-regulation_id")
         )
         if basket_regulations:
-            highest_part_number = basket_regulations[0].regulation_id[-1]
-            return int(highest_part_number) + 1
+            highest_part_value = basket_regulations[0].regulation_id[-1]
+            alphanum = string.digits + string.ascii_uppercase
+            return alphanum[alphanum.index(highest_part_value) + 1]
         return 0
 
     def save(self, commit=True):
@@ -184,16 +187,16 @@ class RegulationCreateForm(ValidityPeriodForm):
         #   [1-2] - last two digits from published_at (publication date),
         #           e.g. 21 for year 2021.
         #   [3-6] - sequence number, right padded with zeros eg. 0002.
-        #   [7]   - Part number, allows same legislation to be in system several
-        #           times by adding unique trailing value, all other values
-        #           being equal.
+        #   [7]   - Part value, allows same regulation to be entered into the
+        #           system several times, each instance referencing a specific
+        #           part of a regulation by adding a unique trailing value.
         partial_regulation_id = self._make_partial_regulation_id(
             self.cleaned_data
         )
-        part_number = self._get_next_part_number(partial_regulation_id)
-        instance.regulation_id = "{partial_regulation_id}{part_number}".format(
+        part_value = self._get_next_part_value(partial_regulation_id)
+        instance.regulation_id = "{partial_regulation_id}{part_value}".format(
             partial_regulation_id=partial_regulation_id,
-            part_number=part_number,
+            part_value=part_value,
         )
 
         if commit:
