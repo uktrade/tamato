@@ -1,4 +1,6 @@
 from django import forms
+from django.core.validators import integer_validator
+from django.core.validators import URLValidator
 from django.template import loader
 from django.utils.safestring import SafeString
 
@@ -45,6 +47,7 @@ class RegulationCreateForm(ValidityPeriodForm):
     url = forms.CharField(
         label="URL",
         widget=forms.TextInput(attrs={"type": "url"}),
+        validators=[URLValidator],
     )
     regulation_group_proxy = ChoiceField(
         label="Regulation group",
@@ -60,8 +63,9 @@ class RegulationCreateForm(ValidityPeriodForm):
     )
     sequence_number = forms.CharField(
         label="Sequence number",
-        help_text="The sequence number published by the source of this regulation.",
+        validators=[integer_validator],
         max_length=4,
+        help_text="The sequence number published by the source of this regulation.",
     )
     approved = ChoiceField(
         choices=(
