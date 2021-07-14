@@ -56,8 +56,7 @@ class RegulationCreateForm(ValidityPeriodForm):
     )
     published_at = DateInputFieldFixed(
         label="Published date",
-        disabled=False,
-        help_text=Regulation._meta.get_field("published_at").help_text
+        help_text=Regulation._meta.get_field("published_at").help_text,
     )
     sequence_number = forms.CharField(
         label="Sequence number",
@@ -118,6 +117,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                 Field.text(
                     "sequence_number",
                     field_width=Fixed.FIVE,
+                    pattern="[0-9]{1,4}",
                 ),
                 self._load_details_from_template(
                     "Help with sequence number",
@@ -168,24 +168,30 @@ class RegulationCreateForm(ValidityPeriodForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
+        instance.regulation_group = Group.objects.get(
+            pk=self.cleaned_data["regulation_group_proxy"]
+        )
+        instance.role_type = FIXED_ROLE_TYPE
+        instance.published_at = self.cleaned_data["published_at"]
+
+        # Using input from this form, regulation_id is composed, by position,
+        # of the following elements:
+        #   [0]   - RegulationUsage key (e.g. "C" for "C: Draft regulation").
+        #   [1-2] - last two digits from published_at (publication date),
+        #           e.g. 21 for year 2021.
+        #   [3-6] - sequence number, right padded with zeros eg. 0002.
+        #   [7]   - Part number, allows same legislation to be in system several
+        #           times by adding unique trailing value, all other values
+        #           being equal.
         partial_regulation_id = self._make_partial_regulation_id(
             self.cleaned_data
         )
         part_number = self._get_next_part_number(partial_regulation_id)
-
-        instance.role_type = FIXED_ROLE_TYPE
-        instance.published_at = self.cleaned_data["published_at"]
         instance.regulation_id = "{partial_regulation_id}{part_number}".format(
             partial_regulation_id=partial_regulation_id,
             part_number=part_number,
         )
-        if commit:
-            instance.save()
-        return instance
 
-    def clean(self):
-        cleaned_data = super().clean()
-        cleaned_data["regulation_group"] = Group.objects.get(
-            pk=cleaned_data["regulation_group_proxy"]
-        )
-        return cleaned_data
+        if commit:
+            instance.save(commit)
+        return instance
