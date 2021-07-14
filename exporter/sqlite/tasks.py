@@ -2,10 +2,25 @@ import logging
 
 from common.celery import app
 from common.models.transactions import Transaction
+from common.models.transactions import TransactionPartition
 from exporter import sqlite
 from exporter.storages import SQLiteStorage
 
 logger = logging.getLogger(__name__)
+
+
+def get_output_filename():
+    """
+    Generate output filename with transaction order field.
+
+    If no revisions are present the filename is prefixed with seed_.
+    """
+    tx = Transaction.objects.approved().last()
+    order = tx.order if tx else 0
+    if tx.partition == TransactionPartition.REVISION:
+        return f"{order:0>9}.db"
+
+    return f"seed_{order:0>9}.db"
 
 
 @app.task
@@ -20,8 +35,7 @@ def export_and_upload_sqlite() -> bool:
     not.
     """
     storage = SQLiteStorage()
-    latest_transaction = Transaction.latest_approved()
-    db_name = f"{latest_transaction.order:0>9}.db"
+    db_name = get_output_filename()
 
     export_filename = storage.generate_filename(db_name)
 

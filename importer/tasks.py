@@ -7,6 +7,7 @@ from common.celery import app
 from importer import models
 from importer.taric import process_taric_xml_stream
 from importer.utils import build_dependency_tree
+from workbaskets.models import TransactionPartitionScheme
 
 logger = getLogger(__name__)
 
@@ -14,15 +15,16 @@ logger = getLogger(__name__)
 @app.task
 def import_chunk(
     chunk_pk: int,
-    status: str,
+    workbasket_status: str,
+    partition_scheme: TransactionPartitionScheme,
     username: str,
 ):
     """
     Task for importing an XML chunk into the database.
 
-    This task must ensure the chunks status reflects the import process, whether
-    it is currently running, errored or done. Once complete it is also
-    responsible for finding and setting up the next chunk tasks.
+    This task must ensure the chunks workbasket_status reflects the import
+    process, whether it is currently running, errored or done. Once complete it
+    is also responsible for finding and setting up the next chunk tasks.
     """
     chunk = models.ImporterXMLChunk.objects.get(pk=chunk_pk)
 
@@ -38,7 +40,12 @@ def import_chunk(
     chunk.save()
 
     try:
-        process_taric_xml_stream(BytesIO(chunk.chunk_text.encode()), status, username)
+        process_taric_xml_stream(
+            BytesIO(chunk.chunk_text.encode()),
+            workbasket_status,
+            partition_scheme,
+            username,
+        )
     except Exception as e:
         chunk.status = models.ImporterChunkStatus.ERRORED
         chunk.save()
@@ -47,15 +54,21 @@ def import_chunk(
     chunk.status = models.ImporterChunkStatus.DONE
     chunk.save()
 
-    find_and_run_next_batch_chunks(chunk.batch, status, username)
+    find_and_run_next_batch_chunks(
+        chunk.batch,
+        workbasket_status,
+        partition_scheme,
+        username,
+    )
 
 
 def setup_chunk_task(
     batch: models.ImportBatch,
-    status: str,
+    workbasket_status: str,
+    partition_scheme: TransactionPartitionScheme,
     username: str,
     record_code: str = None,
-    **kwargs,
+    **kwargs
 ):
     """
     Setup tasks to be run for the given chunk.
@@ -81,12 +94,18 @@ def setup_chunk_task(
 
     chunk.status = models.ImporterChunkStatus.RUNNING
     chunk.save()
-    import_chunk.delay(chunk.pk, status, username)
+    import_chunk.delay(
+        chunk.pk,
+        workbasket_status,
+        partition_scheme,
+        username,
+    )
 
 
 def find_and_run_next_batch_chunks(
     batch: models.ImportBatch,
-    status: str,
+    workbasket_status: str,
+    partition_scheme: TransactionPartitionScheme,
     username: str,
 ):
     """
@@ -124,10 +143,15 @@ def find_and_run_next_batch_chunks(
             batch,
         ).dependencies_finished():
             logger.info("setting up tasks for %s", dependent_batch)
-            find_and_run_next_batch_chunks(dependent_batch, status, username)
+            find_and_run_next_batch_chunks(
+                dependent_batch,
+                workbasket_status,
+                partition_scheme,
+                username,
+            )
 
     if not batch.split_job:  # We only run one chunk at a time when the job isn't split
-        setup_chunk_task(batch, status, username)
+        setup_chunk_task(batch, workbasket_status, partition_scheme, username)
         return
 
     # If the job is a split job (should only be used for seed files) the following logic applies.
@@ -162,7 +186,8 @@ def find_and_run_next_batch_chunks(
             for chapter in chunk_query.values_list("chapter", flat=True).distinct():
                 setup_chunk_task(
                     batch,
-                    status,
+                    workbasket_status,
+                    partition_scheme,
                     username,
                     record_code=code,
                     chapter=chapter,
@@ -172,11 +197,18 @@ def find_and_run_next_batch_chunks(
             for chunk in chunk_query:
                 setup_chunk_task(
                     batch,
-                    status,
+                    workbasket_status,
+                    partition_scheme,
                     username,
                     record_code=code,
                     chapter=chunk.chapter,
                     chunk_number=chunk.chunk_number,
                 )
         else:
-            setup_chunk_task(batch, status, username, record_code=code)
+            setup_chunk_task(
+                batch,
+                workbasket_status,
+                partition_scheme,
+                username,
+                record_code=code,
+            )

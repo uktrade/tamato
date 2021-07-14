@@ -96,6 +96,7 @@ class AdditionalCode(TrackedModel, ValidityMixin):
         return f"{self} - {self.get_description().description}"
 
     def in_use(self):
+        # Grab Measure class from measure_set to avoid a circular import.
         return (
             self.measure_set.model.objects.filter(
                 additional_code__sid=self.sid,

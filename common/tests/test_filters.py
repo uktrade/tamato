@@ -19,11 +19,11 @@ def choice_inputs(request):
 
 def test_type_choices(choice_inputs):
     get_choices = type_choices(TestModel2.objects.all())
-    choices = get_choices()
 
-    assert len(choices) == len(choice_inputs)
-    for input, output in zip(choice_inputs, choices):
-        assert output.value == input.custom_sid
+    values = [choice.value for choice in get_choices()]
+    custom_sids = [choice_input.custom_sid for choice_input in choice_inputs]
+
+    assert values == custom_sids
 
 
 def test_search_queryset_returns_partial_match():

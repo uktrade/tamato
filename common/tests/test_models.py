@@ -5,14 +5,21 @@ import pytest
 from pytest_django.asserts import assertQuerysetEqual  # noqa
 
 import common.exceptions
+import workbaskets.models
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.models.transactions import Transaction
+from common.models.transactions import TransactionPartition
 from common.tests import factories
 from common.tests import models
+from common.tests.factories import ApprovedTransactionFactory
+from common.tests.factories import FootnoteFactory
+from common.tests.factories import SeedFileTransactionFactory
+from common.tests.factories import UnapprovedTransactionFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
+from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
 from regulations.models import Group
@@ -363,7 +370,7 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     with patch(
         "exporter.tasks.upload_workbaskets.delay",
     ):
-        workbasket.approve(valid_user)
+        workbasket.approve(valid_user, workbaskets.models.SEED_FIRST)
     description_queryset = sample_model.get_descriptions()
 
     assert new_description in description_queryset
@@ -468,3 +475,60 @@ def test_copy_also_copies_dependents():
     assert copy.descriptions.count() == 1
     assert copy.descriptions.get() != desc
     assert copy.descriptions.get().description == desc.description
+
+
+def test_transaction_default_order():
+    """Verify Transactions default order is by ("partition", "order") by
+    creating transactions that will not be in the correct order if only using
+    default sorting, by pk, or just by order."""
+    FootnoteFactory.create(transaction=SeedFileTransactionFactory.create())
+    FootnoteFactory.create(transaction=UnapprovedTransactionFactory.create())
+    FootnoteFactory.create(transaction=ApprovedTransactionFactory.create())
+
+    transaction_data = Transaction.objects.values("order", "partition")
+    unordered_transaction_data = Transaction.objects.order_by().values(
+        "order",
+        "partition",
+    )
+
+    assert list(transaction_data) != list(
+        unordered_transaction_data,
+    ), "Test or data structures may have been edited so sorting doesn't do anything."
+    assert list(transaction_data) == sorted(
+        unordered_transaction_data,
+        key=lambda o: (o["partition"], o["order"]),
+    )
+
+
+def test_save_single_draft_transaction_updates(unordered_transactions):
+    """Verify that save_draft correctly sets the order and partition
+    correctly."""
+    unordered_transactions.new_transaction.save_draft(workbaskets.models.REVISION_ONLY)
+
+    assert (
+        unordered_transactions.new_transaction.partition
+        == TransactionPartition.REVISION
+    )
+    assert (
+        unordered_transactions.existing_transaction.order + 1
+        == unordered_transactions.new_transaction.order
+    )
+    assert_transaction_order(Transaction.objects.all())
+
+
+def test_save_drafts_transaction_updates(unordered_transactions):
+    """Verify that save_drafts correctly sets the order and partition
+    correctly."""
+    Transaction.objects.filter(
+        pk=unordered_transactions.new_transaction.pk,
+    ).save_drafts(workbaskets.models.REVISION_ONLY)
+    unordered_transactions.new_transaction.refresh_from_db()
+
+    assert set(Transaction.objects.values_list("partition", flat=True)) == {
+        TransactionPartition.REVISION.value,
+    }
+    assert (
+        unordered_transactions.existing_transaction.order + 1
+        == unordered_transactions.new_transaction.order
+    )
+    assert_transaction_order(Transaction.objects.all())
