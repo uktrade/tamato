@@ -102,12 +102,6 @@ class Regulation(TrackedModel):
     published_at = models.DateField(
         blank=True,
         null=True,
-        help_text=(
-            "The date that the source for this regulation was published. For a "
-            "Statutory Instrument (S.I.) or other peice of UK legislation, "
-            "this should be the “made date” as found in the introductory note "
-            "of the legislative text."
-        )
     )
     information_text = ShortDescription(
         validators=[validators.no_information_text_delimiters],
