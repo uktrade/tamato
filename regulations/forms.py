@@ -81,7 +81,10 @@ class RegulationCreateForm(ValidityPeriodForm):
             ("1", "Not approved (draft)"),
         ),
         label="Status of the legislation",
-        help_text=Regulation._meta.get_field("approved").help_text,
+        help_text=(
+            "An unapproved status means none of the measures that link to "
+            "this regulation will be active at the border."
+        ),
     )
 
     def _load_details_from_template(self, title, template_path):

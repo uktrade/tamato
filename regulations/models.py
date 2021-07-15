@@ -131,10 +131,6 @@ class Regulation(TrackedModel):
     # each one partially replacing the draft.
     approved = models.BooleanField(
         default=False,
-        help_text=(
-            "An unapproved status means none of the measures that link to "
-            "this regulation will be active at the border."
-        )
     )
 
     """The code which indicates whether or not a regulation has been replaced."""
