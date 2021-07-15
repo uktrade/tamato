@@ -21,11 +21,12 @@ from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
 from regulations.models import Group, Regulation
 from regulations.validators import RegulationUsage
+from regulations.validators import RoleType
 from workbaskets.models import WorkBasket
 
 
 # Regulation.role_type is currently always set to a value of one (1).
-FIXED_ROLE_TYPE = 1
+FIXED_ROLE_TYPE = RoleType.BASE
 
 
 class RegulationCreateForm(ValidityPeriodForm):
