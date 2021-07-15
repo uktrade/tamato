@@ -46,11 +46,6 @@ class RegulationCreateForm(ValidityPeriodForm):
     regulation_usage = ChoiceField(
         choices=RegulationUsage.choices,
     )
-    url = forms.CharField(
-        label="URL",
-        widget=forms.TextInput(attrs={"type": "url"}),
-        validators=[URLValidator],
-    )
     regulation_group = ModelChoiceField(
         queryset=Group.objects.all().order_by("group_id"),
         empty_label="Select a regulation group",
@@ -68,11 +63,11 @@ class RegulationCreateForm(ValidityPeriodForm):
             "of the legislative text."
         )
     )
-    sequence_number = forms.CharField(
-        label="Sequence number",
-        validators=[integer_validator],
-        max_length=4,
-        help_text="The sequence number published by the source of this regulation.",
+    sequence_number = forms.IntegerField(
+        max_value=9999,
+        help_text=(
+            "The sequence number published by the source of this regulation.",
+        )
     )
     approved = ChoiceField(
         choices=(
@@ -106,6 +101,10 @@ class RegulationCreateForm(ValidityPeriodForm):
             "unlimited amount of time."
         )
         self.fields["information_text"].label = "Title"
+        self.fields["url"].widget.attrs.update({"class": "govuk-input"})
+        self.fields["sequence_number"].widget.attrs.update(
+            {"class": "govuk-input govuk-input--width-5"}
+        )
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -128,11 +127,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "start_date",
                 "end_date",
                 "published_at",
-                Field.text(
-                    "sequence_number",
-                    field_width=Fixed.FIVE,
-                    pattern="[0-9]{1,4}",
-                ),
+                "sequence_number",
                 self._load_details_from_template(
                     "Help with sequence number",
                     "regulations/help_sequence_number.html"
