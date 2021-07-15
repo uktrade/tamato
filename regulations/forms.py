@@ -25,7 +25,7 @@ from regulations.validators import RoleType
 from workbaskets.models import WorkBasket
 
 
-# Regulation.role_type is currently always set to a value of one (1).
+# Regulation.role_type is currently always set to RoleType.BASE.
 FIXED_ROLE_TYPE = RoleType.BASE
 
 
@@ -38,9 +38,7 @@ class RegulationCreateForm(ValidityPeriodForm):
             "regulation_group",
             "information_text",
             "valid_between",
-            # published_at -- set at creation time, otherwise "cannot be
-            #   specified for Regulation model form as it is a non-editable
-            #   field.".
+            "published_at",
             "approved",
         ]
 
@@ -180,7 +178,6 @@ class RegulationCreateForm(ValidityPeriodForm):
             pk=self.cleaned_data["regulation_group_proxy"]
         )
         instance.role_type = FIXED_ROLE_TYPE
-        instance.published_at = self.cleaned_data["published_at"]
 
         # Using input from this form, regulation_id is composed, by position,
         # of the following elements:
