@@ -52,6 +52,9 @@ class Group(TrackedModel, ValidityMixin):
 
     business_rules = (UpdateValidity,)
 
+    def __str__(self):
+        return f"{self.group_id}: {self.description}"
+
 
 class Regulation(TrackedModel):
     """
@@ -174,10 +177,6 @@ class Regulation(TrackedModel):
         on_delete=models.PROTECT,
         blank=True,
         null=True,
-        help_text=(
-            "If the wrong regulation group is selected, a trader's declaration "
-            "may be rejected."
-        )
     )
 
     amends = models.ManyToManyField(

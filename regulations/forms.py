@@ -3,6 +3,7 @@ import string
 from django import forms
 from django.core.validators import integer_validator
 from django.core.validators import URLValidator
+from django.forms.models import ModelChoiceField
 from django.template import loader
 from django.utils.safestring import SafeString
 
@@ -50,13 +51,13 @@ class RegulationCreateForm(ValidityPeriodForm):
         widget=forms.TextInput(attrs={"type": "url"}),
         validators=[URLValidator],
     )
-    regulation_group_proxy = ChoiceField(
-        label="Regulation group",
-        choices= [("", "")] + [
-            (group.pk, f"{group.group_id}: {group.description}")
-                for group in Group.objects.all().order_by("group_id")
-        ],
-        help_text=Regulation._meta.get_field("regulation_group").help_text
+    regulation_group = ModelChoiceField(
+        queryset=Group.objects.all().order_by("group_id"),
+        empty_label="Select a regulation group",
+        help_text=(
+            "If the wrong regulation group is selected, a trader's declaration "
+            "may be rejected."
+        ),
     )
     published_at = DateInputFieldFixed(
         label="Published date",
@@ -110,7 +111,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                     "regulations/help_public_identifiers.html"
                 ),
                 "url",
-                "regulation_group_proxy",
+                "regulation_group",
                 self._load_details_from_template(
                     "Help with regulation group",
                     "regulations/help_regulation_group.html"
@@ -174,9 +175,6 @@ class RegulationCreateForm(ValidityPeriodForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        instance.regulation_group = Group.objects.get(
-            pk=self.cleaned_data["regulation_group_proxy"]
-        )
         instance.role_type = FIXED_ROLE_TYPE
 
         # Using input from this form, regulation_id is composed, by position,
