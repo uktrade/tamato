@@ -43,7 +43,7 @@ class RegulationCreateForm(ValidityPeriodForm):
         ]
 
     regulation_usage = ChoiceField(
-        choices=[("", "")] + RegulationUsage.choices
+        choices=RegulationUsage.choices,
     )
     url = forms.CharField(
         label="URL",

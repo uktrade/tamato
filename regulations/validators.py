@@ -71,6 +71,7 @@ regulation_id_validator = RegexValidator(fr"^{REGULATION_ID_REGEX}$")
 
 
 class RegulationUsage(models.TextChoices):
+    __empty__ = "Select a regulation usage"
     DRAFT_REGULATION = "C", "C: Draft regulation"
     PREFERENTIAL_TRADE_AGREEMENT = "P", "P: Preferential Trade Agreement / FTA"
     UNILATERAL_PREFERENCES = "U", "U: Unilateral preferences (GSP)"
