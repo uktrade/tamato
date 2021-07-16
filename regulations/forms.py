@@ -1,26 +1,24 @@
 import string
 
 from django import forms
-from django.core.validators import integer_validator
-from django.core.validators import URLValidator
 from django.forms.models import ModelChoiceField
 from django.template import loader
 from django.utils.safestring import SafeString
 
 
 from crispy_forms_gds.helper import FormHelper
-from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
-from crispy_forms_gds.layout import Fixed
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django.forms import ChoiceField
+from django.forms import TypedChoiceField
 
 from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
-from regulations.models import Group, Regulation
+from regulations.models import Group
+from regulations.models import Regulation
 from regulations.validators import RegulationUsage
 from regulations.validators import RoleType
 from workbaskets.models import WorkBasket
@@ -69,12 +67,12 @@ class RegulationCreateForm(ValidityPeriodForm):
             "The sequence number published by the source of this regulation.",
         )
     )
-    approved = ChoiceField(
+    approved = TypedChoiceField(
         choices=(
-            ("", ""),
-            ("0", "Approved"),
-            ("1", "Not approved (draft)"),
+            (True, "Approved"),
+            (False, "Not approved (draft)"),
         ),
+        coerce=lambda val: val == "True",
         label="Status of the legislation",
         help_text=(
             "An unapproved status means none of the measures that link to "
