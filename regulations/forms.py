@@ -153,16 +153,17 @@ class RegulationCreateForm(ValidityPeriodForm):
         regulation_id (see RegulationCreateForm._make_partial_regulation_id()).
         """
         tx = WorkBasket.get_current_transaction(self.request)
-        basket_regulations = (
+        last_matching_regulation = (
             Regulation.objects.filter(
                 regulation_id__startswith=partial_regulation_id,
                 role_type=FIXED_ROLE_TYPE,
             )
             .approved_up_to_transaction(tx)
             .order_by("-regulation_id")
+            .first()
         )
-        if basket_regulations:
-            highest_part_value = basket_regulations[0].regulation_id[-1]
+        if last_matching_regulation:
+            highest_part_value = last_matching_regulation.regulation_id[-1]
             alphanum = string.digits + string.ascii_uppercase
             return alphanum[alphanum.index(highest_part_value) + 1]
         return 0
