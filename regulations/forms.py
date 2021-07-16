@@ -1,19 +1,18 @@
 import string
 
-from django import forms
-from django.forms.models import ModelChoiceField
-from django.template import loader
-from django.utils.safestring import SafeString
-
-
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
+
 from django.forms import ChoiceField
+from django.forms import IntegerField
 from django.forms import TypedChoiceField
+from django.forms.models import ModelChoiceField
+from django.template import loader
+from django.utils.safestring import SafeString
 
 from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
@@ -61,7 +60,7 @@ class RegulationCreateForm(ValidityPeriodForm):
             "of the legislative text."
         )
     )
-    sequence_number = forms.IntegerField(
+    sequence_number = IntegerField(
         max_value=9999,
         help_text=(
             "The sequence number published by the source of this regulation.",
