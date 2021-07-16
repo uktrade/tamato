@@ -139,18 +139,13 @@ class RegulationCreateForm(ValidityPeriodForm):
         not include the single digit at the last position of a valid
         regulation_id, which is only applied when the regulation instance is
         saved (the part number provides a uniqueness element among potentially
-        <11 partial regulation_ids).
+        < 10 + 26 partial regulation_ids).
         """
         publication_year = str(cleaned_data["published_at"].year)[-2:]
-        sequence_number = "{:0>4}".format(cleaned_data["sequence_number"])
+        sequence_number = f"{cleaned_data['sequence_number']:0>4}"
         return (
-            "{regulation_usage}"
-            "{publication_year}"
-            "{sequence_number}".format(
-                regulation_usage=cleaned_data["regulation_usage"],
-                publication_year=publication_year,
-                sequence_number=sequence_number,
-            )
+            f"{cleaned_data['regulation_usage']}"
+            f"{publication_year}{sequence_number}"
         )
 
     def _get_next_part_value(self, partial_regulation_id):
