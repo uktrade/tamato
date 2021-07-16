@@ -195,6 +195,16 @@ class RegulationCreateForm(ValidityPeriodForm):
 
         cleaned_data["regulation_id"] = f"{partial_regulation_id}{part_value}"
 
+        if (
+            not cleaned_data["approved"] and
+            cleaned_data["regulation_usage"] != RegulationUsage.DRAFT_REGULATION
+        ):
+            self.add_error(
+                "approved",
+                "Regulation status \"Not approved\" may only be applied "
+                "when Regulation usage is \"C: Draft regulation\""
+            )
+
         return cleaned_data
 
     def save(self, commit=True):
