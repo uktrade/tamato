@@ -7,6 +7,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 
+from django.core.exceptions import ValidationError
 from django.forms import ChoiceField
 from django.forms import IntegerField
 from django.forms import TypedChoiceField
@@ -63,7 +64,7 @@ class RegulationCreateForm(ValidityPeriodForm):
     sequence_number = IntegerField(
         max_value=9999,
         help_text=(
-            "The sequence number published by the source of this regulation.",
+            "The sequence number published by the source of this regulation."
         )
     )
     approved = TypedChoiceField(
@@ -134,19 +135,16 @@ class RegulationCreateForm(ValidityPeriodForm):
             Submit("submit", "Save"),
         )
 
-    def _make_partial_regulation_id(self, cleaned_data):
+    def _make_partial_regulation_id(self, published_at, sequence_number, regulation_usage):
         """ Make a partial regulation_id using bound form data. The result will
         not include the single digit at the last position of a valid
         regulation_id, which is only applied when the regulation instance is
         saved (the part number provides a uniqueness element among potentially
         < 10 + 26 partial regulation_ids).
         """
-        publication_year = str(cleaned_data["published_at"].year)[-2:]
-        sequence_number = f"{cleaned_data['sequence_number']:0>4}"
-        return (
-            f"{cleaned_data['regulation_usage']}"
-            f"{publication_year}{sequence_number}"
-        )
+        publication_year = str(published_at.year)[-2:]
+        sequence_number = f"{sequence_number:0>4}"
+        return f"{regulation_usage}{publication_year}{sequence_number}"
 
     def _get_next_part_value(self, partial_regulation_id):
         """ Get the next available part value that can be appended to a partial
@@ -165,13 +163,14 @@ class RegulationCreateForm(ValidityPeriodForm):
         if last_matching_regulation:
             highest_part_value = last_matching_regulation.regulation_id[-1]
             alphanum = string.digits + string.ascii_uppercase
-            return alphanum[alphanum.index(highest_part_value) + 1]
+            return alphanum[int(highest_part_value, 36) + 1]
         return 0
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
+    def clean(self):
+        cleaned_data = super().clean()
 
-        instance.role_type = FIXED_ROLE_TYPE
+        if self.errors:
+            return cleaned_data
 
         # Using input from this form, regulation_id is composed, by position,
         # of the following elements:
@@ -183,13 +182,26 @@ class RegulationCreateForm(ValidityPeriodForm):
         #           system several times, each instance referencing a specific
         #           part of a regulation by adding a unique trailing value.
         partial_regulation_id = self._make_partial_regulation_id(
-            self.cleaned_data
+            cleaned_data["published_at"],
+            cleaned_data["sequence_number"],
+            cleaned_data["regulation_usage"],
         )
-        part_value = self._get_next_part_value(partial_regulation_id)
-        instance.regulation_id = "{partial_regulation_id}{part_value}".format(
-            partial_regulation_id=partial_regulation_id,
-            part_value=part_value,
-        )
+        try:
+            part_value = self._get_next_part_value(partial_regulation_id)
+        except IndexError:
+            raise ValidationError(
+                "Exceeded maximum number of parts for this regulation."
+            )
+
+        cleaned_data["regulation_id"] = f"{partial_regulation_id}{part_value}"
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        instance.role_type = FIXED_ROLE_TYPE
+        instance.regulation_id = self.cleaned_data["regulation_id"]
 
         if commit:
             instance.save(commit)
