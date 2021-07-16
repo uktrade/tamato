@@ -1,6 +1,7 @@
 import string
 
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
@@ -99,10 +100,6 @@ class RegulationCreateForm(ValidityPeriodForm):
             "unlimited amount of time."
         )
         self.fields["information_text"].label = "Title"
-        self.fields["url"].widget.attrs.update({"class": "govuk-input"})
-        self.fields["sequence_number"].widget.attrs.update(
-            {"class": "govuk-input govuk-input--width-5"}
-        )
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -115,7 +112,10 @@ class RegulationCreateForm(ValidityPeriodForm):
                     "Help with public identifiers",
                     "regulations/help_public_identifiers.html"
                 ),
-                "url",
+                Field(
+                    "url",
+                    css_class="govuk-input",
+                ),
                 "regulation_group",
                 self._load_details_from_template(
                     "Help with regulation group",
@@ -125,7 +125,10 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "start_date",
                 "end_date",
                 "published_at",
-                "sequence_number",
+                Field(
+                    "sequence_number",
+                    css_class="govuk-input govuk-input--width-5"
+                ),
                 self._load_details_from_template(
                     "Help with sequence number",
                     "regulations/help_sequence_number.html"
