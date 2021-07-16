@@ -25,7 +25,7 @@ AWS_S3_REGION_NAME = os.environ.get("TEST_AWS_S3_REGION_NAME", "eu-west-2")
 # Cache settings - put things in memory to minimise dependencies.
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     },
 }
 
