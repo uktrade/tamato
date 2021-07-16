@@ -31,7 +31,7 @@ govuk-frontend-jinja @ git+https://github.com/alphagov/govuk-frontend-jinja.git@
 gunicorn==20.0.4
 Jinja2==2.11.3
 lxml==4.6.3
-moto==2.0.5
+moto==2.1.0
 parsec==3.8
 psycopg2-binary==2.8.6
 pygments>=2.8
