@@ -312,6 +312,11 @@ def test_new_draft_uses_passed_transaction(sample_model):
     assert Transaction.objects.count() == transaction_count + 1
 
 
+def test_new_version_works_for_all_models(trackedmodel_factory):
+    model = trackedmodel_factory.create()
+    model.new_version(model.transaction.workbasket)
+
+
 def test_identifying_fields(sample_model):
     assert sample_model.get_identifying_fields() == {"sid": sample_model.sid}
 
