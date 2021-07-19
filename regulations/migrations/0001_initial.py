@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
                         editable=False,
                         max_length=3,
                         validators=[
-                            django.core.validators.RegexValidator("[A-Z][A-Z][A-Z]")
+                            django.core.validators.RegexValidator("[A-Z][A-Z][A-Z]"),
                         ],
                     ),
                 ),
@@ -135,15 +135,19 @@ class Migration(migrations.Migration):
                         max_length=8,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "(?x)\n    ((?P<prefix>C|R|D|A|I|J|P|U|S|X|N|M|Q|0)\n    (?P<year>\\d{2})\n    (?P<number>\\d{4})\n    (?P<suffix>[0-9A-Z]))|\n    ((?P<national_prefix>Z|V)\n    (?P<national_year>\\d{4})\n    (?P<national_suffix>[A-Z]{3}))|\n    ((?P<dummy_prefix>IYY)\n    (?P<dummy_suffix>\\d{5}))\n"
-                            )
+                                "(?x)\n    ((?P<prefix>C|R|D|A|I|J|P|U|S|X|N|M|Q|0)\n    (?P<year>\\d{2})\n    (?P<number>\\d{4})\n    (?P<suffix>[0-9A-Z]))|\n    ((?P<national_prefix>Z|V)\n    (?P<national_year>\\d{4})\n    (?P<national_suffix>[A-Z]{3}))|\n    ((?P<dummy_prefix>IYY)\n    (?P<dummy_suffix>\\d{5}))\n",
+                            ),
                         ],
                     ),
                 ),
                 (
                     "official_journal_number",
                     models.CharField(
-                        blank=True, default="1", editable=False, max_length=5, null=True
+                        blank=True,
+                        default="1",
+                        editable=False,
+                        max_length=5,
+                        null=True,
                     ),
                 ),
                 (
@@ -165,9 +169,10 @@ class Migration(migrations.Migration):
                     common.fields.ShortDescription(
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[^|]*$", "Must not contain '|'"
-                            )
-                        ]
+                                "^[^|]*$",
+                                "Must not contain '|'",
+                            ),
+                        ],
                     ),
                 ),
                 (
@@ -179,8 +184,9 @@ class Migration(migrations.Migration):
                         null=True,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[^|]*$", "Must not contain '|'"
-                            )
+                                "^[^|]*$",
+                                "Must not contain '|'",
+                            ),
                         ],
                     ),
                 ),
@@ -192,8 +198,9 @@ class Migration(migrations.Migration):
                         null=True,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[^|]*$", "Must not contain '|'"
-                            )
+                                "^[^|]*$",
+                                "Must not contain '|'",
+                            ),
                         ],
                     ),
                 ),
@@ -213,7 +220,8 @@ class Migration(migrations.Migration):
                 (
                     "valid_between",
                     django.contrib.postgres.fields.ranges.DateTimeRangeField(
-                        blank=True, null=True
+                        blank=True,
+                        null=True,
                     ),
                 ),
                 (
@@ -365,8 +373,8 @@ class Migration(migrations.Migration):
                         null=True,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[0-9]{3}|[0-9]{6}|[A-Z]{3}$"
-                            )
+                                "^[0-9]{3}|[0-9]{6}|[A-Z]{3}$",
+                            ),
                         ],
                     ),
                 ),
@@ -378,8 +386,8 @@ class Migration(migrations.Migration):
                         null=True,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[A-Z0-9]{2}$|^[A-Z0-9]{4}$"
-                            )
+                                "^[A-Z0-9]{2}$|^[A-Z0-9]{4}$",
+                            ),
                         ],
                     ),
                 ),
