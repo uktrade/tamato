@@ -110,7 +110,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "public_identifier",
                 self._load_details_from_template(
                     "Help with public identifiers",
-                    "regulations/help_public_identifiers.html"
+                    "regulations/help_public_identifiers.jinja"
                 ),
                 Field(
                     "url",
@@ -119,7 +119,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "regulation_group",
                 self._load_details_from_template(
                     "Help with regulation group",
-                    "regulations/help_regulation_group.html"
+                    "regulations/help_regulation_group.jinja"
                 ),
                 "information_text",
                 "start_date",
@@ -131,7 +131,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                 ),
                 self._load_details_from_template(
                     "Help with sequence number",
-                    "regulations/help_sequence_number.html"
+                    "regulations/help_sequence_number.jinja"
                 ),
                 "approved",
             ),
