@@ -123,7 +123,7 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         return cleaned_data
 
     def save(self, commit=True):
-        instance = super(AdditionalCodeCreateForm, self).save(commit=False)
+        instance = super().save(commit=False)
 
         workbasket = WorkBasket.current(self.request)
         tx = None
@@ -138,7 +138,7 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         instance.sid = highest_sid + 1
 
         if commit:
-            instance.save()
+            instance.save(commit)
         return instance
 
     class Meta:
