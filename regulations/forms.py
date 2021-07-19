@@ -1,13 +1,13 @@
+import re
 import string
 
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
-from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
-
 from django.core.exceptions import ValidationError
 from django.forms import ChoiceField
 from django.forms import IntegerField
@@ -20,10 +20,10 @@ from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
 from regulations.models import Group
 from regulations.models import Regulation
+from regulations.validators import UK_ID
 from regulations.validators import RegulationUsage
 from regulations.validators import RoleType
 from workbaskets.models import WorkBasket
-
 
 # Regulation.role_type is currently always set to RoleType.BASE.
 FIXED_ROLE_TYPE = RoleType.BASE
@@ -60,13 +60,11 @@ class RegulationCreateForm(ValidityPeriodForm):
             "Statutory Instrument (S.I.) or other peice of UK legislation, "
             "this should be the “made date” as found in the introductory note "
             "of the legislative text."
-        )
+        ),
     )
     sequence_number = IntegerField(
         max_value=9999,
-        help_text=(
-            "The sequence number published by the source of this regulation."
-        )
+        help_text=("The sequence number published by the source of this regulation."),
     )
     approved = TypedChoiceField(
         choices=(
@@ -83,13 +81,12 @@ class RegulationCreateForm(ValidityPeriodForm):
 
     def _load_details_from_template(self, title, template_path):
         public_identifier_details_content = loader.render_to_string(
-            template_path
+            template_path,
         )
         return HTML.details(
             title,
-            SafeString(public_identifier_details_content)
+            SafeString(public_identifier_details_content),
         )
-
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -110,7 +107,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "public_identifier",
                 self._load_details_from_template(
                     "Help with public identifiers",
-                    "regulations/help_public_identifiers.jinja"
+                    "regulations/help_public_identifiers.jinja",
                 ),
                 Field(
                     "url",
@@ -119,7 +116,7 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "regulation_group",
                 self._load_details_from_template(
                     "Help with regulation group",
-                    "regulations/help_regulation_group.jinja"
+                    "regulations/help_regulation_group.jinja",
                 ),
                 "information_text",
                 "start_date",
@@ -127,22 +124,29 @@ class RegulationCreateForm(ValidityPeriodForm):
                 "published_at",
                 Field(
                     "sequence_number",
-                    css_class="govuk-input govuk-input--width-5"
+                    css_class="govuk-input govuk-input--width-5",
                 ),
                 self._load_details_from_template(
                     "Help with sequence number",
-                    "regulations/help_sequence_number.jinja"
+                    "regulations/help_sequence_number.jinja",
                 ),
                 "approved",
             ),
             Submit("submit", "Save"),
         )
 
-    def _make_partial_regulation_id(self, published_at, sequence_number, regulation_usage):
-        """ Make a partial regulation_id using bound form data. The result will
-        not include the single digit at the last position of a valid
-        regulation_id, which is only applied when the regulation instance is
-        saved (the part number provides a uniqueness element among potentially
+    def _make_partial_regulation_id(
+        self,
+        published_at,
+        sequence_number,
+        regulation_usage,
+    ):
+        """
+        Make a partial regulation_id using bound form data. The result will not
+        include the single digit at the last position of a valid regulation_id,
+        which is only applied when the regulation instance is saved (the part
+        number provides a uniqueness element among potentially.
+
         < 10 + 26 partial regulation_ids).
         """
         publication_year = str(published_at.year)[-2:]
@@ -150,9 +154,9 @@ class RegulationCreateForm(ValidityPeriodForm):
         return f"{regulation_usage}{publication_year}{sequence_number}"
 
     def _get_next_part_value(self, partial_regulation_id):
-        """ Get the next available part value that can be appended to a partial
-        regulation_id (see RegulationCreateForm._make_partial_regulation_id()).
-        """
+        """Get the next available part value that can be appended to a partial
+        regulation_id (see
+        RegulationCreateForm._make_partial_regulation_id())."""
         tx = WorkBasket.get_current_transaction(self.request)
         last_matching_regulation = (
             Regulation.objects.filter(
@@ -193,19 +197,22 @@ class RegulationCreateForm(ValidityPeriodForm):
             part_value = self._get_next_part_value(partial_regulation_id)
         except IndexError:
             raise ValidationError(
-                "Exceeded maximum number of parts for this regulation."
+                "Exceeded maximum number of parts for this regulation.",
             )
 
         cleaned_data["regulation_id"] = f"{partial_regulation_id}{part_value}"
 
+        # Sanity check against the UK flavour of Regulation ID.
+        assert re.match(UK_ID, cleaned_data["regulation_id"])
+
         if (
-            not cleaned_data["approved"] and
-            cleaned_data["regulation_usage"] != RegulationUsage.DRAFT_REGULATION
+            not cleaned_data["approved"]
+            and cleaned_data["regulation_usage"] != RegulationUsage.DRAFT_REGULATION
         ):
             self.add_error(
                 "approved",
-                "Regulation status \"Not approved\" may only be applied "
-                "when Regulation usage is \"C: Draft regulation\""
+                'Regulation status "Not approved" may only be applied '
+                'when Regulation usage is "C: Draft regulation"',
             )
 
         return cleaned_data
