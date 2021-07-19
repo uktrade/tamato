@@ -43,6 +43,8 @@ class RegulationDetail(TrackedModelDetailView):
 
 
 class RegulationCreate(DraftCreateView):
+    """UI to create new regulations."""
+
     template_name = "regulations/create.jinja"
     form_class = RegulationCreateForm
 
@@ -61,6 +63,7 @@ class RegulationCreate(DraftCreateView):
         # from the form.
         kwargs["request"] = self.request
         return kwargs
+
 
 class RegulationConfirmCreate(TrackedModelDetailView):
     template_name = "common/confirm_create.jinja"
