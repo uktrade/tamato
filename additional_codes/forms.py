@@ -125,10 +125,7 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
+        tx = WorkBasket.get_current_transaction(self.request)
 
         highest_sid = (
             models.AdditionalCode.objects.filter(type__sid=instance.type.sid)
