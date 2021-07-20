@@ -56,7 +56,7 @@ class Group(TrackedModel, ValidityMixin):
         return f"{self.group_id}: {self.description}"
 
 
-class Regulation(TrackedModel):
+class Regulation(TrackedModel, ValidityMixin):
     """
     The main legal acts at the basis of the Union tariff and commercial
     legislation are regulations and decisions.
