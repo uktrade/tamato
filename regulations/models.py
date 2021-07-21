@@ -52,6 +52,9 @@ class Group(TrackedModel, ValidityMixin):
 
     business_rules = (UpdateValidity,)
 
+    def __str__(self):
+        return f"{self.group_id}: {self.description}"
+
 
 class Regulation(TrackedModel):
     """
@@ -96,7 +99,10 @@ class Regulation(TrackedModel):
         editable=False,
         default=1,
     )
-    published_at = models.DateField(blank=True, null=True, editable=False)
+    published_at = models.DateField(
+        blank=True,
+        null=True,
+    )
     information_text = ShortDescription(
         validators=[validators.no_information_text_delimiters],
     )
@@ -123,7 +129,9 @@ class Regulation(TrackedModel):
     # measures are moved from the draft to the actual regulation.
     # It is possible for a draft regulation to be replaced by multiple actual regulations,
     # each one partially replacing the draft.
-    approved = models.BooleanField(default=False)
+    approved = models.BooleanField(
+        default=False,
+    )
 
     """The code which indicates whether or not a regulation has been replaced."""
     replacement_indicator = models.PositiveIntegerField(

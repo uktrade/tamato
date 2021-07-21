@@ -268,6 +268,11 @@ Please submit a Pull Request
 
 This project uses the [pre-commit](https://pre-commit.com/) tool to run [black](https://github.com/psf/black) as an autoformatter and [reorder-python-imports](https://github.com/asottile/reorder_python_imports) to format imports.
 
+By pip-installing `requirements-dev.txt` you will have the pre-commit package
+installed, so you should now set up your pre-commit hooks:
+
+    $ pre-commit install
+
 ## How to change application dependencies (libraries)
 
 ## Known manual procedures

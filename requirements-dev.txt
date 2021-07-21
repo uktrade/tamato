@@ -1,4 +1,5 @@
 -r requirements.txt
 
 django_debug_toolbar
+pre-commit
 pytest-celery
