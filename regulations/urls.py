@@ -13,6 +13,8 @@ register_converter(RegulationRoleTypeConverter, "reg_type")
 api_router = routers.DefaultRouter()
 api_router.register(r"regulations", views.RegulationViewSet, basename="regulation")
 
+detail = "<reg_type:role_type>/<reg_id:regulation_id>"
+
 ui_patterns = [
     path(
         "",
@@ -20,7 +22,17 @@ ui_patterns = [
         name="regulation-ui-list",
     ),
     path(
-        "<reg_type:role_type>/<reg_id:regulation_id>/",
+        "create/",
+        views.RegulationCreate.as_view(),
+        name="regulation-ui-create",
+    ),
+    path(
+        f"{detail}/confirm-create/",
+        views.RegulationConfirmCreate.as_view(),
+        name="regulation-ui-confirm-create",
+    ),
+    path(
+        f"{detail}/",
         views.RegulationDetail.as_view(),
         name="regulation-ui-detail",
     ),
