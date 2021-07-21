@@ -75,6 +75,9 @@ class AdditionalCodeForm(ValidityPeriodForm):
 
 
 class AdditionalCodeCreateForm(ValidityPeriodForm):
+    class Meta:
+        model = models.AdditionalCode
+        fields = ("type", "valid_between")
 
     type = forms.ModelChoiceField(
         label="Additional code type",
@@ -137,10 +140,6 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         if commit:
             instance.save(commit)
         return instance
-
-    class Meta:
-        model = models.AdditionalCode
-        fields = ("type", "valid_between")
 
 
 class AdditionalCodeDescriptionForm(DescriptionForm):
