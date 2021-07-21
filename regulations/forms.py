@@ -63,6 +63,7 @@ class RegulationCreateForm(ValidityPeriodForm):
         ),
     )
     sequence_number = IntegerField(
+        min_value=1,
         max_value=9999,
         help_text=("The sequence number published by the source of this regulation."),
     )
