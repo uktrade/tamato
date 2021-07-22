@@ -77,23 +77,30 @@ class AdditionalCodeForm(ValidityPeriodForm):
 class AdditionalCodeCreateForm(ValidityPeriodForm):
     class Meta:
         model = models.AdditionalCode
-        fields = ("type", "valid_between")
+        fields = ("type", "code", "valid_between")
 
     type = forms.ModelChoiceField(
         label="Additional code type",
-        help_text="Selecting the right additional code type will determine whether it can be associated with measures, commodity codes, or both",
+        help_text=(
+            "Selecting the right additional code type will determine whether "
+            "it can be associated with measures, commodity codes, or both"
+        ),
         queryset=models.AdditionalCodeType.objects.latest_approved(),
         empty_label="Select an additional code type",
     )
-
     code = forms.CharField(
         label="Additional code ID",
-        help_text="Must be 3 numeric characters and form a unique combination with the additional code type",
+        help_text=(
+            "Must be 3 numeric characters and form a unique combination with "
+            "the additional code type"
+        ),
     )
-
     description = forms.CharField(
         label="Additional code description",
-        help_text="You may enter HTML formatting if required. See the guide below for more information.",
+        help_text=(
+            "You may enter HTML formatting if required. See the guide below "
+            "for more information."
+        ),
         widget=forms.Textarea,
     )
 
