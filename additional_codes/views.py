@@ -16,8 +16,8 @@ from additional_codes.models import AdditionalCodeDescription
 from additional_codes.models import AdditionalCodeType
 from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.models import TrackedModel
-from common.validators import UpdateType
 from common.serializers import AutoCompleteSerializer
+from common.validators import UpdateType
 from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -98,7 +98,6 @@ class AdditionalCodeCreate(DraftCreateView):
 
     def form_valid(self, form):
         transaction = self.get_transaction()
-        transaction.save()
         self.object = form.save(commit=False)
         self.object.update_type = UpdateType.CREATE
         self.object.transaction = transaction
