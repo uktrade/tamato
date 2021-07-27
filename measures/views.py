@@ -1,3 +1,5 @@
+from typing import Type
+
 from rest_framework import viewsets
 
 from common.models import TrackedModel
@@ -28,7 +30,7 @@ class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MeasureMixin:
-    model: type[TrackedModel] = Measure
+    model: Type[TrackedModel] = Measure
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)

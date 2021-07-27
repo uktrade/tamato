@@ -5,6 +5,7 @@ from datetime import timezone
 from functools import wraps
 from io import BytesIO
 from itertools import count
+from typing import Dict
 
 import pytest
 from dateutil.parser import parse as parse_date
@@ -342,7 +343,7 @@ def only_applicable_after(cutoff):
     return decorator
 
 
-def validity_period_post_data(start: date, end: date) -> dict[str, int]:
+def validity_period_post_data(start: date, end: date) -> Dict[str, int]:
     """
     Construct a POST data fragment for the validity period start and end dates
     of a ValidityPeriodForm from the given date objects, eg:
