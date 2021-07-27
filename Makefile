@@ -72,12 +72,12 @@ run: collectstatic migrate
 test-fast:
 	@echo
 	@echo "> Running tests..."
-	${PYTHON} manage.py test --failfast
+	${PYTHON} manage.py test --failfast -- --random-order
 
 test:
 	@echo
 	@echo "> Running tests..."
-	@coverage run --source='.' manage.py test -- --alluredir=allure-results --nomigrations
+	@coverage run --source='.' manage.py test -- --random-order --alluredir=allure-results --nomigrations
 	@coverage xml
 
 ## docker-image: Build docker image
