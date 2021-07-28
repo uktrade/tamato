@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.postgres.fields import DateRangeField
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.db import models
+from django.db.models.expressions import RawSQL
 from django.forms import ModelChoiceField
 from django.urls import reverse_lazy
 from psycopg2.extras import DateRange
@@ -15,11 +16,19 @@ from common.util import TaricDateRange
 from common.util import TaricDateTimeRange
 
 
+def get_next_by_max(field):
+    return lambda: RawSQL(
+        sql=f'SELECT MAX("{field.column}") + 1 FROM "{field.model._meta.db_table}"',
+        params=[],
+    )
+
+
 class NumericSID(models.PositiveIntegerField):
     def __init__(self, *args, **kwargs):
         kwargs["editable"] = False
         kwargs["validators"] = [validators.NumericSIDValidator()]
         kwargs["db_index"] = True
+        kwargs["default"] = get_next_by_max(self)
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
@@ -27,6 +36,7 @@ class NumericSID(models.PositiveIntegerField):
         del kwargs["editable"]
         del kwargs["validators"]
         del kwargs["db_index"]
+        del kwargs["default"]
         return name, path, args, kwargs
 
 
@@ -34,12 +44,14 @@ class SignedIntSID(models.IntegerField):
     def __init__(self, *args, **kwargs):
         kwargs["editable"] = False
         kwargs["db_index"] = True
+        kwargs["default"] = get_next_by_max(self)
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
         del kwargs["editable"]
         del kwargs["db_index"]
+        del kwargs["default"]
         return name, path, args, kwargs
 
 

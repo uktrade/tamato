@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import re
-from collections import defaultdict
 from datetime import date
 from typing import Any
-from typing import Dict
 from typing import Iterable
 from typing import Optional
+from typing import Set
 from typing import TypeVar
 
 from django.db import models
@@ -17,13 +16,14 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
-from django.db.models.base import Model
+from django.db.models.expressions import Expression
 from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
 from django.template import loader
 from django.urls import NoReverseMatch
 from django.urls import reverse
+from django_cte import CTEQuerySet
 from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
@@ -35,8 +35,6 @@ from common.exceptions import NoDescriptionError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
-from common.renderers import Counter
-from common.renderers import counter_generator
 from common.util import classproperty
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
@@ -44,7 +42,7 @@ from workbaskets.validators import WorkflowStatus
 Cls = TypeVar("Cls")
 
 
-class TrackedModelQuerySet(PolymorphicQuerySet):
+class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
@@ -676,44 +674,15 @@ class TrackedModel(PolymorphicModel):
 
     _meta: Options
 
-    @classmethod
-    def get_sid_counters(cls, transaction=None) -> Dict[Model, Dict[Field, Counter]]:
-        """
-        Returns a dictionary of counter objects that when called will return the
-        next available SID for a given field (assuming that noone else has
-        written to the database at the same time – each counter uses a cached
-        value).
-
-        This also includes SIDs for any model that references this one via a
-        foreign key.
-        """
-        all_models = {
-            *(
-                field.related_model
-                for field in cls._meta.get_fields()
-                if field.one_to_many
-            ),
-            cls,
+    @classproperty
+    def auto_value_fields(cls) -> Set[Field]:
+        """Returns the set of fields on this model that should have their value
+        set automatically on save, excluding any primary keys."""
+        return {
+            f
+            for f in cls._meta.get_fields()
+            if isinstance(f, (SignedIntSID, NumericSID))
         }
-
-        sid_fields = {
-            model: {
-                f
-                for f in model._meta.get_fields()
-                if isinstance(f, (SignedIntSID, NumericSID))
-            }
-            for model in all_models
-        }
-
-        sid_counters = defaultdict(dict)
-        for model in sid_fields:
-            for field in sid_fields[model]:
-                max_sid = model.objects.approved_up_to_transaction(
-                    transaction,
-                ).aggregate(max=Max(field.name))["max"]
-                sid_counters[model][field] = counter_generator((max_sid or 0) + 1)
-
-        return sid_counters
 
     # Fields that we don't want to copy from one object to a new one, either
     # because they will be set by the system automatically or because we will
@@ -766,7 +735,6 @@ class TrackedModel(PolymorphicModel):
     def copy(
         self: Cls,
         transaction,
-        sid_counters: Dict[Model, Dict[Field, Counter]] = None,
         **overrides: Any,
     ) -> Cls:
         """
@@ -781,11 +749,6 @@ class TrackedModel(PolymorphicModel):
         model. If the model uses SIDs, they will be automatically set to the
         next highest available SID. Models with other identifying fields should
         have thier new IDs passed in through overrides.
-
-        ``sid_counters``, if specified, will be used to get the new SIDs for
-        this model and any dependent models. If ``copy`` is to be called in a
-        loop, consider calling ``cls.get_sid_counters(…)`` and passing the
-        result in to improve performance (working out max SIDs is slow).
         """
 
         # Remove any fields from the basic data that are overriden, because
@@ -797,11 +760,13 @@ class TrackedModel(PolymorphicModel):
             field = self._meta.get_field(field_name)
             basic_fields.remove(field)
 
-        if not sid_counters:
-            sid_counters = self.get_sid_counters(transaction)
+        # Remove any SIDs from the copied data. This allows them to either
+        # automatically pick the next highest value or to be passed in.
+        for field in self.auto_value_fields:
+            basic_fields.remove(field)
 
         # Build the dictionary of data that the new model will have. Convert any
-        # foreign key into an id because ``value_from_object`` returns PKs.
+        # foreign keys into ids because ``value_from_object`` returns PKs.
         model_data = {
             f.name
             + (
@@ -810,19 +775,13 @@ class TrackedModel(PolymorphicModel):
             for f in basic_fields
         }
 
-        # If this model has any SIDs, override them with the next highest value.
-        sid_overrides = {
-            field.name: next_sid()
-            for field, next_sid in sid_counters.get(type(self), {}).items()
-        }
-
         new_object_data = {
             **model_data,
-            **sid_overrides,
             "transaction": transaction,
             "update_type": validators.UpdateType.CREATE,
             **overrides,
         }
+
         new_object = type(self).objects.create(**new_object_data)
 
         # Now copy any many-to-many fields with an auto-created through model.
@@ -851,9 +810,7 @@ class TrackedModel(PolymorphicModel):
 
             reverse_field_name = field.field.name
             for model in queryset.approved_up_to_transaction(transaction):
-                model.copy(
-                    transaction, sid_counters, **{reverse_field_name: new_object}
-                )
+                model.copy(transaction, **{reverse_field_name: new_object})
 
         return new_object
 
@@ -873,6 +830,19 @@ class TrackedModel(PolymorphicModel):
         if self.transaction.workbasket.status in WorkflowStatus.approved_statuses():
             self.version_group.current_version = self
             self.version_group.save()
+
+        auto_fields = {
+            field
+            for field in self.auto_value_fields
+            if field.attname in self.__dict__
+            and isinstance(self.__dict__.get(field.attname), (Expression, F))
+        }
+
+        # If the model contains any fields that are built in the database, the
+        # fields will still contain the expression objects. So remove them now
+        # and Django will lazy fetch the real values if they are accessed.
+        for field in auto_fields:
+            delattr(self, field.name)
 
         return return_value
 

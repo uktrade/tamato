@@ -391,26 +391,6 @@ def test_copy(trackedmodel_factory, approved_transaction):
 
 
 @pytest.mark.parametrize(
-    ("sid_values", "expected_next_sids"),
-    (
-        ([], [1]),
-        ([1], [2]),
-        ([1, 2], [3, 4]),
-        (range(1, 10), range(10, 21)),
-    ),
-)
-def test_sid_counters(sid_values, expected_next_sids):
-    """Verify that the sid_counter is incremented by 1 for each call."""
-    for sid in sid_values:
-        factories.TestModel1Factory.create(sid=sid)
-
-    counters = models.TestModel1.get_sid_counters()
-    counter = counters[models.TestModel1][models.TestModel1._meta.get_field("sid")]
-    for value in expected_next_sids:
-        assert counter() == value
-
-
-@pytest.mark.parametrize(
     ("starting_sid", "expected_next_sid"),
     (
         (0, 1),
