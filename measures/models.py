@@ -1,10 +1,7 @@
 from datetime import date
-from typing import Dict
 from typing import Set
 
 from django.db import models
-from django.db.models.base import Model
-from django.db.models.fields import Field
 from polymorphic.managers import PolymorphicManager
 
 from common.business_rules import UpdateValidity
@@ -13,8 +10,8 @@ from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models.mixins.validity import ValidityMixin
-from common.renderers import Counter
 from common.util import TaricDateRange
+from common.util import classproperty
 from common.validators import UpdateType
 from footnotes import validators as footnote_validators
 from measures import business_rules
@@ -611,13 +608,13 @@ class Measure(TrackedModel, ValidityMixin):
     def objects_with_validity_field(cls):
         return super().objects_with_validity_field().with_effective_valid_between()
 
-    @classmethod
-    def get_sid_counters(cls, transaction=None) -> Dict[Model, Dict[Field, Counter]]:
+    @classproperty
+    def auto_value_fields(cls):
         """Remove export refund SID because we don't want to auto-increment it –
         it should really be a foreign key to an ExportRefundNomenclature model
         but as we don't use them in the UK Tariff we don't store them."""
-        counters = super().get_sid_counters(transaction=transaction)
-        del counters[cls][cls._meta.get_field("export_refund_nomenclature_sid")]
+        counters = super().auto_value_fields
+        counters.remove(cls._meta.get_field("export_refund_nomenclature_sid"))
         return counters
 
     def has_components(self):
