@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import re
+from contextlib import contextmanager
 from datetime import timedelta
+from enum import Enum
 from functools import lru_cache
 from functools import partial
 from platform import python_version_tuple
@@ -15,7 +17,6 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-import wrapt
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
@@ -37,6 +38,8 @@ from django.db.transaction import atomic
 from django.template import loader
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
+from psycopg2.sql import SQL
+from psycopg2.sql import Identifier
 
 major, minor, patch = python_version_tuple()
 
@@ -336,9 +339,18 @@ def get_field_tuple(model: Model, field_name: str) -> Tuple[str, Any]:
     return field_name, value
 
 
-class TableLock:
-    """Provides a decorator for locking database tables for the duration of a
-    decorated function."""
+class LockMode(Enum):
+    """
+    PostgreSQL provides various lock modes to control concurrent access to data
+    in tables.
+
+    Most PostgreSQL commands automatically acquire locks of appropriate modes to
+    ensure that referenced tables are not dropped or modified in incompatible
+    ways while the command executes.
+
+    See PostgreSQL's explicit locking documentation for more information:
+    https://www.postgresql.org/docs/current/explicit-locking.html
+    """
 
     ACCESS_SHARE = "ACCESS SHARE"
     ROW_SHARE = "ROW SHARE"
@@ -349,47 +361,46 @@ class TableLock:
     EXCLUSIVE = "EXCLUSIVE"
     ACCESS_EXCLUSIVE = "ACCESS EXCLUSIVE"
 
-    LOCK_TYPES = (
-        ACCESS_SHARE,
-        ROW_SHARE,
-        ROW_EXCLUSIVE,
-        SHARE_UPDATE_EXCLUSIVE,
-        SHARE,
-        SHARE_ROW_EXCLUSIVE,
-        EXCLUSIVE,
-        ACCESS_EXCLUSIVE,
-    )
 
-    @classmethod
-    def acquire_lock(cls, *models, lock=None):
-        """
-        Decorator for PostgreSQL's table-level lock functionality.
+@contextmanager
+def lock(*models: type[Model], mode: LockMode = LockMode.ACCESS_EXCLUSIVE):
+    """
+    Obtains a table-level lock for all of the specified models, waiting if
+    necessary for any conflicting locks to be released.
 
-        Example:
-            @transaction.commit_on_success
-            @require_lock(MyModel, lock=TableLock.ACCESS_EXCLUSIVE)
-            def myview(request)
-                ...
+    If no lock mode is specified, then ACCESS EXCLUSIVE, the most restrictive
+    mode, is used.
 
-        PostgreSQL's LOCK Documentation:
-        http://www.postgresql.org/docs/8.3/interactive/sql-lock.html
-        """
-        if lock is None:
-            lock = cls.ACCESS_EXCLUSIVE
+    Note that locks are *global* to the transaction and once acquired cannot be
+    released manually. They are automatically released when the transaction
+    ends. If `with lock()` were to be called inside another atomic() block, the
+    lock would not actually be released at the end of the `with lock()`
+    statement, which would be a possible source of hard to spot bugs.
 
-        if lock not in cls.LOCK_TYPES:
-            raise ValueError("%s is not a PostgreSQL supported lock mode.")
+    For that reason, this method raises `RuntimeError` if the caller is already
+    in a transaction. This ensures that either the caller can be sure that the
+    lock is released when the `with` statement or decorated function ends, or an
+    error is thrown.
 
-        @wrapt.decorator
-        def wrapper(wrapped, instance, args, kwargs):
-            with atomic():
-                with transaction.get_connection().cursor() as cursor:
-                    for model in models:
-                        cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+    See PostgreSQL's LOCK documentation for details on modes:
+    http://www.postgresql.org/docs/current/interactive/sql-lock.html
+    """
+    if not any(models):
+        raise ValueError("No models provided to lock")
 
-                    return wrapped(*args, **kwargs)
+    connection = transaction.get_connection()
+    if connection.in_atomic_block:
+        raise RuntimeError("Cannot lock while already inside a transaction")
 
-        return wrapper
+    with atomic():
+        with transaction.get_connection().cursor() as cursor:
+            tables = (Identifier(model._meta.db_table) for model in models)
+            sql = SQL("LOCK TABLE {tables} IN {mode} MODE").format(
+                tables=SQL(",").join(tables),
+                mode=SQL(mode.value),
+            )
+            cursor.execute(sql)
+        yield
 
 
 def get_next_id(queryset: QuerySet, id_field: Field, max_len: int):

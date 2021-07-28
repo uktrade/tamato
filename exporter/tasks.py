@@ -13,7 +13,8 @@ from django.core.files.base import ContentFile
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 
-from common.util import TableLock
+from common.util import LockMode
+from common.util import lock
 from exporter import sqlite
 from exporter.models import Upload
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
@@ -103,7 +104,7 @@ def upload_and_create_envelopes(
     retry_backoff_max=settings.EXPORTER_UPLOAD_RETRY_BACKOFF_MAX,
     retry_jitter=True,
 )
-@TableLock.acquire_lock(Envelope, lock="SHARE")
+@lock(Envelope, mode=LockMode.SHARE)
 def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     """
     Upload workbaskets.
