@@ -37,6 +37,21 @@ class CommunityCode(models.IntegerChoices):
     ECONOMIC_COAL = 4, "Economic/Coal"
 
 
+class RegulationUsage(models.TextChoices):
+    __empty__ = "Select a regulation usage"
+    DRAFT_REGULATION = "C", "C: Draft regulation"
+    PREFERENTIAL_TRADE_AGREEMENT = "P", "P: Preferential Trade Agreement / FTA"
+    UNILATERAL_PREFERENCES = "U", "U: Unilateral preferences (GSP)"
+    SUSPENSIONS_AND_RELIEFS = "S", "S: Suspensions and reliefs"
+    IMPORT_AND_EXPORT_CONTROL = "X", "X: Import and Export control"
+    TRADE_REMEDIES = "N", "N: Trade remedies"
+    MFN = "M", "M:  MFN"
+    QUOTAS = "Q", "Q: Quotas"
+    AGRI_MEASURES = "A", "A: Agri measures"
+
+
+UK_ID_PREFIXES = "".join([ru for ru in RegulationUsage.values if ru is not None])
+
 # The regulation number is composed of four elements, as follows:
 # - the regulation number prefix - one of the following (for EU regulations);
 #     - 'C' draft regulations, decisions and agreements;
@@ -63,11 +78,12 @@ class CommunityCode(models.IntegerChoices):
 #     legislation (for instance, for supporting different validity periods within the
 #     one regulation)
 TARIC_ID = r"[CRDAIJ]\d{2}\d{4}[0-9A-Z]"
-UK_ID = r"[CPUSXNMQA]\d{2}\d{4}[0-9A-Z]"
+UK_ID = fr"[{UK_ID_PREFIXES}]" + r"\d{2}\d{4}[0-9A-Z]"
 NATIONAL_ID = r"[ZV]\d{4}[A-Z]{3}"
 DUMMY_ID = r"IYY\d{5}"
 REGULATION_ID_REGEX = fr"({TARIC_ID}|{UK_ID}|{NATIONAL_ID}|{DUMMY_ID})"
 regulation_id_validator = RegexValidator(fr"^{REGULATION_ID_REGEX}$")
+
 
 no_information_text_delimiters = RegexValidator(
     r"^[^|\xA0]*$",

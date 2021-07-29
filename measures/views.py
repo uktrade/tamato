@@ -1,3 +1,5 @@
+from typing import Type
+
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
@@ -40,7 +42,7 @@ class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MeasureMixin:
-    model: type[TrackedModel] = Measure
+    model: Type[TrackedModel] = Measure
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)

@@ -71,7 +71,13 @@ def test_nursery_caches_object(object_nursery, handler_class):
 
 
 @pytest.mark.django_db
-def test_nursery_gets_object_from_cache(object_nursery):
+def test_nursery_gets_object_from_cache(settings, object_nursery):
+    settings.CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        },
+    }
+
     instance = factories.FootnoteFactory.create()
     object_nursery.cache_object(instance)
 

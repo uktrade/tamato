@@ -6,6 +6,7 @@ from functools import wraps
 from typing import Iterable
 from typing import Mapping
 from typing import Optional
+from typing import Tuple
 from typing import Type
 from typing import Union
 
@@ -121,7 +122,7 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
 class BusinessRuleChecker:
     def __init__(self, models: Iterable[TrackedModel], transaction):
-        self.checks: set[tuple[type[BusinessRule], TrackedModel]] = set()
+        self.checks: set[Tuple[Type[BusinessRule], TrackedModel]] = set()
 
         self.transaction = transaction
 
@@ -172,6 +173,22 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
         return cls
 
     return decorator
+
+
+def skip_when_deleted(cls):
+    """If the object passed to the business rule is deleted, do not run the rule
+    and report no violations."""
+    _original_validate = cls.validate
+
+    @wraps(_original_validate)
+    def validate(self, model):
+        if model.update_type == UpdateType.DELETE:
+            log.debug("Skipping %s: object is deleted", cls.__name__)
+        else:
+            _original_validate(self, model)
+
+    cls.validate = validate
+    return cls
 
 
 class UniqueIdentifyingFields(BusinessRule):

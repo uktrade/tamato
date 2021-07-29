@@ -14,10 +14,10 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import ValidityPeriodContains
 from common.business_rules import only_applicable_after
+from common.business_rules import skip_when_deleted
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
-from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
 
@@ -298,6 +298,7 @@ class ME25(BusinessRule):
             raise self.violation(measure)
 
 
+@skip_when_deleted
 class ME32(BusinessRule):
     """
     There may be no overlap in time with other measure occurrences with a goods
@@ -308,10 +309,7 @@ class ME32(BusinessRule):
     """
 
     def validate(self, measure):
-        if (
-            measure.goods_nomenclature is None
-            or measure.update_type == UpdateType.DELETE
-        ):
+        if measure.goods_nomenclature is None:
             return
 
         # build the query for measures matching the given measure

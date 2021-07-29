@@ -48,7 +48,7 @@ Browse to http://localhost:8000/
 Skip this section if running under docker.
 
 The following dependencies are required to run this app:
- * Python 3.9.x
+ * Python 3.8.x
  * Node 14.16.x
  * Postgres 12.x
  * Redis 5.x
@@ -134,6 +134,40 @@ To run with coverage use the following:
     ./manage.py test -- --cov
 
 When running tests the settings module defaults to settings.test
+
+
+### Tips to run tests faster
+
+#### Run tests in parallel:
+
+When running locally it's possible to run tests in parallel using pytest-xdist.
+pytest-rerunfailures is also needed as a small number of tests clash when running in parallel and will fail.
+As re-running failing tests is a workaround, parallelization is undesirable under CI.
+
+Install dependencies:
+
+    pip install pytest-xdist pytest-rerunfailures
+
+Run the tests:
+
+    pytest -n=8 --reruns 8 --reruns-delay 4
+
+The example above is for a CPU with 8 threads, set "n" to a number less than or equal to the number of threads on the test machine.
+
+
+#### Run tests in Pyston instead of CPython:
+
+Pyston is a faster python implementation that aims for compatibility with the default CPython implementation.  
+Ad-hoc testing on one laptop showed tests completed in 6 minutes in CPython and 4 with Pyston. 
+
+Download and install a release from here: https://github.com/pyston/pyston/releases
+
+ - Create a python environment using venv[1]
+-  Install Tamato and it's dependencies to it.
+ - Run tests as usual.
+
+
+[1] The version of virtualenv on Ubuntu 20.04 is old and incompatible, it is advisable to use venv instead here: `$ pyston -mvenv`
 
 
 ## Environment Variables
@@ -267,6 +301,11 @@ Please submit a Pull Request
 ### Formatting.
 
 This project uses the [pre-commit](https://pre-commit.com/) tool to run [black](https://github.com/psf/black) as an autoformatter and [reorder-python-imports](https://github.com/asottile/reorder_python_imports) to format imports.
+
+By pip-installing `requirements-dev.txt` you will have the pre-commit package
+installed, so you should now set up your pre-commit hooks:
+
+    $ pre-commit install
 
 ## How to change application dependencies (libraries)
 
