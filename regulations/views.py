@@ -1,15 +1,22 @@
+from typing import Type
+
 from django.http.response import HttpResponseRedirect
 from rest_framework import viewsets
 
+from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.views import BusinessRulesMixin
 from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from regulations.filters import RegulationFilter
 from regulations.filters import RegulationFilterBackend
 from regulations.forms import RegulationCreateForm
+from regulations.forms import RegulationEditForm
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftUpdateView
 
 
 class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -50,7 +57,6 @@ class RegulationCreate(DraftCreateView):
 
     def form_valid(self, form):
         transaction = self.get_transaction()
-        transaction.save()
         self.object = form.save(commit=False)
         self.object.update_type = self.UPDATE_TYPE
         self.object.transaction = transaction
@@ -72,3 +78,46 @@ class RegulationConfirmCreate(TrackedModelDetailView):
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
         return Regulation.objects.approved_up_to_transaction(tx)
+
+
+# TODO:
+# * Should Regulation views apply 'permission_classes' attr.
+# * RegulationUpdate inherits BusinessRulesMixin as with other edit views. Which
+#   rules should be applied, if any?
+# * Should business rules be applied to RegulationCreate too?
+# * Why do our create views define a template, but edit views don't (as far as
+#   I can see).
+# * Should all of our views contain breadcrumbs beneath the banner? If so, then
+#   should they include Alpha status information, i.e. pull in {{ super() }}.
+# * The UI design displays the "Published date" (Regulation.published_at) but
+#   it isn't editable due to the regulation_id instability that it would
+#   introduce, as discussed with Simon and Stephen. Should it just be removed
+#   in the same way that "Regulation usage" and "Sequence number" have been
+#   removed from "Edit regulation"?
+
+
+class RegulationMixin:
+    model: Type[TrackedModel] = Regulation
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return Regulation.objects.approved_up_to_transaction(tx).select_related(
+            "regulation_group",
+        )
+
+
+class RegulationUpdate(
+    RegulationMixin,
+    BusinessRulesMixin,
+    TrackedModelDetailMixin,
+    DraftUpdateView,
+):
+    template_name = "regulations/edit.jinja"
+    form_class = RegulationEditForm
+
+
+class RegulationConfirmUpdate(
+    RegulationMixin,
+    TrackedModelDetailView,
+):
+    template_name = "common/confirm_update.jinja"

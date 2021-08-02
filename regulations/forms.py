@@ -29,7 +29,7 @@ from workbaskets.models import WorkBasket
 FIXED_ROLE_TYPE = RoleType.BASE
 
 
-class RegulationCreateForm(ValidityPeriodForm):
+class RegulationFormBase(ValidityPeriodForm):
     class Meta:
         model = Regulation
         fields = [
@@ -41,7 +41,35 @@ class RegulationCreateForm(ValidityPeriodForm):
             "published_at",
             "approved",
         ]
+        labels = {
+            "url": "URL",
+        }
 
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        self.fields["end_date"].help_text = (
+            "Leave the end date empty if the regulation is required for an "
+            "unlimited amount of time."
+        )
+        self.fields["information_text"].label = "Title"
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+    def _load_details_from_template(self, title, template_path):
+        public_identifier_details_content = loader.render_to_string(
+            template_path,
+        )
+        return HTML.details(
+            title,
+            SafeString(public_identifier_details_content),
+        )
+
+
+class RegulationCreateForm(RegulationFormBase):
     regulation_usage = ChoiceField(
         choices=RegulationUsage.choices,
     )
@@ -80,28 +108,8 @@ class RegulationCreateForm(ValidityPeriodForm):
         ),
     )
 
-    def _load_details_from_template(self, title, template_path):
-        public_identifier_details_content = loader.render_to_string(
-            template_path,
-        )
-        return HTML.details(
-            title,
-            SafeString(public_identifier_details_content),
-        )
-
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
-
-        self.fields["end_date"].help_text = (
-            "Leave the end date empty if the regulation is required for an "
-            "unlimited amount of time."
-        )
-        self.fields["information_text"].label = "Title"
-
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             Fieldset(
                 "regulation_usage",
@@ -227,3 +235,80 @@ class RegulationCreateForm(ValidityPeriodForm):
         if commit:
             instance.save(commit)
         return instance
+
+
+class RegulationEditForm(RegulationFormBase):
+    regulation_group = ModelChoiceField(
+        queryset=Group.objects.all().order_by("group_id"),
+        empty_label="Select a regulation group",
+        help_text=(
+            "If the wrong regulation group is selected, a trader's declaration "
+            "may be rejected."
+        ),
+    )
+    published_at = DateInputFieldFixed(
+        label="Published date",
+        help_text="You can't edit this",
+        disabled=True,
+    )
+    approved = TypedChoiceField(
+        choices=(
+            (True, "Approved"),
+            (False, "Not approved (draft)"),
+        ),
+        coerce=lambda val: val == "True",
+        label="Status of the legislation",
+        help_text=(
+            "An unapproved status means none of the measures that link to "
+            "this regulation will be active at the border."
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            Fieldset(
+                "public_identifier",
+                self._load_details_from_template(
+                    "Help with public identifiers",
+                    "regulations/help_public_identifiers.jinja",
+                ),
+                Field(
+                    "url",
+                    css_class="govuk-input",
+                ),
+                "regulation_group",
+                self._load_details_from_template(
+                    "Help with regulation group",
+                    "regulations/help_regulation_group.jinja",
+                ),
+                "information_text",
+                "start_date",
+                "end_date",
+                "published_at",
+                self._load_details_from_template(
+                    "Help with sequence number",
+                    "regulations/help_sequence_number.jinja",
+                ),
+                "approved",
+            ),
+            Submit("submit", "Save"),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
+        if (
+            not cleaned_data["approved"]
+            and cleaned_data["regulation_usage"] != RegulationUsage.DRAFT_REGULATION
+        ):
+            self.add_error(
+                "approved",
+                'Regulation status "Not approved" may only be applied '
+                'when Regulation usage is "C: Draft regulation"',
+            )
+
+        return cleaned_data
