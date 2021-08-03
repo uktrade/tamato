@@ -9,6 +9,7 @@ from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from regulations import business_rules
 from regulations.filters import RegulationFilter
 from regulations.filters import RegulationFilterBackend
 from regulations.forms import RegulationCreateForm
@@ -81,17 +82,14 @@ class RegulationConfirmCreate(TrackedModelDetailView):
 
 
 # TODO:
-# * Should Regulation views apply 'permission_classes' attr.
-# * RegulationUpdate inherits BusinessRulesMixin as with other edit views. Which
-#   rules should be applied, if any?
-# * Should business rules be applied to RegulationCreate too?
-# * Why do our create views define a template, but edit views don't (as far as
-#   I can see).
+#
 # * Should all of our views contain breadcrumbs beneath the banner? If so, then
-#   should they include Alpha status information, i.e. pull in {{ super() }}.
+#   should they include Alpha status information, i.e. pull in {{ super() }}?
+#
 # * The UI design displays the "Published date" (Regulation.published_at) but
-#   it isn't editable due to the regulation_id instability that it would
-#   introduce, as discussed with Simon and Stephen. Should it just be removed
+#   we've decided that it shouldn't be editable in order to avoid regulation_id
+#   instability when editing - discussed with Simon and Stephen. Should it just
+#   be removed
 #   in the same way that "Regulation usage" and "Sequence number" have been
 #   removed from "Edit regulation"?
 
@@ -114,6 +112,13 @@ class RegulationUpdate(
 ):
     template_name = "regulations/edit.jinja"
     form_class = RegulationEditForm
+    validate_business_rules = (
+        business_rules.ROIMB1,
+        business_rules.ROIMB4,
+        business_rules.ROIMB8,
+        business_rules.ROIMB44,
+        business_rules.ROIMB47,
+    )
 
 
 class RegulationConfirmUpdate(
