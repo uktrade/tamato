@@ -83,3 +83,4 @@ norecursedirs = [
     "node_modules",
     ".local",
 ]
+addopts = "-n=auto"
