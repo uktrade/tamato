@@ -297,6 +297,7 @@ class RegulationEditForm(RegulationFormBase):
 
     def clean(self):
         cleaned_data = super().clean()
+        cleaned_data["regulation_id"] = self.instance.regulation_id
 
         if self.errors:
             return cleaned_data
