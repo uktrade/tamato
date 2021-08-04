@@ -136,7 +136,7 @@ def test_export_task_does_not_reupload():
     factories.ApprovedTransactionFactory.create(order="123")
 
     with mock.patch(
-        "exporter.sqlite.tasks.S3Boto3Storage",
+        "exporter.sqlite.tasks.SQLiteStorage",
         autospec=True,
     ) as mock_storage:
         mock_storage.return_value.exists.return_value = True
@@ -155,7 +155,7 @@ def test_export_task_uploads():
     factories.ApprovedTransactionFactory.create(order="999")  # seed file
     factories.ApprovedTransactionFactory.create(order="123")
 
-    with mock.patch("exporter.sqlite.tasks.S3Boto3Storage") as mock_storage:
+    with mock.patch("exporter.sqlite.tasks.SQLiteStorage") as mock_storage:
         mock_storage.return_value.exists.return_value = False
 
         returned = tasks.export_and_upload_sqlite()
@@ -175,7 +175,7 @@ def test_export_task_ignores_unapproved_transactions():
     factories.ApprovedTransactionFactory.create(order="123")
     factories.UnapprovedTransactionFactory.create(order="124")
 
-    with mock.patch("exporter.sqlite.tasks.S3Boto3Storage") as mock_storage:
+    with mock.patch("exporter.sqlite.tasks.SQLiteStorage") as mock_storage:
         mock_storage.return_value.exists.return_value = True
 
         tasks.export_and_upload_sqlite()
