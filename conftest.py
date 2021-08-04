@@ -38,6 +38,7 @@ from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
+from exporter.storages import SQLiteStorage
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
@@ -570,6 +571,45 @@ def hmrc_storage():
                 )
 
                 bucket = connection.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
+                return bucket
+
+            mock_connection_property.side_effect = get_connection
+            mock_bucket_property.side_effect = get_bucket
+            yield storage
+
+
+@pytest.fixture
+def sqlite_storage():
+    """Patch SQLiteStorage with moto so that nothing is really uploaded to
+    s3."""
+    with mock_s3():
+        storage = SQLiteStorage()
+        session = boto3.session.Session()
+
+        with patch(
+            "storages.backends.s3boto3.S3Boto3Storage.connection",
+            new_callable=PropertyMock,
+        ) as mock_connection_property, patch(
+            "storages.backends.s3boto3.S3Boto3Storage.bucket",
+            new_callable=PropertyMock,
+        ) as mock_bucket_property:
+            # By default Motos mock_s3 doesn't stop S3Boto3Storage from connection to s3.
+            # Patch the connection and bucket properties on it to use Moto instead.
+            @lru_cache(None)
+            def get_connection():
+                return session.resource("s3")
+
+            @lru_cache(None)
+            def get_bucket():
+                connection = get_connection()
+                connection.create_bucket(
+                    Bucket=settings.SQLITE_STORAGE_BUCKET_NAME,
+                    CreateBucketConfiguration={
+                        "LocationConstraint": settings.AWS_S3_REGION_NAME,
+                    },
+                )
+
+                bucket = connection.Bucket(settings.SQLITE_STORAGE_BUCKET_NAME)
                 return bucket
 
             mock_connection_property.side_effect = get_connection

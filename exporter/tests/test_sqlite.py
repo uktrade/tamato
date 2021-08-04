@@ -150,21 +150,34 @@ def test_export_task_does_not_reupload():
         mock_storage.return_value.save.assert_not_called()
 
 
-def test_export_task_uploads():
+def test_export_task_uploads(
+    sqlite_storage,
+    s3_bucket_names,
+    s3_object_names,
+    settings,
+):
     """The export system should actually upload a file to S3."""
+
+    expected_bucket = "sqlite"
+    expected_key = "sqlite/000000123.db"
+    settings.SQLITE_STORAGE_BUCKET_NAME = expected_bucket
+
     factories.ApprovedTransactionFactory.create(order="999")  # seed file
     factories.ApprovedTransactionFactory.create(order="123")
 
-    with mock.patch("exporter.sqlite.tasks.SQLiteStorage") as mock_storage:
-        mock_storage.return_value.exists.return_value = False
-
+    with mock.patch(
+        "exporter.storages.SQLiteStorage.save",
+        wraps=mock.MagicMock(
+            side_effect=sqlite_storage.save,
+        ),
+    ) as mock_save:
         returned = tasks.export_and_upload_sqlite()
 
         assert returned is True
-        mock_storage.return_value.generate_filename.assert_called_once_with(
-            "sqlite/000000123.db",
-        )
-        mock_storage.return_value.save.assert_called_once()
+        mock_save.assert_called_once()
+
+    assert expected_bucket in s3_bucket_names()
+    assert expected_key in s3_object_names(expected_bucket)
 
 
 def test_export_task_ignores_unapproved_transactions():
