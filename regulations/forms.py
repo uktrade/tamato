@@ -45,6 +45,13 @@ class RegulationFormBase(ValidityPeriodForm):
             "url": "URL",
         }
 
+    PUBLISHED_AT_HELP_TEXT = (
+        "The date that the source for this regulation was published. For a "
+        "Statutory Instrument (S.I.) or other peice of UK legislation, "
+        "this should be the “made date” as found in the introductory note "
+        "of the legislative text."
+    )
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
@@ -83,12 +90,7 @@ class RegulationCreateForm(RegulationFormBase):
     )
     published_at = DateInputFieldFixed(
         label="Published date",
-        help_text=(
-            "The date that the source for this regulation was published. For a "
-            "Statutory Instrument (S.I.) or other peice of UK legislation, "
-            "this should be the “made date” as found in the introductory note "
-            "of the legislative text."
-        ),
+        help_text=RegulationFormBase.PUBLISHED_AT_HELP_TEXT,
     )
     sequence_number = IntegerField(
         min_value=1,
@@ -286,9 +288,9 @@ class RegulationEditForm(RegulationFormBase):
                 "start_date",
                 "end_date",
                 "published_at",
-                self._load_details_from_template(
-                    "Help with sequence number",
-                    "regulations/help_sequence_number.jinja",
+                HTML.details(
+                    "Help with Published date",
+                    RegulationFormBase.PUBLISHED_AT_HELP_TEXT,
                 ),
                 "approved",
             ),
