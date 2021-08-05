@@ -1,8 +1,11 @@
 from typing import Type
 
 import pytest
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
+from common.serializers import TrackedModelSerializerMixin
+from common.serializers import ValiditySerializerMixin
 from common.tests import factories
 from common.tests.models import TestModel1
 from importer import models
@@ -21,7 +24,9 @@ def object_nursery() -> TariffObjectNursery:
 
 @pytest.fixture
 def mock_serializer() -> Type[ModelSerializer]:
-    class TestSerializer(ModelSerializer):
+    class TestSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
+        sid = serializers.IntegerField()
+
         class Meta:
             model = TestModel1
             exclude = ("version_group",)

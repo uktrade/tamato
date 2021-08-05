@@ -231,6 +231,17 @@ def workbasket():
     return factories.WorkBasketFactory.create()
 
 
+@pytest.fixture(
+    params=factories.TrackedModelMixin.__subclasses__(),
+    ids=[
+        factory._meta.model.__name__
+        for factory in factories.TrackedModelMixin.__subclasses__()
+    ],
+)
+def trackedmodel_factory(request):
+    return request.param
+
+
 @pytest.fixture
 def unique_identifying_fields():
     """

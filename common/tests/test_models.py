@@ -370,19 +370,44 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     assert description not in description_queryset
 
 
-@pytest.mark.parametrize(
-    "factory",
-    factories.TrackedModelMixin.__subclasses__(),
-    ids=[
-        factory._meta.model.__name__
-        for factory in factories.TrackedModelMixin.__subclasses__()
-    ],
-)
-def test_trackedmodel_str(factory):
+def test_trackedmodel_str(trackedmodel_factory):
     """Verify no __str__ methods of TrackedModel classes crash or return non-
     strings."""
-    instance = factory.create()
+    instance = trackedmodel_factory.create()
     result = instance.__str__()
 
     assert isinstance(result, str)
     assert len(result.strip())
+
+
+def test_copy(trackedmodel_factory, approved_transaction):
+    """Verify that a copy of a TrackedModel is a new instance with different
+    primary key and version group."""
+    instance: TrackedModel = trackedmodel_factory.create()
+    copy = instance.copy(approved_transaction)
+
+    assert copy.pk != instance.pk
+    assert copy.version_group != instance.version_group
+
+
+@pytest.mark.parametrize(
+    ("starting_sid", "expected_next_sid"),
+    (
+        (0, 1),
+        (10, 11),
+    ),
+)
+def test_copy_increments_sid_fields(starting_sid, expected_next_sid):
+    instance = factories.TestModel1Factory.create(sid=starting_sid)
+    copy = instance.copy(factories.ApprovedTransactionFactory())
+
+    assert copy.sid == expected_next_sid
+
+
+def test_copy_also_copies_dependents():
+    desc = factories.TestModelDescription1Factory.create()
+    copy = desc.described_record.copy(factories.ApprovedTransactionFactory())
+
+    assert copy.descriptions.count() == 1
+    assert copy.descriptions.get() != desc
+    assert copy.descriptions.get().description == desc.description

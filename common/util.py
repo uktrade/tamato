@@ -1,6 +1,7 @@
 """Miscellaneous utility functions."""
 from __future__ import annotations
 
+from platform import python_version_tuple
 from typing import Optional
 from typing import TypeVar
 from typing import Union
@@ -17,6 +18,25 @@ from django.db.models.functions import Cast
 from django.db.transaction import atomic
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
+
+major, minor, patch = python_version_tuple()
+
+# The preferred style of combining @classmethod and @property is only in 3.9.
+# When we stop support for 3.8, we should remove both of these branches.
+if int(major) == 3 and int(minor) < 9:
+    # https://stackoverflow.com/a/13624858
+    class classproperty(object):
+        def __init__(self, fget):
+            self.fget = fget
+
+        def __get__(self, owner_self, owner_cls):
+            return self.fget(owner_cls)
+
+
+else:
+
+    def classproperty(fn):
+        return classmethod(property(fn))
 
 
 def is_truthy(value: str) -> bool:

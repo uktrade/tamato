@@ -11,6 +11,7 @@ from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models.mixins.validity import ValidityMixin
 from common.util import TaricDateRange
+from common.util import classproperty
 from common.validators import UpdateType
 from footnotes import validators as footnote_validators
 from measures import business_rules
@@ -606,6 +607,15 @@ class Measure(TrackedModel, ValidityMixin):
     @classmethod
     def objects_with_validity_field(cls):
         return super().objects_with_validity_field().with_effective_valid_between()
+
+    @classproperty
+    def auto_value_fields(cls):
+        """Remove export refund SID because we don't want to auto-increment it –
+        it should really be a foreign key to an ExportRefundNomenclature model
+        but as we don't use them in the UK Tariff we don't store them."""
+        counters = super().auto_value_fields
+        counters.remove(cls._meta.get_field("export_refund_nomenclature_sid"))
+        return counters
 
     def has_components(self):
         return (

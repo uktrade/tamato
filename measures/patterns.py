@@ -40,39 +40,6 @@ from workbaskets.models import WorkBasket
 logger = logging.getLogger(__name__)
 
 
-def clonable_data(obj: TrackedModel) -> Dict:
-    return {
-        field.name: getattr(obj, field.name)
-        for field in obj._meta.fields
-        if field.name
-        not in (
-            obj._meta.pk.name,
-            "polymorphic_ctype",
-            "trackedmodel_ptr",
-            "id",
-            *obj.identifying_fields,
-        )
-    }
-
-
-def copy_measure(measure: Measure, **overrides) -> Measure:
-    """Create a copy of the passed measure (applying any overrides) and attach
-    copies of all of the original measure's duties, conditions, exclusions and
-    footnotes."""
-
-    new_object_kwargs = clonable_data(measure)
-
-    next_sid = Measure.objects.order_by("sid").last().sid
-    new_object_kwargs["sid"] = next_sid
-
-    new_object_kwargs.update(overrides)
-    new_measure = Measure(**new_object_kwargs)
-
-    # for component in measure.components:
-
-    return new_measure
-
-
 class MeasureCreationPattern:
     """
     A pattern used for creating measures. This pattern will create new measures

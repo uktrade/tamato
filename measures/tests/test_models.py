@@ -190,3 +190,18 @@ def test_measure_update_types(
     assert check_update_validation(
         factory,
     )
+
+
+@pytest.mark.parametrize(
+    ("export_refund_sid"),
+    (None, 123),
+)
+def test_copy_measure_doesnt_add_export_refund_sids(export_refund_sid):
+    """Although export refund is defined as a SID, it should not be incremented
+    or added if it is not present."""
+    measure = factories.MeasureFactory.create(
+        export_refund_nomenclature_sid=export_refund_sid,
+    )
+    copy = measure.copy(factories.ApprovedTransactionFactory())
+
+    assert copy.export_refund_nomenclature_sid == export_refund_sid

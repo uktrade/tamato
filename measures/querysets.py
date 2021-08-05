@@ -143,6 +143,7 @@ class DutySentenceMixin(QuerySet):
                     ),
                 ),
                 delimiter=" ",
+                ordering="components__duty_expression__sid",
             ),
         )
 
