@@ -227,14 +227,8 @@ def test_ON13(area_code, expect_error):
     )
     exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(origin=origin)
 
-    try:
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ON13(exclusion.transaction).validate(exclusion)
-    except BusinessRuleViolation as e:
-        if not expect_error:
-            raise e
-    else:
-        if expect_error:
-            pytest.fail(msg="Did not raise BusinessRuleViolation")
 
 
 def test_ON14():
@@ -397,10 +391,18 @@ def test_QD15():
         ("earlier", True),
     ),
 )
+@pytest.mark.parametrize(
+    ("update_type"),
+    (
+        UpdateType.UPDATE,
+        UpdateType.DELETE,
+    ),
+)
 def test_prevent_quota_definition_deletion(
     unapproved_transaction,
     date_ranges,
     date_range,
+    update_type,
     error_expected,
 ):
     """
@@ -415,9 +417,10 @@ def test_prevent_quota_definition_deletion(
     deleted = quota_definition.new_version(
         workbasket=unapproved_transaction.workbasket,
         transaction=unapproved_transaction,
-        update_type=UpdateType.DELETE,
+        update_type=update_type,
     )
 
+    error_expected = error_expected and (update_type == UpdateType.DELETE)
     with raises_if(BusinessRuleViolation, error_expected):
         business_rules.PreventQuotaDefinitionDeletion(deleted.transaction).validate(
             deleted,
@@ -513,22 +516,15 @@ def test_QA3(main_volume, main_unit, sub_volume, sub_unit, expect_error):
 
     units = defaultdict(factories.MeasurementUnitFactory)
 
-    try:
-        assoc = factories.QuotaAssociationFactory(
-            main_quota__volume=main_volume,
-            main_quota__measurement_unit=units[main_unit],
-            sub_quota__volume=sub_volume,
-            sub_quota__measurement_unit=units[sub_unit],
-        )
+    assoc = factories.QuotaAssociationFactory(
+        main_quota__volume=main_volume,
+        main_quota__measurement_unit=units[main_unit],
+        sub_quota__volume=sub_volume,
+        sub_quota__measurement_unit=units[sub_unit],
+    )
+
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.QA3(assoc.transaction).validate(assoc)
-
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-
-    else:
-        if expect_error:
-            pytest.fail("Did not raise BusinessRuleViolation")
 
 
 @pytest.mark.parametrize(
@@ -555,16 +551,8 @@ def test_QA4(coefficient, expect_error):
 
     assoc = factories.QuotaAssociationFactory.create(**kwargs)
 
-    try:
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.QA4(assoc.transaction).validate(assoc)
-
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-
-    else:
-        if expect_error:
-            pytest.fail("Did not raise BusinessRuleViolation")
 
 
 @pytest.mark.parametrize(
@@ -628,13 +616,20 @@ def test_QA6(existing_relation, new_relation, error_expected):
         business_rules.QA6(assoc.transaction).validate(assoc)
 
 
-def test_blocking_of_fcfs_quotas_only():
+@pytest.mark.parametrize(
+    ("mechanism", "error_expected"),
+    (
+        (AdministrationMechanism.LICENSED, True),
+        (AdministrationMechanism.FCFS, False),
+    ),
+)
+def test_blocking_of_fcfs_quotas_only(mechanism, error_expected):
     """Blocking periods are only applicable to FCFS quotas."""
     blocking = factories.QuotaBlockingFactory.create(
-        quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED,
+        quota_definition__order_number__mechanism=mechanism,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.BlockingOnlyOfFCFSQuotas(blocking.transaction).validate(blocking)
 
 
@@ -658,14 +653,21 @@ def test_QBP3(date_ranges):
         factories.QuotaBlockingFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_suspension_of_fcfs_quotas_only():
+@pytest.mark.parametrize(
+    ("mechanism", "error_expected"),
+    (
+        (AdministrationMechanism.LICENSED, True),
+        (AdministrationMechanism.FCFS, False),
+    ),
+)
+def test_suspension_of_fcfs_quotas_only(mechanism, error_expected):
     """Quota suspensions are only applicable to First Come First Served
     quotas."""
     suspension = factories.QuotaSuspensionFactory.create(
-        quota_definition__order_number__mechanism=AdministrationMechanism.LICENSED,
+        quota_definition__order_number__mechanism=mechanism,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.SuspensionsOnlyToFCFSQuotas(suspension.transaction).validate(
             suspension,
         )

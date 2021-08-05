@@ -14,7 +14,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.test.html import parse_html
 from factory.django import DjangoModelFactory
@@ -256,99 +255,6 @@ def trackedmodel_factory(request):
 )
 def description_factory(request):
     return request.param
-
-
-@pytest.fixture
-def unique_identifying_fields():
-    """
-    Provides a function for checking a model of the specified factory class
-    cannot be created with the same identifying_fields as an existing instance.
-
-    Usage:
-        assert unique_identifying_fields(FactoryClass)
-    """
-
-    # TODO allow factory or model instance as argument
-
-    def check(factory):
-        existing = factory()
-
-        with pytest.raises(ValidationError):
-            factory(
-                valid_between=existing.valid_between,
-                **{
-                    field: getattr(existing, field)
-                    for field in factory._meta.model.identifying_fields
-                },
-            )
-
-        return True
-
-    return check
-
-
-@pytest.fixture
-def must_exist():
-    """
-    Provides a function for checking a model's foreign key link instance must
-    exist.
-
-    Usage:
-        assert must_exist("field_name", LinkedModelFactory, ModelFactory)
-    """
-
-    # TODO drop the `dependency_name` argument, as with validity_period_contained
-
-    def check(dependency_name, dependent_factory):
-        non_existent_id = -1
-
-        with pytest.raises((ValidationError, ObjectDoesNotExist)):
-            dependent_factory.create(
-                **{f"{dependency_name}_id": non_existent_id},
-            )
-
-        return True
-
-    return check
-
-
-@pytest.fixture
-def validity_period_contained(date_ranges):
-    """
-    Provides a function for checking a model's validity period must be contained
-    within the validity period of the specified model.
-
-    Usage:
-        assert validity_period_contained("field_name", ContainerModelFactory, ContainedModelFactory)
-    """
-
-    # TODO drop the `dependency_name` argument, inspect the model for a ForeignKey to
-    # the specified container model. Add `field_name` kwarg for disambiguation if
-    # multiple ForeignKeys.
-
-    def check(dependency_name, dependency_factory, dependent_factory):
-        dependency = dependency_factory.create(
-            valid_between=date_ranges.starts_with_normal,
-        )
-
-        try:
-            dependent_factory.create(
-                valid_between=date_ranges.normal,
-                **{dependency_name: dependency},
-            )
-
-        except ValidationError:
-            pass
-
-        else:
-            pytest.fail(
-                f"{dependency_factory._meta.get_model_class().__name__} validity must "
-                f"span {dependent_factory._meta.get_model_class().__name__} validity.",
-            )
-
-        return True
-
-    return check
 
 
 @pytest.fixture
