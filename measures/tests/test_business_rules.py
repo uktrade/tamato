@@ -329,36 +329,33 @@ def test_ME88():
         business_rules.ME88(measure.transaction).validate(measure)
 
 
-def test_ME16():
+@pytest.mark.parametrize(
+    ("existing_code", "overlapping_code", "error_expected"),
+    (
+        (False, True, True),
+        (True, False, True),
+        (True, True, False),
+        (False, False, False),
+    ),
+)
+def test_ME16(existing_code, overlapping_code, error_expected):
     """Integrating a measure with an additional code when an equivalent or
     overlapping measures without additional code already exists and vice-versa,
     should be forbidden."""
 
-    existing = factories.MeasureFactory.create(additional_code=None)
     additional_code = factories.AdditionalCodeFactory.create()
+    existing = factories.MeasureFactory.create(
+        additional_code=(additional_code if existing_code else None),
+    )
     measure = factories.MeasureFactory.create(
         measure_type=existing.measure_type,
         geographical_area=existing.geographical_area,
         goods_nomenclature=existing.goods_nomenclature,
-        additional_code=additional_code,
+        additional_code=(additional_code if overlapping_code else None),
         order_number=existing.order_number,
         reduction=existing.reduction,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME16(measure.transaction).validate(measure)
-
-    existing.additional_code = additional_code
-    existing.save(force_write=True)
-    measure = factories.MeasureFactory.create(
-        measure_type=existing.measure_type,
-        geographical_area=existing.geographical_area,
-        goods_nomenclature=existing.goods_nomenclature,
-        additional_code=None,
-        order_number=existing.order_number,
-        reduction=existing.reduction,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME16(measure.transaction).validate(measure)
 
 
@@ -756,14 +753,8 @@ def test_ME9(additional_code, goods_nomenclature, expect_error):
         goods_nomenclature=goods_nomenclature,
     )
 
-    try:
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ME9(measure.transaction).validate(measure)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail(reason="DID NOT RAISE BusinessRuleViolation")
 
 
 def test_ME12():
@@ -980,7 +971,14 @@ def test_ME29():
     regulation may not be completely abrogated."""
 
 
-def test_ME33(date_ranges):
+@pytest.mark.parametrize(
+    ("terminating_regulation", "error_expected"),
+    (
+        (False, False),
+        (True, True),
+    ),
+)
+def test_ME33(terminating_regulation, date_ranges, error_expected):
     """
     A justification regulation may not be entered if the measure end date is not
     filled in.
@@ -991,16 +989,25 @@ def test_ME33(date_ranges):
     is self-explanatory: if there no end date on the measure, then the
     justification regulation field must be set to null.
     """
+    regulation = factories.RegulationFactory.create()
     measure = factories.MeasureFactory.create(
         valid_between=date_ranges.no_end,
-        terminating_regulation=factories.RegulationFactory.create(),
+        generating_regulation=regulation,
+        terminating_regulation=(regulation if terminating_regulation else None),
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME33(measure.transaction).validate(measure)
 
 
-def test_ME34(date_ranges):
+@pytest.mark.parametrize(
+    ("terminating_regulation", "error_expected"),
+    (
+        (True, False),
+        (False, True),
+    ),
+)
+def test_ME34(terminating_regulation, date_ranges, error_expected):
     """
     A justification regulation must be entered if the measure end date is filled
     in.
@@ -1011,12 +1018,14 @@ def test_ME34(date_ranges):
     - Always use the measure generating regulation ID and role to populate the
       justification equivalents, if the end date needs to be entered on a regulation.
     """
+    regulation = factories.RegulationFactory.create()
     measure = factories.MeasureFactory.create(
         valid_between=date_ranges.normal,
-        terminating_regulation=None,
+        generating_regulation=regulation,
+        terminating_regulation=(regulation if terminating_regulation else None),
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME34(measure.transaction).validate(measure)
 
 
@@ -1470,14 +1479,8 @@ def test_ME108(expression, same_condition, expect_error):
         condition=condition,
     )
 
-    try:
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ME108(component.transaction).validate(component)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail(reason="DID NOT RAISE BusinessRuleViolation")
 
 
 @pytest.mark.parametrize(

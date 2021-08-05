@@ -322,14 +322,9 @@ def test_NIG24(date_ranges, valid_between, expect_error):
         goods_nomenclature=existing.goods_nomenclature,
         valid_between=getattr(date_ranges, valid_between),
     )
-    try:
+
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG24(association.transaction).validate(association)
-    except BusinessRuleViolation:
-        if not expect_error:
-            raise
-    else:
-        if expect_error:
-            pytest.fail("DID NOT RAISE BusinessRuleViolation")
 
 
 def test_NIG30(spanning_dates):
