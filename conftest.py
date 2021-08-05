@@ -540,11 +540,10 @@ def s3_object_exists(s3):
     return check
 
 
-@pytest.fixture
-def hmrc_storage():
-    """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
+@contextlib.contextmanager
+def make_storage(storage_class, bucket_name):
     with mock_s3():
-        storage = HMRCStorage()
+        storage = storage_class()
         session = boto3.session.Session()
 
         with patch(
@@ -564,57 +563,33 @@ def hmrc_storage():
             def get_bucket():
                 connection = get_connection()
                 connection.create_bucket(
-                    Bucket=settings.HMRC_STORAGE_BUCKET_NAME,
+                    Bucket=bucket_name,
                     CreateBucketConfiguration={
                         "LocationConstraint": settings.AWS_S3_REGION_NAME,
                     },
                 )
 
-                bucket = connection.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
+                bucket = connection.Bucket(bucket_name)
                 return bucket
 
             mock_connection_property.side_effect = get_connection
             mock_bucket_property.side_effect = get_bucket
             yield storage
+
+
+@pytest.fixture
+def hmrc_storage():
+    """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
+    with make_storage(HMRCStorage, settings.HMRC_STORAGE_BUCKET_NAME) as storage:
+        yield storage
 
 
 @pytest.fixture
 def sqlite_storage():
     """Patch SQLiteStorage with moto so that nothing is really uploaded to
     s3."""
-    with mock_s3():
-        storage = SQLiteStorage()
-        session = boto3.session.Session()
-
-        with patch(
-            "storages.backends.s3boto3.S3Boto3Storage.connection",
-            new_callable=PropertyMock,
-        ) as mock_connection_property, patch(
-            "storages.backends.s3boto3.S3Boto3Storage.bucket",
-            new_callable=PropertyMock,
-        ) as mock_bucket_property:
-            # By default Motos mock_s3 doesn't stop S3Boto3Storage from connection to s3.
-            # Patch the connection and bucket properties on it to use Moto instead.
-            @lru_cache(None)
-            def get_connection():
-                return session.resource("s3")
-
-            @lru_cache(None)
-            def get_bucket():
-                connection = get_connection()
-                connection.create_bucket(
-                    Bucket=settings.SQLITE_STORAGE_BUCKET_NAME,
-                    CreateBucketConfiguration={
-                        "LocationConstraint": settings.AWS_S3_REGION_NAME,
-                    },
-                )
-
-                bucket = connection.Bucket(settings.SQLITE_STORAGE_BUCKET_NAME)
-                return bucket
-
-            mock_connection_property.side_effect = get_connection
-            mock_bucket_property.side_effect = get_bucket
-            yield storage
+    with make_storage(SQLiteStorage, settings.SQLITE_STORAGE_BUCKET_NAME) as storage:
+        yield storage
 
 
 @pytest.fixture(
