@@ -136,26 +136,64 @@ To run with coverage use the following:
 When running tests the settings module defaults to settings.test
 
 
-### Tips to run tests faster
+### Speed up test by without running coverage:
 
-#### Run tests in parallel:
+Coverage is enabled when running tests when running with make or pytest:
 
-When running locally it's possible to run tests in parallel using pytest-xdist.
-pytest-rerunfailures is also needed as a small number of tests clash when running in parallel and will fail.
-As re-running failing tests is a workaround, parallelization is undesirable under CI.
+    make test
 
-Install dependencies:
+    pytest
 
-    pip install pytest-xdist pytest-rerunfailures
+Running without coverage enabled is significantly faster, use one of the following commands:
 
-Run the tests:
+    make test-fast
 
-    pytest -n=8 --reruns 8 --reruns-delay 4
+    pytest --no-cov
 
-The example above is for a CPU with 8 threads, set "n" to a number less than or equal to the number of threads on the test machine.
+### Find and debug intermittent test failures:
 
 
-#### Run tests in Pyston instead of CPython:
+#### Run tests in a loop
+
+The simplest way to find intermittent test failures is to keep running them in a loop.
+It's worth leaving it running for at least a few test runs.
+
+    while pytest -s -v; do :; done
+
+In the example above -s -v is used to output stdout and enable verbose output.
+Timing issues more bugs can be surfaced by setting the amount of processes to a number higher than the
+amount of CPU threads, e.g. 12 or 16 for an 8 thread CPU:
+
+    while sleep 45 && pytest -s -v -n=12; do :; done
+
+#### Debugging with WebPDB, IPD, PDB++
+
+By default tests run in multiple processes using pytest-xdist - a side effect is that debuggers over stdout
+such as pdb, ipdb, pdb++ do not work.
+
+Using webpdb gets round this:  https://pypi.org/project/web-pdb/
+
+When running in a single process (see below) pytest-ipdb or pdb++ can be good choices, in that case use -s
+so that pytest doesn't capture stdout:
+
+    pytest -s
+
+#### Run tests in a single process:
+
+Running in a single process can eliminate pytest-xdist as a cause of errors.
+
+    pytest -n0
+
+pytest-random-order randomises the order of test, using it can surface bugs around hidden state, install it:
+    
+    pip install pytest-random-order
+
+Use random order:
+
+    pytest -n0 --random-order
+
+
+### Speed up runtimes by using Pyston instead of CPython:
 
 Pyston is a faster python implementation that aims for compatibility with the default CPython implementation.  
 Ad-hoc testing on one laptop showed tests completed in 6 minutes in CPython and 4 with Pyston. 
