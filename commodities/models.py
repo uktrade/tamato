@@ -16,6 +16,7 @@ from common.fields import LongDescription
 from common.models import NumericSID
 from common.models import TrackedModel
 from common.models.mixins.description import DescriptionMixin
+from common.models.mixins.description import DescriptionQueryset
 from common.models.mixins.validity import ValidityMixin
 from common.models.mixins.validity import ValidityStartMixin
 from common.util import TaricDateRange
@@ -304,6 +305,8 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     subrecord_code = "15"
     period_record_code = "400"
     period_subrecord_code = "10"
+
+    objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
 
     sid = NumericSID()
     described_goods_nomenclature = models.ForeignKey(

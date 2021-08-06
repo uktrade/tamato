@@ -4,7 +4,6 @@ from django.db import migrations
 from django.db import models
 
 import common.fields
-from common import migration_operations
 
 
 class Migration(migrations.Migration):
@@ -17,26 +16,6 @@ class Migration(migrations.Migration):
         migrations.AlterModelOptions(
             name="testmodeldescription1",
             options={},
-        ),
-        migrations.AddField(
-            model_name="testmodeldescription1",
-            name="validity_start",
-            field=models.DateField(blank=True, db_index=True, null=True),
-            preserve_default=False,
-        ),
-        migrations.RunPython(
-            migration_operations.copy_start_date_to_validity_start(
-                "tests",
-                "testmodeldescription1",
-            ),
-            migration_operations.copy_start_date_to_valid_between(
-                "tests",
-                "testmodeldescription1",
-            ),
-        ),
-        migrations.RemoveField(
-            model_name="testmodeldescription1",
-            name="valid_between",
         ),
         migrations.AlterField(
             model_name="testmodeldescription1",

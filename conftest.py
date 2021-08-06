@@ -242,6 +242,20 @@ def trackedmodel_factory(request):
     return request.param
 
 
+@pytest.fixture(
+    params=(
+        factories.AdditionalCodeDescriptionFactory,
+        factories.CertificateDescriptionFactory,
+        factories.GeographicalAreaDescriptionFactory,
+        factories.GoodsNomenclatureDescriptionFactory,
+        factories.FootnoteDescriptionFactory,
+        factories.TestModelDescription1Factory,
+    ),
+)
+def description_factory(request):
+    return request.param
+
+
 @pytest.fixture
 def unique_identifying_fields():
     """
