@@ -541,9 +541,9 @@ def s3_object_exists(s3):
 
 
 @contextlib.contextmanager
-def make_storage(storage_class, bucket_name):
+def make_storage_mock(storage_class, **override_settings):
     with mock_s3():
-        storage = storage_class()
+        storage = storage_class(**override_settings)
         session = boto3.session.Session()
 
         with patch(
@@ -563,13 +563,13 @@ def make_storage(storage_class, bucket_name):
             def get_bucket():
                 connection = get_connection()
                 connection.create_bucket(
-                    Bucket=bucket_name,
+                    Bucket=storage.bucket_name,
                     CreateBucketConfiguration={
                         "LocationConstraint": settings.AWS_S3_REGION_NAME,
                     },
                 )
 
-                bucket = connection.Bucket(bucket_name)
+                bucket = connection.Bucket(storage.bucket_name)
                 return bucket
 
             mock_connection_property.side_effect = get_connection
@@ -580,7 +580,10 @@ def make_storage(storage_class, bucket_name):
 @pytest.fixture
 def hmrc_storage():
     """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
-    with make_storage(HMRCStorage, settings.HMRC_STORAGE_BUCKET_NAME) as storage:
+    with make_storage_mock(
+        HMRCStorage,
+        bucket_name=settings.HMRC_STORAGE_BUCKET_NAME,
+    ) as storage:
         yield storage
 
 
@@ -588,7 +591,10 @@ def hmrc_storage():
 def sqlite_storage():
     """Patch SQLiteStorage with moto so that nothing is really uploaded to
     s3."""
-    with make_storage(SQLiteStorage, settings.SQLITE_STORAGE_BUCKET_NAME) as storage:
+    with make_storage_mock(
+        SQLiteStorage,
+        bucket_name=settings.SQLITE_STORAGE_BUCKET_NAME,
+    ) as storage:
         yield storage
 
 
