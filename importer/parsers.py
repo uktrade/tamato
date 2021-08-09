@@ -383,8 +383,9 @@ class RangeLowerElement(TextElement):
     format_expression = Lower
 
     def serializer(self, field_name: str, **kwargs) -> Expression:
-        real_field = "_".join(field_name.split("_")[0:2])
-        return super().serializer(real_field)
+        *related_fields, local_name = field_name.split("__")
+        real_field = "_".join(local_name.split("_")[0:2])
+        return super().serializer("__".join([*related_fields, real_field]))
 
 
 class RangeUpperElement(TextElement):
@@ -403,8 +404,9 @@ class RangeUpperElement(TextElement):
         )
 
     def serializer(self, field_name: str, **kwargs) -> Expression:
-        real_field = "_".join(field_name.split("_")[0:2])
-        return super().serializer(real_field)
+        *related_fields, local_name = field_name.split("__")
+        real_field = "_".join(local_name.split("_")[0:2])
+        return super().serializer("__".join([*related_fields, real_field]))
 
 
 class CompoundElement(ValueElementMixin, ElementParser):
@@ -486,14 +488,19 @@ class ValidityMixin:
         super().clean()
         valid_between = {}
 
-        if "valid_between_lower" in self.data:
-            valid_between["lower"] = self.data.pop("valid_between_lower")
+        lower_name = self._field_lookup[self.valid_between_lower]
+        upper_name = self._field_lookup[self.valid_between_upper]
 
-        if "valid_between_upper" in self.data:
-            valid_between["upper"] = self.data.pop("valid_between_upper")
+        if lower_name in self.data:
+            valid_between["lower"] = self.data.pop(lower_name)
+
+        if upper_name in self.data:
+            valid_between["upper"] = self.data.pop(upper_name)
 
         if valid_between:
-            self.data["valid_between"] = valid_between
+            *field_names, _ = lower_name.split("__")
+            real_name = "__".join([*field_names, "valid_between"])
+            self.data[real_name] = valid_between
 
 
 class ValidityStartMixin:
