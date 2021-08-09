@@ -1,4 +1,7 @@
 from django.db import transaction
+from django.db.models.expressions import Case
+from django.db.models.expressions import Expression
+from django.db.models.expressions import When
 
 from importer.handlers import BaseHandler
 from importer.taric import RecordParser
@@ -20,7 +23,7 @@ class RegulationGroupDescriptionHandler(BaseHandler):
     xml_model = parsers.RegulationGroupDescriptionParser
 
 
-@RecordParser.use_for_xml_serialization  # FIXME
+@RecordParser.use_for_xml_serialization
 class RegulationHandler(BaseHandler):
     links = (
         {
@@ -32,6 +35,18 @@ class RegulationHandler(BaseHandler):
     serializer_class = serializers.RegulationImporterSerializer
     xml_model = parsers.BaseRegulationParser
 
+    @classmethod
+    def xml_serializer(cls, recurse: bool = True, message_seq: int = 0) -> Expression:
+        return Case(
+            When(
+                **{
+                    f"{name}__isnull": True
+                    for name in ("suspends", "terminates", "amends", "extends")
+                },
+                then=super().xml_serializer(recurse=recurse, message_seq=message_seq),
+            ),
+            default=None,
+        )
 
 
 class BaseRegulationThroughTableHandler(BaseHandler):
@@ -66,11 +81,13 @@ class BaseRegulationThroughTableHandler(BaseHandler):
         return super().save(data)
 
 
+@RecordParser.use_for_xml_serialization
 class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
     serializer_class = serializers.AmendmentImporterSerializer
     xml_model = parsers.ModificationRegulationParser
 
 
+@RecordParser.use_for_xml_serialization
 class SuspensionRegulationHandler(BaseRegulationThroughTableHandler):
     serializer_class = serializers.SuspensionImporterSerializer
     xml_model = parsers.FullTemporaryStopRegulationParser
@@ -83,6 +100,7 @@ class SuspensionRegulationActionHandler(BaseRegulationThroughTableHandler):
     xml_model = parsers.FullTemporaryStopActionParser
 
 
+@RecordParser.use_for_xml_serialization
 class ReplacementHandler(BaseHandler):
     identifying_fields = (
         "enacting_regulation__regulation_id",
