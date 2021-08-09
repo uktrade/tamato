@@ -199,14 +199,7 @@ class RegulationFactory(TrackedModelMixin, ValidityFactoryMixin):
         lambda o: Dates().no_end if o.role_type == 1 else None,
     )
     community_code = 1
-    regulation_group = factory.LazyAttribute(
-        lambda o: RegulationGroupFactory(
-            valid_between=o.valid_between,
-            transaction=o.transaction,
-        )
-        if o.role_type == 1
-        else None,
-    )
+    regulation_group = factory.SubFactory(RegulationGroupFactory)
     information_text = string_sequence(length=50)
     public_identifier = factory.sequence(lambda n: f"S.I. 2021/{n}")
     url = factory.sequence(lambda n: f"https://legislation.gov.uk/uksi/2021/{n}")
@@ -268,7 +261,7 @@ class ReplacementFactory(TrackedModelMixin):
 
     target_regulation = factory.SubFactory(RegulationFactory)
     enacting_regulation = factory.SubFactory(RegulationFactory)
-    measure_type_id = "AAAAAA"
+    measure_type_id = "123456"
     geographical_area_id = "GB"
     chapter_heading = "01"
 
