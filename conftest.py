@@ -595,6 +595,9 @@ def sqlite_storage():
         SQLiteStorage,
         bucket_name=settings.SQLITE_STORAGE_BUCKET_NAME,
     ) as storage:
+        assert storage.endpoint_url is settings.SQLITE_S3_ENDPOINT_URL
+        assert storage.access_key is settings.SQLITE_S3_ACCESS_KEY_ID
+        assert storage.secret_key is settings.SQLITE_S3_SECRET_ACCESS_KEY
         yield storage
 
 
