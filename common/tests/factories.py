@@ -257,7 +257,7 @@ class ReplacementFactory(TrackedModelMixin):
 
     target_regulation = factory.SubFactory(RegulationFactory)
     enacting_regulation = factory.SubFactory(RegulationFactory)
-    measure_type_id = "AAAAAA"
+    measure_type_id = "123456"
     geographical_area_id = "GB"
     chapter_heading = "01"
 

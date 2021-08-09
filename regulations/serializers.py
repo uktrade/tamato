@@ -273,12 +273,36 @@ class RegulationSerializer(
         ]
 
 
-class ReplacementImporterSerializer(
-    serializers.HyperlinkedModelSerializer,
-    TrackedModelSerializerMixin,
-):
-    enacting_regulation = RegulationSerializer(required=False)
-    target_regulation = RegulationSerializer(required=False)
+class AmendmentImporterSerializer(TrackedModelSerializerMixin):
+    enacting_regulation = RegulationImporterSerializer()
+    target_regulation = NestedRegulationSerializer(read_only=True)
+
+    class Meta:
+        model = models.Amendment
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "update_type",
+        ]
+
+
+class SuspensionImporterSerializer(TrackedModelSerializerMixin):
+    enacting_regulation = RegulationImporterSerializer()
+    target_regulation = NestedRegulationSerializer(read_only=True)
+
+    class Meta:
+        model = models.Suspension
+        fields = [
+            "enacting_regulation",
+            "target_regulation",
+            "effective_end_date",
+            "update_type",
+        ]
+
+
+class ReplacementImporterSerializer(TrackedModelSerializerMixin):
+    enacting_regulation = RegulationSerializer(read_only=True)
+    target_regulation = RegulationSerializer(read_only=True)
 
     class Meta:
         model = models.Replacement

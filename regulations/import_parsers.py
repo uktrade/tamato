@@ -164,24 +164,28 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
 
     tag = Tag("modification.regulation")
 
-    role_type = IntElement(Tag("modification.regulation.role"))
-    regulation_id = TextElement(Tag("modification.regulation.id"))
-    published_at = TextElement(Tag("published.date"))
-    official_journal_number = TextElement(Tag("officialjournal.number"))
-    official_journal_page = IntElement(Tag("officialjournal.page"))
-    valid_between_lower = ValidityMixin.valid_between_lower
-    valid_between_upper = ValidityMixin.valid_between_upper
-    effective_end_date = TextElement(Tag("effective.end.date"))
+    enacting_regulation__role_type = IntElement(Tag("modification.regulation.role"))
+    enacting_regulation__regulation_id = TextElement(Tag("modification.regulation.id"))
+    enacting_regulation__published_at = TextElement(Tag("published.date"))
+    enacting_regulation__official_journal_number = TextElement(
+        Tag("officialjournal.number")
+    )
+    enacting_regulation__official_journal_page = IntElement(Tag("officialjournal.page"))
+    enacting_regulation__valid_between_lower = ValidityMixin.valid_between_lower
+    enacting_regulation__valid_between_upper = ValidityMixin.valid_between_upper
+    enacting_regulation__effective_end_date = TextElement(Tag("effective.end.date"))
     target_regulation__role_type = TextElement(Tag("base.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag("base.regulation.id"))
-    replacement_indicator = IntElement(Tag("replacement.indicator"))
-    stopped = BooleanElement(Tag("stopped.flag"))
-    information_text = CompoundElement(
-        Tag("information.text"),
-        "public_identifier",
-        "url",
+    enacting_regulation__replacement_indicator = IntElement(
+        Tag("replacement.indicator")
     )
-    approved = BooleanElement(Tag("approved.flag"))
+    enacting_regulation__stopped = BooleanElement(Tag("stopped.flag"))
+    enacting_regulation__information_text = CompoundElement(
+        Tag("information.text"),
+        "enacting_regulation__public_identifier",
+        "enacting_regulation__url",
+    )
+    enacting_regulation__approved = BooleanElement(Tag("approved.flag"))
 
 
 @RecordParser.register_child("fts_regulation")
@@ -219,21 +223,29 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
 
     tag = Tag("full.temporary.stop.regulation")
 
-    role_type = IntElement(Tag("full.temporary.stop.regulation.role"))
-    regulation_id = TextElement(Tag("full.temporary.stop.regulation.id"))
-    published_at = TextElement(Tag("published.date"))
-    official_journal_number = TextElement(Tag("officialjournal.number"))
-    official_journal_page = IntElement(Tag("officialjournal.page"))
-    valid_between_lower = ValidityMixin.valid_between_lower
-    valid_between_upper = ValidityMixin.valid_between_upper
-    effective_end_date = TextElement(Tag("effective.enddate"))
-    replacement_indicator = IntElement(Tag("replacement.indicator"))
-    information_text = CompoundElement(
-        Tag("information.text"),
-        "public_identifier",
-        "url",
+    enacting_regulation__role_type = IntElement(
+        Tag("full.temporary.stop.regulation.role")
     )
-    approved = BooleanElement(Tag("approved.flag"))
+    enacting_regulation__regulation_id = TextElement(
+        Tag("full.temporary.stop.regulation.id")
+    )
+    enacting_regulation__published_at = TextElement(Tag("published.date"))
+    enacting_regulation__official_journal_number = TextElement(
+        Tag("officialjournal.number")
+    )
+    enacting_regulation__official_journal_page = IntElement(Tag("officialjournal.page"))
+    enacting_regulation__valid_between_lower = ValidityMixin.valid_between_lower
+    enacting_regulation__valid_between_upper = ValidityMixin.valid_between_upper
+    effective_end_date = TextElement(Tag("effective.enddate"))
+    enacting_regulation__replacement_indicator = IntElement(
+        Tag("replacement.indicator")
+    )
+    enacting_regulation__information_text = CompoundElement(
+        Tag("information.text"),
+        "enacting_regulation__public_identifier",
+        "enacting_regulation__url",
+    )
+    enacting_regulation__approved = BooleanElement(Tag("approved.flag"))
 
 
 @RecordParser.register_child("fts_action")
@@ -260,8 +272,8 @@ class FullTemporaryStopActionParser(Writable, ElementParser):
 
     tag = Tag("fts.regulation.action")
 
-    role_type = IntElement(Tag("fts.regulation.role"))
-    regulation_id = TextElement(Tag("fts.regulation.id"))
+    enacting_regulation__role_type = IntElement(Tag("fts.regulation.role"))
+    enacting_regulation__regulation_id = TextElement(Tag("fts.regulation.id"))
     target_regulation__role_type = IntElement(Tag("stopped.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag("stopped.regulation.id"))
 

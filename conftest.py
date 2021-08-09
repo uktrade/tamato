@@ -317,6 +317,11 @@ def run_xml_import(valid_user, settings):
         for field in checked_fields:
             imported_value = getattr(imported, field)
             source_value = getattr(model, field)
+            if hasattr(imported_value, "identifying_fields"):
+                imported_value = imported_value.get_identifying_fields()
+            if hasattr(source_value, "identifying_fields"):
+                source_value = source_value.get_identifying_fields()
+
             assert (
                 imported_value == source_value
             ), f"imported '{field}' ({imported_value} - {type(imported_value)}) does not match source '{field}' ({source_value} - {type(source_value)})"
