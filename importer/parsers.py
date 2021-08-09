@@ -368,14 +368,19 @@ class ValidityMixin:
         super().clean()
         valid_between = {}
 
-        if "valid_between_lower" in self.data:
-            valid_between["lower"] = self.data.pop("valid_between_lower")
+        lower_name = self._field_lookup[self.valid_between_lower]
+        upper_name = self._field_lookup[self.valid_between_upper]
 
-        if "valid_between_upper" in self.data:
-            valid_between["upper"] = self.data.pop("valid_between_upper")
+        if lower_name in self.data:
+            valid_between["lower"] = self.data.pop(lower_name)
+
+        if upper_name in self.data:
+            valid_between["upper"] = self.data.pop(upper_name)
 
         if valid_between:
-            self.data["valid_between"] = valid_between
+            *field_names, _ = lower_name.split("__")
+            real_name = "__".join([*field_names, "valid_between"])
+            self.data[real_name] = valid_between
 
 
 class ValidityStartMixin:
