@@ -23,7 +23,7 @@ def test_certificate_description_xml(xml):
     assert element is not None
 
 
-@validate_taric_xml(factories.CertificateFactory)
+@validate_taric_xml(factories.CertificateFactory, factory_kwargs={"description": None})
 def test_certificate_xml(xml):
     element = xml.find(".//oub:certificate", nsmap)
     assert element is not None
