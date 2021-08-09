@@ -32,11 +32,6 @@ class RegulationHandler(BaseHandler):
     serializer_class = serializers.RegulationImporterSerializer
     xml_model = parsers.BaseRegulationParser
 
-    def clean(self, data: dict) -> dict:
-        data["information_text"], data["public_identifier"], data["url"] = data[
-            "information_text"
-        ]
-        return super().clean(data)
 
 
 class BaseRegulationThroughTableHandler(BaseHandler):
@@ -51,9 +46,6 @@ class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
     xml_model = parsers.ModificationRegulationParser
 
     def clean(self, data: dict) -> dict:
-        data["information_text"], data["public_identifier"], data["url"] = data[
-            "information_text"
-        ]
         return super().clean(data)
 
     @transaction.atomic
@@ -78,10 +70,6 @@ class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
         self.suspension_data = {}
         if "effective_end_date" in data:
             self.suspension_data["effective_end_date"] = data.pop("effective_end_date")
-        if "information_text" in data:
-            data["information_text"], data["public_identifier"], data["url"] = data[
-                "information_text"
-            ]
         return super().clean(data)
 
     @transaction.atomic
