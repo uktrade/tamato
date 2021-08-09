@@ -3,10 +3,11 @@ from __future__ import annotations
 import logging
 import xml.etree.ElementTree as etree
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import Mapping
 from typing import Optional
+from typing import Sequence
+from typing import Union
 
 from common.validators import UpdateType
 from importer.namespaces import Tag
@@ -101,6 +102,8 @@ class ElementParser:
     """
 
     tag: Optional[Tag] = None
+    extra_fields: Sequence[str] = tuple()
+    data: Union[Dict[str, Any], Any]
 
     def __init__(self, tag: Tag = None, many: bool = False, depth: int = 1):
         self.child = None
@@ -188,8 +191,15 @@ class ElementParser:
                 element,
             ):
                 field_name = self._field_lookup[self.child]
+                if self.child.many and self.child.extra_fields:
+                    raise NotImplementedError("Many child parsers with extra_fields")
                 if self.child.many:
                     self.data.setdefault(field_name, []).append(self.child.data)
+                elif self.child.extra_fields:
+                    for index, sub_field_name in enumerate(
+                        [field_name, *self.child.extra_fields],
+                    ):
+                        self.data[sub_field_name] = self.child.data[index]
                 else:
                     self.data[field_name] = self.child.data
                 self.child = None
