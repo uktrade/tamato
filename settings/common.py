@@ -287,7 +287,16 @@ HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
 # SQLite AWS settings
-SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME")
+SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
+SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
+    "SQLITE_S3_ACCESS_KEY_ID",
+    "test_sqlite_key_id",
+)
+SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
+    "SQLITE_S3_SECRET_ACCESS_KEY",
+    "test_sqlite_key",
+)
+SQLITE_S3_ENDPOINT_URL = os.environ.get("SQLITE_S3_ENDPOINT_URL", "test_sqlite_url")
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
 
 # Default AWS settings.

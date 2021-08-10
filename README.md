@@ -212,26 +212,31 @@ Download and install a release from here: https://github.com/pyston/pyston/relea
 
 | Name | Description |
 | ---- | ----------- | 
-| SSO_ENABLED              | Use DIT staff SSO for authentication. You may want to set this to `"false"` for local development. If `"false"`, Django's ModelBackend authentication is used instead. (default `"true"`) |
-| AUTHBROKER_URL           | Base URL of the OAuth2 authentication broker (default https://sso.trade.gov.uk) |
-| AUTHBROKER_CLIENT_ID     | Client ID used to connect to the OAuth2 authentication broker |
-| AUTHBROKER_CLIENT_SECRET | Client secret used to connect to the OAuth2 authentication broker |
-| DATABASE_URL             | Connection details for the database, formatted per the [dj-database-url schema](https://github.com/jacobian/dj-database-url#url-schema) |
-| LOG_LEVEL                | The level of logging messages in the web app. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                     |
-| CELERY_LOG_LEVEL         | The level of logging for the celery worker. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                       |
-| TAMATO_IMPORT_USERNAME   | The TAMATO username to use for the owner of the workbaskets created.                                                                    |
-| NURSERY_CACHE_ENGINE     | The engine to use the the Importer Nursery Cache. Defaults to importer.cache.memory.MemoryCacheEngine.                                  |
-| CACHE_URL                | The URL for the Django cache. Defaults to redis://0.0.0.0:6379/1.                                                                       |
-| SKIP_VALIDATION          | Whether Transaction level validations should be skipped or not. Defaults to False.                                                      |
-| USE_IMPORTER_CACHE       | Whether to cache records for the importer (caches all current records as they are made). Defaults to True.                              |
-| CELERY_BROKER_URL        | Connection details for Celery to store running tasks, defaults to the CACHE_URL.                                                        |
-| CELERY_RESULT_BACKEND    | Connection details for Celery to store task results, defaults to CELERY_BROKER_URL.                                                     |
-| HMRC_STORAGE_BUCKET_NAME | Name of s3 bucket used for uploads by the exporter                                                                                      |
-| HMRC_STORAGE_DIRECTORY   | Destination directory in s3 bucket for the exporter                                                                                     |
-| AWS_ACCESS_KEY_ID        | AWS key id, used for s3                                                                                                                 |
-| AWS_SECRET_ACCESS_KEY    | AWS secret key, used for s3                                                                                                             |
-| AWS_STORAGE_BUCKET_NAME  | Default bucket [unused]                                                                                                                 |
-| AWS_S3_ENDPOINT_URL      | AWS s3 endpoint url                                                                                                                     |                                                                                                                   |
+| SSO_ENABLED                 | Use DIT staff SSO for authentication. You may want to set this to `"false"` for local development. If `"false"`, Django's ModelBackend authentication is used instead. (default `"true"`) |
+| AUTHBROKER_URL              | Base URL of the OAuth2 authentication broker (default https://sso.trade.gov.uk) |
+| AUTHBROKER_CLIENT_ID        | Client ID used to connect to the OAuth2 authentication broker |
+| AUTHBROKER_CLIENT_SECRET    | Client secret used to connect to the OAuth2 authentication broker |
+| DATABASE_URL                | Connection details for the database, formatted per the [dj-database-url schema](https://github.com/jacobian/dj-database-url#url-schema) |
+| LOG_LEVEL                   | The level of logging messages in the web app. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                     |
+| CELERY_LOG_LEVEL            | The level of logging for the celery worker. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                       |
+| TAMATO_IMPORT_USERNAME      | The TAMATO username to use for the owner of the workbaskets created.                                                                    |
+| NURSERY_CACHE_ENGINE        | The engine to use the the Importer Nursery Cache. Defaults to importer.cache.memory.MemoryCacheEngine.                                  |
+| CACHE_URL                   | The URL for the Django cache. Defaults to redis://0.0.0.0:6379/1.                                                                       |
+| SKIP_VALIDATION             | Whether Transaction level validations should be skipped or not. Defaults to False.                                                      |
+| USE_IMPORTER_CACHE          | Whether to cache records for the importer (caches all current records as they are made). Defaults to True.                              |
+| CELERY_BROKER_URL           | Connection details for Celery to store running tasks, defaults to the CACHE_URL.                                                        |
+| CELERY_RESULT_BACKEND       | Connection details for Celery to store task results, defaults to CELERY_BROKER_URL.                                                     |
+| HMRC_STORAGE_BUCKET_NAME    | Name of s3 bucket used for uploads by the exporter                                                                                      |
+| HMRC_STORAGE_DIRECTORY      | Destination directory in s3 bucket for the exporter                                                                                     |
+| AWS_ACCESS_KEY_ID           | AWS key id, used for s3                                                                                                                 |
+| AWS_SECRET_ACCESS_KEY       | AWS secret key, used for s3                                                                                                             |
+| AWS_STORAGE_BUCKET_NAME     | Default bucket [unused]                                                                                                                 |
+| AWS_S3_ENDPOINT_URL         | AWS s3 endpoint url                                                                                                                     |
+| SQLITE_STORAGE_BUCKET_NAME  | Bucket used for SQLite uploads                                                                                                          |
+| SQLITE_S3_ACCESS_KEY_ID     | AWS key id, used for SQLite storage bucket uploads                                                                                      |
+| SQLITE_S3_SECRET_ACCESS_KEY | AWS secret key, used for SQLite storage bucket uploads                                                                                  |
+| SQLITE_S3_ENDPOINT_URL      | AWS s3 endpoint url, used for SQLite storage bucket uploads                                                                             |
+| SQLITE_STORAGE_DIRECTORY    | Destination directory in s3 bucket for the SQLite storage bucket                                                                        |
 
 
 ## Using the importer

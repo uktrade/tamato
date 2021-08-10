@@ -38,6 +38,7 @@ from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
+from exporter.storages import SQLiteStorage
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
@@ -539,11 +540,10 @@ def s3_object_exists(s3):
     return check
 
 
-@pytest.fixture
-def hmrc_storage():
-    """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
+@contextlib.contextmanager
+def make_storage_mock(storage_class, **override_settings):
     with mock_s3():
-        storage = HMRCStorage()
+        storage = storage_class(**override_settings)
         session = boto3.session.Session()
 
         with patch(
@@ -563,18 +563,42 @@ def hmrc_storage():
             def get_bucket():
                 connection = get_connection()
                 connection.create_bucket(
-                    Bucket=settings.HMRC_STORAGE_BUCKET_NAME,
+                    Bucket=storage.bucket_name,
                     CreateBucketConfiguration={
                         "LocationConstraint": settings.AWS_S3_REGION_NAME,
                     },
                 )
 
-                bucket = connection.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
+                bucket = connection.Bucket(storage.bucket_name)
                 return bucket
 
             mock_connection_property.side_effect = get_connection
             mock_bucket_property.side_effect = get_bucket
             yield storage
+
+
+@pytest.fixture
+def hmrc_storage():
+    """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
+    with make_storage_mock(
+        HMRCStorage,
+        bucket_name=settings.HMRC_STORAGE_BUCKET_NAME,
+    ) as storage:
+        yield storage
+
+
+@pytest.fixture
+def sqlite_storage():
+    """Patch SQLiteStorage with moto so that nothing is really uploaded to
+    s3."""
+    with make_storage_mock(
+        SQLiteStorage,
+        bucket_name=settings.SQLITE_STORAGE_BUCKET_NAME,
+    ) as storage:
+        assert storage.endpoint_url is settings.SQLITE_S3_ENDPOINT_URL
+        assert storage.access_key is settings.SQLITE_S3_ACCESS_KEY_ID
+        assert storage.secret_key is settings.SQLITE_S3_SECRET_ACCESS_KEY
+        yield storage
 
 
 @pytest.fixture(
