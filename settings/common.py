@@ -61,6 +61,7 @@ DJANGO_CORE_APPS = [
 THIRD_PARTY_APPS = [
     "django_extensions",
     "django_filters",
+    "formtools",
     "polymorphic",
     "rest_framework",
     "webpack_loader",
@@ -106,7 +107,15 @@ TAMATO_APPS = [
     "crispy_forms_gds",
 ]
 
-INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS, *DOMAIN_APPS]
+APPS_THAT_MUST_COME_LAST = ["django.forms"]
+
+INSTALLED_APPS = [
+    *DJANGO_CORE_APPS,
+    *THIRD_PARTY_APPS,
+    *TAMATO_APPS,
+    *DOMAIN_APPS,
+    *APPS_THAT_MUST_COME_LAST,
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -146,6 +155,8 @@ TEMPLATES = [
         },
     },
 ]
+
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 # -- Auth
 LOGIN_URL = reverse_lazy("login")

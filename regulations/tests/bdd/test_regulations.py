@@ -60,15 +60,13 @@ def regulation_details(client, regulation_C2000000):
 def regulation_core_data(regulation_details, regulation_C2000000):
     reg = regulation_C2000000
     result = regulation_details.content.decode()
-    assert all(
-        value in result
-        for value in [
-            reg.regulation_id,
-            f"{reg.regulation_group.group_id}: {reg.regulation_group.description}",
-            reg.information_text,
-            reg.public_identifier,
-            reg.url,
-            f"{reg.valid_between.lower:%d %b %Y}",
-            reg.transaction.workbasket.get_status_display(),
-        ]
-    )
+    for value in [
+        reg.regulation_id,
+        f"{reg.regulation_group.group_id}: {reg.regulation_group.description}",
+        reg.information_text,
+        reg.public_identifier,
+        reg.url,
+        f"{reg.valid_between.lower:%d %b %Y}",
+        reg.transaction.workbasket.get_status_display(),
+    ]:
+        assert value in result

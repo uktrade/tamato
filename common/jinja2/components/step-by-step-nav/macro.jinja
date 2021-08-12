@@ -1,0 +1,137 @@
+{% macro step_by_step_nav(params) %}
+  {% if params.steps %}
+    <div
+      data-module="gemstepnav"
+      class="gem-c-step-nav js-hidden
+            {%- if params.small %} govuk-!-display-none-print{% endif %}
+            {%- if not params.small %} gem-c-step-nav--large{% endif %}"
+      {% if params.remember_last_step %}data-remember{% endif %}
+      {% if params.tracking_id %}data-id="{{ params.tracking_id }}"{% endif %}
+      data-show-text="{{ params.show_text|default("show") }}"
+      data-hide-text="{{ params.hide_text|default("hide") }}"
+      data-show-all-text="{{ params.show_all_text|default("Show all") }}"
+      data-hide-all-text="{{ params.hide_all_text|default("Hide all") }}"
+    >
+      <ol class="gem-c-step-nav__steps">
+        {% for step in params.steps %}
+          {% set step_is_active = loop.index == params.highlight_step %}
+          {% set logic = step.logic if step.logic in ["and", "or"] else None %}
+          {% set circle_class = "gem-c-step-nav__circle--" ~ ("logic" if logic else "number") %}
+          <li class="gem-c-step-nav__step js-step
+                    {%- if step_is_active %} gem-c-step-nav__step--active{% endif %}"
+              {% if step_is_active %}aria-current="step"{% endif %}
+              {% if step_count == params.show_step %}data-show{% endif %}
+              id="{{ params.id }}"
+              data-track-count="stepNavSection"
+              {% if step.optional %}data-optional{% endif %}
+          >
+            <div class="gem-c-step-nav__header js-toggle-panel" data-position="{{ loop.index }}">
+              <h{{ params.heading_level|default(2) }} class="gem-c-step-nav__title">
+                <span class="gem-c-step-nav__circle {{ circle_class }}">
+                  <span class="gem-c-step-nav__circle-inner">
+                    <span class="gem-c-step-nav__circle-background">
+                      {% if logic %}
+                        {{ logic }}
+                      {% else %}
+                        <span class="gem-c-step-nav__circle-step-label govuk-!-display-none-print visuallyhidden">Step </span>
+                        {{- loop.index -}}
+                        <span class="gem-c-step-nav__circle-step-colon govuk-!-display-none-print visuallyhidden" aria-hidden="true">: </span>
+                      {% endif %}
+                    </span>
+                  </span>
+                </span>
+
+                <span class="js-step-title">{{ step.title }}</span>
+              </h{{ params.heading_level|default(2) }}>
+            </div>
+
+            <div class="gem-c-step-nav__panel js-panel" id="step-panel-{{ params.id }}-{{ loop.index }}">
+              {% set in_substep = False %}
+              {% set options = namespace(
+                step_nav_content_id=params.step_nav_content_id|default(params.tracking_id),
+                step_index=loop.index0,
+                link_index=0,
+              ) %}
+              {% for element in step.contents %}
+                {{ step_nav_element(element, options) }}
+                {% if element.type == "list" %}
+                  {% set options.link_index = options.link_index + element.contents|length %}
+                {% endif %}
+              {% endfor %}
+            </div>
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro step_nav_element(element, options) %}
+  {% set link_index = options.link_index %}
+  {% if element.type == "paragraph" %}
+    <p class="gem-c-step-nav__paragraph">{{ element.text }}</p>
+  {% elif element.type == "list" %}
+    <{{ "ul" if element.style == "choice" else "ol" }}
+      class="gem-c-step-nav__list {{ "gem-c-step-nav__list--choice" if element.style == "choice" else "" }}"
+      data-length="{{ element.contents|length }}"
+    >
+      {% for contents in element.contents -%}
+        <li class="gem-c-step-nav__list-item js-list-item
+                  {%- if contents.active %} gem-c-step-nav__list-item--active{% endif %}"
+        >
+          {%- if contents.href -%}
+            {%- set link_index = link_index + 1 -%}
+            {%- set href -%}
+              {%- if contents.active -%}
+                #content
+              {%- elif contents.href.startswith("http") or not options.step_nav_content_id -%}
+                {{ contents.href }}
+              {%- else -%}
+                {{ add_url_params(contents.href, {"step-by-step-nav": options.step_nav_content_id}) }}
+              {%- endif -%}
+            {%- endset -%}
+            <a href="{{ href }}"
+               {%- if href.startswith("http") %} rel="external"{% endif %}
+               data-position="{{ options.step_index + 1 }}.{{ link_index }}"
+               class="gem-c-step-nav__link js-link"
+            >
+              {%- if contents.active -%}
+                <span class="gem-c-step-nav__link-active-context visuallyhidden">
+                  You are currently viewing:
+                </span>
+              {%- endif -%}
+              {{ contents.text }}
+              {%- if contents.context -%}
+                <span class="gem-c-step-nav__context">{{ contents.context }}</span>
+              {%- endif -%}
+            </a>
+          {%- else -%}
+            {{ contents.text }}
+          {%- endif -%}
+        </li>
+      {%- endfor %}
+    </{{ "ul" if element.style == "choice" else "ol" }}>
+  {% endif %}
+{% endmacro %}
+
+{% macro add_url_params(url, params) -%}
+  {# Add the key/value pairs in the params dictionary to the given url as url
+     parameters.
+
+     Eg: add_url_params("http://example.com?q=search", {"page": 1})
+         -> "http://example.com?q=search&page=1"
+
+     Implemented here for the sake of ease of reuse, but sadly not compatible with
+     Nunjucks.
+  #}
+  {%- set path, query = url.split("?", 1) -%}
+  {%- set ns = namespace(params=[]) -%}
+  {%- for param in query.split("&") -%}
+    {%- set key, value = param.split("=", 1) -%}
+    {{ ns.params.append((key, value)) }}
+  {%- endfor -%}
+  {%- for key, value in params.items() -%}
+    {{ ns.params.append((key, value)) }}
+  {%- endfor -%}
+  {{ parts[0] ~ "?" ~ urlencode(ns.params) }}
+{%- endmacro %}
