@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import CheckConstraint
 from django.db.models import Max
 from django.db.models import Q
+from polymorphic.managers import PolymorphicManager
 
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
@@ -55,7 +56,7 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     # This deals with subgroups of other groups
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
 
-    objects = GeographicalAreaQuerySet.as_manager()
+    objects = PolymorphicManager.from_queryset(GeographicalAreaQuerySet)()
 
     indirect_business_rules = (
         business_rules.GA14,
