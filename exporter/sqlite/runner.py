@@ -1,5 +1,6 @@
 import decimal
 import logging
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -33,13 +34,14 @@ class Runner:
         True, allowing SQLite specific functionality to be switched on and off
         using the value of this setting.
         """
+        sqlite_env = os.environ.copy()
+        sqlite_env["DATABASE_URL"] = f"sqlite:///{self.db}"
+
         run(
             [sys.executable, "manage.py", *args],
             cwd=settings.BASE_DIR,
             capture_output=False,
-            env={
-                "DATABASE_URL": f"sqlite:///{self.db}",
-            },
+            env=sqlite_env,
         )
 
     def make_empty_database(self):
