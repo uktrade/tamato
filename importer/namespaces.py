@@ -1,10 +1,9 @@
 """Provides dataclasses and config classes for xml elements and the taric schema."""
 
-from collections.abc import Iterator
 from dataclasses import dataclass, field, make_dataclass
 import os
 import re
-from typing import Dict, Sequence, TypeVar, Union
+from typing import Dict, Iterator, Sequence, TypeVar, Union
 import xml.etree.ElementTree as ET
 
 from django.conf import settings
@@ -13,6 +12,7 @@ from common.xml.namespaces import SEED_MESSAGE
 from common.xml.namespaces import nsmap
 
 TTag = TypeVar("TTag", bound="Tag")
+TTags = TypeVar("TTags", bound="SchemaTagsBase")
 
 RE_PATTERN_TEST = re.compile(r"[^A-Za-z\.\_]")
 
@@ -25,12 +25,25 @@ xsd_schema_paths: Dict[str, str] = (
     ("oub", PATH_XSD_TARIC)
 )
 
+"""
+Define additional groups in the below dictionary
+for use as a `record_group` argument
+to importer.chunker.chunk_taric.
+
+Check importer.forms.UploadTaricForm.save
+for example usage when users check
+the 'Commodities Only' box in /importers/create.
+
+The only group defined at the moment is commodities,
+which is easily extensible to additional record groups.
+"""
 TARIC_RECORD_GROUPS: Dict[str, Sequence[str]] = dict(
     commodities = (
         "40000", "40005", "40010", "40015",
         "40020", "40025", "40035", "40040"
     )
 )
+
 
 @dataclass
 class Tag:
@@ -65,7 +78,7 @@ class Tag:
     @property
     def is_pattern(self) -> bool:
         """Returns true if the tag name is a regex pattern."""
-        return RE_PATTERN_TEST.match(self.name) is not None
+        return RE_PATTERN_TEST.search(self.name) is not None
 
     @property
     def pattern(self):
@@ -97,9 +110,9 @@ class Tag:
             tag_qualified_name = tag
 
         if is_pattern is True:
-            return self.pattern.match(tag_qualified_name)
-        else:
-            return self.qualified_name == tag_qualified_name
+            return self.pattern.search(tag_qualified_name) is not None
+
+        return self.qualified_name == tag_qualified_name
 
     def __str__(self):
         """Returns a string representation of the tag."""
@@ -112,7 +125,7 @@ class SchemaTagsBase:
     XS_ELEMENT = Tag(name="element", prefix="xs")
 
 
-def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> dataclass:
+def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> TTags:
     """Returns a dynamic dataclass with taric schema element tag definitions."""
     schema_tags = dict()
 
@@ -132,5 +145,5 @@ def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> dataclass:
                 tag = Tag(name=name, prefix=prefix)
                 schema_tags[attr] = tag
 
-    DataClass = make_dataclass("TaricSchemaTags", schema_tags.keys(), bases=(SchemaTagsBase,))
-    return DataClass(**schema_tags)
+    Tags = make_dataclass("TaricSchemaTags", schema_tags.keys(), bases=(SchemaTagsBase,))
+    return Tags(**schema_tags)

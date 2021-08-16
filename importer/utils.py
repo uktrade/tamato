@@ -4,9 +4,12 @@ from hashlib import sha256
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
 from typing import Set
 from typing import TypedDict
+
+from django.db.models.query_utils import DeferredAttribute
 
 from common.models import TrackedModel
 
@@ -81,33 +84,50 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
             "220": {"215", "210"},
         }
     """
-    def _get_record_code(record: TrackedModel) -> str:
+    def _get_record_codes(record: TrackedModel) -> List[str]:
         key = record.record_code
-        if use_subrecord_codes is True:
-            key = f"{key}{record.subrecord_code}"
 
-        return key
+        if use_subrecord_codes is False:
+            return [key]
+
+        subrecord_code = record.subrecord_code
+
+        if isinstance(subrecord_code, str):
+            return [f"{key}{subrecord_code}"]
+
+        if isinstance(subrecord_code, DeferredAttribute):
+            return [
+                f"{key}{code}"
+                for code, _ in subrecord_code.field.choices
+            ]
+
+        return []
 
     dependency_map = {}
 
     record_codes = {
-        _get_record_code(subclass)
-        for subclass in TrackedModel.__subclasses__()}
+        code
+        for subclass in TrackedModel.__subclasses__()
+        for code in _get_record_codes(subclass)
+    }
 
     for subclass in TrackedModel.__subclasses__():
-        record_code = _get_record_code(subclass)
+        if subclass.__name__[:4] == "Test":
+            continue
 
-        if record_code not in dependency_map:
-            dependency_map[record_code] = set()
+        for record_code in _get_record_codes(subclass):
+            if record_code not in dependency_map:
+                dependency_map[record_code] = set()
 
-        for _, relation in subclass.get_relations():
-            relation_code = _get_record_code(relation)
+            for _, relation in subclass.get_relations():
+                relation_codes = _get_record_codes(relation)
 
-            if (
-                relation_code != record_code
-                and relation_code in record_codes
-            ):
-                dependency_map[record_code].add(relation_code)
+                for relation_code in relation_codes:
+                    if (
+                        relation_code != record_code
+                        and relation_code in record_codes
+                    ):
+                        dependency_map[record_code].add(relation_code)
 
     return dependency_map
 
