@@ -1,4 +1,5 @@
-from typing import Sequence, Type
+from typing import Sequence
+from typing import Type
 
 import pytest
 from rest_framework import serializers
@@ -10,13 +11,11 @@ from common.tests import factories
 from common.tests.models import TestModel1
 from importer import models
 from importer.handlers import BaseHandler
-from importer.namespaces import (
-    make_schema_dataclass,
-    xsd_schema_paths,
-    Tag,
-    TTags,
-    TARIC_RECORD_GROUPS
-)
+from importer.namespaces import TARIC_RECORD_GROUPS
+from importer.namespaces import Tag
+from importer.namespaces import TTags
+from importer.namespaces import make_schema_dataclass
+from importer.namespaces import xsd_schema_paths
 from importer.nursery import TariffObjectNursery
 from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType

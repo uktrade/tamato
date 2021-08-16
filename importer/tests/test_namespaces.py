@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 
-from importer.namespaces import Tag, TTags
+from importer.namespaces import Tag
+from importer.namespaces import TTags
 
 quota_event = Tag(name="quota.event")
 quota_balance_event = Tag(name="quota.balance.event")
@@ -8,7 +9,7 @@ quota_balance_event = Tag(name="quota.balance.event")
 
 def get_snippet_transaction(
     xml: str,
-    Tags: TTags
+    Tags: TTags,
 ) -> ET.Element:
     envelope = ET.fromstring(xml)
     return Tags.ENV_TRANSACTION.first(envelope)

@@ -15,7 +15,11 @@ from workbaskets.validators import WorkflowStatus
 class UploadTaricForm(forms.ModelForm):
     status = forms.ChoiceField(choices=WorkflowStatus.choices, required=True)
     taric_file = forms.FileField(required=True)
-    commodities = forms.BooleanField(label="Commodities Only", required=False, initial=False)
+    commodities = forms.BooleanField(
+        label="Commodities Only",
+        required=False,
+        initial=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

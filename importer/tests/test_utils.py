@@ -1,4 +1,5 @@
-from typing import Dict, Sequence
+from typing import Dict
+from typing import Sequence
 
 from importer import utils
 
@@ -9,16 +10,14 @@ def get_dependency_tree(use_subrecord_codes: bool) -> Dict[str, Sequence[str]]:
     d = {k: list(v) for k, v in dependency_tree.items()}
     with open(f"z{int(use_subrecord_codes)}", "w") as f:
         import json
+
         json.dump(d, f, indent=3)
 
     key_lens = {len(key) for key in dependency_tree}
-    value_lens = {
-        len(value)
-        for values in dependency_tree.values()
-        for value in values
-    }
+    value_lens = {len(value) for values in dependency_tree.values() for value in values}
 
     return (key_lens, value_lens)
+
 
 def test_generate_key():
     key = utils.generate_key("test", ["1", "2"], {"1": 1, "2": 2})

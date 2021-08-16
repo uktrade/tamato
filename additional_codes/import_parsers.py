@@ -72,7 +72,9 @@ class AdditionalCodeDescriptionPeriodParser(
 
     sid = TextElement(Tag(name="additional.code.description.period.sid"))
     described_additionalcode__sid = TextElement(Tag(name="additional.code.sid"))
-    described_additionalcode__type__sid = TextElement(Tag(name="additional.code.type.id"))
+    described_additionalcode__type__sid = TextElement(
+        Tag(name="additional.code.type.id"),
+    )
     described_additionalcode__code = TextElement(Tag(name="additional.code"))
     validity_start = ValidityStartMixin.validity_start
 
@@ -106,7 +108,9 @@ class AdditionalCodeDescriptionParser(Writable, ElementParser):
     sid = TextElement(Tag(name="additional.code.description.period.sid"))
     language_id = ConstantElement(Tag(name="language.id"), value="EN")
     described_additionalcode__sid = TextElement(Tag(name="additional.code.sid"))
-    described_additionalcode__type__sid = TextElement(Tag(name="additional.code.type.id"))
+    described_additionalcode__type__sid = TextElement(
+        Tag(name="additional.code.type.id"),
+    )
     described_additionalcode__code = TextElement(Tag(name="additional.code"))
     description = TextElement(Tag(name="description"))
 

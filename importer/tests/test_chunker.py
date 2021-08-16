@@ -1,7 +1,7 @@
+import xml.etree.ElementTree as ET
 from io import BytesIO
 from typing import Sequence
 from unittest import mock
-import xml.etree.ElementTree as ET
 
 import pytest
 
@@ -11,7 +11,6 @@ from importer.chunker import filter_transaction_records
 from importer.namespaces import TTags
 
 from .test_namespaces import get_snippet_transaction
-
 
 pytestmark = pytest.mark.django_db
 
@@ -31,7 +30,7 @@ def get_basic_chunk_text(id: str) -> bytes:
 def filter_snippet_transaction(
     xml: str,
     Tags: TTags,
-    record_group: Sequence[str]
+    record_group: Sequence[str],
 ) -> ET.Element:
     transaction = get_snippet_transaction(xml, Tags)
     return filter_transaction_records(transaction, record_group)
@@ -44,7 +43,10 @@ def test_get_chunk(mock_temp_file: mock.MagicMock):
 
     chunk1 = chunker.get_chunk(chunks_in_progress, "1")
     chunk2 = chunker.get_chunk(
-        chunks_in_progress, "2", record_code="400", chapter_heading="01"
+        chunks_in_progress,
+        "2",
+        record_code="400",
+        chapter_heading="01",
     )
     chunk1.seek(0)
     chunk2.seek(0)
@@ -78,9 +80,15 @@ def test_close_chunk():
     )
 
 
-def test_transaction_filter_positive(taric_schema_tags, record_group, envelope_commodity):
+def test_transaction_filter_positive(
+    taric_schema_tags,
+    record_group,
+    envelope_commodity,
+):
     transaction = filter_snippet_transaction(
-        envelope_commodity, taric_schema_tags, record_group
+        envelope_commodity,
+        taric_schema_tags,
+        record_group,
     )
 
     assert transaction is not None
@@ -89,7 +97,9 @@ def test_transaction_filter_positive(taric_schema_tags, record_group, envelope_c
 
 def test_transaction_filter_negative(taric_schema_tags, record_group, envelope_measure):
     transaction = filter_snippet_transaction(
-        envelope_measure, taric_schema_tags, record_group
+        envelope_measure,
+        taric_schema_tags,
+        record_group,
     )
 
     assert transaction is None

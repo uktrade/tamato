@@ -294,7 +294,9 @@ class RegulationReplacementParser(Writable, ElementParser):
     tag = Tag(name="regulation.replacement")
 
     enacting_regulation__role_type = IntElement(Tag(name="replacing.regulation.role"))
-    enacting_regulation__regulation_id = TextElement(Tag(name="replacing.regulation.id"))
+    enacting_regulation__regulation_id = TextElement(
+        Tag(name="replacing.regulation.id"),
+    )
     target_regulation__role_type = IntElement(Tag(name="replaced.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag(name="replaced.regulation.id"))
     measure_type_id = TextElement(Tag(name="measure.type.id"))

@@ -84,6 +84,7 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
             "220": {"215", "210"},
         }
     """
+
     def _get_record_codes(record: TrackedModel) -> List[str]:
         key = record.record_code
 
@@ -96,10 +97,7 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
             return [f"{key}{subrecord_code}"]
 
         if isinstance(subrecord_code, DeferredAttribute):
-            return [
-                f"{key}{code}"
-                for code, _ in subrecord_code.field.choices
-            ]
+            return [f"{key}{code}" for code, _ in subrecord_code.field.choices]
 
         return []
 
@@ -123,10 +121,7 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
                 relation_codes = _get_record_codes(relation)
 
                 for relation_code in relation_codes:
-                    if (
-                        relation_code != record_code
-                        and relation_code in record_codes
-                    ):
+                    if relation_code != record_code and relation_code in record_codes:
                         dependency_map[record_code].add(relation_code)
 
     return dependency_map

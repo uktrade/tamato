@@ -7,7 +7,9 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.template.loader import render_to_string
 
 from importer import models
-from importer.namespaces import make_schema_dataclass, nsmap, xsd_schema_paths
+from importer.namespaces import make_schema_dataclass
+from importer.namespaces import nsmap
+from importer.namespaces import xsd_schema_paths
 from importer.utils import dependency_tree
 
 MAX_FILE_SIZE = 1024 * 1024 * 50  # Will keep chunks roughly close to 50MB
@@ -251,9 +253,13 @@ def write_transaction_to_chunk(
         chunks_in_progress.pop(key)
 
 
-def filter_transaction_records(elem: ET.Element, record_group: Sequence[str]) -> ET.Element:
+def filter_transaction_records(
+    elem: ET.Element,
+    record_group: Sequence[str],
+) -> ET.Element:
     """
-    Filters the records in a transaction based on record codes in the record group.
+    Filters the records in a transaction based on record codes in the record
+    group.
 
     Record identifiers are concatenated record_code and subrecord_code child element values.
 
@@ -298,10 +304,7 @@ def filter_transaction_records(elem: ET.Element, record_group: Sequence[str]) ->
         logger.info(msg)
         return elem
 
-    msg = (
-        f"Transaction id {transaction_id}: "
-        "Removed - no matching records. "
-    )
+    msg = f"Transaction id {transaction_id}: " "Removed - no matching records. "
     logger.info(msg)
     return
 
@@ -309,7 +312,7 @@ def filter_transaction_records(elem: ET.Element, record_group: Sequence[str]) ->
 def chunk_taric(
     taric3_file: InMemoryUploadedFile,
     batch: models.ImportBatch,
-    record_group: Sequence[str] = None
+    record_group: Sequence[str] = None,
 ) -> models.ImportBatch:
     """
     Parses a TARIC3 XML stream and breaks it into a batch of chunks.
@@ -326,7 +329,7 @@ def chunk_taric(
     for event, elem in xmlparser:
         if event == "start" and elem.tag == Tags.ENV_ENVELOPE.qualified_name:
             envelope_id = elem.get("id", taric3_file.name)
-        if event != "end" or elem.tag !=  Tags.ENV_TRANSACTION.qualified_name:
+        if event != "end" or elem.tag != Tags.ENV_TRANSACTION.qualified_name:
             continue
 
         transaction = filter_transaction_records(elem, record_group)

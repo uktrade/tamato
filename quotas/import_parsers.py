@@ -103,7 +103,9 @@ class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
     tag = Tag(name="quota.order.number.origin.exclusions")
 
     origin__sid = TextElement(Tag(name="quota.order.number.origin.sid"))
-    excluded_geographical_area__sid = TextElement(Tag(name="excluded.geographical.area.sid"))
+    excluded_geographical_area__sid = TextElement(
+        Tag(name="excluded.geographical.area.sid"),
+    )
 
 
 @RecordParser.register_child("quota_definition")
@@ -360,7 +362,9 @@ class QuotaEventParser(Writable, ElementParser):
         TextElement(Tag(name="unblocking.date")): "unblocking.date",
         # critical event
         TextElement(Tag(name="critical.state")): "critical.state",
-        TextElement(Tag(name="critical.state.change.date")): "critical.state.change.date",
+        TextElement(
+            Tag(name="critical.state.change.date"),
+        ): "critical.state.change.date",
         # exhaustion event
         TextElement(Tag(name="exhaustion.date")): "exhaustion.date",
         # reopening event
@@ -371,7 +375,9 @@ class QuotaEventParser(Writable, ElementParser):
         TextElement(Tag(name="transfer.date")): "transfer.date",
         TextElement(Tag(name="quota.closed")): "quota.closed",
         TextElement(Tag(name="transferred.amount")): "transferred.amount",
-        TextElement(Tag(name="target.quota.definition.sid")): "target.quota.definition.sid",
+        TextElement(
+            Tag(name="target.quota.definition.sid"),
+        ): "target.quota.definition.sid",
     }
 
     def clean(self):

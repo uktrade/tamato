@@ -9,5 +9,5 @@ nsmap = {
     ENVELOPE: "urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0",
     SEED_MESSAGE: "urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0",
     TARIC_MESSAGE: "urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0",
-    XML_SCHEMA: "http://www.w3.org/2001/XMLSchema"
+    XML_SCHEMA: "http://www.w3.org/2001/XMLSchema",
 }

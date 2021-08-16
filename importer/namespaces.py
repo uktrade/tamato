@@ -1,10 +1,17 @@
-"""Provides dataclasses and config classes for xml elements and the taric schema."""
+"""Provides dataclasses and config classes for xml elements and the taric
+schema."""
 
-from dataclasses import dataclass, field, make_dataclass
 import os
 import re
-from typing import Dict, Iterator, Sequence, TypeVar, Union
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from dataclasses import field
+from dataclasses import make_dataclass
+from typing import Dict
+from typing import Iterator
+from typing import Sequence
+from typing import TypeVar
+from typing import Union
 
 from django.conf import settings
 
@@ -22,7 +29,7 @@ PATH_XSD_TARIC = os.path.join(PATH_ASSETS, "taric3.xsd")
 
 xsd_schema_paths: Dict[str, str] = (
     ("env", PATH_XSD_ENVELOPE),
-    ("oub", PATH_XSD_TARIC)
+    ("oub", PATH_XSD_TARIC),
 )
 
 """
@@ -38,16 +45,23 @@ The only group defined at the moment is commodities,
 which is easily extensible to additional record groups.
 """
 TARIC_RECORD_GROUPS: Dict[str, Sequence[str]] = dict(
-    commodities = (
-        "40000", "40005", "40010", "40015",
-        "40020", "40025", "40035", "40040"
-    )
+    commodities=(
+        "40000",
+        "40005",
+        "40010",
+        "40015",
+        "40020",
+        "40025",
+        "40035",
+        "40040",
+    ),
 )
 
 
 @dataclass
 class Tag:
     """A dataclass for xml element tags."""
+
     name: str
     prefix: str = field(default=SEED_MESSAGE)
     nsmap: Dict[str, str] = field(default_factory=lambda: nsmap)
@@ -82,19 +96,21 @@ class Tag:
 
     @property
     def pattern(self):
-        """Returns a compiled regex pattern """
+        """Returns a compiled regex pattern."""
         if self.is_pattern is False:
             return self.qualified_name
 
         return re.compile(re.escape(f"{{{self.namespace}}}") + self.name)
 
     def iter(self, parent: ET.Element) -> Iterator[ET.Element]:
-        """Returns an iterator of descendants of the parent matching this tag's name."""
+        """Returns an iterator of descendants of the parent matching this tag's
+        name."""
         qname = self.qualified_name
         return (el for el in parent.iter() if el.tag == qname)
 
     def first(self, parent: ET.Element) -> ET.Element:
-        """Returns the first descendant of the parent matching this tag's name."""
+        """Returns the first descendant of the parent matching this tag's
+        name."""
         try:
             return next(self.iter(parent))
         except StopIteration:
@@ -122,6 +138,7 @@ class Tag:
 @dataclass
 class SchemaTagsBase:
     """Provides a base dataclass for schema element tag definitions."""
+
     XS_ELEMENT = Tag(name="element", prefix="xs")
 
 
@@ -133,7 +150,10 @@ def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> TTags:
         iterator = ET.iterparse(path, events=["start", "end"])
 
         for event, elem in iterator:
-            if event == "start" and elem.tag == SchemaTagsBase.XS_ELEMENT.qualified_name:
+            if (
+                event == "start"
+                and elem.tag == SchemaTagsBase.XS_ELEMENT.qualified_name
+            ):
                 name = elem.get("name")
 
                 if name is None:
@@ -145,5 +165,9 @@ def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> TTags:
                 tag = Tag(name=name, prefix=prefix)
                 schema_tags[attr] = tag
 
-    Tags = make_dataclass("TaricSchemaTags", schema_tags.keys(), bases=(SchemaTagsBase,))
+    Tags = make_dataclass(
+        "TaricSchemaTags",
+        schema_tags.keys(),
+        bases=(SchemaTagsBase,),
+    )
     return Tags(**schema_tags)

@@ -296,7 +296,9 @@ class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
     sid = IntElement(Tag(name="duty.expression.id"), format="FM00")
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    duty_amount_applicability_code = IntElement(Tag(name="duty.amount.applicability.code"))
+    duty_amount_applicability_code = IntElement(
+        Tag(name="duty.amount.applicability.code"),
+    )
     measurement_unit_applicability_code = IntElement(
         Tag(name="measurement.unit.applicability.code"),
     )
@@ -602,7 +604,9 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
         Tag(name="measure.generating.regulation.id"),
     )
     valid_between_upper = ValidityMixin.valid_between_upper
-    terminating_regulation__role_type = IntElement(Tag(name="justification.regulation.role"))
+    terminating_regulation__role_type = IntElement(
+        Tag(name="justification.regulation.role"),
+    )
     terminating_regulation__regulation_id = TextElement(
         Tag(name="justification.regulation.id"),
     )
@@ -762,7 +766,9 @@ class MeasureExcludedGeographicalAreaParser(Writable, ElementParser):
     tag = Tag(name="measure.excluded.geographical.area")
 
     modified_measure__sid = TextElement(Tag(name="measure.sid"))
-    excluded_geographical_area__area_id = TextElement(Tag(name="excluded.geographical.area"))
+    excluded_geographical_area__area_id = TextElement(
+        Tag(name="excluded.geographical.area"),
+    )
     excluded_geographical_area__sid = TextElement(Tag(name="geographical.area.sid"))
 
 
