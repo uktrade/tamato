@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field, make_dataclass
 import os
 import re
-from typing import Dict, TypeVar, Union
+from typing import Dict, Sequence, TypeVar, Union
 import xml.etree.ElementTree as ET
 
 from django.conf import settings
@@ -25,6 +25,12 @@ xsd_schema_paths: Dict[str, str] = (
     ("oub", PATH_XSD_TARIC)
 )
 
+TARIC_RECORD_GROUPS: Dict[str, Sequence[str]] = dict(
+    commodities = (
+        "40000", "40005", "40010", "40015",
+        "40020", "40025", "40035", "40040"
+    )
+)
 
 @dataclass
 class Tag:
