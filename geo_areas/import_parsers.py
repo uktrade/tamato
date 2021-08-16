@@ -37,14 +37,14 @@ class GeographicalAreaParser(ValidityMixin, Writable, ElementParser):
     record_code = "250"
     subrecord_code = "00"
 
-    tag = Tag("geographical.area")
+    tag = Tag(name="geographical.area")
 
-    sid = TextElement(Tag("geographical.area.sid"))
-    area_id = TextElement(Tag("geographical.area.id"))
+    sid = TextElement(Tag(name="geographical.area.sid"))
+    area_id = TextElement(Tag(name="geographical.area.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    area_code = TextElement(Tag("geographical.code"))
-    parent__sid = TextElement(Tag("parent.geographical.area.group.sid"))
+    area_code = TextElement(Tag(name="geographical.code"))
+    parent__sid = TextElement(Tag(name="parent.geographical.area.group.sid"))
 
 
 @RecordParser.register_child("geographical_area_description")
@@ -70,13 +70,13 @@ class GeographicalAreaDescriptionParser(Writable, ElementParser):
     record_code = "250"
     subrecord_code = "10"
 
-    tag = Tag("geographical.area.description")
+    tag = Tag(name="geographical.area.description")
 
-    sid = IntElement(Tag("geographical.area.description.period.sid"))
-    language_id = ConstantElement(Tag("language.id"), value="EN")
-    described_geographicalarea__sid = TextElement(Tag("geographical.area.sid"))
-    described_geographicalarea__area_id = TextElement(Tag("geographical.area.id"))
-    description = TextElement(Tag("description"))
+    sid = IntElement(Tag(name="geographical.area.description.period.sid"))
+    language_id = ConstantElement(Tag(name="language.id"), value="EN")
+    described_geographicalarea__sid = TextElement(Tag(name="geographical.area.sid"))
+    described_geographicalarea__area_id = TextElement(Tag(name="geographical.area.id"))
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("geographical_area_description_period")
@@ -105,12 +105,12 @@ class GeographicalAreaDescriptionPeriodParser(
     record_code = "250"
     subrecord_code = "05"
 
-    tag = Tag("geographical.area.description.period")
+    tag = Tag(name="geographical.area.description.period")
 
-    sid = IntElement(Tag("geographical.area.description.period.sid"))
-    described_geographicalarea__sid = TextElement(Tag("geographical.area.sid"))
+    sid = IntElement(Tag(name="geographical.area.description.period.sid"))
+    described_geographicalarea__sid = TextElement(Tag(name="geographical.area.sid"))
     validity_start = ValidityStartMixin.validity_start
-    described_geographicalarea__area_id = TextElement(Tag("geographical.area.id"))
+    described_geographicalarea__area_id = TextElement(Tag(name="geographical.area.id"))
 
 
 @RecordParser.register_child("geographical_area_membership")
@@ -135,9 +135,9 @@ class GeographicalMembershipParser(ValidityMixin, Writable, ElementParser):
     record_code = "250"
     subrecord_code = "15"
 
-    tag = Tag("geographical.area.membership")
+    tag = Tag(name="geographical.area.membership")
 
-    member__sid = IntElement(Tag("geographical.area.sid"))
-    geo_group__sid = IntElement(Tag("geographical.area.group.sid"))
+    member__sid = IntElement(Tag(name="geographical.area.sid"))
+    geo_group__sid = IntElement(Tag(name="geographical.area.group.sid"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper

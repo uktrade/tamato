@@ -11,22 +11,22 @@ from importer.parsers import ValidityMixin
 
 
 def test_element_parser_empty_element():
-    parser = ElementParser(Tag("test"))
-    parser.end(etree.Element(str(Tag("test")), {"value": "foo"}))
+    parser = ElementParser(Tag(name="test"))
+    parser.end(etree.Element(str(Tag(name="test")), {"value": "foo"}))
     assert parser.data == {"value": "foo"}
 
 
 def test_element_parser_text_element():
-    parser = ElementParser(Tag("test"))
-    el = etree.Element(str(Tag("test")))
+    parser = ElementParser(Tag(name="test"))
+    el = etree.Element(str(Tag(name="test")))
     el.text = "foo"
     parser.end(el)
     assert parser.text == "foo"
 
 
 def test_text_element_class():
-    parser = TextElement(Tag("test"))
-    el = etree.Element(str(Tag("test")))
+    parser = TextElement(Tag(name="test"))
+    el = etree.Element(str(Tag(name="test")))
     el.text = "foo"
     parser.end(el)
     assert parser.data == "foo"
@@ -34,13 +34,13 @@ def test_text_element_class():
 
 def test_element_parser_with_child():
     class TestElement(ElementParser):
-        tag = Tag("test")
-        foo = TextElement(Tag("foo"))
+        tag = Tag(name="test")
+        foo = TextElement(Tag(name="foo"))
 
     parser = TestElement()
 
-    el = etree.Element(str(Tag("test")))
-    child = etree.Element(str(Tag("foo")))
+    el = etree.Element(str(Tag(name="test")))
+    child = etree.Element(str(Tag(name="foo")))
     child.text = "bar"
     el.append(child)
 
@@ -54,16 +54,16 @@ def test_element_parser_with_child():
 
 def test_element_parser_with_repeated_children():
     class Foo(ElementParser):
-        tag = Tag("foo")
+        tag = Tag(name="foo")
 
     class TestElement(ElementParser):
-        tag = Tag("test")
+        tag = Tag(name="test")
         foo = Foo(many=True)
 
     parser = TestElement()
 
-    el = etree.Element(str(Tag("test")))
-    children = [etree.Element(str(Tag("foo")), {"id": i}) for i in range(3)]
+    el = etree.Element(str(Tag(name="test")))
+    children = [etree.Element(str(Tag(name="foo")), {"id": i}) for i in range(3)]
     el.extend(children)
 
     parser.start(el)
@@ -83,21 +83,21 @@ def test_element_parser_with_repeated_children():
 
 def test_element_parser_with_grandchildren():
     class Grandchild(ElementParser):
-        tag = Tag("grandchild")
+        tag = Tag(name="grandchild")
 
     class Child(ElementParser):
-        tag = Tag("child")
+        tag = Tag(name="child")
         grandchild = Grandchild(many=True)
 
     class TestElement(ElementParser):
-        tag = Tag("test")
+        tag = Tag(name="test")
         child = Child(many=True)
 
     parser = TestElement()
 
-    el = etree.Element(str(Tag("test")))
-    child = etree.Element(str(Tag("child")))
-    grandchild = etree.Element(str(Tag("grandchild")), {"id": "2"})
+    el = etree.Element(str(Tag(name="test")))
+    child = etree.Element(str(Tag(name="child")))
+    grandchild = etree.Element(str(Tag(name="grandchild")), {"id": "2"})
 
     child.extend([grandchild])
     el.extend([child])
@@ -114,21 +114,21 @@ def test_element_parser_with_grandchildren():
 
 def test_element_parser_with_two_levels_of_same_tag():
     class Grandchild(ElementParser):
-        tag = Tag("child")
+        tag = Tag(name="child")
 
     class Child(ElementParser):
-        tag = Tag("child")
+        tag = Tag(name="child")
         grandchild = Grandchild(many=True)
 
     class TestElement(ElementParser):
-        tag = Tag("test")
+        tag = Tag(name="test")
         child = Child(many=True)
 
     parser = TestElement()
 
-    el = etree.Element(str(Tag("test")))
-    child = etree.Element(str(Tag("child")))
-    grandchild = etree.Element(str(Tag("child")), {"id": "2"})
+    el = etree.Element(str(Tag(name="test")))
+    child = etree.Element(str(Tag(name="child")))
+    grandchild = etree.Element(str(Tag(name="child")), {"id": "2"})
 
     child.extend([grandchild])
     el.extend([child])
@@ -153,16 +153,16 @@ def test_element_parser_with_partially_loaded_element():
     """
 
     class Foo(ElementParser):
-        tag = Tag("foo")
+        tag = Tag(name="foo")
 
     class TestElement(ElementParser):
-        tag = Tag("test")
+        tag = Tag(name="test")
         foo = Foo(many=True)
 
     parser = TestElement()
 
-    el = etree.Element(str(Tag("test")))
-    children = [etree.Element(str(Tag("foo")), {"id": str(i)}) for i in range(3)]
+    el = etree.Element(str(Tag(name="test")))
+    children = [etree.Element(str(Tag(name="foo")), {"id": str(i)}) for i in range(3)]
 
     parser.start(el)  # with no children
     for child in children:
@@ -182,16 +182,16 @@ def test_element_parser_with_partially_loaded_element():
 
 def test_validity_mixin():
     class TestElement(ValidityMixin, ElementParser):
-        tag = Tag("test")
-        valid_between_lower = TextElement(Tag("validity.start.date"))
-        valid_between_upper = TextElement(Tag("validity.end.date"))
+        tag = Tag(name="test")
+        valid_between_lower = TextElement(Tag(name="validity.start.date"))
+        valid_between_upper = TextElement(Tag(name="validity.end.date"))
 
     parser = TestElement()
 
-    el = etree.Element(str(Tag("test")))
-    start_date = etree.Element(str(Tag("validity.start.date")))
+    el = etree.Element(str(Tag(name="test")))
+    start_date = etree.Element(str(Tag(name="validity.start.date")))
     start_date.text = "2020-01-01"
-    end_date = etree.Element(str(Tag("validity.end.date")))
+    end_date = etree.Element(str(Tag(name="validity.end.date")))
     end_date.text = "2020-01-02"
     el.extend([start_date, end_date])
 
@@ -227,12 +227,12 @@ def test_validity_mixin():
 )
 def test_boolean_element_parser(true_value, false_value, text, expected):
     parser = BooleanElement(
-        Tag("foo"),
+        Tag(name="foo"),
         true_value=true_value,
         false_value=false_value,
     )
 
-    el = etree.Element(str(Tag("foo")))
+    el = etree.Element(str(Tag(name="foo")))
     el.text = text
 
     parser.start(el)
@@ -259,12 +259,12 @@ def test_boolean_element_parser(true_value, false_value, text, expected):
 )
 def test_compound_element_parser(num_children, separator, text, expected):
     parser = CompoundElement(
-        Tag("foo"),
+        Tag(name="foo"),
         *(str(i) for i in range(num_children)),
         separator=separator,
     )
 
-    el = etree.Element(str(Tag("foo")))
+    el = etree.Element(str(Tag(name="foo")))
     el.text = text
 
     parser.start(el)

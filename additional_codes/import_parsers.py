@@ -32,11 +32,11 @@ class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
     record_code = "245"
     subrecord_code = "00"
 
-    tag = Tag("additional.code")
+    tag = Tag(name="additional.code")
 
-    sid = IntElement(Tag("additional.code.sid"))
-    type__sid = TextElement(Tag("additional.code.type.id"))
-    code = TextElement(Tag("additional.code"))
+    sid = IntElement(Tag(name="additional.code.sid"))
+    type__sid = TextElement(Tag(name="additional.code.type.id"))
+    code = TextElement(Tag(name="additional.code"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
 
@@ -68,12 +68,12 @@ class AdditionalCodeDescriptionPeriodParser(
     record_code = "245"
     subrecord_code = "05"
 
-    tag = Tag("additional.code.description.period")
+    tag = Tag(name="additional.code.description.period")
 
-    sid = TextElement(Tag("additional.code.description.period.sid"))
-    described_additionalcode__sid = TextElement(Tag("additional.code.sid"))
-    described_additionalcode__type__sid = TextElement(Tag("additional.code.type.id"))
-    described_additionalcode__code = TextElement(Tag("additional.code"))
+    sid = TextElement(Tag(name="additional.code.description.period.sid"))
+    described_additionalcode__sid = TextElement(Tag(name="additional.code.sid"))
+    described_additionalcode__type__sid = TextElement(Tag(name="additional.code.type.id"))
+    described_additionalcode__code = TextElement(Tag(name="additional.code"))
     validity_start = ValidityStartMixin.validity_start
 
 
@@ -101,14 +101,14 @@ class AdditionalCodeDescriptionParser(Writable, ElementParser):
     record_code = "245"
     subrecord_code = "10"
 
-    tag = Tag("additional.code.description")
+    tag = Tag(name="additional.code.description")
 
-    sid = TextElement(Tag("additional.code.description.period.sid"))
-    language_id = ConstantElement(Tag("language.id"), value="EN")
-    described_additionalcode__sid = TextElement(Tag("additional.code.sid"))
-    described_additionalcode__type__sid = TextElement(Tag("additional.code.type.id"))
-    described_additionalcode__code = TextElement(Tag("additional.code"))
-    description = TextElement(Tag("description"))
+    sid = TextElement(Tag(name="additional.code.description.period.sid"))
+    language_id = ConstantElement(Tag(name="language.id"), value="EN")
+    described_additionalcode__sid = TextElement(Tag(name="additional.code.sid"))
+    described_additionalcode__type__sid = TextElement(Tag(name="additional.code.type.id"))
+    described_additionalcode__code = TextElement(Tag(name="additional.code"))
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("additional_code_type")
@@ -134,12 +134,12 @@ class AdditionalCodeTypeParser(ValidityMixin, Writable, ElementParser):
     record_code = "120"
     subrecord_code = "00"
 
-    tag = Tag("additional.code.type")
+    tag = Tag(name="additional.code.type")
 
-    sid = TextElement(Tag("additional.code.type.id"))
+    sid = TextElement(Tag(name="additional.code.type.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    application_code = TextElement(Tag("application.code"))
+    application_code = TextElement(Tag(name="application.code"))
 
 
 @RecordParser.register_child("additional_code_type_description")
@@ -163,11 +163,11 @@ class AdditionalCodeTypeDescriptionParser(Writable, ElementParser):
     record_code = "120"
     subrecord_code = "05"
 
-    tag = Tag("additional.code.type.description")
+    tag = Tag(name="additional.code.type.description")
 
-    sid = TextElement(Tag("additional.code.type.id"))
-    language_id = ConstantElement(Tag("language.id"), value="EN")
-    description = TextElement(Tag("description"))
+    sid = TextElement(Tag(name="additional.code.type.id"))
+    language_id = ConstantElement(Tag(name="language.id"), value="EN")
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("footnote_association_additional_code")
@@ -195,12 +195,12 @@ class FootnoteAssociationAdditionalCodeParser(ValidityMixin, Writable, ElementPa
     record_code = "245"
     subrecord_code = "15"
 
-    tag = Tag("footnote.association.additional.code")
+    tag = Tag(name="footnote.association.additional.code")
 
-    additional_code__sid = TextElement(Tag("additional.code.sid"))
-    associated_footnote__footnote_type__sid = TextElement(Tag("footnote.type.id"))
-    associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    additional_code__sid = TextElement(Tag(name="additional.code.sid"))
+    associated_footnote__footnote_type__sid = TextElement(Tag(name="footnote.type.id"))
+    associated_footnote__footnote_id = TextElement(Tag(name="footnote.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    additional_code__type__sid = TextElement(Tag("additional.code.type.id"))
-    additional_code__code = TextElement(Tag("additional.code"))
+    additional_code__type__sid = TextElement(Tag(name="additional.code.type.id"))
+    additional_code__code = TextElement(Tag(name="additional.code"))

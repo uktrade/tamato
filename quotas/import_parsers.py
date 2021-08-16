@@ -1,4 +1,3 @@
-from importer.namespaces import RegexTag
 from importer.namespaces import Tag
 from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
@@ -33,10 +32,10 @@ class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
     record_code = "360"
     subrecord_code = "00"
 
-    tag = Tag("quota.order.number")
+    tag = Tag(name="quota.order.number")
 
-    sid = TextElement(Tag("quota.order.number.sid"))
-    order_number = TextElement(Tag("quota.order.number.id"))
+    sid = TextElement(Tag(name="quota.order.number.sid"))
+    order_number = TextElement(Tag(name="quota.order.number.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
 
@@ -71,14 +70,14 @@ class QuotaOrderNumberOriginParser(ValidityMixin, Writable, ElementParser):
     record_code = "360"
     subrecord_code = "10"
 
-    tag = Tag("quota.order.number.origin")
+    tag = Tag(name="quota.order.number.origin")
 
-    sid = TextElement(Tag("quota.order.number.origin.sid"))
-    order_number__sid = TextElement(Tag("quota.order.number.sid"))
-    geographical_area__area_id = TextElement(Tag("geographical.area.id"))
+    sid = TextElement(Tag(name="quota.order.number.origin.sid"))
+    order_number__sid = TextElement(Tag(name="quota.order.number.sid"))
+    geographical_area__area_id = TextElement(Tag(name="geographical.area.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    geographical_area__sid = TextElement(Tag("geographical.area.sid"))
+    geographical_area__sid = TextElement(Tag(name="geographical.area.sid"))
 
 
 @RecordParser.register_child("quota_order_number_origin_exclusion")
@@ -101,10 +100,10 @@ class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
     record_code = "360"
     subrecord_code = "15"
 
-    tag = Tag("quota.order.number.origin.exclusions")
+    tag = Tag(name="quota.order.number.origin.exclusions")
 
-    origin__sid = TextElement(Tag("quota.order.number.origin.sid"))
-    excluded_geographical_area__sid = TextElement(Tag("excluded.geographical.area.sid"))
+    origin__sid = TextElement(Tag(name="quota.order.number.origin.sid"))
+    excluded_geographical_area__sid = TextElement(Tag(name="excluded.geographical.area.sid"))
 
 
 @RecordParser.register_child("quota_definition")
@@ -139,28 +138,28 @@ class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
     record_code = "370"
     subrecord_code = "00"
 
-    tag = Tag("quota.definition")
+    tag = Tag(name="quota.definition")
 
-    sid = TextElement(Tag("quota.definition.sid"))
-    order_number__order_number = TextElement(Tag("quota.order.number.id"))
+    sid = TextElement(Tag(name="quota.definition.sid"))
+    order_number__order_number = TextElement(Tag(name="quota.order.number.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    order_number__sid = TextElement(Tag("quota.order.number.sid"))
-    volume = TextElement(Tag("volume"))
-    initial_volume = TextElement(Tag("initial.volume"))
-    monetary_unit__code = TextElement(Tag("monetary.unit.code"))
-    measurement_unit__code = TextElement(Tag("measurement.unit.code"))
+    order_number__sid = TextElement(Tag(name="quota.order.number.sid"))
+    volume = TextElement(Tag(name="volume"))
+    initial_volume = TextElement(Tag(name="initial.volume"))
+    monetary_unit__code = TextElement(Tag(name="monetary.unit.code"))
+    measurement_unit__code = TextElement(Tag(name="measurement.unit.code"))
     measurement_unit_qualifier__code = TextElement(
-        Tag("measurement.unit.qualifier.code"),
+        Tag(name="measurement.unit.qualifier.code"),
     )
-    maximum_precision = TextElement(Tag("maximum.precision"))
+    maximum_precision = TextElement(Tag(name="maximum.precision"))
     quota_critical = BooleanElement(
-        Tag("critical.state"),
+        Tag(name="critical.state"),
         true_value="Y",
         false_value="N",
     )
-    quota_critical_threshold = TextElement(Tag("critical.threshold"))
-    description = TextElement(Tag("description"))
+    quota_critical_threshold = TextElement(Tag(name="critical.threshold"))
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("quota_association")
@@ -185,12 +184,12 @@ class QuotaAssociationParser(Writable, ElementParser):
     record_code = "370"
     subrecord_code = "05"
 
-    tag = Tag("quota.association")
+    tag = Tag(name="quota.association")
 
-    main_quota__sid = TextElement(Tag("main.quota.definition.sid"))
-    sub_quota__sid = TextElement(Tag("sub.quota.definition.sid"))
-    sub_quota_relation_type = TextElement(Tag("relation.type"))
-    coefficient = TextElement(Tag("coefficient"))
+    main_quota__sid = TextElement(Tag(name="main.quota.definition.sid"))
+    sub_quota__sid = TextElement(Tag(name="sub.quota.definition.sid"))
+    sub_quota_relation_type = TextElement(Tag(name="relation.type"))
+    coefficient = TextElement(Tag(name="coefficient"))
 
 
 @RecordParser.register_child("quota_blocking_period")
@@ -217,14 +216,14 @@ class QuotaBlockingParser(ValidityMixin, Writable, ElementParser):
     record_code = "370"
     subrecord_code = "10"
 
-    tag = Tag("quota.blocking.period")
+    tag = Tag(name="quota.blocking.period")
 
-    sid = IntElement(Tag("quota.blocking.period.sid"))
-    quota_definition__sid = IntElement(Tag("quota.definition.sid"))
-    valid_between_lower = RangeLowerElement(Tag("blocking.start.date"))
-    valid_between_upper = RangeUpperElement(Tag("blocking.end.date"))
-    blocking_period_type = IntElement(Tag("blocking.period.type"))
-    description = TextElement(Tag("description"))
+    sid = IntElement(Tag(name="quota.blocking.period.sid"))
+    quota_definition__sid = IntElement(Tag(name="quota.definition.sid"))
+    valid_between_lower = RangeLowerElement(Tag(name="blocking.start.date"))
+    valid_between_upper = RangeUpperElement(Tag(name="blocking.end.date"))
+    blocking_period_type = IntElement(Tag(name="blocking.period.type"))
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("quota_suspension_period")
@@ -250,13 +249,13 @@ class QuotaSuspensionParser(ValidityMixin, Writable, ElementParser):
     record_code = "370"
     subrecord_code = "15"
 
-    tag = Tag("quota.suspension.period")
+    tag = Tag(name="quota.suspension.period")
 
-    sid = IntElement(Tag("quota.suspension.period.sid"))
-    quota_definition__sid = IntElement(Tag("quota.definition.sid"))
-    valid_between_lower = RangeLowerElement(Tag("suspension.start.date"))
-    valid_between_upper = RangeUpperElement(Tag("suspension.end.date"))
-    description = TextElement(Tag("description"))
+    sid = IntElement(Tag(name="quota.suspension.period.sid"))
+    quota_definition__sid = IntElement(Tag(name="quota.definition.sid"))
+    valid_between_lower = RangeLowerElement(Tag(name="suspension.start.date"))
+    valid_between_upper = RangeUpperElement(Tag(name="suspension.end.date"))
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("quota_event")
@@ -344,35 +343,35 @@ class QuotaEventParser(Writable, ElementParser):
     record_code = "375"
     subrecord_code = "subrecord_code"
 
-    tag = RegexTag(r"quota.([a-z.]+).event")
+    tag = Tag(name=r"quota.([a-z.]+).event")
 
-    quota_definition__sid = TextElement(Tag("quota.definition.sid"))
-    occurrence_timestamp = TextElement(Tag("occurrence.timestamp"))
+    quota_definition__sid = TextElement(Tag(name="quota.definition.sid"))
+    occurrence_timestamp = TextElement(Tag(name="occurrence.timestamp"))
 
     _additional_components = {
         # balance event
-        TextElement(Tag("old.balance")): "old.balance",
-        TextElement(Tag("new.balance")): "new.balance",
-        TextElement(Tag("imported.amount")): "imported.amount",
+        TextElement(Tag(name="old.balance")): "old.balance",
+        TextElement(Tag(name="new.balance")): "new.balance",
+        TextElement(Tag(name="imported.amount")): "imported.amount",
         TextElement(
-            Tag("last.import.date.in.allocation"),
+            Tag(name="last.import.date.in.allocation"),
         ): "last.import.date.in.allocation",
         # unblocking event
-        TextElement(Tag("unblocking.date")): "unblocking.date",
+        TextElement(Tag(name="unblocking.date")): "unblocking.date",
         # critical event
-        TextElement(Tag("critical.state")): "critical.state",
-        TextElement(Tag("critical.state.change.date")): "critical.state.change.date",
+        TextElement(Tag(name="critical.state")): "critical.state",
+        TextElement(Tag(name="critical.state.change.date")): "critical.state.change.date",
         # exhaustion event
-        TextElement(Tag("exhaustion.date")): "exhaustion.date",
+        TextElement(Tag(name="exhaustion.date")): "exhaustion.date",
         # reopening event
-        TextElement(Tag("reopening.date")): "reopening.date",
+        TextElement(Tag(name="reopening.date")): "reopening.date",
         # unsuspension event
-        TextElement(Tag("unsuspension.date")): "unsuspension.date",
+        TextElement(Tag(name="unsuspension.date")): "unsuspension.date",
         # closed and transferred event
-        TextElement(Tag("transfer.date")): "transfer.date",
-        TextElement(Tag("quota.closed")): "quota.closed",
-        TextElement(Tag("transferred.amount")): "transferred.amount",
-        TextElement(Tag("target.quota.definition.sid")): "target.quota.definition.sid",
+        TextElement(Tag(name="transfer.date")): "transfer.date",
+        TextElement(Tag(name="quota.closed")): "quota.closed",
+        TextElement(Tag(name="transferred.amount")): "transferred.amount",
+        TextElement(Tag(name="target.quota.definition.sid")): "target.quota.definition.sid",
     }
 
     def clean(self):

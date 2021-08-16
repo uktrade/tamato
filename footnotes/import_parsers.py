@@ -35,12 +35,12 @@ class FootnoteTypeParser(ValidityMixin, Writable, ElementParser):
     record_code = "100"
     subrecord_code = "00"
 
-    tag = Tag("footnote.type")
+    tag = Tag(name="footnote.type")
 
-    footnote_type_id = TextElement(Tag("footnote.type.id"))
+    footnote_type_id = TextElement(Tag(name="footnote.type.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    application_code = TextElement(Tag("application.code"))
+    application_code = TextElement(Tag(name="application.code"))
 
 
 @RecordParser.register_child("footnote_type_description")
@@ -64,11 +64,11 @@ class FootnoteTypeDescriptionParser(Writable, ElementParser):
     record_code = "100"
     subrecord_code = "05"
 
-    tag = Tag("footnote.type.description")
+    tag = Tag(name="footnote.type.description")
 
-    footnote_type_id = TextElement(Tag("footnote.type.id"))
-    language_id = ConstantElement(Tag("language.id"), value="EN")
-    description = TextElement(Tag("description"))
+    footnote_type_id = TextElement(Tag(name="footnote.type.id"))
+    language_id = ConstantElement(Tag(name="language.id"), value="EN")
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("footnote")
@@ -93,10 +93,10 @@ class FootnoteParser(ValidityMixin, Writable, ElementParser):
     record_code = "200"
     subrecord_code = "00"
 
-    tag = Tag("footnote")
+    tag = Tag(name="footnote")
 
-    footnote_type__footnote_type_id = TextElement(Tag("footnote.type.id"))
-    footnote_id = TextElement(Tag("footnote.id"))
+    footnote_type__footnote_type_id = TextElement(Tag(name="footnote.type.id"))
+    footnote_id = TextElement(Tag(name="footnote.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
 
@@ -124,15 +124,15 @@ class FootnoteDescriptionParser(Writable, ElementParser):
     record_code = "200"
     subrecord_code = "10"
 
-    tag = Tag("footnote.description")
+    tag = Tag(name="footnote.description")
 
-    sid = IntElement(Tag("footnote.description.period.sid"))
-    language_id = ConstantElement(Tag("language.id"), value="EN")
+    sid = IntElement(Tag(name="footnote.description.period.sid"))
+    language_id = ConstantElement(Tag(name="language.id"), value="EN")
     described_footnote__footnote_type__footnote_type_id = TextElement(
-        Tag("footnote.type.id"),
+        Tag(name="footnote.type.id"),
     )
-    described_footnote__footnote_id = TextElement(Tag("footnote.id"))
-    description = TextElement(Tag("description"))
+    described_footnote__footnote_id = TextElement(Tag(name="footnote.id"))
+    description = TextElement(Tag(name="description"))
 
 
 @RecordParser.register_child("footnote_description_period")
@@ -157,11 +157,11 @@ class FootnoteDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParse
     record_code = "200"
     subrecord_code = "05"
 
-    tag = Tag("footnote.description.period")
+    tag = Tag(name="footnote.description.period")
 
-    sid = IntElement(Tag("footnote.description.period.sid"))
+    sid = IntElement(Tag(name="footnote.description.period.sid"))
     described_footnote__footnote_type__footnote_type_id = TextElement(
-        Tag("footnote.type.id"),
+        Tag(name="footnote.type.id"),
     )
-    described_footnote__footnote_id = TextElement(Tag("footnote.id"))
+    described_footnote__footnote_id = TextElement(Tag(name="footnote.id"))
     validity_start = ValidityStartMixin.validity_start
