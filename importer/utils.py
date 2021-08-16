@@ -64,7 +64,7 @@ def generate_key(
     return sha256(hash_input.encode()).hexdigest()
 
 
-def build_dependency_tree() -> Dict[str, Set[str]]:
+def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[str]]:
     """
     Build a dependency tree of all the TrackedModel subclasses mapped by record
     code.
@@ -81,17 +81,33 @@ def build_dependency_tree() -> Dict[str, Set[str]]:
             "220": {"215", "210"},
         }
     """
+    def _get_record_code(record: TrackedModel) -> str:
+        key = record.record_code
+        if use_subrecord_codes is True:
+            key = f"{key}{record.subrecord_code}"
+
+        return key
+
     dependency_map = {}
-    record_codes = {subclass.record_code for subclass in TrackedModel.__subclasses__()}
+
+    record_codes = {
+        _get_record_code(subclass)
+        for subclass in TrackedModel.__subclasses__()}
+
     for subclass in TrackedModel.__subclasses__():
-        if subclass.record_code not in dependency_map:
-            dependency_map[subclass.record_code] = set()
+        record_code = _get_record_code(subclass)
+
+        if record_code not in dependency_map:
+            dependency_map[record_code] = set()
+
         for _, relation in subclass.get_relations():
+            relation_code = _get_record_code(relation)
+
             if (
-                relation.record_code != subclass.record_code
-                and relation.record_code in record_codes
+                relation_code != record_code
+                and relation_code in record_codes
             ):
-                dependency_map[subclass.record_code].add(relation.record_code)
+                dependency_map[record_code].add(relation_code)
 
     return dependency_map
 
