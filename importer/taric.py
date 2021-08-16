@@ -41,12 +41,12 @@ START_TRANSACTION = int(os.getenv("STARTING_TRANSACTION", 0))
 class RecordParser(ElementParser):
     """Parser for TARIC3 `record` element."""
 
-    tag = Tag("record")
-    transaction_id = TextElement(Tag("transaction.id"))
-    record_code = TextElement(Tag("record.code"))
-    subrecord_code = TextElement(Tag("subrecord.code"))
-    sequence_number = TextElement(Tag("record.sequence.number"))
-    update_type = TextElement(Tag("update.type"))
+    tag = Tag(name="record")
+    transaction_id = TextElement(Tag(name="transaction.id"))
+    record_code = TextElement(Tag(name="record.code"))
+    subrecord_code = TextElement(Tag(name="subrecord.code"))
+    sequence_number = TextElement(Tag(name="record.sequence.number"))
+    update_type = TextElement(Tag(name="update.type"))
 
     def save(self, data: Mapping[str, Any], transaction_id: int):
         """
@@ -70,7 +70,7 @@ class RecordParser(ElementParser):
 class MessageParser(ElementParser):
     """Parser for TARIC3 `message` element."""
 
-    tag = Tag("app.message", prefix=ENVELOPE)
+    tag = Tag(name="app.message", prefix=ENVELOPE)
     record = RecordParser(many=True)
 
     def save(self, data: Mapping[str, Any], transaction_id: int):
@@ -87,7 +87,7 @@ class MessageParser(ElementParser):
 class TransactionParser(ElementParser):
     """Parser for TARIC3 `transaction` element."""
 
-    tag = Tag("transaction", prefix=ENVELOPE)
+    tag = Tag(name="transaction", prefix=ENVELOPE)
     message = MessageParser(many=True)
 
     workbasket_status = None
@@ -162,7 +162,7 @@ class EnvelopeError(ParserError):
 
 
 class EnvelopeParser(ElementParser):
-    tag = Tag("envelope", prefix=ENVELOPE)
+    tag = Tag(name="envelope", prefix=ENVELOPE)
     transaction = TransactionParser(many=True)
 
     def __init__(

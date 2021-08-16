@@ -1,10 +1,13 @@
 """Provides dataclasses and config classes for xml elements and the taric schema."""
 
 from collections.abc import Iterator
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, make_dataclass
+import os
 import re
 from typing import Dict, TypeVar, Union
 import xml.etree.ElementTree as ET
+
+from django.conf import settings
 
 from common.xml.namespaces import SEED_MESSAGE
 from common.xml.namespaces import nsmap
@@ -12,6 +15,15 @@ from common.xml.namespaces import nsmap
 TTag = TypeVar("TTag", bound="Tag")
 
 RE_PATTERN_TEST = re.compile(r"[^A-Za-z\.\_]")
+
+PATH_ASSETS = os.path.join(settings.BASE_DIR, "common", "assets")
+PATH_XSD_ENVELOPE = os.path.join(PATH_ASSETS, "envelope.xsd")
+PATH_XSD_TARIC = os.path.join(PATH_ASSETS, "taric3.xsd")
+
+xsd_schema_paths: Dict[str, str] = (
+    ("env", PATH_XSD_ENVELOPE),
+    ("oub", PATH_XSD_TARIC)
+)
 
 
 @dataclass
@@ -86,3 +98,33 @@ class Tag:
     def __str__(self):
         """Returns a string representation of the tag."""
         return self.qualified_name
+
+
+@dataclass
+class SchemaTagsBase:
+    """Provides a base dataclass for schema element tag definitions."""
+    XS_ELEMENT = Tag(name="element", prefix="xs")
+
+
+def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> dataclass:
+    """Returns a dynamic dataclass with taric schema element tag definitions."""
+    schema_tags = dict()
+
+    for prefix, path in xsd_schema_paths:
+        iterator = ET.iterparse(path, events=["start", "end"])
+
+        for event, elem in iterator:
+            if event == "start" and elem.tag == SchemaTagsBase.XS_ELEMENT.qualified_name:
+                name = elem.get("name")
+
+                if name is None:
+                    continue
+
+                attr = name.replace(".", "_")
+                attr = f"{prefix}_{attr}".upper()
+
+                tag = Tag(name=name, prefix=prefix)
+                schema_tags[attr] = tag
+
+    DataClass = make_dataclass("TaricSchemaTags", schema_tags.keys(), bases=(SchemaTagsBase,))
+    return DataClass(**schema_tags)
