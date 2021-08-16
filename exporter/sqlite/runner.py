@@ -36,6 +36,9 @@ class Runner:
         """
         sqlite_env = os.environ.copy()
         sqlite_env["DATABASE_URL"] = f"sqlite:///{self.db}"
+        # Required to make sure the postgres default isn't set as the DB_URL
+        if sqlite_env.get("VCAP_SERVICES"):
+            sqlite_env["VCAP_SERVICES"].pop("postgres", None)
 
         run(
             [sys.executable, "manage.py", *args],
