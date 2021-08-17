@@ -1,10 +1,14 @@
 import xml.etree.ElementTree as ET
 
+import pytest
+
 from importer.namespaces import Tag
 from importer.namespaces import TTags
 
 quota_event = Tag("quota.event")
 quota_balance_event = Tag("quota.balance.event")
+
+pytestmark = pytest.mark.django_db
 
 
 def get_snippet_transaction(
@@ -16,17 +20,17 @@ def get_snippet_transaction(
 
 
 def test_element_tag_finder(taric_schema_tags, envelope_commodity):
-    transaction = get_snippet_transaction
+    transaction = get_snippet_transaction(envelope_commodity, taric_schema_tags)
     assert transaction is not None
 
 
 def test_tag_pattern(tag_name):
-    assert tag_name.is_pattern == False
+    assert tag_name.is_pattern is False
     assert tag_name == quota_event
     assert tag_name != quota_balance_event
 
 
 def test_regex_tag_pattern(tag_regex):
-    assert tag_regex.is_pattern == True
+    assert tag_regex.is_pattern is True
     assert tag_regex != quota_event
     assert tag_regex == quota_balance_event

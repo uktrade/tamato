@@ -2,6 +2,7 @@ from typing import Sequence
 from typing import Type
 
 import pytest
+from django.forms.models import model_to_dict
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
@@ -9,6 +10,7 @@ from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
 from common.tests import factories
 from common.tests.models import TestModel1
+from common.tests.util import generate_test_import_xml
 from importer import models
 from importer.handlers import BaseHandler
 from importer.namespaces import TARIC_RECORD_GROUPS
@@ -162,44 +164,30 @@ def record_group() -> Sequence[str]:
 
 @pytest.fixture
 def envelope_measure() -> bytes:
-    return """<?xml version="1.0" encoding="UTF-8"?>
-    <env:envelope id="210056" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
-        <env:transaction id="330833">
-            <env:app.message id="581">
-                <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
-                    <oub:record>
-                        <oub:transaction.id>330833</oub:transaction.id>
-                        <oub:record.code>430</oub:record.code>
-                        <oub:subrecord.code>00</oub:subrecord.code>
-                        <oub:record.sequence.number>1</oub:record.sequence.number>
-                        <oub:update.type>3</oub:update.type>
-                        <oub:measure></oub:measure>
-                    </oub:record>
-                </oub:transmission>
-            </env:app.message>
-        </env:transaction>
-    </env:envelope>""".encode()
+    model = factories.MeasureFactory.create()
+    data = model_to_dict(model)
+    data.update(
+        {
+            "record_code": model.record_code,
+            "subrecord_code": model.subrecord_code,
+            "taric_template": "taric/measure.xml",
+        },
+    )
+    return generate_test_import_xml(data).read()
 
 
 @pytest.fixture
 def envelope_commodity() -> bytes:
-    return """<?xml version="1.0" encoding="UTF-8"?>
-    <env:envelope id="210056" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
-        <env:transaction id="330663">
-            <env:app.message id="1">
-                <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
-                    <oub:record>
-                        <oub:transaction.id>330663</oub:transaction.id>
-                        <oub:record.code>400</oub:record.code>
-                        <oub:subrecord.code>00</oub:subrecord.code>
-                        <oub:record.sequence.number>1</oub:record.sequence.number>
-                        <oub:update.type>3</oub:update.type>
-                        <oub:goods.nomenclature></oub:goods.nomenclature>
-                    </oub:record>
-                </oub:transmission>
-            </env:app.message>
-        </env:transaction>
-    </env:envelope>""".encode()
+    model = factories.GoodsNomenclatureFactory.create()
+    data = model_to_dict(model)
+    data.update(
+        {
+            "record_code": model.record_code,
+            "subrecord_code": model.subrecord_code,
+            "taric_template": "taric/goods_nomenclature.xml",
+        },
+    )
+    return generate_test_import_xml(data).read()
 
 
 @pytest.fixture
