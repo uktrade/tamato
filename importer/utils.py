@@ -67,6 +67,26 @@ def generate_key(
     return sha256(hash_input.encode()).hexdigest()
 
 
+def get_record_codes(
+    record: TrackedModel,
+    use_subrecord_codes: bool = False,
+) -> List[str]:
+    key = record.record_code
+
+    if use_subrecord_codes is False:
+        return [key]
+
+    subrecord_code = record.subrecord_code
+
+    if isinstance(subrecord_code, str):
+        return [f"{key}{subrecord_code}"]
+
+    if isinstance(subrecord_code, DeferredAttribute):
+        return [f"{key}{code}" for code, _ in subrecord_code.field.choices]
+
+    return []
+
+
 def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[str]]:
     """
     Build a dependency tree of all the TrackedModel subclasses mapped by record
@@ -85,40 +105,21 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
         }
     """
 
-    def _get_record_codes(record: TrackedModel) -> List[str]:
-        key = record.record_code
-
-        if use_subrecord_codes is False:
-            return [key]
-
-        subrecord_code = record.subrecord_code
-
-        if isinstance(subrecord_code, str):
-            return [f"{key}{subrecord_code}"]
-
-        if isinstance(subrecord_code, DeferredAttribute):
-            return [f"{key}{code}" for code, _ in subrecord_code.field.choices]
-
-        return []
-
     dependency_map = {}
 
     record_codes = {
         code
         for subclass in TrackedModel.__subclasses__()
-        for code in _get_record_codes(subclass)
+        for code in get_record_codes(subclass)
     }
 
     for subclass in TrackedModel.__subclasses__():
-        if subclass.__name__[:4] == "Test":
-            continue
-
-        for record_code in _get_record_codes(subclass):
+        for record_code in get_record_codes(subclass):
             if record_code not in dependency_map:
                 dependency_map[record_code] = set()
 
             for _, relation in subclass.get_relations():
-                relation_codes = _get_record_codes(relation)
+                relation_codes = get_record_codes(relation)
 
                 for relation_code in relation_codes:
                     if relation_code != record_code and relation_code in record_codes:
