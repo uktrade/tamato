@@ -285,11 +285,8 @@ def filter_transaction_records(
                 if record_identifier not in record_group:
                     transmission.remove(record)
 
-                    msg = (
-                        f"Transaction {transaction_id}: "
-                        f"Removed record with code {record_identifier}."
-                    )
-                    logger.info(msg)
+                    msg = "Transaction %s: Removed record with code %s."
+                    logger.info(msg, transaction_id, record_identifier)
 
             if not transmission:
                 message.remove(transmission)
@@ -298,15 +295,12 @@ def filter_transaction_records(
             elem.remove(message)
 
     if elem:
-        msg = (
-            f"Transaction {transaction_id}: "
-            f"{len(elem)} out of {n} records match the record group."
-        )
-        logger.info(msg)
+        msg = "Transaction %s: %d out of %d records match the record group."
+        logger.info(msg, transaction_id, len(elem), n)
         return elem
 
-    msg = f"Transaction id {transaction_id}: " "Removed - no matching records. "
-    logger.info(msg)
+    msg = "Transaction id %s: Removed - no matching records. "
+    logger.info(msg, transaction_id)
     return
 
 

@@ -32,12 +32,15 @@ def filter_snippet_transaction(
     Tags: TTags,
     record_group: Sequence[str],
 ) -> ET.Element:
+    """Returns a filtered transaction with matching records from a record_group
+    only."""
     transaction = get_snippet_transaction(xml, Tags)
     return filter_transaction_records(transaction, record_group)
 
 
 @mock.patch("importer.chunker.TemporaryFile")
 def test_get_chunk(mock_temp_file: mock.MagicMock):
+    """Asserts that the correct chung is found or created for writing to."""
     mock_temp_file.side_effect = BytesIO
     chunks_in_progress = {}
 
@@ -58,6 +61,7 @@ def test_get_chunk(mock_temp_file: mock.MagicMock):
 
 
 def test_close_chunk():
+    """Asserts that chunks are properly closed and added to the batch."""
     batch = factories.ImportBatchFactory.create()
     chunk1 = BytesIO()
     chunk2 = BytesIO()
@@ -80,11 +84,13 @@ def test_close_chunk():
     )
 
 
-def test_transaction_filter_positive(
+def test_filter_transaction_records_positive(
     taric_schema_tags,
     record_group,
     envelope_commodity,
 ):
+    """Asserts that matching records from the record_group are preserved in the
+    transaction."""
     transaction = filter_snippet_transaction(
         envelope_commodity,
         taric_schema_tags,
@@ -95,7 +101,13 @@ def test_transaction_filter_positive(
     assert len(transaction) == 1
 
 
-def test_transaction_filter_negative(taric_schema_tags, record_group, envelope_measure):
+def test_filter_transaction_records_negative(
+    taric_schema_tags,
+    record_group,
+    envelope_measure,
+):
+    """Asserts that non-matching records from the record_group are removed from
+    the transaction."""
     transaction = filter_snippet_transaction(
         envelope_measure,
         taric_schema_tags,
