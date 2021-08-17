@@ -1,4 +1,5 @@
 import decimal
+import json
 import logging
 import os
 import sqlite3
@@ -38,7 +39,9 @@ class Runner:
         sqlite_env["DATABASE_URL"] = f"sqlite:///{self.db}"
         # Required to make sure the postgres default isn't set as the DB_URL
         if sqlite_env.get("VCAP_SERVICES"):
-            sqlite_env["VCAP_SERVICES"].pop("postgres", None)
+            vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
+            vcap_env.pop("postgres", None)
+            sqlite_env["VCAP_SERVICES"] = json.dumps(vcap_env)
 
         run(
             [sys.executable, "manage.py", *args],
