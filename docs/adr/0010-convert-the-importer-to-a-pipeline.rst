@@ -113,17 +113,17 @@ A basic set of XML Parser classes may look like:
    from importer.parsers import TextElement
 
    class Record(ElementParser):
-       tag = Tag(name="record")
-       transaction_id = TextElement(Tag(name="transaction.id"))
+       tag = Tag("record")
+       transaction_id = TextElement(Tag("transaction.id"))
 
 
    class Message(ElementParser):
-       tag = Tag(name="app.message", prefix=ENVELOPE)
+       tag = Tag("app.message", prefix=ENVELOPE)
        record = Record(many=True)
 
 
    class Transaction(ElementParser):
-       tag = Tag(name="transaction", prefix=ENVELOPE)
+       tag = Tag("transaction", prefix=ENVELOPE)
        message = Message(many=True)
 
 This would automatically parse an XML file that looks like:

@@ -38,11 +38,11 @@ class ElementParser:
     .. code:: python
 
         class ChildElement(ElementParser):
-            tag = Tag(name="child", prefix="ns")
+            tag = Tag("child", prefix="ns")
             field = TextElement("field")
 
         class ParentElement(ElementParser):
-            tag = Tag(name="parent", prefix="ns")
+            tag = Tag("parent", prefix="ns")
             child = ChildElement()
 
     Option 2:
@@ -50,12 +50,12 @@ class ElementParser:
     .. code:: python
 
         class ParentElement(ElementParser):
-            tag = Tag(name="parent", prefix="ns")
+            tag = Tag("parent", prefix="ns")
 
 
         @ParentElement.register_child("child")
         class ChildElement(ElementParser):
-            tag = Tag(name="child", prefix="ns")
+            tag = Tag("child", prefix="ns")
             some_field = TextElement("field")
 
 
@@ -361,8 +361,8 @@ class CompoundElement(ValueElementMixin, ElementParser):
 class ValidityMixin:
     """Parse validity start and end dates."""
 
-    valid_between_lower = RangeLowerElement(Tag(name="validity.start.date"))
-    valid_between_upper = RangeUpperElement(Tag(name="validity.end.date"))
+    valid_between_lower = RangeLowerElement(Tag("validity.start.date"))
+    valid_between_upper = RangeUpperElement(Tag("validity.end.date"))
 
     def clean(self):
         super().clean()
@@ -381,7 +381,7 @@ class ValidityMixin:
 class ValidityStartMixin:
     """Parse validity start date."""
 
-    validity_start = TextElement(Tag(name="validity.start.date"))
+    validity_start = TextElement(Tag("validity.start.date"))
 
 
 class Writable:

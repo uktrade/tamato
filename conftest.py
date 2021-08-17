@@ -188,7 +188,7 @@ def valid_user_api_client(api_client, valid_user) -> APIClient:
 
 @pytest.fixture
 def taric_schema(settings) -> etree.XMLSchema:
-    with open(settings.TARIC_XSD) as xsd_file:
+    with open(settings.PATH_TARIC) as xsd_file:
         return etree.XMLSchema(etree.parse(xsd_file))
 
 

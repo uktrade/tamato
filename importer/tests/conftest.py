@@ -204,9 +204,9 @@ def envelope_commodity() -> bytes:
 
 @pytest.fixture
 def tag_name() -> Tag:
-    return Tag(name=r"quota.event")
+    return Tag(r"quota.event")
 
 
 @pytest.fixture
 def tag_regex() -> Tag:
-    return Tag(name=r"quota.([a-z.]+).event")
+    return Tag(r"quota.([a-z.]+).event")

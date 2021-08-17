@@ -1,7 +1,6 @@
 """Provides dataclasses and config classes for xml elements and the taric
 schema."""
 
-import os
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -13,19 +12,15 @@ from typing import Sequence
 from typing import TypeVar
 from typing import Union
 
-from django.conf import settings
-
 from common.xml.namespaces import SEED_MESSAGE
 from common.xml.namespaces import nsmap
+from settings.common import PATH_XSD_ENVELOPE
+from settings.common import PATH_XSD_TARIC
 
 TTag = TypeVar("TTag", bound="Tag")
 TTags = TypeVar("TTags", bound="SchemaTagsBase")
 
 RE_PATTERN_TEST = re.compile(r"[^A-Za-z\.\_]")
-
-PATH_ASSETS = os.path.join(settings.BASE_DIR, "common", "assets")
-PATH_XSD_ENVELOPE = os.path.join(PATH_ASSETS, "envelope.xsd")
-PATH_XSD_TARIC = os.path.join(PATH_ASSETS, "taric3.xsd")
 
 xsd_schema_paths: Dict[str, str] = (
     ("env", PATH_XSD_ENVELOPE),
@@ -60,7 +55,16 @@ TARIC_RECORD_GROUPS: Dict[str, Sequence[str]] = dict(
 
 @dataclass
 class Tag:
-    """A dataclass for xml element tags."""
+    """
+    A dataclass for xml element tags.
+
+    - `name`: corresponds to the name attribute
+    of the Element element in the XML Schema.
+    - `prefix`: attribute reflects namespace prefixes
+    defined in the taric3 and envelope xsd-s.
+    - `nsmap`: this is a prefix-namespace mapping
+    in the format required by xml.etree.ElementTree
+    """
 
     name: str
     prefix: str = field(default=SEED_MESSAGE)
@@ -139,7 +143,7 @@ class Tag:
 class SchemaTagsBase:
     """Provides a base dataclass for schema element tag definitions."""
 
-    XS_ELEMENT = Tag(name="element", prefix="xs")
+    XS_ELEMENT = Tag("element", prefix="xs")
 
 
 def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> TTags:
@@ -162,7 +166,7 @@ def make_schema_dataclass(xsd_schema_paths: Dict[str, str]) -> TTags:
                 attr = name.replace(".", "_")
                 attr = f"{prefix}_{attr}".upper()
 
-                tag = Tag(name=name, prefix=prefix)
+                tag = Tag(name, prefix=prefix)
                 schema_tags[attr] = tag
 
     Tags = make_dataclass(

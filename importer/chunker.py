@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from logging import getLogger
 from tempfile import TemporaryFile
+from typing import Optional
 from typing import Sequence
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -256,7 +257,7 @@ def write_transaction_to_chunk(
 def filter_transaction_records(
     elem: ET.Element,
     record_group: Sequence[str],
-) -> ET.Element:
+) -> Optional[ET.Element]:
     """
     Filters the records in a transaction based on record codes in the record
     group.
@@ -273,9 +274,9 @@ def filter_transaction_records(
     transaction_id = elem.get("id")
     n = len(elem)
 
-    for message in list(Tags.ENV_APP_MESSAGE.iter(elem)):
-        for transmission in list(Tags.OUB_TRANSMISSION.iter(message)):
-            for record in list(Tags.OUB_RECORD.iter(transmission)):
+    for message in Tags.ENV_APP_MESSAGE.iter(elem):
+        for transmission in Tags.OUB_TRANSMISSION.iter(message):
+            for record in Tags.OUB_RECORD.iter(transmission):
                 record_code = Tags.OUB_RECORD_CODE.first(record).text
                 subrecord_code = Tags.OUB_SUBRECORD_CODE.first(record).text
 
@@ -290,13 +291,13 @@ def filter_transaction_records(
                     )
                     logger.info(msg)
 
-            if len(transmission) == 0:
+            if not transmission:
                 message.remove(transmission)
 
-        if len(message) == 0:
+        if not message:
             elem.remove(message)
 
-    if len(elem) != 0:
+    if elem:
         msg = (
             f"Transaction {transaction_id}: "
             f"{len(elem)} out of {n} records match the record group."

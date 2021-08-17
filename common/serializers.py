@@ -340,7 +340,7 @@ def validate_envelope(envelope_file, skip_declaration=False):
     """
     xml_declaration = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
-    with open(settings.TARIC_XSD) as xsd_file:
+    with open(settings.PATH_TARIC) as xsd_file:
         if skip_declaration:
             pos = envelope_file.tell()
             xml_declaration = envelope_file.read(len(xml_declaration))

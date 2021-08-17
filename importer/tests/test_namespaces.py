@@ -3,8 +3,8 @@ import xml.etree.ElementTree as ET
 from importer.namespaces import Tag
 from importer.namespaces import TTags
 
-quota_event = Tag(name="quota.event")
-quota_balance_event = Tag(name="quota.balance.event")
+quota_event = Tag("quota.event")
+quota_balance_event = Tag("quota.balance.event")
 
 
 def get_snippet_transaction(

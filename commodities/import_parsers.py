@@ -38,14 +38,14 @@ class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
     record_code = "400"
     subrecord_code = "00"
 
-    tag = Tag(name="goods.nomenclature")
+    tag = Tag("goods.nomenclature")
 
-    sid = TextElement(Tag(name="goods.nomenclature.sid"))
-    item_id = TextElement(Tag(name="goods.nomenclature.item.id"))
-    suffix = TextElement(Tag(name="producline.suffix"))  # XXX not a typo
+    sid = TextElement(Tag("goods.nomenclature.sid"))
+    item_id = TextElement(Tag("goods.nomenclature.item.id"))
+    suffix = TextElement(Tag("producline.suffix"))  # XXX not a typo
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    statistical = BooleanElement(Tag(name="statistical.indicator"))
+    statistical = BooleanElement(Tag("statistical.indicator"))
 
 
 @RecordParser.register_child("goods_nomenclature_origin")
@@ -71,19 +71,19 @@ class GoodsNomenclatureOriginParser(Writable, ElementParser):
     record_code = "400"
     subrecord_code = "35"
 
-    tag = Tag(name="goods.nomenclature.origin")
+    tag = Tag("goods.nomenclature.origin")
 
-    new_goods_nomenclature__sid = TextElement(Tag(name="goods.nomenclature.sid"))
+    new_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     derived_from_goods_nomenclature__item_id = TextElement(
-        Tag(name="derived.goods.nomenclature.item.id"),
+        Tag("derived.goods.nomenclature.item.id"),
     )
     derived_from_goods_nomenclature__suffix = TextElement(
-        Tag(name="derived.productline.suffix"),
+        Tag("derived.productline.suffix"),
     )
     new_goods_nomenclature__item_id = TextElement(
-        Tag(name="goods.nomenclature.item.id"),
+        Tag("goods.nomenclature.item.id"),
     )
-    new_goods_nomenclature__suffix = TextElement(Tag(name="productline.suffix"))
+    new_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
 @RecordParser.register_child("goods_nomenclature_successor")
@@ -109,19 +109,19 @@ class GoodsNomenclatureSuccessorParser(Writable, ElementParser):
     record_code = "400"
     subrecord_code = "40"
 
-    tag = Tag(name="goods.nomenclature.successor")
+    tag = Tag("goods.nomenclature.successor")
 
-    replaced_goods_nomenclature__sid = TextElement(Tag(name="goods.nomenclature.sid"))
+    replaced_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     absorbed_into_goods_nomenclature__item_id = TextElement(
-        Tag(name="absorbed.goods.nomenclature.item.id"),
+        Tag("absorbed.goods.nomenclature.item.id"),
     )
     absorbed_into_goods_nomenclature__suffix = TextElement(
-        Tag(name="absorbed.productline.suffix"),
+        Tag("absorbed.productline.suffix"),
     )
     replaced_goods_nomenclature__item_id = TextElement(
-        Tag(name="goods.nomenclature.item.id"),
+        Tag("goods.nomenclature.item.id"),
     )
-    replaced_goods_nomenclature__suffix = TextElement(Tag(name="productline.suffix"))
+    replaced_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
 @RecordParser.register_child("goods_nomenclature_description")
@@ -148,18 +148,18 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
     record_code = "400"
     subrecord_code = "15"
 
-    tag = Tag(name="goods.nomenclature.description")
+    tag = Tag("goods.nomenclature.description")
 
-    sid = TextElement(Tag(name="goods.nomenclature.description.period.sid"))
-    language_id = ConstantElement(Tag(name="language.id"), value="EN")
-    described_goods_nomenclature__sid = TextElement(Tag(name="goods.nomenclature.sid"))
+    sid = TextElement(Tag("goods.nomenclature.description.period.sid"))
+    language_id = ConstantElement(Tag("language.id"), value="EN")
+    described_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     described_goods_nomenclature__item_id = TextElement(
-        Tag(name="goods.nomenclature.item.id"),
+        Tag("goods.nomenclature.item.id"),
     )
     described_goods_nomenclature__suffix = TextElement(
-        Tag(name="productline.suffix"),
+        Tag("productline.suffix"),
     )
-    description = TextElement(Tag(name="description"))
+    description = TextElement(Tag("description"))
 
 
 @RecordParser.register_child("goods_nomenclature_description_period")
@@ -189,16 +189,16 @@ class GoodsNomenclatureDescriptionPeriodParser(
     record_code = "400"
     subrecord_code = "10"
 
-    tag = Tag(name="goods.nomenclature.description.period")
+    tag = Tag("goods.nomenclature.description.period")
 
-    sid = TextElement(Tag(name="goods.nomenclature.description.period.sid"))
-    described_goods_nomenclature__sid = TextElement(Tag(name="goods.nomenclature.sid"))
+    sid = TextElement(Tag("goods.nomenclature.description.period.sid"))
+    described_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     validity_start = ValidityStartMixin.validity_start
     described_goods_nomenclature__item_id = TextElement(
-        Tag(name="goods.nomenclature.item.id"),
+        Tag("goods.nomenclature.item.id"),
     )
     described_goods_nomenclature__suffix = TextElement(
-        Tag(name="productline.suffix"),
+        Tag("productline.suffix"),
     )
 
 
@@ -226,16 +226,16 @@ class GoodsNomenclatureIndentParser(ValidityStartMixin, Writable, ElementParser)
     record_code = "400"
     subrecord_code = "05"
 
-    tag = Tag(name="goods.nomenclature.indents")
+    tag = Tag("goods.nomenclature.indents")
 
-    sid = TextElement(Tag(name="goods.nomenclature.indent.sid"))
-    indented_goods_nomenclature__sid = TextElement(Tag(name="goods.nomenclature.sid"))
+    sid = TextElement(Tag("goods.nomenclature.indent.sid"))
+    indented_goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     validity_start = ValidityStartMixin.validity_start
-    indent = IntElement(Tag(name="number.indents"), format="FM00")
+    indent = IntElement(Tag("number.indents"), format="FM00")
     indented_goods_nomenclature__item_id = TextElement(
-        Tag(name="goods.nomenclature.item.id"),
+        Tag("goods.nomenclature.item.id"),
     )
-    indented_goods_nomenclature__suffix = TextElement(Tag(name="productline.suffix"))
+    indented_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
 @RecordParser.register_child("footnote_association_goods_nomenclature")
@@ -267,14 +267,14 @@ class FootnoteAssociationGoodsNomenclatureParser(
     record_code = "400"
     subrecord_code = "20"
 
-    tag = Tag(name="footnote.association.goods.nomenclature")
+    tag = Tag("footnote.association.goods.nomenclature")
 
-    goods_nomenclature__sid = TextElement(Tag(name="goods.nomenclature.sid"))
+    goods_nomenclature__sid = TextElement(Tag("goods.nomenclature.sid"))
     associated_footnote__footnote_type__footnote_type_id = TextElement(
-        Tag(name="footnote.type"),
+        Tag("footnote.type"),
     )
-    associated_footnote__footnote_id = TextElement(Tag(name="footnote.id"))
+    associated_footnote__footnote_id = TextElement(Tag("footnote.id"))
     valid_between_lower = ValidityMixin.valid_between_lower
     valid_between_upper = ValidityMixin.valid_between_upper
-    goods_nomenclature__item_id = TextElement(Tag(name="goods.nomenclature.item.id"))
-    goods_nomenclature__suffix = TextElement(Tag(name="productline.suffix"))
+    goods_nomenclature__item_id = TextElement(Tag("goods.nomenclature.item.id"))
+    goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
