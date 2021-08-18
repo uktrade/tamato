@@ -33,11 +33,13 @@ from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import generate_test_import_xml
+from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import UpdateType
 from exporter.storages import HMRCStorage
+from exporter.storages import SQLiteStorage
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
@@ -242,6 +244,20 @@ def trackedmodel_factory(request):
     return request.param
 
 
+@pytest.fixture(
+    params=(
+        factories.AdditionalCodeDescriptionFactory,
+        factories.CertificateDescriptionFactory,
+        factories.GeographicalAreaDescriptionFactory,
+        factories.GoodsNomenclatureDescriptionFactory,
+        factories.FootnoteDescriptionFactory,
+        factories.TestModelDescription1Factory,
+    ),
+)
+def description_factory(request):
+    return request.param
+
+
 @pytest.fixture
 def unique_identifying_fields():
     """
@@ -333,6 +349,82 @@ def validity_period_contained(date_ranges):
         return True
 
     return check
+
+
+@pytest.fixture
+def use_update_form(valid_user_api_client: APIClient):
+    """
+    Uses the default edit form and view for a model to update an object to have
+    the passed new data and returns the new version of the object.
+
+    The ``new_data`` dictionary should contain callable objects that when passed
+    the existing value will return a new value to be sent with the form.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if form thinks
+    that the passed data contains errors.
+    """
+
+    def use(object: TrackedModel, new_data: Dict[str, Callable[[Any], Any]]):
+        model = type(object)
+        versions = set(
+            model.objects.filter(**object.get_identifying_fields()).values_list(
+                "pk",
+                flat=True,
+            ),
+        )
+
+        # Visit the edit page and ensure it is a success
+        edit_url = object.get_url("edit")
+        assert edit_url, f"No edit page found for {object}"
+        response = valid_user_api_client.get(edit_url)
+        assert response.status_code == 200
+
+        # Get the data out of the edit page
+        # and override it with any data that has been passed in
+        data = get_form_data(response.context_data["form"])
+        assert set(new_data.keys()).issubset(data.keys())
+
+        # Submit the edited data and if we expect success ensure we are redirected
+        realised_data = {key: new_data[key](data[key]) for key in new_data}
+        data.update(realised_data)
+        response = valid_user_api_client.post(edit_url, data)
+
+        # Check that if we expect failure that the new data was not persisted
+        if response.status_code not in (301, 302):
+            assert (
+                set(
+                    model.objects.filter(**object.get_identifying_fields()).values_list(
+                        "pk",
+                        flat=True,
+                    ),
+                )
+                == versions
+            )
+            raise ValidationError(
+                "Update form contained errors",
+                response.context_data["form"].errors,
+            )
+
+        # Check that what we asked to be changed has been persisted
+        response = valid_user_api_client.get(edit_url)
+        assert response.status_code == 200
+        data = get_form_data(response.context_data["form"])
+        for key in realised_data:
+            assert data[key] == realised_data[key]
+
+        # Check that if success was expected that the new version was persisted
+        new_version = model.objects.exclude(pk=object.pk).get(
+            version_group=object.version_group,
+        )
+        assert new_version != object
+
+        # Check that the new version is an update and is not approved yet
+        assert new_version.update_type == UpdateType.UPDATE
+        assert new_version.transaction != object.transaction
+        assert not new_version.transaction.workbasket.approved
+        return new_version
+
+    return use
 
 
 @pytest.fixture
@@ -525,11 +617,10 @@ def s3_object_exists(s3):
     return check
 
 
-@pytest.fixture
-def hmrc_storage():
-    """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
+@contextlib.contextmanager
+def make_storage_mock(storage_class, **override_settings):
     with mock_s3():
-        storage = HMRCStorage()
+        storage = storage_class(**override_settings)
         session = boto3.session.Session()
 
         with patch(
@@ -549,18 +640,42 @@ def hmrc_storage():
             def get_bucket():
                 connection = get_connection()
                 connection.create_bucket(
-                    Bucket=settings.HMRC_STORAGE_BUCKET_NAME,
+                    Bucket=storage.bucket_name,
                     CreateBucketConfiguration={
                         "LocationConstraint": settings.AWS_S3_REGION_NAME,
                     },
                 )
 
-                bucket = connection.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
+                bucket = connection.Bucket(storage.bucket_name)
                 return bucket
 
             mock_connection_property.side_effect = get_connection
             mock_bucket_property.side_effect = get_bucket
             yield storage
+
+
+@pytest.fixture
+def hmrc_storage():
+    """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
+    with make_storage_mock(
+        HMRCStorage,
+        bucket_name=settings.HMRC_STORAGE_BUCKET_NAME,
+    ) as storage:
+        yield storage
+
+
+@pytest.fixture
+def sqlite_storage():
+    """Patch SQLiteStorage with moto so that nothing is really uploaded to
+    s3."""
+    with make_storage_mock(
+        SQLiteStorage,
+        bucket_name=settings.SQLITE_STORAGE_BUCKET_NAME,
+    ) as storage:
+        assert storage.endpoint_url is settings.SQLITE_S3_ENDPOINT_URL
+        assert storage.access_key is settings.SQLITE_S3_ACCESS_KEY_ID
+        assert storage.secret_key is settings.SQLITE_S3_SECRET_ACCESS_KEY
+        yield storage
 
 
 @pytest.fixture(

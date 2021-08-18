@@ -14,24 +14,32 @@
   {% block form %}{% endblock %}
 {% endblock %}
 
+{% macro errors(form) %}
+  {% set error_list = [] %}
+  {% set formset = form if form.forms else None %}
+  {% set forms = formset.forms if formset else [form] %}
+  {% for form in forms %}
+    {% for field, errors in form.errors.items() %}
+      {% for error in errors.data %}
+        {{ error_list.append({
+          "text": error.message,
+          "href": "#" ~ (form.prefix ~ "-" if form.prefix else "") ~ field ~ ("_" ~ error.subfield if error.subfield is defined else ""),
+        }) or "" }}
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+  {{ govukErrorSummary({
+    "titleText": "There is a problem",
+    "errorList": error_list
+  }) }}
+{% endmacro %}
+
 {% macro django_form(action="", method="post") %}
   <form method="{{ method }}" action="{{ action }}">
-    {% if form.errors -%}
-      {% set error_list = [] %}
-      {% for field, errors in form.errors.items() %}
-        {% for error in errors.data %}
-          {{ error_list.append({
-            "text": error.message,
-            "href": "#id_" ~ field ~ ("_" ~ error.subfield if error.subfield is defined else ""),
-          }) or "" }}
-        {% endfor %}
-      {% endfor %}
-      {{ govukErrorSummary({
-        "titleText": "There is a problem",
-        "errorList": error_list
-      }) }}
-    {%- endif %}
     {% if method|lower == "post" %}{{ csrf_input }}{% endif %}
+    {% if form.errors %}
+      {{ errors(form) }}
+    {% endif %}
     {{ caller() }}
   </form>
 {% endmacro %}

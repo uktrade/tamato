@@ -136,26 +136,64 @@ To run with coverage use the following:
 When running tests the settings module defaults to settings.test
 
 
-### Tips to run tests faster
+### Speed up test by without running coverage:
 
-#### Run tests in parallel:
+Coverage is enabled when running tests when running with make or pytest:
 
-When running locally it's possible to run tests in parallel using pytest-xdist.
-pytest-rerunfailures is also needed as a small number of tests clash when running in parallel and will fail.
-As re-running failing tests is a workaround, parallelization is undesirable under CI.
+    make test
 
-Install dependencies:
+    pytest
 
-    pip install pytest-xdist pytest-rerunfailures
+Running without coverage enabled is significantly faster, use one of the following commands:
 
-Run the tests:
+    make test-fast
 
-    pytest -n=8 --reruns 8 --reruns-delay 4
+    pytest --no-cov
 
-The example above is for a CPU with 8 threads, set "n" to a number less than or equal to the number of threads on the test machine.
+### Find and debug intermittent test failures:
 
 
-#### Run tests in Pyston instead of CPython:
+#### Run tests in a loop
+
+The simplest way to find intermittent test failures is to keep running them in a loop.
+It's worth leaving it running for at least a few test runs.
+
+    while pytest -s -v; do :; done
+
+In the example above -s -v is used to output stdout and enable verbose output.
+Timing issues more bugs can be surfaced by setting the amount of processes to a number higher than the
+amount of CPU threads, e.g. 12 or 16 for an 8 thread CPU:
+
+    while sleep 45 && pytest -s -v -n=12; do :; done
+
+#### Debugging with WebPDB, IPD, PDB++
+
+By default tests run in multiple processes using pytest-xdist - a side effect is that debuggers over stdout
+such as pdb, ipdb, pdb++ do not work.
+
+Using webpdb gets round this:  https://pypi.org/project/web-pdb/
+
+When running in a single process (see below) pytest-ipdb or pdb++ can be good choices, in that case use -s
+so that pytest doesn't capture stdout:
+
+    pytest -s
+
+#### Run tests in a single process:
+
+Running in a single process can eliminate pytest-xdist as a cause of errors.
+
+    pytest -n0
+
+pytest-random-order randomises the order of test, using it can surface bugs around hidden state, install it:
+    
+    pip install pytest-random-order
+
+Use random order:
+
+    pytest -n0 --random-order
+
+
+### Speed up runtimes by using Pyston instead of CPython:
 
 Pyston is a faster python implementation that aims for compatibility with the default CPython implementation.  
 Ad-hoc testing on one laptop showed tests completed in 6 minutes in CPython and 4 with Pyston. 
@@ -174,26 +212,31 @@ Download and install a release from here: https://github.com/pyston/pyston/relea
 
 | Name | Description |
 | ---- | ----------- | 
-| SSO_ENABLED              | Use DIT staff SSO for authentication. You may want to set this to `"false"` for local development. If `"false"`, Django's ModelBackend authentication is used instead. (default `"true"`) |
-| AUTHBROKER_URL           | Base URL of the OAuth2 authentication broker (default https://sso.trade.gov.uk) |
-| AUTHBROKER_CLIENT_ID     | Client ID used to connect to the OAuth2 authentication broker |
-| AUTHBROKER_CLIENT_SECRET | Client secret used to connect to the OAuth2 authentication broker |
-| DATABASE_URL             | Connection details for the database, formatted per the [dj-database-url schema](https://github.com/jacobian/dj-database-url#url-schema) |
-| LOG_LEVEL                | The level of logging messages in the web app. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                     |
-| CELERY_LOG_LEVEL         | The level of logging for the celery worker. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                       |
-| TAMATO_IMPORT_USERNAME   | The TAMATO username to use for the owner of the workbaskets created.                                                                    |
-| NURSERY_CACHE_ENGINE     | The engine to use the the Importer Nursery Cache. Defaults to importer.cache.memory.MemoryCacheEngine.                                  |
-| CACHE_URL                | The URL for the Django cache. Defaults to redis://0.0.0.0:6379/1.                                                                       |
-| SKIP_VALIDATION          | Whether Transaction level validations should be skipped or not. Defaults to False.                                                      |
-| USE_IMPORTER_CACHE       | Whether to cache records for the importer (caches all current records as they are made). Defaults to True.                              |
-| CELERY_BROKER_URL        | Connection details for Celery to store running tasks, defaults to the CACHE_URL.                                                        |
-| CELERY_RESULT_BACKEND    | Connection details for Celery to store task results, defaults to CELERY_BROKER_URL.                                                     |
-| HMRC_STORAGE_BUCKET_NAME | Name of s3 bucket used for uploads by the exporter                                                                                      |
-| HMRC_STORAGE_DIRECTORY   | Destination directory in s3 bucket for the exporter                                                                                     |
-| AWS_ACCESS_KEY_ID        | AWS key id, used for s3                                                                                                                 |
-| AWS_SECRET_ACCESS_KEY    | AWS secret key, used for s3                                                                                                             |
-| AWS_STORAGE_BUCKET_NAME  | Default bucket [unused]                                                                                                                 |
-| AWS_S3_ENDPOINT_URL      | AWS s3 endpoint url                                                                                                                     |                                                                                                                   |
+| SSO_ENABLED                 | Use DIT staff SSO for authentication. You may want to set this to `"false"` for local development. If `"false"`, Django's ModelBackend authentication is used instead. (default `"true"`) |
+| AUTHBROKER_URL              | Base URL of the OAuth2 authentication broker (default https://sso.trade.gov.uk) |
+| AUTHBROKER_CLIENT_ID        | Client ID used to connect to the OAuth2 authentication broker |
+| AUTHBROKER_CLIENT_SECRET    | Client secret used to connect to the OAuth2 authentication broker |
+| DATABASE_URL                | Connection details for the database, formatted per the [dj-database-url schema](https://github.com/jacobian/dj-database-url#url-schema) |
+| LOG_LEVEL                   | The level of logging messages in the web app. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                     |
+| CELERY_LOG_LEVEL            | The level of logging for the celery worker. One of CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET.                                       |
+| TAMATO_IMPORT_USERNAME      | The TAMATO username to use for the owner of the workbaskets created.                                                                    |
+| NURSERY_CACHE_ENGINE        | The engine to use the the Importer Nursery Cache. Defaults to importer.cache.memory.MemoryCacheEngine.                                  |
+| CACHE_URL                   | The URL for the Django cache. Defaults to redis://0.0.0.0:6379/1.                                                                       |
+| SKIP_VALIDATION             | Whether Transaction level validations should be skipped or not. Defaults to False.                                                      |
+| USE_IMPORTER_CACHE          | Whether to cache records for the importer (caches all current records as they are made). Defaults to True.                              |
+| CELERY_BROKER_URL           | Connection details for Celery to store running tasks, defaults to the CACHE_URL.                                                        |
+| CELERY_RESULT_BACKEND       | Connection details for Celery to store task results, defaults to CELERY_BROKER_URL.                                                     |
+| HMRC_STORAGE_BUCKET_NAME    | Name of s3 bucket used for uploads by the exporter                                                                                      |
+| HMRC_STORAGE_DIRECTORY      | Destination directory in s3 bucket for the exporter                                                                                     |
+| AWS_ACCESS_KEY_ID           | AWS key id, used for s3                                                                                                                 |
+| AWS_SECRET_ACCESS_KEY       | AWS secret key, used for s3                                                                                                             |
+| AWS_STORAGE_BUCKET_NAME     | Default bucket [unused]                                                                                                                 |
+| AWS_S3_ENDPOINT_URL         | AWS s3 endpoint url                                                                                                                     |
+| SQLITE_STORAGE_BUCKET_NAME  | Bucket used for SQLite uploads                                                                                                          |
+| SQLITE_S3_ACCESS_KEY_ID     | AWS key id, used for SQLite storage bucket uploads                                                                                      |
+| SQLITE_S3_SECRET_ACCESS_KEY | AWS secret key, used for SQLite storage bucket uploads                                                                                  |
+| SQLITE_S3_ENDPOINT_URL      | AWS s3 endpoint url, used for SQLite storage bucket uploads                                                                             |
+| SQLITE_STORAGE_DIRECTORY    | Destination directory in s3 bucket for the SQLite storage bucket                                                                        |
 
 
 ## Using the importer

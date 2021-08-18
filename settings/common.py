@@ -61,6 +61,7 @@ DJANGO_CORE_APPS = [
 THIRD_PARTY_APPS = [
     "django_extensions",
     "django_filters",
+    "formtools",
     "polymorphic",
     "rest_framework",
     "webpack_loader",
@@ -106,7 +107,15 @@ TAMATO_APPS = [
     "crispy_forms_gds",
 ]
 
-INSTALLED_APPS = [*DJANGO_CORE_APPS, *THIRD_PARTY_APPS, *TAMATO_APPS, *DOMAIN_APPS]
+APPS_THAT_MUST_COME_LAST = ["django.forms"]
+
+INSTALLED_APPS = [
+    *DJANGO_CORE_APPS,
+    *THIRD_PARTY_APPS,
+    *TAMATO_APPS,
+    *DOMAIN_APPS,
+    *APPS_THAT_MUST_COME_LAST,
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -146,6 +155,8 @@ TEMPLATES = [
         },
     },
 ]
+
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 # -- Auth
 LOGIN_URL = reverse_lazy("login")
@@ -287,7 +298,16 @@ HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
 # SQLite AWS settings
-SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME")
+SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
+SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
+    "SQLITE_S3_ACCESS_KEY_ID",
+    "test_sqlite_key_id",
+)
+SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
+    "SQLITE_S3_SECRET_ACCESS_KEY",
+    "test_sqlite_key",
+)
+SQLITE_S3_ENDPOINT_URL = os.environ.get("SQLITE_S3_ENDPOINT_URL", "test_sqlite_url")
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
 
 # Default AWS settings.

@@ -14,6 +14,21 @@ ui_patterns = [
         name="measure-ui-list",
     ),
     path(
+        "create/<sid:sid>/confirm/",
+        views.MeasureConfirmCreate.as_view(),
+        name="measure-ui-confirm-create",
+    ),
+    path(
+        "create/",
+        views.MeasureCreateWizard.as_view(),
+        name="measure-ui-create",
+    ),
+    path(
+        "create/<step>/",
+        views.MeasureCreateWizard.as_view(),
+        name="measure-ui-create",
+    ),
+    path(
         "<sid:sid>/",
         views.MeasureDetail.as_view(),
         name="measure-ui-detail",

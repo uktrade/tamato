@@ -72,7 +72,7 @@ run: collectstatic migrate
 test-fast:
 	@echo
 	@echo "> Running tests..."
-	${PYTHON} python -m pytest -x -n=auto --dist=loadfile --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
+	@${PYTHON} -m pytest -x -n=auto --dist=loadfile
 
 test:
 	@echo

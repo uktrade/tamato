@@ -1,0 +1,60 @@
+{% from "components/radios/macro.njk" import govukRadios %}
+{% from "components/details/macro.njk" import govukDetails %}
+
+{% set option_html = namespace() %}
+{% set option_html.ERGA_OMNES -%}
+  {# form.erga_omnes_exclusions #}
+{%- endset %}
+
+{% set option_html.GROUP -%}
+  {{ form.geo_group }}
+  {# form.geo_group_exclusions #}
+{%- endset %}
+
+{% set option_html.COUNTRY -%}
+  {{ form.geo_area }}
+{%- endset %}
+
+{% set radios = [] %}
+{% for value, label in form.GeoAreaType.choices %}
+  {{ radios.append({
+    "value": value,
+    "text": label,
+    "conditional": {
+      "html": option_html[value]
+    } if option_html[value] else {}
+  }) or "" }}
+{% endfor %}
+
+{% if (help_text_inline and not error_text_inline) or not help_text_inline %}
+  {% if field.help_text %}
+      {% if help_text_inline %}
+          <span id="{{ field.auto_id }}_hint" class="govuk-hint">{{ field.help_text|safe }}</span>
+      {% else %}
+          <div id="{{ field.auto_id }}_hint" class="govuk-hint">{{ field.help_text|safe }}</div>
+      {% endif %}
+  {% endif %}
+{% endif %}
+
+{% if form_show_errors and field.errors %}
+  {% for error in field.errors %}
+    <span id="{{ field.auto_id }}_{{ loop.index0 }}_error" class="govuk-error-message">
+      <span class="govuk-visually-hidden">Error:</span> {{ error }}
+    </span>
+  {% endfor %}
+{% endif %}
+{{ govukRadios({
+  "idPrefix": form.add_prefix("geo_area_type"),
+  "name": form.add_prefix("geo_area_type"),
+  "fieldset": {
+    "legend": {
+      "text": field.label,
+      "classes": "govuk-fieldset__legend--s",
+    }
+  },
+  "items": radios,
+}) }}
+{{ govukDetails({
+  "summaryText": "Help with geography",
+  "text": "Choose the geographical area to which the measure applies. This can be a specific country or a group of countries, and exclusions can be specified. The measure will only apply to imports from or exports to the selected area."
+}) }}

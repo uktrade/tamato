@@ -113,7 +113,7 @@ class MeasureCreationPattern:
     def measure_not_applicable(self) -> MeasureAction:
         return MeasureAction.objects.get(code="07")
 
-    def get_authorised_use_measure_conditions(
+    def create_measure_authorised_use_measure_conditions(
         self,
         measure: Measure,
     ) -> Sequence[MeasureCondition]:
@@ -139,7 +139,7 @@ class MeasureCreationPattern:
             ),
         ]
 
-    def get_origin_quota_conditions(
+    def create_measure_origin_quota_conditions(
         self,
         measure: Measure,
         certificates: Sequence[Certificate],
@@ -166,7 +166,7 @@ class MeasureCreationPattern:
                 transaction=measure.transaction,
             )
 
-    def get_measure_components_from_duty_rate(
+    def create_measure_components_from_duty_rate(
         self,
         measure: Measure,
         rate: str,
@@ -182,7 +182,7 @@ class MeasureCreationPattern:
             logger.error(f"Explosion parsing {rate}")
             raise ex
 
-    def get_conditions(
+    def create_measure_conditions(
         self,
         measure: Measure,
         conditions: str,
@@ -209,7 +209,7 @@ class MeasureCreationPattern:
 
             yield condition
 
-    def get_measure_excluded_geographical_areas(
+    def create_measure_excluded_geographical_areas(
         self,
         measure: Measure,
         exclusion: GeographicalArea,
@@ -248,25 +248,23 @@ class MeasureCreationPattern:
                 transaction=measure.transaction,
             )
 
-    def get_measure_footnotes(
+    def create_measure_footnotes(
         self,
         measure: Measure,
         footnotes: Sequence[Footnote],
     ) -> Sequence[FootnoteAssociationMeasure]:
-        footnote_measures = []
-        for footnote in footnotes:
-            footnote_measures.append(
-                FootnoteAssociationMeasure.objects.create(
-                    footnoted_measure=measure,
-                    associated_footnote=footnote,
-                    update_type=UpdateType.CREATE,
-                    transaction=measure.transaction,
-                ),
+        return [
+            FootnoteAssociationMeasure.objects.create(
+                footnoted_measure=measure,
+                associated_footnote=footnote,
+                update_type=UpdateType.CREATE,
+                transaction=measure.transaction,
             )
-        return footnote_measures
+            for footnote in footnotes
+        ]
 
     @transaction.atomic
-    def create(
+    def create_measure_tracked_models(
         self,
         duty_sentence: str,
         geographical_area: GeographicalArea,
@@ -298,6 +296,8 @@ class MeasureCreationPattern:
 
         If an `order_number` with `required_conditions` is passed, measure
         conditions requiring the certificates will be added to the measure.
+
+        Return an Iterator over all the TrackedModels created, starting with the Measure.
         """
 
         assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
@@ -345,33 +345,50 @@ class MeasureCreationPattern:
         # that group will be excluded instead.
         # TODO: create multiple measures if memberships come to an end.
         for exclusion in exclusions:
-            yield from self.get_measure_excluded_geographical_areas(
+            yield from self.create_measure_excluded_geographical_areas(
                 new_measure,
                 exclusion,
             )
 
         # Output any footnote associations required.
-        yield from self.get_measure_footnotes(new_measure, footnotes)
+        yield from self.create_measure_footnotes(new_measure, footnotes)
 
         # If this is a measure under authorised use, we need to add
         # some measure conditions with the N990 certificate.
         if authorised_use:
-            yield from self.get_authorised_use_measure_conditions(new_measure)
+            yield from self.create_measure_authorised_use_measure_conditions(
+                new_measure,
+            )
 
         # If this is a measure for an origin quota, we need to add
         # some measure conditions with the origin quota required certificates.
         if order_number and order_number.required_certificates.exists():
-            yield from self.get_origin_quota_conditions(
+            yield from self.create_measure_origin_quota_conditions(
                 new_measure,
                 order_number.required_certificates.all(),
             )
 
         # If we have a condition sentence, parse and add to the measure.
         if condition_sentence:
-            yield from self.get_conditions(new_measure, condition_sentence)
+            yield from self.create_measure_conditions(new_measure, condition_sentence)
 
         # Now generate the duty components for the passed duty rate.
-        yield from self.get_measure_components_from_duty_rate(
+        yield from self.create_measure_components_from_duty_rate(
             new_measure,
             duty_sentence,
         )
+
+    def create(self, *args, **kwargs) -> Measure:
+        """
+        Create a new measure linking the passed data and any defaults and return
+        it.
+
+        This is a wrapper around create_measure_tracked_models(). See
+        create_measure_tracked_models for in-depth information, including
+        accepted arguments.
+        """
+        measure, *measure_data = (
+            tracked_model
+            for tracked_model in self.create_measure_tracked_models(*args, **kwargs)
+        )
+        return measure

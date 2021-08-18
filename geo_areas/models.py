@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import CheckConstraint
 from django.db.models import Max
 from django.db.models import Q
+from polymorphic.managers import PolymorphicManager
 
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
@@ -9,11 +10,17 @@ from common.fields import SignedIntSID
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from common.models.records import TrackedModel
+from common.models.records import TrackedModelQuerySet
 from geo_areas import business_rules
 from geo_areas.validators import AreaCode
 from geo_areas.validators import area_id_validator
 from measures import business_rules as measures_business_rules
 from quotas import business_rules as quotas_business_rules
+
+
+class GeographicalAreaQuerySet(TrackedModelQuerySet):
+    def erga_omnes(self):
+        return self.filter(area_code=AreaCode.GROUP, area_id=1011)
 
 
 class GeographicalArea(TrackedModel, ValidityMixin):
@@ -48,6 +55,8 @@ class GeographicalArea(TrackedModel, ValidityMixin):
 
     # This deals with subgroups of other groups
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
+
+    objects = PolymorphicManager.from_queryset(GeographicalAreaQuerySet)()
 
     indirect_business_rules = (
         business_rules.GA14,

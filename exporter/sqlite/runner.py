@@ -1,5 +1,7 @@
 import decimal
+import json
 import logging
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -33,13 +35,19 @@ class Runner:
         True, allowing SQLite specific functionality to be switched on and off
         using the value of this setting.
         """
+        sqlite_env = os.environ.copy()
+        sqlite_env["DATABASE_URL"] = f"sqlite:///{self.db}"
+        # Required to make sure the postgres default isn't set as the DB_URL
+        if sqlite_env.get("VCAP_SERVICES"):
+            vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
+            vcap_env.pop("postgres", None)
+            sqlite_env["VCAP_SERVICES"] = json.dumps(vcap_env)
+
         run(
             [sys.executable, "manage.py", *args],
             cwd=settings.BASE_DIR,
             capture_output=False,
-            env={
-                "DATABASE_URL": f"sqlite:///{self.db}",
-            },
+            env=sqlite_env,
         )
 
     def make_empty_database(self):

@@ -79,6 +79,11 @@
       <h2 class="govuk-heading-m">Measures</h2>
       <ul class="govuk-list">
         <li>
+          <a class="govuk-link" href="{{ url('measure-ui-create', kwargs={"step": "start"}) }}">
+            Create new measure
+          </a>
+        </li>
+        <li>
           <a class="govuk-link" href="{{ url('measure-ui-list') }}">
             Find and edit measures
           </a>

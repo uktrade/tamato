@@ -3,11 +3,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.conf import settings
-from storages.backends.s3boto3 import S3Boto3Storage
 
 from common.celery import app
 from common.models.transactions import Transaction
 from exporter import sqlite
+from exporter.storages import SQLiteStorage
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def export_and_upload_sqlite() -> bool:
     Returns a boolean that is ``True`` if a file was uploaded and ``False`` if
     not.
     """
-    storage = S3Boto3Storage(bucket_name=settings.SQLITE_STORAGE_BUCKET_NAME)
+    storage = SQLiteStorage()
     latest_transaction = Transaction.latest_approved()
     db_name = f"{latest_transaction.order:0>9}.db"
 
