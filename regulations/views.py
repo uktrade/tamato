@@ -81,19 +81,6 @@ class RegulationConfirmCreate(TrackedModelDetailView):
         return Regulation.objects.approved_up_to_transaction(tx)
 
 
-# TODO:
-#
-# * Should all of our views contain breadcrumbs beneath the banner? If so, then
-#   should they include Alpha status information, i.e. pull in {{ super() }}?
-#
-# * The UI design displays the "Published date" (Regulation.published_at) but
-#   we've decided that it shouldn't be editable in order to avoid regulation_id
-#   instability when editing - discussed with Simon and Stephen. Should it just
-#   be removed
-#   in the same way that "Regulation usage" and "Sequence number" have been
-#   removed from "Edit regulation"?
-
-
 class RegulationMixin:
     model: Type[TrackedModel] = Regulation
 
