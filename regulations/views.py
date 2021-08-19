@@ -42,12 +42,19 @@ class RegulationList(TamatoListView):
     search_fields = ["regulation_id", "pk"]
 
 
-class RegulationDetail(TrackedModelDetailView):
-    required_url_kwargs = ("regulation_id",)
+class RegulationMixin:
+    model: Type[TrackedModel] = Regulation
 
-    model = Regulation
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return Regulation.objects.approved_up_to_transaction(tx).select_related(
+            "regulation_group",
+        )
+
+
+class RegulationDetail(RegulationMixin, TrackedModelDetailView):
+    required_url_kwargs = ("regulation_id",)
     template_name = "regulations/detail.jinja"
-    queryset = Regulation.objects.latest_approved().select_related("regulation_group")
 
 
 class RegulationCreate(DraftCreateView):
@@ -79,16 +86,6 @@ class RegulationConfirmCreate(TrackedModelDetailView):
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
         return Regulation.objects.approved_up_to_transaction(tx)
-
-
-class RegulationMixin:
-    model: Type[TrackedModel] = Regulation
-
-    def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return Regulation.objects.approved_up_to_transaction(tx).select_related(
-            "regulation_group",
-        )
 
 
 class RegulationUpdate(
