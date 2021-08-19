@@ -115,6 +115,10 @@ class FootnoteCreateForm(ValidityPeriodForm):
 
     def clean(self):
         cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
         cleaned_data["footnote_description"] = models.FootnoteDescription(
             description=cleaned_data["description"],
             validity_start=cleaned_data["valid_between"].lower,
