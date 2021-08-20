@@ -401,8 +401,7 @@ def use_update_form(valid_user_api_client: APIClient):
                 == versions
             )
             raise ValidationError(
-                "Update form contained errors",
-                response.context_data["form"].errors,
+                f"Update form contained errors: {response.context_data['form'].errors}",
             )
 
         # Check that what we asked to be changed has been persisted
