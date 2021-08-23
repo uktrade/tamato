@@ -1,11 +1,16 @@
+import xml.etree.ElementTree as ET
 from io import BytesIO
+from typing import Sequence
 from unittest import mock
 
 import pytest
 
 from common.tests import factories
 from importer import chunker
+from importer.chunker import filter_transaction_records
+from importer.namespaces import TTags
 
+from .test_namespaces import get_snippet_transaction
 
 pytestmark = pytest.mark.django_db
 
@@ -22,14 +27,29 @@ def get_basic_chunk_text(id: str) -> bytes:
     return get_chunk_opener(id) + b"</env:envelope>"
 
 
+def filter_snippet_transaction(
+    xml: str,
+    Tags: TTags,
+    record_group: Sequence[str],
+) -> ET.Element:
+    """Returns a filtered transaction with matching records from a record_group
+    only."""
+    transaction = get_snippet_transaction(xml, Tags)
+    return filter_transaction_records(transaction, record_group)
+
+
 @mock.patch("importer.chunker.TemporaryFile")
 def test_get_chunk(mock_temp_file: mock.MagicMock):
+    """Asserts that the correct chung is found or created for writing to."""
     mock_temp_file.side_effect = BytesIO
     chunks_in_progress = {}
 
     chunk1 = chunker.get_chunk(chunks_in_progress, "1")
     chunk2 = chunker.get_chunk(
-        chunks_in_progress, "2", record_code="400", chapter_heading="01"
+        chunks_in_progress,
+        "2",
+        record_code="400",
+        chapter_heading="01",
     )
     chunk1.seek(0)
     chunk2.seek(0)
@@ -41,6 +61,7 @@ def test_get_chunk(mock_temp_file: mock.MagicMock):
 
 
 def test_close_chunk():
+    """Asserts that chunks are properly closed and added to the batch."""
     batch = factories.ImportBatchFactory.create()
     chunk1 = BytesIO()
     chunk2 = BytesIO()
@@ -61,3 +82,36 @@ def test_close_chunk():
         batch.chunks.get(record_code=400, chapter="01").chunk_text
         == get_basic_chunk_text("2").decode()
     )
+
+
+def test_filter_transaction_records_positive(
+    taric_schema_tags,
+    record_group,
+    envelope_commodity,
+):
+    """Asserts that matching records from the record_group are preserved in the
+    transaction."""
+    transaction = filter_snippet_transaction(
+        envelope_commodity,
+        taric_schema_tags,
+        record_group,
+    )
+
+    assert transaction is not None
+    assert len(transaction) == 1
+
+
+def test_filter_transaction_records_negative(
+    taric_schema_tags,
+    record_group,
+    envelope_measure,
+):
+    """Asserts that non-matching records from the record_group are removed from
+    the transaction."""
+    transaction = filter_snippet_transaction(
+        envelope_measure,
+        taric_schema_tags,
+        record_group,
+    )
+
+    assert transaction is None
