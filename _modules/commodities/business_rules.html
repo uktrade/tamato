@@ -66,19 +66,30 @@
     <span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must be within the validity</span>
 <span class="sd">    period of the product line above in the hierarchy.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="NIG2.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
-        <span class="n">goods_validity</span> <span class="o">=</span> <span class="n">indent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span>
+    <span class="k">def</span> <span class="nf">parent_spans_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">parent_validity</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">version_at</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">valid_between</span>
+        <span class="n">child_validity</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">version_at</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">valid_between</span>
+        <span class="k">return</span> <span class="n">validity_range_contains_range</span><span class="p">(</span><span class="n">parent_validity</span><span class="p">,</span> <span class="n">child_validity</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">indent</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+<div class="viewcode-block" id="NIG2.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">indent</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">creating_transaction__lt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="n">parent</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get_parent</span><span class="p">()</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="n">parent_validity</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">indent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_spans_child</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">indent</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">validity_range_contains_range</span><span class="p">(</span><span class="n">parent_validity</span><span class="p">,</span> <span class="n">goods_validity</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span></div></div>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_spans_child</span><span class="p">(</span><span class="n">indent</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">indent</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="NIG5"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG5">[docs]</a><span class="nd">@skip_when_deleted</span>
