@@ -7,12 +7,11 @@ from typing import Iterable
 from typing import Iterator
 from typing import Mapping
 from typing import Optional
-from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import Union
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
 from common.models.records import TrackedModel
@@ -99,22 +98,26 @@ class BusinessRule(metaclass=BusinessRuleBase):
         model: TrackedModel,
         transaction,
     ) -> Iterator[TrackedModel]:
-        for field, related_model in model.get_relations():
+        """Returns all model instances that are linked to the passed ``model``
+        and have this business rule listed in their ``business_rules``
+        attribute."""
+        for field, related_model in model.relations.items():
             business_rules = getattr(related_model, "business_rules", [])
             if cls in business_rules:
-                current_related_instances = (
-                    related_model.objects.approved_up_to_transaction(transaction)
-                )
                 if field.one_to_many or field.many_to_many:
-                    related_instances = getattr(model, f"{field.name}_set")
-                    yield from current_related_instances.filter(
-                        version_group__in=related_instances.values("version_group"),
-                    )
+                    related_instances = getattr(model, field.get_accessor_name()).all()
                 else:
-                    related_instance = getattr(model, field.name)
-                    yield current_related_instances.get(
-                        version_group=related_instance.version_group,
-                    )
+                    related_instances = [getattr(model, field.name)]
+                for instance in related_instances:
+                    try:
+                        yield instance.version_at(transaction)
+                    except TrackedModel.DoesNotExist:
+                        # `related_instances` will contain all instances, even
+                        # deleted ones, and `version_at` will return
+                        # `DoesNotExist` if the item has been deleted as of a
+                        # certain transaction. That's ok, because we can just
+                        # skip running business rules against deleted things.
+                        continue
 
     def validate(self, *args):
         """Perform business rule validation."""
@@ -139,14 +142,25 @@ class BusinessRuleChecker:
         self.transaction = transaction
 
     def validate(self):
+        violations = []
+
         for model in self.models:
             for rule in model.business_rules:
-                rule(self.transaction).validate(model)
+                try:
+                    rule(self.transaction).validate(model)
+                except BusinessRuleViolation as violation:
+                    violations.append(violation)
 
             for rule in model.indirect_business_rules:
                 rule_instance = rule(self.transaction)
                 for linked_model in rule.get_linked_models(model, self.transaction):
-                    rule_instance.validate(linked_model)
+                    try:
+                        rule_instance.validate(linked_model)
+                    except BusinessRuleViolation as violation:
+                        violations.append(violation)
+
+        if any(violations):
+            raise ValidationError(violations)
 
 
 def only_applicable_after(cutoff: Union[date, datetime, str]):

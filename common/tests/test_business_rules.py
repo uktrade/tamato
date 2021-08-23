@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleChecker
@@ -174,7 +175,7 @@ def test_prevent_delete_if_in_use(approved_transaction):
         model = model.new_version(workbasket, update_type=UpdateType.DELETE)
         model.in_use = MagicMock(return_value=True)
 
-        with pytest.raises(BusinessRuleViolation):
+        with pytest.raises(ValidationError):
             BusinessRuleChecker([model], model.transaction).validate()
 
     assert model.in_use.called

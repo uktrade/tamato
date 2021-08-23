@@ -7,6 +7,7 @@ from typing import Iterable
 from typing import Optional
 from typing import Set
 from typing import TypeVar
+from typing import Union
 
 from django.db import models
 from django.db.models import Case
@@ -17,6 +18,7 @@ from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.expressions import Expression
+from django.db.models.fields.reverse_related import ForeignObjectRel
 from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
@@ -238,7 +240,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
         Group.
         """
         related_lookups = []
-        for relation, _ in model.get_relations():
+        for relation in model.relations.keys():
             if lookups and relation.name not in lookups:
                 continue
             related_lookups.append(f"{prefix}{relation.name}")
@@ -534,7 +536,7 @@ class TrackedModel(PolymorphicModel):
                 f"Model {self.__class__.__name__} has no descriptions relation.",
             ) from e
 
-        for field, model in descriptions_model.get_relations():
+        for field, model in descriptions_model.relations.items():
             if isinstance(self, model):
                 field_name = field.name
                 break
@@ -636,20 +638,35 @@ class TrackedModel(PolymorphicModel):
     def version_at(self: Cls, transaction) -> Cls:
         return self.get_versions().approved_up_to_transaction(transaction).get()
 
-    @classmethod
-    def get_relations(cls) -> list[tuple[Field, type[TrackedModel]]]:
-        """Find all foreign key and one-to-one relations on an object and return
-        a list containing tuples of the field instance and the related model it
-        links to."""
-        return [
+    @classproperty
+    def relations(cls) -> dict[Union[Field, ForeignObjectRel], type[TrackedModel]]:
+        """
+        Returns all the models that are related to this one.
+
+        The link can either be stored on this model (so a one-to-one or a many-
+        to-one relationship) or on the related model (so a one-to-many
+        relationship).
+        """
+        return dict(
             (f, f.related_model)
             for f in cls._meta.get_fields()
-            if (f.many_to_one or f.one_to_one)
-            and not f.auto_created
-            and f.concrete
+            if (f.many_to_one or f.one_to_one or f.one_to_many)
             and f.model == cls
             and issubclass(f.related_model, TrackedModel)
-        ]
+            and f.related_model is not TrackedModel
+        )
+
+    @classproperty
+    def models_linked_to(
+        cls,
+    ) -> dict[Union[Field, ForeignObjectRel], type[TrackedModel]]:
+        """Returns all the models that are related to this one via a foreign key
+        stored on this model."""
+        return dict(
+            (f, r)
+            for f, r in cls.relations.items()
+            if (f.many_to_one or f.one_to_one) and not f.auto_created and f.concrete
+        )
 
     def __getattr__(self, item: str):
         """
@@ -670,7 +687,7 @@ class TrackedModel(PolymorphicModel):
 
         if item.endswith("_current"):
             field_name = item[:-8]
-            if field_name in [field.name for field, _ in self.get_relations()]:
+            if field_name in [field.name for field in self.relations.keys()]:
                 return getattr(self, field_name).current_version
 
         return self.__getattribute__(item)
@@ -806,11 +823,7 @@ class TrackedModel(PolymorphicModel):
         # the new model substituted in place of this one. It's done this way to
         # give these related models a chance to increment SIDs, etc.
         for field in self.subrecord_relations:
-            if field.related_name is not None:
-                queryset = getattr(self, field.related_name)
-            else:
-                queryset = getattr(self, field.name + "_set")
-
+            queryset = getattr(self, field.get_accessor_name())
             reverse_field_name = field.field.name
             for model in queryset.approved_up_to_transaction(transaction):
                 model.copy(transaction, **{reverse_field_name: new_object})

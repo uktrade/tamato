@@ -79,7 +79,7 @@ def tracked_model_to_activity_stream_item(obj: TrackedModel):
     # Find all the relations to remove and replace with activity stream IDs.
     exclusions = []
     extra_data = {}
-    for relation, _ in obj.get_relations():
+    for relation, _ in obj.models_linked_to.items():
         exclusions.append(relation.name)
         relation_obj = getattr(obj, relation.name, None)
         if relation_obj:

@@ -118,7 +118,7 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
             if record_code not in dependency_map:
                 dependency_map[record_code] = set()
 
-            for _, relation in subclass.get_relations():
+            for relation in subclass.relations.values():
                 relation_codes = get_record_codes(relation)
 
                 for relation_code in relation_codes:
