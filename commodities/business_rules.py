@@ -25,19 +25,30 @@ class NIG2(BusinessRule):
     """The validity period of the goods nomenclature must be within the validity
     period of the product line above in the hierarchy."""
 
-    def validate(self, indent):
-        goods_validity = indent.indented_goods_nomenclature.valid_between
+    def parent_spans_child(self, parent, child) -> bool:
+        parent_validity = parent.indented_goods_nomenclature.version_at(
+            self.transaction,
+        ).valid_between
+        child_validity = child.indented_goods_nomenclature.version_at(
+            self.transaction,
+        ).valid_between
+        return validity_range_contains_range(parent_validity, child_validity)
 
-        for node in indent.nodes.all():
+    def validate(self, indent):
+        for node in indent.nodes.filter(
+            creating_transaction__lt=self.transaction,
+        ).all():
             parent = node.get_parent()
 
             if not parent:
                 continue
 
-            parent_validity = parent.indent.indented_goods_nomenclature.valid_between
-
-            if not validity_range_contains_range(parent_validity, goods_validity):
+            if not self.parent_spans_child(parent.indent, indent):
                 raise self.violation(indent)
+
+            for child in node.get_children():
+                if not self.parent_spans_child(indent, child.indent):
+                    raise self.violation(indent)
 
 
 @skip_when_deleted

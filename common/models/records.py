@@ -627,11 +627,14 @@ class TrackedModel(PolymorphicModel):
         return description or None
 
     @property
-    def current_version(self) -> TrackedModel:
+    def current_version(self: Cls) -> Cls:
         current_version = self.version_group.current_version
         if current_version is None:
             raise self.__class__.DoesNotExist("Object has no current version")
         return current_version
+
+    def version_at(self: Cls, transaction) -> Cls:
+        return self.get_versions().approved_up_to_transaction(transaction).get()
 
     @classmethod
     def get_relations(cls) -> list[tuple[Field, type[TrackedModel]]]:
