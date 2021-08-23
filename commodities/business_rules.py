@@ -2,14 +2,13 @@
 from datetime import date
 from datetime import timedelta
 
-from django.db.models import Count
-
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import FootnoteApplicability
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
+from common.business_rules import ValidityStartDateRules
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
 from common.business_rules import skip_when_not_deleted
@@ -145,7 +144,7 @@ class NIG10(BusinessRule):
             )
 
 
-class NIG11(BusinessRule):
+class NIG11(ValidityStartDateRules):
     """
     At least one indent record is mandatory.
 
@@ -155,56 +154,15 @@ class NIG11(BusinessRule):
     nomenclature.
     """
 
-    def validate(self, good):
+    model_name = "goods nomenclature"
+    item_name = "indent"
+
+    def get_objects(self, good):
         GoodsNomenclatureIndent = good.indents.model
 
-        indents = GoodsNomenclatureIndent.objects.filter(
+        return GoodsNomenclatureIndent.objects.filter(
             indented_goods_nomenclature__sid=good.sid,
-        ).approved_up_to_transaction(good.transaction)
-
-        if indents.count() < 1:
-            raise self.violation(
-                model=good,
-                message="At least one indent record is mandatory.",
-            )
-
-        if not indents.filter(
-            validity_start=good.valid_between.lower,
-        ).exists():
-            raise self.violation(
-                model=good,
-                message=(
-                    "The start date of the first indentation must be equal to the "
-                    "start date of the nomenclature."
-                ),
-            )
-
-        if (
-            GoodsNomenclatureIndent.objects.filter(
-                pk__in=indents.values_list("pk", flat=True),
-            )
-            .values("validity_start")
-            .annotate(
-                start_date_matches=Count("validity_start"),
-            )
-            .filter(
-                start_date_matches__gt=1,
-            )
-            .exists()
-        ):
-            raise self.violation(
-                model=good,
-                message="No two associated indentations may have the same start date",
-            )
-
-        if indents.filter(validity_start__gt=good.valid_between.upper).exists():
-            raise self.violation(
-                model=good,
-                message=(
-                    "The start date of an associated indentation must be less than or "
-                    "equal to the end date of the nomenclature."
-                ),
-            )
+        ).approved_up_to_transaction(self.transaction)
 
 
 class NIG12(DescriptionsRules):

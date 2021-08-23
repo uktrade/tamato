@@ -4,7 +4,6 @@ from datetime import datetime
 from datetime import timezone
 from functools import wraps
 from io import BytesIO
-from itertools import count
 from typing import Any
 from typing import Dict
 from typing import Sequence
@@ -20,6 +19,7 @@ from freezegun import freeze_time
 from lxml import etree
 
 from common.models.records import TrackedModel
+from common.models.transactions import Transaction
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
 from common.util import TaricDateRange
@@ -188,17 +188,15 @@ def assert_many_records_match(
     assert expected_data == imported_data
 
 
-_transaction_counter = count(start=1)
-
-
 def generate_test_import_xml(obj: dict) -> BytesIO:
-
+    last_transaction = Transaction.objects.last()
+    next_transaction_id = (last_transaction.order if last_transaction else 0) + 1
     xml = render_to_string(
         template_name="workbaskets/taric/transaction_detail.xml",
         context={
-            "envelope_id": next(_transaction_counter),
+            "envelope_id": next_transaction_id,
             "tracked_models": [obj],
-            "transaction_id": next(_transaction_counter),
+            "transaction_id": next_transaction_id,
             "message_counter": counter_generator(),
             "counter_generator": counter_generator,
         },

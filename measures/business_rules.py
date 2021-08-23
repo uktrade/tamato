@@ -920,8 +920,7 @@ class ME58(BusinessRule):
 
         if (
             type(measure_condition)
-            .objects.with_workbasket(measure_condition.transaction.workbasket)
-            .exclude(pk=measure_condition.pk or None)
+            .objects.exclude(pk=measure_condition.pk or None)
             .excluding_versions_of(version_group=measure_condition.version_group)
             .filter(
                 condition_code__code=measure_condition.condition_code.code,
@@ -929,7 +928,7 @@ class ME58(BusinessRule):
                 required_certificate__certificate_type__sid=measure_condition.required_certificate.certificate_type.sid,
                 dependent_measure__sid=measure_condition.dependent_measure.sid,
             )
-            .approved_up_to_transaction(measure_condition.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exists()
         ):
             raise self.violation(measure_condition)

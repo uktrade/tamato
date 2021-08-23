@@ -54,6 +54,15 @@ class TransactionManager(models.Manager):
         )
 
 
+class ApprovedTransactionManager(TransactionManager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(partition__in=TransactionPartition.approved_partitions())
+        )
+
+
 class TransactionsAlreadyApproved(Exception):
     pass
 
@@ -190,6 +199,8 @@ class Transaction(TimestampedMixin):
     composite_key = models.CharField(max_length=16, unique=True)
 
     objects = TransactionManager.from_queryset(TransactionQueryset)()
+
+    approved = ApprovedTransactionManager.from_queryset(TransactionQueryset)()
 
     @transition(
         field=partition,
