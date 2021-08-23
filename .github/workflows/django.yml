@@ -1,24 +1,22 @@
 name: CI/CD
 
-on:
+on: 
   push:
-    branches: [ master ]
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
-  build:
-
+  test:
+    name: "Run tests"
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.8]
 
     services:
       postgres:
         image: postgres
         env:
           POSTGRES_PASSWORD: postgres
-      # Set health checks to wait until postgres has started
+        # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -30,17 +28,22 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Detect runtime versions
+      run: |
+        echo "::set-output name=node-version::$(cat ./package.json | jq -r '.engines.node')"
+        echo "::set-output name=python-version::$(cat ./runtime.txt | grep -Eo '[0-9]+\.[0-9]+')"
+
+    - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ env.python-version }}
 
     - name: Set up Node
       uses: actions/setup-node@v1
       with:
-        node-version: "14.16.1"
+        node-version: ${{ env.node-version }}
 
-    - name: Install Dependencies
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
@@ -51,19 +54,70 @@ jobs:
         npm run build
         python manage.py collectstatic --noinput
 
-    - name: Run Tests
+    - name: Check for missing migrations
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        DJANGO_SETTINGS_MODULE: settings.test
+      run: |
+        python manage.py makemigrations --dry-run --check
+
+    - name: Run tests
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         DJANGO_SETTINGS_MODULE: settings.test
       run: |
         make test
 
-    - name: Run Linter
+    - name: Report code coverage
+      uses: codecov/codecov-action@v1
+
+  lint:
+    name: "Lint and static checks"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Detect runtime versions
+      run: |
+        echo "::set-output name=node-version::$(cat ./package.json | jq -r '.engines.node')"
+        echo "::set-output name=python-version::$(cat ./runtime.txt | grep -Eo '[0-9]+\.[0-9]+')"
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ env.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run linter
       run: |
         black --check .
 
-    - name: Report code coverage
-      uses: codecov/codecov-action@v1
+  docs:
+    name: "Build documentation"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Detect runtime versions
+      run: |
+        echo "::set-output name=node-version::$(cat ./package.json | jq -r '.engines.node')"
+        echo "::set-output name=python-version::$(cat ./runtime.txt | grep -Eo '[0-9]+\.[0-9]+')"
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ env.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Build documentation
       uses: ammaraskar/sphinx-action@0.4
@@ -73,6 +127,7 @@ jobs:
         build-command: "sphinx-build -b html -c docs/ . _build"
 
     - name: Publish documentation to Github Pages
+      if: ${{ github.ref == 'refs/heads/master' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
