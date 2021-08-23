@@ -34,7 +34,30 @@ def test_NIG1(date_ranges):
         business_rules.NIG1(duplicate.transaction).validate(duplicate)
 
 
-def test_NIG2(date_ranges):
+@pytest.mark.parametrize(
+    ("parent_validity", "self_validity", "child_validity", "expect_error"),
+    (
+        ("normal", "no_end", "no_end", True),
+        ("no_end", "normal", "no_end", True),
+        ("no_end", "no_end", "normal", False),
+        ("no_end", "no_end", "no_end", False),
+        ("normal", "normal", "normal", False),
+    ),
+    ids=(
+        "parent_does_not_span_self",
+        "self_does_not_span_child",
+        "child_can_end_sooner",
+        "all_open_ended",
+        "all_closed_and_span",
+    ),
+)
+def test_NIG2(
+    date_ranges,
+    parent_validity,
+    self_validity,
+    child_validity,
+    expect_error,
+):
     """
     The validity period of the goods nomenclature must be within the validity
     period of the product line above in the hierarchy.
@@ -43,14 +66,25 @@ def test_NIG2(date_ranges):
     """
 
     parent = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=date_ranges.big,
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            parent_validity,
+        ),
+    )
+    self = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(date_ranges, self_validity),
+        node__parent=parent.nodes.first(),
     )
     child = factories.GoodsNomenclatureIndentFactory.create(
-        node__parent=parent.nodes.first(),
-        indented_goods_nomenclature__valid_between=date_ranges.adjacent_later_big,
+        node__parent=self.nodes.first(),
+        indented_goods_nomenclature__valid_between=getattr(date_ranges, child_validity),
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG2(child.transaction).validate(child)
+
+    # Running against a lone code should never error
+    business_rules.NIG2(parent.transaction).validate(parent)
+
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.NIG2(type(child.transaction).objects.last()).validate(self)
 
 
 def test_NIG4(date_ranges):
