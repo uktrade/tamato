@@ -742,6 +742,7 @@ class QuotaOrderNumberOriginFactory(TrackedModelMixin, ValidityFactoryMixin):
     geographical_area = factory.SubFactory(
         GeographicalAreaFactory,
         valid_between=factory.SelfAttribute("..valid_between"),
+        transaction=factory.SelfAttribute("..transaction"),
     )
 
 
@@ -1044,7 +1045,10 @@ class MeasureConditionFactory(TrackedModelMixin):
         model = "measures.MeasureCondition"
 
     sid = numeric_sid()
-    dependent_measure = factory.SubFactory(MeasureFactory)
+    dependent_measure = factory.SubFactory(
+        MeasureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     condition_code = factory.SubFactory(MeasureConditionCodeFactory)
     component_sequence_number = factory.Faker("random_int", min=1, max=999)
     duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
@@ -1066,7 +1070,10 @@ class MeasureConditionComponentFactory(TrackedModelMixin):
     class Meta:
         model = "measures.MeasureConditionComponent"
 
-    condition = factory.SubFactory(MeasureConditionFactory)
+    condition = factory.SubFactory(
+        MeasureConditionFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     duty_expression = factory.SubFactory(DutyExpressionFactory)
     duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
     monetary_unit = factory.SubFactory(MonetaryUnitFactory)

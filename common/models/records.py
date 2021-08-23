@@ -70,43 +70,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
         )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
-        """
-        Get the approved versions of the model being queried, unless there
+        """Get the approved versions of the model being queried, unless there
         exists a version of the model in a draft state within a transaction
         preceding (and including) the given transaction in the workbasket of the
-        given transaction.
-
-        The generated SQL is equivalent to:
-
-        .. code:: SQL
-
-            SELECT *,
-                   Max(t3."id") filter (
-                       WHERE (
-                           t3."transaction_id" = {TRANSACTION_ID}
-                        OR ("common_transaction"."order" < {TRANSACTION_ORDER} AND "common_transaction"."workbasket_id" = {WORKBASKET_ID})
-                        OR ("workbaskets_workbasket"."approver_id" IS NOT NULL AND "workbaskets_workbasket"."status" IN (APPROVED_STATUSES))
-                       )
-                   ) AS "latest"
-              FROM "common_trackedmodel"
-             INNER JOIN "common_versiongroup"
-                ON "common_trackedmodel"."version_group_id" = "common_versiongroup"."id"
-              LEFT OUTER JOIN "common_trackedmodel" t3
-                ON "common_versiongroup"."id" = t3."version_group_id"
-              LEFT OUTER JOIN "common_transaction"
-                ON t3."transaction_id" = "common_transaction"."id"
-              LEFT OUTER JOIN "workbaskets_workbasket"
-                ON "common_transaction"."workbasket_id" = "workbaskets_workbasket"."id"
-             WHERE NOT "common_trackedmodel"."update_type" = 2
-             GROUP BY "common_trackedmodel"."id"
-            HAVING max(t3."id") filter (
-                       WHERE (
-                           t3."transaction_id" = {TRANSACTION_ID}
-                        OR ("common_transaction"."order" < {TRANSACTION_ORDER} AND "common_transaction"."workbasket_id" = {WORKBASKET_ID})
-                        OR ("workbaskets_workbasket"."approver_id" IS NOT NULL AND "workbaskets_workbasket"."status" IN (APPROVED_STATUSES))
-                       )
-            ) = "common_trackedmodel"."id"
-        """
+        given transaction."""
         if not transaction:
             return self.latest_approved()
 
@@ -114,13 +81,9 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
             self.annotate(
                 latest=Max(
                     "version_group__versions",
-                    filter=(
-                        Q(version_group__versions__transaction=transaction)
-                        | Q(
-                            version_group__versions__transaction__workbasket=transaction.workbasket,
-                            version_group__versions__transaction__order__lt=transaction.order,
-                        )
-                        | self.approved_query_filter("version_group__versions__")
+                    filter=self.as_at_transaction_filter(
+                        transaction,
+                        "version_group__versions__",
                     ),
                 ),
             )
@@ -287,7 +250,8 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
     def get_queryset(self):
         return self.annotate_record_codes().order_by("record_code", "subrecord_code")
 
-    def approved_query_filter(self, prefix=""):
+    @classmethod
+    def approved_query_filter(cls, prefix=""):
         from common.models.transactions import TransactionPartition
 
         return Q(
@@ -295,6 +259,38 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
                 f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
             }
         )
+
+    @classmethod
+    def as_at_transaction_filter(cls, transaction, prefix=""):
+        """
+        Return a Django filter object that will filter the returned models to
+        only those that exist as of the passed transaction.
+
+        This is different than just `object.versions` because it will only
+        include draft versions from the same workbasket, if the transaction is
+        in draft, whereas `object.versions` will include all draft versions.
+
+        At the database level, that is any transaction in this partition with
+        lower order (and in this workbasket in the case of DRAFT), or any
+        transaction in an earlier partition.
+        """
+        from common.models.transactions import TransactionPartition
+
+        this_partition = {
+            f"{prefix}transaction__partition": transaction.partition,
+            f"{prefix}transaction__order__lte": transaction.order,
+        }
+
+        if transaction.partition not in TransactionPartition.approved_partitions():
+            this_partition[
+                f"{prefix}transaction__workbasket__id"
+            ] = transaction.workbasket_id
+
+        earlier_parition = {
+            f"{prefix}transaction__partition__lt": transaction.partition,
+        }
+
+        return Q(**this_partition) | Q(**earlier_parition)
 
     @staticmethod
     def _when_model_record_codes():
