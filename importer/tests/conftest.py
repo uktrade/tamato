@@ -1,6 +1,8 @@
+from typing import Sequence
 from typing import Type
 
 import pytest
+from django.forms.models import model_to_dict
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
@@ -8,8 +10,14 @@ from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
 from common.tests import factories
 from common.tests.models import TestModel1
+from common.tests.util import generate_test_import_xml
 from importer import models
 from importer.handlers import BaseHandler
+from importer.namespaces import TARIC_RECORD_GROUPS
+from importer.namespaces import Tag
+from importer.namespaces import TTags
+from importer.namespaces import make_schema_dataclass
+from importer.namespaces import xsd_schema_paths
 from importer.nursery import TariffObjectNursery
 from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType
@@ -142,3 +150,51 @@ def batch_dependency() -> models.BatchDependencies:
     factories.ImporterXMLChunkFactory.create(batch=dependencies.depends_on)
     factories.ImporterXMLChunkFactory.create(batch=dependencies.dependent_batch)
     return dependencies
+
+
+@pytest.fixture
+def taric_schema_tags() -> TTags:
+    return make_schema_dataclass(xsd_schema_paths)
+
+
+@pytest.fixture
+def record_group() -> Sequence[str]:
+    return TARIC_RECORD_GROUPS["commodities"]
+
+
+@pytest.fixture
+def envelope_measure() -> bytes:
+    model = factories.MeasureFactory.create()
+    data = model_to_dict(model)
+    data.update(
+        {
+            "record_code": model.record_code,
+            "subrecord_code": model.subrecord_code,
+            "taric_template": "taric/measure.xml",
+        },
+    )
+    return generate_test_import_xml(data).read()
+
+
+@pytest.fixture
+def envelope_commodity() -> bytes:
+    model = factories.GoodsNomenclatureFactory.create()
+    data = model_to_dict(model)
+    data.update(
+        {
+            "record_code": model.record_code,
+            "subrecord_code": model.subrecord_code,
+            "taric_template": "taric/goods_nomenclature.xml",
+        },
+    )
+    return generate_test_import_xml(data).read()
+
+
+@pytest.fixture
+def tag_name() -> Tag:
+    return Tag(r"quota.event")
+
+
+@pytest.fixture
+def tag_regex() -> Tag:
+    return Tag(r"quota.([a-z.]+).event")

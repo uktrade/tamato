@@ -80,7 +80,9 @@ class GoodsNomenclatureOriginParser(Writable, ElementParser):
     derived_from_goods_nomenclature__suffix = TextElement(
         Tag("derived.productline.suffix"),
     )
-    new_goods_nomenclature__item_id = TextElement(Tag("goods.nomenclature.item.id"))
+    new_goods_nomenclature__item_id = TextElement(
+        Tag("goods.nomenclature.item.id"),
+    )
     new_goods_nomenclature__suffix = TextElement(Tag("productline.suffix"))
 
 
