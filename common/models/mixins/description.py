@@ -25,7 +25,7 @@ class DescriptionMixin(ValidityStartMixin):
 
     @classproperty
     def described_object_field(cls) -> Field:
-        for rel, _ in cls.get_relations():
+        for rel in cls.relations.keys():
             if rel.name.startswith("described_"):
                 return rel
         raise TypeError(f"{cls} should have a described field.")
