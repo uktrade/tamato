@@ -330,15 +330,89 @@ for processing.</p>
 
 </dd></dl>
 
-<span class="target" id="module-importer.namespaces"></span><dl class="py class">
-<dt id="importer.namespaces.RegexTag">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.namespaces.</span></code><code class="sig-name descname"><span class="pre">RegexTag</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ns2'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/namespaces.html#RegexTag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.namespaces.RegexTag" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="target" id="module-importer.namespaces"></span><p>Provides dataclasses and config classes for xml elements and the taric
+schema.</p>
+<dl class="py class">
+<dt id="importer.namespaces.SchemaTagsBase">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.namespaces.</span></code><code class="sig-name descname"><span class="pre">SchemaTagsBase</span></code><a class="reference internal" href="../../_modules/importer/namespaces.html#SchemaTagsBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.namespaces.SchemaTagsBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a base dataclass for schema element tag definitions.</p>
+</dd></dl>
 
 <dl class="py class">
 <dt id="importer.namespaces.Tag">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.namespaces.</span></code><code class="sig-name descname"><span class="pre">Tag</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ns2'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/namespaces.html#Tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.namespaces.Tag" title="Permalink to this definition">¶</a></dt>
-<dd><p>An XML element tag with a namespace mapping prefix.</p>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">importer.namespaces.</span></code><code class="sig-name descname"><span class="pre">Tag</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">name:</span> <span class="pre">str</span></em>, <em class="sig-param"><span class="pre">prefix:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'ns2'</span></em>, <em class="sig-param"><span class="pre">nsmap:</span> <span class="pre">Dict[str</span></em>, <em class="sig-param"><span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/importer/namespaces.html#Tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.namespaces.Tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dataclass for xml element tags.</p>
+<ul class="simple">
+<li><p><cite>name</cite>: corresponds to the name attribute</p></li>
+</ul>
+<p>of the Element element in the XML Schema.
+- <cite>prefix</cite>: attribute reflects namespace prefixes
+defined in the taric3 and envelope xsd-s.
+- <cite>nsmap</cite>: this is a prefix-namespace mapping
+in the format required by xml.etree.ElementTree</p>
+<dl class="py method">
+<dt id="importer.namespaces.Tag.first">
+<code class="sig-name descname"><span class="pre">first</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">xml.etree.ElementTree.Element</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">xml.etree.ElementTree.Element</span><a class="reference internal" href="../../_modules/importer/namespaces.html#Tag.first"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.namespaces.Tag.first" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the first descendant of the parent matching this tag’s
+name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="importer.namespaces.Tag.is_pattern">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_pattern</span></code><a class="headerlink" href="#importer.namespaces.Tag.is_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the tag name is a regex pattern.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="importer.namespaces.Tag.iter">
+<code class="sig-name descname"><span class="pre">iter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">xml.etree.ElementTree.Element</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">xml.etree.ElementTree.Element</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../../_modules/importer/namespaces.html#Tag.iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.namespaces.Tag.iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator of descendants of the parent matching this tag’s
+name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="importer.namespaces.Tag.namespace">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">namespace</span></code><a class="headerlink" href="#importer.namespaces.Tag.namespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the namespace for the tag.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="importer.namespaces.Tag.pattern">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">pattern</span></code><a class="headerlink" href="#importer.namespaces.Tag.pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a compiled regex pattern.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="importer.namespaces.Tag.prefixed_name">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">prefixed_name</span></code><a class="headerlink" href="#importer.namespaces.Tag.prefixed_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the prefixed element tag.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="importer.namespaces.Tag.qualified_name">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">qualified_name</span></code><a class="headerlink" href="#importer.namespaces.Tag.qualified_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fully qualified element tag.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="importer.namespaces.make_schema_dataclass">
+<code class="sig-prename descclassname"><span class="pre">importer.namespaces.</span></code><code class="sig-name descname"><span class="pre">make_schema_dataclass</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xsd_schema_paths</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">TTags</span><a class="reference internal" href="../../_modules/importer/namespaces.html#make_schema_dataclass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.namespaces.make_schema_dataclass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dynamic dataclass with taric schema element tag definitions.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="importer.namespaces.xsd_schema_paths">
+<code class="sig-prename descclassname"><span class="pre">importer.namespaces.</span></code><code class="sig-name descname"><span class="pre">xsd_schema_paths</span></code><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">(('env',</span> <span class="pre">PosixPath('/github/workspace/common/assets/envelope.xsd')),</span> <span class="pre">('oub',</span> <span class="pre">PosixPath('/github/workspace/common/assets/taric3.xsd')))</span></em><a class="headerlink" href="#importer.namespaces.xsd_schema_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define additional groups in the below dictionary
+for use as a <cite>record_group</cite> argument
+to importer.chunker.chunk_taric.</p>
+<p>Check importer.forms.UploadTaricForm.save
+for example usage when users check
+the ‘Commodities Only’ box in /importers/create.</p>
+<p>The only group defined at the moment is commodities,
+which is easily extensible to additional record groups.</p>
 </dd></dl>
 
 </section>
