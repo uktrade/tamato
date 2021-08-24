@@ -36,6 +36,16 @@ ui_patterns = [
         views.RegulationDetail.as_view(),
         name="regulation-ui-detail",
     ),
+    path(
+        f"{detail}/edit/",
+        views.RegulationUpdate.as_view(),
+        name="regulation-ui-edit",
+    ),
+    path(
+        f"{detail}/confirm-update/",
+        views.RegulationConfirmUpdate.as_view(),
+        name="regulation-ui-confirm-update",
+    ),
 ]
 
 urlpatterns = [
