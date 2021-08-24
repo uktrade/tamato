@@ -225,7 +225,7 @@ class UIRegulationFactory(BaseRegulationFactory):
     status differs between Regulation model fields and form fields.
     """
 
-    published_at = Dates().datetime_now
+    published_at = date_ranges("now")
 
 
 class AmendmentFactory(TrackedModelMixin):
