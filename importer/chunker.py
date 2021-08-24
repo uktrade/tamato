@@ -1,18 +1,20 @@
-import xml.etree.cElementTree as etree
+import xml.etree.ElementTree as ET
 from logging import getLogger
 from tempfile import TemporaryFile
+from typing import Optional
+from typing import Sequence
 
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.template.loader import render_to_string
 
 from importer import models
+from importer.namespaces import make_schema_dataclass
 from importer.namespaces import nsmap
+from importer.namespaces import xsd_schema_paths
 from importer.utils import dependency_tree
 
 MAX_FILE_SIZE = 1024 * 1024 * 50  # Will keep chunks roughly close to 50MB
-
-
-ENVELOPE_TAG = "{urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0}envelope"
-TRANSACTION_TAG = "{urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0}transaction"
+Tags = make_schema_dataclass(xsd_schema_paths)
 
 logger = getLogger(__name__)
 
@@ -172,7 +174,7 @@ def rewrite_comm_codes(batch: models.ImportBatch, envelope_id: str, record_code=
     transactions = []
 
     for chunk in chunks:
-        transactions.extend(etree.fromstring(chunk.chunk_text))
+        transactions.extend(ET.fromstring(chunk.chunk_text))
 
     logger.info("%d to sort, deleting old ones", len(transactions))
 
@@ -191,7 +193,7 @@ def rewrite_comm_codes(batch: models.ImportBatch, envelope_id: str, record_code=
 
 
 def write_transaction_to_chunk(
-    transaction: etree.Element,
+    transaction: ET.Element,
     chunks_in_progress: dict,
     batch: models.ImportBatch,
     envelope_id: str,
@@ -235,7 +237,7 @@ def write_transaction_to_chunk(
     )
 
     chunk.write(
-        etree.tostring(
+        ET.tostring(
             transaction,
         )  # pythons XML doesn't write namespaces back correctly.
         .replace(b"<ns0:", b"<env:")
@@ -252,7 +254,61 @@ def write_transaction_to_chunk(
         chunks_in_progress.pop(key)
 
 
-def chunk_taric(taric3_file, batch: models.ImportBatch) -> models.ImportBatch:
+def filter_transaction_records(
+    elem: ET.Element,
+    record_group: Sequence[str],
+) -> Optional[ET.Element]:
+    """
+    Filters the records in a transaction based on record codes in the record
+    group.
+
+    Record identifiers are concatenated record_code and subrecord_code child element values.
+
+    Returns the a copy of the transaction element with non-matching records removed.
+    Returns the untouched transaction if record_group is none.
+    Returns None if there are no matching records in the transaction.
+    """
+    if record_group is None:
+        return elem
+
+    transaction_id = elem.get("id")
+    n = len(elem)
+
+    for message in Tags.ENV_APP_MESSAGE.iter(elem):
+        for transmission in Tags.OUB_TRANSMISSION.iter(message):
+            for record in Tags.OUB_RECORD.iter(transmission):
+                record_code = Tags.OUB_RECORD_CODE.first(record).text
+                subrecord_code = Tags.OUB_SUBRECORD_CODE.first(record).text
+
+                record_identifier = f"{record_code}{subrecord_code}"
+
+                if record_identifier not in record_group:
+                    transmission.remove(record)
+
+                    msg = "Transaction %s: Removed record with code %s."
+                    logger.info(msg, transaction_id, record_identifier)
+
+            if not transmission:
+                message.remove(transmission)
+
+        if not message:
+            elem.remove(message)
+
+    if elem:
+        msg = "Transaction %s: %d out of %d records match the record group."
+        logger.info(msg, transaction_id, len(elem), n)
+        return elem
+
+    msg = "Transaction id %s: Removed - no matching records. "
+    logger.info(msg, transaction_id)
+    return
+
+
+def chunk_taric(
+    taric3_file: InMemoryUploadedFile,
+    batch: models.ImportBatch,
+    record_group: Sequence[str] = None,
+) -> models.ImportBatch:
     """
     Parses a TARIC3 XML stream and breaks it into a batch of chunks.
 
@@ -261,17 +317,21 @@ def chunk_taric(taric3_file, batch: models.ImportBatch) -> models.ImportBatch:
     order.
     """
     chunks_in_progress = {}
-    xmlparser = etree.iterparse(taric3_file, ["start", "end"])
+    xmlparser = ET.iterparse(taric3_file, ["start", "end"])
 
     element_counter = 0
     envelope_id = None
     for event, elem in xmlparser:
-        if event == "start" and elem.tag == ENVELOPE_TAG:
+        if event == "start" and elem.tag == Tags.ENV_ENVELOPE.qualified_name:
             envelope_id = elem.get("id", taric3_file.name)
-        if event != "end" or elem.tag != TRANSACTION_TAG:
+        if event != "end" or elem.tag != Tags.ENV_TRANSACTION.qualified_name:
             continue
 
-        write_transaction_to_chunk(elem, chunks_in_progress, batch, envelope_id)
+        transaction = filter_transaction_records(elem, record_group)
+
+        if transaction is not None:
+            write_transaction_to_chunk(elem, chunks_in_progress, batch, envelope_id)
+
         elem.clear()
 
         element_counter += 1

@@ -4,9 +4,12 @@ from hashlib import sha256
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
 from typing import Set
 from typing import TypedDict
+
+from django.db.models.query_utils import DeferredAttribute
 
 from common.models import TrackedModel
 
@@ -64,7 +67,27 @@ def generate_key(
     return sha256(hash_input.encode()).hexdigest()
 
 
-def build_dependency_tree() -> Dict[str, Set[str]]:
+def get_record_codes(
+    record: TrackedModel,
+    use_subrecord_codes: bool = False,
+) -> List[str]:
+    key = record.record_code
+
+    if use_subrecord_codes is False:
+        return [key]
+
+    subrecord_code = record.subrecord_code
+
+    if isinstance(subrecord_code, str):
+        return [f"{key}{subrecord_code}"]
+
+    if isinstance(subrecord_code, DeferredAttribute):
+        return [f"{key}{code}" for code, _ in subrecord_code.field.choices]
+
+    return []
+
+
+def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[str]]:
     """
     Build a dependency tree of all the TrackedModel subclasses mapped by record
     code.
@@ -81,17 +104,26 @@ def build_dependency_tree() -> Dict[str, Set[str]]:
             "220": {"215", "210"},
         }
     """
+
     dependency_map = {}
-    record_codes = {subclass.record_code for subclass in TrackedModel.__subclasses__()}
+
+    record_codes = {
+        code
+        for subclass in TrackedModel.__subclasses__()
+        for code in get_record_codes(subclass)
+    }
+
     for subclass in TrackedModel.__subclasses__():
-        if subclass.record_code not in dependency_map:
-            dependency_map[subclass.record_code] = set()
-        for _, relation in subclass.get_relations():
-            if (
-                relation.record_code != subclass.record_code
-                and relation.record_code in record_codes
-            ):
-                dependency_map[subclass.record_code].add(relation.record_code)
+        for record_code in get_record_codes(subclass):
+            if record_code not in dependency_map:
+                dependency_map[record_code] = set()
+
+            for _, relation in subclass.get_relations():
+                relation_codes = get_record_codes(relation)
+
+                for relation_code in relation_codes:
+                    if relation_code != record_code and relation_code in record_codes:
+                        dependency_map[record_code].add(relation_code)
 
     return dependency_map
 

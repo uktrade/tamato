@@ -7,6 +7,7 @@ from datetime import timedelta
 from os.path import abspath
 from os.path import dirname
 from os.path import join
+from pathlib import Path
 
 import dj_database_url
 from django.urls import reverse_lazy
@@ -440,8 +441,13 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-TARIC_XSD = os.path.join(BASE_DIR, "common", "assets", "taric3.xsd")
+# Paths to common assets, e.g. taric schema files
+PATH_ASSETS = Path(BASE_DIR, "common", "assets")
 
+PATH_XSD_ENVELOPE = Path(PATH_ASSETS, "envelope.xsd")
+PATH_XSD_TARIC = Path(PATH_ASSETS, "taric3.xsd")
+
+# Default username for envelope data imports
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
 
 # -- HMRC API client settings

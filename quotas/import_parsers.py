@@ -1,4 +1,3 @@
-from importer.namespaces import RegexTag
 from importer.namespaces import Tag
 from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
@@ -104,7 +103,9 @@ class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
     tag = Tag("quota.order.number.origin.exclusions")
 
     origin__sid = TextElement(Tag("quota.order.number.origin.sid"))
-    excluded_geographical_area__sid = TextElement(Tag("excluded.geographical.area.sid"))
+    excluded_geographical_area__sid = TextElement(
+        Tag("excluded.geographical.area.sid"),
+    )
 
 
 @RecordParser.register_child("quota_definition")
@@ -344,7 +345,7 @@ class QuotaEventParser(Writable, ElementParser):
     record_code = "375"
     subrecord_code = "subrecord_code"
 
-    tag = RegexTag(r"quota.([a-z.]+).event")
+    tag = Tag(r"quota.([a-z.]+).event")
 
     quota_definition__sid = TextElement(Tag("quota.definition.sid"))
     occurrence_timestamp = TextElement(Tag("occurrence.timestamp"))
@@ -361,7 +362,9 @@ class QuotaEventParser(Writable, ElementParser):
         TextElement(Tag("unblocking.date")): "unblocking.date",
         # critical event
         TextElement(Tag("critical.state")): "critical.state",
-        TextElement(Tag("critical.state.change.date")): "critical.state.change.date",
+        TextElement(
+            Tag("critical.state.change.date"),
+        ): "critical.state.change.date",
         # exhaustion event
         TextElement(Tag("exhaustion.date")): "exhaustion.date",
         # reopening event
@@ -372,7 +375,9 @@ class QuotaEventParser(Writable, ElementParser):
         TextElement(Tag("transfer.date")): "transfer.date",
         TextElement(Tag("quota.closed")): "quota.closed",
         TextElement(Tag("transferred.amount")): "transferred.amount",
-        TextElement(Tag("target.quota.definition.sid")): "target.quota.definition.sid",
+        TextElement(
+            Tag("target.quota.definition.sid"),
+        ): "target.quota.definition.sid",
     }
 
     def clean(self):
