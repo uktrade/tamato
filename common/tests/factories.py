@@ -217,6 +217,17 @@ class BaseRegulationFactory(RegulationFactory):
     role_type = 1
 
 
+class UIRegulationFactory(BaseRegulationFactory):
+    """
+    Regulation factory used by our UI form tests.
+
+    These are distinct from our other Regulation factories because the required
+    status differs between Regulation model fields and form fields.
+    """
+
+    published_at = date_ranges("now")
+
+
 class AmendmentFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Amendment"
