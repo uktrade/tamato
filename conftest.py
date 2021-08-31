@@ -79,6 +79,20 @@ def pytest_bdd_apply_tag(tag, function):
         return True
 
 
+@contextlib.contextmanager
+def not_raises(ExpectedException):
+    """Provides a context manager for tests that need to assert a specific
+    exception is not raised."""
+    try:
+        yield
+
+    except ExpectedException as error:
+        raise AssertionError(f"Raised exception {error} when it should not!")
+
+    except Exception as error:
+        raise AssertionError(f"An unexpected exception {error} raised.")
+
+
 @pytest.fixture(scope="session")
 def celery_config():
     return {
