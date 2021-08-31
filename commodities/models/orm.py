@@ -101,14 +101,14 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     def autocomplete_label(self):
         return f"{self} - {self.get_description().description}"
 
+    @property
+    def dependent_measures(self):
+        return self.measures.model.objects.filter(
+            goods_nomenclature__sid=self.sid,
+        ).approved_up_to_transaction(self.transaction)
+
     def in_use(self):
-        return (
-            self.measures.model.objects.filter(
-                goods_nomenclature__sid=self.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
+        return self.dependent_measures.exists()
 
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
