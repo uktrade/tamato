@@ -273,14 +273,19 @@ class NIG30(BusinessRule):
     def matching_measures(self, good):
         return good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
 
-    def validate(self, good):
-        if (
+    def effective_matching_measures(self, good):
+        return (
             self.matching_measures(good)
             .with_effective_valid_between()
             .approved_up_to_transaction(good.transaction)
             .exclude(db_effective_valid_between__contained_by=good.valid_between)
-            .exists()
-        ):
+        )
+
+    def has_violation(self, good):
+        return self.effective_matching_measures(good).exists()
+
+    def validate(self, good):
+        if self.has_violation(good):
             raise self.violation(good)
 
 
@@ -304,16 +309,17 @@ class NIG35(BusinessRule):
 
     # XXX this is redundant - NIG34 will be violated first
 
+    def has_violation(self, good):
+        return good.measures.model.objects.filter(
+            goods_nomenclature__sid=good.sid,
+            additional_code__isnull=False,
+        ).approved_up_to_transaction(
+            good.transaction
+        ).exists()
+
     def validate(self, good):
         if good.update_type != UpdateType.DELETE:
             return
 
-        if (
-            good.measures.model.objects.filter(
-                goods_nomenclature__sid=good.sid,
-                additional_code__isnull=False,
-            )
-            .approved_up_to_transaction(good.transaction)
-            .exists()
-        ):
+        if self.has_violation(good):
             raise self.violation(good)
