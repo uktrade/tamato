@@ -258,13 +258,15 @@ class PreventDeleteIfInUse(BusinessRule):
 
     in_use_check = "in_use"
 
+    def has_violation(self, model) -> bool:
+        return getattr(model, self.in_use_check)()
+
     def validate(self, model):
         if model.update_type != UpdateType.DELETE:
             log.debug("Skipping %s: Not a delete", self.__class__.__name__)
             return
 
-        check = getattr(model, self.in_use_check)
-        if check():
+        if self.has_violation(model):
             raise self.violation(model)
 
         log.debug("Passed %s: Not in use", self.__class__.__name__)
