@@ -294,6 +294,62 @@ def test_collection_clone(collection_full):
     assert len(collection_full.commodities) == n
 
 
+def test_collection_update_create(collection_basic, commodities):
+    group = collection_basic.clone()
+
+    commodity = commodities["9999.20.00.10_80_3"]
+
+    updates = [
+        CommodityChange(
+            collection=group,
+            candidate=commodity,
+            update_type=UpdateType.CREATE,
+        ),
+    ]
+
+    group.update(updates)
+    assert commodity in group.commodities
+
+
+def test_collection_update_update(collection_basic):
+    group = collection_basic.clone()
+
+    code = "9999.20"
+    suffix = "20"
+    current = group.get_commodity(code)
+    candidate = copy_commodity(current, suffix=suffix)
+
+    updates = [
+        CommodityChange(
+            collection=group,
+            current=current,
+            candidate=candidate,
+            update_type=UpdateType.UPDATE,
+        ),
+    ]
+
+    group.update(updates)
+    assert group.get_commodity(code) is None
+    assert group.get_commodity(code, suffix) is not None
+
+
+def test_collection_update_delete(collection_basic, commodities):
+    group = collection_basic.clone()
+
+    commodity = commodities["9999.20_80_2"]
+
+    updates = [
+        CommodityChange(
+            collection=group,
+            current=commodity,
+            update_type=UpdateType.DELETE,
+        ),
+    ]
+
+    group.update(updates)
+    assert commodity not in group.commodities
+
+
 def test_snapshot_get_parent(collection_basic):
     snapshot = collection_basic.current_snapshot
 
@@ -540,57 +596,85 @@ def test_change_invalid_delete_no_current(collection_basic):
         )
 
 
-def test_change_effects_create(collection_basic, commodities):
-    group = collection_basic.clone()
+def test_snapshot_diff_create(collection_basic, commodities):
+    collection = collection_basic.clone()
 
-    commodity = commodities["9999.20.00.10_80_3"]
+    parent = collection.get_commodity("9999.20")
+    candidate = commodities["9999.20.00.10_80_3"]
 
     updates = [
         CommodityChange(
-            collection=group,
-            candidate=commodity,
+            collection=collection,
+            candidate=candidate,
             update_type=UpdateType.CREATE,
         ),
     ]
 
-    group.update(updates)
-    assert commodity in group.commodities
+    before = collection.current_snapshot
+    collection.update(updates)
+    after = collection.current_snapshot
+
+    snapshot_diff = after.compare_children(parent, before)
+    assert snapshot_diff.diff == [candidate]
 
 
-def test_change_effects_update(collection_basic):
-    group = collection_basic.clone()
+def test_snapshot_diff_update(collection_basic):
+    collection = collection_basic.clone()
 
-    code = "9999.20"
-    suffix = "20"
-    current = group.get_commodity(code)
-    candidate = copy_commodity(current, suffix=suffix)
+    parent = collection.get_commodity("9999")
+    sibling = collection.get_commodity("9999.10")
+
+    current = collection.get_commodity("9999.20")
+    candidate = copy_commodity(current, indent=current.get_indent() + 1)
 
     updates = [
         CommodityChange(
-            collection=group,
+            collection=collection,
             current=current,
             candidate=candidate,
             update_type=UpdateType.UPDATE,
         ),
     ]
 
-    group.update(updates)
-    assert group.get_commodity(code) is None
-    assert group.get_commodity(code, suffix) is not None
+    before = collection.current_snapshot
+    collection.update(updates)
+    after = collection.current_snapshot
+
+    snapshot_diff = after.compare_children(parent, before)
+    assert snapshot_diff.diff == [current]
+
+    snapshot_diff = after.compare_children(sibling, before)
+    assert snapshot_diff.diff == [candidate]
+
+    snapshot_diff = after.compare_siblings(sibling, before)
+    assert snapshot_diff.diff == [current]
+
+    snapshot_diff = before.compare_parents(current, after)
+    assert snapshot_diff.diff == [parent]
+
+    snapshot_diff = after.compare_parents(candidate, before)
+    assert snapshot_diff.diff == [sibling]
 
 
-def test_change_effects_delete(collection_basic, commodities):
-    group = collection_basic.clone()
+def test_snapshot_diff_delete(collection_basic):
+    collection = collection_basic.clone()
 
-    commodity = commodities["9999.20_80_2"]
+    parent = collection.get_commodity("9999")
+    current = collection.get_commodity("9999.20")
 
     updates = [
         CommodityChange(
-            collection=group,
-            current=commodity,
+            collection=collection,
+            current=current,
             update_type=UpdateType.DELETE,
         ),
     ]
 
-    group.update(updates)
-    assert commodity not in group.commodities
+    before = collection.current_snapshot
+    collection.update(updates)
+    after = collection.current_snapshot
+
+    snapshot_diff = after.compare_children(parent, before)
+    assert snapshot_diff.diff == [current]
+    snapshot_diff = before.compare_parents(current, after)
+    assert snapshot_diff.diff == [parent]
