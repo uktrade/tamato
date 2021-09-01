@@ -209,25 +209,6 @@ def test_commodity_tree_base_get_commodity(commodities):
                 assert a == b
 
 
-def test_collection_get_commodity(collection_full, commodities):
-    for commodity in commodities.values():
-        codes = [
-            commodity.code,
-            commodity.dot_code,
-            commodity.trimmed_code,
-            commodity.trimmed_dot_code,
-        ]
-
-        for code in codes:
-            assert (
-                collection_full.get_commodity(
-                    code,
-                    commodity.suffix,
-                )
-                == commodity
-            )
-
-
 @pytest.mark.parametrize(
     "case",
     [
@@ -272,6 +253,45 @@ def test_collection_get_calendar_clock_snapshot(collection_spanned, date_ranges,
         snapshot,
         excluded_date_ranges,
     )
+
+
+def test_collection_get_transaction_clock_snapshot(collection_full):
+    transaction_ids = sorted(
+        [commodity.obj.transaction.id for commodity in collection_full.commodities],
+    )
+
+    for i, transaction_id in enumerate(transaction_ids):
+        snapshot = collection_full.get_transaction_clock_snapshot(
+            transaction_id=transaction_id,
+        )
+
+        commodities = collection_full.commodities[: i + 1]
+        assert snapshot.commodities == commodities
+
+    snapshot = collection_full.get_transaction_clock_snapshot()
+
+
+def test_collection_current_snapshot(collection_full):
+    snapshot = collection_full.current_snapshot
+    tx_snapshot = collection_full.get_transaction_clock_snapshot()
+    cal_snapshot = collection_full.get_calendar_clock_snapshot()
+
+    tx_commodities = set(map(lambda x: x.identifier, tx_snapshot.commodities))
+    cal_commodities = set(map(lambda x: x.identifier, cal_snapshot.commodities))
+    tx_cal_commodities = tx_commodities.intersection(cal_commodities)
+
+    commodities = set(map(lambda x: x.identifier, snapshot.commodities))
+
+    assert snapshot.moment == date.today()
+    assert sorted(commodities) == sorted(tx_cal_commodities)
+
+
+def test_collection_clone(collection_full):
+    n = len(collection_full.commodities)
+    collection_cloned = collection_full.clone()
+    collection_cloned.commodities.pop()
+
+    assert len(collection_full.commodities) == n
 
 
 def test_snapshot_get_parent(collection_basic):
@@ -405,7 +425,7 @@ def test_snapshot_transaction_id(collection_basic):
 def test_snapshot_identifier(collection_basic):
     res = {
         ClockType.CALENDAR: re.compile(
-            r"(20[0-9]{2}-[0-9]{2}-[0-9]{2}).([a-f0-9]{32})"
+            r"(20[0-9]{2}-[0-9]{2}-[0-9]{2}).([a-f0-9]{32})",
         ),
         ClockType.TRANSACTION: re.compile(r"(tx_[0-9]{,7}).([a-f0-9]{32})"),
     }
