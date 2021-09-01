@@ -5,6 +5,8 @@ from datetime import timedelta
 import pytest
 
 from commodities.models.dc import CommodityChange
+from commodities.models.dc import CommodityTreeBase
+from commodities.models.static import SUFFIX_DECLARABLE
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from conftest import not_raises
@@ -171,6 +173,40 @@ def test_commodity_identifier(commodities):
             assert suffix == commodity.suffix
             assert indent == str(commodity.get_indent())
             assert version == str(commodity.version)
+
+
+def test_commodity_tree_base_get_sanitized_code(commodities):
+    base = CommodityTreeBase(commodities=commodities.values())
+    code_attrs = ("code", "dot_code", "trimmed_code", "trimmed_dot_code")
+
+    for commodity in commodities.values():
+        for attr in code_attrs:
+            code = getattr(commodity, attr)
+            sanitized_code = base._get_sanitized_code(code)
+            assert sanitized_code == commodity.code
+
+
+def test_commodity_tree_base_get_commodity(commodities):
+    base = CommodityTreeBase(commodities=commodities.values())
+    suffixes = (None, "10", "80")
+    versions = (None, 0, 1, 2)
+
+    for commodity in commodities.values():
+        for suffix in suffixes:
+            for version in versions:
+                result = base.get_commodity(
+                    commodity.code, suffix=suffix, version=version
+                )
+                suffix = suffix or SUFFIX_DECLARABLE
+                version = version or commodity.current_version
+
+                a = result == commodity
+                b = suffix == commodity.suffix and version == commodity.version
+
+                if a != b:
+                    print("meh")
+
+                assert a == b
 
 
 def test_collection_get_commodity(collection_full, commodities):

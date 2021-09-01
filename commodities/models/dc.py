@@ -226,7 +226,7 @@ class CommodityTreeBase(BaseModel):
         The method supports search by code only:
         - the suffix will default to '80';
         - the version will default to the current version of the related GoodsNomenclature object;
-        - the version_group_id argument not figure in the search if it is not specified.
+        - the version_group_id argument will not figure in the search if it is not specified.
         """
         code = self._get_sanitized_code(code)
         suffix = suffix or SUFFIX_DECLARABLE
