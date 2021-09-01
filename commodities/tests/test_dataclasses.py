@@ -1,9 +1,11 @@
+import re
 from datetime import date
 from datetime import timedelta
 
 import pytest
 
 from commodities.models.dc import CommodityChange
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from conftest import not_raises
 
@@ -30,55 +32,145 @@ def verify_snapshot_members(collection, snapshot, excluded_date_ranges):
         assert commodity in snapshot.commodities
 
 
-def test_commodity_dot_code(collection_full):
-    c = collection_full.get_commodity("9999")
-    assert c.dot_code == "9999.00.00.00"
+def test_commodity_code(commodities):
+    for commodity in commodities.values():
+        assert commodity.code == commodity.obj.item_id
 
 
-def test_commodity_trimmed_code(collection_full):
-    c_9999 = collection_full.get_commodity("9999")
-    c_999920 = collection_full.get_commodity("999920")
-    c_9999200010 = collection_full.get_commodity("9999200010")
+def test_commodity_dot_code(commodities):
+    for commodity in commodities.values():
+        code = commodity.code
+        dot_code = commodity.dot_code
 
-    assert c_9999.trimmed_code == "9999"
-    assert c_999920.trimmed_code == "999920"
-    assert c_9999200010.trimmed_code == c_9999200010.code
-
-
-def test_commodity_trimmed_dot_code(collection_full):
-    c_999920 = collection_full.get_commodity("999920")
-    c_9999200010 = collection_full.get_commodity("9999200010")
-
-    assert c_999920.trimmed_dot_code == "9999.20"
-    assert c_9999200010.trimmed_dot_code == c_9999200010.dot_code
+        assert len(dot_code) == 13
+        assert dot_code.count(".") == 3
+        assert dot_code.replace(".", "") == code
 
 
-def test_commodity_is_chapter(collection_full):
-    c_99 = collection_full.get_commodity("99")
-    c_9999 = collection_full.get_commodity("9999")
+def test_commodity_trimmed_code(commodities):
+    for commodity in commodities.values():
+        trimmed_code = commodity.trimmed_code
+        code = commodity.code
+        tail = code.replace(trimmed_code, "")
 
-    assert c_99.is_chapter is True
-    assert c_9999.is_chapter is False
-
-
-def test_commodity_is_heading(collection_full):
-    c_99 = collection_full.get_commodity("99")
-    c_9999 = collection_full.get_commodity("9999")
-    c_999910 = collection_full.get_commodity("999910")
-
-    assert c_99.is_heading is False
-    assert c_9999.is_heading is True
-    assert c_999910.is_heading is False
+        assert len(trimmed_code) >= 4
+        assert tail.count("0") == len(tail)
+        assert len(tail) % 2 == 0
 
 
-def test_commodity_is_subheading(collection_full):
-    c_9999 = collection_full.get_commodity("9999")
-    c_999910 = collection_full.get_commodity("999910")
-    c_9999200010 = collection_full.get_commodity("9999200010")
+def test_commodity_trimmed_dot_code(commodities):
+    for commodity in commodities.values():
+        trimmed_dot_code = commodity.trimmed_dot_code
+        dot_code = commodity.dot_code
+        tail = dot_code.replace(trimmed_dot_code, "")
 
-    assert c_9999.is_subheading is False
-    assert c_999910.is_subheading is True
-    assert c_9999200010.is_subheading is False
+        assert len(trimmed_dot_code) >= 4
+        assert tail.count("0") + tail.count(".") == len(tail)
+        assert len(tail) % 3 == 0
+
+
+def test_commodity_code_levels(commodities):
+    for commodity in commodities.values():
+        assert len(commodity.chapter) == 2
+        assert len(commodity.heading) == 4
+        assert len(commodity.subheading) == 6
+        assert len(commodity.cn_subheading) == 8
+        assert len(commodity.code) == 10
+
+
+def test_commodity_is_chapter(commodities):
+    for commodity in commodities.values():
+        code = commodity.code
+        n = len(code.replace("00", ""))
+        assert commodity.is_chapter == (n == 2)
+
+
+def test_commodity_is_heading(commodities):
+    for commodity in commodities.values():
+        code = commodity.trimmed_dot_code
+
+        m = len(code[2:4].replace("00", ""))
+        n = len(code[4:].replace(".00", ""))
+
+        is_heading = m != 0 and n == 0
+        assert commodity.is_heading == is_heading
+
+
+def test_commodity_is_subheading(commodities):
+    for commodity in commodities.values():
+        code = commodity.trimmed_dot_code
+
+        m = len(code[4:].replace(".00", "").replace(".", ""))
+        n = len(code[7:].replace(".00", "").replace(".", ""))
+
+        is_subheading = m != 0 and n == 0
+        assert commodity.is_subheading == is_subheading
+
+
+def test_commodity_is_cn_subheading(commodities):
+    for commodity in commodities.values():
+        code = commodity.trimmed_dot_code
+
+        m = len(code[7:].replace(".00", "").replace(".", ""))
+        n = len(code[10:].replace(".00", "").replace(".", ""))
+
+        is_cn_subheading = m != 0 and n == 0
+        assert commodity.is_cn_subheading == is_cn_subheading
+
+
+def test_commodity_is_taric_subheading(commodities):
+    for commodity in commodities.values():
+        code = commodity.trimmed_dot_code
+
+        m = len(code[7:].replace(".00", "").replace(".", ""))
+        n = len(code[10:].replace(".00", "").replace(".", ""))
+
+        is_taric_subheading = m != 0 and n != 0
+        assert commodity.is_taric_subheading == is_taric_subheading
+
+
+def test_commodity_suffix(commodities):
+    used_conftest_suffixes = ("10", "80")
+
+    for commodity in commodities.values():
+        assert len(commodity.suffix) == 2
+        assert commodity.suffix == commodity.obj.suffix
+        assert commodity.suffix in used_conftest_suffixes
+
+
+def test_commodity_dates(commodities):
+    for commodity in commodities.values():
+        date_range = TaricDateRange(
+            commodity.start_date,
+            commodity.end_date,
+        )
+
+        assert date_range == commodity.obj.valid_between
+
+
+def test_commodity_get_indent(commodities):
+    for commodity in commodities.values():
+        a = commodity.indent is not None
+        b = commodity.get_indent() == commodity.indent
+
+        assert a == b
+
+
+def test_commodity_identifier(commodities):
+    re_code = re.compile(r"([0-9\.]{13})-([1-8]{1}0)-([0-9]{1,2})/([0-9]{1})")
+
+    for commodity in commodities.values():
+        with not_raises(StopIteration):
+            match = next(re_code.finditer(commodity.identifier))
+            groups = match.groups()
+
+            assert len(groups) == 4
+            code, suffix, indent, version = match.groups()
+
+            assert code == commodity.dot_code
+            assert suffix == commodity.suffix
+            assert indent == str(commodity.get_indent())
+            assert version == str(commodity.version)
 
 
 def test_collection_get_commodity(collection_full, commodities):

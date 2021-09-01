@@ -31,7 +31,10 @@ def copy_commodity(commodity: Commodity, **kwargs) -> Commodity:
 
 
 def create_commodity(
-    code: str, suffix: str, indent: int, validity: TaricDateRange
+    code: str,
+    suffix: str,
+    indent: int,
+    validity: TaricDateRange,
 ) -> Commodity:
     item_id = code.replace(".", "")
 
@@ -45,7 +48,8 @@ def create_commodity(
 
 
 def create_collection(
-    commodities: List[Commodity], keys: List[str] = None
+    commodities: List[Commodity],
+    keys: List[str] = None,
 ) -> CommodityCollection:
     keys = keys or commodities.keys()
     members = [commodities[key] for key in keys]

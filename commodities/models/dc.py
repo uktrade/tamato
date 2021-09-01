@@ -126,7 +126,7 @@ class Commodity(TrackedModelWrapper):
     @property
     def is_heading(self) -> bool:
         """Returns true if the commodity code represents a HS heading."""
-        return self.trimmed_code.rstrip("0") == self.heading
+        return self.trimmed_code == self.heading and not self.is_chapter
 
     @property
     def is_subheading(self) -> bool:
@@ -428,27 +428,37 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         return len(self.get_children(commodity)) == 0
 
     def compare_parents(
-        self, commodity: Commodity, snapshot: "CommodityTreeSnapshot"
+        self,
+        commodity: Commodity,
+        snapshot: "CommodityTreeSnapshot",
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.PARENTS)
 
     def compare_siblings(
-        self, commodity: Commodity, snapshot: "CommodityTreeSnapshot"
+        self,
+        commodity: Commodity,
+        snapshot: "CommodityTreeSnapshot",
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.SIBLINGS)
 
     def compare_children(
-        self, commodity: Commodity, snapshot: "CommodityTreeSnapshot"
+        self,
+        commodity: Commodity,
+        snapshot: "CommodityTreeSnapshot",
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.CHILDREN)
 
     def compare_ancestors(
-        self, commodity: Commodity, snapshot: "CommodityTreeSnapshot"
+        self,
+        commodity: Commodity,
+        snapshot: "CommodityTreeSnapshot",
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.ANCESTORS)
 
     def compare_descendants(
-        self, commodity: Commodity, snapshot: "CommodityTreeSnapshot"
+        self,
+        commodity: Commodity,
+        snapshot: "CommodityTreeSnapshot",
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.DESCENDANTS)
 
@@ -644,7 +654,8 @@ class CommodityCollection(CommodityTreeBase):
             self.commodities.append(change.candidate)
 
     def get_calendar_clock_snapshot(
-        self, snapshot_date: date = None
+        self,
+        snapshot_date: date = None,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain calendar date.
@@ -668,7 +679,8 @@ class CommodityCollection(CommodityTreeBase):
         )
 
     def get_transaction_clock_snapshot(
-        self, transaction_id: int = None
+        self,
+        transaction_id: int = None,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain transaction (based on
@@ -784,11 +796,13 @@ class CommodityChange(BaseModel):
         """
         if self.candidate is not None:
             candidate = self.collection.get_commodity(
-                self.candidate.code, self.candidate.suffix
+                self.candidate.code,
+                self.candidate.suffix,
             )
         if self.current is not None:
             current = self.collection.get_commodity(
-                self.current.code, self.current.suffix
+                self.current.code,
+                self.current.suffix,
             )
 
         if self.update_type == UpdateType.CREATE:
@@ -986,9 +1000,9 @@ class CommodityChange(BaseModel):
         """
         Preempt business rule violations related to changes in hierarchy.
 
-        NOTE: There are several reasons why we can't use ME32.validate directly here,
+        NOTE: There are several reasons why we can't use ME32 directly here,
         even if we are willing to sacrifice performance:
-        - ME32 naturally has no ability to preview the "after" snapshot;
+        - ME32 has no ability to preview the "after" snapshot;
           this is the only business rule where this is a fatal problem
           as here we need to assess business rule violations
           in the context of related nodes in a changing hierarchy
@@ -999,19 +1013,18 @@ class CommodityChange(BaseModel):
           when we validate a workbasket with transactions reflecting:
           a) commodity changes (e.g. captured from the selective xml importer)
           b) the side effects of these changes in terms of
-          updates to, or deletions of, related measures or footnote associations.
+          updates/deletions of related measures or footnote associations.
 
         TODO: Refactor ME32 to consolidate the two use-case scenarios.
         """
 
         def _get_measure_key(m: Measure) -> str:
             """
-            Returns a fingerprint reflecting the values of a series of fields
-            for the measure.
+            Returns a fingerprint for a measure based on select field values.
 
-            Any other measure with the same fingerprint is a candidate for a
-            clashing measure in the context of ME32, and what remains is to test
-            for a validities overlap.
+            Any other measure with the same fingerprint can trigger a violation
+            of ME32 with respect to this measure if the validity spans of the
+            two measures overlap as well.
             """
             return (
                 f"{m.measure_type}."
@@ -1030,8 +1043,11 @@ class CommodityChange(BaseModel):
             Algorithm:
             1. Sort the two measures on start_date
             2a. If the earlier measure has no end date, there is an overlap
-            2b. If the earlier measure's end date on or after later's start date,
-                there is an overlap
+            2b. If the earlier measure's end date is on or after,
+                the later measure start date, there is an overlap
+
+            NOTE: If the two measures also have the same "fingerprint"
+            (see _get_measure_key() above), this will violate ME32.
             """
             earlier, later = sorted((m1, m2), key=lambda x: x.valid_between.lower)
 
@@ -1106,8 +1122,7 @@ class CommodityChange(BaseModel):
             )
 
     def _handle_validation_issue(self, msg: str) -> None:
-        """Logs a warn message or raises an error depending on validation
-        appraoch."""
+        """Logs a warning message or raises an error."""
         if self.ignore_validation_rules is True:
             logger.warn(msg)
         else:
@@ -1134,7 +1149,7 @@ class CommodityCollectionLoader:
         """
         if len(prefix) < 2:
             raise ValueError(
-                "The minimum prefix length is 2 characters, which denotes an HS chapter."
+                "The minimum prefix length is 2 characters, which denotes an HS chapter.",
             )
 
         self.prefix = prefix
