@@ -259,14 +259,14 @@ def test_collection_get_transaction_clock_snapshot(collection_full):
     transaction_ids = sorted(
         [commodity.obj.transaction.id for commodity in collection_full.commodities],
     )
+    commodities = collection_full.commodities[::-1]
 
     for i, transaction_id in enumerate(transaction_ids):
         snapshot = collection_full.get_transaction_clock_snapshot(
             transaction_id=transaction_id,
         )
 
-        commodities = collection_full.commodities[: i + 1]
-        assert snapshot.commodities == commodities
+        assert snapshot.commodities[::-1] == commodities[: i + 1]
 
     snapshot = collection_full.get_transaction_clock_snapshot()
 
@@ -311,13 +311,13 @@ def test_collection_update_create(collection_basic, commodities):
     assert commodity in group.commodities
 
 
-def test_collection_update_update(collection_basic):
+def test_collection_update_update(collection_basic, transaction_pool):
     group = collection_basic.clone()
 
     code = "9999.20"
     suffix = "20"
     current = group.get_commodity(code)
-    candidate = copy_commodity(current, suffix=suffix)
+    candidate = copy_commodity(current, transaction_pool, suffix=suffix)
 
     updates = [
         CommodityChange(
@@ -525,9 +525,9 @@ def test_change_invalid_create_no_comodity(collection_basic):
         )
 
 
-def test_change_invalid_create_clash(collection_basic):
+def test_change_invalid_create_clash(collection_basic, transaction_pool):
     current = collection_basic.get_commodity("9999.20")
-    commodity = copy_commodity(current, indent=current.indent + 1)
+    commodity = copy_commodity(current, transaction_pool, indent=current.indent + 1)
 
     with pytest.raises(ValueError):
         CommodityChange(
@@ -537,9 +537,9 @@ def test_change_invalid_create_clash(collection_basic):
         )
 
 
-def test_change_valid_update(collection_basic):
+def test_change_valid_update(collection_basic, transaction_pool):
     current = collection_basic.get_commodity("9999.20")
-    commodity = copy_commodity(current, suffix="20")
+    commodity = copy_commodity(current, transaction_pool, suffix="20")
 
     with not_raises(ValueError):
         CommodityChange(
@@ -550,11 +550,9 @@ def test_change_valid_update(collection_basic):
         )
 
 
-def test_change_invalid_update_no_current(collection_basic):
-    commodity = copy_commodity(
-        collection_basic.get_commodity("9999.20"),
-        suffix="20",
-    )
+def test_change_invalid_update_no_current(collection_basic, transaction_pool):
+    current = collection_basic.get_commodity("9999.20")
+    commodity = copy_commodity(current, transaction_pool, suffix="20")
 
     with pytest.raises(ValueError):
         CommodityChange(
@@ -564,9 +562,9 @@ def test_change_invalid_update_no_current(collection_basic):
         )
 
 
-def test_change_invalid_update_no_change(collection_basic):
+def test_change_invalid_update_no_change(collection_basic, transaction_pool):
     current = collection_basic.get_commodity("9999.20")
-    commodity = copy_commodity(current)
+    commodity = copy_commodity(current, transaction_pool)
 
     with pytest.raises(ValueError):
         CommodityChange(
@@ -618,14 +616,18 @@ def test_snapshot_diff_create(collection_basic, commodities):
     assert snapshot_diff.diff == [candidate]
 
 
-def test_snapshot_diff_update(collection_basic):
+def test_snapshot_diff_update(collection_basic, transaction_pool):
     collection = collection_basic.clone()
 
     parent = collection.get_commodity("9999")
     sibling = collection.get_commodity("9999.10")
 
     current = collection.get_commodity("9999.20")
-    candidate = copy_commodity(current, indent=current.get_indent() + 1)
+    candidate = copy_commodity(
+        current,
+        transaction_pool,
+        indent=current.get_indent() + 1,
+    )
 
     updates = [
         CommodityChange(

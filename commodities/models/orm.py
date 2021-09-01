@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Set
 
 from django.db import models
@@ -103,9 +104,17 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
     @property
     def dependent_measures(self):
-        return self.measures.model.objects.filter(
-            goods_nomenclature__sid=self.sid,
-        ).approved_up_to_transaction(self.transaction)
+        currently_effective_range = TaricDateRange(
+            lower=date.today(),
+        )
+
+        return (
+            self.measures.with_effective_valid_between()
+            .filter(
+                db_effective_valid_between__overlap=currently_effective_range,
+            )
+            .approved_up_to_transaction(self.transaction)
+        )
 
     def in_use(self):
         return self.dependent_measures.exists()
@@ -400,7 +409,11 @@ class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
     record_code = "400"
     subrecord_code = "20"
 
-    goods_nomenclature = models.ForeignKey(GoodsNomenclature, on_delete=models.PROTECT)
+    goods_nomenclature = models.ForeignKey(
+        GoodsNomenclature,
+        on_delete=models.PROTECT,
+        related_name="footnote_associations",
+    )
     associated_footnote = models.ForeignKey(
         "footnotes.Footnote",
         on_delete=models.PROTECT,

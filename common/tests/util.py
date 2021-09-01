@@ -290,6 +290,10 @@ class Dates:
             relativedelta(months=-1, days=+14),
             relativedelta(days=+14),
         ),
+        "overlap_normal_same_year": (
+            relativedelta(days=+15),
+            relativedelta(days=+14, months=+1),
+        ),
         "overlap_big": (relativedelta(years=+1), relativedelta(years=+3, days=+2)),
         "after_big": (
             relativedelta(years=+3, months=+1),

@@ -66,7 +66,10 @@ class TrackedModelWrapper(BaseModel):
         This method will return the preferred key name
         where it has been specified, otherwise the primary key name.
         """
-        key = TRACKEDMODEL_IDENTIFIER_KEYS.get(self.identifier)
+        app_name = self.obj._meta.app_config.verbose_name
+        model_name = self.model.__name__
+        identifier = f"{app_name}.{model_name}"
+        key = TRACKEDMODEL_IDENTIFIER_KEYS.get(identifier)
 
         if key is None:
             model_field_names = self.obj._meta.fields

@@ -10,10 +10,10 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from django.core.exceptions import ValidationError
 from django.db.models import Q
 
 from commodities import business_rules as cbr
+from common.business_rules import BusinessRuleViolation
 from common.models.meta.base import BaseModel
 from common.models.meta.wrappers import TrackedModelWrapper
 from common.models.records import TrackedModel
@@ -706,7 +706,7 @@ class CommodityCollection(CommodityTreeBase):
                     transaction_id
                     for commodity in self.commodities
                     for transaction_id in commodity._get_transaction_ids()
-                ]
+                ],
             )
 
         return CommodityTreeSnapshot(
@@ -791,6 +791,7 @@ class CommodityChange(BaseModel):
     def __post_init__(self) -> None:
         """Triggers validation on the fields of the model upon instantiation."""
         self.validate()
+        self.handle_side_effects()
         super().__post_init__()
 
     def validate(self) -> None:
@@ -885,7 +886,7 @@ class CommodityChange(BaseModel):
         - NIG34: Checks whether the good is in "use" but does not provide related measures.
         - NIG35: Not used as it is redundant in this context after NIG34
         """
-        good = self.candidate.obj
+        good = self.current.obj
 
         # NIG34 / NIG35
         for measure in good.dependent_measures:
@@ -894,7 +895,7 @@ class CommodityChange(BaseModel):
         # No BR: delete related footnote associations
         qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
         for association in qs.filter(
-            goods_nomenclature__item_id=self.candidate.code,
+            goods_nomenclature__item_id=self.current.code,
         ):
             self._add_pending_delete(association)
 
@@ -903,15 +904,8 @@ class CommodityChange(BaseModel):
         Preempt business rule violations due to commodity code updates.
 
         NOTE:
-        1. There are cases where underlying business rule logic
-        could not be used for this use-case
-        and where a corresponding refactor
-        of the respective business rule or its parent class
-        would be out-of-scope for this ticket:
-        - NIG30: Checks whether the good is in "use" but does not provide related measures.
-
-        2. NIG35 is not used as it is redundant in this context after NIG34
-        3. For some rules invoked from a measure's point of view (esp. ME7)
+        1. NIG35 is not used as it is redundant in this context after NIG34
+        2. For some rules invoked from a measure's point of view (esp. ME7)
           there is no need to strict need to invoke them
           when we already know the changing commodity and whether it violates a condition;
           however, for consistency we still apply these rules.
@@ -919,13 +913,15 @@ class CommodityChange(BaseModel):
 
         good = self.candidate.obj
 
-        qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
-        footnote_associations = qs.filter(goods_nomenclature=good)
+        footnote_associations = good.footnote_associations.all()
         measures = good.dependent_measures
 
         # NIG30 / NIG31
-        for measure in cbr.NIG30().effective_matching_measures(good):
-            self._handle_validity_conflicts(measure)
+        try:
+            cbr.NIG30().validate(good)
+        except BusinessRuleViolation:
+            for measure in measures:
+                self._handle_validity_conflicts(measure)
 
         # NIG22: Invoked from the POV of a footnote association
         # here, find all related associations and invoke the BR
@@ -933,7 +929,7 @@ class CommodityChange(BaseModel):
         for association in footnote_associations:
             try:
                 cbr.NIG22().validate(association)
-            except ValidationError:
+            except BusinessRuleViolation:
                 self._handle_validity_conflicts(association)
 
         # ME7: Invoked from the POV of a measure
@@ -943,7 +939,7 @@ class CommodityChange(BaseModel):
             for measure in measures:
                 try:
                     mbr.ME7().validate(measure)
-                except ValidationError:
+                except BusinessRuleViolation:
                     self._add_pending_delete(measure)
 
         # ME88: Invoked from the POV of a measure
@@ -953,7 +949,7 @@ class CommodityChange(BaseModel):
             for measure in measures:
                 try:
                     mbr.ME88().validate(measure)
-                except ValidationError:
+                except BusinessRuleViolation:
                     self._add_pending_delete(measure)
 
         # ME71 / NIG18: Invoked from the POV-s of footnote associations
@@ -964,39 +960,50 @@ class CommodityChange(BaseModel):
             for association in footnote_associations:
                 try:
                     cbr.NIG18().validate(measure)
-                except ValidationError:
+                except BusinessRuleViolation:
                     self._add_pending_delete(association)
 
             qs = FootnoteAssociationMeasure.objects.latest_approved()
             for measure in measures:
                 for association in qs.filter(footnoted_measure=measure):
-                    mbr.ME71().validate(association)
+                    try:
+                        mbr.ME71().validate(association)
+                    except BusinessRuleViolation:
+                        self._add_pending_delete(association)
 
     def _handle_validity_conflicts(self, obj: TrackedModel) -> None:
         """Handle conflicts related to validity span rule violations."""
         good = self.candidate.obj
 
-        if (
-            good.valid_between.lower > obj.valid_between.upper
-            or good.valid_between.upper < obj.valid_between.lower
+        gvb = good.valid_between
+        ovb = obj.valid_between
+
+        # If obj validity does not overlap the good validity at all,
+        # mark the object for deletion
+        if (ovb.upper and gvb.lower > ovb.upper) or (
+            gvb.upper and gvb.upper < ovb.lower
         ):
             self._add_pending_delete(obj)
             return
 
+        # Determine whether the obj validity is trimmed
+        # from start date, end date, or both
         start_date = None
         end_date = None
 
-        if good.valid_between.upper < obj.valid_between.upper:
-            end_date = good.valid_between.lower
-        if good.valid_between.lower > obj.valid_between.lower:
-            start_date = good.valid_between.upper
+        if gvb.upper and ovb.upper and gvb.upper < ovb.upper:
+            end_date = gvb.lower
+        if gvb.lower > ovb.lower:
+            start_date = gvb.upper
 
+        # Circuit breaker for cases where the obj is spanned by the good
         if start_date is None and end_date is None:
             return
 
+        # Mark the object for update with trimmed validity
         valid_between = TaricDateRange(
-            start_date or obj.valid_between.lower,
-            end_date or obj.valid_between.upper,
+            start_date or ovb.lower,
+            end_date or ovb.upper,
         )
 
         attrs = dict(
@@ -1065,19 +1072,19 @@ class CommodityChange(BaseModel):
                 or earlier.valid_between.upper >= later.valid_between.lower
             )
 
-        good = self.candidate.obj
+        commodity = self.candidate or self.current
+        good = commodity.obj
+        measures = {_get_measure_key(m): m for m in good.dependent_measures}
 
         clone = self.collection.clone()
         before = clone.current_snapshot
         clone.update([self])
         after = clone.current_snapshot
 
-        measures = {_get_measure_key(m): m for m in good.dependent_measures}
-
         # Check if the changing commodity has ME32 clashes in its new hierarchy
         for attr in ["get_ancestors", "get_descendants"]:
-            for relative in getattr(after, attr)(self.candidate):
-                related_measures = relative.dependent_measures
+            for relative in getattr(after, attr)(commodity):
+                related_measures = relative.obj.dependent_measures
 
                 for related_measure in related_measures:
                     key = _get_measure_key(related_measure)
@@ -1096,7 +1103,7 @@ class CommodityChange(BaseModel):
             if len(before.compare_parents(child, after).diff) != 0:
                 # ...then check if before-child has ME32 clashes with new ancestors
                 for ancestor in after.get_ancestors(child):
-                    ancestor_measures = ancestor.dependent_measures
+                    ancestor_measures = ancestor.obj.dependent_measures
 
                     for ancestor_measure in ancestor_measures:
                         key = _get_measure_key(ancestor_measure)
@@ -1110,7 +1117,7 @@ class CommodityChange(BaseModel):
 
     def _add_pending_delete(self, obj: TrackedModel) -> None:
         """Add a pending related object delete operation to side effects."""
-        key = TrackedModel(obj=obj).identifier
+        key = TrackedModelWrapper(obj=obj).identifier
 
         self.side_effects[key] = SideEffect(
             obj=obj,
@@ -1119,7 +1126,7 @@ class CommodityChange(BaseModel):
 
     def _add_pending_update(self, obj: TrackedModel, attrs: Dict[Any, Any]) -> None:
         """Add a pending related object update operation to side effects."""
-        key = TrackedModel(obj=obj).identifier
+        key = TrackedModelWrapper(obj=obj).identifier
 
         try:
             self.side_effects[key].attrs.update(attrs)
