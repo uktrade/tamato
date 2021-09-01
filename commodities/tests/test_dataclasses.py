@@ -7,6 +7,7 @@ import pytest
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityTreeBase
 from commodities.models.static import SUFFIX_DECLARABLE
+from commodities.models.static import ClockType
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from conftest import not_raises
@@ -159,11 +160,11 @@ def test_commodity_get_indent(commodities):
 
 
 def test_commodity_identifier(commodities):
-    re_code = re.compile(r"([0-9\.]{13})-([1-8]{1}0)-([0-9]{1,2})/([0-9]{1})")
+    re_identifier = re.compile(r"([0-9\.]{13})-([1-8]{1}0)-([0-9]{1,2})/([0-9]{1})")
 
     for commodity in commodities.values():
         with not_raises(StopIteration):
-            match = next(re_code.finditer(commodity.identifier))
+            match = next(re_identifier.finditer(commodity.identifier))
             groups = match.groups()
 
             assert len(groups) == 4
@@ -195,16 +196,15 @@ def test_commodity_tree_base_get_commodity(commodities):
         for suffix in suffixes:
             for version in versions:
                 result = base.get_commodity(
-                    commodity.code, suffix=suffix, version=version
+                    commodity.code,
+                    suffix=suffix,
+                    version=version,
                 )
                 suffix = suffix or SUFFIX_DECLARABLE
                 version = version or commodity.current_version
 
                 a = result == commodity
                 b = suffix == commodity.suffix and version == commodity.version
-
-                if a != b:
-                    print("meh")
 
                 assert a == b
 
@@ -343,7 +343,42 @@ def test_snapshot_get_children_suffixes_indents(collection_suffixes_indents):
     assert children == [c_991010_80, c_991020]
 
 
-def test_snapshot_commodity_is_declarable(collection_basic):
+def test_snapshot_get_ancestors(collection_full):
+    snapshot = collection_full.current_snapshot
+
+    c_99 = snapshot.get_commodity("99")
+    c_9910 = snapshot.get_commodity("9910")
+    c_9999 = snapshot.get_commodity("9999")
+    c_9999200000 = snapshot.get_commodity("9999.20.00.00")
+    c_9999200010 = snapshot.get_commodity("9999.20.00.10")
+
+    assert snapshot.get_ancestors(c_99) == []
+    assert snapshot.get_ancestors(c_9999) == [c_99, c_9910]
+    assert snapshot.get_ancestors(c_9999200010) == [
+        c_99,
+        c_9910,
+        c_9999,
+        c_9999200000,
+    ]
+
+
+def test_snapshot_get_descendants(collection_full):
+    snapshot = collection_full.current_snapshot
+    commodities = snapshot.commodities
+
+    for commodity in commodities:
+        ancestors = snapshot.get_ancestors(commodity)
+        non_ancestors = [
+            commodity_ for commodity_ in commodities if commodity_ not in ancestors
+        ]
+
+        for ancestor in ancestors:
+            assert commodity in snapshot.get_descendants(ancestor)
+        for commodity_ in non_ancestors:
+            assert commodity not in snapshot.get_descendants(commodity_)
+
+
+def test_snapshot_is_declarable(collection_basic):
     snapshot = collection_basic.current_snapshot
 
     c_9999 = snapshot.get_commodity("9999")
@@ -351,6 +386,48 @@ def test_snapshot_commodity_is_declarable(collection_basic):
 
     assert snapshot.is_declarable(c_9999) is False
     assert snapshot.is_declarable(c_999910) is True
+
+
+def test_snapshot_date(collection_basic):
+    snapshot = collection_basic.get_calendar_clock_snapshot()
+    assert snapshot.snapshot_date == snapshot.moment
+    snapshot = collection_basic.get_transaction_clock_snapshot()
+    assert snapshot.snapshot_date is None
+
+
+def test_snapshot_transaction_id(collection_basic):
+    snapshot = collection_basic.get_calendar_clock_snapshot()
+    assert snapshot.snapshot_transaction_id is None
+    snapshot = collection_basic.get_transaction_clock_snapshot()
+    assert snapshot.snapshot_transaction_id == snapshot.moment
+
+
+def test_snapshot_identifier(collection_basic):
+    res = {
+        ClockType.CALENDAR: re.compile(
+            r"(20[0-9]{2}-[0-9]{2}-[0-9]{2}).([a-f0-9]{32})"
+        ),
+        ClockType.TRANSACTION: re.compile(r"(tx_[0-9]{,7}).([a-f0-9]{32})"),
+    }
+
+    snapshots = [
+        collection_basic.get_calendar_clock_snapshot(),
+        collection_basic.get_transaction_clock_snapshot(),
+    ]
+
+    for snapshot in snapshots:
+        with not_raises(StopIteration):
+            match = next(res[snapshot.clock_type].finditer(snapshot.identifier))
+            groups = match.groups()
+
+            assert len(groups) == 2
+
+            if snapshot.clock_type == ClockType.CALENDAR:
+                assert groups[0] == str(snapshot.moment)
+            else:
+                assert groups[0] == f"tx_{snapshot.moment}"
+
+            assert groups[1] == snapshot.hash
 
 
 def test_change_valid_create(collection_basic, commodities):

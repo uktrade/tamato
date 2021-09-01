@@ -398,7 +398,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             ancestors.append(parent)
             current = parent
 
-        return ancestors
+        return ancestors[::-1]
 
     def get_descendants(self, commodity: Commodity) -> List[Commodity]:
         """Returns all descendants of a commodity in the snapshot tree."""
@@ -485,8 +485,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     @property
     def identifier(self) -> str:
-        """Returns a unique identifier for the snapshot based on moment and
-        hash."""
+        """Returns a unique identifier for the snapshot."""
         prefix = "tx_" if self.clock_type == ClockType.TRANSACTION else ""
         return f"{prefix}{self.moment}.{self.hash}"
 
@@ -687,8 +686,9 @@ class CommodityCollection(CommodityTreeBase):
         transaction id).
 
         If the optional transaction_id argument is not provided, this method
-        will return the snapshot as of the most recent transaction in the
-        database.
+        will return the snapshot as of the most recent transaction in the db and
+        will assign as the snapshot moment the highest transaction id across all
+        snapshot commodities.
         """
         today = date.today()
 
@@ -699,6 +699,15 @@ class CommodityCollection(CommodityTreeBase):
             if commodity.start_date <= today
             if commodity.is_current_as_of_transaction_id(transaction_id)
         ]
+
+        if transaction_id is None:
+            transaction_id = max(
+                [
+                    transaction_id
+                    for commodity in self.commodities
+                    for transaction_id in commodity._get_transaction_ids()
+                ]
+            )
 
         return CommodityTreeSnapshot(
             commodities=commodities,
