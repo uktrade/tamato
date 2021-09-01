@@ -4,3 +4,4 @@ applications:
     buildpacks:
       - https://github.com/cloudfoundry/nodejs-buildpack.git#v1.7.56
       - python_buildpack
+    disk_quota: 8192 M
