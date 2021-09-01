@@ -26,9 +26,10 @@ def test_footnote_update(new_data, expected_valid, use_update_form):
     ("new_data", "expected_valid"),
     (
         ({}, True),
-        ({"validity_start_0": lambda d: d + 1}, True),
-        ({"validity_start_0": lambda d: d - 1}, True),
-        ({"validity_start_1": lambda m: m + 1}, True),
+        # conditional to avoid false errors at end of month etc.
+        ({"validity_start_0": lambda d: d + 1 if d < 28 else 1}, True),
+        ({"validity_start_0": lambda d: d - 1 if d > 1 else 28}, True),
+        ({"validity_start_1": lambda m: m + 1 if m < 12 else 1}, True),
         ({"validity_start_2": lambda y: y + 1}, True),
         ({"description": lambda d: d + "AAA"}, True),
         ({"description": lambda d: ""}, False),
