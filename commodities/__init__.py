@@ -24,7 +24,7 @@ Changes to the commodity tree have two main types of considerations:
     and as such can be caught in the vast majority of cases
     using existing business rule validation logic in TaMaTo
 
-REQUIREMENTS FOR TACKING THE ISSUES
+REQUIREMENTS FOR TACKLING THE ISSUES
 B. In order to handle well commodity tree chanegs in the context of
 the above two main considerations, we need to adopt a new approach that:
 1. Avoids late fails in terms of firing off business rule violations
@@ -53,21 +53,21 @@ The following constructs make the bootstrapping approach possible:
   - the wrapper provides a range of "convenience" methods as additional perks
 
 2. CommodityCollection
-  - this is just a bag of any commodities
-  - included commodities may or may not be effective at the same point in time
-  - the may wrap any version of a good object
+  - this is just a bag of commodities
+    -- included commodities may or may not be effective at the same point in time
+    -- the may wrap any version of a good object
   - commodity changes are applied to this collection construct
 
 3. CommodityTreeSnapshot
   - a collection provides the ability to take "snapshots"
   - a snapshot is a collection of commodities that are in effect
     as of a given moment, and constitute the tree hierarchy as of that moment
-  - a snapshot can be taken based on one of to "clocks", but not both:
+  - a snapshot can be taken based on one of two "clocks", but not both:
     -- a calendar clock (what goods where in effect as of date x)
     -- a transaction clock (what goods where in effect as of transaction x)
     -- see the Tariff Manual for further discussion on calendar vs transaction clocks
-  - a snapshot has a tree hierarchy parent, children, siblings relations
-    as well as mutiple-degree of separation relations such as ancestors and descendants
+  - a snapshot has a tree hierarchy with parent, children and sibling relations
+    as well as traversal-style relations such as ancestors and descendants
 
 4. SnapshotDiff
   - a dedicated construct for evaluating snapshot diffs
@@ -116,8 +116,8 @@ With the above in mind, the intended workflow that TP-803 envisions
   - this is picked up by a separate handler downstream (see scope below)
 
 TP-803 SCOPE
-NOTE: All of this can be viewed simply as a decision engine;
-no action is taken until the pending commodity and related record changes
+All of the above can be viewed simply as a holding bay slash decision engine;
+no action is taken until the pending changes to commodities and related records
 are ultimately applied as transactions in a workbasket downstream.
 This write stage is the the conern of import handlers
 and is implemented as a separate feature (see TP-931).

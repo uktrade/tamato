@@ -265,18 +265,6 @@ class SnapshotDiff(BaseModel):
     the ancestors, parents, siblings, or children of a given commodity
     and find out how they changed between the two snapshots.
 
-    NOTES:
-    1. Calendar vs Transaction Clocks:
-    The tariff database uses at least two "clocks":
-    - the calendar clock, which revolves around validity dates
-    - the transaction clock, which revolves around transaction ids
-
-    A commodity tree snapshot can be taken using
-    either the calendar or transaction clock, but not both.
-    Accordingly the moment field of this dataclass can be one of:
-    - a calendar date (when the type is date)
-    - a transaction id (when the type is int)
-
     2. Use-Case Scenarios for SnapshotDiffs
     There can be a two motivations for getting a diff between snapshots:
     - compare the where a commodity sits in the tree hierarchy
@@ -319,6 +307,18 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     based on the provided collection of commodities.
     See the docs to the __post_init__ method of this dataclass
     for details on the related business logic.
+
+    NOTES:
+    1. Calendar vs Transaction Clocks:
+    The tariff database uses at least two "clocks":
+    - the calendar clock, which revolves around validity dates
+    - the transaction clock, which revolves around transaction ids
+
+    A commodity tree snapshot can be taken using
+    either the calendar or transaction clock, but not both.
+    Accordingly the moment field of this dataclass can be one of:
+    - a calendar date (when the clock type is calendar)
+    - a transaction id (when the clock type is transaction)
 
     For additional context on commodity trees, see the docs for CommodityTree.
     """
