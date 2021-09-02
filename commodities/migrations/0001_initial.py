@@ -170,7 +170,10 @@ class Migration(migrations.Migration):
                 (
                     "path",
                     models.CharField(
-                        max_length=255, primary_key=True, serialize=False, unique=True
+                        max_length=255,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
                     ),
                 ),
                 (

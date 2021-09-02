@@ -310,12 +310,16 @@ class NIG35(BusinessRule):
     # XXX this is redundant - NIG34 will be violated first
 
     def has_violation(self, good):
-        return good.measures.model.objects.filter(
-            goods_nomenclature__sid=good.sid,
-            additional_code__isnull=False,
-        ).approved_up_to_transaction(
-            good.transaction
-        ).exists()
+        return (
+            good.measures.model.objects.filter(
+                goods_nomenclature__sid=good.sid,
+                additional_code__isnull=False,
+            )
+            .approved_up_to_transaction(
+                good.transaction,
+            )
+            .exists()
+        )
 
     def validate(self, good):
         if good.update_type != UpdateType.DELETE:

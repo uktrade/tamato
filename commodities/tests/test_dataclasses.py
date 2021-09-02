@@ -1,3 +1,4 @@
+import contextlib
 import re
 from datetime import date
 from datetime import timedelta
@@ -10,11 +11,27 @@ from commodities.models.static import SUFFIX_DECLARABLE
 from commodities.models.static import ClockType
 from common.util import TaricDateRange
 from common.validators import UpdateType
-from conftest import not_raises
 
 from .conftest import copy_commodity
 
+# from conftest import not_raises
+
+
 pytestmark = pytest.mark.django_db
+
+
+@contextlib.contextmanager
+def not_raises(ExpectedException):
+    """Provides a context manager for tests that need to assert a specific
+    exception is not raised."""
+    try:
+        yield
+
+    except ExpectedException as error:
+        raise AssertionError(f"Raised exception {error} when it should not!")
+
+    except Exception as error:
+        raise AssertionError(f"An unexpected exception {error} raised.")
 
 
 def verify_snapshot_members(collection, snapshot, excluded_date_ranges):

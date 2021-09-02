@@ -108,13 +108,9 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
             lower=date.today(),
         )
 
-        return (
-            self.measures.with_effective_valid_between()
-            .filter(
-                db_effective_valid_between__overlap=currently_effective_range,
-            )
-            .approved_up_to_transaction(self.transaction)
-        )
+        return self.measures.model.objects.filter(
+            goods_nomenclature__sid=self.sid,
+        ).approved_up_to_transaction(self.transaction)
 
     def in_use(self):
         return self.dependent_measures.exists()

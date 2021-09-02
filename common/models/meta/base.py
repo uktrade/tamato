@@ -9,7 +9,6 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import _GenericAlias
-from typing import _UnionGenericAlias
 from typing import get_args
 
 
@@ -116,8 +115,8 @@ class ModelPostProcessor:
                 if isinstance(value, dict):
                     self._post_process_dict(value, args[1], dc_field.name)
 
-        if type(dc_field.type) == _UnionGenericAlias:
-            self._post_process_union(value, args, dc_field.name)
+        # if type(dc_field.type) == _UnionGenericAlias:
+        #     self._post_process_union(value, args, dc_field.name)
 
 
 @dataclass
