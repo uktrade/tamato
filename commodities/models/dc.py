@@ -946,7 +946,7 @@ class CommodityChange(BaseModel):
         # here, find all related measures and invoke the BR
         # (inefficient for this workflow, but consistent use of BR-s)
         if len(self.candidate.trimmed_code) > len(self.current.trimmed_code):
-            for measure in measures:
+            for measure in good.measures.latest_approved().all():
                 try:
                     mbr.ME88().validate(measure)
                 except BusinessRuleViolation:

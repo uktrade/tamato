@@ -1,3 +1,15 @@
+"""
+Includes tests for commodity tree change scenarios outlined in ADR13.
+
+Each scenario will cover at least one of two types of issues:
+1. Guarantee that the tree hierarchy is correctly interpreted after the change
+   - e.g. each comodity has the right parents, children, siblings, etc. post-change
+2. Guarantee correct detection of, and remedy for, the side effects on objects related
+   to the changed commodity as well as its hierarchy pre- and post-change
+   - e.g. any measures or footnote associations that may be caught up in the change
+     in a way that they now incidentally begin to violate business rules
+"""
+
 import pytest
 
 from commodities.models.dc import CommodityChange
@@ -46,7 +58,6 @@ def test_scenario1_add_node_diff(scenario_1: TScenario):
 
 def test_scenario2_delete_node(scenario_2: TScenario, date_ranges):
     """Asserts correct handling of ADR 13, scenario 2."""
-    # TODO: Extend to cover NIG34 and NIG35 for the deleted node
     collection, changes = scenario_2
 
     parent = collection.get_commodity("9999")
@@ -95,7 +106,6 @@ def test_scenario3_orphaned_node(scenario_3: TScenario):
 
 def test_scenario4_change_time_span(scenario_4: TScenario):
     """Asserts correct handling of ADR 13, scenario 4."""
-    # TODO: Extend test to cover NIG22, NIG30, and NIG31 on the updated node
     collection, changes = scenario_4
 
     collection.update(changes)
@@ -132,7 +142,6 @@ def test_scenario4_change_time_span(scenario_4: TScenario):
 
 def test_scenario5_intermediate_suffix(scenario_5: TScenario):
     """Asserts correct handling of ADR 13, scenario 5."""
-    # TODO: Extend to cover ME7 on the new parent with intermediate suffix
     collection, changes = scenario_5
     collection.update(changes)
 
@@ -145,6 +154,8 @@ def test_scenario5_intermediate_suffix(scenario_5: TScenario):
 
     # Assert side-effects captured and BR-s violation pre-empted
     change = changes[1]
+
+    # ME7
     measure = change.candidate.obj.dependent_measures.first()
     validate_captured_side_effect(change, measure, UpdateType.DELETE)
 
@@ -153,14 +164,21 @@ def test_scenario6_increase_indent(scenario_6: TScenario):
     """Asserts correct handling of ADR 13, scenario 6."""
     # TODO: Extend to cover ME32, ME71, ME88, and NIG18
     collection, changes = scenario_6
-
     collection.update(changes)
-    snapshot = collection.current_snapshot
 
-    commodity = collection.get_commodity("9999.20")
+    # Assert expected post-update tree hierarchy
+    snapshot = collection.current_snapshot
+    commodity = collection.get_commodity("9999.20.10")
     parent = snapshot.get_parent(commodity)
 
     assert parent == collection.get_commodity("9999.10")
+
+    # Assert side-effects captured and BR-s violation pre-empted
+    change = changes[0]
+
+    # ME88
+    measure = change.candidate.obj.measures.first()
+    validate_captured_side_effect(change, measure, UpdateType.DELETE)
 
 
 def test_scenario7_increase_indent_orphan_node(scenario_7: TScenario):

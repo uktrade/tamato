@@ -1,3 +1,27 @@
+"""
+Provides fixtures for commodity application tests.
+
+Scenario fixtures in particular reflect the scenarios in ADR13.
+- Each fixture provides the SETUP for the scenario in terms of
+  initial tree state and pending commodity changes
+- The changes are applied by the respective test using the fixture,
+  which results in the END-STATE of the tree, at which point
+  the test the new hierarchy as well as any side effects.
+
+An important note on transaction sequencing in the below fixtures:
+- As we change the commodity tree, we need to detect side effects
+  on related measures, footnote associations, etc.
+- In order to avoid creating duplicate logic in our app,
+  we leverage existing business rules for detecting any side effects
+- This involves a mix of goods-centric business rules (NIG-s)
+  and measure-centric business rules (ME-s)
+- Sometimes, NIG-s will look for measures approved as of a good's transaction
+  and ME-s will look for goods approved as of a mesure's transaction
+- In order to properly configure the fixtures,
+  we use a small transaction pool with transactions in descending order
+  where needed, retaining the ability to add delayed_transactions as well
+"""
+
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -9,6 +33,7 @@ from commodities.models.dc import Commodity
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityCollection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
+from common.models.records import TrackedModel
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.util import TaricDateRange
@@ -23,6 +48,7 @@ TScenario = Tuple[CommodityCollection, List[CommodityChange]]
 def copy_commodity(
     commodity: Commodity, transaction_pool: Iterator[Transaction], **kwargs
 ) -> Commodity:
+    """Returns a copy of a commodity wrapper with modified attributes."""
     meta = commodity.obj._meta
 
     attrs = {
@@ -48,6 +74,7 @@ def create_commodity(
     indent: int,
     validity: TaricDateRange,
 ) -> Commodity:
+    """Returns a new commodity wrapper with the provided attributes."""
     item_id = code.replace(".", "")
 
     transaction = next(transaction_pool)
@@ -66,21 +93,39 @@ def create_collection(
     commodities: List[Commodity],
     keys: List[str] = None,
 ) -> CommodityCollection:
+    """Returns a new CommodityCollection with the selected commodities."""
     keys = keys or commodities.keys()
     members = [commodities[key] for key in keys]
 
     return CommodityCollection(commodities=members)
 
 
+def create_record(
+    transaction_pool: Iterator[Transaction], factory, **kwargs
+) -> TrackedModel:
+    """
+    Returns a new TrackedModel instance.
+
+    See the module-level docs for details on the use of the transaction_pool.
+    """
+    try:
+        transaction = kwargs["transaction"]
+        del kwargs["transaction"]
+    except KeyError:
+        transaction = next(transaction_pool)
+
+    return factory.create(transaction=transaction, **kwargs)
+
+
 def create_dependent_measure(
     commodity: Commodity, transaction_pool: Iterator[Transaction], **kwargs
 ) -> Measure:
+    """Returns a new measure linked to a given good."""
     factory = factories.MeasureFactory
+    measure = create_record(transaction_pool, factory, **kwargs)
 
-    transaction = next(transaction_pool)
+    transaction = measure.transaction
     workbasket = transaction.workbasket
-
-    measure = factory.create(transaction=transaction, **kwargs)
 
     return measure.new_version(
         workbasket=workbasket,
@@ -92,18 +137,23 @@ def create_dependent_measure(
 def create_footnote_association(
     commodity: Commodity, transaction_pool: Iterator[Transaction], **kwargs
 ) -> FootnoteAssociationGoodsNomenclature:
+    """Returns a new footnote association linked to a given good."""
     factory = factories.FootnoteAssociationGoodsNomenclatureFactory
+    association = create_record(transaction_pool, factory, **kwargs)
 
-    transaction = next(transaction_pool)
-    transaction.workbasket
+    transaction = association.transaction
+    workbasket = transaction.workbasket
 
-    return factory.create(
-        transaction=transaction, goods_nomenclature=commodity.obj, **kwargs
+    return association.new_version(
+        workbasket=workbasket,
+        transaction=transaction,
+        goods_nomenclature=commodity.obj,
     )
 
 
 @pytest.fixture
 def workbasket() -> WorkBasket:
+    """Provides a workbasket for use across fixtures."""
     return factories.WorkBasketFactory(
         status=WorkflowStatus.PUBLISHED,
     )
@@ -111,6 +161,11 @@ def workbasket() -> WorkBasket:
 
 @pytest.fixture
 def transaction_pool(workbasket) -> Iterator[Transaction]:
+    """
+    Returns an iterator with transactions in descending order of id.
+
+    See the module-level docs for details on the use of the transaction_pool.
+    """
     factory = factories.TransactionFactory
 
     transactions = [factory.create(workbasket=workbasket) for _ in range(50)][::-1]
@@ -192,6 +247,11 @@ def collection_spanned(commodities_spanned) -> CommodityCollection:
 
 @pytest.fixture
 def scenario_1(commodities) -> TScenario:
+    """
+    Returns the setup for scenario 1 in ADR13.
+
+    See the module-level docs for details on scenario setups.
+    """
     keys = ["9999_80_1", "9999.10_80_2"]
     collection = create_collection(commodities, keys)
 
@@ -208,6 +268,11 @@ def scenario_1(commodities) -> TScenario:
 
 @pytest.fixture
 def scenario_2(collection_basic, transaction_pool) -> TScenario:
+    """
+    Returns the setup for scenario 2 in ADR13.
+
+    See the module-level docs for details on scenario setups.
+    """
     collection = collection_basic.clone()
 
     commodity = collection.get_commodity("9999.20")
@@ -228,6 +293,11 @@ def scenario_2(collection_basic, transaction_pool) -> TScenario:
 
 @pytest.fixture
 def scenario_3(commodities) -> TScenario:
+    """
+    Returns the setup for scenario 3 in ADR13.
+
+    See the module-level docs for details on scenario setups.
+    """
     keys = [
         "9999_80_1",
         "9999.10_80_2",
@@ -249,6 +319,11 @@ def scenario_3(commodities) -> TScenario:
 
 @pytest.fixture
 def scenario_4(collection_basic, date_ranges, transaction_pool) -> TScenario:
+    """
+    Returns the setup for scenario 4 in ADR13.
+
+    See the module-level docs for details on scenario setups.
+    """
     collection = collection_basic.clone()
 
     current = collection.get_commodity("9999.20")
@@ -280,6 +355,11 @@ def scenario_4(collection_basic, date_ranges, transaction_pool) -> TScenario:
 
 @pytest.fixture
 def scenario_5(collection_basic, commodities, transaction_pool) -> TScenario:
+    """
+    Returns the setup for scenario 5 in ADR13.
+
+    See the module-level docs for details on scenario setups.
+    """
     collection = collection_basic.clone()
 
     current = collection.get_commodity("9999.20")
@@ -304,11 +384,33 @@ def scenario_5(collection_basic, commodities, transaction_pool) -> TScenario:
 
 
 @pytest.fixture
-def scenario_6(collection_basic, transaction_pool) -> TScenario:
-    collection = collection_basic.clone()
+def scenario_6(collection_basic, transaction_pool, workbasket) -> TScenario:
+    """
+    Returns the setup for scenario 6 in ADR13.
 
+    See the module-level docs for details on scenario setups.
+    """
+    collection = collection_basic.clone()
     current = collection.get_commodity("9999.20")
-    candidate = copy_commodity(current, transaction_pool, indent=current.indent + 1)
+
+    attrs = dict(indent=current.indent + 1, item_id="9999201000")
+    candidate = copy_commodity(current, transaction_pool, **attrs)
+
+    measure_type = create_record(
+        transaction_pool,
+        factories.MeasureTypeFactory,
+        measure_explosion_level=6,
+    )
+    delayed_transaction = factories.TransactionFactory.create(
+        workbasket=workbasket,
+    )
+    attrs = dict(
+        transaction=delayed_transaction,
+        measure_type=measure_type,
+    )
+    measure = create_dependent_measure(candidate, transaction_pool, **attrs)
+
+    print(measure)
 
     changes = [
         CommodityChange(
@@ -324,6 +426,11 @@ def scenario_6(collection_basic, transaction_pool) -> TScenario:
 
 @pytest.fixture
 def scenario_7(commodities, transaction_pool) -> TScenario:
+    """
+    Returns the setup for scenario 7 in ADR13.
+
+    See the module-level docs for details on scenario setups.
+    """
     keys = [
         "9999_80_1",
         "9999.10_80_2",
@@ -349,6 +456,11 @@ def scenario_7(commodities, transaction_pool) -> TScenario:
 
 @pytest.fixture
 def scenario_8(scenario_7, transaction_pool) -> TScenario:
+    """
+    Returns the setup for scenario 8 in ADR13.
+
+    See the module-level docs for details on scenario setups.
+    """
     collection, changes = scenario_7
     collection.update(changes)
 
