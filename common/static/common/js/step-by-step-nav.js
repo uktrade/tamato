@@ -69,8 +69,7 @@ class StepNav {
     var showall = document.createElement('div');
     showall.className = 'gem-c-step-nav__controls govuk-!-display-none-print';
     showall.innerHTML = '<button aria-expanded="false" class="gem-c-step-nav__button gem-c-step-nav__button--controls js-step-controls-button">' +
-      '<span class="gem-c-step-nav__button-text gem-c-step-nav__button-text--all js-step-controls-button-text">' + this.actions.showAllText + '</span>' +
-      '<span class="gem-c-step-nav__chevron js-step-controls-button-icon">' + this.downChevronSvg + '</span>' +
+      this.actions.showAllText +
       '</button>';
 
     var steps = this.element.querySelector('.gem-c-step-nav__steps');
@@ -96,7 +95,6 @@ class StepNav {
         thisSectionSpan.className = 'govuk-visually-hidden';
 
         showHideSpan.appendChild(showHideSpanText);
-        showHideSpan.appendChild(showHideSpanIcon);
 
         commaSpan.innerHTML = ', ';
         thisSectionSpan.innerHTML = ' this section';
@@ -333,8 +331,7 @@ class StepNav {
     // Find out if the number of is-opens == total number of steps
     var shownStepsIsTotalSteps = shownSteps === this.totalSteps;
 
-    this.showOrHideAllButton.querySelector('.js-step-controls-button-text').innerHTML = shownStepsIsTotalSteps ? this.actions.hideAllText : this.actions.showAllText;
-    this.showOrHideAllButton.querySelector('.js-step-controls-button-icon').innerHTML = shownStepsIsTotalSteps ? this.upChevronSvg : this.downChevronSvg;
+    this.showOrHideAllButton.innerHTML = shownStepsIsTotalSteps ? this.actions.hideAllText : this.actions.showAllText;
   }
 }
 
@@ -378,7 +375,6 @@ class StepView {
     var showHideText = this.stepElement.querySelector('.js-toggle-link');
 
     showHideText.querySelector('.js-toggle-link-text').innerHTML = isShown ? this.hideText : this.showText;
-    showHideText.querySelector('.js-toggle-link-icon').innerHTML = isShown ? this.upChevronSvg : this.downChevronSvg;
   }
 
   isShown() {
