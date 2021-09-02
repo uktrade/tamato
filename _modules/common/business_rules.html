@@ -48,12 +48,11 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
 
 <span class="kn">from</span> <span class="nn">common.models.records</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
@@ -134,28 +133,32 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="n">transaction</span>
 
-    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="BusinessRule.get_linked_models"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRule.get_linked_models">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_linked_models</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">,</span>
         <span class="n">transaction</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
-        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">related_model</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">get_relations</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;Returns all model instances that are linked to the passed ``model``</span>
+<span class="sd">        and have this business rule listed in their ``business_rules``</span>
+<span class="sd">        attribute.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">related_model</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">business_rules</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">related_model</span><span class="p">,</span> <span class="s2">&quot;business_rules&quot;</span><span class="p">,</span> <span class="p">[])</span>
             <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">business_rules</span><span class="p">:</span>
-                <span class="n">current_related_instances</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
-                <span class="p">)</span>
                 <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">one_to_many</span> <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">many_to_many</span><span class="p">:</span>
-                    <span class="n">related_instances</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_set&quot;</span><span class="p">)</span>
-                    <span class="k">yield from</span> <span class="n">current_related_instances</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                        <span class="n">version_group__in</span><span class="o">=</span><span class="n">related_instances</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;version_group&quot;</span><span class="p">),</span>
-                    <span class="p">)</span>
+                    <span class="n">related_instances</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_accessor_name</span><span class="p">())</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">related_instance</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                    <span class="k">yield</span> <span class="n">current_related_instances</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                        <span class="n">version_group</span><span class="o">=</span><span class="n">related_instance</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
-                    <span class="p">)</span>
+                    <span class="n">related_instances</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
+                <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">related_instances</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">instance</span><span class="o">.</span><span class="n">version_at</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">TrackedModel</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                        <span class="c1"># `related_instances` will contain all instances, even</span>
+                        <span class="c1"># deleted ones, and `version_at` will return</span>
+                        <span class="c1"># `DoesNotExist` if the item has been deleted as of a</span>
+                        <span class="c1"># certain transaction. That&#39;s ok, because we can just</span>
+                        <span class="c1"># skip running business rules against deleted things.</span>
+                        <span class="k">continue</span></div>
 
 <div class="viewcode-block" id="BusinessRule.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.BusinessRule.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Perform business rule validation.&quot;&quot;&quot;</span>
@@ -180,14 +183,25 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="n">transaction</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
+
         <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">business_rules</span><span class="p">:</span>
-                <span class="n">rule</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">rule</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">BusinessRuleViolation</span> <span class="k">as</span> <span class="n">violation</span><span class="p">:</span>
+                    <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">violation</span><span class="p">)</span>
 
             <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">indirect_business_rules</span><span class="p">:</span>
                 <span class="n">rule_instance</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">linked_model</span> <span class="ow">in</span> <span class="n">rule</span><span class="o">.</span><span class="n">get_linked_models</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
-                    <span class="n">rule_instance</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">linked_model</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">rule_instance</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">linked_model</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">BusinessRuleViolation</span> <span class="k">as</span> <span class="n">violation</span><span class="p">:</span>
+                        <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">violation</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">violations</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">violations</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">only_applicable_after</span><span class="p">(</span><span class="n">cutoff</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>

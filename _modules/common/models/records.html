@@ -48,6 +48,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Case</span>
@@ -58,6 +59,7 @@
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Value</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">When</span>
 <span class="kn">from</span> <span class="nn">django.db.models.expressions</span> <span class="kn">import</span> <span class="n">Expression</span>
+<span class="kn">from</span> <span class="nn">django.db.models.fields.reverse_related</span> <span class="kn">import</span> <span class="n">ForeignObjectRel</span>
 <span class="kn">from</span> <span class="nn">django.db.models.options</span> <span class="kn">import</span> <span class="n">Options</span>
 <span class="kn">from</span> <span class="nn">django.db.models.query_utils</span> <span class="kn">import</span> <span class="n">DeferredAttribute</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
@@ -279,7 +281,7 @@
 <span class="sd">        Group.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">related_lookups</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">relation</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">get_relations</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">lookups</span> <span class="ow">and</span> <span class="n">relation</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lookups</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">related_lookups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">relation</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -575,7 +577,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has no descriptions relation.&quot;</span><span class="p">,</span>
             <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
 
-        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">descriptions_model</span><span class="o">.</span><span class="n">get_relations</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">descriptions_model</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
                 <span class="n">field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span>
                 <span class="k">break</span>
@@ -677,20 +679,35 @@
     <span class="k">def</span> <span class="nf">version_at</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">get_relations</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]]:</span>
-        <span class="sd">&quot;&quot;&quot;Find all foreign key and one-to-one relations on an object and return</span>
-<span class="sd">        a list containing tuples of the field instance and the related model it</span>
-<span class="sd">        links to.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span>
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">relations</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="n">ForeignObjectRel</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns all the models that are related to this one.</span>
+
+<span class="sd">        The link can either be stored on this model (so a one-to-one or a many-</span>
+<span class="sd">        to-one relationship) or on the related model (so a one-to-many</span>
+<span class="sd">        relationship).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">related_model</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">many_to_one</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">one_to_one</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">auto_created</span>
-            <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">concrete</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">many_to_one</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">one_to_one</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">one_to_many</span><span class="p">)</span>
             <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="bp">cls</span>
             <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">related_model</span><span class="p">,</span> <span class="n">TrackedModel</span><span class="p">)</span>
-        <span class="p">]</span>
+            <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">related_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">TrackedModel</span>
+        <span class="p">)</span>
+
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">models_linked_to</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="n">ForeignObjectRel</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Returns all the models that are related to this one via a foreign key</span>
+<span class="sd">        stored on this model.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">many_to_one</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">one_to_one</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">auto_created</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">concrete</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -711,7 +728,7 @@
 
         <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_current&quot;</span><span class="p">):</span>
             <span class="n">field_name</span> <span class="o">=</span> <span class="n">item</span><span class="p">[:</span><span class="o">-</span><span class="mi">8</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_relations</span><span class="p">()]:</span>
+            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">keys</span><span class="p">()]:</span>
                 <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span><span class="o">.</span><span class="n">current_version</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
@@ -847,11 +864,7 @@
         <span class="c1"># the new model substituted in place of this one. It&#39;s done this way to</span>
         <span class="c1"># give these related models a chance to increment SIDs, etc.</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subrecord_relations</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">related_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">queryset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">related_name</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">queryset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_set&quot;</span><span class="p">)</span>
-
+            <span class="n">queryset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_accessor_name</span><span class="p">())</span>
             <span class="n">reverse_field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">name</span>
             <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">queryset</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">):</span>
                 <span class="n">model</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">reverse_field_name</span><span class="p">:</span> <span class="n">new_object</span><span class="p">})</span>
