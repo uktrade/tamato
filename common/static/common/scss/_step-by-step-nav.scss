@@ -61,6 +61,7 @@ $top-border: solid 1px govuk-colour("mid-grey", $legacy: "grey-3");
 
 .gem-c-step-nav__controls {
   padding: 3px 3px 0 0;
+  text-align: right;
 }
 
 .gem-c-step-nav__button {
@@ -112,7 +113,6 @@ $top-border: solid 1px govuk-colour("mid-grey", $legacy: "grey-3");
   @include step-nav-font(14, $line-height: 1);
   position: relative;
   z-index: 1; // this and relative position stops focus outline underlap with border of accordion
-  margin: .5em 0 1.5em;
   padding: 0 0 govuk-spacing(1);
 
   &:hover .gem-c-step-nav__button-text {
@@ -249,7 +249,7 @@ $top-border: solid 1px govuk-colour("mid-grey", $legacy: "grey-3");
   box-sizing: border-box;
   position: absolute;
   z-index: 5;
-  top: 3px;
+  top: 15px;
   left: 0;
   width: govuk-em($number-circle-size, 16);
   height: govuk-em($number-circle-size, 16);
@@ -322,14 +322,10 @@ $top-border: solid 1px govuk-colour("mid-grey", $legacy: "grey-3");
 
 .gem-c-step-nav__header {
   border-top: $top-border;
-  padding: govuk-spacing(1) 0 govuk-spacing(6);
+  padding: govuk-spacing(3) 0;
 
   .gem-c-step-nav--large & {
     padding-top: govuk-spacing(2);
-  }
-
-  .js-enabled & {
-    padding: 0;
   }
 
   .gem-c-step-nav--active & {
@@ -364,7 +360,6 @@ $top-border: solid 1px govuk-colour("mid-grey", $legacy: "grey-3");
   display: block;
   color: $govuk-link-colour;
   text-transform: capitalize;
-  padding-bottom: govuk-spacing(6);
 
   .gem-c-step-nav--large & {
     @include step-nav-font(14, $tablet-size: 16, $line-height: 1.2);
@@ -374,7 +369,6 @@ $top-border: solid 1px govuk-colour("mid-grey", $legacy: "grey-3");
 .gem-c-step-nav__panel {
   @include govuk-text-colour;
   @include step-nav-font(16);
-  padding-bottom: govuk-spacing(5);
 
   .gem-c-step-nav--large & {
     @include step-nav-font(16, $tablet-size: 19);
