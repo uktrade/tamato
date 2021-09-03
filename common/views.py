@@ -31,7 +31,7 @@ from workbaskets.views.mixins import WithCurrentWorkBasket
 
 def index(request):
     try:
-        workbasket = WorkBasket.objects.is_not_approved().get()
+        workbasket = WorkBasket.objects.is_not_approved().last()
     except WorkBasket.DoesNotExist:
         workbasket = WorkBasket.objects.create(
             title=f"Workbasket {WorkBasket.objects.last().pk+1}",
