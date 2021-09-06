@@ -1,7 +1,11 @@
 ---
 applications:
-  - memory: 1G
-    buildpacks:
+  - buildpacks:
       - https://github.com/cloudfoundry/nodejs-buildpack.git#v1.7.56
       - python_buildpack
-    disk_quota: 8192M
+    processes:
+    - type: web
+      memory: 1G
+    - type: worker
+      disk_quota: 8G
+      memory: 1G
