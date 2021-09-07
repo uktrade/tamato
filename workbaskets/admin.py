@@ -7,21 +7,25 @@ from exporter.tasks import upload_workbaskets
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
+
 class WorkBasketAdmin(admin.ModelAdmin):
     change_list_template = "workbasket_change_list.html"
 
     def get_urls(self):
         urls = super().get_urls()
-        export_url = path('upload/', self.upload)
-        
-        return [export_url] + urls
-    
+        upload_url = path("upload/", self.upload)
+
+        return [upload_url] + urls
+
     def upload(self, request):
         if not request.user.is_superuser:
-            return HttpResponseForbidden('Only superusers may export workbaskets')
-        
+            return HttpResponseForbidden("Only superusers may upload workbaskets")
+
         upload_workbaskets.delay()
-        self.message_user(request, f"Uploading workbaskets with status of '{WorkflowStatus.READY_FOR_EXPORT.label}'")
+        self.message_user(
+            request,
+            f"Uploading workbaskets with status of '{WorkflowStatus.READY_FOR_EXPORT.label}'",
+        )
         return HttpResponseRedirect("../")
 
 
