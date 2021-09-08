@@ -1,5 +1,3 @@
-from unittest import mock
-
 import pytest
 from django.urls import reverse
 
@@ -31,7 +29,6 @@ def test_submit_workbasket(unapproved_transaction, valid_user, client):
     assert workbasket.approver is not None
 
     assert client.session["workbasket"]["status"] == WorkflowStatus.SENT_TO_CDS
-
 
 
 def test_edit_after_submit(workbasket, valid_user, client, date_ranges):

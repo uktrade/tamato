@@ -1,5 +1,4 @@
 from contextlib import nullcontext as does_not_raise
-from unittest import mock
 
 import pytest
 from django_fsm import TransitionNotAllowed
@@ -547,7 +546,7 @@ def test_workbasket_transactions():
             WorkflowStatus.PUBLISHED,
             "cds_error",
             WorkflowStatus.CDS_ERROR,
-            pytest.raises(TransitionNotAllowed),     
+            pytest.raises(TransitionNotAllowed),
         ),
     ],
 )
@@ -560,7 +559,7 @@ def test_workbasket_submit(
     valid_user,
 ):
     new_workbasket.status = start_status
-    
+
     transition_method = getattr(new_workbasket, transition)
     with expect_error:
         if transition_method.__name__ == "approve":
@@ -568,7 +567,7 @@ def test_workbasket_submit(
         else:
             transition_method()
         assert new_workbasket.status == target_status
-        
+
 
 def test_get_tracked_models(new_workbasket):
     for _ in range(2):
@@ -587,7 +586,6 @@ def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, vali
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
-    
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
