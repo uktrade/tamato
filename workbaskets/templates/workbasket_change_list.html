@@ -4,7 +4,7 @@
     <div>
         <form action={% url 'admin:upload' %} method="POST">
             {% csrf_token %}
-                <button type="submit" style="cursor:pointer">Export workbaskets</button>
+                <button class="button" type="submit">Export workbaskets</button>
         </form>
     </div>
     <br />
