@@ -852,3 +852,9 @@ def response():
 def form_error_shown(response, error_message):
     response_html = parse_html(response["response"].content.decode())
     assert error_message in response_html
+
+
+@pytest.fixture
+def staff_user():
+    user = factories.UserFactory.create(is_staff=True)
+    return user
