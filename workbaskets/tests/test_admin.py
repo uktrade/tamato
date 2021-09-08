@@ -1,8 +1,7 @@
 from unittest import mock
 
 import pytest
-
-from common.tests.factories import UserFactory
+from django.urls import reverse
 
 pytestmark = pytest.mark.django_db
 
@@ -10,31 +9,36 @@ pytestmark = pytest.mark.django_db
 class TestWorkBasketUpload:
     @classmethod
     def setup_class(cls):
-        cls.url = "/admin/workbaskets/workbasket/upload/"
+        cls.url = reverse("admin:upload")
 
-    def test_upload_returns_302_for_valid_superuser(self, valid_user, client):
-        valid_user.is_superuser = True
-        valid_user.save()
+    def test_upload_returns_302_for_valid_staff_user(self, staff_user, client):
+        client.force_login(staff_user)
+        response = client.post(self.url)
+
+        assert response.status_code == 302
+        assert response.url == reverse("admin:workbaskets_workbasket_changelist")
+
+    def test_upload_redirects_non_staff_to_login(self, client, valid_user):
         client.force_login(valid_user)
         response = client.post(self.url)
 
         assert response.status_code == 302
-        assert response.url == "../"
+        assert response.url == f"{reverse('admin:login')}?next={self.url}"
 
-    def test_upload_returns_403_error_for_non_superuser(self, client):
-        non_superuser = UserFactory.create(is_superuser=False)
-        client.force_login(non_superuser)
-        response = client.post(self.url)
-
-        assert response.status_code == 403
-
-    def test_upload_calls_task(self, valid_user, client):
+    def test_upload_doesnt_call_task_for_non_staff(self, client, valid_user):
+        client.force_login(valid_user)
         with mock.patch(
             "exporter.tasks.upload_workbaskets.delay",
         ) as mock_task:
-            valid_user.is_superuser = True
-            valid_user.save()
-            client.force_login(valid_user)
             client.post(self.url)
 
-            mock_task.assert_called_once_with()
+            mock_task.assert_not_called()
+
+    def test_upload_calls_task(self, staff_user, client):
+        with mock.patch(
+            "exporter.tasks.upload_workbaskets.delay",
+        ) as mock_task:
+            client.force_login(staff_user)
+            client.post(self.url)
+
+            mock_task.assert_called_once()

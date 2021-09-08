@@ -2,7 +2,7 @@
 
 {% block object-tools %}
     <div>
-        <form action="upload/" method="POST">
+        <form action={% url 'admin:upload' %} method="POST">
             {% csrf_token %}
                 <button type="submit" style="cursor:pointer">Export workbaskets</button>
         </form>
