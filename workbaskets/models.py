@@ -148,11 +148,6 @@ class WorkBasket(TimestampedMixin):
             version_group.current_version = obj
             version_group.save()
 
-        # imported lower down to avoid circular import error
-        from exporter.tasks import upload_workbaskets
-
-        upload_workbaskets.delay()
-
     @transition(
         field=status,
         source=WorkflowStatus.READY_FOR_EXPORT,
