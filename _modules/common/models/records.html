@@ -281,7 +281,7 @@
 <span class="sd">        Group.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">related_lookups</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">models_linked_to</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">lookups</span> <span class="ow">and</span> <span class="n">relation</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lookups</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">related_lookups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">relation</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -685,7 +685,7 @@
 <span class="sd">        Returns all the models that are related to this one.</span>
 
 <span class="sd">        The link can either be stored on this model (so a one-to-one or a many-</span>
-<span class="sd">        to-one relationship) or on the related model (so a one-to-many</span>
+<span class="sd">        to-one relationship) or on the related model (so a one-to-many (reverse)</span>
 <span class="sd">        relationship).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
@@ -702,7 +702,8 @@
         <span class="bp">cls</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="n">ForeignObjectRel</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]:</span>
         <span class="sd">&quot;&quot;&quot;Returns all the models that are related to this one via a foreign key</span>
-<span class="sd">        stored on this model.&quot;&quot;&quot;</span>
+<span class="sd">        stored on this model (one-to-many reverse related models are not</span>
+<span class="sd">        included in the returned results).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
