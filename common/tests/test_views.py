@@ -3,8 +3,10 @@ import xml.etree.ElementTree as etree
 import pytest
 from django.urls import reverse
 
+from common.tests import factories
 from common.views import HealthCheckResponse
 from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -40,3 +42,18 @@ def test_healthcheck_response(response, status_code, status):
     assert payload[0].tag == "status"
     assert payload[0].text == status
     assert payload[1].tag == "response_time"
+
+
+def test_handles_multiple_unapproved_workbaskets(valid_user_client, new_workbasket):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.NEW_IN_PROGRESS,
+    )
+    transaction = factories.TransactionFactory.create(workbasket=workbasket)
+    with transaction:
+        for _ in range(2):
+            factories.FootnoteTypeFactory.create()
+    assert WorkBasket.objects.is_not_approved().count() == 2
+
+    response = valid_user_client.get(reverse("index"))
+
+    assert response.status_code == 200
