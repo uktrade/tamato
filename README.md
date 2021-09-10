@@ -237,6 +237,7 @@ Download and install a release from here: https://github.com/pyston/pyston/relea
 | SQLITE_S3_SECRET_ACCESS_KEY | AWS secret key, used for SQLite storage bucket uploads                                                                                  |
 | SQLITE_S3_ENDPOINT_URL      | AWS s3 endpoint url, used for SQLite storage bucket uploads                                                                             |
 | SQLITE_STORAGE_DIRECTORY    | Destination directory in s3 bucket for the SQLite storage bucket                                                                        |
+| GOOGLE_ANALYTICS_ID         | The id used to configure Google Tag Manager in production |
 
 
 ## Using the importer
