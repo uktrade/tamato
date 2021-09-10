@@ -240,7 +240,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
         Group.
         """
         related_lookups = []
-        for relation in model.relations.keys():
+        for relation in model.models_linked_to.keys():
             if lookups and relation.name not in lookups:
                 continue
             related_lookups.append(f"{prefix}{relation.name}")
@@ -644,7 +644,7 @@ class TrackedModel(PolymorphicModel):
         Returns all the models that are related to this one.
 
         The link can either be stored on this model (so a one-to-one or a many-
-        to-one relationship) or on the related model (so a one-to-many
+        to-one relationship) or on the related model (so a one-to-many (reverse)
         relationship).
         """
         return dict(
@@ -661,7 +661,8 @@ class TrackedModel(PolymorphicModel):
         cls,
     ) -> dict[Union[Field, ForeignObjectRel], type[TrackedModel]]:
         """Returns all the models that are related to this one via a foreign key
-        stored on this model."""
+        stored on this model (one-to-many reverse related models are not
+        included in the returned results)."""
         return dict(
             (f, r)
             for f, r in cls.relations.items()
