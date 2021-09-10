@@ -22,10 +22,13 @@ An important note on transaction sequencing in the below fixtures:
   where needed, retaining the ability to add delayed_transactions as well
 """
 
-from typing import Dict
+from __future__ import annotations
+
+from copy import copy
 from typing import Iterator
-from typing import List
-from typing import Tuple
+from typing import Optional
+from typing import Sequence
+from typing import Union
 
 import pytest
 
@@ -42,7 +45,7 @@ from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
-TScenario = Tuple[CommodityCollection, List[CommodityChange]]
+TScenario = tuple[CommodityCollection, list[CommodityChange]]
 
 
 def copy_commodity(
@@ -90,8 +93,8 @@ def create_commodity(
 
 
 def create_collection(
-    commodities: List[Commodity],
-    keys: List[str] = None,
+    commodities: Union[list[Commodity], dict[str, Commodity]],
+    keys: Optional[Sequence[str]] = None,
 ) -> CommodityCollection:
     """Returns a new CommodityCollection with the selected commodities."""
     keys = keys or commodities.keys()
@@ -168,7 +171,7 @@ def transaction_pool(workbasket) -> Iterator[Transaction]:
     """
     factory = factories.TransactionFactory
 
-    transactions = [factory.create(workbasket=workbasket) for _ in range(50)][::-1]
+    transactions = reversed(factory.create_batch(50, workbasket=workbasket))
 
     return iter(transactions)
 
@@ -182,7 +185,7 @@ def normal_good(date_ranges, transaction_pool):
 
 
 @pytest.fixture
-def commodities(date_ranges, transaction_pool) -> Dict[str, Commodity]:
+def commodities(date_ranges, transaction_pool) -> dict[str, Commodity]:
     params = (
         ("9900.00.00.00", "80", 0, date_ranges.normal),
         ("9910.00.00.00", "80", 0, date_ranges.normal),
@@ -213,8 +216,7 @@ def commodities_spanned(date_ranges, transaction_pool):
     )
 
     commodities = [create_commodity(transaction_pool, *args) for args in params]
-    keys = [f"{c.trimmed_dot_code}_{c.suffix}_{c.indent}" for c in commodities]
-    return dict(zip(keys, commodities))
+    return {f"{c.trimmed_dot_code}_{c.suffix}_{c.indent}": c for c in commodities}
 
 
 @pytest.fixture
@@ -273,7 +275,7 @@ def scenario_2(collection_basic, transaction_pool) -> TScenario:
 
     See the module-level docs for details on scenario setups.
     """
-    collection = collection_basic.clone()
+    collection = copy(collection_basic)
 
     commodity = collection.get_commodity("9999.20")
 
@@ -324,7 +326,7 @@ def scenario_4(collection_basic, date_ranges, transaction_pool) -> TScenario:
 
     See the module-level docs for details on scenario setups.
     """
-    collection = collection_basic.clone()
+    collection = copy(collection_basic)
 
     current = collection.get_commodity("9999.20")
 
@@ -338,8 +340,6 @@ def scenario_4(collection_basic, date_ranges, transaction_pool) -> TScenario:
     attrs = dict(valid_between=date_ranges.overlap_normal_earlier)
     create_dependent_measure(candidate, transaction_pool, **attrs)
     create_footnote_association(candidate, transaction_pool, **attrs)
-
-    print(1)
 
     changes = [
         CommodityChange(
@@ -360,7 +360,7 @@ def scenario_5(collection_basic, commodities, transaction_pool) -> TScenario:
 
     See the module-level docs for details on scenario setups.
     """
-    collection = collection_basic.clone()
+    collection = copy(collection_basic)
 
     current = collection.get_commodity("9999.20")
     candidate = copy_commodity(current, transaction_pool, suffix="20")
@@ -390,7 +390,7 @@ def scenario_6(collection_basic, transaction_pool, workbasket) -> TScenario:
 
     See the module-level docs for details on scenario setups.
     """
-    collection = collection_basic.clone()
+    collection = copy(collection_basic)
     current = collection.get_commodity("9999.20")
 
     attrs = dict(indent=current.indent + 1, item_id="9999201000")
@@ -408,9 +408,7 @@ def scenario_6(collection_basic, transaction_pool, workbasket) -> TScenario:
         transaction=delayed_transaction,
         measure_type=measure_type,
     )
-    measure = create_dependent_measure(candidate, transaction_pool, **attrs)
-
-    print(measure)
+    create_dependent_measure(candidate, transaction_pool, **attrs)
 
     changes = [
         CommodityChange(

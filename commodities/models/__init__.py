@@ -1,11 +1,11 @@
-from .orm import FootnoteAssociationGoodsNomenclature
-from .orm import GoodsNomenclature
-from .orm import GoodsNomenclatureDescription
-from .orm import GoodsNomenclatureIndent
-from .orm import GoodsNomenclatureIndentNode
-from .orm import GoodsNomenclatureIndentQuerySet
-from .orm import GoodsNomenclatureOrigin
-from .orm import GoodsNomenclatureSuccessor
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
+from commodities.models.orm import GoodsNomenclature
+from commodities.models.orm import GoodsNomenclatureDescription
+from commodities.models.orm import GoodsNomenclatureIndent
+from commodities.models.orm import GoodsNomenclatureIndentNode
+from commodities.models.orm import GoodsNomenclatureIndentQuerySet
+from commodities.models.orm import GoodsNomenclatureOrigin
+from commodities.models.orm import GoodsNomenclatureSuccessor
 
 __all__ = [
     "GoodsNomenclature",

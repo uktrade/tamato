@@ -1,14 +1,15 @@
 import contextlib
 import re
+from copy import copy
 from datetime import date
 from datetime import timedelta
 
 import pytest
 
+from commodities.models.constants import SUFFIX_DECLARABLE
+from commodities.models.constants import ClockType
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityTreeBase
-from commodities.models.static import SUFFIX_DECLARABLE
-from commodities.models.static import ClockType
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
@@ -28,10 +29,7 @@ def not_raises(ExpectedException):
         yield
 
     except ExpectedException as error:
-        raise AssertionError(f"Raised exception {error} when it should not!")
-
-    except Exception as error:
-        raise AssertionError(f"An unexpected exception {error} raised.")
+        pytest.fail(f"Raised exception {error} when it should not!")
 
 
 def verify_snapshot_members(collection, snapshot, excluded_date_ranges):
@@ -177,20 +175,23 @@ def test_commodity_get_indent(commodities):
 
 
 def test_commodity_identifier(commodities):
-    re_identifier = re.compile(r"([0-9\.]{13})-([1-8]{1}0)-([0-9]{1,2})/([0-9]{1})")
+    re_identifier = re.compile(r"([0-9.]{13})-([1-8]{1}0)-([0-9]{1,2})/([0-9]{1})")
 
     for commodity in commodities.values():
-        with not_raises(StopIteration):
+        try:
             match = next(re_identifier.finditer(commodity.identifier))
-            groups = match.groups()
+        except StopIteration:
+            pytest.fail("Expected at least one commodity identifier")
 
-            assert len(groups) == 4
-            code, suffix, indent, version = match.groups()
+        groups = match.groups()
 
-            assert code == commodity.dot_code
-            assert suffix == commodity.suffix
-            assert indent == str(commodity.get_indent())
-            assert version == str(commodity.version)
+        assert len(groups) == 4
+        code, suffix, indent, version = groups
+
+        assert code == commodity.dot_code
+        assert suffix == commodity.suffix
+        assert indent == str(commodity.get_indent())
+        assert version == str(commodity.version)
 
 
 def test_commodity_tree_base_get_sanitized_code(commodities):
@@ -257,6 +258,11 @@ def test_commodity_tree_base_get_commodity(commodities):
             ],
         ),
     ],
+    ids=[
+        "snapshot-today",
+        "snapshot-yesterday",
+        "snapshot-15-days-ahead",
+    ],
 )
 def test_collection_get_calendar_clock_snapshot(collection_spanned, date_ranges, case):
     snapshot_date = date.today() + timedelta(days=case["delta"])
@@ -293,11 +299,11 @@ def test_collection_current_snapshot(collection_full):
     tx_snapshot = collection_full.get_transaction_clock_snapshot()
     cal_snapshot = collection_full.get_calendar_clock_snapshot()
 
-    tx_commodities = set(map(lambda x: x.identifier, tx_snapshot.commodities))
-    cal_commodities = set(map(lambda x: x.identifier, cal_snapshot.commodities))
+    tx_commodities = set(x.identifier for x in tx_snapshot.commodities)
+    cal_commodities = set(x.identifier for x in cal_snapshot.commodities)
     tx_cal_commodities = tx_commodities.intersection(cal_commodities)
 
-    commodities = set(map(lambda x: x.identifier, snapshot.commodities))
+    commodities = set(x.identifier for x in snapshot.commodities)
 
     assert snapshot.moment == date.today()
     assert sorted(commodities) == sorted(tx_cal_commodities)
@@ -305,14 +311,14 @@ def test_collection_current_snapshot(collection_full):
 
 def test_collection_clone(collection_full):
     n = len(collection_full.commodities)
-    collection_cloned = collection_full.clone()
+    collection_cloned = copy(collection_full)
     collection_cloned.commodities.pop()
 
     assert len(collection_full.commodities) == n
 
 
 def test_collection_update_create(collection_basic, commodities):
-    group = collection_basic.clone()
+    group = copy(collection_basic)
 
     commodity = commodities["9999.20.00.10_80_3"]
 
@@ -329,7 +335,7 @@ def test_collection_update_create(collection_basic, commodities):
 
 
 def test_collection_update_update(collection_basic, transaction_pool):
-    group = collection_basic.clone()
+    group = copy(collection_basic)
 
     code = "9999.20"
     suffix = "20"
@@ -351,7 +357,7 @@ def test_collection_update_update(collection_basic, transaction_pool):
 
 
 def test_collection_update_delete(collection_basic, commodities):
-    group = collection_basic.clone()
+    group = copy(collection_basic)
 
     commodity = commodities["9999.20_80_2"]
 
@@ -477,8 +483,8 @@ def test_snapshot_is_declarable(collection_basic):
     c_9999 = snapshot.get_commodity("9999")
     c_999910 = snapshot.get_commodity("9999.10")
 
-    assert snapshot.is_declarable(c_9999) is False
-    assert snapshot.is_declarable(c_999910) is True
+    assert not snapshot.is_declarable(c_9999)
+    assert snapshot.is_declarable(c_999910)
 
 
 def test_snapshot_date(collection_basic):
@@ -509,18 +515,22 @@ def test_snapshot_identifier(collection_basic):
     ]
 
     for snapshot in snapshots:
-        with not_raises(StopIteration):
+        try:
             match = next(res[snapshot.clock_type].finditer(snapshot.identifier))
-            groups = match.groups()
+        except StopIteration as e:
+            pytest.fail(e)
 
-            assert len(groups) == 2
+        groups = match.groups()
 
-            if snapshot.clock_type == ClockType.CALENDAR:
-                assert groups[0] == str(snapshot.moment)
-            else:
-                assert groups[0] == f"tx_{snapshot.moment}"
+        assert len(groups) == 2
+        moment, hash_ = groups
 
-            assert groups[1] == snapshot.hash
+        if snapshot.clock_type == ClockType.CALENDAR:
+            assert moment == str(snapshot.moment)
+        else:
+            assert moment == f"tx_{snapshot.moment}"
+
+        assert hash_ == snapshot.hash
 
 
 def test_change_valid_create(collection_basic, commodities):
@@ -612,7 +622,7 @@ def test_change_invalid_delete_no_current(collection_basic):
 
 
 def test_snapshot_diff_create(collection_basic, commodities):
-    collection = collection_basic.clone()
+    collection = copy(collection_basic)
 
     parent = collection.get_commodity("9999.20")
     candidate = commodities["9999.20.00.10_80_3"]
@@ -634,7 +644,7 @@ def test_snapshot_diff_create(collection_basic, commodities):
 
 
 def test_snapshot_diff_update(collection_basic, transaction_pool):
-    collection = collection_basic.clone()
+    collection = copy(collection_basic)
 
     parent = collection.get_commodity("9999")
     sibling = collection.get_commodity("9999.10")
@@ -676,7 +686,7 @@ def test_snapshot_diff_update(collection_basic, transaction_pool):
 
 
 def test_snapshot_diff_delete(collection_basic):
-    collection = collection_basic.clone()
+    collection = copy(collection_basic)
 
     parent = collection.get_commodity("9999")
     current = collection.get_commodity("9999.20")

@@ -1,33 +1,33 @@
 """Includes dataclasses used in goods nomenclature hierarchy tree management."""
+from __future__ import annotations
+
 import logging
+from copy import copy
 from dataclasses import dataclass
 from datetime import date
 from hashlib import md5
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import Union
 
 from django.db.models import Q
 
 from commodities import business_rules as cbr
+from commodities.models.constants import SUFFIX_DECLARABLE
+from commodities.models.constants import ClockType
+from commodities.models.constants import TreeNodeRelation
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
+from commodities.models.orm import GoodsNomenclature
 from common.business_rules import BusinessRuleViolation
 from common.models.meta.base import BaseModel
 from common.models.meta.wrappers import TrackedModelWrapper
+from common.models.meta.wrappers import TTrackedModelIdentifier
 from common.models.records import TrackedModel
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures import business_rules as mbr
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
-
-from .orm import FootnoteAssociationGoodsNomenclature
-from .orm import GoodsNomenclature
-from .static import SUFFIX_DECLARABLE
-from .static import ClockType
-from .static import TreeNodeRelation
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class Commodity(TrackedModelWrapper):
     """
 
     obj: GoodsNomenclature
-    indent: int = None
+    indent: Optional[int] = None
 
     @property
     def code(self) -> str:
@@ -155,7 +155,7 @@ class Commodity(TrackedModelWrapper):
         extra = f"{self.suffix}-{self.get_indent()}/{self.version}"
         return f"{code}-{extra}"
 
-    def get_indent(self) -> int:
+    def get_indent(self) -> Optional[int]:
         """
         Returns the true indent of the commodity.
 
@@ -204,14 +204,14 @@ class CommodityTreeBase(BaseModel):
     See the docs of CommodityTree and CommodityTreeSnapshot for details.
     """
 
-    commodities: List[Commodity]
+    commodities: list[Commodity]
 
     def get_commodity(
         self,
         code: str,
-        suffix: str = None,
-        version: int = None,
-        version_group_id: int = None,
+        suffix: Optional[str] = None,
+        version: Optional[int] = None,
+        version_group_id: Optional[int] = None,
     ) -> Optional[Commodity]:
         """
         Returns a commodity matching the provided arguments, if found.
@@ -247,12 +247,12 @@ class CommodityTreeBase(BaseModel):
                 ),
             )
         except StopIteration:
-            return
+            return None
 
     def _get_sanitized_code(self, code: str) -> str:
         """Returns the commodity code in GoodsNomenclature.item_id format."""
         code = code.replace(".", "")
-        return code + "0" * (10 - len(code))
+        return f"{code:0<10}"
 
 
 @dataclass
@@ -276,11 +276,11 @@ class SnapshotDiff(BaseModel):
 
     commodity: Commodity
     relation: TreeNodeRelation
-    exists: Dict[str, bool]
-    values: Dict[str, Union[Commodity, List[Commodity]]]
+    exists: dict[str, bool]
+    values: dict[str, Union[Commodity, list[Commodity]]]
 
     @property
-    def diff(self) -> List[Commodity]:
+    def diff(self) -> list[Commodity]:
         """Returns the diff between the commodity relations across the two
         snapshots."""
         values = [
@@ -323,10 +323,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     For additional context on commodity trees, see the docs for CommodityTree.
     """
 
-    commodities: List[Commodity]
+    commodities: list[Commodity]
     clock_type: ClockType
     moment: Union[date, int]
-    edges: Dict[str, Commodity] = None
+    edges: Optional[dict[str, Commodity]] = None
 
     def __post_init__(self) -> None:
         """
@@ -367,7 +367,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         except KeyError:
             return
 
-    def get_siblings(self, commodity: Commodity) -> List[Commodity]:
+    def get_siblings(self, commodity: Commodity) -> list[Commodity]:
         """Returns the siblings of a commodity in the snapshot tree."""
         parent = self.get_parent(commodity)
 
@@ -381,11 +381,11 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             if self.get_parent(c) == parent
         ]
 
-    def get_children(self, commodity: Commodity) -> List[Commodity]:
+    def get_children(self, commodity: Commodity) -> list[Commodity]:
         """Returns the children of a commodity in the snapshot tree."""
         return [c for c in self.commodities if self.get_parent(c) == commodity]
 
-    def get_ancestors(self, commodity: Commodity) -> List[Commodity]:
+    def get_ancestors(self, commodity: Commodity) -> list[Commodity]:
         """Returns all ancestors of a commodity in the snapshot tree."""
         ancestors = []
 
@@ -400,7 +400,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
         return ancestors[::-1]
 
-    def get_descendants(self, commodity: Commodity) -> List[Commodity]:
+    def get_descendants(self, commodity: Commodity) -> list[Commodity]:
         """Returns all descendants of a commodity in the snapshot tree."""
         descendants = []
 
@@ -430,40 +430,40 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     def compare_parents(
         self,
         commodity: Commodity,
-        snapshot: "CommodityTreeSnapshot",
+        snapshot: CommodityTreeSnapshot,
     ) -> SnapshotDiff:
-        return self._get_diff(commodity, snapshot, TreeNodeRelation.PARENTS)
+        return self._get_diff(commodity, snapshot, TreeNodeRelation.PARENT)
 
     def compare_siblings(
         self,
         commodity: Commodity,
-        snapshot: "CommodityTreeSnapshot",
+        snapshot: CommodityTreeSnapshot,
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.SIBLINGS)
 
     def compare_children(
         self,
         commodity: Commodity,
-        snapshot: "CommodityTreeSnapshot",
+        snapshot: CommodityTreeSnapshot,
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.CHILDREN)
 
     def compare_ancestors(
         self,
         commodity: Commodity,
-        snapshot: "CommodityTreeSnapshot",
+        snapshot: CommodityTreeSnapshot,
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.ANCESTORS)
 
     def compare_descendants(
         self,
         commodity: Commodity,
-        snapshot: "CommodityTreeSnapshot",
+        snapshot: CommodityTreeSnapshot,
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.DESCENDANTS)
 
     @property
-    def snapshot_date(self) -> date:
+    def snapshot_date(self) -> Optional[date]:
         """Returns the snapshot date if it uses the calendar clock."""
         if self.clock_type == ClockType.CALENDAR:
             return self.moment
@@ -555,7 +555,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     def _get_diff(
         self,
         commodity: Commodity,
-        snapshot: "CommodityTreeSnapshot",
+        snapshot: CommodityTreeSnapshot,
         relation: TreeNodeRelation,
     ) -> SnapshotDiff:
         """
@@ -577,17 +577,9 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             snapshot.identifier: commodity in snapshot.commodities,
         }
 
-        if relation == TreeNodeRelation.PARENTS:
-            attr = "get_parent"
-        elif relation == TreeNodeRelation.SIBLINGS:
-            attr = "get_siblings"
-        elif relation == TreeNodeRelation.CHILDREN:
-            attr = "get_children"
-        elif relation == TreeNodeRelation.ANCESTORS:
-            attr = "get_ancestors"
-        elif relation == TreeNodeRelation.DESCENDANTS:
-            attr = "get_descendants"
-        else:
+        attr = f"get_{relation.value}"
+
+        if hasattr(self, attr) is False:
             raise ValueError("Unknown relation")
 
         values = {
@@ -602,7 +594,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             values=values,
         )
 
-    def __eq__(self, snapshot: "CommodityTreeSnapshot") -> bool:
+    def __eq__(self, snapshot: CommodityTreeSnapshot) -> bool:
         """Returns True for snapshots with the same clock types and commoditie
         collections."""
         return self.identifier == snapshot.identifier
@@ -628,7 +620,7 @@ class CommodityCollection(CommodityTreeBase):
     - see the docs to get_snapshot method of this class for more details.
     """
 
-    def update(self, changes: Tuple["CommodityChange"]) -> None:
+    def update(self, changes: tuple["CommodityChange"]) -> None:
         """
         Update the commodity collection using CommodityChange constructs.
 
@@ -654,7 +646,7 @@ class CommodityCollection(CommodityTreeBase):
 
     def get_calendar_clock_snapshot(
         self,
-        snapshot_date: date = None,
+        snapshot_date: Optional[date] = None,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain calendar date.
@@ -679,7 +671,7 @@ class CommodityCollection(CommodityTreeBase):
 
     def get_transaction_clock_snapshot(
         self,
-        transaction_id: int = None,
+        transaction_id: Optional[int] = None,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain transaction (based on
@@ -715,10 +707,6 @@ class CommodityCollection(CommodityTreeBase):
             moment=transaction_id,
         )
 
-    def clone(self) -> "CommodityCollection":
-        """Returns an independent copy of the collection."""
-        return CommodityCollection(self.commodities[:])
-
     @property
     def current_snapshot(self) -> CommodityTreeSnapshot:
         """
@@ -744,6 +732,10 @@ class CommodityCollection(CommodityTreeBase):
             moment=today,
         )
 
+    def __copy__(self) -> "CommodityCollection":
+        """Returns an independent copy of the collection."""
+        return CommodityCollection(copy(self.commodities))
+
 
 @dataclass
 class SideEffect(BaseModel):
@@ -756,7 +748,7 @@ class SideEffect(BaseModel):
 
     obj: TrackedModel
     update_type: UpdateType
-    attrs: Dict[Any, Any] = None
+    attrs: dict[str, Any] = None
 
 
 @dataclass
@@ -783,15 +775,15 @@ class CommodityChange(BaseModel):
 
     collection: CommodityCollection
     update_type: UpdateType
-    current: Commodity = None
-    candidate: Commodity = None
+    current: Optional[Commodity] = None
+    candidate: Optional[Commodity] = None
     ignore_validation_rules: bool = False
-    side_effects: Dict[Union[str, int], SideEffect] = None
+    side_effects: Optional[dict[TTrackedModelIdentifier, SideEffect]] = None
 
     def __post_init__(self) -> None:
         """Triggers validation on the fields of the model upon instantiation."""
         self.validate()
-        self.handle_side_effects()
+        self.preempt_side_effects()
         super().__post_init__()
 
     def validate(self) -> None:
@@ -817,47 +809,34 @@ class CommodityChange(BaseModel):
 
         if self.update_type == UpdateType.CREATE:
             if self.candidate is None:
-                msg = "The operation is CREATE but no commodity was provided."
-                self._handle_validation_issue(msg)
+                self._handle_validation_issue("no commodity was provided")
 
             if candidate is not None:
-                msg = (
-                    "The operation is CREATE but there is a clash "
-                    "with a commodity already exists in the group."
+                self._handle_validation_issue(
+                    "the commodity already exists in the group",
                 )
-                self._handle_validation_issue(msg)
 
         else:
             if self.current is None:
-                msg = (
-                    "The operation is UPDATE or DELETE "
-                    "but current commodity was not provied."
-                )
-                self._handle_validation_issue(msg)
+                self._handle_validation_issue("a current commodity was not provided")
 
             if current != self.current:
-                msg = (
-                    "The operation is UPDATE or DELETE "
-                    "but there is no matching comodity in the commodity collection."
+                self._handle_validation_issue(
+                    "there is no matching commodity in the commodity collection",
                 )
-                self._handle_validation_issue(msg)
 
         if self.update_type == UpdateType.UPDATE:
             if self.current == self.candidate:
-                msg = (
-                    "The operation is UPDATE "
-                    "but the current and new versions are identical"
+                self._handle_validation_issue(
+                    "the current and new versions are identical",
                 )
-                self._handle_validation_issue(msg)
 
             if candidate == self.candidate:
-                msg = (
-                    "The operation is UPDATE "
-                    "but there is no effective change to the commodity."
+                self._handle_validation_issue(
+                    "there is no effective change to the commodity",
                 )
-                self._handle_validation_issue(msg)
 
-    def handle_side_effects(self) -> None:
+    def preempt_side_effects(self) -> None:
         """
         Preempt business rule violations due to the requested commodity change.
 
@@ -906,8 +885,8 @@ class CommodityChange(BaseModel):
         NOTE:
         1. NIG35 is not used as it is redundant in this context after NIG34
         2. For some rules invoked from a measure's point of view (esp. ME7)
-          there is no need to strict need to invoke them
-          when we already know the changing commodity and whether it violates a condition;
+          there is no need to invoke them when we already know
+          the changing commodity and whether it violates a condition;
           however, for consistency we still apply these rules.
         """
 
@@ -956,7 +935,7 @@ class CommodityChange(BaseModel):
         # here, find all related footnote associations
         # to the commodity as well its measures, and invoke the BR-s
         # (inefficient for this workflow, but consistent use of BR-s)
-        if self.candidate.is_taric_subheading is True:
+        if self.candidate.is_taric_subheading:
             for association in footnote_associations:
                 try:
                     cbr.NIG18().validate(measure)
@@ -1076,7 +1055,7 @@ class CommodityChange(BaseModel):
         good = commodity.obj
         measures = {_get_measure_key(m): m for m in good.dependent_measures}
 
-        clone = self.collection.clone()
+        clone = copy(self.collection)
         before = clone.current_snapshot
         clone.update([self])
         after = clone.current_snapshot
@@ -1100,7 +1079,7 @@ class CommodityChange(BaseModel):
         # Check if commodity's before-children have new parents
         for child in before.get_children(self.current):
             # If the commodity's before-child has new parent...
-            if len(before.compare_parents(child, after).diff) != 0:
+            if before.compare_parents(child, after).diff:
                 # ...then check if before-child has ME32 clashes with new ancestors
                 for ancestor in after.get_ancestors(child):
                     ancestor_measures = ancestor.obj.dependent_measures
@@ -1124,7 +1103,7 @@ class CommodityChange(BaseModel):
             update_type=UpdateType.DELETE,
         )
 
-    def _add_pending_update(self, obj: TrackedModel, attrs: Dict[Any, Any]) -> None:
+    def _add_pending_update(self, obj: TrackedModel, attrs: dict[str, Any]) -> None:
         """Add a pending related object update operation to side effects."""
         key = TrackedModelWrapper(obj=obj).identifier
 
@@ -1139,10 +1118,12 @@ class CommodityChange(BaseModel):
 
     def _handle_validation_issue(self, msg: str) -> None:
         """Logs a warning message or raises an error."""
+
         if self.ignore_validation_rules is True:
+            msg = f"The operation is {self.update_type} but {msg}"
             logger.warn(msg)
         else:
-            raise ValueError(msg)
+            raise CommodityChangeException(msg, self)
 
 
 # TODO: Move the loader to a more appropriate module
@@ -1183,7 +1164,7 @@ class CommodityCollectionLoader:
         """
         qs = GoodsNomenclature.objects
 
-        if current_only is True:
+        if current_only:
             qs = qs.latest_approved().filter(
                 Q(valid_between__endswith=None)
                 | Q(valid_between__endswith__gt=date.today()),
@@ -1194,3 +1175,8 @@ class CommodityCollectionLoader:
         commodities = [Commodity(obj=obj) for obj in qs.all()]
 
         return CommodityCollection(commodities=commodities)
+
+
+class CommodityChangeException(ValueError):
+    def __init__(self, msg: str, change: CommodityChange) -> None:
+        super().__init__(f"Commodity {change.update_type} error: {msg}")

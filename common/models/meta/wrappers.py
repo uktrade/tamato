@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -24,7 +25,9 @@ TRACKEDMODEL_IDENTIFIER_KEYS = {
 }
 
 TRACKEDMODEL_IDENTIFIER_FALLBACK_KEY = "sid"
-TRACKEDMODEL_PRIMARY_KEY = "id"
+TRACKEDMODEL_PRIMARY_KEY = "pk"
+
+TTrackedModelIdentifier = Union[str, int]
 
 
 @dataclass
@@ -82,7 +85,7 @@ class TrackedModelWrapper(BaseModel):
         return key
 
     @property
-    def identifier(self) -> Union[str, int]:
+    def identifier(self) -> TTrackedModelIdentifier:
         """Returns the object identifier which is the value of the identifier
         field."""
         return getattr(self.obj, self.identifier_key)
@@ -142,7 +145,7 @@ class TrackedModelWrapper(BaseModel):
 
     @property
     def update_type(self) -> int:
-        """Returns the UpdateType of the Taric record.""" ""
+        """Returns the UpdateType of the Taric record."""
         return UpdateType(self.obj.update_type)
 
     @property
@@ -173,7 +176,10 @@ class TrackedModelWrapper(BaseModel):
             f"{self.envelope}|{self.validity}|{self.record_type}"
         )
 
-    def get_current_version_as_of_transaction(self, transaction: Transaction) -> int:
+    def get_current_version_as_of_transaction(
+        self,
+        transaction: Transaction,
+    ) -> Optional[int]:
         """Returns the current version of the record as of a given
         transaction."""
         return self.get_current_version_as_of_transaction_id(transaction.id)
@@ -185,7 +191,7 @@ class TrackedModelWrapper(BaseModel):
 
     def get_current_version_as_of_transaction_id(
         self,
-        transaction_id: int = None,
+        transaction_id: Optional[int] = None,
     ) -> int:
         """Returns the current version of the record as of a given transaction
         id."""
@@ -195,7 +201,10 @@ class TrackedModelWrapper(BaseModel):
         ids = self._get_transaction_ids()
         return len([tid for tid in ids if tid <= transaction_id])
 
-    def is_current_as_of_transaction_id(self, transaction_id: int = None) -> bool:
+    def is_current_as_of_transaction_id(
+        self,
+        transaction_id: Optional[int] = None,
+    ) -> bool:
         """Returns True if this is the current version of the record as of a
         given transaction id."""
         if transaction_id is None:

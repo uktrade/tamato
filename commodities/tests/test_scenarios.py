@@ -150,7 +150,7 @@ def test_scenario5_intermediate_suffix(scenario_5: TScenario):
     parent = snapshot.get_commodity("9999.20", "20")
 
     assert parent is not None
-    assert snapshot.is_declarable(parent) == False
+    assert not snapshot.is_declarable(parent)
 
     # Assert side-effects captured and BR-s violation pre-empted
     change = changes[1]

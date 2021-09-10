@@ -20,7 +20,7 @@ Changes to the commodity tree have two main types of considerations:
   - affected records may be related to the changing commodity itself
     or to any commodity in the surrounding hierarchy pre- and post-change
   - side effects are incidental violations of business rules
-    resulting form the changes made to the commodity tree
+    resulting from the changes made to the commodity tree
     and as such can be caught in the vast majority of cases
     using existing business rule validation logic in TaMaTo
 
@@ -63,8 +63,8 @@ The following constructs make the bootstrapping approach possible:
   - a snapshot is a collection of commodities that are in effect
     as of a given moment, and constitute the tree hierarchy as of that moment
   - a snapshot can be taken based on one of two "clocks", but not both:
-    -- a calendar clock (what goods where in effect as of date x)
-    -- a transaction clock (what goods where in effect as of transaction x)
+    -- a calendar clock (what goods were in effect as of date x)
+    -- a transaction clock (what goods were in effect as of transaction x)
     -- see the Tariff Manual for further discussion on calendar vs transaction clocks
   - a snapshot has a tree hierarchy with parent, children and sibling relations
     as well as traversal-style relations such as ancestors and descendants
