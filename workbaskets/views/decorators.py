@@ -10,9 +10,8 @@ def require_current_workbasket(view_func):
     @wraps(view_func)
     def check_for_current_workbasket(request, *args, **kwargs):
         if WorkBasket.current(request) is None:
-            try:
-                workbasket = WorkBasket.objects.is_not_approved().get()
-            except WorkBasket.DoesNotExist:
+            workbasket = WorkBasket.objects.is_not_approved().last()
+            if not workbasket:
                 workbasket = WorkBasket.objects.create(
                     author=request.user,
                 )
