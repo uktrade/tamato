@@ -26,8 +26,10 @@ from __future__ import annotations
 
 from copy import copy
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Sequence
+from typing import Tuple
 from typing import Union
 
 import pytest
@@ -45,7 +47,7 @@ from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
-TScenario = tuple[CommodityCollection, list[CommodityChange]]
+TScenario = Tuple[CommodityCollection, List[CommodityChange]]
 
 
 def copy_commodity(
