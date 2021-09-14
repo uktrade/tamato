@@ -337,7 +337,7 @@ class AddAnother(forms.BaseFormSet):
     preserved.
     """
 
-    extra = 1
+    extra = 0
     can_order = False
     can_delete = True
     max_num = 1000
@@ -414,13 +414,18 @@ class AddAnother(forms.BaseFormSet):
         to redisplay the formset with an extra empty form or the selected form
         removed."""
 
+        # An empty set of forms is valid.
+        if not self.total_form_count():
+            return True
+
         # reshow the form with an extra empty form if "Add another" was submitted
         if f"{self.prefix}-ADD" in self.data:
             return False
 
         # reshow the form with the deleted form(s) removed if "Delete" was submitted
-        if any(field for field in self.data if field.endswith("-DELETE")):
-            return False
+        for field in self.data:
+            if field.endswith("-DELETE"):
+                return False
 
         return super().is_valid()
 
