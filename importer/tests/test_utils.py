@@ -1,3 +1,5 @@
+import pytest
+
 from importer import utils
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaEvent
@@ -32,3 +34,18 @@ def test_get_subrecords():
 
     assert qd_codes == [qd_identifier]
     assert qe_codes == qe_identifiers
+
+
+@pytest.mark.parametrize(
+    ("label", "index"),
+    (
+        ("A", 0),
+        ("B", 1),
+        ("AA", 26),
+        ("ab", 27),
+        ("BA", 52),
+        ("xfd", 16383),  # max value for an Excel column
+    ),
+)
+def test_col(label, index):
+    assert utils.col(label) == index

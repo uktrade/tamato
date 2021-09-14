@@ -112,7 +112,7 @@ def if_applicable(
 @Parser
 def fail(text, index):
     """A parser that always fails if reached."""
-    return Value.failure(index, "")
+    return Value.failure(index, f"'{text}' to match something")
 
 
 class DutySentenceParser:
@@ -218,10 +218,14 @@ class DutySentenceParser:
         # Duty sentences can only be of a finite length – each expression may only
         # appear once and in order of increasing expression id. So we try all expressions
         # in order and filter out the None results for ones that did not match.
-        expressions = [
-            component(exp) ^ empty
-            for exp in sorted(duty_expressions, key=lambda e: e.sid)
-        ]
+        expressions = (
+            [
+                component(exp) ^ empty
+                for exp in sorted(duty_expressions, key=lambda e: e.sid)
+            ]
+            if duty_expressions
+            else [fail]
+        )
         self._sentence = joint(*expressions).parsecmap(
             lambda sentence: [exp for exp in sentence if exp is not None],
         )

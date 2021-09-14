@@ -77,7 +77,7 @@ test-fast:
 test:
 	@echo
 	@echo "> Running tests..."
-	@python -m pytest -n=auto --dist=loadfile --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
+	@${PYTHON} -m pytest -n=auto --dist=loadfile --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
 
 ## docker-image: Build docker image
 docker-image:
