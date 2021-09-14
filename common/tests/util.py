@@ -376,19 +376,23 @@ def get_form_data(form: forms.ModelForm) -> Dict[str, Any]:
     hence result in multiple HTML <input> objects."""
 
     data = {**form.initial}
-    for field in form.rendered_fields:
-        value = data[field] if field in data else form.fields[field].initial
-        if hasattr(form.fields[field].widget, "decompress"):
-            # If the widget can be decompressed, then it is not just a simple
-            # value and has some internal structure. So we need to generate one
-            # form item per decompressed value and append the name with _0, _1,
-            # etc. This mirrors the MultiValueWidget in django/forms/widgets.py.
-            if field in data:
-                del data[field]
-            value = form.fields[field].widget.decompress(value)
-            data.update(
-                **{f"{field}_{i}": v for i, v in enumerate(value) if v is not None}
-            )
-        elif value is not None:
-            data.setdefault(field, value)
+    if hasattr(form, "rendered_fields"):
+        for field in form.rendered_fields:
+            value = data[field] if field in data else form.fields[field].initial
+            if hasattr(form.fields[field].widget, "decompress"):
+                # If the widget can be decompressed, then it is not just a simple
+                # value and has some internal structure. So we need to generate one
+                # form item per decompressed value and append the name with _0, _1,
+                # etc. This mirrors the MultiValueWidget in django/forms/widgets.py.
+                if field in data:
+                    del data[field]
+                value = form.fields[field].widget.decompress(value)
+                data.update(
+                    **{f"{field}_{i}": v for i, v in enumerate(value) if v is not None}
+                )
+            elif value is not None:
+                data.setdefault(field, value)
+    else:
+        data = {key: value for (key, value) in data.items() if value is not None}
+
     return data

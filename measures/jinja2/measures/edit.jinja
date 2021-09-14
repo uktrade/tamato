@@ -29,6 +29,10 @@
       }) }}
 {% endset %}
 
+{% set footnotes_html %}
+
+{% endset %}
+
 {% set geographical_area_html %}
     {{ govukRadios({
         "idPrefix": "geographical_area_choice",
@@ -121,6 +125,13 @@
                         "heading": {"text": "Measure validity period"},
                         "content": {
                             "html": validity_period_html
+                        },
+                        "summary": {}
+                    },
+                    {
+                        "heading": {"text": "Footnotes"},
+                        "content": {
+                            "html": footnotes_html
                         },
                         "summary": {}
                     },
