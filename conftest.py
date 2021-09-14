@@ -31,6 +31,7 @@ from common.models import TrackedModel
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
+from common.tests.util import assert_records_match
 from common.tests.util import generate_test_import_xml
 from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
@@ -386,19 +387,7 @@ def run_xml_import(valid_user, settings):
             else:
                 raise
 
-        checked_fields = (
-            set(field.name for field in imported._meta.fields)
-            - set(field.name for field in TrackedModel._meta.fields)
-            - {"trackedmodel_ptr"}
-        )
-
-        for field in checked_fields:
-            imported_value = getattr(imported, field)
-            source_value = getattr(model, field)
-            assert (
-                imported_value == source_value
-            ), f"imported '{field}' ({imported_value} - {type(imported_value)}) does not match source '{field}' ({source_value} - {type(source_value)})"
-
+        assert_records_match(model, imported)
         return imported
 
     return check

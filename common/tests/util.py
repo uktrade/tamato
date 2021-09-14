@@ -7,6 +7,7 @@ from io import BytesIO
 from itertools import count
 from typing import Any
 from typing import Dict
+from typing import Sequence
 
 import pytest
 from dateutil.parser import parse as parse_date
@@ -18,6 +19,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from lxml import etree
 
+from common.models.records import TrackedModel
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
 from common.util import TaricDateRange
@@ -116,6 +118,51 @@ def make_non_duplicate_record(factory, identifying_fields=None):
     )
 
     return not_duplicate
+
+
+def get_checkable_data(model: TrackedModel, ignore=frozenset()):
+    """Returns a dict representing the model's data ignoring any automatically
+    set fields and fields with names passed to `ignore`."""
+    checked_field_names = {f.name for f in model.copyable_fields} - ignore
+    return {
+        name: model._meta.get_field(name).value_from_object(model)
+        for name in checked_field_names
+    }
+
+
+def assert_records_match(
+    expected: TrackedModel,
+    imported: TrackedModel,
+    ignore=frozenset(),
+):
+    """
+    Asserts that every value for every field in the imported model is the same
+    as the data in the expected model.
+
+    System fields that will change from model to model are not checked. Any
+    field names given to `ignore` will also not be checked.
+    """
+    assert get_checkable_data(expected, ignore=ignore) == get_checkable_data(
+        imported,
+        ignore=ignore,
+    )
+
+
+def assert_many_records_match(
+    expected: Sequence[TrackedModel],
+    imported: Sequence[TrackedModel],
+    ignore=frozenset(),
+):
+    """
+    Asserts that every value for every field in the imported models is the same
+    as the data in the expected models, and that the count of both is equal.
+
+    System fields that will change from model to model are not checked. Any
+    field names given to `ignore` will also not be checked.
+    """
+    assert [get_checkable_data(e, ignore=ignore) for e in expected] == [
+        get_checkable_data(i, ignore=ignore) for i in imported
+    ]
 
 
 _transaction_counter = count(start=1)
