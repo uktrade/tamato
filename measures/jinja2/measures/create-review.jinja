@@ -5,29 +5,49 @@
 {% set page_title = step_metadata[wizard.steps.current].title %}
 
 {% macro review_step(step) %}
-  <h2 class="govuk-heading-m">{{ step_metadata[step].link_text }}</h2>
+  {% set link_text = step_metadata[step].link_text %}
+  <h2 class="govuk-heading-m">{{ link_text }}</h2>
   {% set rows = [] %}
   {% set data = view.get_cleaned_data_for_step(step) %}
+
   {% set ignore %}
   {{ caller(rows, data) }}
   {% endset %}
+
   {% set row_data = [] %}
-  {% for label, value in rows %}
+  {% if rows %}
+    {% for label, value in rows %}
+      {{ row_data.append({
+        "key": {"text": label},
+        "value": {"text": value},
+        "actions": {
+          "items": [
+            {
+              "text": "Change",
+              "visuallyHiddenText": label|lower,
+              "href": view.get_step_url(step),
+              "attributes": {}
+            }
+          ]
+        }
+      }) or "" }}
+    {% endfor %}
+  {% else %}
     {{ row_data.append({
-      "key": {"text": label},
-      "value": {"text": value},
+      "key": {"text": link_text},
+      "value": {"text": "None"},
       "actions": {
         "items": [
           {
             "text": "Change",
-            "visuallyHiddenText": label|lower,
+            "visuallyHiddenText": link_text,
             "href": view.get_step_url(step),
             "attributes": {}
           }
         ]
       }
     }) or "" }}
-  {% endfor %}
+  {% endif %}
   {{ govukSummaryList({"rows": row_data, "classes": "govuk-!-margin-bottom-9"}) }}
 {% endmacro %}
 
@@ -51,11 +71,14 @@
   {% endcall %}
 
   {% call(rows, data) review_step("conditions") %}
-    {% for item in data  %}
-      {% if not item.DELETE %}
-        {{ rows.append(("Condition code", item.condition_code)) }}
-      {% endif %}
-    {% endfor %}
+    {# Conditions are optional, so cater for empty data. #}
+    {% if data %}
+      {% for item in data  %}
+        {% if not item.DELETE %}
+          {{ rows.append(("Condition code", item.condition_code)) }}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
   {% endcall %}
 
   {% call(rows, data) review_step("duties") %}
@@ -63,11 +86,14 @@
   {% endcall %}
 
   {% call(rows, data) review_step("footnotes") %}
-    {% for item in data %}
-      {% if not item.DELETE %}
-        {{ rows.append(("Footnote", item.footnote ~ " - " ~ item.footnote.get_description().description|safe)) }}
-      {% endif %}
-    {% endfor %}
+    {# Footnotes are optional, so cater for empty data. #}
+    {% if data %}
+      {% for item in data %}
+        {% if not item.DELETE %}
+          {{ rows.append(("Footnote", item.footnote ~ " - " ~ item.footnote.get_description().description|safe)) }}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
   {% endcall %}
 
   {{ govukButton({"text": "Create"}) }}
