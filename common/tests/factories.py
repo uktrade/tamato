@@ -845,6 +845,28 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
     stopped = False
     export_refund_nomenclature_sid = None
 
+    class Params:
+        with_footnote = factory.Trait(
+            association=factory.RelatedFactory(
+                "common.tests.factories.FootnoteAssociationMeasureFactory",
+                factory_related_name="footnoted_measure",
+            ),
+        )
+
+        with_exclusion = factory.Trait(
+            exclusion=factory.RelatedFactory(
+                "common.tests.factories.MeasureExcludedGeographicalAreaFactory",
+                factory_related_name="modified_measure",
+            ),
+        )
+
+        with_condition = factory.Trait(
+            condition=factory.RelatedFactory(
+                "common.tests.factories.MeasureConditionFactory",
+                factory_related_name="dependent_measure",
+            ),
+        )
+
     @factory.lazy_attribute
     def terminating_regulation(self):
         if self.valid_between.upper is None:
