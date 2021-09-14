@@ -366,7 +366,7 @@ class ConditionSentenceParser:
     )
 
     CONDITION_PHRASE_PATTERN = re.compile(
-        r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-(?P<c4>\d{3}) )?\((?P<c5>\d{2})\):\s*"
+        r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-(?P<c4>\d{3}) )?\((?P<c5>\d{2,3})\):\s*"
         f"(?:{DUTY_PHRASE_REGEX})?",
     )
 
