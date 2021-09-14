@@ -146,10 +146,10 @@ def test_seasonal_rate_parser(
             ],
         ),
         (
-            "Cond:  Y cert: D-017 (29):; Y cert: D-018 (29):; Y (09):",
+            "Cond:  Y cert: D-017 (299):; Y cert: D-018 (299):; Y (09):",
             [
-                (("Y", "D017", "29"), None),
-                (("Y", "D018", "29"), None),
+                (("Y", "D017", "299"), None),
+                (("Y", "D018", "299"), None),
                 (("Y", None, "09"), None),
             ],
         ),
