@@ -337,6 +337,10 @@ class AddAnother(forms.BaseFormSet):
     preserved.
     """
 
+    ACTION_ADD = "ADD"
+    ACTION_DELETE = "DELETE"
+    FORMSET_ACTIONS = (ACTION_ADD, ACTION_DELETE)
+
     extra = 0
     can_order = False
     can_delete = True
@@ -348,6 +352,17 @@ class AddAnother(forms.BaseFormSet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # If we have form data, then capture the any user "add form" or
+        # "delete form" actions.
+        self.formset_action = None
+        if f"{self.prefix}-ADD" in self.data:
+            self.formset_action = AddAnother.ACTION_ADD
+        else:
+            for field in self.data:
+                if field.endswith("-DELETE"):
+                    self.formset_action = AddAnother.ACTION_DELETE
+                    break
 
         data = self.data.copy()
 
@@ -414,18 +429,14 @@ class AddAnother(forms.BaseFormSet):
         to redisplay the formset with an extra empty form or the selected form
         removed."""
 
+        # Re-present the form to show the result of adding another form or
+        # deleting an existing one.
+        if self.formset_action in (AddAnother.FORMSET_ACTIONS):
+            return False
+
         # An empty set of forms is valid.
         if not self.total_form_count():
             return True
-
-        # reshow the form with an extra empty form if "Add another" was submitted
-        if f"{self.prefix}-ADD" in self.data:
-            return False
-
-        # reshow the form with the deleted form(s) removed if "Delete" was submitted
-        for field in self.data:
-            if field.endswith("-DELETE"):
-                return False
 
         return super().is_valid()
 
