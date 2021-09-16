@@ -13,7 +13,6 @@ from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
 from common.util import validity_range_contains_range
-from common.validators import UpdateType
 
 
 class NIG1(NoOverlapping):
@@ -303,6 +302,7 @@ class NIG34(PreventDeleteIfInUse):
     measure."""
 
 
+@skip_when_deleted
 class NIG35(BusinessRule):
     """A goods nomenclature cannot be deleted if it is used in an additional
     nomenclature measure."""
@@ -322,8 +322,5 @@ class NIG35(BusinessRule):
         )
 
     def validate(self, good):
-        if good.update_type != UpdateType.DELETE:
-            return
-
         if self.has_violation(good):
             raise self.violation(good)

@@ -14,11 +14,13 @@ from django.db.models import Q
 
 from commodities import business_rules as cbr
 from commodities.models.constants import SUFFIX_DECLARABLE
-from commodities.models.constants import ClockType
 from commodities.models.constants import TreeNodeRelation
+from commodities.models.orm import CommodityCode
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
+from commodities.models.orm import GoodsNomenclatureIndent
 from common.business_rules import BusinessRuleViolation
+from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.records import TrackedModel
 from common.models.transactions import Transaction
@@ -62,65 +64,78 @@ TRACKEDMODEL_PRIMARY_KEY = "pk"
 class Commodity(BaseModel):
     """Provides a wrapper of the GoodsNomenclature model."""
 
-    obj: GoodsNomenclature
+    obj: GoodsNomenclature = None
+    item_id: Optional[str] = None
+    suffix: Optional[str] = None
     indent: Optional[int] = None
+    valid_between: Optional[TaricDateRange] = None
+
+    def get_item_id(self) -> Optional[str]:
+        """Returns the item_id attribute if set, or the object item_id field
+        otherwise."""
+        if self.item_id is not None:
+            return self.item_id
+
+        if self.obj is None:
+            return
+
+        return self.obj.item_id
+
+    def get_suffix(self) -> Optional[str]:
+        """Returns the suffix attribute if set, or the object suffix field
+        otherwise."""
+        if self.suffix is not None:
+            return self.suffix
+
+        if self.obj is None:
+            return
+
+        return self.obj.suffix
+
+    def get_indent(self) -> Optional[int]:
+        """Returns the indent attribute if set, or the object item_id field
+        otherwise."""
+        if self.indent is not None:
+            return self.indent
+
+        if self.obj is None:
+            return
+
+        obj = (
+            GoodsNomenclatureIndent.objects.latest_approved()
+            .filter(
+                indented_goods_nomenclature__item_id=self.get_item_id(),
+            )
+            .order_by("transaction_id")
+            .last()
+        )
+
+        if obj is None:
+            return
+
+        return int(obj.indent)
+
+    def get_valid_between(self) -> TaricDateRange:
+        """Returns the validity period for the commodity."""
+        if self.valid_between is not None:
+            return self.valid_between
+
+        if self.obj is None:
+            return
+
+        return self.obj.valid_between
 
     @property
     def code(self) -> str:
-        """Returns the commodity code."""
-        return self.obj.item_id
+        """Returns the the commodity code."""
+        return CommodityCode(code=self.get_item_id())
 
     @property
-    def chapter(self) -> str:
-        """Returns the HS chapter for the commodity code."""
-        return self.code[:2]
-
-    @property
-    def heading(self) -> str:
-        """Returns the HS heading for the commodity code."""
-        return self.code[:4]
-
-    @property
-    def subheading(self) -> str:
-        """Returns the HS subheading for the commodity code."""
-        return self.code[:6]
-
-    @property
-    def cn_subheading(self) -> str:
-        """Returns the CN subheading for the commodity code."""
-        return self.code[:8]
-
-    @property
-    def dot_code(self) -> str:
-        """Returns the commodity code in dot format."""
-        code = self.code
-        return f"{code[:4]}.{code[4:6]}.{code[6:8]}.{code[8:]}"
-
-    @property
-    def trimmed_dot_code(self) -> str:
-        """Returns the commodity code in dot format, without trailing zero
-        pairs."""
-        parts = self.dot_code.split(".")
-
-        for i, part in enumerate(parts[::-1]):
-            if part != "00":
-                return ".".join(parts[: len(parts) - i])
-
-    @property
-    def trimmed_code(self) -> str:
-        """Returns the commodity code without trailing zero pairs."""
-        return self.trimmed_dot_code.replace(".", "")
-
-    @property
-    def suffix(self) -> str:
-        """Returns the suffix of the commodity."""
-        return self.obj.suffix
-
-    @property
-    def description(self) -> str:
+    def description(self) -> Optional[str]:
         """Returns the description of the commodity."""
-        obj = self.obj.descriptions.order_by("validity_start").last()
-        return obj.description
+        if self.obj is None:
+            return
+        return self.obj.get_description().description
 
     @property
     def start_date(self) -> date:
@@ -133,40 +148,10 @@ class Commodity(BaseModel):
         return self.obj.valid_between.upper
 
     @property
-    def is_chapter(self) -> bool:
-        """Returns true if the commodity code represents a HS chapter."""
-        return self.trimmed_code.rstrip("0") == self.chapter
-
-    @property
-    def is_heading(self) -> bool:
-        """Returns true if the commodity code represents a HS heading."""
-        return self.trimmed_code == self.heading and not self.is_chapter
-
-    @property
-    def is_subheading(self) -> bool:
-        """Returns true if the commodity code represents a HS subheading."""
-        return self.trimmed_code == self.subheading
-
-    @property
-    def is_cn_subheading(self) -> bool:
-        """Returns true if the commodity code represents a CN subheading."""
-        return self.trimmed_code == self.cn_subheading
-
-    @property
-    def is_taric_subheading(self) -> bool:
-        """Returns true if the commodity code represents a Taric subheading."""
-        return self.trimmed_code == self.code
-
-    @property
-    def identifier_key(self) -> str:
-        """Returns an override of the model identifier_key property."""
-        return "key"
-
-    @property
     def identifier(self) -> str:
         """Returns an override of the model instance identifier property."""
-        code = self.dot_code
-        extra = f"{self.suffix}-{self.get_indent()}/{self.version}"
+        code = self.code.dot_code
+        extra = f"{self.get_suffix()}-{self.get_indent()}/{self.version}"
         return f"{code}-{extra}"
 
     @property
@@ -188,32 +173,6 @@ class Commodity(BaseModel):
     def current_version(self) -> int:
         """Returns the current version of the Taric record."""
         return self.obj.version_group.versions.count()
-
-    def get_indent(self) -> Optional[int]:
-        """
-        Returns the true indent of the commodity.
-
-        If the indent field of this dataclass has been set, this will take
-        precedence over the indent of the wrapped GoodsNomenclature object.
-        """
-        if self.indent is not None:
-            return self.indent
-
-        obj = self.obj.indents.order_by("validity_start").last()
-
-        if obj is None:
-            return
-
-        return int(obj.indent)
-
-    def _get_transaction_ids(self) -> tuple[int]:
-        """Returns the id-s of all transactions in the version group of the
-        record."""
-        transaction_ids = self.obj.version_group.versions.values_list(
-            "transaction_id",
-            flat=True,
-        )
-        return tuple(transaction_ids)
 
     @property
     def is_current_version(self) -> bool:
@@ -248,6 +207,15 @@ class Commodity(BaseModel):
 
         current_version = self.get_current_version_as_of_transaction_id(transaction_id)
         return self.version == current_version
+
+    def _get_transaction_ids(self) -> tuple[int]:
+        """Returns the id-s of all transactions in the version group of the
+        record."""
+        transaction_ids = self.obj.version_group.versions.values_list(
+            "transaction_id",
+            flat=True,
+        )
+        return tuple(transaction_ids)
 
     def __eq__(self, commodity: "Commodity") -> bool:
         """
@@ -312,8 +280,8 @@ class CommodityTreeBase(BaseModel):
             return next(
                 filter(
                     lambda x: (
-                        x.code == code
-                        and x.suffix == suffix
+                        x.code.code == code
+                        and x.get_suffix() == suffix
                         and x.version == (version or x.current_version)
                         and (
                             version_group_id is None
@@ -326,9 +294,9 @@ class CommodityTreeBase(BaseModel):
         except StopIteration:
             return None
 
-    def _get_sanitized_code(self, code: str) -> str:
+    def _get_sanitized_code(self, code: Union[str, CommodityCode]) -> str:
         """Returns the commodity code in GoodsNomenclature.item_id format."""
-        code = code.replace(".", "")
+        code = str(code).replace(".", "")
         return f"{code:0<10}"
 
 
@@ -424,7 +392,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
           -- the method keeps a list of the prior sorted commodities
           -- this allows it to assign the correct parents for 0-indent headings.
         """
-        chapters = {c.chapter for c in self.commodities}
+        chapters = {c.code.chapter for c in self.commodities}
 
         try:
             assert len(chapters) == 1
@@ -499,7 +467,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         return descendants
 
     def is_declarable(self, commodity: Commodity) -> bool:
-        if commodity.suffix != SUFFIX_DECLARABLE:
+        if commodity.get_suffix() != SUFFIX_DECLARABLE:
             return False
 
         return len(self.get_children(commodity)) == 0
@@ -579,9 +547,9 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         self.commodities = sorted(
             self.commodities,
             key=lambda x: (
-                x.code,
-                x.suffix,
-                x.indent,
+                str(x.code),
+                x.get_suffix(),
+                x.get_indent(),
             ),
         )
 
@@ -1001,7 +969,7 @@ class CommodityChange(BaseModel):
         # ME88: Invoked from the POV of a measure
         # here, find all related measures and invoke the BR
         # (inefficient for this workflow, but consistent use of BR-s)
-        if len(self.candidate.trimmed_code) > len(self.current.trimmed_code):
+        if len(self.candidate.code.trimmed_code) > len(self.current.code.trimmed_code):
             for measure in good.measures.latest_approved().all():
                 try:
                     mbr.ME88().validate(measure)
@@ -1012,7 +980,7 @@ class CommodityChange(BaseModel):
         # here, find all related footnote associations
         # to the commodity as well its measures, and invoke the BR-s
         # (inefficient for this workflow, but consistent use of BR-s)
-        if self.candidate.is_taric_subheading:
+        if self.candidate.code.is_taric_subheading:
             for association in footnote_associations:
                 try:
                     cbr.NIG18().validate(measure)

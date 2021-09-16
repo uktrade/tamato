@@ -201,7 +201,10 @@ def commodities(date_ranges, transaction_pool) -> dict[str, Commodity]:
     )
 
     commodities = [create_commodity(transaction_pool, *args) for args in params]
-    keys = [f"{c.trimmed_dot_code}_{c.suffix}_{c.indent}" for c in commodities]
+    keys = [
+        f"{c.code.trimmed_dot_code}_{c.get_suffix()}_{c.get_indent()}"
+        for c in commodities
+    ]
     return dict(zip(keys, commodities))
 
 
@@ -218,7 +221,10 @@ def commodities_spanned(date_ranges, transaction_pool):
     )
 
     commodities = [create_commodity(transaction_pool, *args) for args in params]
-    return {f"{c.trimmed_dot_code}_{c.suffix}_{c.indent}": c for c in commodities}
+    return {
+        f"{c.code.trimmed_dot_code}_{c.get_suffix()}_{c.get_indent()}": c
+        for c in commodities
+    }
 
 
 @pytest.fixture

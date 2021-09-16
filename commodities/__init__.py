@@ -19,6 +19,7 @@ Changes to the commodity tree have two main types of considerations:
   - related records may include measures, footnote associations, etc.
   - affected records may be related to the changing commodity itself
     or to any commodity in the surrounding hierarchy pre- and post-change
+    (e.g. business rule NIG30 might mean we need to terminate a measure)
   - side effects are incidental violations of business rules
     resulting from the changes made to the commodity tree
     and as such can be caught in the vast majority of cases
@@ -101,7 +102,7 @@ TP-803 WORKFLOW
 With the above in mind, the intended workflow that TP-803 envisions
 (parts of which are implemented elsewhere) is the following:
 1. An incoming Taric envelope is parsed selectively to isolate commodity changes
-  - the initial input can in theory be anythging else, e.g. a spreadsheet
+  - the initial input can in theory be anything else, e.g. a spreadsheet
 2. The existing commodity tree in the database is loaded into a CommodityCollection
   using the CommodityTreeLoader (chapter by chapter)
 3. The pending commodity changes are wrapped in CommodityChange instances

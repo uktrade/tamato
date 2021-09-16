@@ -7,9 +7,9 @@ from datetime import timedelta
 import pytest
 
 from commodities.models.constants import SUFFIX_DECLARABLE
-from commodities.models.constants import ClockType
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityTreeBase
+from common.models.constants import ClockType
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
@@ -52,24 +52,23 @@ def verify_snapshot_members(collection, snapshot, excluded_date_ranges):
 
 def test_commodity_code(commodities):
     for commodity in commodities.values():
-        assert commodity.code == commodity.obj.item_id
+        assert str(commodity.code) == commodity.get_item_id()
 
 
 def test_commodity_dot_code(commodities):
     for commodity in commodities.values():
         code = commodity.code
-        dot_code = commodity.dot_code
+        dot_code = commodity.code.dot_code
 
         assert len(dot_code) == 13
         assert dot_code.count(".") == 3
-        assert dot_code.replace(".", "") == code
+        assert dot_code.replace(".", "") == str(code)
 
 
 def test_commodity_trimmed_code(commodities):
     for commodity in commodities.values():
-        trimmed_code = commodity.trimmed_code
-        code = commodity.code
-        tail = code.replace(trimmed_code, "")
+        trimmed_code = commodity.code.trimmed_code
+        tail = str(commodity.code).replace(trimmed_code, "")
 
         assert len(trimmed_code) >= 4
         assert tail.count("0") == len(tail)
@@ -78,8 +77,8 @@ def test_commodity_trimmed_code(commodities):
 
 def test_commodity_trimmed_dot_code(commodities):
     for commodity in commodities.values():
-        trimmed_dot_code = commodity.trimmed_dot_code
-        dot_code = commodity.dot_code
+        trimmed_dot_code = commodity.code.trimmed_dot_code
+        dot_code = commodity.code.dot_code
         tail = dot_code.replace(trimmed_dot_code, "")
 
         assert len(trimmed_dot_code) >= 4
@@ -89,71 +88,71 @@ def test_commodity_trimmed_dot_code(commodities):
 
 def test_commodity_code_levels(commodities):
     for commodity in commodities.values():
-        assert len(commodity.chapter) == 2
-        assert len(commodity.heading) == 4
-        assert len(commodity.subheading) == 6
-        assert len(commodity.cn_subheading) == 8
-        assert len(commodity.code) == 10
+        assert len(commodity.code.chapter) == 2
+        assert len(commodity.code.heading) == 4
+        assert len(commodity.code.subheading) == 6
+        assert len(commodity.code.cn_subheading) == 8
+        assert len(str(commodity.code)) == 10
 
 
 def test_commodity_is_chapter(commodities):
     for commodity in commodities.values():
-        code = commodity.code
+        code = str(commodity.code)
         n = len(code.replace("00", ""))
-        assert commodity.is_chapter == (n == 2)
+        assert commodity.code.is_chapter == (n == 2)
 
 
 def test_commodity_is_heading(commodities):
     for commodity in commodities.values():
-        code = commodity.trimmed_dot_code
+        code = commodity.code.trimmed_dot_code
 
         m = len(code[2:4].replace("00", ""))
         n = len(code[4:].replace(".00", ""))
 
         is_heading = m != 0 and n == 0
-        assert commodity.is_heading == is_heading
+        assert commodity.code.is_heading == is_heading
 
 
 def test_commodity_is_subheading(commodities):
     for commodity in commodities.values():
-        code = commodity.trimmed_dot_code
+        code = commodity.code.trimmed_dot_code
 
         m = len(code[4:].replace(".00", "").replace(".", ""))
         n = len(code[7:].replace(".00", "").replace(".", ""))
 
         is_subheading = m != 0 and n == 0
-        assert commodity.is_subheading == is_subheading
+        assert commodity.code.is_subheading == is_subheading
 
 
 def test_commodity_is_cn_subheading(commodities):
     for commodity in commodities.values():
-        code = commodity.trimmed_dot_code
+        code = commodity.code.trimmed_dot_code
 
         m = len(code[7:].replace(".00", "").replace(".", ""))
         n = len(code[10:].replace(".00", "").replace(".", ""))
 
         is_cn_subheading = m != 0 and n == 0
-        assert commodity.is_cn_subheading == is_cn_subheading
+        assert commodity.code.is_cn_subheading == is_cn_subheading
 
 
 def test_commodity_is_taric_subheading(commodities):
     for commodity in commodities.values():
-        code = commodity.trimmed_dot_code
+        code = commodity.code.trimmed_dot_code
 
         m = len(code[7:].replace(".00", "").replace(".", ""))
         n = len(code[10:].replace(".00", "").replace(".", ""))
 
         is_taric_subheading = m != 0 and n != 0
-        assert commodity.is_taric_subheading == is_taric_subheading
+        assert commodity.code.is_taric_subheading == is_taric_subheading
 
 
 def test_commodity_suffix(commodities):
     used_conftest_suffixes = ("10", "80")
 
     for commodity in commodities.values():
-        assert len(commodity.suffix) == 2
-        assert commodity.suffix == commodity.obj.suffix
-        assert commodity.suffix in used_conftest_suffixes
+        assert len(commodity.get_suffix()) == 2
+        assert commodity.get_suffix() == commodity.obj.suffix
+        assert commodity.get_suffix() in used_conftest_suffixes
 
 
 def test_commodity_dates(commodities):
@@ -188,8 +187,8 @@ def test_commodity_identifier(commodities):
         assert len(groups) == 4
         code, suffix, indent, version = groups
 
-        assert code == commodity.dot_code
-        assert suffix == commodity.suffix
+        assert code == commodity.code.dot_code
+        assert suffix == commodity.get_suffix()
         assert indent == str(commodity.get_indent())
         assert version == str(commodity.version)
 
@@ -200,9 +199,9 @@ def test_commodity_tree_base_get_sanitized_code(commodities):
 
     for commodity in commodities.values():
         for attr in code_attrs:
-            code = getattr(commodity, attr)
+            code = getattr(commodity.code, attr)
             sanitized_code = base._get_sanitized_code(code)
-            assert sanitized_code == commodity.code
+            assert sanitized_code == str(commodity.code)
 
 
 def test_commodity_tree_base_get_commodity(commodities):
@@ -222,7 +221,7 @@ def test_commodity_tree_base_get_commodity(commodities):
                 version = version or commodity.current_version
 
                 a = result == commodity
-                b = suffix == commodity.suffix and version == commodity.version
+                b = suffix == commodity.get_suffix() and version == commodity.version
 
                 assert a == b
 
