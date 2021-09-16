@@ -253,7 +253,6 @@ class NoOverlapping(BusinessRule):
             raise self.violation(model)
 
 
-@skip_when_deleted
 class PreventDeleteIfInUse(BusinessRule):
     """Rule preventing deleting an in-use model."""
 

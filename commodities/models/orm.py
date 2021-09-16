@@ -195,6 +195,10 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
             goods_nomenclature__sid=self.sid,
         ).approved_up_to_transaction(self.transaction)
 
+    @property
+    def is_taric_code(self) -> bool:
+        return self.code.is_taric_code
+
     def in_use(self):
         return self.dependent_measures.exists()
 
