@@ -78,6 +78,10 @@ class MeasureForm(ValidityPeriodForm):
         required=False,
         empty_label=None,
     )
+    footnotes = forms.ModelMultipleChoiceField(
+        queryset=Footnote.objects.all(),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -139,6 +143,7 @@ class MeasureForm(ValidityPeriodForm):
             "additional_code",
             "order_number",
             "geographical_area",
+            "footnotes",
         )
 
 

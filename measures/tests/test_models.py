@@ -205,3 +205,11 @@ def test_copy_measure_doesnt_add_export_refund_sids(export_refund_sid):
     copy = measure.copy(factories.ApprovedTransactionFactory())
 
     assert copy.export_refund_nomenclature_sid == export_refund_sid
+
+
+def test_add_footnote_to_measure():
+    measure = factories.MeasureFactory.create()
+    footnote = factories.FootnoteFactory.create()
+    measure.footnotes.add(footnote)
+
+    assert measure.footnotes.first() == footnote
