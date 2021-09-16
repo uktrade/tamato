@@ -13,8 +13,8 @@ Each scenario will cover at least one of two types of issues:
 import pytest
 
 from commodities.models.dc import CommodityChange
+from commodities.models.dc import get_model_identifier
 from commodities.tests.conftest import TScenario
-from common.models.meta.wrappers import TrackedModelWrapper
 from common.models.records import TrackedModel
 from common.validators import UpdateType
 
@@ -26,7 +26,7 @@ def validate_captured_side_effect(
     obj: TrackedModel,
     update_type: UpdateType,
 ) -> None:
-    key = TrackedModelWrapper(obj=obj).identifier
+    key = get_model_identifier(obj)
 
     assert key in change.side_effects
     assert change.side_effects[key].obj == obj

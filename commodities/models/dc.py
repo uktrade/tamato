@@ -19,10 +19,9 @@ from commodities.models.constants import TreeNodeRelation
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from common.business_rules import BusinessRuleViolation
-from common.models.meta.base import BaseModel
-from common.models.meta.wrappers import TrackedModelWrapper
-from common.models.meta.wrappers import TTrackedModelIdentifier
+from common.models.dc.base import BaseModel
 from common.models.records import TrackedModel
+from common.models.transactions import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures import business_rules as mbr
@@ -39,14 +38,29 @@ __all__ = [
     "CommodityTreeSnapshot",
 ]
 
+TTrackedModelIdentifier = Union[str, int]
+
+TRACKEDMODEL_IDENTIFIER_KEYS = {
+    "additional_codes.AdditionalCode": "code",
+    "commodities.GoodsNomenclature": "item_id",
+    "commodities.GoodsNomenclatureIndentNode": "depth",
+    "geo_areas.GeographicalArea": "area_id",
+    "measures.MeasureAction": "code",
+    "measures.MeasureConditionCode": "code",
+    "measures.MeasurementUnit": "code",
+    "measures.MeasurementUnitQualifier": "code",
+    "measures.MonetaryUnit": "code",
+    "quotas.QuotaOrderNumber": "order_number",
+    "regulations.Group": "group_id",
+}
+
+TRACKEDMODEL_IDENTIFIER_FALLBACK_KEY = "sid"
+TRACKEDMODEL_PRIMARY_KEY = "pk"
+
 
 @dataclass
-class Commodity(TrackedModelWrapper):
-    """
-    Provides a wrapper of the GoodsNomenclature model.
-
-    See the docs for TrackedModelWrapper for additional context.
-    """
+class Commodity(BaseModel):
+    """Provides a wrapper of the GoodsNomenclature model."""
 
     obj: GoodsNomenclature
     indent: Optional[int] = None
@@ -155,6 +169,26 @@ class Commodity(TrackedModelWrapper):
         extra = f"{self.suffix}-{self.get_indent()}/{self.version}"
         return f"{code}-{extra}"
 
+    @property
+    def version(self) -> int:
+        """
+        Returns the version of the object.
+
+        TrackedModel objects support version control. The version_group field
+        holds pointers to all prior and current versions of a Taric record. The
+        versions are ordered based on transaction id. This method returns the
+        version number of the object based on the place of its transaction id in
+        the version transaction ids sequence.
+        """
+        ids = self._get_transaction_ids()
+        version = ids.index(self.obj.transaction.id) + 1
+        return version
+
+    @property
+    def current_version(self) -> int:
+        """Returns the current version of the Taric record."""
+        return self.obj.version_group.versions.count()
+
     def get_indent(self) -> Optional[int]:
         """
         Returns the true indent of the commodity.
@@ -171,6 +205,49 @@ class Commodity(TrackedModelWrapper):
             return
 
         return int(obj.indent)
+
+    def _get_transaction_ids(self) -> tuple[int]:
+        """Returns the id-s of all transactions in the version group of the
+        record."""
+        transaction_ids = self.obj.version_group.versions.values_list(
+            "transaction_id",
+            flat=True,
+        )
+        return tuple(transaction_ids)
+
+    @property
+    def is_current_version(self) -> bool:
+        """Returns True if this is the current version of the Taric record."""
+        return self.obj == self.obj.current_version
+
+    def is_current_as_of_transaction(self, transaction: Transaction) -> bool:
+        """Returns True if this is the current version of the record as of a
+        given transaction."""
+        return self.is_current_as_of_transaction_id(transaction.id)
+
+    def get_current_version_as_of_transaction_id(
+        self,
+        transaction_id: Optional[int] = None,
+    ) -> int:
+        """Returns the current version of the record as of a given transaction
+        id."""
+        if transaction_id is None:
+            return self.current_version
+
+        ids = self._get_transaction_ids()
+        return len([tid for tid in ids if tid <= transaction_id])
+
+    def is_current_as_of_transaction_id(
+        self,
+        transaction_id: Optional[int] = None,
+    ) -> bool:
+        """Returns True if this is the current version of the record as of a
+        given transaction id."""
+        if transaction_id is None:
+            return self.is_current_version
+
+        current_version = self.get_current_version_as_of_transaction_id(transaction_id)
+        return self.version == current_version
 
     def __eq__(self, commodity: "Commodity") -> bool:
         """
@@ -1096,7 +1173,7 @@ class CommodityChange(BaseModel):
 
     def _add_pending_delete(self, obj: TrackedModel) -> None:
         """Add a pending related object delete operation to side effects."""
-        key = TrackedModelWrapper(obj=obj).identifier
+        key = get_model_identifier(obj)
 
         self.side_effects[key] = SideEffect(
             obj=obj,
@@ -1105,7 +1182,7 @@ class CommodityChange(BaseModel):
 
     def _add_pending_update(self, obj: TrackedModel, attrs: dict[str, Any]) -> None:
         """Add a pending related object update operation to side effects."""
-        key = TrackedModelWrapper(obj=obj).identifier
+        key = get_model_identifier(obj)
 
         try:
             self.side_effects[key].attrs.update(attrs)
@@ -1180,3 +1257,36 @@ class CommodityCollectionLoader:
 class CommodityChangeException(ValueError):
     def __init__(self, msg: str, change: CommodityChange) -> None:
         super().__init__(f"Commodity {change.update_type} error: {msg}")
+
+
+def get_model_preferred_key(obj: TrackedModel) -> str:
+    """
+    Returns the preferred identifier key name for the model, if defined. Many
+    models in the Taric specification have a field that contains the identifier
+    or descriptor for each object. Examples include:
+
+    - item_id for GoodsNomenclature
+    - area_id for GeographicalArea
+    - sid for Measure (among others)
+    - order_number for QuotaOrderNumber
+    - code for MeasurementUnit (among others)
+    This method will return the preferred key name
+    where it has been specified, otherwise the primary key name.
+    """
+    key = TRACKEDMODEL_IDENTIFIER_KEYS.get(obj._meta.label)
+
+    if key is None:
+        model_field_names = [field.name for field in obj._meta.fields]
+
+        if TRACKEDMODEL_IDENTIFIER_FALLBACK_KEY in model_field_names:
+            key = TRACKEDMODEL_IDENTIFIER_FALLBACK_KEY
+        else:
+            key = TRACKEDMODEL_PRIMARY_KEY
+
+    return key
+
+
+def get_model_identifier(obj: TrackedModel) -> str:
+    """Returns the preferred identifierfor a model."""
+    attr = get_model_preferred_key(obj)
+    return getattr(obj, attr)

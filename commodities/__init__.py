@@ -44,7 +44,7 @@ and providing a list of pending related record changes
 that need to be applied alongside the commodity changes.
 
 The following constructs make the bootstrapping approach possible:
-1. Commodity wrapper (inherits form a new TrackedModelWrapper dataclass)
+1. Commodity wrapper
   - the primary benefit of the wrapper is the ability to "fake"
     changes to the wrapped underlying record for the purposes of
     previewing the effects and side effects of the change.
