@@ -19,6 +19,7 @@ from commodities.models.orm import CommodityCode
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from commodities.models.orm import GoodsNomenclatureIndent
+from commodities.util import clean_item_id
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
@@ -56,7 +57,7 @@ TRACKEDMODEL_IDENTIFIER_KEYS = {
     "regulations.Group": "group_id",
 }
 
-TRACKEDMODEL_IDENTIFIER_FALLBACK_KEY = "sid"
+TRACKEDMODEL_IDENTIFIER_FALLBACK_KEY = TrackedModel.identifying_fields[0]
 TRACKEDMODEL_PRIMARY_KEY = "pk"
 
 
@@ -273,7 +274,8 @@ class CommodityTreeBase(BaseModel):
         - the version will default to the current version of the related GoodsNomenclature object;
         - the version_group_id argument will not figure in the search if it is not specified.
         """
-        code = self._get_sanitized_code(code)
+        code = clean_item_id(code)
+
         suffix = suffix or SUFFIX_DECLARABLE
 
         try:
@@ -294,11 +296,6 @@ class CommodityTreeBase(BaseModel):
         except StopIteration:
             return None
 
-    def _get_sanitized_code(self, code: Union[str, CommodityCode]) -> str:
-        """Returns the commodity code in GoodsNomenclature.item_id format."""
-        code = str(code).replace(".", "")
-        return f"{code:0<10}"
-
 
 @dataclass
 class SnapshotDiff(BaseModel):
@@ -312,7 +309,7 @@ class SnapshotDiff(BaseModel):
 
     2. Use-Case Scenarios for SnapshotDiffs
     There can be a two motivations for getting a diff between snapshots:
-    - compare the where a commodity sits in the tree hierarchy
+    - compare where a commodity sits in the tree hierarchy
       at two different points in time or as of two different transactions
     - compare the 'before' and 'after' snapshots around a tree update
 
@@ -321,8 +318,7 @@ class SnapshotDiff(BaseModel):
 
     commodity: Commodity
     relation: TreeNodeRelation
-    exists: dict[str, bool]
-    values: dict[str, Union[Commodity, list[Commodity]]]
+    values: list[Union[Commodity, list[Commodity]]]
 
     @property
     def diff(self) -> list[Commodity]:
@@ -330,7 +326,7 @@ class SnapshotDiff(BaseModel):
         snapshots."""
         values = [
             [value] if isinstance(value, Commodity) or value is None else value
-            for value in self.values.values()
+            for value in self.values
         ]
 
         diff = [
@@ -378,7 +374,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         Builds the commodity tree upon instantiation.
 
         The business logic for building the tree is as follows:
-        - fort the commodities first, and then traverse the sorted collection to build the tree
+        - for the commodities first, and then traverse the sorted collection to build the tree
         - the _sort method is responsible for sorting logic, see its docs for details
         - the _traverse method is responsible for traversal, see its docs for details
         1. The commodity collection is first sorted on code, suffix and indent.
@@ -393,6 +389,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
           -- this allows it to assign the correct parents for 0-indent headings.
         """
         chapters = {c.code.chapter for c in self.commodities}
+
+        if len(chapters) != 1:
+            msg = "All commodities in a group must be from the same HS chapter."
+            raise CommodityTreeSnapshotException(msg)
 
         try:
             assert len(chapters) == 1
@@ -611,31 +611,22 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         You can get one diff per commodity and relation type
         (e.g. diff the children of '9999.20.00.00' or diff the siblings of '9999.30.20.10')
         """
-        if snapshot == self:
-            raise ValueError("The two snapshots are identical.")
-
         if snapshot.clock_type != self.clock_type:
             raise ValueError("Cannot diff snapshots with different clock types.")
-
-        exists = {
-            self.identifier: commodity in self.commodities,
-            snapshot.identifier: commodity in snapshot.commodities,
-        }
 
         attr = f"get_{relation.value}"
 
         if hasattr(self, attr) is False:
             raise ValueError("Unknown relation")
 
-        values = {
-            self.identifier: getattr(self, attr)(commodity),
-            snapshot.identifier: getattr(snapshot, attr)(commodity),
-        }
+        values = [
+            getattr(self, attr)(commodity),
+            getattr(snapshot, attr)(commodity),
+        ]
 
         return SnapshotDiff(
             commodity=commodity,
             relation=relation,
-            exists=exists,
             values=values,
         )
 
@@ -874,6 +865,7 @@ class CommodityChange(BaseModel):
             if self.current == self.candidate:
                 self._handle_validation_issue(
                     "the current and new versions are identical",
+                    warn_only=True,
                 )
 
             if candidate == self.candidate:
@@ -970,7 +962,7 @@ class CommodityChange(BaseModel):
         # here, find all related measures and invoke the BR
         # (inefficient for this workflow, but consistent use of BR-s)
         if len(self.candidate.code.trimmed_code) > len(self.current.code.trimmed_code):
-            for measure in good.measures.latest_approved().all():
+            for measure in good.measures.all():
                 try:
                     mbr.ME88().validate(measure)
                 except BusinessRuleViolation:
@@ -1066,14 +1058,22 @@ class CommodityChange(BaseModel):
             of ME32 with respect to this measure if the validity spans of the
             two measures overlap as well.
             """
+            try:
+                order_number = (m.order_number or m.dead_order_number).order_number
+            except AttributeError:
+                order_number = ""
+
+            try:
+                additional_code = (m.additional_code or m.dead_additional_code).code
+            except AttributeError:
+                additional_code = ""
+
             return (
-                f"{m.measure_type}."
-                f"{m.geographical_area.area_id}."
-                f"{m.order_number}."
-                f"{m.dead_order_number}."
-                f"{m.additional_code}."
-                f"{m.dead_additional_code}."
-                f"{m.reduction}"
+                m.measure_type.sid,
+                m.geographical_area.area_id,
+                order_number,
+                additional_code,
+                m.reduction,
             )
 
         def _validities_overlap(m1: Measure, m2: Measure) -> bool:
@@ -1161,10 +1161,10 @@ class CommodityChange(BaseModel):
                 attrs=attrs,
             )
 
-    def _handle_validation_issue(self, msg: str) -> None:
+    def _handle_validation_issue(self, msg: str, warn_only: bool = False) -> None:
         """Logs a warning message or raises an error."""
 
-        if self.ignore_validation_rules is True:
+        if self.ignore_validation_rules or warn_only:
             msg = f"The operation is {self.update_type} but {msg}"
             logger.warn(msg)
         else:
@@ -1225,6 +1225,10 @@ class CommodityCollectionLoader:
 class CommodityChangeException(ValueError):
     def __init__(self, msg: str, change: CommodityChange) -> None:
         super().__init__(f"Commodity {change.update_type} error: {msg}")
+
+
+class CommodityTreeSnapshotException(ValueError):
+    pass
 
 
 def get_model_preferred_key(obj: TrackedModel) -> str:

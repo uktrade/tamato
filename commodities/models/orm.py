@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
 from typing import Set
 
 from django.db import models
@@ -144,9 +143,14 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     )
 
     @property
+    def code(self) -> CommodityCode:
+        """Returns a CommodityCode instance for the good."""
+        return CommodityCode(code=self.item_id)
+
+    @property
     def footnote_application_codes(self) -> Set[ApplicationCode]:
         codes = {ApplicationCode.TARIC_NOMENCLATURE, ApplicationCode.DYNAMIC_FOOTNOTE}
-        if not self.is_taric_code:
+        if not self.code.is_taric_code:
             codes.add(ApplicationCode.CN_NOMENCLATURE)
         return codes
 
@@ -187,10 +191,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
     @property
     def dependent_measures(self):
-        currently_effective_range = TaricDateRange(
-            lower=date.today(),
-        )
-
         return self.measures.model.objects.filter(
             goods_nomenclature__sid=self.sid,
         ).approved_up_to_transaction(self.transaction)

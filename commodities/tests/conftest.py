@@ -113,13 +113,9 @@ def create_record(
 
     See the module-level docs for details on the use of the transaction_pool.
     """
-    try:
-        transaction = kwargs["transaction"]
-        del kwargs["transaction"]
-    except KeyError:
-        transaction = next(transaction_pool)
-
-    return factory.create(transaction=transaction, **kwargs)
+    if "transaction" not in kwargs:
+        kwargs["transaction"] = next(transaction_pool)
+    return factory.create(**kwargs)
 
 
 def create_dependent_measure(
@@ -201,15 +197,21 @@ def commodities(date_ranges, transaction_pool) -> dict[str, Commodity]:
     )
 
     commodities = [create_commodity(transaction_pool, *args) for args in params]
-    keys = [
-        f"{c.code.trimmed_dot_code}_{c.get_suffix()}_{c.get_indent()}"
+
+    return {
+        f"{c.code.trimmed_dot_code}_{c.get_suffix()}_{c.get_indent()}": c
         for c in commodities
-    ]
-    return dict(zip(keys, commodities))
+    }
 
 
 @pytest.fixture
 def commodities_spanned(date_ranges, transaction_pool):
+    """
+    Returns a list of commodities with various validity periods.
+
+    This is useful for tests of date range related side effects arising from
+    commodity code changes.
+    """
     params = (
         ("9999.00.00.00", "80", 1, date_ranges.no_end),
         ("9999.10.00.00", "80", 2, date_ranges.normal),
@@ -229,29 +231,40 @@ def commodities_spanned(date_ranges, transaction_pool):
 
 @pytest.fixture
 def collection_basic(commodities) -> CommodityCollection:
+    """Returns a simple collection of commodities side effects testing."""
     keys = ["9999_80_1", "9999.10_80_2", "9999.20_80_2"]
     return create_collection(commodities, keys)
 
 
 @pytest.fixture
 def collection_heading(commodities) -> CommodityCollection:
+    """Returns a special collection of headings to test header and chapter
+    parenting rules."""
     keys = ["9900_80_0", "9910_80_0"]
     return create_collection(commodities, keys)
 
 
 @pytest.fixture
 def collection_suffixes_indents(commodities) -> CommodityCollection:
+    """Returns a collection of indented commodities to test tree hierarchies."""
     keys = ["9910.10_10_1", "9910.10_80_2", "9910.20_80_2"]
     return create_collection(commodities, keys)
 
 
 @pytest.fixture
 def collection_full(commodities) -> CommodityCollection:
+    """Returns a collection with all commodities for complex scenario
+    testing."""
     return create_collection(commodities)
 
 
 @pytest.fixture
 def collection_spanned(commodities_spanned) -> CommodityCollection:
+    """
+    Retruns a collection with the spanned commodities.
+
+    See the docs for the commodities_spanned fixture above for details.
+    """
     return create_collection(commodities_spanned)
 
 

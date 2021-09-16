@@ -316,7 +316,7 @@ class NIG35(BusinessRule):
                 additional_code__isnull=False,
             )
             .approved_up_to_transaction(
-                good.transaction,
+                self.transaction,
             )
             .exists()
         )

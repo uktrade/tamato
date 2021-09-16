@@ -1,4 +1,3 @@
-import contextlib
 import re
 from copy import copy
 from datetime import date
@@ -15,21 +14,7 @@ from common.validators import UpdateType
 
 from .conftest import copy_commodity
 
-# from conftest import not_raises
-
-
 pytestmark = pytest.mark.django_db
-
-
-@contextlib.contextmanager
-def not_raises(ExpectedException):
-    """Provides a context manager for tests that need to assert a specific
-    exception is not raised."""
-    try:
-        yield
-
-    except ExpectedException as error:
-        pytest.fail(f"Raised exception {error} when it should not!")
 
 
 def verify_snapshot_members(collection, snapshot, excluded_date_ranges):
@@ -193,30 +178,22 @@ def test_commodity_identifier(commodities):
         assert version == str(commodity.version)
 
 
-def test_commodity_tree_base_get_sanitized_code(commodities):
-    base = CommodityTreeBase(commodities=commodities.values())
-    code_attrs = ("code", "dot_code", "trimmed_code", "trimmed_dot_code")
-
-    for commodity in commodities.values():
-        for attr in code_attrs:
-            code = getattr(commodity.code, attr)
-            sanitized_code = base._get_sanitized_code(code)
-            assert sanitized_code == str(commodity.code)
-
-
 def test_commodity_tree_base_get_commodity(commodities):
     base = CommodityTreeBase(commodities=commodities.values())
     suffixes = (None, "10", "80")
     versions = (None, 0, 1, 2)
 
     for commodity in commodities.values():
+        kwargs = dict(code=str(commodity.code))
+
         for suffix in suffixes:
+            if suffix is not None:
+                kwargs.update(dict(suffix=suffix))
+
             for version in versions:
-                result = base.get_commodity(
-                    commodity.code,
-                    suffix=suffix,
-                    version=version,
-                )
+                kwargs.update(dict(version=version))
+
+                result = base.get_commodity(**kwargs)
                 suffix = suffix or SUFFIX_DECLARABLE
                 version = version or commodity.current_version
 
@@ -535,12 +512,11 @@ def test_snapshot_identifier(collection_basic):
 def test_change_valid_create(collection_basic, commodities):
     commodity = commodities["9999.20.00.10_80_3"]
 
-    with not_raises(ValueError):
-        CommodityChange(
-            collection=collection_basic,
-            candidate=commodity,
-            update_type=UpdateType.CREATE,
-        )
+    assert CommodityChange(
+        collection=collection_basic,
+        candidate=commodity,
+        update_type=UpdateType.CREATE,
+    )
 
 
 def test_change_invalid_create_no_comodity(collection_basic):
@@ -567,13 +543,12 @@ def test_change_valid_update(collection_basic, transaction_pool):
     current = collection_basic.get_commodity("9999.20")
     commodity = copy_commodity(current, transaction_pool, suffix="20")
 
-    with not_raises(ValueError):
-        CommodityChange(
-            collection=collection_basic,
-            current=current,
-            candidate=commodity,
-            update_type=UpdateType.UPDATE,
-        )
+    assert CommodityChange(
+        collection=collection_basic,
+        current=current,
+        candidate=commodity,
+        update_type=UpdateType.UPDATE,
+    )
 
 
 def test_change_invalid_update_no_current(collection_basic, transaction_pool):
@@ -604,12 +579,11 @@ def test_change_invalid_update_no_change(collection_basic, transaction_pool):
 def test_change_valid_delete(collection_basic):
     current = collection_basic.get_commodity("9999.20")
 
-    with not_raises(ValueError):
-        CommodityChange(
-            collection=collection_basic,
-            current=current,
-            update_type=UpdateType.DELETE,
-        )
+    assert CommodityChange(
+        collection=collection_basic,
+        current=current,
+        update_type=UpdateType.DELETE,
+    )
 
 
 def test_change_invalid_delete_no_current(collection_basic):
