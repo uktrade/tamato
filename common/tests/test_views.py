@@ -50,8 +50,8 @@ def test_handles_multiple_unapproved_workbaskets(valid_user_client, new_workbask
     )
     transaction = factories.TransactionFactory.create(workbasket=workbasket)
     with transaction:
-        for _ in range(2):
-            factories.FootnoteTypeFactory.create()
+        factories.FootnoteTypeFactory.create_batch(2)
+
     assert WorkBasket.objects.is_not_approved().count() == 2
 
     response = valid_user_client.get(reverse("index"))
