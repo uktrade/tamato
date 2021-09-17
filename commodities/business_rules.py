@@ -12,6 +12,7 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
+from common.business_rules import skip_when_not_deleted
 from common.util import validity_range_contains_range
 
 
@@ -302,7 +303,7 @@ class NIG34(PreventDeleteIfInUse):
     measure."""
 
 
-@skip_when_deleted
+@skip_when_not_deleted
 class NIG35(BusinessRule):
     """A goods nomenclature cannot be deleted if it is used in an additional
     nomenclature measure."""
