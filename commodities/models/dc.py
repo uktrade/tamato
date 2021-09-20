@@ -30,6 +30,7 @@ from common.validators import UpdateType
 from measures import business_rules as mbr
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
+from measures.querysets import MeasuresQuerySet
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,7 @@ class Commodity(BaseModel):
         return self.obj.valid_between
 
     @property
-    def code(self) -> str:
+    def code(self) -> CommodityCode:
         """Returns the the commodity code."""
         return CommodityCode(code=self.get_item_id())
 
@@ -154,6 +155,25 @@ class Commodity(BaseModel):
         code = self.code.dot_code
         extra = f"{self.get_suffix()}-{self.get_indent()}/{self.version}"
         return f"{code}-{extra}"
+
+    @property
+    def good(self) -> Optional[GoodsNomenclature]:
+        if self.obj is None:
+            return
+
+        overrides = {
+            attr: getattr(self, attr)
+            for attr in self.get_field_names(exclude=["obj"])
+            if getattr(self, attr) is not None
+        }
+
+        good = self.obj.copy(self.obj.transaction, **overrides)
+
+        for field in good.auto_value_fields:
+            attr = field.name
+            setattr(good, attr, getattr(self.obj, attr))
+
+        return good
 
     @property
     def version(self) -> int:
@@ -230,7 +250,7 @@ class Commodity(BaseModel):
 
         return (
             self.identifier == commodity.identifier
-            and self.obj.valid_between == commodity.obj.valid_between
+            and self.get_valid_between() == commodity.get_valid_between()
         )
 
     def __str__(self) -> str:
@@ -466,6 +486,31 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
         return descendants
 
+    def get_dependent_measures(self, commodity: Commodity) -> MeasuresQuerySet:
+        if commodity not in self.commodities:
+            raise ValueError(f"Commodity {commodity} not found in this snapshot.")
+
+        qs = Measure.objects.filter(
+            goods_nomenclature__item_id=commodity.get_item_id(),
+            goods_nomenclature__suffix=commodity.get_suffix(),
+        )
+
+        if self.clock_type == ClockType.TRANSACTION:
+            qs = qs.approved_up_to_transaction(self.snapshot_transaction)
+        else:
+            qs = qs.latest_approved()
+
+        if self.clock_type == ClockType.CALENDAR:
+            effective_date = self.snapshot_date
+        else:
+            effective_date = date.today()
+
+        qs = qs.with_effective_valid_between().filter(
+            db_effective_valid_between__contains=effective_date,
+        )
+
+        return qs
+
     def is_declarable(self, commodity: Commodity) -> bool:
         if commodity.get_suffix() != SUFFIX_DECLARABLE:
             return False
@@ -518,6 +563,12 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         """Retruns the snapshot transaction if uses the transaction clock."""
         if self.clock_type == ClockType.TRANSACTION:
             return self.moment
+
+    @property
+    def snapshot_transaction(self) -> Optional[int]:
+        """Retruns the snapshot transaction if uses the transaction clock."""
+        if self.clock_type == ClockType.TRANSACTION:
+            return Transaction.objects.get(id=self.moment)
 
     @property
     def hash(self) -> str:
@@ -814,7 +865,7 @@ class CommodityChange(BaseModel):
     current: Optional[Commodity] = None
     candidate: Optional[Commodity] = None
     ignore_validation_rules: bool = False
-    side_effects: Optional[dict[TTrackedModelIdentifier, SideEffect]] = None
+    # side_effects: Optional[dict[TTrackedModelIdentifier, SideEffect]] = None
 
     def __post_init__(self) -> None:
         """Triggers validation on the fields of the model upon instantiation."""
@@ -880,16 +931,17 @@ class CommodityChange(BaseModel):
         See ADR13 for the scenarios covered for update or delete type changes.
         """
         self.side_effects = {}
+        before, after = self._get_before_and_after_snapshots()
 
         if self.update_type == UpdateType.DELETE:
-            self._handle_delete_side_effects()
+            self._handle_delete_side_effects(after)
         elif self.update_type == UpdateType.UPDATE:
-            self._handle_update_side_effects()
+            self._handle_update_side_effects(after)
 
         if self.update_type != UpdateType.CREATE:
-            self._handle_hierarchy_side_effects()
+            self._handle_hierarchy_side_effects(before, after)
 
-    def _handle_delete_side_effects(self) -> None:
+    def _handle_delete_side_effects(self, after: CommodityTreeSnapshot) -> None:
         """
         Preempt business rule violations due to commodity code deletes.
 
@@ -902,10 +954,8 @@ class CommodityChange(BaseModel):
         - NIG34: Checks whether the good is in "use" but does not provide related measures.
         - NIG35: Not used as it is redundant in this context after NIG34
         """
-        good = self.current.obj
-
         # NIG34 / NIG35
-        for measure in good.dependent_measures:
+        for measure in after.get_dependent_measures(self.current):
             self._add_pending_delete(measure)
 
         # No BR: delete related footnote associations
@@ -915,7 +965,7 @@ class CommodityChange(BaseModel):
         ):
             self._add_pending_delete(association)
 
-    def _handle_update_side_effects(self) -> None:
+    def _handle_update_side_effects(self, after: CommodityTreeSnapshot) -> None:
         """
         Preempt business rule violations due to commodity code updates.
 
@@ -927,26 +977,26 @@ class CommodityChange(BaseModel):
           however, for consistency we still apply these rules.
         """
 
-        good = self.candidate.obj
+        good = self.candidate.good
 
         footnote_associations = good.footnote_associations.all()
-        measures = good.dependent_measures
+        measures = after.get_dependent_measures(self.candidate)
 
         # NIG30 / NIG31
         try:
             cbr.NIG30().validate(good)
         except BusinessRuleViolation:
             for measure in measures:
-                self._handle_validity_conflicts(measure)
+                self._handle_validity_conflicts(good, measure)
 
         # NIG22: Invoked from the POV of a footnote association
         # here, find all related associations and invoke the BR
         # (inefficient for this workflow, but consistent use of BR-s)
         for association in footnote_associations:
             try:
-                cbr.NIG22().validate(association)
+                cbr.NIG22(good.transaction).validate(association)
             except BusinessRuleViolation:
-                self._handle_validity_conflicts(association)
+                self._handle_validity_conflicts(good, association)
 
         # ME7: Invoked from the POV of a measure
         # here, find all related measures and invoke the BR
@@ -987,10 +1037,12 @@ class CommodityChange(BaseModel):
                     except BusinessRuleViolation:
                         self._add_pending_delete(association)
 
-    def _handle_validity_conflicts(self, obj: TrackedModel) -> None:
+    def _handle_validity_conflicts(
+        self,
+        good: GoodsNomenclature,
+        obj: TrackedModel,
+    ) -> None:
         """Handle conflicts related to validity span rule violations."""
-        good = self.candidate.obj
-
         gvb = good.valid_between
         ovb = obj.valid_between
 
@@ -1007,10 +1059,11 @@ class CommodityChange(BaseModel):
         start_date = None
         end_date = None
 
-        if gvb.upper and ovb.upper and gvb.upper < ovb.upper:
-            end_date = gvb.lower
+        if gvb.upper:
+            if ovb.upper is None or gvb.upper < ovb.upper:
+                end_date = gvb.upper
         if gvb.lower > ovb.lower:
-            start_date = gvb.upper
+            start_date = gvb.lower
 
         # Circuit breaker for cases where the obj is spanned by the good
         if start_date is None and end_date is None:
@@ -1026,9 +1079,16 @@ class CommodityChange(BaseModel):
             valid_between=valid_between,
         )
 
+        if type(obj) == Measure:
+            attrs["terminating_regulation"] = obj.generating_regulation
+
         self._add_pending_update(obj, attrs)
 
-    def _handle_hierarchy_side_effects(self) -> None:
+    def _handle_hierarchy_side_effects(
+        self,
+        before: CommodityTreeSnapshot,
+        after: CommodityTreeSnapshot,
+    ) -> None:
         """
         Preempt business rule violations related to changes in hierarchy.
 
@@ -1083,8 +1143,8 @@ class CommodityChange(BaseModel):
             Algorithm:
             1. Sort the two measures on start_date
             2a. If the earlier measure has no end date, there is an overlap
-            2b. If the earlier measure's end date is on or after,
-                the later measure start date, there is an overlap
+            2b. If the earlier measure's end date is on or after
+                the later measure's start date, there is an overlap
 
             NOTE: If the two measures also have the same "fingerprint"
             (see _get_measure_key() above), this will violate ME32.
@@ -1097,18 +1157,16 @@ class CommodityChange(BaseModel):
             )
 
         commodity = self.candidate or self.current
-        good = commodity.obj
-        measures = {_get_measure_key(m): m for m in good.dependent_measures}
 
-        clone = copy(self.collection)
-        before = clone.current_snapshot
-        clone.update([self])
-        after = clone.current_snapshot
+        measures = {
+            _get_measure_key(measure): measure
+            for measure in after.get_dependent_measures(commodity)
+        }
 
         # Check if the changing commodity has ME32 clashes in its new hierarchy
         for attr in ["get_ancestors", "get_descendants"]:
             for relative in getattr(after, attr)(commodity):
-                related_measures = relative.obj.dependent_measures
+                related_measures = after.get_dependent_measures(relative)
 
                 for related_measure in related_measures:
                     key = _get_measure_key(related_measure)
@@ -1169,6 +1227,16 @@ class CommodityChange(BaseModel):
             logger.warn(msg)
         else:
             raise CommodityChangeException(msg, self)
+
+    def _get_before_and_after_snapshots(
+        self,
+    ) -> tuple[CommodityTreeSnapshot, CommodityTreeSnapshot]:
+        clone = copy(self.collection)
+        before = clone.current_snapshot
+        clone.update([self])
+        after = clone.current_snapshot
+
+        return (before, after)
 
 
 # TODO: Move the loader to a more appropriate module

@@ -1,4 +1,6 @@
 """Provides a base model for all dataclasses used in the project."""
+from __future__ import annotations
+
 import types
 from dataclasses import Field
 from dataclasses import dataclass
@@ -127,6 +129,9 @@ class BaseModel:
         """Postprocess the fields of the model."""
         processor = ModelPostProcessor(self)
         processor.post_process()
+
+    def get_field_names(self, exclude: list[str] = None) -> list[str]:
+        return [field.name for field in fields(self) if field.name not in exclude]
 
     @property
     def __identifier__(self):
