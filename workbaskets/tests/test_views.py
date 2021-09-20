@@ -24,17 +24,18 @@ def test_submit_workbasket(unapproved_transaction, valid_user, client):
     assert response.status_code == 302
     assert response.url == reverse("index")
 
-    workbasket.refresh_from_db()
-    assert workbasket.status == WorkflowStatus.SENT_TO_CDS
+    workbasket = WorkBasket.objects.get(pk=workbasket.pk)
+    assert workbasket.status == WorkflowStatus.SENT
     assert workbasket.approver is not None
 
-    assert client.session["workbasket"]["status"] == WorkflowStatus.SENT_TO_CDS
+    assert client.session["workbasket"]["status"] == WorkflowStatus.SENT
 
 
-def test_edit_after_submit(workbasket, valid_user, client, date_ranges):
+def test_edit_after_submit(valid_user, client, date_ranges):
     client.force_login(valid_user)
 
     # submit a workbasket containing a newly created footnote
+    workbasket = factories.WorkBasketFactory.create()
     with workbasket.new_transaction():
         footnote = factories.FootnoteFactory.create(
             update_type=UpdateType.CREATE,
@@ -59,13 +60,12 @@ def test_edit_after_submit(workbasket, valid_user, client, date_ranges):
     assert response.status_code == 302
 
     # check that the session workbasket has been replaced by a new one
-    new_workbasket = WorkBasket.from_json(client.session["workbasket"])
-    new_workbasket.refresh_from_db()
-    assert new_workbasket.pk != workbasket.pk
+    session_workbasket = WorkBasket.load_from_session(client.session)
+    assert session_workbasket.id != workbasket.id
 
     # check that the footnote edit is in the new session workbasket
-    assert new_workbasket.transactions.count() == 1
-    tx = new_workbasket.transactions.first()
+    assert session_workbasket.transactions.count() == 1
+    tx = session_workbasket.transactions.first()
     assert tx.tracked_models.count() == 1
     new_footnote_version = tx.tracked_models.first()
     assert new_footnote_version.pk != footnote.pk
