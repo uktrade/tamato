@@ -88,7 +88,9 @@ def test_envelope_serializer_outputs_expected_items(approved_workbasket):
     output_record_codes = {*taric_xml_record_codes(output_xml)}
 
     # More items than models are output, as models for descriptions aren't kept.
-    assert output_record_codes.issuperset(expected_item_record_codes)
+    assert (
+        output_record_codes >= expected_item_record_codes
+    ), f"Output ({output_record_codes}) missing some expected record codes"
 
 
 def test_transaction_envelope_serializer_splits_output():
