@@ -1,5 +1,7 @@
+from ajax_select import urls as ajax_select_urls
 from django.urls import include
 from django.urls import path
+from django.urls import re_path
 from rest_framework import routers
 
 from measures import views
@@ -47,6 +49,7 @@ ui_patterns = [
 
 
 urlpatterns = [
+    re_path(r"^ajax_select/", include(ajax_select_urls)),
     path("measures/", include(ui_patterns)),
     path("api/", include(api_router.urls)),
 ]

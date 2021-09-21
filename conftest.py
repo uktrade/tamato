@@ -290,12 +290,10 @@ def use_update_form(valid_user_api_client: APIClient):
         data = get_form_data(response.context_data["form"])
         assert set(new_data.keys()).issubset(data.keys())
 
-        {key for key in new_data}
         # Submit the edited data and if we expect success ensure we are redirected
         realised_data = {key: new_data[key](data[key]) for key in new_data}
 
         data.update(realised_data)
-        data = {key: value for (key, value) in data.items() if value}
         response = valid_user_api_client.post(edit_url, data)
 
         # Check that if we expect failure that the new data was not persisted

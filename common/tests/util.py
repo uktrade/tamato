@@ -376,10 +376,7 @@ def get_form_data(form: forms.ModelForm) -> Dict[str, Any]:
     hence result in multiple HTML <input> objects."""
 
     data = {**form.initial}
-    fields = (
-        form.rendered_fields if hasattr(form, "rendered_fields") else form.fields.keys()
-    )
-    for field in fields:
+    for field in form.rendered_fields:
         value = data[field] if field in data else form.fields[field].initial
         if hasattr(form.fields[field].widget, "decompress"):
             # If the widget can be decompressed, then it is not just a simple
@@ -394,12 +391,4 @@ def get_form_data(form: forms.ModelForm) -> Dict[str, Any]:
             )
         elif value is not None:
             data.setdefault(field, value)
-
-    # copied = data.copy()
-    # for key in copied.keys():
-    #     if not data[key]:
-    #         del data[key]
-
-    data["geographical_area_group"] = data["geographical_area_group"].pk
-
     return data

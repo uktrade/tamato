@@ -60,6 +60,7 @@ DJANGO_CORE_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "ajax_select",
     "django_extensions",
     "django_filters",
     "formtools",

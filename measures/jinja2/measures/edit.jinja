@@ -29,10 +29,6 @@
       }) }}
 {% endset %}
 
-{% set footnotes_html %}
-
-{% endset %}
-
 {% set geographical_area_html %}
     {{ govukRadios({
         "idPrefix": "geographical_area_choice",
@@ -73,6 +69,7 @@
 {% endset %}
 
 {% block form %}
+{{ form.media }}
   {% call django_form(action=object.get_url("edit")) %}
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-two-thirds">
@@ -131,7 +128,7 @@
                     {
                         "heading": {"text": "Footnotes"},
                         "content": {
-                            "html": footnotes_html
+                            "html": form.footnotes
                         },
                         "summary": {}
                     },

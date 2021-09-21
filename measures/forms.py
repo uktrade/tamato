@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from ajax_select.fields import AutoCompleteSelectMultipleField
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
@@ -19,6 +20,7 @@ from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
 from common.util import validity_range_contains_range
+from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
@@ -78,10 +80,11 @@ class MeasureForm(ValidityPeriodForm):
         required=False,
         empty_label=None,
     )
-    footnotes = forms.ModelMultipleChoiceField(
-        queryset=Footnote.objects.all(),
+    footnotes = AutoCompleteSelectMultipleField(
+        "footnotes",
         required=False,
     )
+    footnotes.widget.attrs.update({"class": "govuk-select"})
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -105,6 +108,22 @@ class MeasureForm(ValidityPeriodForm):
             self.fields[
                 "geographical_area_country_or_region"
             ].initial = self.instance.geographical_area
+
+    def _save_m2m(self):
+        # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#bulk-create
+        # Django doesn't support bulk creation of a multi-table inherited model
+        # such as Footnote where the parent model (Tracked Model) differs from Footnote._meta.concrete_model
+        footnote_pks = self.cleaned_data.pop("footnotes", [])
+        for pk in footnote_pks:
+            footnote = Footnote.objects.get(pk=pk)
+            measure = self.instance
+            models.FootnoteAssociationMeasure.objects.create(
+                footnoted_measure=measure,
+                associated_footnote=footnote,
+                update_type=UpdateType.CREATE,
+                transaction=measure.transaction,
+            )
+        super()._save_m2m()
 
     def clean(self):
         cleaned_data = super().clean()
