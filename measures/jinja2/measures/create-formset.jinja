@@ -16,7 +16,7 @@
     {{ crispy(formset.empty_form)|replace("__prefix__", formset.forms|length)|safe }}
   {% endif %}
 
-  {% call govukFieldset({"legend": {}}) %}
+  {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
     {{ govukButton({
       "text": "Add new",
       "classes": "govuk-button--secondary",
