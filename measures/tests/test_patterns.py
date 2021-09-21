@@ -66,7 +66,12 @@ def authorised_use_objects():
 
 @pytest.fixture
 def authorised_use_measure_data(measure_data: Dict, authorised_use_objects) -> Dict:
-    return {"authorised_use": True, **measure_data}
+    return {
+        **measure_data,
+        "measure_type": factories.MeasureTypeFactory(
+            description="Third country duty under authorised use",
+        ),
+    }
 
 
 @pytest.fixture

@@ -346,6 +346,9 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+# -- Google Tag Manager
+GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
+
 # -- Logging
 
 LOGGING = {

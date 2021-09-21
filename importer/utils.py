@@ -14,6 +14,19 @@ from django.db.models.query_utils import DeferredAttribute
 from common.models import TrackedModel
 
 
+def col(label: str) -> int:
+    """Return the correct index given an Excel column letter."""
+    if not label.isalpha():
+        raise ValueError(f"'{label}' is not a valid column label.")
+    return (
+        sum(
+            (ord(char) - ord("A") + 1) * (26 ** position)
+            for position, char in enumerate(reversed(label.upper()))
+        )
+        - 1
+    )
+
+
 class LinksType(TypedDict):
     """
     A type defining the interface between a handler and its links.

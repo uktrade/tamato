@@ -9,7 +9,6 @@ from typing import Sequence
 
 from django.db import transaction
 
-from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
@@ -85,6 +84,10 @@ class MeasureCreationPattern:
         last_sid = MeasureCondition.objects.values("sid").order_by("sid").last()
         next_sid = 1 if last_sid is None else last_sid["sid"] + 1
         return counter_generator(next_sid)
+
+    @cached_property
+    def authorised_use_measure_types(self):
+        return set(MeasureType.objects.filter(description__contains="authorised use"))
 
     @cached_property
     def presentation_of_certificate(self) -> MeasureConditionCode:
@@ -267,17 +270,14 @@ class MeasureCreationPattern:
     def create_measure_tracked_models(
         self,
         duty_sentence: str,
-        geographical_area: GeographicalArea,
         goods_nomenclature: GoodsNomenclature,
-        measure_type: MeasureType,
         validity_start: date,
         validity_end: date,
         exclusions: Sequence[GeographicalArea] = [],
         order_number: Optional[QuotaOrderNumber] = None,
-        authorised_use: bool = False,
-        additional_code: AdditionalCode = None,
         footnotes: Sequence[Footnote] = [],
         condition_sentence: Optional[str] = None,
+        **data,
     ) -> Iterator[TrackedModel]:
         """
         Create a new measure linking the passed data and any defaults. The
@@ -288,8 +288,9 @@ class MeasureCreationPattern:
         exclusion, all of its members at of the start date of the measure will
         be excluded.
 
-        If `authorised_use` is `True`, measure conditions requiring the N990
-        authorised use certificate will be added to the measure.
+        If the measure type is one of the `self.authorised_use_measure_types`,
+        measure conditions requiring the N990 authorised use certificate will be
+        added to the measure.
 
         If `footnotes` are passed, footnote associations will be added to the
         measure.
@@ -297,7 +298,8 @@ class MeasureCreationPattern:
         If an `order_number` with `required_conditions` is passed, measure
         conditions requiring the certificates will be added to the measure.
 
-        Return an Iterator over all the TrackedModels created, starting with the Measure.
+        Return an Iterator over all the TrackedModels created, starting with the
+        Measure.
         """
 
         assert goods_nomenclature.suffix == "80", "ME7 – must be declarable"
@@ -322,14 +324,11 @@ class MeasureCreationPattern:
             **self.defaults,
             **{
                 "sid": new_measure_sid,
-                "measure_type": measure_type,
-                "geographical_area": geographical_area,
                 "goods_nomenclature": goods_nomenclature,
                 "order_number": order_number or self.defaults.get("order_number"),
-                "additional_code": additional_code
-                or self.defaults.get("additional_code"),
                 "valid_between": TaricDateRange(actual_start, actual_end),
             },
+            **data,
         }
 
         if actual_end is not None:
@@ -355,7 +354,7 @@ class MeasureCreationPattern:
 
         # If this is a measure under authorised use, we need to add
         # some measure conditions with the N990 certificate.
-        if authorised_use:
+        if new_measure.measure_type in self.authorised_use_measure_types:
             yield from self.create_measure_authorised_use_measure_conditions(
                 new_measure,
             )
