@@ -8,3 +8,12 @@ class ClockType(Enum):
 
     CALENDAR = auto()
     TRANSACTION = auto()
+    COMBINED = auto()
+
+    @property
+    def is_calendar_clock(self):
+        return self in (self.CALENDAR, self.COMBINED)
+
+    @property
+    def is_transaction_clock(self):
+        return self in (self.TRANSACTION, self.COMBINED)

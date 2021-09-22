@@ -186,6 +186,9 @@ def normal_good(date_ranges, transaction_pool):
 def commodities(date_ranges, transaction_pool) -> dict[str, Commodity]:
     params = (
         ("9900.00.00.00", "80", 0, date_ranges.normal),
+        ("9905.00.00.00", "10", 0, date_ranges.normal),
+        ("9905.00.00.00", "80", 0, date_ranges.normal),
+        ("9910.00.00.00", "10", 0, date_ranges.normal),
         ("9910.00.00.00", "80", 0, date_ranges.normal),
         ("9910.10.00.00", "10", 1, date_ranges.normal),
         ("9910.10.00.00", "80", 2, date_ranges.normal),
@@ -237,10 +240,10 @@ def collection_basic(commodities) -> CommodityCollection:
 
 
 @pytest.fixture
-def collection_heading(commodities) -> CommodityCollection:
+def collection_headings(commodities) -> CommodityCollection:
     """Returns a special collection of headings to test header and chapter
     parenting rules."""
-    keys = ["9900_80_0", "9910_80_0"]
+    keys = ["9900_80_0", "9905_10_0", "9905_80_0", "9910_10_0", "9910_80_0"]
     return create_collection(commodities, keys)
 
 
@@ -362,16 +365,14 @@ def scenario_4(collection_basic, date_ranges, transaction_pool) -> TScenario:
     create_dependent_measure(candidate, transaction_pool, **attrs)
     create_footnote_association(candidate, transaction_pool, **attrs)
 
-    changes = [
-        CommodityChange(
-            collection=collection,
-            current=current,
-            candidate=candidate,
-            update_type=UpdateType.UPDATE,
-        ),
-    ]
+    change = CommodityChange(
+        collection=collection,
+        current=current,
+        candidate=candidate,
+        update_type=UpdateType.UPDATE,
+    )
 
-    return (collection, changes)
+    return (collection, [change])
 
 
 @pytest.fixture

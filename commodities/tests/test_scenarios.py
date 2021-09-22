@@ -29,8 +29,10 @@ def validate_captured_side_effect(
     key = get_model_identifier(obj)
 
     assert key in change.side_effects
-    assert change.side_effects[key].obj == obj
-    assert change.side_effects[key].update_type == update_type
+
+    side_effect = change.side_effects[key]
+    assert side_effect.obj.get_identifying_fields() == obj.get_identifying_fields()
+    assert side_effect.update_type == update_type
 
 
 def test_scenario1_add_node_diff(scenario_1: TScenario):
@@ -114,7 +116,7 @@ def test_scenario4_change_time_span(scenario_4: TScenario):
     change = changes[0]
 
     # NIG22
-    associations = change.candidate.obj.footnote_associations.order_by("id")
+    associations = change.candidate.good.footnote_associations.order_by("id")
 
     # Case 1 - association that still overlaps with the good's new validity span
     # It should be picked up in side effects with a flag UPDATE

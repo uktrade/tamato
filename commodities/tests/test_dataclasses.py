@@ -8,7 +8,6 @@ import pytest
 from commodities.models.constants import SUFFIX_DECLARABLE
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityTreeBase
-from common.models.constants import ClockType
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
@@ -267,13 +266,14 @@ def test_collection_get_transaction_clock_snapshot(collection_full):
 
         assert snapshot.commodities[::-1] == commodities[: i + 1]
 
-    snapshot = collection_full.get_transaction_clock_snapshot()
-
 
 def test_collection_current_snapshot(collection_full):
     snapshot = collection_full.current_snapshot
-    tx_snapshot = collection_full.get_transaction_clock_snapshot()
-    cal_snapshot = collection_full.get_calendar_clock_snapshot()
+
+    transaction_id = collection_full.max_transaction_id
+    snapshot_date = date.today()
+    tx_snapshot = collection_full.get_transaction_clock_snapshot(transaction_id)
+    cal_snapshot = collection_full.get_calendar_clock_snapshot(snapshot_date)
 
     tx_commodities = set(x.identifier for x in tx_snapshot.commodities)
     cal_commodities = set(x.identifier for x in cal_snapshot.commodities)
@@ -281,7 +281,7 @@ def test_collection_current_snapshot(collection_full):
 
     commodities = set(x.identifier for x in snapshot.commodities)
 
-    assert snapshot.moment == date.today()
+    assert snapshot.moments == (snapshot_date, transaction_id)
     assert sorted(commodities) == sorted(tx_cal_commodities)
 
 
@@ -377,13 +377,19 @@ def test_snapshot_get_children(collection_basic):
     assert snapshot.get_children(c_9999) == [c_999910, c_999920]
 
 
-def test_snapshot_get_parent_heading_zero_indent(collection_heading):
-    snapshot = collection_heading.current_snapshot
+def test_snapshot_get_parent_headings_zero_indent(collection_headings):
+    snapshot = collection_headings.current_snapshot
 
     c_99 = snapshot.get_commodity("99")
-    c_9910 = snapshot.get_commodity("9910")
+    c_9905_10 = snapshot.get_commodity("9905", suffix="10")
+    c_9905_80 = snapshot.get_commodity("9905")
+    c_9910_10 = snapshot.get_commodity("9910", suffix="10")
+    c_9910_80 = snapshot.get_commodity("9910")
 
-    assert snapshot.get_parent(c_9910) == c_99
+    assert snapshot.get_parent(c_9905_10) == c_99
+    assert snapshot.get_parent(c_9910_10) == c_99
+    assert snapshot.get_parent(c_9905_80) == c_9905_10
+    assert snapshot.get_parent(c_9910_80) == c_9910_10
 
 
 def test_snapshot_get_parent_suffixes_indents(collection_suffixes_indents):
@@ -422,16 +428,18 @@ def test_snapshot_get_ancestors(collection_full):
     snapshot = collection_full.current_snapshot
 
     c_99 = snapshot.get_commodity("99")
-    c_9910 = snapshot.get_commodity("9910")
+    c_9910_10 = snapshot.get_commodity("9910", suffix="10")
+    c_9910_80 = snapshot.get_commodity("9910")
     c_9999 = snapshot.get_commodity("9999")
     c_9999200000 = snapshot.get_commodity("9999.20.00.00")
     c_9999200010 = snapshot.get_commodity("9999.20.00.10")
 
     assert snapshot.get_ancestors(c_99) == []
-    assert snapshot.get_ancestors(c_9999) == [c_99, c_9910]
+    assert snapshot.get_ancestors(c_9999) == [c_99, c_9910_10, c_9910_80]
     assert snapshot.get_ancestors(c_9999200010) == [
         c_99,
-        c_9910,
+        c_9910_10,
+        c_9910_80,
         c_9999,
         c_9999200000,
     ]
@@ -464,49 +472,28 @@ def test_snapshot_is_declarable(collection_basic):
 
 
 def test_snapshot_date(collection_basic):
-    snapshot = collection_basic.get_calendar_clock_snapshot()
-    assert snapshot.snapshot_date == snapshot.moment
-    snapshot = collection_basic.get_transaction_clock_snapshot()
+    snapshot_date = date.today()
+    transaction_id = collection_basic.max_transaction_id
+
+    snapshot = collection_basic.get_calendar_clock_snapshot(snapshot_date)
+    assert snapshot.snapshot_date == snapshot_date
+    assert snapshot.moments == (snapshot_date, transaction_id)
+
+    transaction_id = collection_basic.max_transaction_id
+    snapshot = collection_basic.get_transaction_clock_snapshot(transaction_id)
     assert snapshot.snapshot_date is None
 
 
 def test_snapshot_transaction_id(collection_basic):
-    snapshot = collection_basic.get_calendar_clock_snapshot()
+    snapshot_date = date.today()
+    transaction_id = collection_basic.max_transaction_id
+
+    snapshot = collection_basic.get_calendar_clock_snapshot(snapshot_date)
     assert snapshot.snapshot_transaction_id is None
-    snapshot = collection_basic.get_transaction_clock_snapshot()
-    assert snapshot.snapshot_transaction_id == snapshot.moment
 
-
-def test_snapshot_identifier(collection_basic):
-    res = {
-        ClockType.CALENDAR: re.compile(
-            r"(20[0-9]{2}-[0-9]{2}-[0-9]{2}).([a-f0-9]{32})",
-        ),
-        ClockType.TRANSACTION: re.compile(r"(tx_[0-9]{,7}).([a-f0-9]{32})"),
-    }
-
-    snapshots = [
-        collection_basic.get_calendar_clock_snapshot(),
-        collection_basic.get_transaction_clock_snapshot(),
-    ]
-
-    for snapshot in snapshots:
-        try:
-            match = next(res[snapshot.clock_type].finditer(snapshot.identifier))
-        except StopIteration as e:
-            pytest.fail(e)
-
-        groups = match.groups()
-
-        assert len(groups) == 2
-        moment, hash_ = groups
-
-        if snapshot.clock_type == ClockType.CALENDAR:
-            assert moment == str(snapshot.moment)
-        else:
-            assert moment == f"tx_{snapshot.moment}"
-
-        assert hash_ == snapshot.hash
+    snapshot = collection_basic.get_transaction_clock_snapshot(transaction_id)
+    assert snapshot.snapshot_transaction_id == transaction_id
+    assert snapshot.moments == (snapshot_date, transaction_id)
 
 
 def test_change_valid_create(collection_basic, commodities):

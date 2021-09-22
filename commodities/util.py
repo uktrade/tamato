@@ -1,5 +1,7 @@
+from typing import Optional
 from typing import Union
 
+from common.util import TaricDateRange
 from common.util import strint
 
 
@@ -25,3 +27,47 @@ def clean_item_id(value: Union[str, int, float]) -> str:
     item_id = f"{item_id:0<10}"
 
     return item_id
+
+
+def date_ranges_overlap(a: TaricDateRange, b: TaricDateRange) -> bool:
+    """Returns true if two date ranges overlap."""
+    if a.upper and b.lower > a.upper:
+        return False
+    if b.upper and a.lower > b.upper:
+        return False
+
+    return True
+
+
+def contained_date_range(
+    date_range: TaricDateRange,
+    containing_date_range: TaricDateRange,
+) -> Optional[TaricDateRange]:
+    """
+    Returns a trimmed contained range that is fully contained by the container
+    range.
+
+    Trimming is not eager: only the minimum amount of trimming is done to ensure
+    that the result is fully contained by the container date range.
+
+    If the two ranges do not overlap, the method returns None.
+    """
+    a = date_range
+    b = containing_date_range
+
+    if date_ranges_overlap(a, b) is False:
+        return None
+
+    start_date = None
+    end_date = None
+
+    if b.upper:
+        if a.upper is None or b.upper < a.upper:
+            end_date = b.upper
+    if b.lower > a.lower:
+        start_date = b.lower
+
+    return TaricDateRange(
+        start_date or a.lower,
+        end_date or a.upper,
+    )

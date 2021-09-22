@@ -5,12 +5,9 @@ import logging
 from copy import copy
 from dataclasses import dataclass
 from datetime import date
-from hashlib import md5
 from typing import Any
 from typing import Optional
 from typing import Union
-
-from django.db.models import Q
 
 from commodities import business_rules as cbr
 from commodities.models.constants import SUFFIX_DECLARABLE
@@ -20,6 +17,8 @@ from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from commodities.models.orm import GoodsNomenclatureIndent
 from commodities.util import clean_item_id
+from commodities.util import contained_date_range
+from commodities.util import date_ranges_overlap
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
@@ -157,23 +156,17 @@ class Commodity(BaseModel):
         return f"{code}-{extra}"
 
     @property
-    def good(self) -> Optional[GoodsNomenclature]:
+    def good(self) -> Optional[TrackedModelReflection]:
         if self.obj is None:
             return
 
         overrides = {
             attr: getattr(self, attr)
-            for attr in self.get_field_names(exclude=["obj"])
+            for attr in self.get_field_names(exclude=["obj", "indent"])
             if getattr(self, attr) is not None
         }
 
-        good = self.obj.copy(self.obj.transaction, **overrides)
-
-        for field in good.auto_value_fields:
-            attr = field.name
-            setattr(good, attr, getattr(self.obj, attr))
-
-        return good
+        return get_tracked_model_reflection(self.obj, **overrides)
 
     @property
     def version(self) -> int:
@@ -186,8 +179,8 @@ class Commodity(BaseModel):
         version number of the object based on the place of its transaction id in
         the version transaction ids sequence.
         """
-        ids = self._get_transaction_ids()
-        version = ids.index(self.obj.transaction.id) + 1
+        transaction_orders = self._get_transaction_orders()
+        version = transaction_orders.index(self.obj.transaction.order) + 1
         return version
 
     @property
@@ -200,33 +193,39 @@ class Commodity(BaseModel):
         """Returns True if this is the current version of the Taric record."""
         return self.obj == self.obj.current_version
 
-    def is_current_as_of_transaction(self, transaction: Transaction) -> bool:
+    def is_current_as_of_transaction(
+        self,
+        transaction: Optional[Transaction] = None,
+    ) -> bool:
         """Returns True if this is the current version of the record as of a
         given transaction."""
-        return self.is_current_as_of_transaction_id(transaction.id)
+        transaction_order = transaction.order if transaction else None
+        return self.is_current_as_of_transaction_order(transaction_order)
 
-    def get_current_version_as_of_transaction_id(
+    def get_current_version_as_of_transaction_order(
         self,
-        transaction_id: Optional[int] = None,
+        transaction_order: Optional[int] = None,
     ) -> int:
         """Returns the current version of the record as of a given transaction
         id."""
-        if transaction_id is None:
+        if transaction_order is None:
             return self.current_version
 
-        ids = self._get_transaction_ids()
-        return len([tid for tid in ids if tid <= transaction_id])
+        orders = self._get_transaction_orders()
+        return len([order for order in orders if order <= transaction_order])
 
-    def is_current_as_of_transaction_id(
+    def is_current_as_of_transaction_order(
         self,
-        transaction_id: Optional[int] = None,
+        transaction_order: Optional[int] = None,
     ) -> bool:
         """Returns True if this is the current version of the record as of a
         given transaction id."""
-        if transaction_id is None:
+        if transaction_order is None:
             return self.is_current_version
 
-        current_version = self.get_current_version_as_of_transaction_id(transaction_id)
+        current_version = self.get_current_version_as_of_transaction_order(
+            transaction_order,
+        )
         return self.version == current_version
 
     def _get_transaction_ids(self) -> tuple[int]:
@@ -237,6 +236,15 @@ class Commodity(BaseModel):
             flat=True,
         )
         return tuple(transaction_ids)
+
+    def _get_transaction_orders(self) -> tuple[int]:
+        """Returns the id-s of all transactions in the version group of the
+        record."""
+        transaction_orders = self.obj.version_group.versions.values_list(
+            "transaction__order",
+            flat=True,
+        )
+        return tuple(transaction_orders)
 
     def __eq__(self, commodity: "Commodity") -> bool:
         """
@@ -376,17 +384,17 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     - the transaction clock, which revolves around transaction ids
 
     A commodity tree snapshot can be taken using
-    either the calendar or transaction clock, but not both.
-    Accordingly the moment field of this dataclass can be one of:
-    - a calendar date (when the clock type is calendar)
-    - a transaction id (when the clock type is transaction)
+    the calendar or transaction clock, or both.
+    Accordingly the moments field of this dataclass is a tuple of:
+    - an optional calendar date (when the clock type has a calendar)
+    - an optional transaction id (when the clock type has a transaction)
 
     For additional context on commodity trees, see the docs for CommodityTree.
     """
 
     commodities: list[Commodity]
     clock_type: ClockType
-    moment: Union[date, int]
+    moments: tuple[Optional[date], Optional[int]]
     edges: Optional[dict[str, Commodity]] = None
 
     def __post_init__(self) -> None:
@@ -410,7 +418,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         """
         chapters = {c.code.chapter for c in self.commodities}
 
-        if len(chapters) != 1:
+        if len(chapters) > 1:
             msg = "All commodities in a group must be from the same HS chapter."
             raise CommodityTreeSnapshotException(msg)
 
@@ -452,39 +460,17 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     def get_ancestors(self, commodity: Commodity) -> list[Commodity]:
         """Returns all ancestors of a commodity in the snapshot tree."""
-        ancestors = []
-
-        current = commodity
-
-        while True:
-            parent = self.get_parent(current)
-            if parent is None:
-                break
-            ancestors.append(parent)
-            current = parent
-
-        return ancestors[::-1]
+        try:
+            return self.ancestors[commodity.identifier]
+        except KeyError:
+            return []
 
     def get_descendants(self, commodity: Commodity) -> list[Commodity]:
         """Returns all descendants of a commodity in the snapshot tree."""
-        descendants = []
-
-        generation = [commodity]
-
-        while True:
-            children = [
-                child
-                for commodity in generation
-                for child in self.get_children(commodity)
-            ]
-
-            if len(children) == 0:
-                break
-
-            descendants.extend(children)
-            generation = children
-
-        return descendants
+        try:
+            return self.descendants[commodity.identifier]
+        except KeyError:
+            return []
 
     def get_dependent_measures(self, commodity: Commodity) -> MeasuresQuerySet:
         if commodity not in self.commodities:
@@ -495,12 +481,12 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             goods_nomenclature__suffix=commodity.get_suffix(),
         )
 
-        if self.clock_type == ClockType.TRANSACTION:
+        if self.clock_type.is_transaction_clock:
             qs = qs.approved_up_to_transaction(self.snapshot_transaction)
         else:
             qs = qs.latest_approved()
 
-        if self.clock_type == ClockType.CALENDAR:
+        if self.clock_type.is_calendar_clock:
             effective_date = self.snapshot_date
         else:
             effective_date = date.today()
@@ -555,35 +541,20 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     @property
     def snapshot_date(self) -> Optional[date]:
         """Returns the snapshot date if it uses the calendar clock."""
-        if self.clock_type == ClockType.CALENDAR:
-            return self.moment
+        if self.clock_type.is_calendar_clock:
+            return self.moments[0]
 
     @property
     def snapshot_transaction_id(self) -> Optional[int]:
         """Retruns the snapshot transaction if uses the transaction clock."""
-        if self.clock_type == ClockType.TRANSACTION:
-            return self.moment
+        if self.clock_type.is_transaction_clock:
+            return self.moments[1]
 
     @property
-    def snapshot_transaction(self) -> Optional[int]:
+    def snapshot_transaction(self) -> Optional[Transaction]:
         """Retruns the snapshot transaction if uses the transaction clock."""
-        if self.clock_type == ClockType.TRANSACTION:
-            return Transaction.objects.get(id=self.moment)
-
-    @property
-    def hash(self) -> str:
-        """Returns a hash based on the sorted identifiers of snapshot
-        commodities."""
-        md5_hash = md5()
-        value = ".".join(sorted(c.identifier for c in self.commodities))
-        md5_hash.update(value.encode())
-        return md5_hash.hexdigest()
-
-    @property
-    def identifier(self) -> str:
-        """Returns a unique identifier for the snapshot."""
-        prefix = "tx_" if self.clock_type == ClockType.TRANSACTION else ""
-        return f"{prefix}{self.moment}.{self.hash}"
+        if self.clock_type.is_transaction_clock:
+            return Transaction.objects.get(id=self.moments[1])
 
     def _sort(self) -> None:
         """
@@ -617,26 +588,35 @@ class CommodityTreeSnapshot(CommodityTreeBase):
           -- the method keeps a list of the prior sorted commodities
           -- this enables assignment of the correct parents for 0-indent headings.
         """
-        indents = {0: []}
+        indents = [[]]
         edges = {}
+        ancestors = {}
+        descendants = {}
 
         for commodity in self.commodities:
             indent = commodity.get_indent()
 
             if indent == 0:
-                try:
-                    parent = indents[indent][-1]
-                except IndexError:
+                if not indents[0]:
                     parent = None
+                else:
+                    try:
+                        parent = [
+                            c
+                            for c in indents[0]
+                            if c.get_suffix() < commodity.get_suffix()
+                        ][-1]
+                    except IndexError:
+                        parent = indents[0][0]
             elif indent == 1:
                 try:
-                    parent = indents[indent - 1][-1]
+                    parent = indents[0][-1]
                 except IndexError:
                     parent = None
             else:
                 try:
                     parent = indents[indent - 1]
-                except KeyError:
+                except IndexError:
                     parent = None
 
             edges[commodity.identifier] = parent
@@ -644,9 +624,34 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             if indent == 0:
                 indents[indent].append(commodity)
             else:
-                indents[indent] = commodity
+                try:
+                    indents[indent] = commodity
+                except IndexError:
+                    indents.append(commodity)
+
+            commodities = indents[1:indent]
+            parent = commodities[0] if commodities else commodity
+
+            while True:
+                try:
+                    parent = edges[parent.identifier]
+                except IndexError:
+                    break
+                if parent is None:
+                    break
+                commodities.insert(0, parent)
+
+            ancestors[commodity.identifier] = commodities
+
+            for ancestor in commodities:
+                try:
+                    descendants[ancestor.identifier].append(commodity)
+                except KeyError:
+                    descendants[ancestor.identifier] = [commodity]
 
         self.edges = edges
+        self.ancestors = ancestors
+        self.descendants = descendants
 
     def _get_diff(
         self,
@@ -681,11 +686,6 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             values=values,
         )
 
-    def __eq__(self, snapshot: CommodityTreeSnapshot) -> bool:
-        """Returns True for snapshots with the same clock types and commoditie
-        collections."""
-        return self.identifier == snapshot.identifier
-
 
 @dataclass
 class CommodityCollection(CommodityTreeBase):
@@ -704,7 +704,7 @@ class CommodityCollection(CommodityTreeBase):
     with related GoodsNomenclature objects that are deprecated, current or future.
 
     To see the commodity tree hierarchy for a given moment, get a snapshot
-    - see the docs to get_snapshot method of this class for more details.
+    - see the docs to `CommodityCollection.get_snapshot` method for more details.
     """
 
     def update(self, changes: tuple["CommodityChange"]) -> None:
@@ -733,7 +733,7 @@ class CommodityCollection(CommodityTreeBase):
 
     def get_calendar_clock_snapshot(
         self,
-        snapshot_date: Optional[date] = None,
+        snapshot_date: date,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain calendar date.
@@ -741,24 +741,11 @@ class CommodityCollection(CommodityTreeBase):
         If the optional snapshot_date argument is not provided, this method will
         return the snapshot as of today.
         """
-        snapshot_date = snapshot_date or date.today()
-
-        commodities = [
-            commodity
-            for commodity in self.commodities
-            if commodity.end_date is None or commodity.end_date >= snapshot_date
-            if commodity.start_date <= snapshot_date
-        ]
-
-        return CommodityTreeSnapshot(
-            commodities=commodities,
-            clock_type=ClockType.CALENDAR,
-            moment=snapshot_date,
-        )
+        return self._get_snapshot(snapshot_date=snapshot_date)
 
     def get_transaction_clock_snapshot(
         self,
-        transaction_id: Optional[int] = None,
+        transaction_id: int,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain transaction (based on
@@ -769,30 +756,7 @@ class CommodityCollection(CommodityTreeBase):
         will assign as the snapshot moment the highest transaction id across all
         snapshot commodities.
         """
-        today = date.today()
-
-        commodities = [
-            commodity
-            for commodity in self.commodities
-            if commodity.end_date is None or commodity.end_date >= today
-            if commodity.start_date <= today
-            if commodity.is_current_as_of_transaction_id(transaction_id)
-        ]
-
-        if transaction_id is None:
-            transaction_id = max(
-                [
-                    transaction_id
-                    for commodity in self.commodities
-                    for transaction_id in commodity._get_transaction_ids()
-                ],
-            )
-
-        return CommodityTreeSnapshot(
-            commodities=commodities,
-            clock_type=ClockType.TRANSACTION,
-            moment=transaction_id,
-        )
+        return self._get_snapshot(transaction_id=transaction_id)
 
     @property
     def current_snapshot(self) -> CommodityTreeSnapshot:
@@ -802,22 +766,63 @@ class CommodityCollection(CommodityTreeBase):
         A current snapshot only includes current record versions for commodities
         that are valid as of the current date.
         """
+        return self._get_snapshot()
 
-        today = date.today()
+    @property
+    def max_transaction_id(self) -> int:
+        return max(
+            [
+                transaction_id
+                for commodity in self.commodities
+                for transaction_id in commodity._get_transaction_ids()
+            ],
+        )
 
-        commodities = [
-            commodity
-            for commodity in self.commodities
-            if commodity.end_date is None or commodity.end_date >= today
-            if commodity.start_date <= today
-            if commodity.is_current_version
-        ]
+    def _get_snapshot(
+        self,
+        snapshot_date: Optional[date] = None,
+        transaction_id: Optional[int] = None,
+    ) -> CommodityTreeSnapshot:
+        if transaction_id is None == snapshot_date is None:
+            clock_type = ClockType.COMBINED
+        elif transaction_id is None:
+            clock_type = ClockType.CALENDAR
+        else:
+            clock_type = ClockType.TRANSACTION
+
+        if transaction_id is None:
+            transaction_id = self.max_transaction_id
+        if snapshot_date is None:
+            snapshot_date = date.today()
+
+        commodities = self._get_snapshot_commodities(snapshot_date, transaction_id)
 
         return CommodityTreeSnapshot(
             commodities=commodities,
-            clock_type=ClockType.CALENDAR,
-            moment=today,
+            clock_type=clock_type,
+            moments=(snapshot_date, transaction_id),
         )
+
+    def _get_snapshot_commodities(
+        self,
+        snapshot_date: date,
+        transaction_id: int = None,
+    ) -> list[Commodity]:
+        if snapshot_date is None:
+            snapshot_date = date.today()
+
+        if transaction_id is None:
+            transaction_id = self.max_transaction_id
+
+        transaction = Transaction.objects.get(id=transaction_id)
+
+        return [
+            commodity
+            for commodity in self.commodities
+            if commodity.obj is not None
+            if commodity.get_valid_between().__contains__(snapshot_date)
+            if commodity.is_current_as_of_transaction(transaction)
+        ]
 
     def __copy__(self) -> "CommodityCollection":
         """Returns an independent copy of the collection."""
@@ -934,14 +939,14 @@ class CommodityChange(BaseModel):
         before, after = self._get_before_and_after_snapshots()
 
         if self.update_type == UpdateType.DELETE:
-            self._handle_delete_side_effects(after)
+            self._handle_delete_side_effects(before)
         elif self.update_type == UpdateType.UPDATE:
-            self._handle_update_side_effects(after)
+            self._handle_update_side_effects(before, after)
 
         if self.update_type != UpdateType.CREATE:
             self._handle_hierarchy_side_effects(before, after)
 
-    def _handle_delete_side_effects(self, after: CommodityTreeSnapshot) -> None:
+    def _handle_delete_side_effects(self, before: CommodityTreeSnapshot) -> None:
         """
         Preempt business rule violations due to commodity code deletes.
 
@@ -955,7 +960,7 @@ class CommodityChange(BaseModel):
         - NIG35: Not used as it is redundant in this context after NIG34
         """
         # NIG34 / NIG35
-        for measure in after.get_dependent_measures(self.current):
+        for measure in before.get_dependent_measures(self.current):
             self._add_pending_delete(measure)
 
         # No BR: delete related footnote associations
@@ -965,7 +970,11 @@ class CommodityChange(BaseModel):
         ):
             self._add_pending_delete(association)
 
-    def _handle_update_side_effects(self, after: CommodityTreeSnapshot) -> None:
+    def _handle_update_side_effects(
+        self,
+        before: CommodityTreeSnapshot,
+        after: CommodityTreeSnapshot,
+    ) -> None:
         """
         Preempt business rule violations due to commodity code updates.
 
@@ -980,7 +989,7 @@ class CommodityChange(BaseModel):
         good = self.candidate.good
 
         footnote_associations = good.footnote_associations.all()
-        measures = after.get_dependent_measures(self.candidate)
+        measures = self._get_dependent_measures(before, after)
 
         # NIG30 / NIG31
         try:
@@ -1012,7 +1021,8 @@ class CommodityChange(BaseModel):
         # here, find all related measures and invoke the BR
         # (inefficient for this workflow, but consistent use of BR-s)
         if len(self.candidate.code.trimmed_code) > len(self.current.code.trimmed_code):
-            for measure in good.measures.all():
+            obj = self.candidate.obj or good
+            for measure in obj.measures.all():
                 try:
                     mbr.ME88().validate(measure)
                 except BusinessRuleViolation:
@@ -1048,32 +1058,16 @@ class CommodityChange(BaseModel):
 
         # If obj validity does not overlap the good validity at all,
         # mark the object for deletion
-        if (ovb.upper and gvb.lower > ovb.upper) or (
-            gvb.upper and gvb.upper < ovb.lower
-        ):
+        if date_ranges_overlap(gvb, ovb) is False:
             self._add_pending_delete(obj)
             return
 
         # Determine whether the obj validity is trimmed
         # from start date, end date, or both
-        start_date = None
-        end_date = None
+        valid_between = contained_date_range(ovb, gvb)
 
-        if gvb.upper:
-            if ovb.upper is None or gvb.upper < ovb.upper:
-                end_date = gvb.upper
-        if gvb.lower > ovb.lower:
-            start_date = gvb.lower
-
-        # Circuit breaker for cases where the obj is spanned by the good
-        if start_date is None and end_date is None:
+        if valid_between == ovb:
             return
-
-        # Mark the object for update with trimmed validity
-        valid_between = TaricDateRange(
-            start_date or ovb.lower,
-            end_date or ovb.upper,
-        )
 
         attrs = dict(
             valid_between=valid_between,
@@ -1136,48 +1130,35 @@ class CommodityChange(BaseModel):
                 m.reduction,
             )
 
-        def _validities_overlap(m1: Measure, m2: Measure) -> bool:
-            """
-            Returns True if two measures have overlapping validity spans.
+        # Check if the changing commodity has ME32 clashes in its new hierarchy
+        if self.update_type == UpdateType.UPDATE:
+            measures = {
+                _get_measure_key(measure): measure
+                for measure in after.get_dependent_measures(self.candidate)
+            }
 
-            Algorithm:
-            1. Sort the two measures on start_date
-            2a. If the earlier measure has no end date, there is an overlap
-            2b. If the earlier measure's end date is on or after
-                the later measure's start date, there is an overlap
+            for attr in ["get_ancestors", "get_descendants"]:
+                for relative in getattr(after, attr)(self.candidate):
+                    related_measures = after.get_dependent_measures(relative)
 
-            NOTE: If the two measures also have the same "fingerprint"
-            (see _get_measure_key() above), this will violate ME32.
-            """
-            earlier, later = sorted((m1, m2), key=lambda x: x.valid_between.lower)
+                    for related_measure in related_measures:
+                        key = _get_measure_key(related_measure)
 
-            return (
-                earlier.valid_between.upper is None
-                or earlier.valid_between.upper >= later.valid_between.lower
-            )
+                        try:
+                            measure = measures[key]
 
-        commodity = self.candidate or self.current
+                            if date_ranges_overlap(
+                                measure.valid_between,
+                                related_measure.valid_between,
+                            ):
+                                self._add_pending_delete(related_measure)
+                        except KeyError:
+                            continue
 
         measures = {
             _get_measure_key(measure): measure
-            for measure in after.get_dependent_measures(commodity)
+            for measure in before.get_dependent_measures(self.current)
         }
-
-        # Check if the changing commodity has ME32 clashes in its new hierarchy
-        for attr in ["get_ancestors", "get_descendants"]:
-            for relative in getattr(after, attr)(commodity):
-                related_measures = after.get_dependent_measures(relative)
-
-                for related_measure in related_measures:
-                    key = _get_measure_key(related_measure)
-
-                    try:
-                        measure = measures[key]
-
-                        if _validities_overlap(measure, related_measure):
-                            self._add_pending_delete(related_measure)
-                    except KeyError:
-                        continue
 
         # Check if commodity's before-children have new parents
         for child in before.get_children(self.current):
@@ -1185,14 +1166,17 @@ class CommodityChange(BaseModel):
             if before.compare_parents(child, after).diff:
                 # ...then check if before-child has ME32 clashes with new ancestors
                 for ancestor in after.get_ancestors(child):
-                    ancestor_measures = ancestor.obj.dependent_measures
+                    ancestor_measures = after.get_dependent_measures(ancestor)
 
                     for ancestor_measure in ancestor_measures:
                         key = _get_measure_key(ancestor_measure)
 
                         try:
                             measure = measures[key]
-                            if _validities_overlap(measure, ancestor_measure):
+                            if date_ranges_overlap(
+                                measure.valid_between,
+                                ancestor_measure.valid_between,
+                            ):
                                 self._add_pending_delete(ancestor_measure)
                         except KeyError:
                             continue
@@ -1232,11 +1216,25 @@ class CommodityChange(BaseModel):
         self,
     ) -> tuple[CommodityTreeSnapshot, CommodityTreeSnapshot]:
         clone = copy(self.collection)
-        before = clone.current_snapshot
+
+        commodity = self.current or self.candidate
+        before = clone.get_calendar_clock_snapshot(commodity.get_valid_between().lower)
+
         clone.update([self])
-        after = clone.current_snapshot
+
+        commodity = self.candidate or self.current
+        after = clone.get_calendar_clock_snapshot(commodity.get_valid_between().lower)
 
         return (before, after)
+
+    def _get_dependent_measures(
+        self,
+        before: CommodityTreeSnapshot,
+        after: CommodityTreeSnapshot,
+    ) -> set[Measure]:
+        b = before.get_dependent_measures(self.current or self.candidate)
+        a = after.get_dependent_measures(self.candidate or self.current)
+        return set(a).union(set(b))
 
 
 # TODO: Move the loader to a more appropriate module
@@ -1279,8 +1277,7 @@ class CommodityCollectionLoader:
 
         if current_only:
             qs = qs.latest_approved().filter(
-                Q(valid_between__endswith=None)
-                | Q(valid_between__endswith__gt=date.today()),
+                valid_between__contains=date.today(),
             )
 
         qs = qs.filter(item_id__startswith=self.prefix)
@@ -1328,5 +1325,36 @@ def get_model_preferred_key(obj: TrackedModel) -> str:
 
 def get_model_identifier(obj: TrackedModel) -> str:
     """Returns the preferred identifierfor a model."""
-    attr = get_model_preferred_key(obj)
-    return getattr(obj, attr)
+    identifier = obj.identifying_fields_to_string()
+    label = obj._meta.label
+    return f"{label}: {identifier}"
+
+
+class TrackedModelReflection:
+    def __init__(self, **kwargs):
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+
+def get_tracked_model_reflection(
+    obj: TrackedModel, transaction: Transaction = None, **overrides
+):
+    fields = (field for field in obj._meta.get_fields())
+    attrs = {}
+
+    for field in fields:
+        try:
+            attrs[field.name] = getattr(obj, field.name)
+        except AttributeError:
+            continue
+        except field.related_model.DoesNotExist:
+            attrs[field.name] = None
+
+    attrs.update(
+        {attr: value for attr, value in overrides.items() if hasattr(obj, attr)},
+    )
+
+    if transaction:
+        attrs["transaction"] = transaction
+
+    return TrackedModelReflection(**attrs)
