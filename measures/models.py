@@ -571,7 +571,7 @@ class Measure(TrackedModel, ValidityMixin):
         codes = {footnote_validators.ApplicationCode.DYNAMIC_FOOTNOTE}
         if self.goods_nomenclature:
             codes.add(footnote_validators.ApplicationCode.OTHER_MEASURES)
-        if not self.goods_nomenclature.code.is_taric_code:
+        if not self.goods_nomenclature.is_taric_code:
             codes.add(footnote_validators.ApplicationCode.CN_MEASURES)
         return codes
 

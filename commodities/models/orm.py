@@ -150,7 +150,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     @property
     def footnote_application_codes(self) -> Set[ApplicationCode]:
         codes = {ApplicationCode.TARIC_NOMENCLATURE, ApplicationCode.DYNAMIC_FOOTNOTE}
-        if not self.code.is_taric_code:
+        if not self.is_taric_code:
             codes.add(ApplicationCode.CN_NOMENCLATURE)
         return codes
 
@@ -180,10 +180,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return self.item_id
-
-    @property
-    def code(self) -> CommodityCode:
-        return CommodityCode(code=self.item_id)
 
     @property
     def autocomplete_label(self):
