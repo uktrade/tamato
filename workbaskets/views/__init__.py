@@ -60,6 +60,6 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
         workbasket.approve(self.request.user)
         workbasket.export_to_cds()
         workbasket.save()
-        self.request.session["workbasket"] = workbasket.to_json()
+        workbasket.save_to_session(self.request.session)
 
         return reverse("index")

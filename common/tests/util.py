@@ -186,13 +186,12 @@ def generate_test_import_xml(obj: dict) -> BytesIO:
 
 def taric_xml_record_codes(xml):
     """Yields tuples of (record_code, subrecord_code)"""
-    return [
-        (
-            record.findtext(".//record.code", namespaces=xml.nsmap),
-            record.findtext(".//subrecord.code", namespaces=xml.nsmap),
-        )
-        for record in xml.findall(".//record", namespaces=xml.nsmap)
-    ]
+    records = xml.xpath(".//*[local-name() = 'record']")
+    codes = etree.XPath(
+        ".//*[local-name()='record.code' or local-name()='subrecord.code']/text()",
+    )
+
+    return [tuple(codes(record)) for record in records]
 
 
 def validate_taric_xml(

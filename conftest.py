@@ -197,7 +197,7 @@ def taric_schema(settings) -> etree.XMLSchema:
 @pytest.fixture
 def new_workbasket() -> WorkBasket:
     workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.NEW_IN_PROGRESS,
+        status=WorkflowStatus.EDITING,
     )
     transaction = factories.TransactionFactory.create(workbasket=workbasket)
     with transaction:
@@ -215,7 +215,7 @@ def approved_workbasket():
 @pytest.fixture
 @given("there is a current workbasket")
 def session_workbasket(client, new_workbasket):
-    client.session["workbasket"] = new_workbasket.to_json()
+    new_workbasket.save_to_session(client.session)
     client.session.save()
     return new_workbasket
 
@@ -658,7 +658,7 @@ def in_use_check_respects_deletes(valid_user):
         assert not in_use(), f"New {instance!r} already in use"
 
         workbasket = factories.WorkBasketFactory.create(
-            status=WorkflowStatus.AWAITING_APPROVAL,
+            status=WorkflowStatus.PROPOSED,
         )
         with workbasket.new_transaction():
             create_kwargs = {relation: instance}

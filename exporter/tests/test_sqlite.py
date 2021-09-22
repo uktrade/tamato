@@ -67,7 +67,7 @@ def test_table_export(factory, sqlite_database: Path):
         transaction__workbasket__status=WorkflowStatus.PUBLISHED,
     )
     unpublished = factory.create(
-        transaction__workbasket__status=WorkflowStatus.AWAITING_APPROVAL,
+        transaction__workbasket__status=WorkflowStatus.PROPOSED,
     )
 
     table = factory._meta.model._meta.db_table

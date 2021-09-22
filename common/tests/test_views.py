@@ -46,7 +46,7 @@ def test_healthcheck_response(response, status_code, status):
 
 def test_handles_multiple_unapproved_workbaskets(valid_user_client, new_workbasket):
     workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.NEW_IN_PROGRESS,
+        status=WorkflowStatus.EDITING,
     )
     transaction = factories.TransactionFactory.create(workbasket=workbasket)
     with transaction:
