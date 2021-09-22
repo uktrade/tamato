@@ -1330,7 +1330,14 @@ def get_model_identifier(obj: TrackedModel) -> str:
     return f"{label}: {identifier}"
 
 
+# TODO: Potentially move to a more prominent place in the django project
 class TrackedModelReflection:
+    """
+    A generic class for tracked model reflections.
+
+    For details, see get_tracked_model_reflection below.
+    """
+
     def __init__(self, **kwargs):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
@@ -1339,6 +1346,19 @@ class TrackedModelReflection:
 def get_tracked_model_reflection(
     obj: TrackedModel, transaction: Transaction = None, **overrides
 ):
+    """
+    Returns a reflection of a TrackedModel object.
+
+    A reflection is different from `TrackedModel.copy`:
+    - it attaches references to the same related models as the underlying object
+      (rather than create new versions of them)
+    - it is not meant to be written to db
+
+    The benefit of using a relfection is that scenarios such as
+    handling of commodity changes can produce side effects
+    referring to the actual related models of the underlying object
+    rather than new versions of them linked to a copy of the object.
+    """
     fields = (field for field in obj._meta.get_fields())
     attrs = {}
 
