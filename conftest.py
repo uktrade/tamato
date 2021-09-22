@@ -859,3 +859,20 @@ def form_error_shown(response, error_message):
 def staff_user():
     user = factories.UserFactory.create(is_staff=True)
     return user
+
+
+@pytest.fixture
+def existing_measure():
+    return factories.MeasureFactory.create()
+
+
+@pytest.fixture
+def existing_measure_data(existing_measure):
+    return {
+        "measure_type": existing_measure.measure_type.pk,
+        "generating_regulation": existing_measure.generating_regulation.pk,
+        "start_date_0": existing_measure.valid_between.lower.day,
+        "start_date_1": existing_measure.valid_between.lower.month,
+        "start_date_2": existing_measure.valid_between.lower.year,
+        "geographical_area": existing_measure.geographical_area.pk,
+    }
