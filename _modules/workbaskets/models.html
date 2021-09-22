@@ -40,12 +40,9 @@
             
   <h1>Source code for workbaskets.models</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;WorkBasket models.&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
-<span class="kn">from</span> <span class="nn">django.core.serializers.json</span> <span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Prefetch</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
@@ -130,9 +127,15 @@
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;approved_workbaskets&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">FSMField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">NEW_IN_PROGRESS</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">EDITING</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
         <span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="c1"># Ideally, we would protect the status field from being modified except by the</span>
+        <span class="c1"># transition methods, otherwise the workbasket contents can be left in an</span>
+        <span class="c1"># invalid state.  Unfortunately if `protected` is True the `clean` method raises</span>
+        <span class="c1"># an exception.</span>
+        <span class="n">protected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -144,41 +147,27 @@
 
     <span class="nd">@transition</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">source</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">NEW_IN_PROGRESS</span><span class="p">,</span>
-            <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">EDITING</span><span class="p">,</span>
-        <span class="p">],</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">AWAITING_APPROVAL</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">EDITING</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">PROPOSED</span><span class="p">,</span>
+        <span class="n">custom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Submit for approval&quot;</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">submit_for_approval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
 
     <span class="nd">@transition</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">source</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">APPROVAL_REJECTED</span><span class="p">,</span>
-            <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">AWAITING_APPROVAL</span><span class="p">,</span>
-            <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">CDS_ERROR</span><span class="p">,</span>
-        <span class="p">],</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">PROPOSED</span><span class="p">,</span>
         <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">EDITING</span><span class="p">,</span>
+        <span class="n">custom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Withdraw or reject submission&quot;</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">withdraw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+        <span class="sd">&quot;&quot;&quot;Withdraw/reject a proposed workbasket.&quot;&quot;&quot;</span>
 
     <span class="nd">@transition</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">AWAITING_APPROVAL</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">APPROVAL_REJECTED</span><span class="p">,</span>
-        <span class="n">permission</span><span class="o">=</span><span class="s2">&quot;workbaskets.can_approve&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">def</span> <span class="nf">reject</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@transition</span><span class="p">(</span>
-        <span class="n">field</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">AWAITING_APPROVAL</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">READY_FOR_EXPORT</span><span class="p">,</span>
-        <span class="n">permission</span><span class="o">=</span><span class="s2">&quot;workbaskets.can_approve&quot;</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">PROPOSED</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">APPROVED</span><span class="p">,</span>
+        <span class="n">custom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Approve&quot;</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">approve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Once a workbasket has been approved all related Tracked Models must</span>
@@ -191,24 +180,27 @@
 
     <span class="nd">@transition</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">READY_FOR_EXPORT</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">SENT_TO_CDS</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">APPROVED</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">SENT</span><span class="p">,</span>
+        <span class="n">custom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Send to HMRC&quot;</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">export_to_cds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+        <span class="sd">&quot;&quot;&quot;Tariff changes in workbasket have been sent to HMRC CDS.&quot;&quot;&quot;</span>
 
     <span class="nd">@transition</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">SENT_TO_CDS</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">SENT</span><span class="p">,</span>
         <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">PUBLISHED</span><span class="p">,</span>
+        <span class="n">custom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Publish&quot;</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">cds_confirmed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+        <span class="sd">&quot;&quot;&quot;HMRC CDS has accepted the changes to the tariff.&quot;&quot;&quot;</span>
 
     <span class="nd">@transition</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">SENT_TO_CDS</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">CDS_ERROR</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">SENT</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">ERRORED</span><span class="p">,</span>
+        <span class="n">custom</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Mark as in error&quot;</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">cds_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;If a workbasket, after approval, is then rejected by CDS it is</span>
@@ -227,48 +219,28 @@
                 <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">versions</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
             <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Used for serializing the workbasket to the session.&quot;&quot;&quot;</span>
-
-        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">&quot;_state&quot;</span><span class="p">}</span>
-        <span class="k">if</span> <span class="s2">&quot;transactions&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;transactions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">transaction</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span> <span class="k">for</span> <span class="n">transaction</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;transactions&quot;</span><span class="p">]</span>
-            <span class="p">]</span>
-
-        <span class="c1"># return a dict for convenient access to fields</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">DjangoJSONEncoder</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">save_to_session</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+        <span class="n">session</span><span class="p">[</span><span class="s2">&quot;workbasket&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+        <span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">TrackedModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transaction__workbasket</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Restore from session.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="n">WorkBasket</span><span class="p">(</span>
-            <span class="nb">id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]),</span>
-            <span class="n">pk</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]),</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span>
-            <span class="n">reason</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;reason&quot;</span><span class="p">],</span>
-            <span class="n">status</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">],</span>
-            <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span>
-                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;created_at&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;+00:00&quot;</span><span class="p">),</span>
-            <span class="p">),</span>
-            <span class="n">updated_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span>
-                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;updated_at&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;+00:00&quot;</span><span class="p">),</span>
-            <span class="p">),</span>
-            <span class="n">author_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;author_id&quot;</span><span class="p">]),</span>
-            <span class="n">approver_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;approver_id&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;approver_id&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">load_from_session</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;workbasket&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">session</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;WorkBasket not in session&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WorkBasket</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;workbasket&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">current</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the current workbasket in the session.&quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="s2">&quot;workbasket&quot;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">:</span>
-            <span class="n">workbasket</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;workbasket&quot;</span><span class="p">])</span>
+            <span class="n">workbasket</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">load_from_session</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">workbasket</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">approved_statuses</span><span class="p">():</span>
                 <span class="k">del</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;workbasket&quot;</span><span class="p">]</span>
