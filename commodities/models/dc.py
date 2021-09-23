@@ -4,10 +4,13 @@ from __future__ import annotations
 import logging
 from copy import copy
 from dataclasses import dataclass
+from dataclasses import field
 from datetime import date
+from itertools import groupby
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -31,23 +34,44 @@ from common.models.dc.base import BaseModel
 from common.models.records import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
+from common.util import get_record_code
 from common.validators import UpdateType
+from importer.namespaces import TARIC_RECORD_GROUPS
 from measures import business_rules as mbr
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
+from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     "Commodity",
     "CommodityChange",
+    "CommodityChangeRecordLoader",
     "CommodityCollection",
     "CommodityCollectionLoader",
     "CommodityTreeSnapshot",
+    "TrackedModelReflection",
 ]
 
 TTrackedModelIdentifier = Union[str, int]
+
+COMMODITY_RECORD_ATTRIBUTES: dict[str, tuple[str, str]] = {
+    "40000": ("goods_nomenclature", "item_id"),
+    "40005": ("goods_nomenclature_indent", "indented_goods_nomenclature__item_id"),
+    "40010": (
+        "goods_nomenclature_description_period",
+        "described_goods_nomenclature__item_id",
+    ),
+    "40015": (
+        "goods_nomenclature_description",
+        "described_goods_nomenclature__item_id",
+    ),
+    "40020": ("footnote_association_goods_nomenclature", "goods_nomenclature__item_id"),
+    "40035": ("goods_nomenclature_origin", "new_goods_nomenclature__item_id"),
+    "40040": ("goods_nomenclature_successor", "replaced_goods_nomenclature__item_id"),
+}
 
 TRACKEDMODEL_IDENTIFIER_KEYS = {
     "additional_codes.AdditionalCode": "code",
@@ -1403,3 +1427,237 @@ def get_tracked_model_reflection(
         attrs["transaction"] = transaction
 
     return TrackedModelReflection(**attrs)
+
+
+@dataclass
+class CommodityChapterChanges:
+    collection: CommodityCollection
+    changes: list[CommodityChange] = field(default_factory=list)
+
+
+class CommodityChangeRecordLoader:
+    """Provides a loader for commodity changes based on imported taric
+    records."""
+
+    def __init__(self) -> None:
+        """Instantiates the loader."""
+        self.chapter_changes: dict[str, CommodityChapterChanges] = {}
+
+    def load(self, data: Mapping[str, Any]) -> list[CommodityChange]:
+        """
+        Converts transaction records to corresponding CommodityChange objects.
+
+        Records in the transaction are grouped
+        based on the changing commodity they relate to.
+        In any given transaction, there will be 400-type records
+        relating to one or more changing commodities.
+        Here the 400-type records are grouped based on
+        the changing commodity they relate to,
+        and each group will produce one pending commodity change.
+
+        Note: Since side effects of pending commodity changes
+        (with related remedies) are identified post instantiation,
+        this means that once commodity change records are loaded here,
+        all remedies are available to be appended
+        as transactions to the import workbasket -
+        CommodityChange provides the functionality
+        to represent a remedy as a transaction as well.
+        """
+        record_group = TARIC_RECORD_GROUPS["commodities"]
+
+        matching_records = [
+            (self._get_record_commodity_code(record), record)
+            for transmission in data["message"]
+            for record in transmission["record"]
+            if get_record_code(record) in record_group
+        ]
+
+        sorted_records = sorted(matching_records, key=lambda x: x[0])
+        grouped_records = groupby(sorted_records, key=lambda x: x[0])
+
+        for commodity_code, records in grouped_records:
+            self.add_pending_change(commodity_code, records)
+
+    def add_pending_change(
+        self,
+        commodity_code: str,
+        records: tuple[str, dict[str, Any]],
+    ) -> None:
+        """
+        Produces a commodity change instance based on a group of 400-type
+        records that relate to the same changing commodity.
+
+        Note: Ultimately only changes that affect the hierarchy
+        (item_id, suffix, validity period, and indent)
+        need to result in a CommodityChange record.
+
+        These changes will be found either in the
+        40000 or 40005 record in the group
+        (GoodsNomenclature and GoodsNomenclatureIndent).
+
+        Changes to descriptions, description periods,
+        origins or successors are not relevant here
+        (any changes to origin or successor related commodities
+        will have been handled on their own separately).
+        """
+        chapter = commodity_code[:4]
+        chapter_changes = self._get_or_create_chapter_changes(chapter)
+
+        records_by_code = {get_record_code(record): record for _, record in records}
+
+        commodity_record = records_by_code.get("40000")
+        indent_record = records_by_code.get("40005")
+
+        if not (commodity_record or indent_record):
+            return
+
+        indent = self._get_indent(indent_record)
+        update_type = self._get_update_type(commodity_record)
+        transaction_order = int(commodity_record["transaction_id"])
+
+        current = self._get_current_commodity(
+            commodity_code,
+            indent,
+            update_type,
+            transaction_order,
+        )
+
+        candidate = self._create_candidate_commodity(
+            commodity_code,
+            indent,
+            update_type,
+            commodity_record["goods_nomenclature"],
+            current.obj if current else None,
+        )
+
+        change = CommodityChange(
+            collection=chapter_changes.collection,
+            update_type=update_type,
+            current=current,
+            candidate=candidate,
+        )
+
+        chapter_changes.changes.append(change)
+
+    def _get_or_create_chapter_changes(self, chapter: str) -> CommodityChapterChanges:
+        """Returns an instance of CommodityCollectionLoader for the chapter."""
+        if chapter not in self.chapter_changes:
+            loader = CommodityCollectionLoader(prefix=chapter)
+            collection = loader.load()
+
+            self.chapter_changes[chapter] = CommodityChapterChanges(
+                collection=collection,
+            )
+
+        return self.chapter_changes[chapter]
+
+    def _get_indent(self, indent_record: dict[str, Any]) -> Optional[int]:
+        """Returns the indent level from an indent record (40005), if such
+        record exists in the record group for a changing commodity."""
+        if indent_record:
+            return indent_record["goods_nomenclature_indent"]["indent"]
+
+    def _get_update_type(self, commodity_record: dict[str, Any]) -> UpdateType:
+        """Returns the update type for the commodity record."""
+        if commodity_record:
+            update_flag = int(commodity_record["update_type"])
+            return UpdateType(update_flag)
+
+        return UpdateType.UPDATE
+
+    def _get_current_good(
+        self,
+        commodity_code: str,
+        transaction_order: int,
+    ) -> Optional[GoodsNomenclature]:
+        """
+        Returns the current goods object for this commodity code up to the
+        record transaction.
+
+        TODO: Should this not check for suffix as well?
+        """
+        transaction = (
+            Transaction.objects.filter(
+                order=transaction_order,
+                workbasket__status=WorkflowStatus.PUBLISHED,
+            )
+            .exclude(
+                workbasket__id=1,
+            )
+            .first()
+        )
+
+        try:
+            return GoodsNomenclature.objects.approved_up_to_transaction(
+                transaction,
+            ).get(
+                item_id=commodity_code,
+            )
+        except GoodsNomenclature.DoesNotExist:
+            return None
+
+    def _get_current_commodity(
+        self,
+        commodity_code: str,
+        indent: int,
+        update_type: UpdateType,
+        transaction_order: int,
+    ) -> Optional[Commodity]:
+        """Returns a commodity wrapper for the current good object as of the
+        record transaction."""
+        if update_type == UpdateType.CREATE:
+            return None
+
+        current_good = self._get_current_good(commodity_code, transaction_order)
+
+        return Commodity(
+            obj=current_good,
+            indent=indent,
+        )
+
+    def _create_candidate_commodity(
+        self,
+        commodity_code: str,
+        indent: int,
+        update_type: UpdateType,
+        data: dict[str, Any],
+        obj: Optional[GoodsNomenclature] = None,
+    ) -> Optional[Commodity]:
+        """Returns a candidate commodity wrapper with the commodity record's
+        attributes."""
+        if update_type == UpdateType.DELETE:
+            return None
+
+        valid_between = self._get_taric_date_range(data)
+
+        return Commodity(
+            obj=obj,
+            item_id=data["item_id"],
+            suffix=data["suffix"],
+            indent=indent,
+            valid_between=valid_between,
+        )
+
+    def _get_taric_date_range(self, data: dict[str, Any]) -> TaricDateRange:
+        """Returns a TaricDateRange instance for the record's validity
+        period."""
+        valid_between = copy(data["valid_between"])
+
+        if "upper" not in valid_between:
+            valid_between["upper"] = None
+
+        try:
+            start_date, end_date = map(
+                lambda x: date(*map(int, x.split("-"))) if x else None,
+                valid_between.values(),
+            )
+        except ValueError:
+            print(1)
+
+        return TaricDateRange(start_date, end_date)
+
+    def _get_record_commodity_code(self, record: dict[str, Any]) -> str:
+        """Returns the commodity code embedded in a taric record."""
+        code = get_record_code(record)
+        record_name, attr_name = COMMODITY_RECORD_ATTRIBUTES[code]
+        return record.get(record_name).get(attr_name)
