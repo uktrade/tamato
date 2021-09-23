@@ -41,6 +41,7 @@ from measures import business_rules as mbr
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,8 @@ COMMODITY_RECORD_ATTRIBUTES: dict[str, tuple[str, str]] = {
     "40035": ("goods_nomenclature_origin", "new_goods_nomenclature__item_id"),
     "40040": ("goods_nomenclature_successor", "replaced_goods_nomenclature__item_id"),
 }
+
+PREEMPTIVE_TRANSACTION_SEED = -int(1e5)
 
 TRACKEDMODEL_IDENTIFIER_KEYS = {
     "additional_codes.AdditionalCode": "code",
@@ -888,6 +891,27 @@ class SideEffect(BaseModel):
     obj: TrackedModel
     update_type: UpdateType
     attrs: Dict[str, Any] = None
+
+    def to_transaction(self, workbasket: WorkBasket) -> TrackedModel:
+        order = self._get_preemptive_transaction_order(workbasket)
+        attrs = self.attrs or {}
+
+        with workbasket.new_transaction(order=order) as transaction:
+            return self.obj.new_version(
+                workbasket, transaction, update_type=self.update_type, **attrs
+            )
+
+    def _get_preemptive_transaction_order(self, workbasket: WorkBasket) -> int:
+        preemptive_transactions = [
+            transaction
+            for transaction in workbasket.transactions.all()
+            if transaction.order < 0
+        ]
+
+        if not preemptive_transactions:
+            return PREEMPTIVE_TRANSACTION_SEED
+
+        return max([transaction.order for transaction in preemptive_transactions]) + 1
 
 
 @dataclass
