@@ -74,6 +74,20 @@ def test_other_on_membership():
         membership.other(factories.CountryFactory())
 
 
+def test_other_on_later_version():
+    country = factories.CountryFactory()
+    geo_group = factories.GeoGroupFactory()
+    membership = factories.GeographicalMembershipFactory(
+        member=country,
+        geo_group=geo_group,
+    )
+    v2_country = factories.CountryFactory(sid=country.sid, area_code=country.area_code)
+    v2_geo_group = factories.GeoGroupFactory(sid=geo_group.sid)
+
+    assert membership.other(v2_country) == membership.geo_group
+    assert membership.other(v2_geo_group) == membership.member
+
+
 def test_geo_area_in_use(in_use_check_respects_deletes):
     assert in_use_check_respects_deletes(
         factories.GeographicalAreaFactory,
