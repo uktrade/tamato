@@ -51,6 +51,19 @@ def test_get_current_memberships_on_areas(membership_data, expected):
     assert len(area.get_current_memberships()) == expected
 
 
+def test_get_current_memberships_when_region_and_country_share_sid():
+    country = factories.CountryFactory()
+    region = factories.RegionFactory(sid=country.sid)
+    factories.GeographicalMembershipFactory(member=country)
+    factories.GeographicalMembershipFactory(member=region)
+    country_memberships = country.get_current_memberships()
+    region_memberships = region.get_current_memberships()
+
+    assert country_memberships.count() == 1
+    assert region_memberships.count() == 1
+    assert country_memberships != region_memberships
+
+
 def test_other_on_membership():
     membership = factories.GeographicalMembershipFactory()
     assert membership.other(membership.member) == membership.geo_group

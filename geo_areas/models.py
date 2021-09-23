@@ -87,7 +87,8 @@ class GeographicalArea(TrackedModel, ValidityMixin):
     def get_current_memberships(self):
         return (
             GeographicalMembership.objects.filter(
-                Q(geo_group__sid=self.sid) | Q(member__sid=self.sid),
+                Q(geo_group__sid=self.sid)
+                | Q(member__sid=self.sid, member__area_code=self.area_code),
             )
             .latest_approved()
             .select_related("member", "geo_group")
