@@ -54,13 +54,15 @@ def test_get_current_memberships_on_areas(membership_data, expected):
 def test_get_current_memberships_when_region_and_country_share_sid():
     country = factories.CountryFactory()
     region = factories.RegionFactory(sid=country.sid)
-    factories.GeographicalMembershipFactory(member=country)
-    factories.GeographicalMembershipFactory(member=region)
+    country_membership = factories.GeographicalMembershipFactory(member=country)
+    region_membership = factories.GeographicalMembershipFactory(member=region)
     country_memberships = country.get_current_memberships()
     region_memberships = region.get_current_memberships()
 
     assert country_memberships.count() == 1
+    assert country_memberships.first() == country_membership
     assert region_memberships.count() == 1
+    assert region_memberships.first() == region_membership
     assert country_memberships != region_memberships
 
 
