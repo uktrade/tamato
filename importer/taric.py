@@ -14,10 +14,13 @@ from django.db import IntegrityError
 from django.db.transaction import atomic
 from lxml import etree
 
+from commodities.models.dc import CommodityChangeRecordLoader
 from common import models
+from common.util import get_record_code
 from common.validators import UpdateType
 from common.xml.namespaces import ENVELOPE
 from common.xml.namespaces import nsmap
+from importer.namespaces import TARIC_RECORD_GROUPS
 from importer.namespaces import Tag
 from importer.nursery import get_nursery
 from importer.parsers import ElementParser
@@ -132,6 +135,32 @@ class TransactionParser(ElementParser):
         for message_data in data["message"]:
             self.message.save(message_data, transaction.id)
 
+        if self._detect_commodity_changes(data):
+            loader = CommodityChangeRecordLoader()
+            loader.load(data)
+
+            for chapter_changes in loader.chapter_changes.values():
+                for change in chapter_changes.changes:
+                    for side_effect in change.side_effects.values():
+                        obj = side_effect.to_transaction(self.parent.workbasket)
+
+                        transaction = obj.transaction
+                        order = transaction.order
+                        commodity = change.candidate or change.current
+                        code = commodity.code.dot_code
+                        logger.info(
+                            f"Saving preemptive transaction {order}: "
+                            f"commodity {code} -"
+                            f"{obj._meta.label} {obj.sid} - "
+                            f"{obj.update_type}",
+                        )
+
+                        EnvelopeTransaction.objects.create(
+                            envelope=envelope,
+                            transaction=transaction,
+                            order=order,
+                        )
+
         try:
             transaction.clean()
         except ValidationError as e:
@@ -158,6 +187,23 @@ class TransactionParser(ElementParser):
                     envelope=self.parent.envelope,
                 )
             return True
+
+    def _detect_commodity_changes(self, data: Mapping[str, Any]) -> bool:
+        logging.debug(
+            f"Checking for commodity changes in transaction {self.data['id']}",
+        )
+
+        codes = [
+            get_record_code(record)
+            for transmission in data["message"]
+            for record in transmission["record"]
+        ]
+
+        matching_codes = [
+            code for code in codes if code in TARIC_RECORD_GROUPS["commodities"][:2]
+        ]
+
+        return len(matching_codes) != 0
 
 
 class EnvelopeError(ParserError):
