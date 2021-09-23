@@ -356,11 +356,11 @@ class AddAnother(forms.BaseFormSet):
         # If we have form data, then capture the any user "add form" or
         # "delete form" actions.
         self.formset_action = None
-        if f"{self.prefix}-ADD" in self.data:
+        if f"{self.prefix}-{AddAnother.ACTION_ADD}" in self.data:
             self.formset_action = AddAnother.ACTION_ADD
         else:
             for field in self.data:
-                if field.endswith("-DELETE"):
+                if field.endswith(f"-{AddAnother.ACTION_DELETE}"):
                     self.formset_action = AddAnother.ACTION_DELETE
                     break
 
@@ -431,11 +431,11 @@ class AddAnother(forms.BaseFormSet):
 
         # Re-present the form to show the result of adding another form or
         # deleting an existing one.
-        if self.formset_action in (AddAnother.FORMSET_ACTIONS):
+        if self.formset_action in AddAnother.FORMSET_ACTIONS:
             return False
 
         # An empty set of forms is valid.
-        if not self.total_form_count():
+        if self.total_form_count() == 0:
             return True
 
         return super().is_valid()
