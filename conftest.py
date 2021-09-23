@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 from functools import lru_cache
 from typing import Any
@@ -271,7 +273,7 @@ def use_update_form(valid_user_api_client: APIClient):
     that the passed data contains errors.
     """
 
-    def use(object: TrackedModel, new_data: Dict[str, Callable[[Any], Any]]):
+    def use(object: TrackedModel, new_data: dict[str, Callable[[Any], Any]]):
         model = type(object)
         versions = set(
             model.objects.filter(**object.get_identifying_fields()).values_list(

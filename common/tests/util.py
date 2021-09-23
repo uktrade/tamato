@@ -265,6 +265,7 @@ class Dates:
             relativedelta(years=+1, months=+2),
         ),
         "big": (relativedelta(years=-2), relativedelta(years=+2, days=+1)),
+        "adjacent": (relativedelta(days=+1), relativedelta(months=+1)),
         "adjacent_earlier": (relativedelta(months=-1), relativedelta(days=-1)),
         "adjacent_later": (relativedelta(months=+1, days=+1), relativedelta(months=+2)),
         "adjacent_no_end": (relativedelta(months=+1, days=+1), None),
@@ -287,6 +288,10 @@ class Dates:
         "overlap_normal_earlier": (
             relativedelta(months=-1, days=+14),
             relativedelta(days=+14),
+        ),
+        "overlap_normal_same_year": (
+            relativedelta(days=+15),
+            relativedelta(days=+14, months=+1),
         ),
         "overlap_big": (relativedelta(years=+1), relativedelta(years=+3, days=+2)),
         "after_big": (
