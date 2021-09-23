@@ -306,6 +306,199 @@ put these codes on their declaration forms when importing or exporting goods.</p
 <p>Nomenclature, also known as goods classification, goods nomenclature or
 commodity code classification, is the name for the full list of products in the
 UK Tariff.</p>
+<section id="tp-803-commodity-tree-changes">
+<h4>TP-803: Commodity Tree Changes<a class="headerlink" href="#tp-803-commodity-tree-changes" title="Permalink to this headline">¶</a></h4>
+<p>ISSUES TO CONSIDER WHEN CHANGING THE TREE
+Changes to the commodity tree have two main types of considerations:
+1. Do we have a correct commodity tree after the change?</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>e.g. are all parent, child, sibling and other relations as they should be</p></li>
+<li><p>the question applies for the changing commodity
+as well as all commodities in its hierarchy prior and post change
+(these may or may not be the same depending on the change)</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Have we dealt with any side effects on any related taric records</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>related records may include measures, footnote associations, etc.</p></li>
+<li><p>affected records may be related to the changing commodity itself
+or to any commodity in the surrounding hierarchy pre- and post-change
+(e.g. business rule NIG30 might mean we need to terminate a measure)</p></li>
+<li><p>side effects are incidental violations of business rules
+resulting from the changes made to the commodity tree
+and as such can be caught in the vast majority of cases
+using existing business rule validation logic in TaMaTo</p></li>
+</ul>
+</div></blockquote>
+<p>REQUIREMENTS FOR TACKLING THE ISSUES
+B. In order to handle well commodity tree chanegs in the context of
+the above two main considerations, we need to adopt a new approach that:
+1. Avoids late fails in terms of firing off business rule violations</p>
+<blockquote>
+<div><p>or post-mortem re-evaluations of the materialized commodity hierarchy
+- this is particularly relevant when making large-scale</p>
+<blockquote>
+<div><p>changes to the tree, e.g. in the context of HS22</p>
+</div></blockquote>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Takes advantage of early detection of side effects by providing</p></li>
+</ol>
+<blockquote>
+<div><p>automated decision logic for the correct remedy in each case</p>
+</div></blockquote>
+<p>TP-803’s BOOTSTRAPPING IMPLEMENTATION
+The new approach in TP-803 satisfies the above criteria by
+“bootstrapping” any pending changes to the commodity tree,
+providing the ability to view “before” and “after” snapshots
+of the commodity tree hierarchy pre- and post- pending changes,
+detecting any potential side effects on related records,
+and providing a list of pending related record changes
+that need to be applied alongside the commodity changes.</p>
+<p>The following constructs make the bootstrapping approach possible:
+1. Commodity wrapper</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the primary benefit of the wrapper is the ability to “fake”
+changes to the wrapped underlying record for the purposes of
+previewing the effects and side effects of the change.</p></li>
+<li><p>one example is “masking” relations fields to avoid complications
+of dealing with related meta records (e.g. indents in commodities).</p></li>
+<li><p>the wrapper provides a range of “convenience” methods as additional perks</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>CommodityCollection</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>this is just a bag of commodities
+– included commodities may or may not be effective at the same point in time
+– the may wrap any version of a good object</p></li>
+<li><p>commodity changes are applied to this collection construct</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>CommodityTreeSnapshot</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>a collection provides the ability to take “snapshots”</p></li>
+<li><p>a snapshot is a collection of commodities that are in effect
+as of a given moment, and constitute the tree hierarchy as of that moment</p></li>
+<li><p>a snapshot can be taken based on one of two “clocks”, but not both:
+– a calendar clock (what goods were in effect as of date x)
+– a transaction clock (what goods were in effect as of transaction x)
+– see the Tariff Manual for further discussion on calendar vs transaction clocks</p></li>
+<li><p>a snapshot has a tree hierarchy with parent, children and sibling relations
+as well as traversal-style relations such as ancestors and descendants</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>SnapshotDiff</p></li>
+</ol>
+<blockquote>
+<div><ul>
+<li><p>a dedicated construct for evaluating snapshot diffs</p></li>
+<li><p>the key benefit of the construct is clean code</p></li>
+<li><p>a diff is evaluated in terms of members of a single relation for a single commodity
+– e.g. what is the difference in the siblings of commodity x</p>
+<blockquote>
+<div><p>between snapshot a and snapshot b?</p>
+</div></blockquote>
+</li>
+<li><p>there are two motivations for using a snapshot diff:
+– compare the “before” and “after” snapshots around a commodity change
+– compare the state of the commodity tree at two different points in time</p>
+<blockquote>
+<div><p>(even outside the context of a commodity change)</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="5">
+<li><p>CommodityChange</p></li>
+</ol>
+<blockquote>
+<div><ul>
+<li><p>a dedicated construct for pending commodity changes</p></li>
+<li><p>this construct serves as a “watchdog” for pending changes:
+– it evaluates the “sanity” of a requested change</p>
+<blockquote>
+<div><p>(e.g. if someone requests an update to a non-existing commodity)</p>
+</div></blockquote>
+<dl class="simple">
+<dt>– it evaluates and determines remedies for any side effects</dt><dd><p>incidental to the pending change</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="6">
+<li><p>SideEffect</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>a dedicated construct for side effects and related remedies</p></li>
+<li><p>the key benefit of the construct is clean code</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="7">
+<li><p>CommodityTreeLoader</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>responsible for loading any subset of the tariff db commodity tree
+into a CommodityCollection (up to a chapter level)</p></li>
+<li><p>see notes on workfow below for more detail</p></li>
+</ul>
+</div></blockquote>
+<p>TP-803 WORKFLOW
+With the above in mind, the intended workflow that TP-803 envisions
+(parts of which are implemented elsewhere) is the following:
+1. An incoming Taric envelope is parsed selectively to isolate commodity changes</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the initial input can in theory be anything else, e.g. a spreadsheet</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>The existing commodity tree in the database is loaded into a CommodityCollection</p></li>
+</ol>
+<blockquote>
+<div><p>using the CommodityTreeLoader (chapter by chapter)</p>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>The pending commodity changes are wrapped in CommodityChange instances</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>side effects are detected at this stage</p></li>
+<li><p>this involves collection updates, taking “before” and “after” snapshots,
+plus probing for any related records that might be affected by the change</p></li>
+<li><p>any required remedies are stored in the instance’s SideEffects list</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>The collection is updated with the pending changes represented by these objects</p></li>
+<li><p>At this point we have everything we need in order to be able to write</p></li>
+</ol>
+<blockquote>
+<div><p>changes to the tariff db that have the intended effect on the tree hierarchy
+and remedy any side effects on any related records caught up in the change
+- this is picked up by a separate handler downstream (see scope below)</p>
+</div></blockquote>
+<p>TP-803 SCOPE
+All of the above can be viewed simply as a holding bay slash decision engine;
+no action is taken until the pending changes to commodities and related records
+are ultimately applied as transactions in a workbasket downstream.
+This write stage is the the conern of import handlers
+and is implemented as a separate feature (see TP-931).</p>
+</section>
 </section>
 <section id="module-additional_codes">
 <span id="additional-codes"></span><h3><a class="reference internal" href="#module-additional_codes" title="additional_codes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">additional_codes</span></code></a><a class="headerlink" href="#module-additional_codes" title="Permalink to this headline">¶</a></h3>
@@ -512,7 +705,10 @@ See <a class="reference external" href="https://uktrade.atlassian.net/wiki/space
 </li>
 <li><a class="reference internal" href="#domain-modules">Domain Modules</a><ul>
 <li><a class="reference internal" href="#module-measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a></li>
-<li><a class="reference internal" href="#module-commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a></li>
+<li><a class="reference internal" href="#module-commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><ul>
+<li><a class="reference internal" href="#tp-803-commodity-tree-changes">TP-803: Commodity Tree Changes</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-additional_codes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">additional_codes</span></code></a></li>
 <li><a class="reference internal" href="#module-quotas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">quotas</span></code></a></li>
 <li><a class="reference internal" href="#module-certificates"><code class="xref py py-mod docutils literal notranslate"><span class="pre">certificates</span></code></a></li>

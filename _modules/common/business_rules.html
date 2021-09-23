@@ -240,20 +240,27 @@
     <span class="k">return</span> <span class="n">decorator</span>
 
 
-<div class="viewcode-block" id="skip_when_deleted"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.skip_when_deleted">[docs]</a><span class="k">def</span> <span class="nf">skip_when_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If the object passed to the business rule is deleted, do not run the rule</span>
-<span class="sd">    and report no violations.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="skip_when_update_type"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.skip_when_update_type">[docs]</a><span class="k">def</span> <span class="nf">skip_when_update_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">update_types</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Skip business rule validation for given update types.&quot;&quot;&quot;</span>
     <span class="n">_original_validate</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">_original_validate</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: object is deleted&quot;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span> <span class="ow">in</span> <span class="n">update_types</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: update_type is </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">_original_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
     <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span> <span class="o">=</span> <span class="n">validate</span>
     <span class="k">return</span> <span class="bp">cls</span></div>
+
+
+<span class="k">def</span> <span class="nf">skip_when_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">skip_when_update_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="p">(</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">,))</span>
+
+
+<span class="k">def</span> <span class="nf">skip_when_not_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">skip_when_update_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="p">(</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">,</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="UniqueIdentifyingFields"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.UniqueIdentifyingFields">[docs]</a><span class="k">class</span> <span class="nc">UniqueIdentifyingFields</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
@@ -294,18 +301,17 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="PreventDeleteIfInUse"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.PreventDeleteIfInUse">[docs]</a><span class="k">class</span> <span class="nc">PreventDeleteIfInUse</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="PreventDeleteIfInUse"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.PreventDeleteIfInUse">[docs]</a><span class="nd">@skip_when_not_deleted</span>
+<span class="k">class</span> <span class="nc">PreventDeleteIfInUse</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Rule preventing deleting an in-use model.&quot;&quot;&quot;</span>
 
     <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;in_use&quot;</span>
 
-<div class="viewcode-block" id="PreventDeleteIfInUse.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.PreventDeleteIfInUse.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span> <span class="o">!=</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: Not a delete&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-            <span class="k">return</span>
+    <span class="k">def</span> <span class="nf">has_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use_check</span><span class="p">)()</span>
 
-        <span class="n">check</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use_check</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">check</span><span class="p">():</span>
+<div class="viewcode-block" id="PreventDeleteIfInUse.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.PreventDeleteIfInUse.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_violation</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Passed </span><span class="si">%s</span><span class="s2">: Not in use&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span></div></div>

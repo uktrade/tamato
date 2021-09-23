@@ -349,11 +349,7 @@
 <span class="sd">    This rule is not applicable for Meursing additional codes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ME32.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME32.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="c1"># build the query for measures matching the given measure</span>
+    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
         <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
             <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
@@ -373,12 +369,23 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">matching_measures</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="k">return</span> <span class="n">query</span>
+
+    <span class="k">def</span> <span class="nf">matching_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
             <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
         <span class="p">)</span>
+
+<div class="viewcode-block" id="ME32.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME32.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># build the query for measures matching the given measure</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_query</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+        <span class="n">matching_measures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matching_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
 
         <span class="c1"># get all goods nomenclature versions associated with this measure</span>
         <span class="n">GoodsNomenclature</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="p">)</span>
