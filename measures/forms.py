@@ -326,7 +326,7 @@ class MeasureCommodityForm(forms.Form):
         )
 
 
-class AddAnother(forms.BaseFormSet):
+class FormSet(forms.BaseFormSet):
     """
     Adds the ability to add another form to the formset on submit.
 
@@ -336,10 +336,6 @@ class AddAnother(forms.BaseFormSet):
     Deleting a subform will also redisplay the formset, with the order of the forms
     preserved.
     """
-
-    ACTION_ADD = "ADD"
-    ACTION_DELETE = "DELETE"
-    FORMSET_ACTIONS = (ACTION_ADD, ACTION_DELETE)
 
     extra = 0
     can_order = False
@@ -356,12 +352,12 @@ class AddAnother(forms.BaseFormSet):
         # If we have form data, then capture the any user "add form" or
         # "delete form" actions.
         self.formset_action = None
-        if f"{self.prefix}-{AddAnother.ACTION_ADD}" in self.data:
-            self.formset_action = AddAnother.ACTION_ADD
+        if f"{self.prefix}-ADD" in self.data:
+            self.formset_action = "ADD"
         else:
             for field in self.data:
-                if field.endswith(f"-{AddAnother.ACTION_DELETE}"):
-                    self.formset_action = AddAnother.ACTION_DELETE
+                if field.endswith(f"-ADD"):
+                    self.formset_action = "DELETE"
                     break
 
         data = self.data.copy()
@@ -431,7 +427,7 @@ class AddAnother(forms.BaseFormSet):
 
         # Re-present the form to show the result of adding another form or
         # deleting an existing one.
-        if self.formset_action in AddAnother.FORMSET_ACTIONS:
+        if self.formset_action == "ADD" or self.formset_action == "DELETE":
             return False
 
         # An empty set of forms is valid.
@@ -496,7 +492,7 @@ class MeasureConditionsForm(forms.ModelForm):
         )
 
 
-class MeasureConditionsFormSet(AddAnother):
+class MeasureConditionsFormSet(FormSet):
     form = MeasureConditionsForm
 
 
@@ -542,7 +538,7 @@ class MeasureFootnotesForm(forms.Form):
         )
 
 
-class MeasureFootnotesFormSet(AddAnother):
+class MeasureFootnotesFormSet(FormSet):
     form = MeasureFootnotesForm
 
 
