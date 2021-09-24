@@ -179,9 +179,9 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         is passed this returns the geo group. Raises a ValueError if an object
         is passed that is neither of these.
         """
-        if area == self.geo_group:
+        if area.sid == self.geo_group.sid:
             return self.member
-        elif area == self.member:
+        elif area.sid == self.member.sid:
             return self.geo_group
         else:
             raise ValueError(f"{area} is not part of membership {self}")
