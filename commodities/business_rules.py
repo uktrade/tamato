@@ -12,8 +12,8 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
+from common.business_rules import skip_when_not_deleted
 from common.util import validity_range_contains_range
-from common.validators import UpdateType
 
 
 class NIG1(NoOverlapping):
@@ -273,14 +273,19 @@ class NIG30(BusinessRule):
     def matching_measures(self, good):
         return good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
 
-    def validate(self, good):
-        if (
+    def effective_matching_measures(self, good):
+        return (
             self.matching_measures(good)
             .with_effective_valid_between()
             .approved_up_to_transaction(good.transaction)
             .exclude(db_effective_valid_between__contained_by=good.valid_between)
-            .exists()
-        ):
+        )
+
+    def has_violation(self, good):
+        return self.effective_matching_measures(good).exists()
+
+    def validate(self, good):
+        if self.has_violation(good):
             raise self.violation(good)
 
 
@@ -298,22 +303,25 @@ class NIG34(PreventDeleteIfInUse):
     measure."""
 
 
+@skip_when_not_deleted
 class NIG35(BusinessRule):
     """A goods nomenclature cannot be deleted if it is used in an additional
     nomenclature measure."""
 
     # XXX this is redundant - NIG34 will be violated first
 
-    def validate(self, good):
-        if good.update_type != UpdateType.DELETE:
-            return
-
-        if (
+    def has_violation(self, good):
+        return (
             good.measures.model.objects.filter(
                 goods_nomenclature__sid=good.sid,
                 additional_code__isnull=False,
             )
-            .approved_up_to_transaction(good.transaction)
+            .approved_up_to_transaction(
+                self.transaction,
+            )
             .exists()
-        ):
+        )
+
+    def validate(self, good):
+        if self.has_violation(good):
             raise self.violation(good)

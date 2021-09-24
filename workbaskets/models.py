@@ -1,10 +1,7 @@
 """WorkBasket models."""
-import json
-from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import Prefetch
 from django.db.models import QuerySet
@@ -89,9 +86,15 @@ class WorkBasket(TimestampedMixin):
         related_name="approved_workbaskets",
     )
     status = FSMField(
-        default=WorkflowStatus.NEW_IN_PROGRESS,
+        default=WorkflowStatus.EDITING,
         choices=WorkflowStatus.choices,
         db_index=True,
+        # Ideally, we would protect the status field from being modified except by the
+        # transition methods, otherwise the workbasket contents can be left in an
+        # invalid state.  Unfortunately if `protected` is True the `clean` method raises
+        # an exception.
+        protected=False,
+        editable=False,
     )
 
     @property
@@ -103,41 +106,27 @@ class WorkBasket(TimestampedMixin):
 
     @transition(
         field=status,
-        source=[
-            WorkflowStatus.NEW_IN_PROGRESS,
-            WorkflowStatus.EDITING,
-        ],
-        target=WorkflowStatus.AWAITING_APPROVAL,
+        source=WorkflowStatus.EDITING,
+        target=WorkflowStatus.PROPOSED,
+        custom={"label": "Submit for approval"},
     )
     def submit_for_approval(self):
         self.full_clean()
 
     @transition(
         field=status,
-        source=[
-            WorkflowStatus.APPROVAL_REJECTED,
-            WorkflowStatus.AWAITING_APPROVAL,
-            WorkflowStatus.CDS_ERROR,
-        ],
+        source=WorkflowStatus.PROPOSED,
         target=WorkflowStatus.EDITING,
+        custom={"label": "Withdraw or reject submission"},
     )
     def withdraw(self):
-        pass
+        """Withdraw/reject a proposed workbasket."""
 
     @transition(
         field=status,
-        source=WorkflowStatus.AWAITING_APPROVAL,
-        target=WorkflowStatus.APPROVAL_REJECTED,
-        permission="workbaskets.can_approve",
-    )
-    def reject(self):
-        pass
-
-    @transition(
-        field=status,
-        source=WorkflowStatus.AWAITING_APPROVAL,
-        target=WorkflowStatus.READY_FOR_EXPORT,
-        permission="workbaskets.can_approve",
+        source=WorkflowStatus.PROPOSED,
+        target=WorkflowStatus.APPROVED,
+        custom={"label": "Approve"},
     )
     def approve(self, user):
         """Once a workbasket has been approved all related Tracked Models must
@@ -150,24 +139,27 @@ class WorkBasket(TimestampedMixin):
 
     @transition(
         field=status,
-        source=WorkflowStatus.READY_FOR_EXPORT,
-        target=WorkflowStatus.SENT_TO_CDS,
+        source=WorkflowStatus.APPROVED,
+        target=WorkflowStatus.SENT,
+        custom={"label": "Send to HMRC"},
     )
     def export_to_cds(self):
-        pass
+        """Tariff changes in workbasket have been sent to HMRC CDS."""
 
     @transition(
         field=status,
-        source=WorkflowStatus.SENT_TO_CDS,
+        source=WorkflowStatus.SENT,
         target=WorkflowStatus.PUBLISHED,
+        custom={"label": "Publish"},
     )
     def cds_confirmed(self):
-        pass
+        """HMRC CDS has accepted the changes to the tariff."""
 
     @transition(
         field=status,
-        source=WorkflowStatus.SENT_TO_CDS,
-        target=WorkflowStatus.CDS_ERROR,
+        source=WorkflowStatus.SENT,
+        target=WorkflowStatus.ERRORED,
+        custom={"label": "Mark as in error"},
     )
     def cds_error(self):
         """If a workbasket, after approval, is then rejected by CDS it is
@@ -186,48 +178,28 @@ class WorkBasket(TimestampedMixin):
                 version_group.current_version = versions.first()
             version_group.save()
 
-    def to_json(self):
-        """Used for serializing the workbasket to the session."""
-
-        data = {key: val for key, val in self.__dict__.items() if key != "_state"}
-        if "transactions" in data:
-            data["transactions"] = [
-                transaction.to_json() for transaction in data["transactions"]
-            ]
-
-        # return a dict for convenient access to fields
-        return json.loads(json.dumps(data, cls=DjangoJSONEncoder))
+    def save_to_session(self, session):
+        session["workbasket"] = {
+            "id": self.pk,
+            "status": self.status,
+        }
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
         return TrackedModel.objects.filter(transaction__workbasket=self)
 
     @classmethod
-    def from_json(cls, data):
-        """Restore from session."""
-
-        return WorkBasket(
-            id=int(data["id"]),
-            pk=int(data["id"]),
-            title=data["title"],
-            reason=data["reason"],
-            status=data["status"],
-            created_at=datetime.fromisoformat(
-                data["created_at"].replace("Z", "+00:00"),
-            ),
-            updated_at=datetime.fromisoformat(
-                data["updated_at"].replace("Z", "+00:00"),
-            ),
-            author_id=int(data["author_id"]),
-            approver_id=int(data["approver_id"]) if data["approver_id"] else None,
-        )
+    def load_from_session(cls, session):
+        if "workbasket" not in session:
+            raise KeyError("WorkBasket not in session")
+        return WorkBasket.objects.get(pk=session["workbasket"]["id"])
 
     @classmethod
     def current(cls, request):
         """Get the current workbasket in the session."""
 
         if "workbasket" in request.session:
-            workbasket = cls.from_json(request.session["workbasket"])
+            workbasket = cls.load_from_session(request.session)
 
             if workbasket.status in WorkflowStatus.approved_statuses():
                 del request.session["workbasket"]
