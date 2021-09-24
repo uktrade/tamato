@@ -59,11 +59,12 @@ def test_get_current_memberships_when_region_and_country_share_sid():
     country_memberships = country.get_current_memberships()
     region_memberships = region.get_current_memberships()
 
-    assert country_memberships.count() == 1
-    assert country_memberships.first() == country_membership
-    assert region_memberships.count() == 1
-    assert region_memberships.first() == region_membership
-    assert country_memberships != region_memberships
+    assert country_memberships.count() == 2
+    assert region_memberships.count() == 2
+    assert country_membership in country_memberships
+    assert region_membership in country_memberships
+    assert country_membership in region_memberships
+    assert region_membership in region_memberships
 
 
 def test_other_on_membership():
@@ -91,6 +92,14 @@ def test_other_on_later_version():
 
     assert membership.other(v2_country) == membership.geo_group
     assert membership.other(v2_geo_group) == membership.member
+
+
+def test_other_on_same_sid_different_area_code():
+    country = factories.CountryFactory.create()
+    region = factories.RegionFactory.create(sid=country.sid)
+    membership = factories.GeographicalMembershipFactory.create(member=country)
+
+    assert membership.other(region) == membership.geo_group
 
 
 def test_geo_area_in_use(in_use_check_respects_deletes):
