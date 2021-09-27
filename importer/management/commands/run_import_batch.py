@@ -24,9 +24,9 @@ class Command(BaseCommand):
             "-s",
             "--status",
             choices=[
-                WorkflowStatus.NEW_IN_PROGRESS.value,
-                WorkflowStatus.AWAITING_APPROVAL.value,
-                WorkflowStatus.READY_FOR_EXPORT.value,
+                WorkflowStatus.EDITING.value,
+                WorkflowStatus.PROPOSED.value,
+                WorkflowStatus.APPROVED.value,
                 WorkflowStatus.PUBLISHED.value,
             ],
             help="The status of the workbaskets containing the import changes.",

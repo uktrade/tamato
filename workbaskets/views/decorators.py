@@ -16,7 +16,7 @@ def require_current_workbasket(view_func):
                     author=request.user,
                 )
 
-            request.session["workbasket"] = workbasket.to_json()
+            workbasket.save_to_session(request.session)
 
         return view_func(request, *args, **kwargs)
 

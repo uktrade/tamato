@@ -199,20 +199,27 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
     return decorator
 
 
-def skip_when_deleted(cls):
-    """If the object passed to the business rule is deleted, do not run the rule
-    and report no violations."""
+def skip_when_update_type(cls, update_types):
+    """Skip business rule validation for given update types."""
     _original_validate = cls.validate
 
     @wraps(_original_validate)
     def validate(self, model):
-        if model.update_type == UpdateType.DELETE:
-            log.debug("Skipping %s: object is deleted", cls.__name__)
+        if model.update_type in update_types:
+            log.debug("Skipping %s: update_type is %s", cls.__name__, model.update_type)
         else:
             _original_validate(self, model)
 
     cls.validate = validate
     return cls
+
+
+def skip_when_deleted(cls):
+    return skip_when_update_type(cls, (UpdateType.DELETE,))
+
+
+def skip_when_not_deleted(cls):
+    return skip_when_update_type(cls, (UpdateType.CREATE, UpdateType.UPDATE))
 
 
 class UniqueIdentifyingFields(BusinessRule):
@@ -253,18 +260,17 @@ class NoOverlapping(BusinessRule):
             raise self.violation(model)
 
 
+@skip_when_not_deleted
 class PreventDeleteIfInUse(BusinessRule):
     """Rule preventing deleting an in-use model."""
 
     in_use_check = "in_use"
 
-    def validate(self, model):
-        if model.update_type != UpdateType.DELETE:
-            log.debug("Skipping %s: Not a delete", self.__class__.__name__)
-            return
+    def has_violation(self, model) -> bool:
+        return getattr(model, self.in_use_check)()
 
-        check = getattr(model, self.in_use_check)
-        if check():
+    def validate(self, model):
+        if self.has_violation(model):
             raise self.violation(model)
 
         log.debug("Passed %s: Not in use", self.__class__.__name__)

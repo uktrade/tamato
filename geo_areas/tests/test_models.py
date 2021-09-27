@@ -51,6 +51,22 @@ def test_get_current_memberships_on_areas(membership_data, expected):
     assert len(area.get_current_memberships()) == expected
 
 
+def test_get_current_memberships_when_region_and_country_share_sid():
+    country = factories.CountryFactory.create()
+    region = factories.RegionFactory.create(sid=country.sid)
+    country_membership = factories.GeographicalMembershipFactory.create(member=country)
+    region_membership = factories.GeographicalMembershipFactory.create(member=region)
+    country_memberships = country.get_current_memberships()
+    region_memberships = region.get_current_memberships()
+
+    assert country_memberships.count() == 2
+    assert region_memberships.count() == 2
+    assert country_membership in country_memberships
+    assert region_membership in country_memberships
+    assert country_membership in region_memberships
+    assert region_membership in region_memberships
+
+
 def test_other_on_membership():
     membership = factories.GeographicalMembershipFactory()
     assert membership.other(membership.member) == membership.geo_group
@@ -59,6 +75,31 @@ def test_other_on_membership():
         membership.other(factories.GeoGroupFactory())
     with pytest.raises(ValueError):
         membership.other(factories.CountryFactory())
+
+
+def test_other_on_later_version():
+    country = factories.CountryFactory.create()
+    geo_group = factories.GeoGroupFactory.create()
+    membership = factories.GeographicalMembershipFactory.create(
+        member=country,
+        geo_group=geo_group,
+    )
+    v2_country = factories.CountryFactory.create(
+        sid=country.sid,
+        area_code=country.area_code,
+    )
+    v2_geo_group = factories.GeoGroupFactory.create(sid=geo_group.sid)
+
+    assert membership.other(v2_country) == membership.geo_group
+    assert membership.other(v2_geo_group) == membership.member
+
+
+def test_other_on_same_sid_different_area_code():
+    country = factories.CountryFactory.create()
+    region = factories.RegionFactory.create(sid=country.sid)
+    membership = factories.GeographicalMembershipFactory.create(member=country)
+
+    assert membership.other(region) == membership.geo_group
 
 
 def test_geo_area_in_use(in_use_check_respects_deletes):
