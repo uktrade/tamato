@@ -519,7 +519,7 @@ class TrackedModel(PolymorphicModel):
     def get_description(self):
         return self.get_descriptions(transaction=self.transaction).last()
 
-    def get_descriptions(self, transaction=None) -> TrackedModelQuerySet:
+    def get_descriptions(self, transaction=None, request=None) -> TrackedModelQuerySet:
         """
         Get the latest descriptions related to this instance of the Tracked
         Model.
@@ -557,6 +557,13 @@ class TrackedModel(PolymorphicModel):
 
         if transaction:
             return query.approved_up_to_transaction(transaction=transaction)
+
+        if request:
+            from workbaskets.models import WorkBasket
+
+            return query.approved_up_to_transaction(
+                transaction=WorkBasket.get_current_transaction(request),
+            )
 
         return query.latest_approved()
 
