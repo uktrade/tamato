@@ -46,16 +46,16 @@ class Command(BaseCommand):
 
     @atomic
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.READY_FOR_EXPORT)
+        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
         if not workbaskets:
-            sys.exit("Nothing to upload:  No workbaskets with status READY_FOR_EXPORT.")
+            sys.exit("Nothing to upload:  No workbaskets with status APPROVED.")
 
         # transactions:  will be serialized, then added to an envelope for uploaded.
         transactions = workbaskets.ordered_transactions()
 
         if not transactions:
             sys.exit(
-                f"Nothing to upload:  {workbaskets.count()} Workbaskets READY_FOR_EXPORT but none contain any transactions.",
+                f"Nothing to upload:  {workbaskets.count()} Workbaskets APPROVED but none contain any transactions.",
             )
 
         if options.get("envelope_id") is not None:

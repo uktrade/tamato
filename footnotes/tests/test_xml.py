@@ -9,21 +9,16 @@ pytestmark = pytest.mark.django_db
 
 @validate_taric_xml(factories.FootnoteTypeFactory)
 def test_footnote_type_xml(xml):
-    element = xml.find(".//oub:footnote.type", nsmap)
-    assert element is not None
-    element = xml.find(".//oub:footnote.type.description", nsmap)
-    assert element is not None
+    assert xml.xpath(".//oub:footnote.type", namespaces=nsmap)
+    assert xml.xpath(".//oub:footnote.type.description", namespaces=nsmap)
 
 
 @validate_taric_xml(factories.FootnoteFactory)
 def test_footnote_xml(xml):
-    element = xml.find(".//oub:footnote", nsmap)
-    assert element is not None
+    assert xml.xpath(".//oub:footnote", namespaces=nsmap)
 
 
 @validate_taric_xml(factories.FootnoteDescriptionFactory)
 def test_footnote_description_xml(xml):
-    element = xml.find(".//oub:footnote.description.period", nsmap)
-    assert element is not None
-    element = xml.find(".//oub:footnote.description", nsmap)
-    assert element is not None
+    assert xml.xpath(".//oub:footnote.description.period", namespaces=nsmap)
+    assert xml.xpath(".//oub:footnote.description", namespaces=nsmap)

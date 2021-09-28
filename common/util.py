@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from platform import python_version_tuple
+from typing import Any
 from typing import Optional
 from typing import TypeVar
 from typing import Union
@@ -11,6 +12,7 @@ from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
 from django.db.models import Model
+from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models.fields import Field
 from django.db.models.fields import IntegerField
@@ -236,3 +238,8 @@ def get_next_id(queryset: QuerySet[Model], id_field: Field, max_len: int):
         .first()
         .next_id
     )
+
+
+def get_record_code(record: dict[str, Any]) -> str:
+    """Returns the concatenated codes for a taric record."""
+    return f"{record['record_code']}{record['subrecord_code']}"

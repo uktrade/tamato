@@ -85,7 +85,7 @@ class ApprovedWorkBasketFactory(WorkBasketFactory):
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
-    status = WorkflowStatus.READY_FOR_EXPORT
+    status = WorkflowStatus.APPROVED
     transaction = factory.RelatedFactory(
         "common.tests.factories.TransactionFactory",
         factory_related_name="workbasket",
@@ -97,7 +97,7 @@ class SimpleApprovedWorkBasketFactory(WorkBasketFactory):
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
-    status = WorkflowStatus.READY_FOR_EXPORT
+    status = WorkflowStatus.APPROVED
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):

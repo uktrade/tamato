@@ -9,21 +9,16 @@ pytestmark = pytest.mark.django_db
 
 @validate_taric_xml(factories.AdditionalCodeTypeFactory)
 def test_additional_code_type_xml(xml):
-    element = xml.find(".//oub:additional.code.type", nsmap)
-    assert element is not None
-    element = xml.find(".//oub:additional.code.type.description", nsmap)
-    assert element is not None
+    assert xml.xpath(".//oub:additional.code.type", namespaces=nsmap)
+    assert xml.xpath(".//oub:additional.code.type.description", namespaces=nsmap)
 
 
 @validate_taric_xml(factories.AdditionalCodeDescriptionFactory)
 def test_additional_code_description_xml(xml):
-    element = xml.find(".//oub:additional.code.description", nsmap)
-    assert element is not None
-    element = xml.find(".//oub:additional.code.description.period", nsmap)
-    assert element is not None
+    assert xml.xpath(".//oub:additional.code.description", namespaces=nsmap)
+    assert xml.xpath(".//oub:additional.code.description.period", namespaces=nsmap)
 
 
 @validate_taric_xml(factories.AdditionalCodeFactory)
 def test_additional_code_xml(xml):
-    element = xml.find(".//oub:additional.code", nsmap)
-    assert element is not None
+    assert xml.xpath(".//oub:additional.code", namespaces=nsmap)

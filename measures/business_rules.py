@@ -308,11 +308,7 @@ class ME32(BusinessRule):
     This rule is not applicable for Meursing additional codes.
     """
 
-    def validate(self, measure):
-        if measure.goods_nomenclature is None:
-            return
-
-        # build the query for measures matching the given measure
+    def compile_query(self, measure):
         query = Q(
             measure_type__sid=measure.measure_type.sid,
             geographical_area__sid=measure.geographical_area.sid,
@@ -332,12 +328,23 @@ class ME32(BusinessRule):
         else:
             query &= Q(additional_code__isnull=True, dead_additional_code__isnull=True)
 
-        matching_measures = (
+        return query
+
+    def matching_measures(self, measure, query):
+        return (
             type(measure)
             .objects.filter(query)
             .approved_up_to_transaction(measure.transaction)
             .exclude(version_group=measure.version_group)
         )
+
+    def validate(self, measure):
+        if measure.goods_nomenclature is None:
+            return
+
+        # build the query for measures matching the given measure
+        query = self.compile_query(measure)
+        matching_measures = self.matching_measures(measure, query)
 
         # get all goods nomenclature versions associated with this measure
         GoodsNomenclature = type(measure.goods_nomenclature)
