@@ -332,7 +332,7 @@ class MeasureCommodityForm(forms.Form):
         )
 
 
-class AddAnother(forms.BaseFormSet):
+class FormSet(forms.BaseFormSet):
     """
     Adds the ability to add another form to the formset on submit.
 
@@ -343,7 +343,7 @@ class AddAnother(forms.BaseFormSet):
     preserved.
     """
 
-    extra = 1
+    extra = 0
     can_order = False
     can_delete = True
     max_num = 1000
@@ -354,6 +354,17 @@ class AddAnother(forms.BaseFormSet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # If we have form data, then capture the any user "add form" or
+        # "delete form" actions.
+        self.formset_action = None
+        if f"{self.prefix}-ADD" in self.data:
+            self.formset_action = "ADD"
+        else:
+            for field in self.data:
+                if field.endswith(f"-ADD"):
+                    self.formset_action = "DELETE"
+                    break
 
         data = self.data.copy()
 
@@ -420,13 +431,14 @@ class AddAnother(forms.BaseFormSet):
         to redisplay the formset with an extra empty form or the selected form
         removed."""
 
-        # reshow the form with an extra empty form if "Add another" was submitted
-        if f"{self.prefix}-ADD" in self.data:
+        # Re-present the form to show the result of adding another form or
+        # deleting an existing one.
+        if self.formset_action == "ADD" or self.formset_action == "DELETE":
             return False
 
-        # reshow the form with the deleted form(s) removed if "Delete" was submitted
-        if any(field for field in self.data if field.endswith("-DELETE")):
-            return False
+        # An empty set of forms is valid.
+        if self.total_form_count() == 0:
+            return True
 
         return super().is_valid()
 
@@ -486,7 +498,7 @@ class MeasureConditionsForm(forms.ModelForm):
         )
 
 
-class MeasureConditionsFormSet(AddAnother):
+class MeasureConditionsFormSet(FormSet):
     form = MeasureConditionsForm
 
 
@@ -532,7 +544,7 @@ class MeasureFootnotesForm(forms.Form):
         )
 
 
-class MeasureFootnotesFormSet(AddAnother):
+class MeasureFootnotesFormSet(FormSet):
     form = MeasureFootnotesForm
 
 
