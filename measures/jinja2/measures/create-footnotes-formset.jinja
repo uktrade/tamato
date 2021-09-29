@@ -1,0 +1,48 @@
+{% if form.instance.footnotes.all() %}
+        {% set table_rows = [] %}
+        {% for footnote in form.instance.footnotes.all() %}
+            {% set footnote_link -%}
+            <a class="govuk-link govuk-!-font-weight-bold" href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
+            {%- endset %}
+            {% set remove_button -%}
+            <a href="#">Remove</a>
+            {%- endset %}
+            {{ table_rows.append([
+            {"html": footnote_link},
+            {"text": footnote.get_description().description|default("")},
+            {"html": remove_button}
+            ]) or "" }}
+        {% endfor %}
+        {{ govukTable({
+            "head": [
+            {"text": "ID"},
+            {"text": "Description"},
+            {"text": ""}
+            ],
+            "rows": table_rows,
+            "caption": "Footnotes currently assigned to the measure",
+            "captionClasses": "govuk-table__caption--m"
+        }) }}
+    {% else %}
+        <p class="govuk__para">No footnotes found.</p>
+    {% endif %}
+
+{{ crispy(formset.management_form, no_form_tags) }}
+    <label class="govuk-label">Add a footnote</label>
+    <div id="sort-code-hint" class="govuk-hint">Start typing the ID of the footnote or terms used in the description</div>
+    {% for form in formset %}
+        {{ crispy(form) }}
+    {% endfor %}
+
+    {% if formset.data[formset.prefix ~ "-ADD"] %}
+        {{ crispy(formset.empty_form)|replace("__prefix__", formset.forms|length)|safe }}
+    {% endif %}
+
+    {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
+        {{ govukButton({
+        "text": "Add another footnote",
+        "classes": "govuk-button--secondary",
+        "value": "1",
+        "name": formset.prefix ~ "-ADD",
+        }) }}
+    {% endcall %}

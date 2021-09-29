@@ -274,6 +274,14 @@ class MeasureUpdate(
 
         return form
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["formset"] = forms.MeasureFootnotesFormSet()
+        context["no_form_tags"] = FormHelper()
+        context["no_form_tags"].form_tag = False
+
+        return context
+
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"

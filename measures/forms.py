@@ -78,12 +78,6 @@ class MeasureForm(ValidityPeriodForm):
         required=False,
         empty_label=None,
     )
-    footnote = AutoCompleteField(
-        label="Add a footnote",
-        help_text="Start typing the ID of the footnote or terms used in the description",
-        queryset=Footnote.objects.all(),
-        required=False,
-    )
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)

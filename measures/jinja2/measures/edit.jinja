@@ -6,6 +6,7 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/fieldset/macro.njk" import govukFieldset %}
 
 
 {% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
@@ -28,6 +29,12 @@
       "summaryText": "Help with measure validity period",
       "text": "Enter the start date for the measure’s validity period. The end date will inherit from the measure generating regulation or an earlier end date can be specified."
       }) }}
+{% endset %}
+
+{% set footnotes_html %}
+    
+    {% include "measures/create-footnotes-formset.jinja" %}
+
 {% endset %}
 
 {% set geographical_area_html %}
@@ -69,44 +76,6 @@
     }) }}
 {% endset %}
 
-{% set footnotes_html %}
-    {% if form.instance.footnotes.all() %}
-        {% set table_rows = [] %}
-        {% for footnote in form.instance.footnotes.all() %}
-            {% set footnote_link -%}
-            <a class="govuk-link govuk-!-font-weight-bold" href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
-            {%- endset %}
-            {% set remove_button -%}
-            <a href="#">Remove</a>
-            {%- endset %}
-            {{ table_rows.append([
-            {"html": footnote_link},
-            {"text": footnote.get_description().description|default("")},
-            {"html": remove_button}
-            ]) or "" }}
-        {% endfor %}
-        {{ govukTable({
-            "head": [
-            {"text": "ID"},
-            {"text": "Description"},
-            {"text": ""}
-            ],
-            "rows": table_rows,
-            "caption": "Footnotes currently assigned to the measure",
-            "captionClasses": "govuk-table__caption--m"
-        }) }}
-    {% else %}
-        <p class="govuk__para">No footnotes found.</p>
-    {% endif %}
-    <div class="govuk-form-group">
-        <label class="govuk-label">{{ form.footnote.label }}</label>
-        <div id="sort-code-hint" class="govuk-hint">{{ form.footnote.help_text }}</div>
-        {{ form.footnote }}
-    </div>
-    <div class="govuk-form-group">
-        <a href="#" class="govuk-button govuk-button--secondary">Add another footnote</a>
-    </div>
-{% endset %}
 
 {% block form %}
   {% call django_form(action=object.get_url("edit")) %}
