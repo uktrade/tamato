@@ -19,7 +19,7 @@ django-polymorphic==3.0.0
 django-redis==4.12.1
 django-rest-polymorphic==0.1.9
 django-sequences==2.6
-django-staff-sso-client==3.1.0
+django-staff-sso-client==3.1.1
 django-storages==1.11.1
 django-treebeard==4.5.1
 django-webpack-loader==1.0.0
