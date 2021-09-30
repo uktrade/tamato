@@ -25,7 +25,6 @@ date fields, and any other Postgres-specific features are ignored.
 """
 
 from itertools import chain
-from pathlib import Path
 
 from django.apps import apps
 from django.conf import settings
@@ -48,9 +47,8 @@ def make_export_plan(sqlite: runner.Runner) -> plan.Plan:
     return import_script
 
 
-def make_export(path: Path):
-    sqlite = runner.Runner(path)
-    sqlite.make_empty_database()
-
+def make_export() -> bytes:
+    sqlite = runner.Runner.from_empty_database()
     plan = make_export_plan(sqlite)
     sqlite.run_operations(plan.operations)
+    return sqlite.get_bytes()

@@ -1,6 +1,6 @@
 import logging
+from io import BytesIO
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from django.conf import settings
 
@@ -35,14 +35,11 @@ def export_and_upload_sqlite() -> bool:
         logger.debug("Database %s already present", export_filename)
         return False
 
-    with TemporaryDirectory(prefix="sqlite") as db_dir:
-        database_path = Path(db_dir) / db_name
-        logger.info("Generating database %s", database_path)
-        sqlite.make_export(database_path)
+    logger.info("Generating database")
+    database = BytesIO(sqlite.make_export())
 
-        logger.info("Uploading database %s", export_filename)
-        with open(database_path, "rb") as database_file:
-            storage.save(export_filename, database_file)
+    logger.info("Uploading database %s", export_filename)
+    storage.save(export_filename, database)
 
-        logger.info("Upload complete")
-        return True
+    logger.info("Upload complete")
+    return True
