@@ -1,7 +1,7 @@
 ---
 applications:
   - buildpacks:
-      - https://github.com/cloudfoundry/nodejs-buildpack.git#v1.7.56
+      - nodejs_buildpack
       - python_buildpack
     processes:
     - type: web
