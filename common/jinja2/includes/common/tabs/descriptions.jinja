@@ -2,7 +2,7 @@
 {% from 'macros/create_link.jinja' import create_link %}
 
 {% set description_rows = [] %}
-{% for description in object.get_descriptions() %}
+{% for description in object.get_descriptions(request=request) %}
 	{% set edit_url = description.get_url("edit") %}
 	{% set description_row = [
 		{"text": "{:%d %b %Y}".format(description.validity_start)},
