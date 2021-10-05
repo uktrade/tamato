@@ -1,9 +1,6 @@
-import shutil
-import sqlite3
-import tempfile
-from pathlib import Path
 from unittest import mock
 
+import apsw
 import pytest
 
 from common.tests import factories
@@ -16,7 +13,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(scope="module")
-def sqlite_template() -> Path:
+def sqlite_template() -> Runner:
     """
     Provides a template SQLite file with the correct TaMaTo schema but without
     any data.
@@ -25,20 +22,16 @@ def sqlite_template() -> Path:
     migrations to create a new db. This file lasts for as long as all of the
     tests in this module are executing and is then cleaned up.
     """
-    with tempfile.TemporaryDirectory() as f:
-        template_db = Path(f) / "template.db"
-        Runner(template_db).make_empty_database()
-        yield template_db
+    yield Runner.from_empty_database()
 
 
 @pytest.fixture(scope="function")
-def sqlite_database(sqlite_template) -> Path:
+def sqlite_database(sqlite_template: Runner) -> Runner:
     """Copies the template file to a new location that will be cleaned up at the
     end of one test."""
-    with tempfile.TemporaryDirectory() as f:
-        test_path = Path(f) / "test.db"
-        shutil.copyfile(sqlite_template, test_path)
-        yield test_path
+    database = apsw.Connection(":memory:")
+    database.deserialize("main", sqlite_template.database.serialize("main"))
+    yield Runner(database)
 
 
 FACTORIES_EXPORTED = [
@@ -60,7 +53,7 @@ FACTORIES_EXPORTED = [
     FACTORIES_EXPORTED,
     ids=(f._meta.model.__name__ for f in FACTORIES_EXPORTED),
 )
-def test_table_export(factory, sqlite_database: Path):
+def test_table_export(factory, sqlite_database: Runner):
     """Check that it's possible to export each table that we want in the
     output."""
     published = factory.create(
@@ -71,12 +64,12 @@ def test_table_export(factory, sqlite_database: Path):
     )
 
     table = factory._meta.model._meta.db_table
-    run = Runner(sqlite_database)
+    run = sqlite_database
     ops = plan.Plan()
     ops.add_table(factory._meta.model, list(run.read_column_order(table)))
     run.run_operations(ops.operations)
 
-    conn = sqlite3.connect(sqlite_database)
+    conn = run.database.cursor()
     rows = conn.execute(f"SELECT * FROM {table}").fetchall()
 
     assert len(rows) == 1
@@ -99,7 +92,12 @@ VALIDITY_FACTORIES_EXPORTED = [
     ("date_range"),
     ("no_end", "normal"),
 )
-def test_valid_between_export(factory, date_ranges, date_range, sqlite_database: Path):
+def test_valid_between_export(
+    factory,
+    date_ranges,
+    date_range,
+    sqlite_database: Runner,
+):
     """Check that the exported date range columns contain the correct values."""
     object = factory.create(
         transaction__workbasket__status=WorkflowStatus.PUBLISHED,
@@ -107,12 +105,12 @@ def test_valid_between_export(factory, date_ranges, date_range, sqlite_database:
     )
 
     table = factory._meta.model._meta.db_table
-    run = Runner(sqlite_database)
+    run = sqlite_database
     ops = plan.Plan()
     ops.add_table(factory._meta.model, list(run.read_column_order(table)))
     run.run_operations(ops.operations)
 
-    conn = sqlite3.connect(sqlite_database)
+    conn = run.database.cursor()
     validity_start, validity_end = conn.execute(
         f"SELECT validity_start, validity_end FROM {table}",
     ).fetchone()
