@@ -37,6 +37,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
+        #python-version: ${{ steps.runtimes.outputs.python-version }}
+        # Pin to version 3.9 until psycopg2-binary can support 3.10
         python-version: 3.9
 
     - name: Set up Node
@@ -125,6 +127,7 @@ jobs:
     - name: Build documentation
       uses: ammaraskar/sphinx-action@0.4
       with:
+        python-version: 3.9
         pre-build-command: "apt-get update -y && apt-get install -y git-core python-dev build-essential libxml2-dev libxslt1-dev libz-dev graphviz libgraphviz-dev"
         docs-folder: "."
         build-command: "sphinx-build -b html -c docs/ . _build"
