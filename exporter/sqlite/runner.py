@@ -4,9 +4,9 @@ import os
 import sys
 from pathlib import Path
 from subprocess import run
-from tempfile import NamedTemporaryFile
 from typing import Iterable
 from typing import Iterator
+from typing import Tuple
 
 import apsw
 from django.conf import settings
@@ -49,7 +49,7 @@ class Runner:
         )
 
     @classmethod
-    def from_empty_database(cls) -> "Runner":
+    def make_tamato_database(cls, db: Path) -> "Runner":
         """
         Generate a new and empty SQLite database with the TaMaTo schema.
 
@@ -59,22 +59,40 @@ class Runner:
         to Postgres so they are removed after being applied.
         """
         try:
-            with NamedTemporaryFile() as db_name:
-                db = Path(db_name.name)
-                cls.manage(db, "makemigrations", "--name", "sqlite_export")
-                cls.manage(db, "migrate")
-                assert db.exists()
+            cls.manage(db, "makemigrations", "--name", "sqlite_export")
+            cls.manage(db, "migrate")
+            assert db.exists()
+            return cls(apsw.Connection(str(db)))
 
-                # Copy the template database into memory.
-                template = apsw.Connection(str(db))
-                runner = cls(apsw.Connection(":memory:"))
-                runner.database.deserialize("main", template.serialize("main"))
-                return runner
         finally:
             for file in Path(settings.BASE_DIR).rglob(
                 "**/migrations/*sqlite_export.py",
             ):
                 file.unlink()
+
+    def read_schema(self, type: str) -> Iterator[Tuple[str, str]]:
+        cursor = self.database.cursor()
+        cursor.execute(
+            f"""
+            SELECT 
+                name, sql
+            FROM
+                sqlite_master
+            WHERE 
+                sql IS NOT NULL
+                AND type = '{type}'
+                AND name NOT LIKE 'sqlite_%'
+            """,
+        )
+        yield from cursor.fetchall()
+
+    @property
+    def tables(self) -> Iterator[Tuple[str, str]]:
+        yield from self.read_schema("table")
+
+    @property
+    def indexes(self) -> Iterator[Tuple[str, str]]:
+        yield from self.read_schema("index")
 
     def read_column_order(self, table: str) -> Iterator[str]:
         """
@@ -100,7 +118,3 @@ class Runner:
                 cursor.executemany(*operation)
             except apsw.SQLError as e:
                 logger.error(e)
-
-    def get_bytes(self) -> bytes:
-        """Returns the bytes of the SQLite database."""
-        return self.database.serialize("main")

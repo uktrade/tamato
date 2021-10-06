@@ -1,3 +1,7 @@
+import tempfile
+from io import BytesIO
+from os import path
+from pathlib import Path
 from unittest import mock
 
 import apsw
@@ -22,16 +26,18 @@ def sqlite_template() -> Runner:
     migrations to create a new db. This file lasts for as long as all of the
     tests in this module are executing and is then cleaned up.
     """
-    yield Runner.from_empty_database()
+    with tempfile.TemporaryDirectory() as f:
+        template_db = Path(f) / "template.db"
+        yield Runner.make_tamato_database(template_db)
 
 
 @pytest.fixture(scope="function")
 def sqlite_database(sqlite_template: Runner) -> Runner:
     """Copies the template file to a new location that will be cleaned up at the
     end of one test."""
-    database = apsw.Connection(":memory:")
-    database.deserialize("main", sqlite_template.database.serialize("main"))
-    yield Runner(database)
+    in_memory_database = apsw.Connection(":memory:")
+    in_memory_database.deserialize("main", sqlite_template.database.serialize("main"))
+    yield Runner(in_memory_database)
 
 
 FACTORIES_EXPORTED = [
@@ -66,7 +72,7 @@ def test_table_export(factory, sqlite_database: Runner):
     table = factory._meta.model._meta.db_table
     run = sqlite_database
     ops = plan.Plan()
-    ops.add_table(factory._meta.model, list(run.read_column_order(table)))
+    ops.add_data(factory._meta.model, list(run.read_column_order(table)))
     run.run_operations(ops.operations)
 
     conn = run.database.cursor()
@@ -107,7 +113,7 @@ def test_valid_between_export(
     table = factory._meta.model._meta.db_table
     run = sqlite_database
     ops = plan.Plan()
-    ops.add_table(factory._meta.model, list(run.read_column_order(table)))
+    ops.add_data(factory._meta.model, list(run.read_column_order(table)))
     run.run_operations(ops.operations)
 
     conn = run.database.cursor()
@@ -122,7 +128,7 @@ def test_valid_between_export(
         assert validity_end is None
 
 
-def test_export_task_does_not_reupload():
+def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings):
     """
     If a file has already been generated for this database state, we don't need
     to upload it again.
@@ -132,66 +138,59 @@ def test_export_task_does_not_reupload():
     """
     factories.ApprovedTransactionFactory.create(order="999")  # seed file
     factories.ApprovedTransactionFactory.create(order="123")
+    expected_key = path.join(
+        settings.SQLITE_STORAGE_DIRECTORY,
+        "000000123.db",
+        "0" * 10,
+    )
+    sqlite_storage.save(expected_key, BytesIO(b""))
 
-    with mock.patch(
-        "exporter.sqlite.tasks.SQLiteStorage",
-        autospec=True,
-    ) as mock_storage:
-        mock_storage.return_value.exists.return_value = True
-
+    names_before = s3_object_names(sqlite_storage.bucket_name)
+    with mock.patch("exporter.sqlite.tasks.SQLiteStorage", new=lambda: sqlite_storage):
         returned = tasks.export_and_upload_sqlite()
-
         assert returned is False
-        mock_storage.return_value.generate_filename.assert_called_once_with(
-            "sqlite/000000123.db",
-        )
-        mock_storage.return_value.save.assert_not_called()
+
+    names_after = s3_object_names(sqlite_storage.bucket_name)
+    assert names_before == names_after
 
 
-def test_export_task_uploads(
+def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
+    """The export system should actually upload a file to S3."""
+    factories.ApprovedTransactionFactory.create(order="999")  # seed file
+    factories.ApprovedTransactionFactory.create(order="123")
+    expected_key = path.join(settings.SQLITE_STORAGE_DIRECTORY, "000000123.db")
+
+    with mock.patch("exporter.sqlite.tasks.SQLiteStorage", new=lambda: sqlite_storage):
+        returned = tasks.export_and_upload_sqlite()
+        assert returned is True
+
+    assert any(
+        n.startswith(expected_key) for n in s3_object_names(sqlite_storage.bucket_name)
+    )
+
+
+def test_export_task_ignores_unapproved_transactions(
     sqlite_storage,
-    s3_bucket_names,
     s3_object_names,
     settings,
 ):
-    """The export system should actually upload a file to S3."""
-
-    expected_bucket = "sqlite"
-    expected_key = "sqlite/000000123.db"
-    settings.SQLITE_STORAGE_BUCKET_NAME = expected_bucket
-
-    factories.ApprovedTransactionFactory.create(order="999")  # seed file
-    factories.ApprovedTransactionFactory.create(order="123")
-
-    with mock.patch(
-        "exporter.storages.SQLiteStorage.save",
-        wraps=mock.MagicMock(
-            side_effect=sqlite_storage.save,
-        ),
-    ) as mock_save:
-        returned = tasks.export_and_upload_sqlite()
-
-        assert returned is True
-        mock_save.assert_called_once()
-
-    assert expected_bucket in s3_bucket_names()
-    assert expected_key in s3_object_names(expected_bucket)
-
-
-def test_export_task_ignores_unapproved_transactions():
     """Only transactions that have been approved should be included in the
     upload as draft data may be sensitive and unpublished, and shouldn't be
     included."""
     factories.ApprovedTransactionFactory.create(order="999")  # seed file
     factories.ApprovedTransactionFactory.create(order="123")
     factories.UnapprovedTransactionFactory.create(order="124")
+    expected_key = path.join(
+        settings.SQLITE_STORAGE_DIRECTORY,
+        "000000123.db",
+        "0" * 10,
+    )
+    sqlite_storage.save(expected_key, BytesIO(b""))
 
-    with mock.patch("exporter.sqlite.tasks.SQLiteStorage") as mock_storage:
-        mock_storage.return_value.exists.return_value = True
+    names_before = s3_object_names(sqlite_storage.bucket_name)
+    with mock.patch("exporter.sqlite.tasks.SQLiteStorage", new=lambda: sqlite_storage):
+        returned = tasks.export_and_upload_sqlite()
+        assert returned is False
 
-        tasks.export_and_upload_sqlite()
-
-        mock_storage.return_value.generate_filename.assert_called_once_with(
-            "sqlite/000000123.db",
-        )
-        mock_storage.return_value.save.assert_not_called()
+    names_after = s3_object_names(sqlite_storage.bucket_name)
+    assert names_before == names_after
