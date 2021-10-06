@@ -7,11 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>Architecture &#8212; TaMaTo 1.0.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
@@ -107,8 +107,8 @@ to be sent to border systems in advance and take effect correctly at some future
 time. Most models use a pair of validity dates, implemented using the
 <a class="reference internal" href="#common.models.mixins.validity.ValidityMixin" title="common.models.mixins.validity.ValidityMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code></a>.</p>
 <dl class="py class">
-<dt id="common.models.mixins.validity.ValidityMixin">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.models.mixins.validity.</span></code><code class="sig-name descname"><span class="pre">ValidityMixin</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.validity.ValidityMixin" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.mixins.validity.ValidityMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.mixins.validity.</span></span><span class="sig-name descname"><span class="pre">ValidityMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.validity.ValidityMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>The model is live after the validity start date
 (<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.lower</span></code>) and before the validity end date
 (<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.upper</span></code>).</p>
@@ -127,8 +127,8 @@ only have start dates. The description is live up until the start date of the
 next description record. This is implemented using the
 <a class="reference internal" href="#common.models.mixins.validity.ValidityStartMixin" title="common.models.mixins.validity.ValidityStartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityStartMixin</span></code></a>.</p>
 <dl class="py class">
-<dt id="common.models.mixins.validity.ValidityStartMixin">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.models.mixins.validity.</span></code><code class="sig-name descname"><span class="pre">ValidityStartMixin</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityStartMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.validity.ValidityStartMixin" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.mixins.validity.ValidityStartMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.mixins.validity.</span></span><span class="sig-name descname"><span class="pre">ValidityStartMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityStartMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.mixins.validity.ValidityStartMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>The model is live after the <code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_start</span></code> date and before the
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_start</span></code> date of the next model in the same series.</p>
 <p>This is broadly the same as the <code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code>
@@ -160,11 +160,11 @@ done to them.</p>
 a new version of that model. This is implemented using the
 <a class="reference internal" href="#common.models.records.TrackedModel" title="common.models.records.TrackedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code></a> system.</p>
 <dl class="py class">
-<dt id="common.models.records.TrackedModel">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.models.records.</span></code><code class="sig-name descname"><span class="pre">TrackedModel</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymorphic_ctype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModel" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModel">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.records.</span></span><span class="sig-name descname"><span class="pre">TrackedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymorphic_ctype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModel" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="common.models.records.TrackedModel.identifying_fields">
-<code class="sig-name descname"><span class="pre">identifying_fields</span></code><em class="property"><span class="pre">:</span> <span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">('sid',)</span></em><a class="headerlink" href="#common.models.records.TrackedModel.identifying_fields" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModel.identifying_fields">
+<span class="sig-name descname"><span class="pre">identifying_fields</span></span><em class="property"><span class="pre">:</span> <span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">('sid',)</span></em><a class="headerlink" href="#common.models.records.TrackedModel.identifying_fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>The fields which together form a composite unique key for each model.</p>
 <p>The system ID (or SID) field is normally the unique identifier of a TARIC
 model, but in places where this does not exist models can declare their own.
@@ -173,8 +173,8 @@ actually equate to a <code class="docutils literal notranslate"><span class="pre
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="common.models.records.TrackedModel.record_code">
-<code class="sig-name descname"><span class="pre">record_code</span></code><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#common.models.records.TrackedModel.record_code" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModel.record_code">
+<span class="sig-name descname"><span class="pre">record_code</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#common.models.records.TrackedModel.record_code" title="Permalink to this definition">¶</a></dt>
 <dd><p>The type id of this model’s type family in the TARIC specification.</p>
 <p>This number groups together a number of different models into ‘records’.
 Where two models share a record code, they are conceptually expressing
@@ -185,8 +185,8 @@ models with a single <a class="reference internal" href="#common.models.records.
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="common.models.records.TrackedModel.subrecord_code">
-<code class="sig-name descname"><span class="pre">subrecord_code</span></code><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#common.models.records.TrackedModel.subrecord_code" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModel.subrecord_code">
+<span class="sig-name descname"><span class="pre">subrecord_code</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#common.models.records.TrackedModel.subrecord_code" title="Permalink to this definition">¶</a></dt>
 <dd><p>The type id of this model in the TARIC specification. The
 <a class="reference internal" href="#common.models.records.TrackedModel.subrecord_code" title="common.models.records.TrackedModel.subrecord_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">subrecord_code</span></code></a> when combined with the <a class="reference internal" href="#common.models.records.TrackedModel.record_code" title="common.models.records.TrackedModel.record_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">record_code</span></code></a> uniquely
 identifies the type within the specification.</p>
@@ -196,8 +196,8 @@ ones.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="common.models.records.TrackedModel.update_type">
-<code class="sig-name descname"><span class="pre">update_type</span></code><em class="property"><span class="pre">:</span> <span class="pre">common.validators.UpdateType</span></em><a class="headerlink" href="#common.models.records.TrackedModel.update_type" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModel.update_type">
+<span class="sig-name descname"><span class="pre">update_type</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.validators.UpdateType</span></em><a class="headerlink" href="#common.models.records.TrackedModel.update_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>The change that was made to the model when this version of the model was
 authored.</p>
 <p>The first version should always have <code class="xref py py-data docutils literal notranslate"><span class="pre">CREATE</span></code>,
@@ -208,8 +208,8 @@ models that reappear for the same <a class="reference internal" href="#common.mo
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="common.models.records.TrackedModel.version_group">
-<code class="sig-name descname"><span class="pre">version_group</span></code><a class="headerlink" href="#common.models.records.TrackedModel.version_group" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModel.version_group">
+<span class="sig-name descname"><span class="pre">version_group</span></span><a class="headerlink" href="#common.models.records.TrackedModel.version_group" title="Permalink to this definition">¶</a></dt>
 <dd><p>Each version group contains all of the versions of the same logical model.</p>
 <p>When a new version of a model is authored (e.g. to
 <code class="xref py py-data docutils literal notranslate"><span class="pre">DELETE</span></code> it) a new model row is created and
@@ -231,11 +231,11 @@ eligible to be “current”, such that the version from the most recent transac
 that is not draft is considered to be “current”.</p>
 <p>There are a number of convenience methods for finding “current” models.</p>
 <dl class="py class">
-<dt id="common.models.records.TrackedModelQuerySet">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">common.models.records.</span></code><code class="sig-name descname"><span class="pre">TrackedModelQuerySet</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModelQuerySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModelQuerySet">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.records.</span></span><span class="sig-name descname"><span class="pre">TrackedModelQuerySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModelQuerySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py method">
-<dt id="common.models.records.TrackedModelQuerySet.approved_up_to_transaction">
-<code class="sig-name descname"><span class="pre">approved_up_to_transaction</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModelQuerySet.approved_up_to_transaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet.approved_up_to_transaction" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModelQuerySet.approved_up_to_transaction">
+<span class="sig-name descname"><span class="pre">approved_up_to_transaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModelQuerySet.approved_up_to_transaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet.approved_up_to_transaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the approved versions of the model being queried unless there exists
 a version of the model in a draft state within a transaction preceding
 (and including) the given transaction in the workbasket of the given
@@ -272,8 +272,8 @@ HAVING max(t3.&quot;id&quot;) filter (
 </dd></dl>
 
 <dl class="py method">
-<dt id="common.models.records.TrackedModelQuerySet.latest_approved">
-<code class="sig-name descname"><span class="pre">latest_approved</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModelQuerySet.latest_approved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet.latest_approved" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="common.models.records.TrackedModelQuerySet.latest_approved">
+<span class="sig-name descname"><span class="pre">latest_approved</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModelQuerySet.latest_approved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet.latest_approved" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all the latest versions of the model being queried which have been
 approved.</p>
 <p>This will specifically fetch the most recent approved row pertaining to an object.
@@ -675,8 +675,8 @@ envelopes the system has generated and which transactions they contained.</p>
 <p>Provides classes and models for tracking draft data and implements the
 workflow that data must go through before publication.</p>
 <dl class="py class">
-<dt id="workbaskets.models.WorkBasket">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">workbaskets.models.</span></code><code class="sig-name descname"><span class="pre">WorkBasket</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/workbaskets/models.html#WorkBasket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#workbaskets.models.WorkBasket" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="workbaskets.models.WorkBasket">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">workbaskets.models.</span></span><span class="sig-name descname"><span class="pre">WorkBasket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/workbaskets/models.html#WorkBasket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#workbaskets.models.WorkBasket" title="Permalink to this definition">¶</a></dt>
 <dd><p>A WorkBasket groups tariff edits which will be applied at the same time.</p>
 <p>WorkBasket status is controlled by a state machine:
 See <a class="reference external" href="https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow">https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow</a></p>
@@ -759,7 +759,7 @@ See <a class="reference external" href="https://uktrade.atlassian.net/wiki/space
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -791,7 +791,7 @@ See <a class="reference external" href="https://uktrade.atlassian.net/wiki/space
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, DIT.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.0+.
     </div>
   </body>
 </html>

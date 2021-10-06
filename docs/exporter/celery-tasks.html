@@ -7,11 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>Celery Tasks &#8212; TaMaTo 1.0.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
@@ -108,8 +108,8 @@ If case all retries fail then the Envelopes Upload objects will be left with the
 <section id="database-models">
 <h1>Database models<a class="headerlink" href="#database-models" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="taric.models.Envelope">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">taric.models.</span></code><code class="sig-name descname"><span class="pre">Envelope</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/taric/models.html#Envelope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#taric.models.Envelope" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="taric.models.Envelope">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">taric.models.</span></span><span class="sig-name descname"><span class="pre">Envelope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/taric/models.html#Envelope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#taric.models.Envelope" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a TARIC3 envelope.</p>
 <p>An Envelope contains one or more Transactions, listing changes to be applied
 to the tariff in the sequence defined by the transaction IDs.</p>
@@ -117,15 +117,15 @@ to the tariff in the sequence defined by the transaction IDs.</p>
 
 <p>Represents one TARIC XML file exported as all or part of a WorkBasket.</p>
 <dl class="py class">
-<dt id="taric.models.EnvelopeTransaction">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">taric.models.</span></code><code class="sig-name descname"><span class="pre">EnvelopeTransaction</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/taric/models.html#EnvelopeTransaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#taric.models.EnvelopeTransaction" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="taric.models.EnvelopeTransaction">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">taric.models.</span></span><span class="sig-name descname"><span class="pre">EnvelopeTransaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/taric/models.html#EnvelopeTransaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#taric.models.EnvelopeTransaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies a sequence to Transactions contained in an Envelope.</p>
 </dd></dl>
 
 <p>Each Envelope has one or more EnvelopeTransactions linking it to the concrete Transactions it contains.</p>
 <dl class="py class">
-<dt id="exporter.models.Upload">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">exporter.models.</span></code><code class="sig-name descname"><span class="pre">Upload</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/exporter/models.html#Upload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#exporter.models.Upload" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="exporter.models.Upload">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">exporter.models.</span></span><span class="sig-name descname"><span class="pre">Upload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/exporter/models.html#Upload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#exporter.models.Upload" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a TARIC differential update file upload to HMRC.</p>
 </dd></dl>
 
@@ -203,7 +203,7 @@ to the tariff in the sequence defined by the transaction IDs.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -236,7 +236,7 @@ to the tariff in the sequence defined by the transaction IDs.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, DIT.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.0+.
     </div>
   </body>
 </html>
