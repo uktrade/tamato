@@ -36,7 +36,7 @@ lxml==4.6.3
 moto==2.1.0
 openpyxl==3.0.7
 parsec==3.8
-psycopg2-binary==2.8.6
+psycopg2-binary~=2.8.6
 pygments>=2.8
 pytest==6.2.2
 pytest-bdd==4.0.2

@@ -29,10 +29,6 @@ WORKDIR /home/tamato/app
 # Extend PATH for dev ease-of-use and to stop pip complaining.
 ENV PATH="${PATH}:/home/tamato/.local/bin"
 
-RUN apt-get update \
-    && apt-get -y install libpq-dev gcc \
-    && pip install psycopg2
-    
 # install python dependencies
 COPY requirements.txt ./
 RUN pip install -U pip && \
