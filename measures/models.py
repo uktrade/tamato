@@ -652,6 +652,18 @@ class Measure(TrackedModel, ValidityMixin):
             dependent_measure__sid=self.sid,
         ).latest_approved()
 
+    @classmethod
+    def get_inactive_measures(self, **query_attrs):
+        return (
+            Measure.objects.with_effective_valid_between()
+            .filter(
+                valid_between__startswith__lt=date.today(),
+                is_current__isnull=False,
+                **query_attrs,
+            )
+            .exclude(db_effective_valid_between__contains=date.today())
+        )
+
     def terminate(self, workbasket, when: date):
         """
         Returns a new version of the measure updated to end on the specified

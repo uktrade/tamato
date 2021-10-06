@@ -1,9 +1,12 @@
+from datetime import date
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
 
 from common.tests import factories
 from common.validators import UpdateType
+from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
 
@@ -205,3 +208,30 @@ def test_copy_measure_doesnt_add_export_refund_sids(export_refund_sid):
     copy = measure.copy(factories.ApprovedTransactionFactory())
 
     assert copy.export_refund_nomenclature_sid == export_refund_sid
+
+
+@pytest.mark.parametrize(
+    ("active_measure_kwargs"),
+    (
+        {"valid_between__lower": date.today()},
+        {"version_group": None},
+        {"generating_regulation__effective_end_date": date.today()},
+    ),
+)
+def test_get_inactive_measures_doesnt_return_active(active_measure_kwargs):
+    active_measure = factories.MeasureFactory.create(**active_measure_kwargs)
+    qs = Measure.get_inactive_measures()
+
+    assert active_measure not in qs
+
+
+def test_get_inactive_measures_returns_inactive():
+    yesterday = date.today() - timedelta(1)
+    inactive_measure = factories.MeasureFactory.create(
+        valid_between__lower=yesterday,
+        generating_regulation__effective_end_date=yesterday,
+    )
+
+    qs = Measure.get_inactive_measures()
+
+    assert inactive_measure in qs
