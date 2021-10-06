@@ -126,7 +126,7 @@ jobs:
       uses: ammaraskar/sphinx-action@0.4
       with:
         # Pin to version 3.9 until psycopg2-binary can support 3.10
-        pre-build-command: "apt-get install python=3.9 && apt-get update -y && apt-get install -y git-core python-dev build-essential libxml2-dev libxslt1-dev libz-dev graphviz libgraphviz-dev"
+        pre-build-command: "apt-get install python3.9 && apt-get update -y && apt-get install -y git-core python-dev build-essential libxml2-dev libxslt1-dev libz-dev graphviz libgraphviz-dev"
         docs-folder: "."
         build-command: "sphinx-build -b html -c docs/ . _build"
 
