@@ -1,10 +1,9 @@
-from datetime import date
-from datetime import timedelta
 from decimal import Decimal
 
 import pytest
 
 from common.tests import factories
+from common.tests.util import Dates
 from common.validators import UpdateType
 from measures.models import Measure
 
@@ -211,27 +210,67 @@ def test_copy_measure_doesnt_add_export_refund_sids(export_refund_sid):
 
 
 @pytest.mark.parametrize(
-    ("active_measure_kwargs"),
-    (
-        {"valid_between__lower": date.today()},
-        {"version_group": None},
-        {"generating_regulation__effective_end_date": date.today()},
-    ),
+    ("excluded_measures_kwargs", "included_measure_kwargs", "measure_method"),
+    [
+        ([{"valid_between": Dates().later}], {}, Measure.get_measures_in_effect),
+        ([{}], {"valid_between": Dates().later}, Measure.get_measures_not_in_effect),
+        (
+            [{}, {"valid_between": Dates().later}],
+            {"valid_between": Dates().earlier},
+            Measure.get_measures_no_longer_in_effect,
+        ),
+        (
+            [{}, {"valid_between": Dates().earlier}],
+            {"valid_between": Dates().later},
+            Measure.get_measures_not_yet_in_effect,
+        ),
+    ],
 )
-def test_get_inactive_measures_doesnt_return_active(active_measure_kwargs):
-    active_measure = factories.MeasureFactory.create(**active_measure_kwargs)
-    qs = Measure.get_inactive_measures()
+def test_get_effective_measures_class_methods(
+    excluded_measures_kwargs,
+    included_measure_kwargs,
+    measure_method,
+):
+    excluded_measures = [
+        factories.MeasureFactory.create(**kwargs) for kwargs in excluded_measures_kwargs
+    ]
+    included_measure = factories.MeasureFactory.create(**included_measure_kwargs)
+    qs = measure_method()
 
-    assert active_measure not in qs
+    for measure in excluded_measures:
+        assert measure not in qs
+
+    assert included_measure in qs
 
 
-def test_get_inactive_measures_returns_inactive():
-    yesterday = date.today() - timedelta(1)
-    inactive_measure = factories.MeasureFactory.create(
-        valid_between__lower=yesterday,
-        generating_regulation__effective_end_date=yesterday,
+@pytest.mark.parametrize(
+    ("current_excluded", "measure_method"),
+    [
+        (False, Measure.get_measures_current),
+        (True, Measure.get_measures_not_current),
+        (False, Measure.get_measures_current_and_in_effect),
+    ],
+)
+def test_get_current_measures_class_methods(
+    current_excluded,
+    measure_method,
+    date_ranges,
+):
+    previous_measure = factories.MeasureFactory.create()
+    current_measure = factories.MeasureFactory.create(
+        version_group=previous_measure.version_group,
     )
+    qs = measure_method()
 
-    qs = Measure.get_inactive_measures()
+    if current_excluded:
+        assert previous_measure in qs
+        assert current_measure not in qs
+    else:
+        assert previous_measure not in qs
+        assert current_measure in qs
 
-    assert inactive_measure in qs
+    if measure_method == Measure.get_measures_current_and_in_effect:
+        ineffective_measure = factories.MeasureFactory.create(
+            valid_between=date_ranges.earlier,
+        )
+        assert ineffective_measure not in qs
