@@ -1,3 +1,6 @@
+from datetime import date
+from typing import Optional
+
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Case
 from django.db.models import CharField
@@ -11,6 +14,7 @@ from django.db.models.functions import Concat
 from django.db.models.functions.text import Trim
 
 from common.fields import TaricDateRangeField
+from common.models import Transaction
 from common.models.records import TrackedModelQuerySet
 
 
@@ -221,6 +225,87 @@ class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                 default=F("valid_between"),
                 output_field=TaricDateRangeField(),
             ),
+        )
+
+    def get_measures_in_effect(
+        self, asof_date: Optional[date] = None, **query_attrs
+    ) -> QuerySet:
+        asof_date = date.today() if not asof_date else asof_date
+        return (
+            self.with_effective_valid_between()
+            .filter(**query_attrs)
+            .filter(
+                db_effective_valid_between__contains=asof_date,
+            )
+        )
+
+    def get_measures_not_in_effect(
+        self, asof_date: Optional[date] = None, **query_attrs
+    ) -> QuerySet:
+        asof_date = date.today() if not asof_date else asof_date
+        return (
+            self.with_effective_valid_between()
+            .filter(**query_attrs)
+            .exclude(
+                db_effective_valid_between__contains=asof_date,
+            )
+        )
+
+    def get_measures_no_longer_in_effect(
+        self, asof_date: Optional[date] = None, **query_attrs
+    ) -> QuerySet:
+        asof_date = date.today() if not asof_date else asof_date
+        return (
+            self.with_effective_valid_between()
+            .filter(**query_attrs)
+            .filter(
+                ~Q(db_effective_valid_between__contains=asof_date)
+                & ~Q(valid_between__startswith__gt=asof_date),
+            )
+        )
+
+    def get_measures_not_yet_in_effect(
+        self, asof_date: Optional[date] = None, **query_attrs
+    ) -> QuerySet:
+        asof_date = date.today() if not asof_date else asof_date
+        return (
+            self.with_effective_valid_between()
+            .filter(**query_attrs)
+            .filter(
+                db_effective_valid_between__startswith__gt=asof_date,
+            )
+        )
+
+    def get_measures_current(
+        self, asof_transaction: Optional[Transaction] = None, **query_attrs
+    ) -> QuerySet:
+        return self.filter(**query_attrs).approved_up_to_transaction(
+            asof_transaction,
+        )
+
+    def get_measures_not_current(
+        self, asof_transaction: Optional[Transaction] = None, **query_attrs
+    ) -> QuerySet:
+        current = self.get_measures_current(asof_transaction, **query_attrs)
+
+        return self.filter(**query_attrs).difference(current)
+
+    def get_measures_current_and_in_effect(
+        self,
+        asof_date: Optional[date] = None,
+        asof_transaction: Optional[Transaction] = None,
+        **query_attrs,
+    ):
+        asof_date = date.today() if not asof_date else asof_date
+        return (
+            self.approved_up_to_transaction(
+                asof_transaction,
+            )
+            .with_effective_valid_between()
+            .filter(**query_attrs)
+            .filter(
+                db_effective_valid_between__contains=asof_date,
+            )
         )
 
 
