@@ -1,33 +1,31 @@
-import decimal
 import json
 import logging
 import os
-import sqlite3
 import sys
 from pathlib import Path
 from subprocess import run
+from tempfile import NamedTemporaryFile
 from typing import Iterable
 from typing import Iterator
 
+import apsw
 from django.conf import settings
 
 from exporter.sqlite.plan import Operation
 
 logger = logging.getLogger(__name__)
 
-# Cast Decimal objects to a string representation
-# to preserve their precision. They can then be cast
-# back to a Decimal without introducing error.
-sqlite3.register_adapter(decimal.Decimal, str)
-
 
 class Runner:
     """Runs commands on an SQLite database."""
 
-    def __init__(self, db: Path) -> None:
-        self.db = db
+    database: apsw.Connection
 
-    def manage(self, *args: str):
+    def __init__(self, database: apsw.Connection) -> None:
+        self.database = database
+
+    @classmethod
+    def manage(cls, db: Path, *args: str):
         """
         Runs a Django management command on the SQLite database.
 
@@ -36,7 +34,7 @@ class Runner:
         using the value of this setting.
         """
         sqlite_env = os.environ.copy()
-        sqlite_env["DATABASE_URL"] = f"sqlite:///{self.db}"
+        sqlite_env["DATABASE_URL"] = f"sqlite:///{str(db)}"
         # Required to make sure the postgres default isn't set as the DB_URL
         if sqlite_env.get("VCAP_SERVICES"):
             vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
@@ -50,7 +48,8 @@ class Runner:
             env=sqlite_env,
         )
 
-    def make_empty_database(self):
+    @classmethod
+    def from_empty_database(cls) -> "Runner":
         """
         Generate a new and empty SQLite database with the TaMaTo schema.
 
@@ -60,9 +59,17 @@ class Runner:
         to Postgres so they are removed after being applied.
         """
         try:
-            self.manage("makemigrations", "--name", "sqlite_export")
-            self.manage("migrate")
-            assert self.db.exists()
+            with NamedTemporaryFile() as db_name:
+                db = Path(db_name.name)
+                cls.manage(db, "makemigrations", "--name", "sqlite_export")
+                cls.manage(db, "migrate")
+                assert db.exists()
+
+                # Copy the template database into memory.
+                template = apsw.Connection(str(db))
+                runner = cls(apsw.Connection(":memory:"))
+                runner.database.deserialize("main", template.serialize("main"))
+                return runner
         finally:
             for file in Path(settings.BASE_DIR).rglob(
                 "**/migrations/*sqlite_export.py",
@@ -78,24 +85,22 @@ class Runner:
         columns in the order they are defined on the model, and there's no other
         easy way to work out what the correct order is aside from reading them.
         """
-        with sqlite3.connect(str(self.db)) as connection:
-            cursor = connection.cursor()
-            cursor.execute(f"PRAGMA table_info({table})")
-            for column in cursor.fetchall():
-                yield column[1]
+        cursor = self.database.cursor()
+        cursor.execute(f"PRAGMA table_info({table})")
+        for column in cursor.fetchall():
+            yield column[1]
 
     def run_operations(self, operations: Iterable[Operation]):
         """Runs the supplied sequence of operations against the SQLite
         database."""
-        with sqlite3.connect(
-            str(self.db),
-            detect_types=sqlite3.PARSE_DECLTYPES,
-            isolation_level=None,
-        ) as connection:
-            cursor = connection.cursor()
-            for operation in operations:
-                logger.debug("%s: %s", self.db, operation[0])
-                try:
-                    cursor.executemany(*operation)
-                except sqlite3.IntegrityError as e:
-                    logger.error(e)
+        cursor = self.database.cursor()
+        for operation in operations:
+            logger.debug("%s: %s", self.database, operation[0])
+            try:
+                cursor.executemany(*operation)
+            except apsw.SQLError as e:
+                logger.error(e)
+
+    def get_bytes(self) -> bytes:
+        """Returns the bytes of the SQLite database."""
+        return self.database.serialize("main")
