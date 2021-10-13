@@ -23,6 +23,7 @@ from common.models.records import TrackedModel
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
 from common.util import TaricDateRange
+from common.util import get_accessor
 from common.util import get_field_tuple
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
@@ -121,13 +122,36 @@ def make_non_duplicate_record(factory, identifying_fields=None):
 
 
 def get_checkable_data(model: TrackedModel, ignore=frozenset()):
-    """Returns a dict representing the model's data ignoring any automatically
-    set fields and fields with names passed to `ignore`."""
+    """
+    Returns a dict representing the model's data ignoring any automatically set
+    fields and fields with names passed to `ignore`.
+
+    The returned data will contain the identifying fields for any linked
+    models rather than internal PKs.
+
+    For example:
+
+        get_checkable_data(FootnoteDescriptionFactory(), ignore={"sid"})
+        # {
+        #   "description": "My sample footnote text",
+        #   "described_footnote": {
+        #     "footnote_type__footnote_type_id": "FN"
+        #     "footnote_id": "123",
+        #    },
+        # }
+    """
     checked_field_names = {f.name for f in model.copyable_fields} - ignore
-    return {
-        name: model._meta.get_field(name).value_from_object(model)
+    data = {
+        name: getattr(model, get_accessor(model._meta.get_field(name)))
         for name in checked_field_names
     }
+    identifying_fields = {
+        name: data[name].get_identifying_fields()
+        for name in checked_field_names
+        if hasattr(data[name], "get_identifying_fields")
+    }
+    data.update(identifying_fields)
+    return data
 
 
 def assert_records_match(
@@ -142,10 +166,9 @@ def assert_records_match(
     System fields that will change from model to model are not checked. Any
     field names given to `ignore` will also not be checked.
     """
-    assert get_checkable_data(expected, ignore=ignore) == get_checkable_data(
-        imported,
-        ignore=ignore,
-    )
+    expected_data = get_checkable_data(expected, ignore=ignore)
+    imported_data = get_checkable_data(imported, ignore=ignore)
+    assert expected_data == imported_data
 
 
 def assert_many_records_match(
@@ -160,9 +183,9 @@ def assert_many_records_match(
     System fields that will change from model to model are not checked. Any
     field names given to `ignore` will also not be checked.
     """
-    assert [get_checkable_data(e, ignore=ignore) for e in expected] == [
-        get_checkable_data(i, ignore=ignore) for i in imported
-    ]
+    expected_data = [get_checkable_data(e, ignore=ignore) for e in expected]
+    imported_data = [get_checkable_data(i, ignore=ignore) for i in imported]
+    assert expected_data == imported_data
 
 
 _transaction_counter = count(start=1)

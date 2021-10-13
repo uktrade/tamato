@@ -3,11 +3,11 @@ from __future__ import annotations
 import logging
 import xml.etree.ElementTree as etree
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import Mapping
 from typing import Optional
-from xml.etree.ElementTree import Element
+from typing import Sequence
+from typing import Union
 
 from common.validators import UpdateType
 from importer.namespaces import Tag
@@ -102,13 +102,13 @@ class ElementParser:
     """
 
     tag: Optional[Tag] = None
-    data_class: type = dict
-    end_hook: Optional[Callable[[Any, Element], None]] = None
+    extra_fields: Sequence[str] = tuple()
+    data: Union[Dict[str, Any], Any]
 
     def __init__(self, tag: Tag = None, many: bool = False, depth: int = 1):
         self.child = None
         self.parent: Optional[ElementParser] = None
-        self.data = self.data_class()
+        self.data = dict()
         self.depth = depth
         self.many = many
         self.parent = None
@@ -168,7 +168,7 @@ class ElementParser:
 
         self.parent = parent
         if not self.started:
-            self.data = self.data_class()
+            self.data = dict()
             self.started = True
         else:
             # if the tag matches one of the child elements of this element, get the
@@ -191,8 +191,15 @@ class ElementParser:
                 element,
             ):
                 field_name = self._field_lookup[self.child]
+                if self.child.many and self.child.extra_fields:
+                    raise NotImplementedError("Many child parsers with extra_fields")
                 if self.child.many:
                     self.data.setdefault(field_name, []).append(self.child.data)
+                elif self.child.extra_fields:
+                    for index, sub_field_name in enumerate(
+                        [field_name, *self.child.extra_fields],
+                    ):
+                        self.data[sub_field_name] = self.child.data[index]
                 else:
                     self.data[field_name] = self.child.data
                 self.child = None
@@ -202,8 +209,6 @@ class ElementParser:
             if element.text:
                 self.text = element.text.strip()
             self.data.update(element.attrib.items())
-            if callable(self.end_hook):
-                self.end_hook(self.data, element)
             self.started = False
             self.clean()
             self.validate()
@@ -368,14 +373,19 @@ class ValidityMixin:
         super().clean()
         valid_between = {}
 
-        if "valid_between_lower" in self.data:
-            valid_between["lower"] = self.data.pop("valid_between_lower")
+        lower_name = self._field_lookup[self.valid_between_lower]
+        upper_name = self._field_lookup[self.valid_between_upper]
 
-        if "valid_between_upper" in self.data:
-            valid_between["upper"] = self.data.pop("valid_between_upper")
+        if lower_name in self.data:
+            valid_between["lower"] = self.data.pop(lower_name)
+
+        if upper_name in self.data:
+            valid_between["upper"] = self.data.pop(upper_name)
 
         if valid_between:
-            self.data["valid_between"] = valid_between
+            *field_names, _ = lower_name.split("__")
+            real_name = "__".join([*field_names, "valid_between"])
+            self.data[real_name] = valid_between
 
 
 class ValidityStartMixin:
