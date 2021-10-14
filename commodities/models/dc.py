@@ -8,7 +8,6 @@ from dataclasses import field
 from datetime import date
 from itertools import groupby
 from typing import Any
-from typing import Mapping
 from typing import Optional
 from typing import Union
 
@@ -23,12 +22,12 @@ from commodities.util import clean_item_id
 from commodities.util import contained_date_range
 from commodities.util import date_ranges_overlap
 from common.business_rules import BusinessRuleViolation
+from common.models import transactions
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.records import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
-from common.util import get_record_code
 from common.validators import UpdateType
 from importer.namespaces import TARIC_RECORD_GROUPS
 from measures import business_rules as mbr
@@ -255,6 +254,13 @@ class Commodity(BaseModel):
         )
         return self.version == current_version
 
+    def _get_transactions(self) -> tuple[Transaction]:
+        """Returns the id-s of all transactions in the version group of the
+        record."""
+        return tuple(
+            [version.transaction for version in self.obj.version_group.versions.all()],
+        )
+
     def _get_transaction_ids(self) -> tuple[int]:
         """Returns the id-s of all transactions in the version group of the
         record."""
@@ -350,6 +356,23 @@ class CommodityTreeBase(BaseModel):
             )
         except StopIteration:
             return None
+
+    @property
+    def max_transaction(self) -> Optional[Transaction]:
+        sorted_transactions = sorted(
+            [
+                transaction
+                for commodity in self.commodities
+                for transaction in commodity._get_transactions()
+            ],
+            key=lambda x: x.order,
+            reverse=True,
+        )
+
+        try:
+            return sorted_transactions[0]
+        except IndexError:
+            return transactions
 
 
 @dataclass
@@ -450,7 +473,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             raise CommodityTreeSnapshotException(msg)
 
         try:
-            assert len(chapters) == 1
+            assert len(chapters) <= 1
         except AssertionError:
             print("All commodities in a group must be from the same HS chapter.")
             raise
@@ -575,13 +598,18 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     def snapshot_transaction_id(self) -> Optional[int]:
         """Retruns the snapshot transaction if uses the transaction clock."""
         if self.clock_type.is_transaction_clock:
+            return self.moments[1].id
+
+    @property
+    def snapshot_transaction_order(self) -> Optional[int]:
+        """Retruns the snapshot transaction if uses the transaction clock."""
+        if self.clock_type.is_transaction_clock:
             return self.moments[1]
 
     @property
     def snapshot_transaction(self) -> Optional[Transaction]:
-        """Retruns the snapshot transaction if uses the transaction clock."""
         if self.clock_type.is_transaction_clock:
-            return Transaction.objects.get(id=self.moments[1])
+            return self.max_transaction
 
     def _sort(self) -> None:
         """
@@ -772,7 +800,7 @@ class CommodityCollection(CommodityTreeBase):
 
     def get_transaction_clock_snapshot(
         self,
-        transaction_id: int,
+        transaction: Transaction,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain transaction (based on
@@ -783,7 +811,7 @@ class CommodityCollection(CommodityTreeBase):
         will assign as the snapshot moment the highest transaction id across all
         snapshot commodities.
         """
-        return self._get_snapshot(transaction_id=transaction_id)
+        return self._get_snapshot(transaction=transaction)
 
     @property
     def current_snapshot(self) -> CommodityTreeSnapshot:
@@ -795,53 +823,41 @@ class CommodityCollection(CommodityTreeBase):
         """
         return self._get_snapshot()
 
-    @property
-    def max_transaction_id(self) -> int:
-        return max(
-            [
-                transaction_id
-                for commodity in self.commodities
-                for transaction_id in commodity._get_transaction_ids()
-            ],
-        )
-
     def _get_snapshot(
         self,
         snapshot_date: Optional[date] = None,
-        transaction_id: Optional[int] = None,
+        transaction: Optional[Transaction] = None,
     ) -> CommodityTreeSnapshot:
-        if transaction_id is None == snapshot_date is None:
+        if transaction is None == snapshot_date is None:
             clock_type = ClockType.COMBINED
-        elif transaction_id is None:
+        elif transaction is None:
             clock_type = ClockType.CALENDAR
         else:
             clock_type = ClockType.TRANSACTION
 
-        if transaction_id is None:
-            transaction_id = self.max_transaction_id
+        if transaction is None:
+            transaction = self.max_transaction
         if snapshot_date is None:
             snapshot_date = date.today()
 
-        commodities = self._get_snapshot_commodities(snapshot_date, transaction_id)
+        commodities = self._get_snapshot_commodities(snapshot_date, transaction)
 
         return CommodityTreeSnapshot(
             commodities=commodities,
             clock_type=clock_type,
-            moments=(snapshot_date, transaction_id),
+            moments=(snapshot_date, transaction.order),
         )
 
     def _get_snapshot_commodities(
         self,
-        snapshot_date: date,
-        transaction_id: int = None,
+        snapshot_date: Optional[date],
+        transaction: Optional[Transaction] = None,
     ) -> list[Commodity]:
         if snapshot_date is None:
             snapshot_date = date.today()
 
-        if transaction_id is None:
-            transaction_id = self.max_transaction_id
-
-        transaction = Transaction.objects.get(id=transaction_id)
+        if transaction is None:
+            transaction = self.max_transaction
 
         return [
             commodity
@@ -918,7 +934,6 @@ class CommodityChange(BaseModel):
     current: Optional[Commodity] = None
     candidate: Optional[Commodity] = None
     ignore_validation_rules: bool = False
-    # side_effects: Optional[dict[TTrackedModelIdentifier, SideEffect]] = None
 
     def __post_init__(self) -> None:
         """Triggers validation on the fields of the model upon instantiation."""
@@ -1266,12 +1281,16 @@ class CommodityChange(BaseModel):
         clone = copy(self.collection)
 
         commodity = self.current or self.candidate
-        before = clone.get_calendar_clock_snapshot(commodity.get_valid_between().lower)
+
+        if commodity.good:
+            before = clone.get_transaction_clock_snapshot(commodity.good.transaction)
+        else:
+            before = clone.current_snapshot
 
         clone.update([self])
 
         commodity = self.candidate or self.current
-        after = clone.get_calendar_clock_snapshot(commodity.get_valid_between().lower)
+        after = clone.get_transaction_clock_snapshot(commodity.good.transaction)
 
         return (before, after)
 
@@ -1442,7 +1461,7 @@ class CommodityChangeRecordLoader:
         """Instantiates the loader."""
         self.chapter_changes: dict[str, CommodityChapterChanges] = {}
 
-    def load(self, data: Mapping[str, Any]) -> list[CommodityChange]:
+    def load(self, transaction: Transaction) -> list[CommodityChange]:
         """
         Converts transaction records to corresponding CommodityChange objects.
 
@@ -1465,10 +1484,9 @@ class CommodityChangeRecordLoader:
         record_group = TARIC_RECORD_GROUPS["commodities"]
 
         matching_records = [
-            (self._get_record_commodity_code(record), record)
-            for transmission in data["message"]
-            for record in transmission["record"]
-            if get_record_code(record) in record_group
+            (self._get_record_commodity_code(obj), obj)
+            for obj in transaction.tracked_models.all()
+            if obj.record_identifier in record_group
         ]
 
         sorted_records = sorted(matching_records, key=lambda x: x[0])
@@ -1480,7 +1498,7 @@ class CommodityChangeRecordLoader:
     def add_pending_change(
         self,
         commodity_code: str,
-        records: tuple[str, dict[str, Any]],
+        records: tuple[str, dict[str, TrackedModel]],
     ) -> None:
         """
         Produces a commodity change instance based on a group of 400-type
@@ -1502,38 +1520,32 @@ class CommodityChangeRecordLoader:
         chapter = commodity_code[:4]
         chapter_changes = self._get_or_create_chapter_changes(chapter)
 
-        records_by_code = {get_record_code(record): record for _, record in records}
+        records_by_identifier = {obj.record_identifier: obj for _, obj in records}
 
-        commodity_record = records_by_code.get("40000")
-        indent_record = records_by_code.get("40005")
+        good = records_by_identifier.get("40000")
+        indent = records_by_identifier.get("40005")
 
-        if not (commodity_record or indent_record):
+        if not (good or indent):
             return
 
-        indent = self._get_indent(indent_record)
-        update_type = self._get_update_type(commodity_record)
-        transaction_order = int(commodity_record["transaction_id"])
+        if not good:
+            good = indent.indented_goods_nomenclature
 
         current = self._get_current_commodity(
             commodity_code,
-            indent,
-            update_type,
-            transaction_order,
+            good.update_type,
+            good.transaction.order,
+            indent.indent if indent else None,
         )
 
-        candidate = self._create_candidate_commodity(
-            commodity_code,
-            indent,
-            update_type,
-            commodity_record["goods_nomenclature"],
-            current.obj if current else None,
-        )
+        candidate = self._create_candidate_commodity(good)
 
         change = CommodityChange(
             collection=chapter_changes.collection,
-            update_type=update_type,
+            update_type=good.update_type,
             current=current,
             candidate=candidate,
+            ignore_validation_rules=True,
         )
 
         chapter_changes.changes.append(change)
@@ -1598,9 +1610,9 @@ class CommodityChangeRecordLoader:
     def _get_current_commodity(
         self,
         commodity_code: str,
-        indent: int,
         update_type: UpdateType,
         transaction_order: int,
+        indent: Optional[int] = None,
     ) -> Optional[Commodity]:
         """Returns a commodity wrapper for the current good object as of the
         record transaction."""
@@ -1616,26 +1628,14 @@ class CommodityChangeRecordLoader:
 
     def _create_candidate_commodity(
         self,
-        commodity_code: str,
-        indent: int,
-        update_type: UpdateType,
-        data: dict[str, Any],
-        obj: Optional[GoodsNomenclature] = None,
+        good: GoodsNomenclature,
     ) -> Optional[Commodity]:
         """Returns a candidate commodity wrapper with the commodity record's
         attributes."""
-        if update_type == UpdateType.DELETE:
+        if good.update_type == UpdateType.DELETE:
             return None
 
-        valid_between = self._get_taric_date_range(data)
-
-        return Commodity(
-            obj=obj,
-            item_id=data["item_id"],
-            suffix=data["suffix"],
-            indent=indent,
-            valid_between=valid_between,
-        )
+        return Commodity(obj=good)
 
     def _get_taric_date_range(self, data: dict[str, Any]) -> TaricDateRange:
         """Returns a TaricDateRange instance for the record's validity
@@ -1655,8 +1655,13 @@ class CommodityChangeRecordLoader:
 
         return TaricDateRange(start_date, end_date)
 
-    def _get_record_commodity_code(self, record: dict[str, Any]) -> str:
+    def _get_record_commodity_code(self, obj: TrackedModel) -> str:
         """Returns the commodity code embedded in a taric record."""
-        code = get_record_code(record)
-        record_name, attr_name = COMMODITY_RECORD_ATTRIBUTES[code]
-        return record.get(record_name).get(attr_name)
+        _, attr_name = COMMODITY_RECORD_ATTRIBUTES[obj.record_identifier]
+
+        attrs = attr_name.split("__")
+        result = obj
+        for attr in attrs:
+            result = getattr(result, attr)
+
+        return result
