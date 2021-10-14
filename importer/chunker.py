@@ -272,24 +272,33 @@ def filter_transaction_records(
         return elem
 
     transaction_id = elem.get("id")
+
     n = len(elem)
+
+    pending_removals = []
 
     for message in Tags.ENV_APP_MESSAGE.iter(elem):
         for transmission in Tags.OUB_TRANSMISSION.iter(message):
             for record in Tags.OUB_RECORD.iter(transmission):
                 record_code = Tags.OUB_RECORD_CODE.first(record).text
                 subrecord_code = Tags.OUB_SUBRECORD_CODE.first(record).text
+                identifier = f"{record_code}{subrecord_code}"
 
-                record_identifier = f"{record_code}{subrecord_code}"
+                Tags.OUB_UPDATE_TYPE.first(record).text
 
-                if record_identifier not in record_group:
-                    transmission.remove(record)
+                if identifier not in record_group:
+                    pending_removals.append((message, transmission, record, identifier))
 
-                    msg = "Transaction %s: Removed record with code %s."
-                    logger.info(msg, transaction_id, record_identifier)
+    for message, transmission, record, identifier in pending_removals:
+        sequence_number = Tags.OUB_RECORD_SEQUENCE_NUMBER.first(record).text
 
-            if not transmission:
-                message.remove(transmission)
+        transmission.remove(record)
+
+        msg = "Transaction %s: Removed record with code %s and sequence number %s."
+        logger.info(msg, transaction_id, identifier, sequence_number)
+
+        if not transmission:
+            message.remove(transmission)
 
         if not message:
             elem.remove(message)
@@ -329,10 +338,11 @@ def chunk_taric(
 
         transaction = filter_transaction_records(elem, record_group)
 
-        if transaction is not None:
-            write_transaction_to_chunk(elem, chunks_in_progress, batch, envelope_id)
+        if transaction is None:
+            continue
 
-        elem.clear()
+        write_transaction_to_chunk(transaction, chunks_in_progress, batch, envelope_id)
+        transaction.clear()
 
         element_counter += 1
         if element_counter % 100000 == 0:
