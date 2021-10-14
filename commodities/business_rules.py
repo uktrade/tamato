@@ -72,8 +72,13 @@ class NIG5(BusinessRule):
 
         from commodities.models import GoodsNomenclatureOrigin
 
+        try:
+            matching_indent_exists = good.indents.filter(nodes__depth=1).exists()
+        except TypeError:
+            matching_indent_exists = False
+
         if not (
-            good.indents.filter(nodes__depth=1).exists()
+            matching_indent_exists
             or GoodsNomenclatureOrigin.objects.filter(
                 new_goods_nomenclature__sid=good.sid,
             )
