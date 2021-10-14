@@ -254,14 +254,15 @@ def test_collection_get_calendar_clock_snapshot(collection_spanned, date_ranges,
 
 
 def test_collection_get_transaction_clock_snapshot(collection_full):
-    transaction_ids = sorted(
-        [commodity.obj.transaction.id for commodity in collection_full.commodities],
+    transactions = sorted(
+        [commodity.obj.transaction for commodity in collection_full.commodities],
+        key=lambda x: x.order,
     )
     commodities = collection_full.commodities[::-1]
 
-    for i, transaction_id in enumerate(transaction_ids):
+    for i, transaction in enumerate(transactions):
         snapshot = collection_full.get_transaction_clock_snapshot(
-            transaction_id=transaction_id,
+            transaction=transaction,
         )
 
         assert snapshot.commodities[::-1] == commodities[: i + 1]
@@ -270,9 +271,9 @@ def test_collection_get_transaction_clock_snapshot(collection_full):
 def test_collection_current_snapshot(collection_full):
     snapshot = collection_full.current_snapshot
 
-    transaction_id = collection_full.max_transaction_id
+    transaction = collection_full.max_transaction
     snapshot_date = date.today()
-    tx_snapshot = collection_full.get_transaction_clock_snapshot(transaction_id)
+    tx_snapshot = collection_full.get_transaction_clock_snapshot(transaction)
     cal_snapshot = collection_full.get_calendar_clock_snapshot(snapshot_date)
 
     tx_commodities = set(x.identifier for x in tx_snapshot.commodities)
@@ -281,7 +282,7 @@ def test_collection_current_snapshot(collection_full):
 
     commodities = set(x.identifier for x in snapshot.commodities)
 
-    assert snapshot.moments == (snapshot_date, transaction_id)
+    assert snapshot.moments == (snapshot_date, transaction.order)
     assert sorted(commodities) == sorted(tx_cal_commodities)
 
 
@@ -473,27 +474,26 @@ def test_snapshot_is_declarable(collection_basic):
 
 def test_snapshot_date(collection_basic):
     snapshot_date = date.today()
-    transaction_id = collection_basic.max_transaction_id
+    transaction = collection_basic.max_transaction
 
     snapshot = collection_basic.get_calendar_clock_snapshot(snapshot_date)
     assert snapshot.snapshot_date == snapshot_date
-    assert snapshot.moments == (snapshot_date, transaction_id)
+    assert snapshot.moments == (snapshot_date, transaction.order)
 
-    transaction_id = collection_basic.max_transaction_id
-    snapshot = collection_basic.get_transaction_clock_snapshot(transaction_id)
+    snapshot = collection_basic.get_transaction_clock_snapshot(transaction)
     assert snapshot.snapshot_date is None
 
 
 def test_snapshot_transaction_id(collection_basic):
     snapshot_date = date.today()
-    transaction_id = collection_basic.max_transaction_id
+    transaction = collection_basic.max_transaction
 
     snapshot = collection_basic.get_calendar_clock_snapshot(snapshot_date)
-    assert snapshot.snapshot_transaction_id is None
+    assert snapshot.snapshot_transaction is None
 
-    snapshot = collection_basic.get_transaction_clock_snapshot(transaction_id)
-    assert snapshot.snapshot_transaction_id == transaction_id
-    assert snapshot.moments == (snapshot_date, transaction_id)
+    snapshot = collection_basic.get_transaction_clock_snapshot(transaction)
+    assert snapshot.snapshot_transaction.id == transaction.id
+    assert snapshot.moments == (snapshot_date, transaction.order)
 
 
 def test_change_valid_create(collection_basic, commodities):

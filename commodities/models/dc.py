@@ -25,6 +25,7 @@ from commodities.util import clean_item_id
 from commodities.util import contained_date_range
 from commodities.util import date_ranges_overlap
 from common.business_rules import BusinessRuleViolation
+from common.models import transactions
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.records import TrackedModel
@@ -233,6 +234,13 @@ class Commodity(BaseModel):
         )
         return self.version == current_version
 
+    def _get_transactions(self) -> tuple[Transaction]:
+        """Returns the id-s of all transactions in the version group of the
+        record."""
+        return tuple(
+            [version.transaction for version in self.obj.version_group.versions.all()],
+        )
+
     def _get_transaction_ids(self) -> tuple[int]:
         """Returns the id-s of all transactions in the version group of the
         record."""
@@ -328,6 +336,23 @@ class CommodityTreeBase(BaseModel):
             )
         except StopIteration:
             return None
+
+    @property
+    def max_transaction(self) -> Optional[Transaction]:
+        sorted_transactions = sorted(
+            [
+                transaction
+                for commodity in self.commodities
+                for transaction in commodity._get_transactions()
+            ],
+            key=lambda x: x.order,
+            reverse=True,
+        )
+
+        try:
+            return sorted_transactions[0]
+        except IndexError:
+            return transactions
 
 
 @dataclass
@@ -428,7 +453,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             raise CommodityTreeSnapshotException(msg)
 
         try:
-            assert len(chapters) == 1
+            assert len(chapters) <= 1
         except AssertionError:
             print("All commodities in a group must be from the same HS chapter.")
             raise
@@ -553,13 +578,18 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     def snapshot_transaction_id(self) -> Optional[int]:
         """Retruns the snapshot transaction if uses the transaction clock."""
         if self.clock_type.is_transaction_clock:
+            return self.moments[1].id
+
+    @property
+    def snapshot_transaction_order(self) -> Optional[int]:
+        """Retruns the snapshot transaction if uses the transaction clock."""
+        if self.clock_type.is_transaction_clock:
             return self.moments[1]
 
     @property
     def snapshot_transaction(self) -> Optional[Transaction]:
-        """Retruns the snapshot transaction if uses the transaction clock."""
         if self.clock_type.is_transaction_clock:
-            return Transaction.objects.get(id=self.moments[1])
+            return self.max_transaction
 
     def _sort(self) -> None:
         """
@@ -750,7 +780,7 @@ class CommodityCollection(CommodityTreeBase):
 
     def get_transaction_clock_snapshot(
         self,
-        transaction_id: int,
+        transaction: Transaction,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain transaction (based on
@@ -761,7 +791,7 @@ class CommodityCollection(CommodityTreeBase):
         will assign as the snapshot moment the highest transaction id across all
         snapshot commodities.
         """
-        return self._get_snapshot(transaction_id=transaction_id)
+        return self._get_snapshot(transaction=transaction)
 
     @property
     def current_snapshot(self) -> CommodityTreeSnapshot:
@@ -773,53 +803,41 @@ class CommodityCollection(CommodityTreeBase):
         """
         return self._get_snapshot()
 
-    @property
-    def max_transaction_id(self) -> int:
-        return max(
-            [
-                transaction_id
-                for commodity in self.commodities
-                for transaction_id in commodity._get_transaction_ids()
-            ],
-        )
-
     def _get_snapshot(
         self,
         snapshot_date: Optional[date] = None,
-        transaction_id: Optional[int] = None,
+        transaction: Optional[Transaction] = None,
     ) -> CommodityTreeSnapshot:
-        if transaction_id is None == snapshot_date is None:
+        if transaction is None == snapshot_date is None:
             clock_type = ClockType.COMBINED
-        elif transaction_id is None:
+        elif transaction is None:
             clock_type = ClockType.CALENDAR
         else:
             clock_type = ClockType.TRANSACTION
 
-        if transaction_id is None:
-            transaction_id = self.max_transaction_id
+        if transaction is None:
+            transaction = self.max_transaction
         if snapshot_date is None:
             snapshot_date = date.today()
 
-        commodities = self._get_snapshot_commodities(snapshot_date, transaction_id)
+        commodities = self._get_snapshot_commodities(snapshot_date, transaction)
 
         return CommodityTreeSnapshot(
             commodities=commodities,
             clock_type=clock_type,
-            moments=(snapshot_date, transaction_id),
+            moments=(snapshot_date, transaction.order),
         )
 
     def _get_snapshot_commodities(
         self,
-        snapshot_date: date,
-        transaction_id: int = None,
-    ) -> List[Commodity]:
+        snapshot_date: Optional[date],
+        transaction: Optional[Transaction] = None,
+    ) -> list[Commodity]:
         if snapshot_date is None:
             snapshot_date = date.today()
 
-        if transaction_id is None:
-            transaction_id = self.max_transaction_id
-
-        transaction = Transaction.objects.get(id=transaction_id)
+        if transaction is None:
+            transaction = self.max_transaction
 
         return [
             commodity
@@ -875,7 +893,6 @@ class CommodityChange(BaseModel):
     current: Optional[Commodity] = None
     candidate: Optional[Commodity] = None
     ignore_validation_rules: bool = False
-    # side_effects: Optional[dict[TTrackedModelIdentifier, SideEffect]] = None
 
     def __post_init__(self) -> None:
         """Triggers validation on the fields of the model upon instantiation."""
@@ -1222,12 +1239,16 @@ class CommodityChange(BaseModel):
         clone = copy(self.collection)
 
         commodity = self.current or self.candidate
-        before = clone.get_calendar_clock_snapshot(commodity.get_valid_between().lower)
+
+        if commodity.good:
+            before = clone.get_transaction_clock_snapshot(commodity.good.transaction)
+        else:
+            before = clone.current_snapshot
 
         clone.update([self])
 
         commodity = self.candidate or self.current
-        after = clone.get_calendar_clock_snapshot(commodity.get_valid_between().lower)
+        after = clone.get_transaction_clock_snapshot(commodity.good.transaction)
 
         return before, after
 
