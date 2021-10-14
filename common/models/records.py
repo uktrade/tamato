@@ -350,6 +350,7 @@ class VersionGroup(TimestampedMixin):
 
 
 class TrackedModel(PolymorphicModel):
+
     transaction = models.ForeignKey(
         "common.Transaction",
         on_delete=models.PROTECT,
@@ -670,6 +671,12 @@ class TrackedModel(PolymorphicModel):
 
     def version_at(self: Cls, transaction) -> Cls:
         return self.get_versions().approved_up_to_transaction(transaction).get()
+
+    @property
+    def record_identifier(self) -> str:
+        """Returns the record identifier as defined in TARIC3 records
+        specification."""
+        return f"{self.record_code}{self.subrecord_code}"
 
     @classproperty
     def relations(cls) -> Dict[Union[Field, ForeignObjectRel], Type[TrackedModel]]:
