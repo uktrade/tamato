@@ -683,30 +683,6 @@ class TrackedModel(PolymorphicModel):
             if (f.many_to_one or f.one_to_one) and not f.auto_created and f.concrete
         )
 
-    def __getattr__(self, item: str):
-        """
-        Add the ability to get the current instance of a related object through
-        an attribute. For example if a model is like so:
-
-        .. code:: python
-            class ExampleModel(TrackedModel):
-                # must be a TrackedModel
-                other_model = models.ForeignKey(OtherModel, on_delete=models.PROTECT)
-
-        The latest version of the relation can be accessed via:
-
-        .. code:: python
-            example_model = ExampleModel.objects.first()
-            example_model.other_model_current  # Gets the latest version
-        """
-
-        if item.endswith("_current"):
-            field_name = item[:-8]
-            if field_name in [field.name for field in self.relations.keys()]:
-                return getattr(self, field_name).current_version
-
-        return self.__getattribute__(item)
-
     _meta: Options
 
     @classproperty
