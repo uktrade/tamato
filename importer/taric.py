@@ -26,6 +26,7 @@ from importer.nursery import get_nursery
 from importer.parsers import ElementParser
 from importer.parsers import ParserError
 from importer.parsers import TextElement
+from importer.reports import CommodityChangeReports
 from taric.models import Envelope
 from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
@@ -134,7 +135,7 @@ class TransactionParser(ElementParser):
 
         if self._detect_commodity_changes(data):
             loader = CommodityChangeRecordLoader()
-            loader.load(data)
+            loader.load(transaction)
 
             for chapter_changes in loader.chapter_changes.values():
                 for change in chapter_changes.changes:
@@ -269,3 +270,7 @@ def process_taric_xml_stream(taric_stream, status, username):
         if event == "end":
             if handler.end(elem):
                 elem.clear()
+
+    reports = CommodityChangeReports(handler.workbasket)
+    items = [item for item in reports.report_affected_measures()]
+    print(items)
