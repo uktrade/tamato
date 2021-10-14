@@ -233,7 +233,7 @@ def test_get_latest_relation_with_latest_links(
     with django_assert_num_queries(1):
         instance = TestModel3.objects.all().with_latest_links()[0]
         fetched_oldest_link = instance.linked_model
-        fetched_latest_link = instance.linked_model_current
+        fetched_latest_link = instance.linked_model.current_version
 
     assert oldest_link.pk == fetched_oldest_link.pk
     assert latest_link.pk == fetched_latest_link.pk
@@ -262,7 +262,7 @@ def test_get_latest_relation_without_latest_links(
     with django_assert_num_queries(4):
         instance = TestModel3.objects.all().select_related("linked_model")[0]
         fetched_oldest_link = instance.linked_model
-        fetched_latest_link = instance.linked_model_current
+        fetched_latest_link = instance.linked_model.current_version
 
     assert oldest_link == fetched_oldest_link
     assert latest_link == fetched_latest_link
