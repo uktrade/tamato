@@ -15,7 +15,7 @@
         {% if record.official_journal_page %}
         <oub:officialjournal.page>{{ record.enacting_regulation.official_journal_page }}</oub:officialjournal.page>
         {% endif %}
-        {{ validity_period(record) }}
+        {{ validity_period(record.enacting_regulation) }}
         {% if record.effective_end_date %}
         <oub:effective.enddate>{{ record.effective_end_date }}</oub:effective.enddate>
         {% endif %}

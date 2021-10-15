@@ -7,8 +7,9 @@ class MeasureCreateSessionStorage(SessionStorage):
     manage form state."""
 
     def set_step_data(self, step, cleaned_data):
-        for key in list(cleaned_data):
+        cleaned_data_copy = cleaned_data.copy()
+        for key in list(cleaned_data_copy):
             # Don't save ADD and DELETE fields in the session.
-            if key.endswith(f"-ADD") or key.endswith(f"-DELETE"):
-                cleaned_data.pop(key)
-        super().set_step_data(step, cleaned_data)
+            if key.endswith("-ADD") or key.endswith("-DELETE"):
+                cleaned_data_copy.pop(key)
+        super().set_step_data(step, cleaned_data_copy)

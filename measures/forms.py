@@ -399,7 +399,7 @@ class FormSet(forms.BaseFormSet):
             self.formset_action = "ADD"
         else:
             for field in self.data:
-                if field.endswith(f"-ADD"):
+                if field.endswith("-DELETE"):
                     self.formset_action = "DELETE"
                     break
 

@@ -26,91 +26,60 @@ class RegulationHandler(BaseHandler):
             "optional": True,
         },
     )
-    serializer_class = serializers.RegulationImporterSerializer
+    serializer_class = serializers.BaseRegulationSerializer
     tag = parsers.BaseRegulationParser.tag.name
-
-    def clean(self, data: dict) -> dict:
-        data["information_text"], data["public_identifier"], data["url"] = data[
-            "information_text"
-        ]
-        return super().clean(data)
 
 
 class BaseRegulationThroughTableHandler(BaseHandler):
+    identifying_fields = (
+        "enacting_regulation__role_type",
+        "enacting_regulation__regulation_id",
+    )
     links = ({"model": models.Regulation, "name": "target_regulation"},)
-    serializer_class = serializers.RegulationImporterSerializer
+    serializer_class = serializers.BaseRegulationSerializer
     tag = "BaseRegulationThroughTableHandler"
+
+    def clean(self, data: dict) -> dict:
+        enacting_regulation_data = {}
+        for key in data.keys():
+            if key.startswith("enacting_regulation__"):
+                enacting_regulation_data[key.split("__")[1]] = data[key]
+
+        data["enacting_regulation"] = enacting_regulation_data
+        data["enacting_regulation"]["update_type"] = data["update_type"]
+        return super().clean(data)
+
+    @transaction.atomic
+    def save(self, data: dict):
+        enacting_regulation = serializers.BaseRegulationSerializer().create(
+            {
+                "update_type": data["update_type"],
+                "transaction_id": data["transaction_id"],
+                **data.pop("enacting_regulation"),
+            },
+        )
+        data["enacting_regulation"] = enacting_regulation
+        return super().save(data)
 
 
 class AmendmentRegulationHandler(BaseRegulationThroughTableHandler):
-    identifying_fields = ("role_type", "regulation_id")
-    serializer_class = serializers.RegulationImporterSerializer
+    serializer_class = serializers.AmendmentSerializer
     tag = parsers.ModificationRegulationParser.tag.name
 
-    def clean(self, data: dict) -> dict:
-        data["information_text"], data["public_identifier"], data["url"] = data[
-            "information_text"
-        ]
-        return super().clean(data)
 
-    @transaction.atomic
-    def save(self, data: dict):
-        target_regulation = data.pop("target_regulation")
-        enacting_regulation = super().save(data)
-        return serializers.AmendmentSerializer().create(
-            {
-                "target_regulation": target_regulation,
-                "enacting_regulation": enacting_regulation,
-                "update_type": data["update_type"],
-                "transaction_id": data["transaction_id"],
-            },
-        )
-
-
-class BaseSuspensionRegulationHandler(BaseRegulationThroughTableHandler):
-    serializer_class = serializers.RegulationImporterSerializer
-    tag = "BaseSuspensionRegulationHandler"
-
-    def clean(self, data: dict) -> dict:
-        self.suspension_data = {}
-        if "effective_end_date" in data:
-            self.suspension_data["effective_end_date"] = data.pop("effective_end_date")
-        if "information_text" in data:
-            data["information_text"], data["public_identifier"], data["url"] = data[
-                "information_text"
-            ]
-        return super().clean(data)
-
-    @transaction.atomic
-    def save(self, data: dict):
-        target_regulation = data.pop("target_regulation")
-        enacting_regulation = super().save(data)
-        return serializers.SuspensionSerializer().create(
-            {
-                "target_regulation": target_regulation,
-                "enacting_regulation": enacting_regulation,
-                "update_type": data["update_type"],
-                "transaction_id": data["transaction_id"],
-                **self.suspension_data,
-            },
-        )
-
-
-class SuspensionRegulationHandler(BaseSuspensionRegulationHandler):
-    identifying_fields = ("role_type", "regulation_id")
-    serializer_class = serializers.RegulationImporterSerializer
+class SuspensionRegulationHandler(BaseRegulationThroughTableHandler):
+    serializer_class = serializers.SuspensionSerializer
     tag = parsers.FullTemporaryStopRegulationParser.tag.name
 
 
 @SuspensionRegulationHandler.register_dependant
-class SuspensionRegulationActionHandler(BaseSuspensionRegulationHandler):
-    identifying_fields = ("role_type", "regulation_id")
+class SuspensionRegulationActionHandler(BaseRegulationThroughTableHandler):
     dependencies = [SuspensionRegulationHandler]
-    serializer_class = serializers.RegulationImporterSerializer
+    serializer_class = serializers.SuspensionSerializer
     tag = parsers.FullTemporaryStopActionParser.tag.name
 
 
-class ReplacementHandler(BaseRegulationThroughTableHandler):
+class ReplacementHandler(BaseHandler):
     identifying_fields = (
         "enacting_regulation__regulation_id",
         "target_regulation__regulation_id",
@@ -125,5 +94,5 @@ class ReplacementHandler(BaseRegulationThroughTableHandler):
             "name": "enacting_regulation",
         },
     )
-    serializer_class = serializers.ReplacementImporterSerializer
+    serializer_class = serializers.ReplacementSerializer
     tag = parsers.RegulationReplacementParser.tag.name
