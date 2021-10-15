@@ -2,4 +2,5 @@
         class="govuk-button govuk-button--secondary"
         id="id_{{ field.html_name }}"
         value="1"
+        {{ "formaction={}".format(form.path) if form.path else "" }}
 >{{ field.label }}</button>

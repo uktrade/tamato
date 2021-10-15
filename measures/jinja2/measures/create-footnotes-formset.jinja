@@ -1,17 +1,19 @@
-{% if form.instance.footnotes.all() %}
+{% if form.request.session["instance_footnotes_"~form.instance.sid] %}
         {% set table_rows = [] %}
         {% for footnote in form.instance.footnotes.all() %}
-            {% set footnote_link -%}
-            <a class="govuk-link govuk-!-font-weight-bold" href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
-            {%- endset %}
-            {% set remove_button -%}
-            <a href="#">Remove</a>
-            {%- endset %}
-            {{ table_rows.append([
-            {"html": footnote_link},
-            {"text": footnote.get_description().description|default("")},
-            {"html": remove_button}
-            ]) or "" }}
+            {% if footnote.pk in form.request.session["instance_footnotes_"~form.instance.sid]%}
+                {% set footnote_link -%}
+                <a class="govuk-link govuk-!-font-weight-bold" href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
+                {%- endset %}
+                {% set remove_button -%}
+                    <button formaction={{ form.instance.get_url('edit-footnotes') }} class="govuk-link govuk-!-font-weight-bold fake-link" name="remove" value={{ footnote.pk }}>Remove</a>    
+                {%- endset %}
+                {{ table_rows.append([
+                {"html": footnote_link},
+                {"text": footnote.get_description().description|default("")},
+                {"html": remove_button}
+                ]) or "" }}
+            {% endif %}
         {% endfor %}
         {{ govukTable({
             "head": [
@@ -24,7 +26,8 @@
             "captionClasses": "govuk-table__caption--m"
         }) }}
     {% else %}
-        <p class="govuk__para">No footnotes found.</p>
+        <p class="govuk-label">No footnotes found.</p>
+        <br></br>
     {% endif %}
 
 {{ crispy(formset.management_form, no_form_tags) }}
@@ -39,10 +42,8 @@
     {% endif %}
 
     {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
-        {{ govukButton({
-        "text": "Add another footnote",
-        "classes": "govuk-button--secondary",
-        "value": "1",
-        "name": formset.prefix ~ "-ADD",
-        }) }}
+        <button class="govuk-button govuk-button--secondary" data-module="govuk-button" value=1, name={{ formset.prefix ~ "-ADD" }}, formaction={{ object.get_url("edit-footnotes") }}>
+            Add another footnote
+        </button
+       
     {% endcall %}

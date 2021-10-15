@@ -19,6 +19,7 @@ from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
 from common.util import validity_range_contains_range
+from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
@@ -102,6 +103,13 @@ class MeasureForm(ValidityPeriodForm):
                 "geographical_area_country_or_region"
             ].initial = self.instance.geographical_area
 
+        # If no footnote keys are stored in the session for a measure,
+        # store all the pks of a measure's footnotes on the session, using the measure sid as key
+        if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
+            self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
+                footnote.pk for footnote in self.instance.footnotes.all()
+            ]
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -128,6 +136,41 @@ class MeasureForm(ValidityPeriodForm):
         cleaned_data["sid"] = self.instance.sid
 
         return cleaned_data
+
+    def save(self, commit=True):
+        """Get the measure instance after form submission, get from session
+        storage any footnote pks created via the Footnote formset and any pks
+        not removed from the measure after editing and create footnotes via
+        FootnoteAssociationMeasure."""
+        instance = super(MeasureForm, self).save(commit=False)
+        if commit:
+            instance.save()
+
+        sid = instance.sid
+
+        footnote_pks = [
+            dct["footnote"]
+            for dct in self.request.session.get(f"formset_initial_{sid}", [])
+        ]
+        footnote_pks.extend(self.request.session.get(f"instance_footnotes_{sid}", []))
+
+        self.request.session.pop(f"formset_initial_{sid}", None)
+        self.request.session.pop(f"instance_footnotes_{sid}", None)
+
+        for pk in footnote_pks:
+            footnote = (
+                Footnote.objects.filter(pk=pk)
+                .approved_up_to_transaction(instance.transaction)
+                .first()
+            )
+            models.FootnoteAssociationMeasure.objects.create(
+                footnoted_measure=instance,
+                associated_footnote=footnote,
+                update_type=UpdateType.CREATE,
+                transaction=instance.transaction,
+            )
+
+        return instance
 
     class Meta:
         model = models.Measure
@@ -524,7 +567,12 @@ class MeasureFootnotesForm(forms.Form):
         queryset=Footnote.objects.all(),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, request, **kwargs):
+        # Check whether form is being used as part measure edit view
+        # and pass edit-footnotes url if this is the case
+        self.request = request
+        path = self.request.path
+        self.path = path[:-1] + "-footnotes/" if "edit" in path else None
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
