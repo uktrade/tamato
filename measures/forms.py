@@ -568,7 +568,7 @@ class MeasureFootnotesForm(forms.Form):
     )
 
     def __init__(self, *args, request, **kwargs):
-        # Check whether form is being used as part measure edit view
+        # Check whether form is being used as part of measure edit view
         # and pass edit-footnotes url if this is the case
         self.request = request
         path = self.request.path

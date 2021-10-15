@@ -309,7 +309,6 @@ class MeasureFootnotesUpdate(View):
 
         Outputs a string of format 'form-0-delete' or 'form-1-delete' etc.
         """
-        breakpoint()
         split = footnote_key.split("-")
 
         return split[0] + "-" + split[1] + "-DELETE"
