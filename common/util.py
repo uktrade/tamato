@@ -1,6 +1,7 @@
 """Miscellaneous utility functions."""
 from __future__ import annotations
 
+import re
 from platform import python_version_tuple
 from typing import Any
 from typing import Optional
@@ -19,6 +20,7 @@ from django.db.models.fields import IntegerField
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.functions import Cast
 from django.db.transaction import atomic
+from django.template import loader
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
 
@@ -153,28 +155,35 @@ def validity_range_contains_range(
     return True
 
 
-def get_field_tuple(model, field):
+def get_field_tuple(
+    model: Model,
+    field_name: str,
+    default: Any = None,
+) -> tuple(str, Any):
     """
     Get the value of the named field of the specified model.
+
+    Follows field lookups that span relations, eg: "footnote_type__application_code"
 
     Handles special case for "valid_between__lower".
     """
 
-    if field == "valid_between__lower":
-        return ("valid_between__startswith", model.valid_between.lower)
+    # XXX should this be removed to make this function more generic?
+    if field_name == "valid_between__lower":
+        return "valid_between__startswith", model.valid_between.lower
 
-    if "__" in field:
-        child, child_field = field.split("__", 1)
-        child_instance = getattr(model, child)
-        if not child_instance:
+    if "__" in field_name:
+        related, related_field_name = field_name.split("__", 1)
+        related_model = getattr(model, related)
+        if not related_model:
             value = None
         else:
-            _, value = get_field_tuple(getattr(model, child), child_field)
+            _, value = get_field_tuple(related_model, related_field_name)
 
     else:
-        value = getattr(model, field)
+        value = getattr(model, field_name)
 
-    return field, value
+    return field_name, value
 
 
 class TableLock:
@@ -252,3 +261,39 @@ def get_next_id(queryset: QuerySet[Model], id_field: Field, max_len: int):
 def get_record_code(record: dict[str, Any]) -> str:
     """Returns the concatenated codes for a taric record."""
     return f"{record['record_code']}{record['subrecord_code']}"
+
+
+CAMEL_CASE_CAPS = re.compile(r"(?!^)([A-Z]+)")
+
+
+def get_taric_template(model) -> str:
+    """
+    Convert TrackedModel class names to snake_case.
+
+    Doesn't need to handle anything beyond WordsLikeThis.
+    """
+
+    snake_case_name = CAMEL_CASE_CAPS.sub(r"_\1", model.__class__.__name__).lower()
+    template_name = f"taric/{snake_case_name}.xml"
+    try:
+        loader.get_template(template_name)
+    except loader.TemplateDoesNotExist as e:
+        raise loader.TemplateDoesNotExist(
+            f"Taric template {template_name} not found. All TrackedModel "
+            "subclasses must either have a taric template with a name matching the "
+            'class at "taric/{class_name}.xml" or override the get_taric_template '
+            "method, returning an existing template.",
+        ) from e
+
+    return template_name
+
+
+def get_model_indefinite_article(model_instance: Model) -> Optional[str]:
+    """Returns "a" or "an" based on the verbose_name."""
+
+    # XXX naive, but works for all current models
+    name = model_instance._meta.verbose_name
+
+    # verbose_name is initialized to None, so typing thinks it is Optional
+    if name:
+        return "an" if name[0] in ["a", "e", "i", "o", "u"] else "a"

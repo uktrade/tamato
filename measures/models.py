@@ -625,6 +625,9 @@ class Measure(TrackedModel, ValidityMixin):
         """Remove export refund SID because we don't want to auto-increment it –
         it should really be a foreign key to an ExportRefundNomenclature model
         but as we don't use them in the UK Tariff we don't store them."""
+        # XXX this is the only override of TrackedModel.auto_value_fields - if we change
+        # export_refund_nomenclature_sid to an SmallIntegerField from a
+        # SignedIntSID, we could remove this.
         counters = super().auto_value_fields
         counters.remove(cls._meta.get_field("export_refund_nomenclature_sid"))
         return counters

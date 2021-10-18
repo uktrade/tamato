@@ -703,7 +703,8 @@ class TrackedModel(PolymorphicModel):
 
     _meta: Options
 
-    @classproperty
+    @classmethod
+    @property
     def auto_value_fields(cls) -> Set[Field]:
         """Returns the set of fields on this model that should have their value
         set automatically on save, excluding any primary keys."""
