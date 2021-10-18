@@ -103,7 +103,7 @@ TAMATO_APPS = [
     # XXX need to keep this for migrations. delete later.
     "taric",
     "workbaskets",
-    "exporter",
+    "exporter.apps.ExporterConfig",
     "crispy_forms",
     "crispy_forms_gds",
 ]
@@ -308,7 +308,10 @@ SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
     "SQLITE_S3_SECRET_ACCESS_KEY",
     "test_sqlite_key",
 )
-SQLITE_S3_ENDPOINT_URL = os.environ.get("SQLITE_S3_ENDPOINT_URL", "test_sqlite_url")
+SQLITE_S3_ENDPOINT_URL = os.environ.get(
+    "SQLITE_S3_ENDPOINT_URL",
+    "https://test-sqlite-url.local/",
+)
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
 
 # Default AWS settings.

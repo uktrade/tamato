@@ -109,14 +109,19 @@ class Plan:
     @property
     def operations(self) -> Iterable[Operation]:
         return [
+            ("PRAGMA locking_mode=EXCLUSIVE", [[]]),
+            ("PRAGMA page_size=65536", [[]]),
+            ("PRAGMA synchronous=OFF", [[]]),
+            ("PRAGMA journal_mode=OFF", [[]]),
             ("BEGIN", [[]]),
             *self._operations,
             ("COMMIT", [[]]),
-            ("VACUUM", [[]]),
-            ("PRAGMA optimize", [[]]),
         ]
 
-    def add_table(self, model: Type[Model], columns: Iterable[str]):
+    def add_schema(self, sql: str):
+        self._operations.append((sql, [[]]))
+
+    def add_data(self, model: Type[Model], columns: Iterable[str]):
         queryset = model.objects
         output_columns = []
         for column in columns:
