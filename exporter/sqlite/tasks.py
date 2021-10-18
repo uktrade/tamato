@@ -1,8 +1,4 @@
 import logging
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-from django.conf import settings
 
 from common.celery import app
 from common.models.transactions import Transaction
@@ -27,22 +23,15 @@ def export_and_upload_sqlite() -> bool:
     latest_transaction = Transaction.latest_approved()
     db_name = f"{latest_transaction.order:0>9}.db"
 
-    target_filename = Path(settings.SQLITE_STORAGE_DIRECTORY) / db_name
-    export_filename = storage.generate_filename(str(target_filename))
+    export_filename = storage.generate_filename(db_name)
 
     logger.debug("Checking for need to upload tariff database %s", export_filename)
     if storage.exists(export_filename):
         logger.debug("Database %s already present", export_filename)
         return False
 
-    with TemporaryDirectory(prefix="sqlite") as db_dir:
-        database_path = Path(db_dir) / db_name
-        logger.info("Generating database %s", database_path)
-        sqlite.make_export(database_path)
+    logger.info("Generating database %s", export_filename)
+    sqlite.make_export(storage.get_connection(export_filename))
 
-        logger.info("Uploading database %s", export_filename)
-        with open(database_path, "rb") as database_file:
-            storage.save(export_filename, database_file)
-
-        logger.info("Upload complete")
-        return True
+    logger.info("Upload complete")
+    return True

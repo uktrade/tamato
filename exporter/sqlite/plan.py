@@ -11,7 +11,10 @@ from django.db.models.expressions import Case
 from django.db.models.expressions import Expression
 from django.db.models.expressions import F
 from django.db.models.expressions import When
+from django.db.models.fields import CharField
 from django.db.models.fields import DateField
+from django.db.models.fields import IntegerField
+from django.db.models.fields import TextField
 from django.db.models.functions import Cast
 from django.db.models.functions import Lower
 from django.db.models.functions import Upper
@@ -30,22 +33,29 @@ def column_to_expr(column: str, model: Type[Model]) -> Union[Expression, F]:
     try:
         # Use the column directly if it exists on the model
         field = model._meta.get_field(column)
+        if not issubclass(type(field), (CharField, TextField, IntegerField)):
+            return Cast(field.name, CharField())
         return F(field.name)
     except FieldDoesNotExist:
         field = ValidityMixin.valid_between.field
         if column == "validity_start":
-            return Lower(field.name, output_field=DateField())
+            return Cast(Lower(field.name), output_field=CharField())
         elif column == "validity_end":
             # Our date ranges are inclusive but Postgres stores them as
             # exclusive on the upper bound. Hence we need to subtract a day from
             # the date if we want to get inclusive value.
             return Cast(
-                Upper(field.name, output_field=DateField())
-                - Case(
-                    When(**{f"{field.name}__upper_inc": True}, then=timedelta(days=0)),
-                    default=timedelta(days=1),
+                Cast(
+                    Upper(field.name, output_field=DateField())
+                    - Case(
+                        When(
+                            **{f"{field.name}__upper_inc": True}, then=timedelta(days=0)
+                        ),
+                        default=timedelta(days=1),
+                    ),
+                    output_field=DateField(),
                 ),
-                output_field=DateField(),
+                output_field=CharField(),
             )
         else:
             raise
@@ -99,14 +109,19 @@ class Plan:
     @property
     def operations(self) -> Iterable[Operation]:
         return [
+            ("PRAGMA locking_mode=EXCLUSIVE", [[]]),
+            ("PRAGMA page_size=65536", [[]]),
+            ("PRAGMA synchronous=OFF", [[]]),
+            ("PRAGMA journal_mode=OFF", [[]]),
             ("BEGIN", [[]]),
             *self._operations,
             ("COMMIT", [[]]),
-            ("VACUUM", [[]]),
-            ("PRAGMA optimize", [[]]),
         ]
 
-    def add_table(self, model: Type[Model], columns: Iterable[str]):
+    def add_schema(self, sql: str):
+        self._operations.append((sql, [[]]))
+
+    def add_data(self, model: Type[Model], columns: Iterable[str]):
         queryset = model.objects
         output_columns = []
         for column in columns:

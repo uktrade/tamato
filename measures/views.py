@@ -67,6 +67,8 @@ class MeasureDetail(MeasureMixin, TrackedModelDetailView):
 class MeasureCreateWizard(
     NamedUrlSessionWizardView,
 ):
+    storage_name = "measures.wizard.MeasureCreateSessionStorage"
+
     STEPS = [
         (
             "start",

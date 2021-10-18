@@ -1,3 +1,8 @@
+from functools import cached_property
+from os import path
+
+import apsw
+from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
 
 
@@ -25,3 +30,23 @@ class SQLiteStorage(S3Boto3Storage):
             endpoint_url=settings.SQLITE_S3_ENDPOINT_URL,
             default_acl="private",
         )
+
+    def generate_filename(self, filename: str) -> str:
+        from django.conf import settings
+
+        filename = path.join(
+            settings.SQLITE_STORAGE_DIRECTORY,
+            filename,
+        )
+        return super().generate_filename(filename)
+
+    def exists(self, filename: str) -> bool:
+        return any(self.listdir(filename))
+
+    @cached_property
+    def vfs(self) -> apsw.VFS:
+        return S3VFS(bucket=self.bucket, block_size=65536)
+
+    def get_connection(self, filename: str) -> apsw.Connection:
+        """Creates a new empty SQLite database."""
+        return apsw.Connection(filename, vfs=self.vfs.name)

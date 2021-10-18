@@ -49,7 +49,7 @@ Skip this section if running under docker.
 
 The following dependencies are required to run this app:
  * Python 3.8.x
- * Node 14.16.x
+ * Node 16.8.x
  * Postgres 12.x
  * Redis 5.x
 

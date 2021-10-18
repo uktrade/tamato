@@ -26,7 +26,9 @@ date fields, and any other Postgres-specific features are ignored.
 
 from itertools import chain
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
+import apsw
 from django.apps import apps
 from django.conf import settings
 
@@ -34,23 +36,33 @@ from exporter.sqlite import plan
 from exporter.sqlite import runner
 from exporter.sqlite import tasks  # noqa
 
+SKIPPED_MODELS = {
+    "QuotaEvent",
+}
+
 
 def make_export_plan(sqlite: runner.Runner) -> plan.Plan:
-    import_script = plan.Plan()
     names = (name.split(".")[0] for name in settings.DOMAIN_APPS)
-    models = chain(*[apps.get_app_config(name).get_models() for name in names])
-    for model in models:
-        if model.__name__ == "QuotaEvent":
+    all_models = chain(*[apps.get_app_config(name).get_models() for name in names])
+    models_by_table = {model._meta.db_table: model for model in all_models}
+
+    import_script = plan.Plan()
+    for table, sql in sqlite.tables:
+        model = models_by_table.get(table)
+        if model is None or model.__name__ in SKIPPED_MODELS:
             continue
+
         columns = list(sqlite.read_column_order(model._meta.db_table))
-        import_script.add_table(model, columns)
+        import_script.add_schema(sql)
+        import_script.add_data(model, columns)
 
     return import_script
 
 
-def make_export(path: Path):
-    sqlite = runner.Runner(path)
-    sqlite.make_empty_database()
+def make_export(connection: apsw.Connection):
+    with NamedTemporaryFile() as db_name:
+        sqlite = runner.Runner.make_tamato_database(Path(db_name.name))
+        plan = make_export_plan(sqlite)
 
-    plan = make_export_plan(sqlite)
-    sqlite.run_operations(plan.operations)
+    export = runner.Runner(connection)
+    export.run_operations(plan.operations)

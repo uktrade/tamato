@@ -16,6 +16,7 @@ from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models.fields import Field
 from django.db.models.fields import IntegerField
+from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.functions import Cast
 from django.db.transaction import atomic
 from psycopg2.extras import DateRange
@@ -74,6 +75,14 @@ def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return max(d for d in objs if d is not None)
     except ValueError:
         return None
+
+
+def get_accessor(field: Union[Field, ForeignObjectRel]) -> str:
+    """Return the attribute name used to access the field on the model."""
+    if isinstance(field, ForeignObjectRel):
+        return field.get_accessor_name()
+    else:
+        return field.name
 
 
 class TaricDateRange(DateRange):
