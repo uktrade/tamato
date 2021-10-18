@@ -303,11 +303,11 @@ class MeasureFootnotesUpdate(View):
     """Separate post-only view for adding or removing footnotes on an existing
     measure."""
 
-    def get_delete_key_format(self, footnote_key: str) -> str:
+    def get_delete_key(self, footnote_key: str) -> str:
         """
         Expects a string of format 'form-0-footnote' or 'form-1-footnote' etc.
 
-        Outputs a string of format 'form-0-delete' or 'form-1-delete' etc.
+        Outputs a string of format 'form-0-DELETE' or 'form-1-DELETE' etc.
         """
         split = footnote_key.split("-")
 
@@ -322,6 +322,7 @@ class MeasureFootnotesUpdate(View):
         populate formset, ignoring footnotes marked for deletion in the formset.
         """
         sid = self.kwargs.get("sid")
+
         if "remove" in request.POST:
             request.session[f"instance_footnotes_{sid}"].remove(
                 int(request.POST.get("remove")),
@@ -337,8 +338,7 @@ class MeasureFootnotesUpdate(View):
             request.session[f"formset_initial_{sid}"] = [
                 {"footnote": request.POST[footnote]}
                 for footnote in footnote_keys
-                if self.get_delete_key_format(footnote) not in keys
-                and request.POST[footnote]
+                if self.get_delete_key(footnote) not in keys and request.POST[footnote]
             ]
 
         return HttpResponseRedirect(reverse("measure-ui-edit", args=[sid]))
