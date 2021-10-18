@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import contextlib
-from functools import lru_cache
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Type
-from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 import boto3
@@ -40,8 +38,6 @@ from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import UpdateType
-from exporter.storages import HMRCStorage
-from exporter.storages import SQLiteStorage
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
@@ -468,7 +464,8 @@ def imported_fields_match(run_xml_import, update_type):
 
 @pytest.fixture
 def s3():
-    with mock_s3():
+    with mock_s3() as moto:
+        moto.start()
         s3 = boto3.client("s3")
         yield s3
 
@@ -513,65 +510,47 @@ def s3_object_exists(s3):
     return check
 
 
-@contextlib.contextmanager
-def make_storage_mock(storage_class, **override_settings):
-    with mock_s3():
-        storage = storage_class(**override_settings)
-        session = boto3.session.Session()
+def make_storage_mock(s3, storage_class, **override_settings):
+    storage = storage_class(**override_settings)
+    storage._connections.connection = type(storage.connection)(client=s3)
+    s3.create_bucket(
+        Bucket=storage.bucket_name,
+        CreateBucketConfiguration={
+            "LocationConstraint": settings.AWS_S3_REGION_NAME,
+        },
+    )
 
-        with patch(
-            "storages.backends.s3boto3.S3Boto3Storage.connection",
-            new_callable=PropertyMock,
-        ) as mock_connection_property, patch(
-            "storages.backends.s3boto3.S3Boto3Storage.bucket",
-            new_callable=PropertyMock,
-        ) as mock_bucket_property:
-            # By default Motos mock_s3 doesn't stop S3Boto3Storage from connection to s3.
-            # Patch the connection and bucket properties on it to use Moto instead.
-            @lru_cache(None)
-            def get_connection():
-                return session.resource("s3")
-
-            @lru_cache(None)
-            def get_bucket():
-                connection = get_connection()
-                connection.create_bucket(
-                    Bucket=storage.bucket_name,
-                    CreateBucketConfiguration={
-                        "LocationConstraint": settings.AWS_S3_REGION_NAME,
-                    },
-                )
-
-                bucket = connection.Bucket(storage.bucket_name)
-                return bucket
-
-            mock_connection_property.side_effect = get_connection
-            mock_bucket_property.side_effect = get_bucket
-            yield storage
+    return storage
 
 
 @pytest.fixture
-def hmrc_storage():
+def hmrc_storage(s3):
     """Patch HMRCStorage with moto so that nothing is really uploaded to s3."""
-    with make_storage_mock(
+    from exporter.storages import HMRCStorage
+
+    return make_storage_mock(
+        s3,
         HMRCStorage,
         bucket_name=settings.HMRC_STORAGE_BUCKET_NAME,
-    ) as storage:
-        yield storage
+    )
 
 
 @pytest.fixture
-def sqlite_storage():
+def sqlite_storage(s3, s3_bucket_names):
     """Patch SQLiteStorage with moto so that nothing is really uploaded to
     s3."""
-    with make_storage_mock(
+    from exporter.storages import SQLiteStorage
+
+    storage = make_storage_mock(
+        s3,
         SQLiteStorage,
         bucket_name=settings.SQLITE_STORAGE_BUCKET_NAME,
-    ) as storage:
-        assert storage.endpoint_url is settings.SQLITE_S3_ENDPOINT_URL
-        assert storage.access_key is settings.SQLITE_S3_ACCESS_KEY_ID
-        assert storage.secret_key is settings.SQLITE_S3_SECRET_ACCESS_KEY
-        yield storage
+    )
+    assert storage.endpoint_url is settings.SQLITE_S3_ENDPOINT_URL
+    assert storage.access_key is settings.SQLITE_S3_ACCESS_KEY_ID
+    assert storage.secret_key is settings.SQLITE_S3_SECRET_ACCESS_KEY
+    assert storage.bucket_name in s3_bucket_names()
+    return storage
 
 
 @pytest.fixture(
