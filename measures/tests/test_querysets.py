@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -73,35 +74,30 @@ def test_duty_sentence_generation(
     assert test_instance.duty_sentence == expected
 
 
-def test_get_measures_in_effect(date_ranges):
-    effective_measure = factories.MeasureFactory.create()
-    ineffective_measure = factories.MeasureFactory.create(
-        valid_between=date_ranges.later,
-    )
-    qs = Measure.objects.get_measures_in_effect()
-
-    assert effective_measure in qs
-    assert ineffective_measure not in qs
-
-
 def test_get_measures_not_in_effect(date_ranges):
+    """Tests that only measures whose validity_field_name
+    (`db_effective_valid_between` in this case) does not contain the selected
+    date are returned."""
     effective_measure = factories.MeasureFactory.create()
     ineffective_measure = factories.MeasureFactory.create(
         valid_between=date_ranges.later,
     )
-    qs = Measure.objects.get_measures_not_in_effect()
+    qs = Measure.objects.get_objects_not_in_effect(date.today())
 
     assert effective_measure not in qs
     assert ineffective_measure in qs
 
 
 def test_get_measures_no_longer_in_effect(date_ranges):
+    """Tests that only measures whose validity_field_name
+    (`db_effective_valid_between` in this case) does not contain the selected
+    date and does not fall after the selected date are returned."""
     effective_measure = factories.MeasureFactory.create()
     future_measure = factories.MeasureFactory.create(valid_between=date_ranges.later)
     measure_no_longer_in_effect = factories.MeasureFactory.create(
         valid_between=date_ranges.earlier,
     )
-    qs = Measure.objects.get_measures_no_longer_in_effect()
+    qs = Measure.objects.get_objects_no_longer_in_effect(date.today())
 
     assert effective_measure not in qs
     assert future_measure not in qs
@@ -109,51 +105,29 @@ def test_get_measures_no_longer_in_effect(date_ranges):
 
 
 def test_get_measures_not_yet_in_effect(date_ranges):
+    """Tests that only measures whose validity_field_name
+    (`db_effective_valid_between` in this case) begins after the selected date
+    are returned."""
     effective_measure = factories.MeasureFactory.create()
     future_measure = factories.MeasureFactory.create(valid_between=date_ranges.later)
     measure_no_longer_in_effect = factories.MeasureFactory.create(
         valid_between=date_ranges.earlier,
     )
-    qs = Measure.objects.get_measures_not_yet_in_effect()
+    qs = Measure.objects.get_objects_not_yet_in_effect(date.today())
 
     assert effective_measure not in qs
     assert future_measure in qs
     assert measure_no_longer_in_effect not in qs
 
 
-def test_get_measures_current():
-    previous_measure = factories.MeasureFactory.create()
-    current_measure = factories.MeasureFactory.create(
-        version_group=previous_measure.version_group,
-    )
-    qs = Measure.objects.get_measures_current()
-
-    assert previous_measure not in qs
-    assert current_measure in qs
-
-
 def test_get_measures_not_current():
+    """Tests that only measures which are not the latest approved version are
+    returned."""
     previous_measure = factories.MeasureFactory.create()
     current_measure = factories.MeasureFactory.create(
         version_group=previous_measure.version_group,
     )
-    qs = Measure.objects.get_measures_not_current()
+    qs = Measure.objects.get_objects_not_current()
 
     assert previous_measure in qs
     assert current_measure not in qs
-
-
-def test_get_measures_current_and_in_effect(date_ranges):
-    previous_measure = factories.MeasureFactory.create()
-    current_effective_measure = factories.MeasureFactory.create(
-        version_group=previous_measure.version_group,
-    )
-    ineffective_measure = factories.MeasureFactory.create(
-        valid_between=date_ranges.earlier,
-    )
-
-    qs = Measure.objects.get_measures_current_and_in_effect()
-
-    assert previous_measure not in qs
-    assert current_effective_measure in qs
-    assert ineffective_measure not in qs
