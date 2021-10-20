@@ -275,8 +275,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         depth = self.extra_data.pop("indent")
         data.update(**self.extra_data)
         if "indented_goods_nomenclature_id" in data:
+            pk = data.pop("indented_goods_nomenclature_id")
             data["indented_goods_nomenclature"] = models.GoodsNomenclature.objects.get(
-                pk=data.pop("indented_goods_nomenclature_id"),
+                pk=pk,
             )
         item_id = data["indented_goods_nomenclature"].item_id
         data["indented_goods_nomenclature"].suffix
