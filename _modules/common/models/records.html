@@ -78,6 +78,7 @@
 <span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">NumericSID</span>
 <span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">SignedIntSID</span>
 <span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span> <span class="nn">common.querysets</span> <span class="kn">import</span> <span class="n">ValidityQuerySet</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">classproperty</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
@@ -85,7 +86,7 @@
 <span class="n">Cls</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Cls&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="TrackedModelQuerySet"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet">[docs]</a><span class="k">class</span> <span class="nc">TrackedModelQuerySet</span><span class="p">(</span><span class="n">PolymorphicQuerySet</span><span class="p">,</span> <span class="n">CTEQuerySet</span><span class="p">):</span>
+<div class="viewcode-block" id="TrackedModelQuerySet"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet">[docs]</a><span class="k">class</span> <span class="nc">TrackedModelQuerySet</span><span class="p">(</span><span class="n">PolymorphicQuerySet</span><span class="p">,</span> <span class="n">CTEQuerySet</span><span class="p">,</span> <span class="n">ValidityQuerySet</span><span class="p">):</span>
 <div class="viewcode-block" id="TrackedModelQuerySet.latest_approved"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet.latest_approved">[docs]</a>    <span class="k">def</span> <span class="nf">latest_approved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get all the latest versions of the model being queried which have been</span>
