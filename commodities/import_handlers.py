@@ -1,7 +1,9 @@
 import logging
 import random
 import time
+from datetime import date
 from datetime import timedelta
+from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
@@ -184,6 +186,90 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         self.extra_data["indent"] = int(data["indent"])
         return super(GoodsNomenclatureIndentHandler, self).clean(data)
 
+    def set_preceding_node_end_date(
+        self,
+        indent: models.GoodsNomenclatureIndent,
+    ) -> None:
+        """
+        End-dates the node of the preceding indent, if there is one.
+
+        Background:
+        - In the Taric3 specification, goods_nomenclature_indent records
+        have an explicit validity start date, while the end date is implied
+        conditional on the existence of a succeeding indent for the same good.
+
+        - When we materialize the goods nomenclature hierarchy tree,
+        we use the `GoodsNomenclatureIndentNode` model (not in Taric3 spec),
+        which is designed to have explicit validity end dates.
+
+        This means that when a new `goods_nomenclature_indent` record
+        is created on an existing `goods_nomenclature` record,
+        we have to make sure to explicitly end-date the related
+        `GoodsNomenclatureIndentNode` object.
+
+        If we failed to sync the end dates of the indent and the node,
+        one of two issues would occur:
+        1. The materialized goods nomenclature hierarchy tree
+        could end up being incorrect for some time spans
+        2. An exception could be thrown in the `save` method of this class:
+        when we pick the wrong parent indent, its implied end date
+        might be lower than the start date of a new node
+        we are trying to attach to the tree.
+        """
+        indents = indent.indented_goods_nomenclature.indents
+
+        preceding_indent = (
+            indents.filter(
+                validity_start__lt=indent.validity_start,
+            )
+            .order_by("validity_start")
+            .last()
+        )
+
+        if not preceding_indent:
+            return
+
+        preceding_node = models.GoodsNomenclatureIndentNode.objects.get(
+            indent=preceding_indent,
+        )
+
+        valid_between = TaricDateRange(
+            preceding_node.valid_between.lower,
+            indent.validity_start - timedelta(days=1),
+        )
+
+        preceding_node.update(valid_between=valid_between)
+
+    def get_indent_end_date(
+        self,
+        indent: models.GoodsNomenclatureIndent,
+    ) -> Optional[date]:
+        """
+        Return the implied end date for an indent when there is a succeeding
+        indent.
+
+        See the docs to `self.set_preceding_node_end_date` for context.
+
+        If a new indent comes in and it already has a succeeding future indent,
+        then we need to use the implied end date for the new indent
+        as the explicit end date for the new indent's related
+        `GoodsNomenclatureIndentNode` object we are about to create.
+        """
+        indents = indent.indented_goods_nomenclature.indents
+
+        successing_indent = (
+            indents.filter(
+                validity_start__lt=indent.validity_start,
+            )
+            .order_by("validity_start")
+            .last()
+        )
+
+        if not successing_indent:
+            return
+
+        return successing_indent.validity_start - timedelta(days=-1)
+
     @transaction.atomic
     def save(self, data: dict):
         depth = self.extra_data.pop("indent")
@@ -193,9 +279,11 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                 pk=data.pop("indented_goods_nomenclature_id"),
             )
         item_id = data["indented_goods_nomenclature"].item_id
-        suffix = data["indented_goods_nomenclature"].suffix
+        data["indented_goods_nomenclature"].suffix
 
         indent = super().save(data)
+        self.set_preceding_node_end_date(indent)
+
         indent = models.GoodsNomenclatureIndent.objects.with_end_date().get(
             pk=indent.pk,
         )
@@ -212,30 +300,8 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             models.GoodsNomenclatureIndentNode.add_root(**node_data)
             return indent
 
-        chapter_heading = item_id[:2]
-
-        parent_depth = depth + 1
-
-        # In some cases, where there are phantom headers at the 4 digit level
-        # in a chapter, the depth is shifted by + 1.
-        # A phantom header is any good with a suffix != "80". In the real world
-        # this represents a good that does not appear in any legislature and is
-        # non-declarable. i.e. it does not exist outside of the database and is
-        # purely for "convenience". This algorithm doesn't apply to chapter 99.
-        extra_headings = (
-            models.GoodsNomenclature.objects.filter(
-                item_id__startswith=chapter_heading,
-                item_id__endswith="000000",
-            )
-            .exclude(suffix="80")
-            .exists()
-        ) and chapter_heading != "99"
-
-        if extra_headings and (
-            item_id[-6:] != "000000"
-            or data["indented_goods_nomenclature"].suffix == "80"
-        ):
-            parent_depth += 1
+        indent_shift = indent.indented_goods_nomenclature.indent_shift
+        parent_depth = depth + 1 + indent_shift
 
         start_date = data["validity_start"]
         end_date = maybe_min(
@@ -254,35 +320,24 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                 ).get()
                 logger.info("Using manual override for indent %s", defn)
             else:
-                next_parent = (
-                    models.GoodsNomenclatureIndentNode.objects.filter(
-                        Q(indent__indented_goods_nomenclature__item_id__lt=item_id)
-                        | Q(
-                            indent__indented_goods_nomenclature__item_id=item_id,
-                            indent__indented_goods_nomenclature__suffix__lt=suffix,
-                        ),
-                        indent__indented_goods_nomenclature__item_id__startswith=chapter_heading,
-                        indent__indented_goods_nomenclature__valid_between__contains=start_date,
-                        indent__validity_start__lte=start_date,
-                        valid_between__contains=start_date,
-                        depth=parent_depth,
-                    )
-                    .order_by("-indent__indented_goods_nomenclature__item_id")
-                    .first()
-                )
+                next_parent = indent.get_parent_node(parent_depth)
             if not next_parent:
                 raise InvalidIndentError(
                     f"Parent indent not found for {item_id} for date {start_date}",
                 )
 
+            next_parent_indent = (
+                models.GoodsNomenclatureIndent.objects.with_end_date().get(
+                    pk=next_parent.indent.pk,
+                )
+            )
             indent_start = start_date
             indent_end = maybe_min(
                 next_parent.valid_between.upper,
-                models.GoodsNomenclatureIndent.objects.with_end_date()
-                .get(pk=next_parent.indent.pk)
-                .validity_end,
+                next_parent_indent.validity_end,
                 next_parent.indent.indented_goods_nomenclature.valid_between.upper,
                 end_date,
+                self.get_indent_end_date(indent),
             )
 
             node_data["valid_between"] = TaricDateRange(indent_start, indent_end)
@@ -396,7 +451,11 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         This method finds all possible children of a new indent and queries to
         see if any should be moved from their current parent to the new indent.
         """
-        nodes = obj.nodes.all()
+        try:
+            nodes = obj.nodes.all()
+        except (AttributeError, TypeError):
+            return
+
         excluded_nodes = [
             Q(nodes__path__startswith=path)
             for path in nodes.values_list("path", flat=True)
