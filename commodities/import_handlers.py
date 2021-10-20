@@ -279,7 +279,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         return succeeding_indent.validity_start - timedelta(days=-1)
 
-    # @transaction.atomic
+    @transaction.atomic
     def save(self, data: dict):
         depth = self.extra_data.pop("indent")
         data.update(**self.extra_data)
