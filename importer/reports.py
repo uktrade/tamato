@@ -158,9 +158,15 @@ class CommodityChangeReports:
 
     @property
     def affected_measures(self) -> tuple[Measure]:
-        goods_records = self.updated_goods + self.deleted_goods
+        """
+        Returns all affected measures in the import.
 
-        codes = [record.item_id for record in goods_records]
+        NOTE: This method presumes that the imported envelope
+        was filtered to only process commodity changes.
+        Therefore, any changes to measures in this workbasket
+        would be the result of preemptive actions
+        taken by the commodity change handler.
+        """
 
         return tuple(
             [
@@ -169,12 +175,12 @@ class CommodityChangeReports:
                 if transaction.order < 0
                 for record in transaction.tracked_models.all()
                 if type(record) == Measure
-                if record.goods_nomenclature.item_id in codes
             ],
         )
 
     @property
     def goods(self) -> tuple[GoodsNomenclature]:
+        """Returns all goods_nomenclature records in the workbasket."""
         return tuple(
             [
                 record
@@ -186,20 +192,24 @@ class CommodityChangeReports:
 
     @property
     def created_goods(self) -> tuple[GoodsNomenclature]:
+        """Returns created goods_nomenclature records in the workbasket."""
         return self._get_goods_by_update_type(UpdateType.CREATE)
 
     @property
     def deleted_goods(self) -> tuple[GoodsNomenclature]:
+        """Returns deleted goods_nomenclature records in the workbasket."""
         return self._get_goods_by_update_type(UpdateType.DELETE)
 
     @property
     def updated_goods(self) -> tuple[GoodsNomenclature]:
+        """Returns updated goods_nomenclature records in the workbasket."""
         return self._get_goods_by_update_type(UpdateType.UPDATE)
 
     def _get_goods_by_update_type(
         self,
         update_type: UpdateType,
     ) -> tuple[GoodsNomenclature]:
+        """Returns goods records in the workbasket with the update type."""
         return tuple(
             sorted(
                 [record for record in self.goods if record.update_type == update_type],
