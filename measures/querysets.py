@@ -12,7 +12,6 @@ from django.db.models.functions.text import Trim
 
 from common.fields import TaricDateRangeField
 from common.models.records import TrackedModelQuerySet
-from common.querysets import ValidityQuerySet
 
 
 class DutySentenceMixin(QuerySet):
@@ -149,7 +148,7 @@ class DutySentenceMixin(QuerySet):
         )
 
 
-class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin, ValidityQuerySet):
+class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
     def with_effective_valid_between(self):
         """
         In many cases the measures regulation effective_end_date overrides the

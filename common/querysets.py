@@ -1,14 +1,10 @@
 from datetime import date
-from typing import Optional
 
-from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
 
-from common.models import Transaction
 
-
-class ValidityQuerySet(models.QuerySet):
+class ValidityQuerySet(QuerySet):
     def objects_with_validity_field(self):
         return self.model.objects_with_validity_field()
 
@@ -39,7 +35,7 @@ class ValidityQuerySet(models.QuerySet):
 
     def not_current(
         self,
-        asof_transaction: Optional[Transaction] = None,
+        asof_transaction=None,
     ) -> QuerySet:
         current = self.approved_up_to_transaction(asof_transaction)
 
