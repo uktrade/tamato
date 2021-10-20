@@ -158,7 +158,9 @@ class CommodityChangeReports:
 
     @property
     def affected_measures(self) -> tuple[Measure]:
-        codes = [record.item_id for record in self.updated_goods + self.deleted_goods]
+        goods_records = self.updated_goods + self.deleted_goods
+
+        codes = [record.item_id for record in goods_records]
 
         return tuple(
             [
@@ -167,7 +169,7 @@ class CommodityChangeReports:
                 if transaction.order < 0
                 for record in transaction.tracked_models.all()
                 if type(record) == Measure
-                if record.item_id in codes
+                if record.goods_nomenclature.item_id in codes
             ],
         )
 
