@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
+from datetime import timedelta
+from typing import Optional
 from typing import Set
 
 from django.db import models
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from polymorphic.managers import PolymorphicManager
 from treebeard.mp_tree import MP_Node
 
@@ -195,6 +199,46 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     def is_taric_code(self) -> bool:
         return self.code.is_taric_code
 
+    @property
+    def indent_shift(self) -> int:
+        """
+        Returns the depth offset for the good.
+
+        Indent shifts come into play when we need to construct
+        a goods nomenclature hierarchy tree.
+
+        In some cases, where there are phantom headers at the 4 digit level
+        in a chapter, the indent is shifted by + 1.
+        A phantom header is any good with a suffix != "80". In the real world
+        this represents a good that does not appear in any legislature and is
+        non-declarable. i.e. it does not exist outside of the database and is
+        purely for "convenience". This algorithm doesn't apply to chapter 99.
+        """
+        chapter = self.code.chapter
+        indent_shift = 0
+
+        # In some cases, where there are phantom headers at the 4 digit level
+        # in a chapter, the depth is shifted by + 1.
+        # A phantom header is any good with a suffix != "80". In the real world
+        # this represents a good that does not appear in any legislature and is
+        # non-declarable. i.e. it does not exist outside of the database and is
+        # purely for "convenience". This algorithm doesn't apply to chapter 99.
+        extra_headings = (
+            GoodsNomenclature.objects.filter(
+                item_id__startswith=chapter,
+                item_id__endswith="000000",
+            )
+            .exclude(suffix="80")
+            .exists()
+        ) and chapter != "99"
+
+        if extra_headings and (
+            self.good.item_id[-6:] != "000000" or self.good.suffix == "80"
+        ):
+            indent_shift += 1
+
+        return indent_shift
+
     def in_use(self):
         return self.dependent_measures.exists()
 
@@ -230,6 +274,85 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
             )
 
         return GoodsNomenclatureIndent.objects.filter(parent_path_query)
+
+    @property
+    def good_indents(self) -> QuerySet:
+        """Return the related goods indents based on approval status."""
+        good = self.indented_goods_nomenclature
+        return good.indents.approved_up_to_transaction(
+            self.transaction,
+        )
+
+    @property
+    def preceding_indent(self) -> Optional[GoodsNomenclatureIndent]:
+        """Returns the node indent's predecessor in time, if any."""
+        return (
+            self.good_indents.filter(
+                validity_start__lt=self.validity_start,
+            )
+            .order_by("validity_start")
+            .last()
+        )
+
+    @property
+    def succeeding_indent(self) -> Optional[GoodsNomenclatureIndent]:
+        """Returns the node indent's successor in time, if any."""
+        return (
+            self.good_indents.filter(
+                validity_start__gt=self.validity_start,
+            )
+            .order_by("validity_start")
+            .first()
+        )
+
+    def get_parent_node(self, parent_depth: int) -> GoodsNomenclatureIndent:
+        """
+        Returns the parent of the indent given a parent depth.
+
+        This method is attached here so it can be used on indents
+        that do not have an indent node yet
+        (for example, new indents while being imported).
+
+        This method does not trust paths by definition.
+        """
+        good = self.indented_goods_nomenclature
+        item_id = good.item_id
+        chapter = good.code.chapter
+        suffix = good.suffix
+        validity_start = self.validity_start
+
+        qs = GoodsNomenclatureIndentNode.objects
+        parent: GoodsNomenclatureIndent = (
+            qs.filter(
+                Q(indent__indented_goods_nomenclature__item_id__lt=item_id)
+                | Q(
+                    indent__indented_goods_nomenclature__item_id=item_id,
+                    indent__indented_goods_nomenclature__suffix__lt=suffix,
+                ),
+                indent__indented_goods_nomenclature__item_id__startswith=chapter,
+                indent__indented_goods_nomenclature__valid_between__contains=validity_start,
+                indent__validity_start__lte=validity_start,
+                valid_between__contains=validity_start,
+                depth=parent_depth,
+            )
+            .order_by(
+                "-indent__indented_goods_nomenclature__item_id",
+                "-indent__validity_start",
+                "-creating_transaction",
+            )
+            .first()
+        )
+
+        # The end dates on some historically created nodes
+        # may have not been synced with the implied end date of their indent
+        # when a succeeding indent has been introduced at a later point in time.
+        # This can cause the above query to yield the wrong parent.
+        # The extra logic below catches and remedies such potential cases.
+        # TODO: Handle situations with multiple wrong patterns
+        effective_end_date = parent.effective_end_date
+
+        if effective_end_date and effective_end_date < self.validity_start:
+            parent = parent.succeeding_node
 
     def save(self, *args, **kwargs):
         return_value = super().save(*args, **kwargs)
@@ -357,6 +480,85 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
             )
 
         return new_valid_between
+
+    @property
+    def parent_depth(self) -> int:
+        """
+        Returns parent depth factoring in the good's indent shift.
+
+        See the docs to `GoodsNomenclature.indent_shift` for context.
+        """
+        return self.depth + 1 + self.good.indent_shift
+
+    @property
+    def good(self) -> GoodsNomenclature:
+        """Returns the node indent's indented good."""
+        return self.indent.indented_goods_nomenclature
+
+    @property
+    def preceding_node(self) -> Optional[GoodsNomenclatureIndentNode]:
+        """Returns the precessor to this node, if any."""
+        indent = self.indent.preceding_indent
+
+        if not indent:
+            return
+
+        return indent.nodes.order_by(
+            "valid_between__startswith",
+        ).last()
+
+    @property
+    def succeeding_node(self) -> Optional[GoodsNomenclatureIndentNode]:
+        """Returns the successor to this node, if any."""
+        indent = self.indent.succeeding_indent
+
+        if not indent:
+            return
+
+        return indent.nodes.order_by(
+            "valid_between__startswith",
+        ).first()
+
+    @property
+    def effective_end_date(self) -> date:
+        """
+        Returns the effective end date for the node.
+
+        Context:
+        Historically, the goods hierarchy tree was broken for some time spans.
+        The root cause has been fixed for future imports
+        (see `GoodsNomenclatureIndentHandler.set_preceding_node_enddate`).
+        However, legacy broken tree areas still exist;
+        for nodes whose explicit end date has not been updated in the past
+        when the related indent's implicit end date changed
+        (e.g. due to the introduction of a succeeding indent),
+        we need to be able to tell the effective end dates of such nodes,
+        which are constrained by the implicit end date of the related indent.
+        """
+        indent = self.indent.succeeding_indent
+
+        if not indent:
+            return self.valid_between.upper
+
+        return indent.validity_start + timedelta(days=-1)
+
+    @property
+    def effective_valid_between(self) -> TaricDateRange:
+        """
+        Returns the effective validity range for the node.
+
+        Context:
+        See the docs for the `effective_end_date` method of this class.
+        """
+        return TaricDateRange(
+            self.valid_between.lower,
+            self.effective_end_date,
+        )
+
+    @property
+    def parent(self) -> GoodsNomenclatureIndentNode:
+        """Returns the parent of the node."""
+        return self.indent.get_parent_node(self.parent_depth)
 
     @transaction.atomic
     def copy_tree(
