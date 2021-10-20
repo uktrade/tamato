@@ -1598,14 +1598,18 @@ class CommodityChangeRecordLoader:
             .first()
         )
 
-        try:
-            return GoodsNomenclature.objects.approved_up_to_transaction(
+        return (
+            GoodsNomenclature.objects.approved_up_to_transaction(
                 transaction,
-            ).get(
+            )
+            .filter(
                 item_id=commodity_code,
             )
-        except GoodsNomenclature.DoesNotExist:
-            return None
+            .order_by(
+                "transaction__order",
+            )
+            .last()
+        )
 
     def _get_current_commodity(
         self,

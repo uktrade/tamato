@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 from collections import OrderedDict
 from contextlib import closing
 from typing import Any
@@ -14,6 +15,8 @@ from commodities.models import GoodsNomenclature
 from common.validators import UpdateType
 from measures.models import Measure
 from workbaskets.models import WorkBasket
+
+logger = logging.getLogger(__name__)
 
 API_PROTOCOL = "https"
 API_HOST = "data.api.trade.gov.uk"
@@ -105,10 +108,11 @@ def get_filtered_mad_items(
 
         for item in filtered_reader:
             regulation = (
-                Measure.objects.latest_approved()
-                .get(
+                Measure.objects.filter(
                     sid=item[MAD_MEASURE_SID],
                 )
+                .order_by("id")
+                .last()
                 .generating_regulation
             )
 
@@ -141,13 +145,31 @@ def get_measures_mad_items(
 
 class CommodityChangeReports:
     def __init__(self, workbasket: WorkBasket) -> None:
+        self.workbasket = workbasket
         self.transactions = workbasket.transactions.all()
 
     def report_affected_measures(
         self,
         as_defined: Optional[bool] = True,
     ) -> TMadItemGenerator:
-        return get_measures_mad_items(self.affected_measures)
+        data = tuple(
+            get_measures_mad_items(
+                self.affected_measures,
+                as_defined,
+            ),
+        )
+
+        name = f"env/{self.workbasket.title}.csv"
+        fieldnames = data[0].keys()
+
+        with open(name, "w") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(data)
+
+        logger.info(data)
+
+        return data
 
     def report_related_measures(
         self,

@@ -272,5 +272,4 @@ def process_taric_xml_stream(taric_stream, status, username):
                 elem.clear()
 
     reports = CommodityChangeReports(handler.workbasket)
-    items = [item for item in reports.report_affected_measures()]
-    print(items)
+    reports.report_affected_measures()

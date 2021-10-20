@@ -354,6 +354,8 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         if effective_end_date and effective_end_date < self.validity_start:
             parent = parent.succeeding_node
 
+        return parent
+
     def save(self, *args, **kwargs):
         return_value = super().save(*args, **kwargs)
 
