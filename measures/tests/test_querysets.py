@@ -74,7 +74,7 @@ def test_duty_sentence_generation(
     assert test_instance.duty_sentence == expected
 
 
-def test_get_measures_not_in_effect(date_ranges):
+def test_measures_not_in_effect(date_ranges):
     """Tests that only measures whose validity_field_name
     (`db_effective_valid_between` in this case) does not contain the selected
     date are returned."""
@@ -82,7 +82,7 @@ def test_get_measures_not_in_effect(date_ranges):
     ineffective_measure = factories.MeasureFactory.create(
         valid_between=date_ranges.later,
     )
-    qs = Measure.objects.get_objects_not_in_effect(date.today())
+    qs = Measure.objects.not_in_effect(date.today())
 
     assert effective_measure not in qs
     assert ineffective_measure in qs
@@ -97,7 +97,7 @@ def test_get_measures_no_longer_in_effect(date_ranges):
     measure_no_longer_in_effect = factories.MeasureFactory.create(
         valid_between=date_ranges.earlier,
     )
-    qs = Measure.objects.get_objects_no_longer_in_effect(date.today())
+    qs = Measure.objects.no_longer_in_effect(date.today())
 
     assert effective_measure not in qs
     assert future_measure not in qs
@@ -113,7 +113,7 @@ def test_get_measures_not_yet_in_effect(date_ranges):
     measure_no_longer_in_effect = factories.MeasureFactory.create(
         valid_between=date_ranges.earlier,
     )
-    qs = Measure.objects.get_objects_not_yet_in_effect(date.today())
+    qs = Measure.objects.not_yet_in_effect(date.today())
 
     assert effective_measure not in qs
     assert future_measure in qs
@@ -127,7 +127,7 @@ def test_get_measures_not_current():
     current_measure = factories.MeasureFactory.create(
         version_group=previous_measure.version_group,
     )
-    qs = Measure.objects.get_objects_not_current()
+    qs = Measure.objects.not_current()
 
     assert previous_measure in qs
     assert current_measure not in qs
