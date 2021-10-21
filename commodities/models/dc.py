@@ -35,7 +35,6 @@ from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
 from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
@@ -524,7 +523,8 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     def get_dependent_measures(self, commodity: Commodity) -> MeasuresQuerySet:
         if commodity not in self.commodities:
-            raise ValueError(f"Commodity {commodity} not found in this snapshot.")
+            logger.warning(f"Commodity {commodity} not found in this snapshot.")
+            return Measure.objects.none()
 
         qs = Measure.objects.filter(
             goods_nomenclature__item_id=commodity.get_item_id(),
@@ -953,13 +953,13 @@ class CommodityChange(BaseModel):
         """
         if self.candidate is not None:
             candidate = self.collection.get_commodity(
-                self.candidate.code,
-                self.candidate.suffix,
+                self.candidate.get_item_id(),
+                self.candidate.get_suffix(),
             )
         if self.current is not None:
             current = self.collection.get_commodity(
-                self.current.code,
-                self.current.suffix,
+                self.current.get_item_id(),
+                self.current.get_suffix(),
             )
 
         if self.update_type == UpdateType.CREATE:
@@ -1531,12 +1531,8 @@ class CommodityChangeRecordLoader:
         if not good:
             good = indent.indented_goods_nomenclature
 
-        current = self._get_current_commodity(
-            commodity_code,
-            good.update_type,
-            good.transaction.order,
-            indent.indent if indent else None,
-        )
+        indent_ = indent.indent if indent else None
+        current = self._get_current_commodity(good, indent_)
 
         candidate = self._create_candidate_commodity(good)
 
@@ -1576,57 +1572,18 @@ class CommodityChangeRecordLoader:
 
         return UpdateType.UPDATE
 
-    def _get_current_good(
-        self,
-        commodity_code: str,
-        transaction_order: int,
-    ) -> Optional[GoodsNomenclature]:
-        """
-        Returns the current goods object for this commodity code up to the
-        record transaction.
-
-        TODO: Should this not check for suffix as well?
-        """
-        transaction = (
-            Transaction.objects.filter(
-                order=transaction_order,
-                workbasket__status=WorkflowStatus.PUBLISHED,
-            )
-            .exclude(
-                workbasket__id=1,
-            )
-            .first()
-        )
-
-        return (
-            GoodsNomenclature.objects.approved_up_to_transaction(
-                transaction,
-            )
-            .filter(
-                item_id=commodity_code,
-            )
-            .order_by(
-                "transaction__order",
-            )
-            .last()
-        )
-
     def _get_current_commodity(
         self,
-        commodity_code: str,
-        update_type: UpdateType,
-        transaction_order: int,
+        good: GoodsNomenclature,
         indent: Optional[int] = None,
     ) -> Optional[Commodity]:
         """Returns a commodity wrapper for the current good object as of the
         record transaction."""
-        if update_type == UpdateType.CREATE:
+        if good.update_type == UpdateType.CREATE:
             return None
 
-        current_good = self._get_current_good(commodity_code, transaction_order)
-
         return Commodity(
-            obj=current_good,
+            obj=good,
             indent=indent,
         )
 
@@ -1649,13 +1606,10 @@ class CommodityChangeRecordLoader:
         if "upper" not in valid_between:
             valid_between["upper"] = None
 
-        try:
-            start_date, end_date = map(
-                lambda x: date(*map(int, x.split("-"))) if x else None,
-                valid_between.values(),
-            )
-        except ValueError:
-            print(1)
+        start_date, end_date = map(
+            lambda x: date(*map(int, x.split("-"))) if x else None,
+            valid_between.values(),
+        )
 
         return TaricDateRange(start_date, end_date)
 
