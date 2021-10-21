@@ -37,6 +37,7 @@ from common.exceptions import NoDescriptionError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.querysets import ValidityQuerySet
 from common.util import classproperty
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
@@ -44,7 +45,7 @@ from workbaskets.validators import WorkflowStatus
 Cls = TypeVar("Cls")
 
 
-class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
+class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
