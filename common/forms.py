@@ -180,12 +180,13 @@ class ValidityPeriodForm(forms.ModelForm):
             month=int(month),
             year=int(year),
         )
-        day, month, year = (end_date.day, end_date.month, end_date.year)
-        self.fields["end_date"].initial = date(
-            day=int(day),
-            month=int(month),
-            year=int(year),
-        )
+        if end_date:
+            day, month, year = (end_date.day, end_date.month, end_date.year)
+            self.fields["end_date"].initial = date(
+                day=int(day),
+                month=int(month),
+                year=int(year),
+            )
 
         return cleaned_data
 
