@@ -238,7 +238,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             indent.validity_start - timedelta(days=1),
         )
 
-        preceding_node.update(valid_between=valid_between)
+        # The preceding node itself needs to be fixed, update and save
+        preceding_node.valid_between = valid_between
+        preceding_node.save()
 
     def get_indent_end_date(
         self,
