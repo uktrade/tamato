@@ -11,7 +11,8 @@ from typing import Optional
 
 import requests
 
-from commodities.models import GoodsNomenclature
+from commodities.models.orm import CommodityCode
+from commodities.models.orm import GoodsNomenclature
 from common.validators import UpdateType
 from measures.models import Measure
 from workbaskets.models import WorkBasket
@@ -37,6 +38,7 @@ CMT_DUTY_EXPRRESSION = "Duty Expression"
 CMT_EXCLUDED_ORIGINS = "Excluded Origins"
 CMT_FOOTNOTES = "Footnotes"
 CMT_MEASURE_END_DATE = "End Date"
+CMT_MEASURE_SID = "SID"
 CMT_MEASURE_START_DATE = "Start Date"
 CMT_MEASURE_TYPE_DESCRIPTION = "Measure Type Description"
 CMT_ORIGIN = "Origin"
@@ -56,6 +58,7 @@ CMT_HEADERS = (
     CMT_ADDITIONAL_CODE,
     CMT_FOOTNOTES,
     CMT_CONDITIONS,
+    CMT_MEASURE_SID,
 )
 
 MAD_ADDITIONAL_CODE = "measure__additional_code__code"
@@ -87,6 +90,7 @@ MAPPING_MAD_CMT = (
     (MAD_ADDITIONAL_CODE, CMT_ADDITIONAL_CODE),
     (MAD_FOOTNOTES, CMT_FOOTNOTES),
     (MAD_CONDITIONS, CMT_CONDITIONS),
+    (MAD_MEASURE_SID, CMT_MEASURE_SID),
 )
 
 
@@ -159,15 +163,27 @@ class CommodityChangeReports:
             ),
         )
 
-        name = f"env/{self.workbasket.title}.csv"
+        if not data:
+            logger.info("There were no affected measures")
+            return
+
+        measures = {m.sid: m for m in self.affected_measures}
+        for item in data:
+            sid = int(item[CMT_MEASURE_SID])
+            measure = measures[sid]
+            item["Change summary"] = UpdateType(measure.update_type).name.lower()
+
+            item_id = item[CMT_COMMODITY_CODE]
+            code = CommodityCode(code=item_id)
+            item["Measure level"] = len(code.trimmed_code)
+
+        path = f"env/{self.workbasket.title}.csv"
         fieldnames = data[0].keys()
 
-        with open(name, "w") as f:
+        with open(path, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(data)
-
-        logger.info(data)
 
         return data
 
