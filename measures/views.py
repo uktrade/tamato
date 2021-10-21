@@ -226,6 +226,10 @@ class MeasureCreateWizard(
                 for field in f.fields.values():
                     if hasattr(field, "queryset"):
                         field.queryset = field.queryset.approved_up_to_transaction(tx)
+
+        if form.is_valid():
+            form.initial = form.cleaned_data
+
         return form
 
     def get_template_names(self):

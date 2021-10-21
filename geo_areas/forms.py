@@ -132,6 +132,16 @@ class GeographicalAreaFormMixin(forms.Form):
                 raise ValidationError({"geo_area": "A country or region is required."})
             cleaned_data["geographical_area"] = geo_area
 
+        self.fields["geo_area_type"].initial = geo_area_type
+        self.fields["erga_omnes_exclusions"].initial = [
+            exclusion.pk for exclusion in erga_omnes_exclusions
+        ]
+        self.fields["geo_group"].inital = geo_group.pk if geo_group else None
+        self.fields["geo_group_exclusions"].initial = [
+            exclusion.pk for exclusion in geo_group_exclusions
+        ]
+        self.fields["geo_area"].initial = geo_area.pk if geo_area else None
+
         return cleaned_data
 
 
