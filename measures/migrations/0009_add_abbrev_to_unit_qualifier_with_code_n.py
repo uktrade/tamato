@@ -5,9 +5,11 @@ from django.db import migrations
 
 def forwards(apps, schema_editor):
     MeasurementUnitQualifier = apps.get_model("measures", "MeasurementUnitQualifier")
-    code_n_qualifier = MeasurementUnitQualifier.objects.get(code="N")
-    code_n_qualifier.abbreviation = "net"
-    code_n_qualifier.save()
+    code_n_qualifier = MeasurementUnitQualifier.objects.filter(code="N").first()
+    # This check is needed because this qualifier won't exist in our test db
+    if code_n_qualifier:
+        code_n_qualifier.abbreviation = "net"
+        code_n_qualifier.save()
 
 
 class Migration(migrations.Migration):
