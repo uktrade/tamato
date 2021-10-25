@@ -97,6 +97,7 @@ MAPPING_MAD_CMT = (
 
 
 TMadItemGenerator = Generator[None, OrderedDict[str, Any], None]
+TMadItemCollection = tuple[OrderedDict[str, Any]]
 TGoods = tuple[GoodsNomenclature]
 
 # Acronyms:
@@ -104,7 +105,7 @@ TGoods = tuple[GoodsNomenclature]
 # CM - create measures template
 
 
-def sanitize_mad_value(value: Union[str, int, float]) -> Union[str, int, float]:
+def sanitized_mad_value(value: Union[str, int, float]) -> Union[str, int, float]:
     """Returns a sanitized version of a single value from MaD."""
     if not isinstance(value, str):
         return value
@@ -137,7 +138,8 @@ def get_filtered_mad_items(
             item[MAD_REGULATION_ID] = str(regulation)
 
             mapped_item = OrderedDict(
-                (mapped_key, item[key]) for key, mapped_key in MAPPING_MAD_CMT
+                (mapped_key, sanitized_mad_value(item[key]))
+                for key, mapped_key in MAPPING_MAD_CMT
             )
 
             yield mapped_item
@@ -163,6 +165,21 @@ def get_measures_mad_items(
     return get_filtered_mad_items(key, sids, as_defined=as_defined)
 
 
+# TODO: Update to support sending to S3
+def write_report(data: TMadItemCollection, workbasket: WorkBasket) -> None:
+    """Persists a report to a file."""
+    path = Path.cwd() / "env"
+    path.mkdir(parents=True, exist_ok=True)
+    path = path / f"{workbasket.title}.csv"
+
+    fieldnames = data[0].keys()
+
+    with open(str(path), "w") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(data)
+
+
 class CommodityChangeReports:
     def __init__(self, workbasket: WorkBasket) -> None:
         self.workbasket = workbasket
@@ -172,7 +189,7 @@ class CommodityChangeReports:
     def report_affected_measures(
         self,
         as_defined: Optional[bool] = True,
-    ) -> TMadItemGenerator:
+    ) -> TMadItemCollection:
         """
         Returns affected measures from a commodity import in CM layout.
 
@@ -199,23 +216,12 @@ class CommodityChangeReports:
             code = CommodityCode(code=item_id)
             item["Measure level"] = len(code.trimmed_code)
 
-        path = Path.cwd() / "env"
-        path.mkdir(parents=True, exist_ok=True)
-        path = path / f"{self.workbasket.title}.csv"
-
-        fieldnames = data[0].keys()
-
-        with open(path, "w") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(data)
-
         return data
 
     def report_related_measures(
         self,
         as_defined: Optional[bool] = True,
-    ) -> TMadItemGenerator:
+    ) -> TMadItemCollection:
         """
         Returns related measures from a commodity import in CM layout.
 
@@ -224,7 +230,7 @@ class CommodityChangeReports:
         """
 
         goods = self.updated_goods + self.deleted_goods
-        return get_goods_mad_items(goods)
+        return tuple(get_goods_mad_items(goods))
 
     @property
     def affected_measures(self) -> tuple[Measure]:
