@@ -4,10 +4,12 @@ import csv
 import logging
 from collections import OrderedDict
 from contextlib import closing
+from pathlib import Path
 from typing import Any
 from typing import Generator
 from typing import Iterable
 from typing import Optional
+from typing import Union
 
 import requests
 
@@ -97,12 +99,24 @@ MAPPING_MAD_CMT = (
 TMadItemGenerator = Generator[None, OrderedDict[str, Any], None]
 TGoods = tuple[GoodsNomenclature]
 
+# Acronyms:
+# MaD - measures-as-defined template
+# CM - create measures template
+
+
+def sanitize_mad_value(value: Union[str, int, float]) -> Union[str, int, float]:
+    """Returns a sanitized version of a single value from MaD."""
+    if not isinstance(value, str):
+        return value
+    return value.replace("#NA", "")
+
 
 def get_filtered_mad_items(
     key: str,
     values: Iterable[str],
     as_defined: Optional[bool] = True,
 ) -> TMadItemGenerator:
+    """Returns filtered MaD data, re-arranged in CM format."""
     url = URL_DEF if as_defined else URL_DECL
 
     with closing(requests.get(url, stream=True)) as r:
@@ -133,6 +147,7 @@ def get_goods_mad_items(
     goods: Iterable[GoodsNomenclature],
     as_defined: Optional[bool] = True,
 ) -> TMadItemGenerator:
+    """Returns CM rows that match a set of commodity codes."""
     key = MAD_COMMODITY_CODE
     codes = [good.item_id for good in goods]
     return get_filtered_mad_items(key, codes, as_defined=as_defined)
@@ -142,6 +157,7 @@ def get_measures_mad_items(
     measures: Iterable[Measure],
     as_defined: Optional[bool] = True,
 ) -> TMadItemGenerator:
+    """Returns CM rows that match a set of measure sid-s."""
     key = MAD_MEASURE_SID
     sids = [str(measure.sid) for measure in measures]
     return get_filtered_mad_items(key, sids, as_defined=as_defined)
@@ -152,10 +168,16 @@ class CommodityChangeReports:
         self.workbasket = workbasket
         self.transactions = workbasket.transactions.all()
 
+    # TODO: Pluck out the write functionality and setup to send to S3
     def report_affected_measures(
         self,
         as_defined: Optional[bool] = True,
     ) -> TMadItemGenerator:
+        """
+        Returns affected measures from a commodity import in CM layout.
+
+        Note: This method also persists the report locally.
+        """
         data = tuple(
             get_measures_mad_items(
                 self.affected_measures,
@@ -177,7 +199,10 @@ class CommodityChangeReports:
             code = CommodityCode(code=item_id)
             item["Measure level"] = len(code.trimmed_code)
 
-        path = f"env/{self.workbasket.title}.csv"
+        path = Path.cwd() / "env"
+        path.mkdir(parents=True, exist_ok=True)
+        path = Path / f"{self.workbasket.title}.csv"
+
         fieldnames = data[0].keys()
 
         with open(path, "w") as f:
@@ -191,6 +216,13 @@ class CommodityChangeReports:
         self,
         as_defined: Optional[bool] = True,
     ) -> TMadItemGenerator:
+        """
+        Returns related measures from a commodity import in CM layout.
+
+        Not all measures related to the imported commodities are also affected
+        by the side effects of the import.
+        """
+
         goods = self.updated_goods + self.deleted_goods
         return get_goods_mad_items(goods)
 
