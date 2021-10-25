@@ -266,7 +266,17 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
 
     validity_over = "indented_goods_nomenclature"
 
-    def get_parent_indents(self):
+    @property
+    def is_root(self) -> bool:
+        """Returns True if this is a root indent."""
+        item_id = self.indented_goods_nomenclature.item_id
+        return self.indent == 0 and item_id[2:] == "00000000"
+
+    def get_parent_indents(self) -> QuerySet:
+        """Returns the ancestors to this indent in the goods hierarchy."""
+        if self.is_root:
+            return GoodsNomenclatureIndent.objects.none()
+
         parent_path_query = Q()
         for path in self.nodes.values_list("path", flat=True):
             parent_path_query = parent_path_query | Q(
@@ -305,7 +315,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
             .first()
         )
 
-    def get_parent_node(self, parent_depth: int) -> GoodsNomenclatureIndent:
+    def get_parent_node(self, parent_depth: int) -> Optional[GoodsNomenclatureIndent]:
         """
         Returns the parent of the indent given a parent depth.
 
@@ -315,6 +325,9 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
 
         This method does not trust paths by definition.
         """
+        if self.is_root:
+            return None
+
         good = self.indented_goods_nomenclature
         item_id = good.item_id
         chapter = good.code.chapter
