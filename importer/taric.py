@@ -27,6 +27,7 @@ from importer.parsers import ElementParser
 from importer.parsers import ParserError
 from importer.parsers import TextElement
 from importer.reports import CommodityChangeReports
+from importer.reports import write_report
 from taric.models import Envelope
 from taric.models import EnvelopeTransaction
 from workbaskets.models import WorkBasket
@@ -171,7 +172,7 @@ class TransactionParser(ElementParser):
         super().end(element)
         if element.tag == self.tag:
             logging.debug(f"Saving import {self.data['id']}")
-            if int(self.data["id"]) % 1000 == 0:
+            if int(self.data["id"]) % 10 == 0:
                 logger.info(
                     "%s transactions done in %d seconds",
                     self.data["id"],
@@ -272,4 +273,7 @@ def process_taric_xml_stream(taric_stream, status, username):
                 elem.clear()
 
     reports = CommodityChangeReports(handler.workbasket)
-    reports.report_affected_measures()
+    data = reports.report_affected_measures()
+
+    if data:
+        write_report(data, handler.workbasket)
