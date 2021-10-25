@@ -278,7 +278,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         validity_start = self.validity_start
 
         qs = GoodsNomenclatureIndentNode.objects
-        parent: GoodsNomenclatureIndent = (
+        parent: GoodsNomenclatureIndentNode = (
             qs.filter(
                 Q(indent__indented_goods_nomenclature__item_id__lt=item_id)
                 | Q(
