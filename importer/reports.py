@@ -201,7 +201,7 @@ class CommodityChangeReports:
 
         path = Path.cwd() / "env"
         path.mkdir(parents=True, exist_ok=True)
-        path = Path / f"{self.workbasket.title}.csv"
+        path = path / f"{self.workbasket.title}.csv"
 
         fieldnames = data[0].keys()
 

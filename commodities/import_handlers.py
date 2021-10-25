@@ -1,6 +1,4 @@
 import logging
-import random
-import time
 from datetime import date
 from datetime import timedelta
 from typing import Optional
@@ -280,10 +278,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             "creating_transaction_id": data["transaction_id"],
         }
 
-        if depth == 0 and item_id[2:] == "00000000":
-            # This is a root indent (i.e. a chapter heading)
-            # Race conditions are common, so reduce the chance of it.
-            time.sleep(random.choice([x * 0.05 for x in range(0, 200)]))
+        if indent.is_root:
             models.GoodsNomenclatureIndentNode.add_root(**node_data)
             return indent
 
