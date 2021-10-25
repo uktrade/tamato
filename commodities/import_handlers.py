@@ -216,15 +216,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         might be lower than the start date of a new node
         we are trying to attach to the tree.
         """
-        indents = indent.indented_goods_nomenclature.indents
-
-        preceding_indent = (
-            indents.filter(
-                validity_start__lt=indent.validity_start,
-            )
-            .order_by("validity_start")
-            .last()
-        )
+        preceding_indent = indent.preceding_indent
 
         if not preceding_indent:
             return
@@ -257,20 +249,12 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         as the explicit end date for the new indent's related
         `GoodsNomenclatureIndentNode` object we are about to create.
         """
-        indents = indent.indented_goods_nomenclature.indents
+        succeeding_indent = indent.succeeding_indent
 
-        successing_indent = (
-            indents.filter(
-                validity_start__lt=indent.validity_start,
-            )
-            .order_by("validity_start")
-            .last()
-        )
-
-        if not successing_indent:
+        if not succeeding_indent:
             return
 
-        return successing_indent.validity_start - timedelta(days=-1)
+        return succeeding_indent.validity_start - timedelta(days=-1)
 
     @transaction.atomic
     def save(self, data: dict):
