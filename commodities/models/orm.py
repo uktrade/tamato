@@ -608,6 +608,7 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     )
     description = LongDescription()
 
+    business_rules = (UpdateValidity,)
     indirect_business_rules = (business_rules.NIG12,)
 
     class Meta:
