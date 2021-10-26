@@ -232,9 +232,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
             .exists()
         ) and chapter != "99"
 
-        if extra_headings and (
-            self.good.item_id[-6:] != "000000" or self.good.suffix == "80"
-        ):
+        if extra_headings and (self.item_id[-6:] != "000000" or self.suffix == "80"):
             indent_shift += 1
 
         return indent_shift
