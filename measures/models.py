@@ -683,6 +683,27 @@ class Measure(TrackedModel, ValidityMixin):
 
         return self.new_version(workbasket, **update_params)
 
+    def save(self, *args, force_write=False, **kwargs):
+        """If the commodity code is being changed on an existing measure, the
+        measure is deleted instead of doing an `UPDATE` and a new measure
+        created with the updated commodity code."""
+        if self.update_type == UpdateType.UPDATE:
+            previous = self.get_versions().order_by("transaction__order").last()
+            nomenclature_removed = not (
+                previous.goods_nomenclature and self.goods_nomenclature
+            )
+            nomenclature_changed = (
+                True
+                if nomenclature_removed
+                else self.goods_nomenclature.sid != previous.goods_nomenclature.sid
+            )
+            if nomenclature_changed:
+                self.update_type = UpdateType.DELETE
+                instance = super().save(*args, force_write=force_write, **kwargs)
+                return self.copy(self.transaction)
+
+        return super().save(*args, force_write=force_write, **kwargs)
+
 
 class MeasureComponent(TrackedModel):
     """Contains the duty information or part of the duty information."""
