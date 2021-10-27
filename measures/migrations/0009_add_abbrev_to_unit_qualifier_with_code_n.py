@@ -6,7 +6,7 @@ from django.db import migrations
 def forwards(apps, schema_editor):
     MeasurementUnitQualifier = apps.get_model("measures", "MeasurementUnitQualifier")
     code_n_qualifier = MeasurementUnitQualifier.objects.filter(code="N").first()
-    # This check is needed because this qualifier won't exist in our test db
+    # Migrations are run before seeding the db, so a check is needed to ensure the qualifier exists before trying to update
     if code_n_qualifier:
         code_n_qualifier.abbreviation = "net"
         code_n_qualifier.save()
