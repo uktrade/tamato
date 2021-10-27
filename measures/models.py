@@ -687,7 +687,10 @@ class Measure(TrackedModel, ValidityMixin):
         """If the commodity code is being changed on an existing measure, the
         measure is deleted instead of doing an `UPDATE` and a new measure
         created with the updated commodity code."""
-        if self.update_type == UpdateType.UPDATE:
+        if (
+            self.update_type == UpdateType.UPDATE
+            and self.get_versions().order_by("transaction__order").last()
+        ):
             previous = self.get_versions().order_by("transaction__order").last()
             nomenclature_removed = not (
                 previous.goods_nomenclature and self.goods_nomenclature
