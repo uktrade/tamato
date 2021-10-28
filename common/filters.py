@@ -30,6 +30,7 @@ from django_filters.constants import EMPTY_VALUES
 from rest_framework import filters
 from rest_framework.settings import api_settings
 
+from common.fields import AutoCompleteField
 from common.jinja2 import break_words
 from common.models.records import TrackedModelQuerySet
 from common.util import TaricDateRange
@@ -261,3 +262,7 @@ class StartYearMixin(FilterSet):
                 ),
             ).filter(start_year__in=value)
         return queryset
+
+
+class AutoCompleteFilter(CharFilter):
+    field_class = AutoCompleteField
