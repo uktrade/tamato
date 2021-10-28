@@ -154,34 +154,26 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
-                # TODO: Can these be fixed? With autocomplete, these commands are not responsive.
                 Field.text(
                     "goods_nomenclature",
-                    field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "additional_code",
-                    field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "order_number",
-                    field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "measure_type",
-                    field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "regulation",
-                    field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "geographical_area",
-                    field_width=Fluid.TWO_THIRDS,
                 ),
                 Field.text(
                     "footnote",
-                    field_width=Fluid.TWO_THIRDS,
                 ),
                 css_class="govuk-grid-row quarters",
             ),

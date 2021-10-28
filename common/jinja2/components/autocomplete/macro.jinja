@@ -1,5 +1,5 @@
 {% macro autocomplete(params) %}
-  <div class="autocomplete"
+  <div class="autocomplete {% if params.display_class %}{{ params.display_class }}{% endif %}"
      {% if params.source_url %}data-source-url="{{ params.source_url }}"{% endif %}
      data-original-value="{{ params.display_value or "" }}"
   >

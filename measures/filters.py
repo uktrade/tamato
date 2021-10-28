@@ -29,6 +29,8 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
+GOV_UK_TWO_THIRDS = "govuk-!-width-two-thirds"
+
 
 class GovUKDateFilter(DateFilter):
     field_class = DateInputFieldFixed
@@ -58,42 +60,63 @@ class MeasureFilter(TamatoFilter):
         label="Type",
         field_name="measure_type__sid",
         queryset=MeasureType.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     goods_nomenclature = AutoCompleteFilter(
         label="Commodity code",
         field_name="goods_nomenclature__item_id",
         queryset=GoodsNomenclature.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     additional_code = AutoCompleteFilter(
         label="Additional code",
         field_name="additional_code",
         queryset=AdditionalCode.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     geographical_area = AutoCompleteFilter(
         label="Geographical area",
         field_name="geographical_area",
         queryset=GeographicalArea.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     order_number = AutoCompleteFilter(
         label="Quota order number",
         field_name="order_number__order_number",
         queryset=QuotaOrderNumber.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     regulation = AutoCompleteFilter(
         label="Regulation",
         field_name="generating_regulation__regulation_id",
         queryset=Regulation.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     footnote = AutoCompleteFilter(
         label="Footnote",
         field_name="footnotes",
         queryset=Footnote.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     start_date = GovUKDateFilter(
