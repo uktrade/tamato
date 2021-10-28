@@ -23,7 +23,6 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
         "descriptions",
     )
     serializer_class = AutoCompleteSerializer
-    # serializer_class = GeographicalAreaSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "area_code"]
