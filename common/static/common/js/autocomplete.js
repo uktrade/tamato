@@ -14,7 +14,9 @@ const initAutocomplete = () => {
         const searchParams = new URLSearchParams();
         searchParams.set("search", query);
         searchParams.set("format", "json");
-        if(aborter) aborter.abort();
+        if(aborter) {
+          aborter.abort();
+        }
         aborter = new AbortController();
         const signal = aborter.signal
         fetch(`${source_url}?${searchParams}`, {signal})
@@ -22,7 +24,7 @@ const initAutocomplete = () => {
           .then(data => populateResults(data.results))
           .catch(err => console.log(err));
       },
-      minLength: 3,
+      minLength: element.dataset.minLength ? element.dataset.minLength : 0,
       defaultValue: element.dataset.originalValue,
       name: `${hiddenInput.name}_autocomplete`,
       templates: {

@@ -45,6 +45,7 @@ class MeasureForm(ValidityPeriodForm):
         help_text="Select the 10 digit commodity code to which the measure applies.",
         queryset=GoodsNomenclature.objects.all(),
         required=False,
+        attrs={"min_length": 3},
     )
     additional_code = AutoCompleteField(
         label="Code and description",
