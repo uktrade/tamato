@@ -307,6 +307,7 @@ class MeasureCommodityForm(forms.Form):
         label="Commodity code",
         help_text="Select the 10-digit commodity code to which the measure applies.",
         queryset=GoodsNomenclature.objects.all(),
+        attrs={"min_length": 3},
     )
     additional_code = AutoCompleteField(
         label="Additional code",
