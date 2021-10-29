@@ -1,6 +1,7 @@
 {% macro autocomplete(params) %}
   <div class="autocomplete {% if params.display_class %}{{ params.display_class }}{% endif %}"
      {% if params.source_url %}data-source-url="{{ params.source_url }}"{% endif %}
+     {% if params.min_length %}data-min-length="{{ params.min_length }}"{% endif %}
      data-original-value="{{ params.display_value or "" }}"
   >
     <div class="autocomplete-container"></div>
