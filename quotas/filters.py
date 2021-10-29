@@ -1,11 +1,11 @@
 from django import forms
 from django.urls import reverse_lazy
-from django_filters import CharFilter
 from django_filters import MultipleChoiceFilter
 
-from common.filters import MultiValueCharFilter
+from common.filters import AutoCompleteFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
+from geo_areas.models import GeographicalArea
 from quotas import models
 from quotas import validators
 from quotas.forms import QuotaFilterForm
@@ -17,14 +17,16 @@ class OrderNumberFilterBackend(TamatoFilterBackend):
 
 class QuotaFilter(TamatoFilter):
 
-    order_number = CharFilter(
+    order_number = AutoCompleteFilter(
         label="Order number",
         field_name="order_number",
+        queryset=models.QuotaOrderNumber.objects.all(),
     )
 
-    origin = MultiValueCharFilter(
+    origin = AutoCompleteFilter(
         label="Geographical area(s)",
-        field_name="origins__area_id",
+        field_name="origins",
+        queryset=GeographicalArea.objects.all(),
     )
 
     mechanism = MultipleChoiceFilter(

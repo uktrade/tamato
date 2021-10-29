@@ -4,6 +4,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.models.records import TrackedModel
+from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -11,7 +12,6 @@ from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.serializers import GeographicalAreaSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 
@@ -22,7 +22,7 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = GeographicalArea.objects.latest_approved().prefetch_related(
         "descriptions",
     )
-    serializer_class = GeographicalAreaSerializer
+    serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "area_code"]

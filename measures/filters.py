@@ -9,13 +9,19 @@ from django_filters import CharFilter
 from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
-from additional_codes.filters import COMBINED_ADDITIONAL_CODE_AND_TYPE_ID
+from additional_codes.models import AdditionalCode
+from commodities.models.orm import GoodsNomenclature
+from common.filters import AutoCompleteFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.forms import DateInputFieldFixed
-from footnotes.filters import COMBINED_FOOTNOTE_AND_TYPE_ID
+from footnotes.models import Footnote
+from geo_areas.models import GeographicalArea
 from measures.forms import MeasureFilterForm
 from measures.models import Measure
+from measures.models import MeasureType
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 
 BEFORE_EXACT_AFTER_CHOICES = (
     ("exact", "is"),
@@ -23,9 +29,19 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
+GOV_UK_TWO_THIRDS = "govuk-!-width-two-thirds"
+
 
 class GovUKDateFilter(DateFilter):
     field_class = DateInputFieldFixed
+
+
+class MeasureAutoCompleteFilter(AutoCompleteFilter):
+    def __init__(self, *args, **kwargs):
+        attrs = {
+            "display_class": GOV_UK_TWO_THIRDS,
+        }
+        super().__init__(attrs=attrs, *args, **kwargs)
 
 
 class MeasureTypeFilterBackend(TamatoFilterBackend):
@@ -48,34 +64,47 @@ class MeasureFilter(TamatoFilter):
 
     sid = CharFilter(label="ID", widget=forms.TextInput())
 
-    measure_type = CharFilter(label="Type", field_name="measure_type__sid")
+    measure_type = MeasureAutoCompleteFilter(
+        label="Type",
+        field_name="measure_type__sid",
+        queryset=MeasureType.objects.all(),
+    )
 
-    goods_nomenclature = CharFilter(
+    goods_nomenclature = MeasureAutoCompleteFilter(
         label="Commodity code",
         field_name="goods_nomenclature__item_id",
+        queryset=GoodsNomenclature.objects.all(),
     )
 
-    additional_code = CharFilter(
+    additional_code = MeasureAutoCompleteFilter(
         label="Additional code",
-        method="filter_additional_code",
+        field_name="additional_code",
+        queryset=AdditionalCode.objects.all(),
     )
 
-    geographical_area = CharFilter(
+    geographical_area = MeasureAutoCompleteFilter(
         label="Geographical area",
-        field_name="geographical_area__area_id",
+        field_name="geographical_area",
+        queryset=GeographicalArea.objects.all(),
     )
 
-    order_number = CharFilter(
+    order_number = MeasureAutoCompleteFilter(
         label="Quota order number",
         field_name="order_number__order_number",
+        queryset=QuotaOrderNumber.objects.all(),
     )
 
-    regulation = CharFilter(
+    regulation = MeasureAutoCompleteFilter(
         label="Regulation",
         field_name="generating_regulation__regulation_id",
+        queryset=Regulation.objects.all(),
     )
 
-    footnote = CharFilter(label="Footnote", method="filter_footnotes")
+    footnote = MeasureAutoCompleteFilter(
+        label="Footnote",
+        field_name="footnotes",
+        queryset=Footnote.objects.all(),
+    )
 
     start_date = GovUKDateFilter(
         label="",
@@ -106,30 +135,6 @@ class MeasureFilter(TamatoFilter):
     clear_url = reverse_lazy("measure-ui-list")
 
     def date_modifier(self, queryset, name, value):
-        return queryset
-
-    def filter_additional_code(self, queryset, name, value):
-        if value:
-            match = COMBINED_ADDITIONAL_CODE_AND_TYPE_ID.match(value)
-            if match:
-                return queryset.filter(
-                    additional_code__code=match.group("code"),
-                    additional_code__type__sid=match.group("type__sid"),
-                )
-            return queryset.none()
-        return queryset
-
-    def filter_footnotes(self, queryset, name, value):
-        if value:
-            match = COMBINED_FOOTNOTE_AND_TYPE_ID.match(value)
-            if match:
-                return queryset.filter(
-                    footnotes__footnote_id=match.group("footnote_id"),
-                    footnotes__footnote_type__footnote_type_id=match.group(
-                        "footnote_type_id",
-                    ),
-                )
-            return queryset.none()
         return queryset
 
     def filter_start_date(self, queryset, name, value):
