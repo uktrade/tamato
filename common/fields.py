@@ -125,11 +125,14 @@ class TaricDateTimeRangeField(DateTimeRangeField):
 class AutoCompleteField(ModelChoiceField):
     def __init__(self, *args, **kwargs):
         qs = kwargs["queryset"]
+        prefix = getattr(qs.model, "url_pattern_name_prefix", None)
+        if not prefix:
+            prefix = qs.model._meta.model_name
         self.widget = AutocompleteWidget(
             attrs={
                 "label": kwargs.get("label", ""),
                 "help_text": kwargs.get("help_text", ""),
-                "source_url": reverse_lazy(f"{qs.model._meta.model_name}-list"),
+                "source_url": reverse_lazy(f"{prefix}-list"),
                 **kwargs.pop("attrs", {}),
             },
         )
