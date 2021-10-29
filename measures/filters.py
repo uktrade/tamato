@@ -36,6 +36,14 @@ class GovUKDateFilter(DateFilter):
     field_class = DateInputFieldFixed
 
 
+class MeasureAutoCompleteFilter(AutoCompleteFilter):
+    def __init__(self, *args, **kwargs):
+        attrs = {
+            "display_class": GOV_UK_TWO_THIRDS,
+        }
+        super().__init__(attrs=attrs, *args, **kwargs)
+
+
 class MeasureTypeFilterBackend(TamatoFilterBackend):
     search_fields = (
         StringAgg("sid", delimiter=" "),
@@ -56,67 +64,46 @@ class MeasureFilter(TamatoFilter):
 
     sid = CharFilter(label="ID", widget=forms.TextInput())
 
-    measure_type = AutoCompleteFilter(
+    measure_type = MeasureAutoCompleteFilter(
         label="Type",
         field_name="measure_type__sid",
         queryset=MeasureType.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
     )
 
-    goods_nomenclature = AutoCompleteFilter(
+    goods_nomenclature = MeasureAutoCompleteFilter(
         label="Commodity code",
         field_name="goods_nomenclature__item_id",
         queryset=GoodsNomenclature.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
     )
 
-    additional_code = AutoCompleteFilter(
+    additional_code = MeasureAutoCompleteFilter(
         label="Additional code",
         field_name="additional_code",
         queryset=AdditionalCode.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
     )
 
-    geographical_area = AutoCompleteFilter(
+    geographical_area = MeasureAutoCompleteFilter(
         label="Geographical area",
         field_name="geographical_area",
         queryset=GeographicalArea.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
     )
 
-    order_number = AutoCompleteFilter(
+    order_number = MeasureAutoCompleteFilter(
         label="Quota order number",
         field_name="order_number__order_number",
         queryset=QuotaOrderNumber.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
     )
 
-    regulation = AutoCompleteFilter(
+    regulation = MeasureAutoCompleteFilter(
         label="Regulation",
         field_name="generating_regulation__regulation_id",
         queryset=Regulation.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
     )
 
-    footnote = AutoCompleteFilter(
+    footnote = MeasureAutoCompleteFilter(
         label="Footnote",
         field_name="footnotes",
         queryset=Footnote.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
     )
 
     start_date = GovUKDateFilter(
