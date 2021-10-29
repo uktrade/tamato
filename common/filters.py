@@ -157,7 +157,7 @@ class TamatoFilterMixin:
     def search_queryset(self, queryset, search_term):
         search_term = self.get_search_term(search_term)
         return queryset.annotate(search=SearchVector(*self.search_fields)).filter(
-            search=search_term,
+            search__icontains=search_term,
         )
 
 
