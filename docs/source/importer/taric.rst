@@ -1,5 +1,5 @@
-The Importer - Taric
-====================
+Taric
+=====
 
 .. automodule:: importer.taric
     :members:

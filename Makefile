@@ -100,28 +100,4 @@ docker-test:
 
 ## build-docs: Build the project documentation
 build-docs html:
-	@sphinx-build . docs/_build -c docs/ -b html
-
-
-paas-login:
-	@echo "> Login to PaaS"
-	@cf login -a api.london.cloud.service.gov.uk --sso
-
-
-%-db.json:
-	@echo "> Get ${app}-db service key..."
-	@cf service-key ${app}-db EXTERNAL_ACCESS_KEY | tail -n9 > ${app}-db.json
-
-
-paas-db-tunnel: ${app}-db.json
-	@echo "> SSH Tunnel to ${app}-db..."
-	$(eval host := $(shell jq -r '.host' < ${app}-db.json))
-	$(eval port := $(shell jq -r '.port' < ${app}-db.json))
-	@cf ssh -N -L $(port)1:$(host):$(port) ${app}
-
-
-paas-db-tunnel-shell: ${app}-db.json
-	$(eval user := $(shell jq -r '.username' < ${app}-db.json))
-	$(eval pass := $(shell jq -r '.password' < ${app}-db.json))
-	$(eval name := $(shell jq -r '.name' < ${app}-db.json))
-	@PGPASSWORD=$(pass) psql -h localhost -p 54321 -U $(user) $(name)
+	@cd docs && sphinx-build -M html "source" "build"

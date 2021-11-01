@@ -1,5 +1,5 @@
-The Importer - Handlers
-=======================
+Handlers
+========
 
 
 .. automodule:: importer.handlers

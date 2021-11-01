@@ -58,12 +58,14 @@ class Tag:
     """
     A dataclass for xml element tags.
 
-    - `name`: corresponds to the name attribute
-    of the Element element in the XML Schema.
-    - `prefix`: attribute reflects namespace prefixes
-    defined in the taric3 and envelope xsd-s.
-    - `nsmap`: this is a prefix-namespace mapping
-    in the format required by xml.etree.ElementTree
+    :py:attr:`name` corresponds to the name attribute of the Element element in the XML
+    Schema.
+
+    :py:attr:`prefix` reflects namespace prefixes defined in the taric3 and envelope
+    xsd-s.
+
+    :py:attr:`nsmap` this is a prefix-namespace mapping in the format required by
+    xml.etree.ElementTree
     """
 
     name: str

@@ -2,8 +2,7 @@ Architectural Decision Records
 ==============================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Architectural Decision Records:
+   :maxdepth: 1
    :glob:
 
    *
