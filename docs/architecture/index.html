@@ -236,10 +236,10 @@ that is not draft is considered to be “current”.</p>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="common.models.records.TrackedModelQuerySet.approved_up_to_transaction">
 <span class="sig-name descname"><span class="pre">approved_up_to_transaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModelQuerySet.approved_up_to_transaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet.approved_up_to_transaction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the approved versions of the model being queried unless there exists
-a version of the model in a draft state within a transaction preceding
-(and including) the given transaction in the workbasket of the given
-transaction.</p>
+<dd><p>Get the approved versions of the model being queried, unless there
+exists a version of the model in a draft state within a transaction
+preceding (and including) the given transaction in the workbasket of the
+given transaction.</p>
 <p>The generated SQL is equivalent to:</p>
 <div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span>SELECT *,
        Max(t3.&quot;id&quot;) filter (
@@ -527,7 +527,7 @@ multiple countries.</p>
 </section>
 <section id="module-regulations">
 <span id="regulations"></span><h3><a class="reference internal" href="#module-regulations" title="regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a><a class="headerlink" href="#module-regulations" title="Permalink to this headline">¶</a></h3>
-<p>Regulations represent peices of legislation that empower tariff measures.</p>
+<p>Regulations represent pieces of legislation that empower tariff measures.</p>
 </section>
 <section id="module-footnotes">
 <span id="footnotes"></span><h3><a class="reference internal" href="#module-footnotes" title="footnotes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">footnotes</span></code></a><a class="headerlink" href="#module-footnotes" title="Permalink to this headline">¶</a></h3>

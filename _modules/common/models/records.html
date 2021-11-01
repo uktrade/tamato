@@ -106,10 +106,10 @@
 
 <div class="viewcode-block" id="TrackedModelQuerySet.approved_up_to_transaction"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet.approved_up_to_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get the approved versions of the model being queried unless there exists</span>
-<span class="sd">        a version of the model in a draft state within a transaction preceding</span>
-<span class="sd">        (and including) the given transaction in the workbasket of the given</span>
-<span class="sd">        transaction.</span>
+<span class="sd">        Get the approved versions of the model being queried, unless there</span>
+<span class="sd">        exists a version of the model in a draft state within a transaction</span>
+<span class="sd">        preceding (and including) the given transaction in the workbasket of the</span>
+<span class="sd">        given transaction.</span>
 
 <span class="sd">        The generated SQL is equivalent to:</span>
 
@@ -323,10 +323,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate_record_codes</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;record_code&quot;</span><span class="p">,</span> <span class="s2">&quot;subrecord_code&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">approved_query_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">common.models.transactions</span> <span class="kn">import</span> <span class="n">TransactionPartition</span>
+
         <span class="k">return</span> <span class="n">Q</span><span class="p">(</span>
             <span class="o">**</span><span class="p">{</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__workbasket__status__in&quot;</span><span class="p">:</span> <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">approved_statuses</span><span class="p">(),</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__workbasket__approver__isnull&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__partition__in&quot;</span><span class="p">:</span> <span class="n">TransactionPartition</span><span class="o">.</span><span class="n">approved_partitions</span><span class="p">(),</span>
             <span class="p">}</span>
         <span class="p">)</span>
 

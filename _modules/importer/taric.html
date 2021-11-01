@@ -66,6 +66,7 @@
 <span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">TextElement</span>
 <span class="kn">from</span> <span class="nn">taric.models</span> <span class="kn">import</span> <span class="n">Envelope</span>
 <span class="kn">from</span> <span class="nn">taric.models</span> <span class="kn">import</span> <span class="n">EnvelopeTransaction</span>
+<span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">TransactionPartitionScheme</span>
 <span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">WorkBasket</span>
 <span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
@@ -144,8 +145,7 @@
 
 <span class="sd">        :param data: A dict of the parsed element, containing at least an &quot;id&quot; and list</span>
 <span class="sd">            of &quot;message&quot; dicts</span>
-<span class="sd">        :param envelope_id: The ID of the containing Envelope</span>
-<span class="sd">        :param workbasket_id: The primary key of the workbasket to add transactions to</span>
+<span class="sd">        :param envelope: Containing Envelope</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving transaction </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -156,6 +156,9 @@
                 <span class="n">workbasket</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">workbasket</span><span class="p">,</span>
                 <span class="n">order</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]),</span>
                 <span class="n">import_transaction_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]),</span>
+                <span class="n">partition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">partition_scheme</span><span class="o">.</span><span class="n">get_partition</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">workbasket</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">)</span>
 
         <span class="k">except</span> <span class="n">IntegrityError</span><span class="p">:</span>
@@ -207,7 +210,12 @@
     <span class="n">transaction</span> <span class="o">=</span> <span class="n">TransactionParser</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">workbasket_status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tamato_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">workbasket_status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">partition_scheme</span><span class="p">:</span> <span class="n">TransactionPartitionScheme</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tamato_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_transaction_id</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -216,6 +224,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span> <span class="o">=</span> <span class="n">save</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">envelope</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Envelope</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">workbasket</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">WorkBasket</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_scheme</span> <span class="o">=</span> <span class="n">partition_scheme</span>
 
 <div class="viewcode-block" id="EnvelopeParser.start"><a class="viewcode-back" href="../../docs/importer/taric.html#importer.taric.EnvelopeParser.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">ElementParser</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
@@ -243,7 +252,12 @@
             <span class="n">nursery</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="process_taric_xml_stream"><a class="viewcode-back" href="../../docs/importer/taric.html#importer.taric.process_taric_xml_stream">[docs]</a><span class="k">def</span> <span class="nf">process_taric_xml_stream</span><span class="p">(</span><span class="n">taric_stream</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">username</span><span class="p">):</span>
+<div class="viewcode-block" id="process_taric_xml_stream"><a class="viewcode-back" href="../../docs/importer/taric.html#importer.taric.process_taric_xml_stream">[docs]</a><span class="k">def</span> <span class="nf">process_taric_xml_stream</span><span class="p">(</span>
+    <span class="n">taric_stream</span><span class="p">,</span>
+    <span class="n">workbasket_status</span><span class="p">,</span>
+    <span class="n">partition_scheme</span><span class="p">,</span>
+    <span class="n">username</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parse a TARIC XML stream through the import handlers.</span>
 
@@ -251,7 +265,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">xmlparser</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">iterparse</span><span class="p">(</span><span class="n">taric_stream</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="s2">&quot;start-ns&quot;</span><span class="p">])</span>
     <span class="n">handler</span> <span class="o">=</span> <span class="n">EnvelopeParser</span><span class="p">(</span>
-        <span class="n">workbasket_status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+        <span class="n">workbasket_status</span><span class="o">=</span><span class="n">workbasket_status</span><span class="p">,</span>
+        <span class="n">partition_scheme</span><span class="o">=</span><span class="n">partition_scheme</span><span class="p">,</span>
         <span class="n">tamato_username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">event</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">xmlparser</span><span class="p">:</span>
