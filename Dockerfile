@@ -8,7 +8,7 @@ COPY . .
 RUN npm install && npm run build
 
 
-FROM python:3.8-slim-buster
+FROM python:3.8-buster
 
 LABEL maintainer="webops@digital.trade.gov.uk"
 

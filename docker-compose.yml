@@ -33,7 +33,7 @@ services:
     volumes:
       - tamato-s3-volume:/data
     env_file: .env
-    command: server --address 0.0.0.0:9003 /data
+    command: server --quiet --address 0.0.0.0:9003 /data
 
   tamato:
     build: .
@@ -59,11 +59,8 @@ services:
       NURSERY_CACHE_ENGINE: "importer.cache.redis.RedisCacheEngine"
       CACHE_URL: "redis://cache-redis:6378/1"
       CELERY_BROKER_URL: "redis://celery-redis:6378/1"
-    command:
-      - python
-      - manage.py
-      - runserver
-      - 0.0.0.0:8000
+      SSO_ENABLED: "false"
+    command: python manage.py runserver 0.0.0.0:8000
 
 volumes:
   tamato-data-volume:

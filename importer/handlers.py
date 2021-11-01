@@ -81,22 +81,22 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
     Init:
 
-    1) The handler is initialised with the initial data.
+    1. The handler is initialised with the initial data.
 
     Build:
 
-    2) The handler checks for dependencies and links. If there are none it goes to step 5.
-    3) The handler searches for dependencies which may contain extra required data. If any can't be found it
+    2. The handler checks for dependencies and links. If there are none it goes to step 5.
+    3. The handler searches for dependencies which may contain extra required data. If any can't be found it
        asks to be cached and resolved later, the process stops. If they are found it unifies the data.
-    4) The handler searches for any links (foreign keys) that it needs. If any can't be found it asks to be
+    4. The handler searches for any links (foreign keys) that it needs. If any can't be found it asks to be
        cached and resolved later, the process stops. If they are found it stores them.
 
     Dispatch:
 
-    5) The handler validates the complete data against the serializer.
-    6) The handler runs any pre-save processing, including adding the foreign keys to the validated data.
-    7) The handler saves the object to the database.
-    8) The handler runs any post-save processing.
+    5. The handler validates the complete data against the serializer.
+    6. The handler runs any pre-save processing, including adding the foreign keys to the validated data.
+    7. The handler saves the object to the database.
+    8. The handler runs any post-save processing.
 
     Many models are likely to have some specific requirements and so customisation is a focus within this system.
     But many use cases should also be workable with just the base.
@@ -105,8 +105,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
     A few examples of different scenarios follow below.
 
-    Example 1
-    ---------
+
+    **Example 1**
 
     Simple object, no dependencies or links.
 
@@ -123,8 +123,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     or links, there should be nothing it needs to wait on.
 
 
-    Example 2
-    ---------
+    **Example 2**
+
     An object with dependencies:
 
     .. code:: python
@@ -162,8 +162,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     and the nursery removes the relevant data from the cache.
 
 
-    Example 3
-    ---------
+    **Example 3**
 
     An object with Foreign Key links.
 
@@ -196,17 +195,17 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     Therefore Handlers have the option of adding a `links` attribute, which should be an iterable of `LinksType`
     style dictionaries. This must define two keys:
 
-    1) model - which is expected to be a `TrackedModel` instance
-    2) name - a string, which is how the link data will be differentiated from the object data, as well as
+    1. model - which is expected to be a `TrackedModel` instance
+    2. name - a string, which is how the link data will be differentiated from the object data, as well as
        how it will be named in the data when saved to the database. More specifically incoming data for the
        linked field (specifically the models identifying fields) is expected to be prefixed with this name.
        So the parser must define fields with this prefix.
 
     Two other optional keys exist:
 
-    3) optional - defines whether a link is optional. If it is optional the object will be saved even if the
+    3. optional - defines whether a link is optional. If it is optional the object will be saved even if the
        link can't be found. If it is not optional then the object will be cached until the link can be found.
-    4) identifying_fields - On occasion the identifying fields from model.identifying_fields may not be
+    4. identifying_fields - On occasion the identifying fields from model.identifying_fields may not be
        appropriate, in this case they can be overridden here.
 
     With just these the Handler will automatically try to fetch the linked model with the identifying fields of
