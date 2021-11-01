@@ -486,3 +486,5 @@ WEBPACK_LOADER = {
         "STATS_FILE": join(BASE_DIR, "webpack-stats.json"),
     },
 }
+
+TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FIRST")

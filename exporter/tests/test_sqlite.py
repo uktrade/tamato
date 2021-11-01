@@ -7,6 +7,7 @@ from unittest import mock
 import apsw
 import pytest
 
+from common.models.transactions import TransactionPartition
 from common.tests import factories
 from exporter.sqlite import plan
 from exporter.sqlite import tasks
@@ -67,6 +68,7 @@ def test_table_export(factory, sqlite_database: Runner):
     )
     unpublished = factory.create(
         transaction__workbasket__status=WorkflowStatus.PROPOSED,
+        transaction__partition=TransactionPartition.DRAFT,
     )
 
     table = factory._meta.model._meta.db_table
@@ -136,7 +138,9 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
     This idempotency allows us to regularly run an export check without
     constantly uploading files and wasting bandwidth/money.
     """
-    factories.ApprovedTransactionFactory.create(order="999")  # seed file
+    factories.SeedFileTransactionFactory.create(
+        order="999",
+    )
     factories.ApprovedTransactionFactory.create(order="123")
     expected_key = path.join(
         settings.SQLITE_STORAGE_DIRECTORY,
@@ -156,7 +160,7 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
 
 def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
     """The export system should actually upload a file to S3."""
-    factories.ApprovedTransactionFactory.create(order="999")  # seed file
+    factories.SeedFileTransactionFactory.create(order="999")
     factories.ApprovedTransactionFactory.create(order="123")
     expected_key = path.join(settings.SQLITE_STORAGE_DIRECTORY, "000000123.db")
 
@@ -177,7 +181,7 @@ def test_export_task_ignores_unapproved_transactions(
     """Only transactions that have been approved should be included in the
     upload as draft data may be sensitive and unpublished, and shouldn't be
     included."""
-    factories.ApprovedTransactionFactory.create(order="999")  # seed file
+    factories.SeedFileTransactionFactory.create(order="999")
     factories.ApprovedTransactionFactory.create(order="123")
     factories.UnapprovedTransactionFactory.create(order="124")
     expected_key = path.join(

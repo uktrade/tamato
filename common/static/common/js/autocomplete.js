@@ -2,6 +2,7 @@ import accessibleAutocomplete from 'accessible-autocomplete'
 
 const template = (result) => result && result.label
 
+let aborter = null;
 const initAutocomplete = () => { 
   for (let element of document.querySelectorAll(".autocomplete")) {
     const hiddenInput = element.querySelector("input[type=hidden]");
@@ -13,10 +14,17 @@ const initAutocomplete = () => {
         const searchParams = new URLSearchParams();
         searchParams.set("search", query);
         searchParams.set("format", "json");
-        fetch(`${source_url}?${searchParams}`)
+        if(aborter) {
+          aborter.abort();
+        }
+        aborter = new AbortController();
+        const signal = aborter.signal
+        fetch(`${source_url}?${searchParams}`, {signal})
           .then(response => response.json())
-          .then(data => populateResults(data.results));
+          .then(data => populateResults(data.results))
+          .catch(err => console.log(err));
       },
+      minLength: element.dataset.minLength ? element.dataset.minLength : 0,
       defaultValue: element.dataset.originalValue,
       name: `${hiddenInput.name}_autocomplete`,
       templates: {

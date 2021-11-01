@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 
 from exporter.tasks import upload_workbaskets
 from workbaskets.models import WorkBasket
+from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
 
@@ -85,7 +86,7 @@ class WorkBasketAdmin(admin.ModelAdmin):
         if transition:
             transition_args = []
             if transition == "approve":
-                transition_args.append(request.user)
+                transition_args.extend([request.user, get_partition_scheme()])
             getattr(instance, transition)(*transition_args)
 
         instance.save()

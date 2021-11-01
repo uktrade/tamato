@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+from dataclasses import dataclass
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -28,6 +29,8 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UpdateValidity
 from common.models import TrackedModel
+from common.models.transactions import Transaction
+from common.models.transactions import TransactionPartition
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.util import Dates
@@ -41,6 +44,7 @@ from common.validators import UpdateType
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
+from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
 
@@ -195,10 +199,8 @@ def new_workbasket() -> WorkBasket:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    transaction = factories.TransactionFactory.create(workbasket=workbasket)
-    with transaction:
-        for _ in range(2):
-            factories.FootnoteTypeFactory.create()
+    with factories.TransactionFactory.create(workbasket=workbasket):
+        factories.FootnoteTypeFactory.create_batch(2)
 
     return workbasket
 
@@ -214,6 +216,11 @@ def session_workbasket(client, new_workbasket):
     new_workbasket.save_to_session(client.session)
     client.session.save()
     return new_workbasket
+
+
+@pytest.fixture
+def seed_file_transaction():
+    return factories.SeedFileTransactionFactory.create()
 
 
 @pytest.fixture
@@ -358,7 +365,7 @@ def run_xml_import(valid_user, settings):
         settings.SKIP_WORKBASKET_VALIDATION = True
 
         model = factory()
-        model_class = model.__class__
+        model_class = type(model)
         assert isinstance(
             model,
             TrackedModel,
@@ -370,8 +377,9 @@ def run_xml_import(valid_user, settings):
 
         process_taric_xml_stream(
             xml,
+            workbasket_status=WorkflowStatus.PUBLISHED,
+            partition_scheme=get_partition_scheme(),
             username=valid_user.username,
-            status=WorkflowStatus.PUBLISHED,
         )
 
         db_kwargs = model.get_identifying_fields()
@@ -630,7 +638,12 @@ def in_use_check_respects_deletes(valid_user):
     dependant records are unapproved or deleted."""
 
     def check(
-        factory, in_use_check, dependant_factory, relation, through=None, **extra_kwargs
+        factory,
+        in_use_check,
+        dependant_factory,
+        relation,
+        through=None,
+        **extra_kwargs,
     ):
         instance = factory.create()
         in_use = getattr(instance, in_use_check)
@@ -649,7 +662,10 @@ def in_use_check_respects_deletes(valid_user):
         with patch(
             "exporter.tasks.upload_workbaskets.delay",
         ):
-            workbasket.approve(valid_user)
+            workbasket.approve(
+                valid_user,
+                get_partition_scheme(),
+            )
         workbasket.save()
         assert in_use(), f"Approved {instance!r} not in use"
 
@@ -828,3 +844,40 @@ def form_error_shown(response, error_message):
 def staff_user():
     user = factories.UserFactory.create(is_staff=True)
     return user
+
+
+@dataclass
+class UnorderedTransactionData:
+    existing_transaction: Transaction
+    new_transaction: Transaction
+
+
+@pytest.fixture(scope="function")
+def unordered_transactions():
+    """
+    Fixture that creates some transactions, where one is a draft.
+
+    The draft transaction is has approved transactions on either side, to allow
+    testing of save_draft and it's callers, to verify the transactions are get
+    sorted.
+
+    UnorderedTransactionData is returned, so the user can the DRAFT transaction as new_transaction
+    and one example of an existing_transaction.
+    """
+    from common.tests.factories import ApprovedTransactionFactory
+    from common.tests.factories import FootnoteFactory
+    from common.tests.factories import UnapprovedTransactionFactory
+
+    FootnoteFactory.create(transaction=ApprovedTransactionFactory.create())
+
+    new_transaction = UnapprovedTransactionFactory.create(order=100)
+    FootnoteFactory.create(transaction=ApprovedTransactionFactory.create())
+
+    existing_transaction = Transaction.objects.filter(
+        partition=TransactionPartition.REVISION,
+    ).last()
+
+    assert new_transaction.partition == TransactionPartition.DRAFT
+    assert existing_transaction.order > 1
+
+    return UnorderedTransactionData(existing_transaction, new_transaction)

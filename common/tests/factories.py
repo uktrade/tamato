@@ -8,6 +8,7 @@ import factory
 from factory.fuzzy import FuzzyChoice
 
 from common.models import TrackedModel
+from common.models.transactions import TransactionPartition
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
@@ -110,16 +111,26 @@ class TransactionFactory(factory.django.DjangoModelFactory):
     composite_key = factory.Sequence(str)
 
 
-ApprovedTransactionFactory = TransactionFactory
+class SeedFileTransactionFactory(TransactionFactory):
+    partition = TransactionPartition.SEED_FILE
+    order = factory.Sequence(lambda x: x + 1)
+
+
+class ApprovedTransactionFactory(TransactionFactory):
+    partition = TransactionPartition.REVISION
+    order = factory.Sequence(lambda x: x + 1)
 
 
 class UnapprovedTransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "common.Transaction"
 
+    partition = TransactionPartition.DRAFT
     order = factory.Sequence(lambda x: x + 1)
     import_transaction_id = factory.Sequence(lambda x: x + 1)
-    workbasket = factory.SubFactory(WorkBasketFactory)
+    workbasket = factory.SubFactory(
+        WorkBasketFactory,
+    )
 
 
 class VersionGroupFactory(factory.django.DjangoModelFactory):
@@ -128,7 +139,7 @@ class VersionGroupFactory(factory.django.DjangoModelFactory):
 
 
 class TrackedModelMixin(factory.django.DjangoModelFactory):
-    transaction = factory.SubFactory(TransactionFactory)
+    transaction = factory.SubFactory(ApprovedTransactionFactory)
     update_type = UpdateType.CREATE.value
     version_group = factory.SubFactory(VersionGroupFactory)
 
@@ -158,7 +169,10 @@ class FootnoteFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "footnotes.Footnote"
 
     footnote_id = string_sequence(length=3, characters=string.digits)
-    footnote_type = factory.SubFactory(FootnoteTypeFactory)
+    footnote_type = factory.SubFactory(
+        FootnoteTypeFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
 
     description = factory.RelatedFactory(
         "common.tests.factories.FootnoteDescriptionFactory",
@@ -176,6 +190,7 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     described_footnote = factory.SubFactory(
         FootnoteFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     sid = numeric_sid()
 
@@ -199,14 +214,20 @@ class RegulationFactory(TrackedModelMixin, ValidityFactoryMixin):
         lambda o: Dates().no_end if o.role_type == 1 else None,
     )
     community_code = 1
-    regulation_group = factory.SubFactory(RegulationGroupFactory)
+    regulation_group = factory.SubFactory(
+        RegulationGroupFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     information_text = string_sequence(length=50)
     public_identifier = factory.sequence(lambda n: f"S.I. 2021/{n}")
     url = factory.sequence(lambda n: f"https://legislation.gov.uk/uksi/2021/{n}")
 
 
 class BaseRegulationFactory(RegulationFactory):
-    regulation_group = factory.SubFactory(RegulationGroupFactory)
+    regulation_group = factory.SubFactory(
+        RegulationGroupFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     role_type = 1
 
 
@@ -225,32 +246,56 @@ class AmendmentFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Amendment"
 
-    target_regulation = factory.SubFactory(RegulationFactory)
-    enacting_regulation = factory.SubFactory(RegulationFactory)
+    target_regulation = factory.SubFactory(
+        RegulationFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    enacting_regulation = factory.SubFactory(
+        RegulationFactory,
+        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+    )
 
 
 class ExtensionFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Extension"
 
-    target_regulation = factory.SubFactory(RegulationFactory)
-    enacting_regulation = factory.SubFactory(RegulationFactory)
+    target_regulation = factory.SubFactory(
+        RegulationFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    enacting_regulation = factory.SubFactory(
+        RegulationFactory,
+        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+    )
 
 
 class SuspensionFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Suspension"
 
-    target_regulation = factory.SubFactory(RegulationFactory)
-    enacting_regulation = factory.SubFactory(RegulationFactory)
+    target_regulation = factory.SubFactory(
+        RegulationFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    enacting_regulation = factory.SubFactory(
+        RegulationFactory,
+        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+    )
 
 
 class TerminationFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Termination"
 
-    target_regulation = factory.SubFactory(RegulationFactory)
-    enacting_regulation = factory.SubFactory(RegulationFactory)
+    target_regulation = factory.SubFactory(
+        RegulationFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    enacting_regulation = factory.SubFactory(
+        RegulationFactory,
+        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+    )
 
     effective_date = Dates().datetime_now
 
@@ -259,8 +304,14 @@ class ReplacementFactory(TrackedModelMixin):
     class Meta:
         model = "regulations.Replacement"
 
-    target_regulation = factory.SubFactory(RegulationFactory)
-    enacting_regulation = factory.SubFactory(RegulationFactory)
+    target_regulation = factory.SubFactory(
+        RegulationFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    enacting_regulation = factory.SubFactory(
+        RegulationFactory,
+        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+    )
     measure_type_id = "123456"
     geographical_area_id = "GB"
     chapter_heading = "01"
@@ -298,8 +349,14 @@ class GeographicalMembershipFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "geo_areas.GeographicalMembership"
 
-    geo_group = factory.SubFactory(GeoGroupFactory)
-    member = factory.SubFactory(GeographicalAreaFactory)
+    geo_group = factory.SubFactory(
+        GeoGroupFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    member = factory.SubFactory(
+        GeographicalAreaFactory,
+        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+    )
 
 
 class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
@@ -310,6 +367,7 @@ class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityStartFactory
     described_geographicalarea = factory.SubFactory(
         GeographicalAreaFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     description = short_description()
 
@@ -326,7 +384,10 @@ class CertificateFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "certificates.Certificate"
 
-    certificate_type = factory.SubFactory(CertificateTypeFactory)
+    certificate_type = factory.SubFactory(
+        CertificateTypeFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     sid = string_sequence(3)
 
     description = factory.RelatedFactory(
@@ -346,6 +407,7 @@ class CertificateDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin
     described_certificate = factory.SubFactory(
         CertificateFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     description = short_description()
 
@@ -364,7 +426,10 @@ class TestModelDescription1Factory(TrackedModelMixin, ValidityStartFactoryMixin)
     class Meta:
         model = TestModelDescription1
 
-    described_record = factory.SubFactory(TestModel1Factory)
+    described_record = factory.SubFactory(
+        TestModel1Factory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     description = factory.Faker("text", max_nb_chars=500)
 
 
@@ -384,7 +449,10 @@ class TestModel3Factory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = TestModel3
 
-    linked_model = factory.SubFactory(TestModel1Factory)
+    linked_model = factory.SubFactory(
+        TestModel1Factory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     sid = numeric_sid()
 
 
@@ -406,7 +474,10 @@ class AdditionalCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "additional_codes.AdditionalCode"
 
     sid = numeric_sid()
-    type = factory.SubFactory(AdditionalCodeTypeFactory)
+    type = factory.SubFactory(
+        AdditionalCodeTypeFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     code = string_sequence(3)
 
 
@@ -415,7 +486,10 @@ class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMi
         model = "additional_codes.AdditionalCodeDescription"
 
     sid = numeric_sid()
-    described_additionalcode = factory.SubFactory(AdditionalCodeFactory)
+    described_additionalcode = factory.SubFactory(
+        AdditionalCodeFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     description = short_description()
 
 
@@ -423,8 +497,14 @@ class FootnoteAssociationAdditionalCodeFactory(TrackedModelMixin, ValidityFactor
     class Meta:
         model = "additional_codes.FootnoteAssociationAdditionalCode"
 
-    additional_code = factory.SubFactory(AdditionalCodeFactory)
-    associated_footnote = factory.SubFactory(FootnoteFactory)
+    additional_code = factory.SubFactory(
+        AdditionalCodeFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    associated_footnote = factory.SubFactory(
+        FootnoteFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
 
 
 class SimpleGoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -481,7 +561,10 @@ class SimpleGoodsNomenclatureIndentFactory(
         model = "commodities.GoodsNomenclatureIndent"
 
     sid = numeric_sid()
-    indented_goods_nomenclature = factory.SubFactory(SimpleGoodsNomenclatureFactory)
+    indented_goods_nomenclature = factory.SubFactory(
+        SimpleGoodsNomenclatureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     indent = 0
 
 
@@ -523,7 +606,9 @@ class GoodsNomenclatureIndentNodeFactory(ValidityFactoryMixin):
 
     indent = factory.SubFactory(SimpleGoodsNomenclatureIndentFactory)
 
-    creating_transaction = factory.SubFactory(ApprovedTransactionFactory)
+    creating_transaction = factory.SubFactory(
+        ApprovedTransactionFactory,
+    )
 
 
 class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
@@ -534,6 +619,7 @@ class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityStartFactor
     described_goods_nomenclature = factory.SubFactory(
         GoodsNomenclatureFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     description = short_description()
 
@@ -542,9 +628,13 @@ class GoodsNomenclatureOriginFactory(TrackedModelMixin):
     class Meta:
         model = "commodities.GoodsNomenclatureOrigin"
 
-    new_goods_nomenclature = factory.SubFactory(SimpleGoodsNomenclatureFactory)
+    new_goods_nomenclature = factory.SubFactory(
+        SimpleGoodsNomenclatureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     derived_from_goods_nomenclature = factory.SubFactory(
         SimpleGoodsNomenclatureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
         valid_between=date_ranges("big"),
     )
 
@@ -556,9 +646,11 @@ class GoodsNomenclatureSuccessorFactory(TrackedModelMixin):
     replaced_goods_nomenclature = factory.SubFactory(
         SimpleGoodsNomenclatureFactory,
         valid_between=date_ranges("adjacent_earlier"),
+        transaction=factory.SelfAttribute("..transaction"),
     )
     absorbed_into_goods_nomenclature = factory.SubFactory(
         SimpleGoodsNomenclatureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
     )
 
 
@@ -569,8 +661,14 @@ class FootnoteAssociationGoodsNomenclatureFactory(
     class Meta:
         model = "commodities.FootnoteAssociationGoodsNomenclature"
 
-    goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
-    associated_footnote = factory.SubFactory(FootnoteFactory)
+    goods_nomenclature = factory.SubFactory(
+        GoodsNomenclatureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    associated_footnote = factory.SubFactory(
+        FootnoteFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
 
 
 class MeasurementUnitFactory(TrackedModelMixin, ValidityFactoryMixin):
@@ -828,13 +926,25 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "measures.Measure"
 
     sid = numeric_sid()
-    geographical_area = factory.SubFactory(GeographicalAreaFactory)
-    goods_nomenclature = factory.SubFactory(GoodsNomenclatureFactory)
-    measure_type = factory.SubFactory(MeasureTypeFactory)
+    geographical_area = factory.SubFactory(
+        GeographicalAreaFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    goods_nomenclature = factory.SubFactory(
+        GoodsNomenclatureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    measure_type = factory.SubFactory(
+        MeasureTypeFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     additional_code = None
     order_number = None
     reduction = factory.Sequence(lambda x: x % 4 + 1)
-    generating_regulation = factory.SubFactory(RegulationFactory)
+    generating_regulation = factory.SubFactory(
+        RegulationFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     stopped = False
     export_refund_nomenclature_sid = None
 
@@ -998,8 +1108,14 @@ class FootnoteAssociationMeasureFactory(TrackedModelMixin):
     class Meta:
         model = "measures.FootnoteAssociationMeasure"
 
-    footnoted_measure = factory.SubFactory(MeasureFactory)
-    associated_footnote = factory.SubFactory(FootnoteFactory)
+    footnoted_measure = factory.SubFactory(
+        MeasureFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
+    associated_footnote = factory.SubFactory(
+        FootnoteFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
 
 
 class EnvelopeFactory(factory.django.DjangoModelFactory):

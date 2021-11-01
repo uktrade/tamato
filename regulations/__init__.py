@@ -1,1 +1,1 @@
-"""Regulations represent peices of legislation that empower tariff measures."""
+"""Regulations represent pieces of legislation that empower tariff measures."""

@@ -232,7 +232,8 @@ class UniqueIdentifyingFields(BusinessRule):
         query = dict(get_field_tuple(model, field) for field in identifying_fields)
 
         if (
-            model.__class__.objects.filter(**query)
+            type(model)
+            .objects.filter(**query)
             .approved_up_to_transaction(self.transaction)
             .exclude(version_group=model.version_group)
             .exists()
