@@ -37,7 +37,6 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
     settings.HMRC_STORAGE_BUCKET_NAME = expected_bucket
 
     RegulationFactory.create(
-        regulation_group__transaction=approved_transaction,
         transaction=approved_transaction,
     )
     FootnoteTypeFactory.create(transaction=approved_transaction)

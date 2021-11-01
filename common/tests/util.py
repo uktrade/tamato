@@ -223,6 +223,15 @@ def validate_taric_xml(
     factory_kwargs=None,
     check_order=True,
 ):
+    """
+    Decorator that creates a fixture named 'xml' and validates end-to-end from
+    data creation to xml output.
+
+    The implementation from the supplied factory and returns xml via the test
+    client by hitting the workbasket-detail endpoint to return an approved
+    workbasket.
+    """
+
     def decorator(func):
         def wraps(
             api_client,
@@ -466,3 +475,12 @@ def get_form_data(form: forms.ModelForm) -> Dict[str, Any]:
         elif value is not None:
             data.setdefault(field, value)
     return data
+
+
+def assert_transaction_order(transactions):
+    """Given a sequence of transactions verify the default ordering is
+    partition, order (assumptions elsewhere in the code may break if this is not
+    the case)."""
+    assert sorted(transactions, key=lambda o: (o.partition, o.order)) == list(
+        transactions,
+    ), "Transactions should be in the order partition, order"

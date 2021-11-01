@@ -25,6 +25,7 @@ from importer.parsers import ParserError
 from importer.parsers import TextElement
 from taric.models import Envelope
 from taric.models import EnvelopeTransaction
+from workbaskets.models import TransactionPartitionScheme
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -103,8 +104,7 @@ class TransactionParser(ElementParser):
 
         :param data: A dict of the parsed element, containing at least an "id" and list
             of "message" dicts
-        :param envelope_id: The ID of the containing Envelope
-        :param workbasket_id: The primary key of the workbasket to add transactions to
+        :param envelope: Containing Envelope
         """
         logging.debug(f"Saving transaction {self.data['id']}")
 
@@ -115,6 +115,9 @@ class TransactionParser(ElementParser):
                 workbasket=self.parent.workbasket,
                 order=int(self.data["id"]),
                 import_transaction_id=int(self.data["id"]),
+                partition=self.parent.partition_scheme.get_partition(
+                    self.parent.workbasket.status,
+                ),
             )
 
         except IntegrityError:
@@ -166,7 +169,12 @@ class EnvelopeParser(ElementParser):
     transaction = TransactionParser(many=True)
 
     def __init__(
-        self, workbasket_status=None, tamato_username=None, save: bool = True, **kwargs
+        self,
+        workbasket_status=None,
+        partition_scheme: TransactionPartitionScheme = None,
+        tamato_username=None,
+        save: bool = True,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.last_transaction_id = -1
@@ -175,6 +183,7 @@ class EnvelopeParser(ElementParser):
         self.save = save
         self.envelope: Optional[Envelope] = None
         self.workbasket: Optional[WorkBasket] = None
+        self.partition_scheme = partition_scheme
 
     def start(self, element: etree.Element, parent: ElementParser = None):
         super().start(element, parent)
@@ -202,7 +211,12 @@ class EnvelopeParser(ElementParser):
             nursery.clear_cache()
 
 
-def process_taric_xml_stream(taric_stream, status, username):
+def process_taric_xml_stream(
+    taric_stream,
+    workbasket_status,
+    partition_scheme,
+    username,
+):
     """
     Parse a TARIC XML stream through the import handlers.
 
@@ -210,7 +224,8 @@ def process_taric_xml_stream(taric_stream, status, username):
     """
     xmlparser = etree.iterparse(taric_stream, ["start", "end", "start-ns"])
     handler = EnvelopeParser(
-        workbasket_status=status,
+        workbasket_status=workbasket_status,
+        partition_scheme=partition_scheme,
         tamato_username=username,
     )
     for event, elem in xmlparser:

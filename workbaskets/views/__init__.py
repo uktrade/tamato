@@ -10,6 +10,7 @@ from rest_framework import viewsets
 
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
+from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
 
 
@@ -57,7 +58,7 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
         workbasket: WorkBasket = self.get_object()
 
         workbasket.submit_for_approval()
-        workbasket.approve(self.request.user)
+        workbasket.approve(self.request.user, get_partition_scheme())
         workbasket.export_to_cds()
         workbasket.save()
         workbasket.save_to_session(self.request.session)

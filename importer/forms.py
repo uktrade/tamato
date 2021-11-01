@@ -9,6 +9,7 @@ from importer import models
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.namespaces import TARIC_RECORD_GROUPS
+from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
 
@@ -40,7 +41,12 @@ class UploadTaricForm(forms.ModelForm):
             record_group = None
 
         chunk_taric(self.files["taric_file"], batch, record_group=record_group)
-        run_batch(batch=batch.name, username=user.username, status=self.data["status"])
+        run_batch(
+            batch=batch.name,
+            status=self.data["status"],
+            partition_scheme=get_partition_scheme(),
+            username=user.username,
+        )
 
         return batch
 
