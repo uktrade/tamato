@@ -174,12 +174,14 @@ class ValidityPeriodForm(forms.ModelForm):
                 )
         cleaned_data["valid_between"] = TaricDateRange(start_date, end_date)
 
-        day, month, year = (start_date.day, start_date.month, start_date.year)
-        self.fields["start_date"].initial = date(
-            day=int(day),
-            month=int(month),
-            year=int(year),
-        )
+        if start_date:
+            day, month, year = (start_date.day, start_date.month, start_date.year)
+            self.fields["start_date"].initial = date(
+                day=int(day),
+                month=int(month),
+                year=int(year),
+            )
+
         if end_date:
             day, month, year = (end_date.day, end_date.month, end_date.year)
             self.fields["end_date"].initial = date(
