@@ -345,7 +345,7 @@ def chunk_taric(
         transaction.clear()
 
         element_counter += 1
-        if element_counter % 100000 == 0:
+        if element_counter % 100 == 0:
             logger.info("%d transactions done", element_counter)
 
     for key, chunk in chunks_in_progress.items():

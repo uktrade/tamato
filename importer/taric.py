@@ -175,7 +175,7 @@ class TransactionParser(ElementParser):
         super().end(element)
         if element.tag == self.tag:
             logging.debug(f"Saving import {self.data['id']}")
-            if int(self.data["id"]) % 10 == 0:
+            if int(self.data["id"]) % 100 == 0:
                 logger.info(
                     "%s transactions done in %d seconds",
                     self.data["id"],
