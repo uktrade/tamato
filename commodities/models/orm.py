@@ -271,7 +271,11 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
             .first()
         )
 
-    def get_parent_node(self, parent_depth: int) -> Optional[GoodsNomenclatureIndent]:
+    def get_parent_node(
+        self,
+        parent_depth: int,
+        start_date: Optional[date] = None,
+    ) -> Optional[GoodsNomenclatureIndent]:
         """
         Returns the parent of the indent given a parent depth.
 
@@ -284,11 +288,11 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         if self.is_root:
             return None
 
-        good = self.indented_goods_nomenclature
+        good: GoodsNomenclature = self.indented_goods_nomenclature
         item_id = good.item_id
         chapter = good.code.chapter
         suffix = good.suffix
-        validity_start = self.validity_start
+        validity_start = start_date or self.validity_start
 
         qs = GoodsNomenclatureIndentNode.objects
         parent: GoodsNomenclatureIndentNode = (
@@ -322,6 +326,8 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
 
         if effective_end_date and effective_end_date < self.validity_start:
             parent = parent.succeeding_node
+
+        return parent
 
     def save(self, *args, **kwargs):
         return_value = super().save(*args, **kwargs)
