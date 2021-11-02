@@ -719,30 +719,6 @@
             <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">many_to_one</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">one_to_one</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">auto_created</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">concrete</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Add the ability to get the current instance of a related object through</span>
-<span class="sd">        an attribute. For example if a model is like so:</span>
-
-<span class="sd">        .. code:: python</span>
-<span class="sd">            class ExampleModel(TrackedModel):</span>
-<span class="sd">                # must be a TrackedModel</span>
-<span class="sd">                other_model = models.ForeignKey(OtherModel, on_delete=models.PROTECT)</span>
-
-<span class="sd">        The latest version of the relation can be accessed via:</span>
-
-<span class="sd">        .. code:: python</span>
-<span class="sd">            example_model = ExampleModel.objects.first()</span>
-<span class="sd">            example_model.other_model_current  # Gets the latest version</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_current&quot;</span><span class="p">):</span>
-            <span class="n">field_name</span> <span class="o">=</span> <span class="n">item</span><span class="p">[:</span><span class="o">-</span><span class="mi">8</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">keys</span><span class="p">()]:</span>
-                <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span><span class="o">.</span><span class="n">current_version</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-
     <span class="n">_meta</span><span class="p">:</span> <span class="n">Options</span>
 
     <span class="nd">@classproperty</span>
