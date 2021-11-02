@@ -28,7 +28,6 @@ from commodities.util import clean_item_id
 from commodities.util import contained_date_range
 from commodities.util import date_ranges_overlap
 from common.business_rules import BusinessRuleViolation
-from common.models import transactions
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.records import TrackedModel
@@ -378,7 +377,7 @@ class CommodityTreeBase(BaseModel):
         try:
             return sorted_transactions[0]
         except IndexError:
-            return transactions
+            return None
 
 
 @dataclass
@@ -481,7 +480,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         try:
             assert len(chapters) <= 1
         except AssertionError:
-            print("All commodities in a group must be from the same HS chapter.")
+            logger.error("All commodities in a group must be from the same HS chapter.")
             raise
 
         self._sort()
@@ -848,11 +847,12 @@ class CommodityCollection(CommodityTreeBase):
             snapshot_date = date.today()
 
         commodities = self._get_snapshot_commodities(snapshot_date, transaction)
+        order = transaction.order if transaction else None
 
         return CommodityTreeSnapshot(
             commodities=commodities,
             clock_type=clock_type,
-            moments=(snapshot_date, transaction.order),
+            moments=(snapshot_date, order),
         )
 
     def _get_snapshot_commodities(
@@ -1105,7 +1105,7 @@ class CommodityChange(BaseModel):
         if self.candidate.code.is_taric_subheading:
             for association in footnote_associations:
                 try:
-                    cbr.NIG18().validate(measure)
+                    cbr.NIG18().validate(association)
                 except BusinessRuleViolation:
                     self._add_pending_delete(association)
 
