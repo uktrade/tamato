@@ -59,10 +59,11 @@ def test_envelope_serializer_outputs_expected_items(approved_workbasket):
     )
     footnote = factories.FootnoteFactory.create(
         transaction=tx,
-    )  # FootnoteFactory also creates a FootnoteDescription
+    )  # FootnoteFactory also creates a FootnoteType and FootnoteDescription
 
     expected_items = [
         regulation,
+        footnote.footnote_type,
         footnote,
         *footnote.descriptions.all(),
     ]  # < Note: These are sorted by record_code, subrecord_code

@@ -84,7 +84,7 @@ def test_scenario2_delete_node(scenario_2: TScenario, date_ranges):
     # Assert side-effects captured and BR-s violation pre-empted
     # NIG34 / NIG35
     change = changes[0]
-    measure = change.current.obj.measures.first()
+    measure = change.current.obj.measures.last()
     validate_captured_side_effect(change, measure, UpdateType.DELETE)
 
     # Not covered by a BR

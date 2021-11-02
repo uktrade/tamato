@@ -1,14 +1,22 @@
 from django.core.management import BaseCommand
 
+from common.models.transactions import TransactionPartition
 from importer import models
 from importer.tasks import find_and_run_next_batch_chunks
+from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
+from workbaskets.models import TransactionPartitionScheme
 from workbaskets.validators import WorkflowStatus
 
 
-def run_batch(batch: str, status: str, username: str):
+def run_batch(
+    batch: str,
+    status: str,
+    partition_scheme: TransactionPartitionScheme,
+    username: str,
+):
     import_batch = models.ImportBatch.objects.get(name=batch)
 
-    find_and_run_next_batch_chunks(import_batch, status, username)
+    find_and_run_next_batch_chunks(import_batch, status, partition_scheme, username)
 
 
 class Command(BaseCommand):
@@ -33,6 +41,13 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
+            "-p",
+            "--partition-scheme",
+            choices=TRANSACTION_PARTITION_SCHEMES.keys(),
+            help="Partition to place transactions in approved workbaskets",
+            type=str,
+        )
+        parser.add_argument(
             "-u",
             "--username",
             help="The username to use for the owner of the workbaskets created.",
@@ -43,5 +58,6 @@ class Command(BaseCommand):
         run_batch(
             batch=options["batch"],
             status=options["status"],
+            partition_scheme=TransactionPartition[options["partition_scheme"]],
             username=options["username"],
         )

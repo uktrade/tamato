@@ -65,10 +65,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
         """
-        Get the approved versions of the model being queried unless there exists
-        a version of the model in a draft state within a transaction preceding
-        (and including) the given transaction in the workbasket of the given
-        transaction.
+        Get the approved versions of the model being queried, unless there
+        exists a version of the model in a draft state within a transaction
+        preceding (and including) the given transaction in the workbasket of the
+        given transaction.
 
         The generated SQL is equivalent to:
 
@@ -282,10 +282,11 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
         return self.annotate_record_codes().order_by("record_code", "subrecord_code")
 
     def approved_query_filter(self, prefix=""):
+        from common.models.transactions import TransactionPartition
+
         return Q(
             **{
-                f"{prefix}transaction__workbasket__status__in": WorkflowStatus.approved_statuses(),
-                f"{prefix}transaction__workbasket__approver__isnull": False,
+                f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
             }
         )
 
