@@ -1,5 +1,6 @@
 """Django settings for tamato project."""
 import json
+import logging.config
 import os
 import sys
 import uuid
@@ -353,55 +354,64 @@ CELERY_BEAT_SCHEDULE = {
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
 
 # -- Logging
+LOGGING_CONFIG = None
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
-    },
-    "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "default",
+logging.config.dictConfig(
+    {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
+        },
+        "handlers": {
+            "console": {
+                "level": "DEBUG",
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+            },
+        },
+        "loggers": {
+            "root": {
+                "handlers": ["console"],
+                "level": "WARNING",
+            },
+            "importer": {
+                "handlers": ["console"],
+                "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+                "propagate": False,
+            },
+            "exporter": {
+                "handlers": ["console"],
+                "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+                "propagate": False,
+            },
+            "commodities": {
+                "handlers": ["console"],
+                "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+                "propagate": False,
+            },
+            "common": {
+                "handlers": ["console"],
+                "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+                "propagate": False,
+            },
+            "footnotes": {
+                "handlers": ["console"],
+                "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+                "propagate": False,
+            },
+            "measures": {
+                "handlers": ["console"],
+                "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+                "propagate": False,
+            },
+        },
+        "celery": {
+            "handlers": ["celery"],
+            "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
         },
     },
-    "loggers": {
-        "root": {
-            "handlers": ["console"],
-            "level": "WARNING",
-        },
-        "importer": {
-            "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-        },
-        "exporter": {
-            "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-        },
-        "commodities": {
-            "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-        },
-        "common": {
-            "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-        },
-        "footnotes": {
-            "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-        },
-        "measures": {
-            "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-        },
-    },
-    "celery": {
-        "handlers": ["celery", "console"],
-        "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
-    },
-}
+)
 
 # -- Sentry error tracking
 
