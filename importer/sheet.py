@@ -1,3 +1,4 @@
+import logging
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import date
@@ -12,11 +13,14 @@ from typing import Union
 from openpyxl.cell import Cell
 from openpyxl.worksheet.worksheet import Worksheet
 
+from commodities.models.orm import GoodsNomenclature
 from common.util import classproperty
 from importer.utils import col
 from workbaskets.models import WorkBasket
 
 CellValue = Union[date, str, int, None]
+
+logger = logging.getLogger(__name__)
 
 
 def column(label, optional=False, many=False):
@@ -40,7 +44,7 @@ def column(label, optional=False, many=False):
             if optional and (value is None or value == ""):
                 return None
             elif many:
-                value = split("[" + "".join(self.separators) + "]", value)
+                value = split("[" + "".join(self.separators) + "]", value or "")
                 return [fn(self, v) for v in value]
             else:
                 return fn(self, value)
@@ -91,4 +95,13 @@ class SheetRowMixin:
         (header) row."""
         for row in islice(sheet.iter_rows(), 1, None):
             row_model = cls(row, *args, **kwargs)
-            yield row_model.import_row(workbasket)
+
+            try:
+                yield row_model.import_row(workbasket)
+            except GoodsNomenclature.DoesNotExist:
+                logger.warning(
+                    f"Commodity {row_model.item_id}: not imported from EU Taric files yet.",
+                )
+            except Exception as e:
+                logger.error(e)
+                raise

@@ -25,6 +25,18 @@ from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 
+def process_date_value(value: CellValue) -> date:
+    """
+    Returns a date instance corresponding to the cell value.
+
+    The date part of the value must be in "%Y-%m-%d" format. If a value
+    representing date and time is provided, this method will take the date part
+    only.
+    """
+    value = str(value).split(" ")[0]
+    return datetime.strptime(value, r"%Y-%m-%d").date()
+
+
 class MeasureSheetRow(SheetRowMixin):
     """An importer that will parse values from a human-readable spreadsheet of
     measures and will create one measure for each row that it finds."""
@@ -55,7 +67,7 @@ class MeasureSheetRow(SheetRowMixin):
 
     @column("C")
     def duty_sentence(self, value: CellValue) -> str:
-        return str(value)
+        return str(value) if value else ""
 
     @column("D")
     def origin_description(self, value: CellValue) -> str:
@@ -77,6 +89,9 @@ class MeasureSheetRow(SheetRowMixin):
 
     @cached_property
     def excluded_origins(self) -> Sequence[GeographicalArea]:
+        if not self.excluded_origin_descriptions:
+            return []
+
         return [
             desc.described_geographicalarea
             for desc in GeographicalAreaDescription.objects.latest_approved()
@@ -109,11 +124,11 @@ class MeasureSheetRow(SheetRowMixin):
 
     @column("G")
     def validity_start_date(self, value: CellValue) -> date:
-        return datetime.strptime(str(value), r"%Y-%m-%d").date()
+        return process_date_value(value)
 
     @column("H", optional=True)
     def validity_end_date(self, value: CellValue) -> date:
-        return datetime.strptime(str(value), r"%Y-%m-%d").date()
+        return process_date_value(value)
 
     @column("I")
     def regulation_id(self, value: CellValue) -> str:
