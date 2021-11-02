@@ -10,7 +10,6 @@ from itertools import groupby
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -33,7 +32,6 @@ from common.models.dc.base import BaseModel
 from common.models.records import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
-from common.util import get_record_code
 from common.validators import UpdateType
 from importer.namespaces import TARIC_RECORD_GROUPS
 from measures import business_rules as mbr
@@ -1467,7 +1465,7 @@ class CommodityChangeRecordLoader:
         """Instantiates the loader."""
         self.chapter_changes: dict[str, CommodityChapterChanges] = {}
 
-    def load(self, data: Mapping[str, Any]) -> list[CommodityChange]:
+    def load(self, transaction: Transaction) -> list[CommodityChange]:
         """
         Converts transaction records to corresponding CommodityChange objects.
 
@@ -1490,10 +1488,9 @@ class CommodityChangeRecordLoader:
         record_group = TARIC_RECORD_GROUPS["commodities"]
 
         matching_records = [
-            (self._get_record_commodity_code(record), record)
-            for transmission in data["message"]
-            for record in transmission["record"]
-            if get_record_code(record) in record_group
+            (self._get_record_commodity_code(obj), obj)
+            for obj in transaction.tracked_models.all()
+            if obj.record_identifier in record_group
         ]
 
         sorted_records = sorted(matching_records, key=lambda x: x[0])
@@ -1505,7 +1502,7 @@ class CommodityChangeRecordLoader:
     def add_pending_change(
         self,
         commodity_code: str,
-        records: tuple[str, dict[str, Any]],
+        records: tuple[str, dict[str, TrackedModel]],
     ) -> None:
         """
         Produces a commodity change instance based on a group of 400-type
@@ -1527,34 +1524,28 @@ class CommodityChangeRecordLoader:
         chapter = commodity_code[:4]
         chapter_changes = self._get_or_create_chapter_changes(chapter)
 
-        records_by_code = {get_record_code(record): record for _, record in records}
+        records_by_identifier = {obj.record_identifier: obj for _, obj in records}
 
-        commodity_record = records_by_code.get("40000")
-        indent_record = records_by_code.get("40005")
+        good = records_by_identifier.get("40000")
+        indent = records_by_identifier.get("40005")
 
-        if not (commodity_record or indent_record):
+        if not (good or indent):
             return
 
-        indent = self._get_indent(indent_record)
-        update_type = self._get_update_type(commodity_record)
-        int(commodity_record["transaction_id"])
+        if not good:
+            good = indent.indented_goods_nomenclature
 
         indent_ = indent.indent if indent else None
         current = self._get_current_commodity(good, indent_)
 
-        candidate = self._create_candidate_commodity(
-            commodity_code,
-            indent,
-            update_type,
-            commodity_record["goods_nomenclature"],
-            current.obj if current else None,
-        )
+        candidate = self._create_candidate_commodity(good)
 
         change = CommodityChange(
             collection=chapter_changes.collection,
-            update_type=update_type,
+            update_type=good.update_type,
             current=current,
             candidate=candidate,
+            ignore_validation_rules=True,
         )
 
         chapter_changes.changes.append(change)
@@ -1602,26 +1593,14 @@ class CommodityChangeRecordLoader:
 
     def _create_candidate_commodity(
         self,
-        commodity_code: str,
-        indent: int,
-        update_type: UpdateType,
-        data: dict[str, Any],
-        obj: Optional[GoodsNomenclature] = None,
+        good: GoodsNomenclature,
     ) -> Optional[Commodity]:
         """Returns a candidate commodity wrapper with the commodity record's
         attributes."""
-        if update_type == UpdateType.DELETE:
+        if good.update_type == UpdateType.DELETE:
             return None
 
-        valid_between = self._get_taric_date_range(data)
-
-        return Commodity(
-            obj=obj,
-            item_id=data["item_id"],
-            suffix=data["suffix"],
-            indent=indent,
-            valid_between=valid_between,
-        )
+        return Commodity(obj=good)
 
     def _get_taric_date_range(self, data: dict[str, Any]) -> TaricDateRange:
         """Returns a TaricDateRange instance for the record's validity
@@ -1638,8 +1617,13 @@ class CommodityChangeRecordLoader:
 
         return TaricDateRange(start_date, end_date)
 
-    def _get_record_commodity_code(self, record: dict[str, Any]) -> str:
+    def _get_record_commodity_code(self, obj: TrackedModel) -> str:
         """Returns the commodity code embedded in a taric record."""
-        code = get_record_code(record)
-        record_name, attr_name = COMMODITY_RECORD_ATTRIBUTES[code]
-        return record.get(record_name).get(attr_name)
+        _, attr_name = COMMODITY_RECORD_ATTRIBUTES[obj.record_identifier]
+
+        attrs = attr_name.split("__")
+        result = obj
+        for attr in attrs:
+            result = getattr(result, attr)
+
+        return result
