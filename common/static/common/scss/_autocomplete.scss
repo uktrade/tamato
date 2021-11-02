@@ -7,3 +7,8 @@ li {
 hr {
   @extend .govuk-\!-margin-bottom-6;
 }
+
+.autocomplete__input {
+  @extend .govuk-input;
+  background-color: govuk-colour("white");
+}

@@ -46,6 +46,7 @@ class MeasureForm(ValidityPeriodForm):
         help_text="Select the 10 digit commodity code to which the measure applies.",
         queryset=GoodsNomenclature.objects.all(),
         required=False,
+        attrs={"min_length": 3},
     )
     additional_code = AutoCompleteField(
         label="Code and description",
@@ -197,34 +198,13 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
-                Field.text(
-                    "goods_nomenclature",
-                    field_width=Fluid.TWO_THIRDS,
-                ),
-                Field.text(
-                    "additional_code",
-                    field_width=Fluid.TWO_THIRDS,
-                ),
-                Field.text(
-                    "order_number",
-                    field_width=Fluid.TWO_THIRDS,
-                ),
-                Field.text(
-                    "measure_type",
-                    field_width=Fluid.TWO_THIRDS,
-                ),
-                Field.text(
-                    "regulation",
-                    field_width=Fluid.TWO_THIRDS,
-                ),
-                Field.text(
-                    "geographical_area",
-                    field_width=Fluid.TWO_THIRDS,
-                ),
-                Field.text(
-                    "footnote",
-                    field_width=Fluid.TWO_THIRDS,
-                ),
+                "goods_nomenclature",
+                "additional_code",
+                "order_number",
+                "measure_type",
+                "regulation",
+                "geographical_area",
+                "footnote",
                 css_class="govuk-grid-row quarters",
             ),
             HTML(
@@ -349,6 +329,7 @@ class MeasureCommodityForm(forms.Form):
         label="Commodity code",
         help_text="Select the 10-digit commodity code to which the measure applies.",
         queryset=GoodsNomenclature.objects.all(),
+        attrs={"min_length": 3},
     )
     additional_code = AutoCompleteField(
         label="Additional code",

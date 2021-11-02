@@ -30,6 +30,7 @@ from django_filters.constants import EMPTY_VALUES
 from rest_framework import filters
 from rest_framework.settings import api_settings
 
+from common.fields import AutoCompleteField
 from common.jinja2 import break_words
 from common.models.records import TrackedModelQuerySet
 from common.util import TaricDateRange
@@ -156,7 +157,10 @@ class TamatoFilterMixin:
     def search_queryset(self, queryset, search_term):
         search_term = self.get_search_term(search_term)
         return queryset.annotate(search=SearchVector(*self.search_fields)).filter(
-            search=search_term,
+            Q(
+                search__icontains=search_term,
+            )
+            | Q(search=search_term),
         )
 
 
@@ -261,3 +265,7 @@ class StartYearMixin(FilterSet):
                 ),
             ).filter(start_year__in=value)
         return queryset
+
+
+class AutoCompleteFilter(CharFilter):
+    field_class = AutoCompleteField

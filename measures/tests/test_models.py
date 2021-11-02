@@ -4,6 +4,7 @@ import pytest
 
 from common.tests import factories
 from common.validators import UpdateType
+from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
 
@@ -205,3 +206,33 @@ def test_copy_measure_doesnt_add_export_refund_sids(export_refund_sid):
     copy = measure.copy(factories.ApprovedTransactionFactory())
 
     assert copy.export_refund_nomenclature_sid == export_refund_sid
+
+
+@pytest.mark.parametrize(
+    ("GoodsNomenclatureFactory"),
+    (factories.GoodsNomenclatureFactory, None),
+)
+def test_commodity_code_change_performs_DELETE_and_CREATE(GoodsNomenclatureFactory):
+    goods_nomenclature = (
+        GoodsNomenclatureFactory() if GoodsNomenclatureFactory else None
+    )
+    measure = factories.MeasureFactory.create(goods_nomenclature=goods_nomenclature)
+    new_nomenclature = factories.GoodsNomenclatureFactory()
+
+    assert Measure.objects.count() == 1
+
+    factories.MeasureFactory.create(
+        version_group=measure.version_group,
+        update_type=UpdateType.UPDATE,
+        goods_nomenclature=new_nomenclature,
+    )
+
+    deleted_measure = Measure.objects.filter(update_type=UpdateType.DELETE).first()
+    created_measure = Measure.objects.filter(
+        goods_nomenclature=new_nomenclature,
+        update_type=UpdateType.CREATE,
+    ).first()
+
+    assert deleted_measure is not None
+    assert created_measure is not None
+    assert Measure.objects.count() == 3

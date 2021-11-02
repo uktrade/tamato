@@ -37,6 +37,7 @@ from common.exceptions import NoDescriptionError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.querysets import ValidityQuerySet
 from common.util import classproperty
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
@@ -44,7 +45,7 @@ from workbaskets.validators import WorkflowStatus
 Cls = TypeVar("Cls")
 
 
-class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
+class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
@@ -64,10 +65,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
         """
-        Get the approved versions of the model being queried unless there exists
-        a version of the model in a draft state within a transaction preceding
-        (and including) the given transaction in the workbasket of the given
-        transaction.
+        Get the approved versions of the model being queried, unless there
+        exists a version of the model in a draft state within a transaction
+        preceding (and including) the given transaction in the workbasket of the
+        given transaction.
 
         The generated SQL is equivalent to:
 
@@ -281,10 +282,11 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet):
         return self.annotate_record_codes().order_by("record_code", "subrecord_code")
 
     def approved_query_filter(self, prefix=""):
+        from common.models.transactions import TransactionPartition
+
         return Q(
             **{
-                f"{prefix}transaction__workbasket__status__in": WorkflowStatus.approved_statuses(),
-                f"{prefix}transaction__workbasket__approver__isnull": False,
+                f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
             }
         )
 

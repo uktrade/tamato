@@ -294,6 +294,19 @@ class MeasureUpdate(
 
         return context
 
+    def form_valid(self, form):
+        """
+        Gets updated object with form.save(), checks if this object has been
+        deleted during save.
+
+        If deleted, gets newly created measure by latest sid.
+        """
+        self.object = form.save()
+        if self.object.update_type == UpdateType.DELETE:
+            self.object = Measure.objects.filter().order_by("sid").last()
+
+        return HttpResponseRedirect(self.get_success_url())
+
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
