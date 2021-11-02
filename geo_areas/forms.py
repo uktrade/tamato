@@ -121,6 +121,8 @@ class GeographicalAreaFormMixin(forms.Form):
             )
             cleaned_data["geo_area_exclusions"] = erga_omnes_exclusions
 
+        self.fields["geo_area_type"].initial = geo_area_type
+
         if geo_area_type == self.GeoAreaType.GROUP:
             if not geo_group:
                 raise ValidationError({"geo_group": "A country group is required."})
@@ -132,7 +134,6 @@ class GeographicalAreaFormMixin(forms.Form):
                 raise ValidationError({"geo_area": "A country or region is required."})
             cleaned_data["geographical_area"] = geo_area
 
-        self.fields["geo_area_type"].initial = geo_area_type
         self.fields["geo_group"].initial = geo_group.pk if geo_group else None
         self.fields["geo_area"].initial = geo_area.pk if geo_area else None
 

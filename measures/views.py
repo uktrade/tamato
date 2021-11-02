@@ -227,7 +227,9 @@ class MeasureCreateWizard(
                     if hasattr(field, "queryset"):
                         field.queryset = field.queryset.approved_up_to_transaction(tx)
 
-        if form.is_valid():
+        form.is_valid()
+        breakpoint()
+        if hasattr(form, "cleaned_data"):
             form.initial = form.cleaned_data
 
         return form
