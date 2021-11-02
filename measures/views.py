@@ -228,7 +228,6 @@ class MeasureCreateWizard(
                         field.queryset = field.queryset.approved_up_to_transaction(tx)
 
         form.is_valid()
-        breakpoint()
         if hasattr(form, "cleaned_data"):
             form.initial = form.cleaned_data
 
