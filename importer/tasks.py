@@ -8,6 +8,8 @@ from importer import models
 from importer.taric import process_taric_xml_stream
 from importer.utils import build_dependency_tree
 from workbaskets.models import get_partition_scheme
+from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 logger = getLogger(__name__)
 
@@ -69,7 +71,7 @@ def setup_chunk_task(
     partition_scheme_setting: str,
     username: str,
     record_code: str = None,
-    **kwargs
+    **kwargs,
 ):
     """
     Setup tasks to be run for the given chunk.
@@ -218,3 +220,42 @@ def find_and_run_next_batch_chunks(
                 username,
                 record_code=code,
             )
+
+
+def order_transactions() -> None:
+    """Orders transactions in the workbasket, if necessary."""
+    workbasket = WorkBasket.objects.order_by("id").last()
+
+    last_order = (
+        models.Transaction.objects.filter(
+            workbasket__status__in=WorkflowStatus.approved_statuses(),
+            workbasket__id__gt=WorkBasket.objects.order_by("id").first().id,
+        )
+        .exclude(workbasket__id=workbasket.id)
+        .order_by("order")
+        .last()
+        .order
+    )
+
+    first_order = workbasket.transactions.order_by("order").first().order
+    logger.info(f"Workbasket resumes from {last_order}, begins with {first_order}.")
+
+    if first_order == last_order + 1:
+        logger.info(
+            "No need to reorder the transactions in the workbasket.",
+        )
+        return
+
+    logger.info(
+        "Workbasket transactions will be reordered.",
+    )
+
+    for order, transaction in enumerate(
+        workbasket.transactions.order_by("order"),
+        last_order + 1,
+    ):
+        logger.info(
+            f"Changing transaction order from {transaction.order} to {order}.",
+        )
+        transaction.order = order
+        transaction.save()
