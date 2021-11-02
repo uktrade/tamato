@@ -24,6 +24,7 @@ from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.description import DescriptionQueryset
 from common.models.mixins.validity import ValidityMixin
 from common.models.mixins.validity import ValidityStartMixin
+from common.models.transactions import Transaction
 from common.util import TaricDateRange
 from footnotes.validators import ApplicationCode
 from measures import business_rules as measures_business_rules
@@ -241,30 +242,38 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
 
         return GoodsNomenclatureIndent.objects.filter(parent_path_query)
 
-    @property
-    def good_indents(self) -> QuerySet:
+    def get_good_indents(
+        self,
+        as_of_transaction: Optional[Transaction] = None,
+    ) -> QuerySet:
         """Return the related goods indents based on approval status."""
         good = self.indented_goods_nomenclature
         return good.indents.approved_up_to_transaction(
-            self.transaction,
+            as_of_transaction or self.transaction,
         )
 
-    @property
-    def preceding_indent(self) -> Optional[GoodsNomenclatureIndent]:
+    def get_preceding_indent(
+        self,
+        as_of_transaction: Optional[Transaction] = None,
+    ) -> Optional[GoodsNomenclatureIndent]:
         """Returns the node indent's predecessor in time, if any."""
         return (
-            self.good_indents.filter(
+            self.get_good_indents(as_of_transaction)
+            .filter(
                 validity_start__lt=self.validity_start,
             )
             .order_by("validity_start")
             .last()
         )
 
-    @property
-    def succeeding_indent(self) -> Optional[GoodsNomenclatureIndent]:
+    def get_succeeding_indent(
+        self,
+        as_of_transaction: Optional[Transaction] = None,
+    ) -> Optional[GoodsNomenclatureIndent]:
         """Returns the node indent's successor in time, if any."""
         return (
-            self.good_indents.filter(
+            self.get_good_indents(as_of_transaction)
+            .filter(
                 validity_start__gt=self.validity_start,
             )
             .order_by("validity_start")
@@ -274,6 +283,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     def get_parent_node(
         self,
         parent_depth: int,
+        as_of_transaction: Optional[Transaction] = None,
         start_date: Optional[date] = None,
     ) -> Optional[GoodsNomenclatureIndent]:
         """
@@ -322,10 +332,10 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         # This can cause the above query to yield the wrong parent.
         # The extra logic below catches and remedies such potential cases.
         # TODO: Handle situations with multiple wrong patterns
-        effective_end_date = parent.effective_end_date
+        effective_end_date = parent.get_effective_end_date(as_of_transaction)
 
         if effective_end_date and effective_end_date < self.validity_start:
-            parent = parent.succeeding_node
+            parent = parent.get_succeeding_node(as_of_transaction)
 
         return parent
 
@@ -470,10 +480,12 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         """Returns the node indent's indented good."""
         return self.indent.indented_goods_nomenclature
 
-    @property
-    def preceding_node(self) -> Optional[GoodsNomenclatureIndentNode]:
+    def get_preceding_node(
+        self,
+        as_of_transaction: Optional[Transaction] = None,
+    ) -> Optional[GoodsNomenclatureIndentNode]:
         """Returns the precessor to this node, if any."""
-        indent = self.indent.preceding_indent
+        indent = self.indent.get_preceding_indent(as_of_transaction)
 
         if not indent:
             return
@@ -483,9 +495,12 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         ).last()
 
     @property
-    def succeeding_node(self) -> Optional[GoodsNomenclatureIndentNode]:
+    def succeeding_node(
+        self,
+        as_of_transaction: Optional[Transaction] = None,
+    ) -> Optional[GoodsNomenclatureIndentNode]:
         """Returns the successor to this node, if any."""
-        indent = self.indent.succeeding_indent
+        indent = self.indent.get_succeeding_indent(as_of_transaction)
 
         if not indent:
             return
@@ -494,8 +509,10 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
             "valid_between__startswith",
         ).first()
 
-    @property
-    def effective_end_date(self) -> date:
+    def get_effective_end_date(
+        self,
+        as_of_transaction: Optional[Transaction] = None,
+    ) -> date:
         """
         Returns the effective end date for the node.
 
@@ -510,15 +527,17 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         we need to be able to tell the effective end dates of such nodes,
         which are constrained by the implicit end date of the related indent.
         """
-        indent = self.indent.succeeding_indent
+        indent = self.indent.get_succeeding_indent(as_of_transaction)
 
         if not indent:
             return self.valid_between.upper
 
         return indent.validity_start + timedelta(days=-1)
 
-    @property
-    def effective_valid_between(self) -> TaricDateRange:
+    def get_effective_valid_between(
+        self,
+        as_of_transaction: Optional[Transaction] = None,
+    ) -> TaricDateRange:
         """
         Returns the effective validity range for the node.
 
@@ -527,13 +546,8 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         """
         return TaricDateRange(
             self.valid_between.lower,
-            self.effective_end_date,
+            self.get_effective_end_date(as_of_transaction),
         )
-
-    @property
-    def parent(self) -> GoodsNomenclatureIndentNode:
-        """Returns the parent of the node."""
-        return self.indent.get_parent_node(self.parent_depth)
 
     @transaction.atomic
     def copy_tree(

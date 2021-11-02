@@ -214,7 +214,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         might be lower than the start date of a new node
         we are trying to attach to the tree.
         """
-        preceding_indent = indent.preceding_indent
+        preceding_indent = indent.get_preceding_indent()
 
         if not preceding_indent:
             return
@@ -247,7 +247,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         as the explicit end date for the new indent's related
         `GoodsNomenclatureIndentNode` object we are about to create.
         """
-        succeeding_indent = indent.succeeding_indent
+        succeeding_indent = indent.get_succeeding_indent()
 
         if not succeeding_indent:
             return
@@ -263,7 +263,6 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                 pk=data.pop("indented_goods_nomenclature_id"),
             )
         item_id = data["indented_goods_nomenclature"].item_id
-        data["indented_goods_nomenclature"].suffix
 
         indent = super().save(data)
         self.set_preceding_node_end_date(indent)
