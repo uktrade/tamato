@@ -1,4 +1,6 @@
+from datetime import date
 from datetime import timedelta
+from typing import TypeVar
 
 from django.conf import settings
 from django.db import models
@@ -10,6 +12,10 @@ from django_cte import CTEQuerySet
 from django_cte.cte import With
 
 from common.fields import TaricDateRangeField
+from common.util import TaricDateRange
+from common.validators import UpdateType
+
+Self = TypeVar("Self", bound="ValidityMixin")
 
 
 class ValidityMixin(models.Model):
@@ -50,6 +56,41 @@ class ValidityMixin(models.Model):
         default queryset.
         """
         return cls.objects
+
+    def terminate(self: Self, workbasket, when: date, **params) -> Self:
+        """
+        Returns a new version of the object updated to end on the specified
+        date.
+
+        If the object would not have started on that date, the object is deleted
+        instead. If the object will already have ended by this date, then does
+        nothing.
+
+        Any keyword arguments passed will be applied in the case of an update
+        and are ignored for a delete or no change.
+        """
+        starts_after_date = (
+            not self.valid_between.lower_inf and self.valid_between.lower >= when
+        )
+        ends_before_date = (
+            not self.valid_between.upper_inf and self.valid_between.upper < when
+        )
+
+        if ends_before_date:
+            return self
+
+        update_params = {}
+        if starts_after_date:
+            update_params["update_type"] = UpdateType.DELETE
+        else:
+            update_params["update_type"] = UpdateType.UPDATE
+            update_params["valid_between"] = TaricDateRange(
+                lower=self.valid_between.lower,
+                upper=when,
+            )
+            update_params.update(params)
+
+        return self.new_version(workbasket, **update_params)
 
     class Meta:
         abstract = True

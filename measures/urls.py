@@ -43,6 +43,11 @@ ui_patterns = [
         views.MeasureConfirmUpdate.as_view(),
         name="measure-ui-confirm-update",
     ),
+    path(
+        "<sid:sid>/edit-footnotes/",
+        views.MeasureFootnotesUpdate.as_view(),
+        name="measure-ui-edit-footnotes",
+    ),
 ]
 
 
