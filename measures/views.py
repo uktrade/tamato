@@ -1,13 +1,18 @@
+from typing import Any
 from typing import Type
 
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ValidationError
+from django.http import HttpRequest
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
+from django.views import View
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
+from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
@@ -279,6 +284,21 @@ class MeasureUpdate(
 
         return form
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        initial = self.request.session.get(
+            f"formset_initial_{self.kwargs.get('sid')}",
+            [],
+        )
+        formset = forms.MeasureFootnotesFormSet()
+        formset.initial = initial
+        formset.form_kwargs = {"request": self.request}
+        context["formset"] = formset
+        context["no_form_tags"] = FormHelper()
+        context["no_form_tags"].form_tag = False
+
+        return context
+
     def form_valid(self, form):
         """
         Gets updated object with form.save(), checks if this object has been
@@ -295,3 +315,47 @@ class MeasureUpdate(
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
+
+
+class MeasureFootnotesUpdate(View):
+    """Separate post-only view for adding or removing footnotes on an existing
+    measure."""
+
+    def get_delete_key(self, footnote_key: str) -> str:
+        """
+        Expects a string of format 'form-0-footnote' or 'form-1-footnote' etc.
+
+        Outputs a string of format 'form-0-DELETE' or 'form-1-DELETE' etc.
+        """
+        form_prefix, _ = footnote_key.rsplit("-", 1)
+        return f"{form_prefix}-DELETE"
+
+    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        """
+        Checks for 'remove' key in request.POST.
+
+        If found, updates request session with PK of footnote to be removed from
+        measure. If not found, updates request session with footnote pks to
+        populate formset, ignoring footnotes marked for deletion in the formset.
+        """
+        sid = self.kwargs.get("sid")
+
+        if "remove" in request.POST:
+            request.session[f"instance_footnotes_{sid}"].remove(
+                int(request.POST.get("remove")),
+            )
+            request.session.save()
+        else:
+            keys = request.POST.keys()
+            footnote_keys = [
+                key
+                for key in keys
+                if "footnote" in key and "form" in key and "auto" not in key
+            ]
+            request.session[f"formset_initial_{sid}"] = [
+                {"footnote": request.POST[footnote]}
+                for footnote in footnote_keys
+                if self.get_delete_key(footnote) not in keys and request.POST[footnote]
+            ]
+
+        return HttpResponseRedirect(reverse("measure-ui-edit", args=[sid]))
