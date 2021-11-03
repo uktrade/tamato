@@ -143,7 +143,7 @@ class MeasureForm(ValidityPeriodForm):
         storage any footnote pks created via the Footnote formset and any pks
         not removed from the measure after editing and create footnotes via
         FootnoteAssociationMeasure."""
-        instance = super(MeasureForm, self).save(commit=False)
+        instance = super().save(commit=False)
         if commit:
             instance.save()
 
@@ -553,7 +553,9 @@ class MeasureFootnotesForm(forms.Form):
         # and pass edit-footnotes url if this is the case
         self.request = request
         path = self.request.path
-        self.path = path[:-1] + "-footnotes/" if "edit" in path else None
+        self.path = None
+        if "edit" in path:
+            self.path = path[:-1] + "-footnotes/"
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)

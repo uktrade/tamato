@@ -1,4 +1,5 @@
-{% if form.request.session["instance_footnotes_"~form.instance.sid] %}
+{% with form_footnotes = form.request.session["instance_footnotes_" ~ form.instance.sid] %}
+    {% if form_footnotes %}
         {% set table_rows = [] %}
         {% for footnote in form.instance.footnotes.all() %}
             {% if footnote.pk in form.request.session["instance_footnotes_"~form.instance.sid]%}
@@ -29,6 +30,7 @@
         <p class="govuk-label">No footnotes found.</p>
         <br></br>
     {% endif %}
+{% endwith %}
 
 {{ crispy(formset.management_form, no_form_tags) }}
     <label class="govuk-label">Add a footnote</label>

@@ -322,9 +322,8 @@ class MeasureFootnotesUpdate(View):
 
         Outputs a string of format 'form-0-DELETE' or 'form-1-DELETE' etc.
         """
-        split = footnote_key.split("-")
-
-        return split[0] + "-" + split[1] + "-DELETE"
+        form_prefix, _ = footnote_key.rsplit("-", 1)
+        return f"{form_prefix}-DELETE"
 
     def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         """
