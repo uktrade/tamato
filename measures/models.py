@@ -661,27 +661,11 @@ class Measure(TrackedModel, ValidityMixin):
         deleted instead. If the measure will already have ended by this date,
         then does nothing.
         """
-        starts_after_date = self.valid_between.lower >= when
-        ends_before_date = (
-            not self.valid_between.upper_inf and self.valid_between.upper < when
-        )
-
-        if ends_before_date:
-            return self
-
         update_params = {}
-        if starts_after_date:
-            update_params["update_type"] = UpdateType.DELETE
-        else:
-            update_params["update_type"] = UpdateType.UPDATE
-            update_params["valid_between"] = TaricDateRange(
-                lower=self.valid_between.lower,
-                upper=when,
-            )
-            if not self.terminating_regulation:
-                update_params["terminating_regulation"] = self.generating_regulation
+        if not self.terminating_regulation:
+            update_params["terminating_regulation"] = self.generating_regulation
 
-        return self.new_version(workbasket, **update_params)
+        return super().terminate(workbasket, when, **update_params)
 
     def save(self, *args, force_write=False, **kwargs):
         """If the commodity code is being changed on an existing measure, the
