@@ -44,9 +44,13 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
@@ -266,7 +270,7 @@
 
     <span class="k">def</span> <span class="nf">_get_current_related_lookups</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">lookups</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">recurse_level</span><span class="o">=</span><span class="mi">0</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build a list of lookups for the current versions of related objects.</span>
 
@@ -459,13 +463,13 @@
 <span class="sd">    ones.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
+    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The fields which together form a composite unique key for each model.</span>
 
 <span class="sd">    The system ID (or SID) field is normally the unique identifier of a TARIC</span>
 <span class="sd">    model, but in places where this does not exist models can declare their own.</span>
-<span class="sd">    (Note that because mutliple versions of each model will exist this does not</span>
+<span class="sd">    (Note that because multiple versions of each model will exist this does not</span>
 <span class="sd">    actually equate to a ``UNIQUE`` constraint in the database.)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -670,7 +674,7 @@
     <span class="k">def</span> <span class="nf">get_identifying_fields</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">identifying_fields</span> <span class="o">=</span> <span class="n">identifying_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -711,7 +715,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 
     <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">relations</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="n">ForeignObjectRel</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]:</span>
+    <span class="k">def</span> <span class="nf">relations</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="n">ForeignObjectRel</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns all the models that are related to this one.</span>
 
@@ -731,7 +735,7 @@
     <span class="nd">@classproperty</span>
     <span class="k">def</span> <span class="nf">models_linked_to</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="n">ForeignObjectRel</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Field</span><span class="p">,</span> <span class="n">ForeignObjectRel</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]]:</span>
         <span class="sd">&quot;&quot;&quot;Returns all the models that are related to this one via a foreign key</span>
 <span class="sd">        stored on this model (one-to-many reverse related models are not</span>
 <span class="sd">        included in the returned results).&quot;&quot;&quot;</span>
