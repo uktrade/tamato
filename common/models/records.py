@@ -3,9 +3,13 @@ from __future__ import annotations
 import re
 from datetime import date
 from typing import Any
+from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Set
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -225,7 +229,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
 
     def _get_current_related_lookups(
         self, model, *lookups, prefix="", recurse_level=0
-    ) -> list[str]:
+    ) -> List[str]:
         """
         Build a list of lookups for the current versions of related objects.
 
@@ -418,13 +422,13 @@ class TrackedModel(PolymorphicModel):
     ones.
     """
 
-    identifying_fields: Iterable[str] = ("sid",)
+    identifying_fields: Sequence[str] = ("sid",)
     """
     The fields which together form a composite unique key for each model.
 
     The system ID (or SID) field is normally the unique identifier of a TARIC
     model, but in places where this does not exist models can declare their own.
-    (Note that because mutliple versions of each model will exist this does not
+    (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
     """
 
@@ -629,7 +633,7 @@ class TrackedModel(PolymorphicModel):
     def get_identifying_fields(
         self,
         identifying_fields: Optional[Iterable[str]] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
 
@@ -670,7 +674,7 @@ class TrackedModel(PolymorphicModel):
         return self.get_versions().approved_up_to_transaction(transaction).get()
 
     @classproperty
-    def relations(cls) -> dict[Union[Field, ForeignObjectRel], type[TrackedModel]]:
+    def relations(cls) -> Dict[Union[Field, ForeignObjectRel], Type[TrackedModel]]:
         """
         Returns all the models that are related to this one.
 
@@ -690,7 +694,7 @@ class TrackedModel(PolymorphicModel):
     @classproperty
     def models_linked_to(
         cls,
-    ) -> dict[Union[Field, ForeignObjectRel], type[TrackedModel]]:
+    ) -> Dict[Union[Field, ForeignObjectRel], Type[TrackedModel]]:
         """Returns all the models that are related to this one via a foreign key
         stored on this model (one-to-many reverse related models are not
         included in the returned results)."""

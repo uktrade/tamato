@@ -6,7 +6,12 @@ from copy import copy
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
+from typing import Dict
+from typing import List
 from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Tuple
 from typing import Union
 
 from commodities import business_rules as cbr
@@ -278,7 +283,7 @@ class CommodityTreeBase(BaseModel):
     See the docs of CommodityTree and CommodityTreeSnapshot for details.
     """
 
-    commodities: list[Commodity]
+    commodities: List[Commodity]
 
     def get_commodity(
         self,
@@ -346,10 +351,10 @@ class SnapshotDiff(BaseModel):
 
     commodity: Commodity
     relation: TreeNodeRelation
-    values: list[Union[Commodity, list[Commodity]]]
+    values: List[Union[Commodity, List[Commodity]]]
 
     @property
-    def diff(self) -> list[Commodity]:
+    def diff(self) -> List[Commodity]:
         """Returns the diff between the commodity relations across the two
         snapshots."""
         values = [
@@ -392,10 +397,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     For additional context on commodity trees, see the docs for CommodityTree.
     """
 
-    commodities: list[Commodity]
+    commodities: List[Commodity]
     clock_type: ClockType
-    moments: tuple[Optional[date], Optional[int]]
-    edges: Optional[dict[str, Commodity]] = None
+    moments: Tuple[Optional[date], Optional[int]]
+    edges: Optional[Dict[str, Commodity]] = None
 
     def __post_init__(self) -> None:
         """
@@ -408,7 +413,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         1. The commodity collection is first sorted on code, suffix and indent.
         Note that since this is a commodity tree snapshot,
         multiple versions of the same commodity are not possible.
-        - this is the responsiblity of the _sort method of this class
+        - this is the responsibility of the _sort method of this class
         2. Traversal of the sorted commodity collection is trivial:
         - the method keeps a running tally of the latest sorted commodity for a given indent
         - the parent of a commodity is the current object at (indent - 1)
@@ -440,7 +445,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         except KeyError:
             return
 
-    def get_siblings(self, commodity: Commodity) -> list[Commodity]:
+    def get_siblings(self, commodity: Commodity) -> List[Commodity]:
         """Returns the siblings of a commodity in the snapshot tree."""
         parent = self.get_parent(commodity)
 
@@ -454,18 +459,18 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             if self.get_parent(c) == parent
         ]
 
-    def get_children(self, commodity: Commodity) -> list[Commodity]:
+    def get_children(self, commodity: Commodity) -> List[Commodity]:
         """Returns the children of a commodity in the snapshot tree."""
         return [c for c in self.commodities if self.get_parent(c) == commodity]
 
-    def get_ancestors(self, commodity: Commodity) -> list[Commodity]:
+    def get_ancestors(self, commodity: Commodity) -> List[Commodity]:
         """Returns all ancestors of a commodity in the snapshot tree."""
         try:
             return self.ancestors[commodity.identifier]
         except KeyError:
             return []
 
-    def get_descendants(self, commodity: Commodity) -> list[Commodity]:
+    def get_descendants(self, commodity: Commodity) -> List[Commodity]:
         """Returns all descendants of a commodity in the snapshot tree."""
         try:
             return self.descendants[commodity.identifier]
@@ -707,7 +712,7 @@ class CommodityCollection(CommodityTreeBase):
     - see the docs to `CommodityCollection.get_snapshot` method for more details.
     """
 
-    def update(self, changes: tuple["CommodityChange"]) -> None:
+    def update(self, changes: Sequence["CommodityChange"]) -> None:
         """
         Update the commodity collection using CommodityChange constructs.
 
@@ -807,7 +812,7 @@ class CommodityCollection(CommodityTreeBase):
         self,
         snapshot_date: date,
         transaction_id: int = None,
-    ) -> list[Commodity]:
+    ) -> List[Commodity]:
         if snapshot_date is None:
             snapshot_date = date.today()
 
@@ -840,7 +845,7 @@ class SideEffect(BaseModel):
 
     obj: TrackedModel
     update_type: UpdateType
-    attrs: dict[str, Any] = None
+    attrs: Dict[str, Any] = None
 
 
 @dataclass
@@ -1104,7 +1109,7 @@ class CommodityChange(BaseModel):
         TODO: Refactor ME32 to consolidate the two use-case scenarios.
         """
 
-        def _get_measure_key(m: Measure) -> str:
+        def _get_measure_key(m: Measure) -> Tuple[str, str, str, str, int]:
             """
             Returns a fingerprint for a measure based on select field values.
 
@@ -1190,7 +1195,7 @@ class CommodityChange(BaseModel):
             update_type=UpdateType.DELETE,
         )
 
-    def _add_pending_update(self, obj: TrackedModel, attrs: dict[str, Any]) -> None:
+    def _add_pending_update(self, obj: TrackedModel, attrs: Dict[str, Any]) -> None:
         """Add a pending related object update operation to side effects."""
         key = get_model_identifier(obj)
 
@@ -1207,14 +1212,13 @@ class CommodityChange(BaseModel):
         """Logs a warning message or raises an error."""
 
         if self.ignore_validation_rules or warn_only:
-            msg = f"The operation is {self.update_type} but {msg}"
-            logger.warn(msg)
+            logger.warning(f"The operation is {self.update_type} but {msg}")
         else:
             raise CommodityChangeException(msg, self)
 
     def _get_before_and_after_snapshots(
         self,
-    ) -> tuple[CommodityTreeSnapshot, CommodityTreeSnapshot]:
+    ) -> Tuple[CommodityTreeSnapshot, CommodityTreeSnapshot]:
         clone = copy(self.collection)
 
         commodity = self.current or self.candidate
@@ -1225,13 +1229,13 @@ class CommodityChange(BaseModel):
         commodity = self.candidate or self.current
         after = clone.get_calendar_clock_snapshot(commodity.get_valid_between().lower)
 
-        return (before, after)
+        return before, after
 
     def _get_dependent_measures(
         self,
         before: CommodityTreeSnapshot,
         after: CommodityTreeSnapshot,
-    ) -> set[Measure]:
+    ) -> Set[Measure]:
         b = before.get_dependent_measures(self.current or self.candidate)
         a = after.get_dependent_measures(self.candidate or self.current)
         return set(a).union(set(b))
@@ -1324,7 +1328,7 @@ def get_model_preferred_key(obj: TrackedModel) -> str:
 
 
 def get_model_identifier(obj: TrackedModel) -> str:
-    """Returns the preferred identifierfor a model."""
+    """Returns the preferred identifier for a model."""
     identifier = obj.identifying_fields_to_string()
     label = obj._meta.label
     return f"{label}: {identifier}"
@@ -1354,7 +1358,7 @@ def get_tracked_model_reflection(
       (rather than create new versions of them)
     - it is not meant to be written to db
 
-    The benefit of using a relfection is that scenarios such as
+    The benefit of using a reflection is that scenarios such as
     handling of commodity changes can produce side effects
     referring to the actual related models of the underlying object
     rather than new versions of them linked to a copy of the object.
