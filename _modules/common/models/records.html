@@ -83,7 +83,7 @@
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
-<span class="n">Cls</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Cls&quot;</span><span class="p">)</span>
+<span class="n">Cls</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Cls&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;TrackedModel&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="TrackedModelQuerySet"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet">[docs]</a><span class="k">class</span> <span class="nc">TrackedModelQuerySet</span><span class="p">(</span><span class="n">PolymorphicQuerySet</span><span class="p">,</span> <span class="n">CTEQuerySet</span><span class="p">,</span> <span class="n">ValidityQuerySet</span><span class="p">):</span>
@@ -539,8 +539,14 @@
             <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_set_field_names</span>
         <span class="p">}</span>
 
+        <span class="n">new_object_overrides</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">deferred_set_fields</span><span class="p">]</span>
+        <span class="p">}</span>
+
         <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_type</span>
-        <span class="n">new_object_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+        <span class="n">new_object_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_object_overrides</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">transaction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">transaction</span> <span class="o">=</span> <span class="n">workbasket</span><span class="o">.</span><span class="n">new_transaction</span><span class="p">()</span>
@@ -550,6 +556,22 @@
 
         <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
             <span class="n">new_object</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+            <span class="c1"># TODO: make this work with save=False!</span>
+            <span class="c1"># Maybe the deferred values could be saved on the model</span>
+            <span class="c1"># and then handled with a post_save signal?</span>
+            <span class="n">deferred_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">value_from_object</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">deferred_set_fields</span>
+            <span class="p">}</span>
+            <span class="n">deferred_overrides</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">value</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">deferred_set_fields</span><span class="p">]</span>
+            <span class="p">}</span>
+            <span class="n">deferred_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">deferred_overrides</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">deferred_kwargs</span><span class="p">:</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">new_object</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">deferred_kwargs</span><span class="p">[</span><span class="n">field</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">new_object</span>
 
@@ -779,6 +801,23 @@
             <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">record_code</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">record_code</span>
         <span class="p">}</span>
 
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">deferred_set_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a set of fields that can only be saved (using the</span>
+<span class="sd">        ``instance.field.set()`` method) after the object has been saved first.</span>
+
+<span class="sd">        This is any field that is a many-to-many relationship with an auto-</span>
+<span class="sd">        generated through model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">field</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">many_to_many</span>
+            <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">remote_field</span><span class="p">,</span> <span class="s2">&quot;through&quot;</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">through</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">auto_created</span>
+        <span class="p">}</span>
+
     <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span>
         <span class="n">transaction</span><span class="p">,</span>
@@ -834,14 +873,7 @@
         <span class="c1"># Now copy any many-to-many fields with an auto-created through model.</span>
         <span class="c1"># These must be handled after creation of the new model. We only need to</span>
         <span class="c1"># do this for auto-created models because others will be handled below.</span>
-        <span class="n">deferred_set_fields</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">field</span>
-            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">many_to_many</span>
-            <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">remote_field</span><span class="p">,</span> <span class="s2">&quot;through&quot;</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">through</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">auto_created</span>
-        <span class="p">}</span>
-        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">deferred_set_fields</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">deferred_set_fields</span><span class="p">:</span>
             <span class="nb">getattr</span><span class="p">(</span><span class="n">new_object</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">value_from_object</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
         <span class="c1"># Now go and create copies of all of the models that reference this one</span>
