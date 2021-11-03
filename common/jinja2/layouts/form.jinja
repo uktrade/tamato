@@ -37,7 +37,15 @@
 {% macro django_form(action="", method="post") %}
   <form method="{{ method }}" action="{{ action }}">
     {% if method|lower == "post" %}{{ csrf_input }}{% endif %}
-    {% if form.errors %}
+    {% set formset = form if form.forms else None %}
+    {% set forms = formset.forms if formset else [form] %}
+      {% set formset_errors = [] %}
+      {% for form in forms %}
+        {% if form.errors %}
+          {{ formset_errors.append(true) }}
+        {% endif %}
+      {% endfor %}
+    {% if formset_errors %}
       {{ errors(form) }}
     {% endif %}
     {{ caller() }}
