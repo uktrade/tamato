@@ -39,7 +39,9 @@
           <div class="body" role="main">
             
   <h1>Source code for common.models.mixins.validity</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
@@ -51,6 +53,10 @@
 <span class="kn">from</span> <span class="nn">django_cte.cte</span> <span class="kn">import</span> <span class="n">With</span>
 
 <span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">TaricDateRangeField</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">TaricDateRange</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
+
+<span class="n">Self</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Self&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;ValidityMixin&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ValidityMixin"><a class="viewcode-back" href="../../../../docs/architecture/index.html#common.models.mixins.validity.ValidityMixin">[docs]</a><span class="k">class</span> <span class="nc">ValidityMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -91,6 +97,41 @@
 <span class="sd">        default queryset.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span>
+
+    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">workbasket</span><span class="p">,</span> <span class="n">when</span><span class="p">:</span> <span class="n">date</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a new version of the object updated to end on the specified</span>
+<span class="sd">        date.</span>
+
+<span class="sd">        If the object would not have started on that date, the object is deleted</span>
+<span class="sd">        instead. If the object will already have ended by this date, then does</span>
+<span class="sd">        nothing.</span>
+
+<span class="sd">        Any keyword arguments passed will be applied in the case of an update</span>
+<span class="sd">        and are ignored for a delete or no change.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">starts_after_date</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower_inf</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;=</span> <span class="n">when</span>
+        <span class="p">)</span>
+        <span class="n">ends_before_date</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper_inf</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="o">&lt;</span> <span class="n">when</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ends_before_date</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="n">update_params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">starts_after_date</span><span class="p">:</span>
+            <span class="n">update_params</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">update_params</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span>
+            <span class="n">update_params</span><span class="p">[</span><span class="s2">&quot;valid_between&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TaricDateRange</span><span class="p">(</span>
+                <span class="n">lower</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
+                <span class="n">upper</span><span class="o">=</span><span class="n">when</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">update_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_version</span><span class="p">(</span><span class="n">workbasket</span><span class="p">,</span> <span class="o">**</span><span class="n">update_params</span><span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div>
