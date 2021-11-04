@@ -44,9 +44,27 @@ class Command(BaseCommand):
             help="Directory to output to, defaults to the current directory.",
         )
 
+        parser.add_argument(
+            "workbasket_ids",
+            help=(
+                "Override the default selection of APPROVED workbaskets "
+                "with a comma-separated list of workbasket ids."
+            ),
+            nargs="*",
+            type=int,
+            default=None,
+            action="store",
+        )
+
     @atomic
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
+        workbasket_ids = options.get("workbasket_ids")
+        if workbasket_ids:
+            query = dict(id__in=workbasket_ids)
+        else:
+            query = dict(status=WorkflowStatus.APPROVED)
+
+        workbaskets = WorkBasket.objects.filter(**query)
         if not workbaskets:
             sys.exit("Nothing to upload:  No workbaskets with status APPROVED.")
 
