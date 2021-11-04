@@ -250,6 +250,17 @@ def trackedmodel_factory(request):
 
 
 @pytest.fixture(
+    params=factories.ValidityFactoryMixin.__subclasses__(),
+    ids=[
+        factory._meta.model.__name__
+        for factory in factories.ValidityFactoryMixin.__subclasses__()
+    ],
+)
+def validity_factory(request):
+    return request.param
+
+
+@pytest.fixture(
     params=(
         factories.AdditionalCodeDescriptionFactory,
         factories.CertificateDescriptionFactory,

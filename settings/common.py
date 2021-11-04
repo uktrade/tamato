@@ -353,7 +353,6 @@ CELERY_BEAT_SCHEDULE = {
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
 
 # -- Logging
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -375,30 +374,36 @@ LOGGING = {
         "importer": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
         },
         "exporter": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
         },
         "commodities": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
         },
         "common": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
         },
         "footnotes": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
         },
         "measures": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
         },
     },
     "celery": {
-        "handlers": ["celery", "console"],
+        "handlers": ["celery"],
         "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
     },
 }

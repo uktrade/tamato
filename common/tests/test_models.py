@@ -301,7 +301,38 @@ def test_save(sample_model):
     sample_model.save(force_write=True)
 
 
-def test_new_draft_uses_passed_transaction(sample_model):
+@pytest.mark.parametrize(
+    ("initial_dates"),
+    ("normal", "no_end"),
+    ids=("has_end_date", "has_no_end_date"),
+)
+@pytest.mark.parametrize(
+    ("termination_range"),
+    ("earlier", "overlap_normal", "later"),
+    ids=("before_start", "during_validity", "after_existing_end"),
+)
+def test_terminate(
+    validity_factory,
+    date_ranges,
+    workbasket,
+    termination_range,
+    initial_dates,
+):
+    if validity_factory is factories.GoodsNomenclatureIndentNodeFactory:
+        pytest.xfail("Does not implement terminate")
+
+    model = validity_factory.create(valid_between=getattr(date_ranges, initial_dates))
+    termination_date = getattr(date_ranges, termination_range).upper
+    terminated_model = model.terminate(workbasket, termination_date)
+
+    if terminated_model.update_type == UpdateType.DELETE:
+        assert terminated_model.valid_between.lower >= termination_date
+    else:
+        assert terminated_model.valid_between.upper_inf is False
+        assert terminated_model.valid_between.upper <= termination_date
+
+
+def test_new_version_uses_passed_transaction(sample_model):
     transaction_count = Transaction.objects.count()
     new_transaction = sample_model.transaction.workbasket.new_transaction()
     new_model = sample_model.new_version(
@@ -310,6 +341,11 @@ def test_new_draft_uses_passed_transaction(sample_model):
     )
     assert new_model.transaction == new_transaction
     assert Transaction.objects.count() == transaction_count + 1
+
+
+def test_new_version_works_for_all_models(trackedmodel_factory):
+    model = trackedmodel_factory.create()
+    model.new_version(model.transaction.workbasket)
 
 
 def test_identifying_fields(sample_model):

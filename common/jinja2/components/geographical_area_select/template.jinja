@@ -20,6 +20,7 @@
   {{ radios.append({
     "value": value,
     "text": label,
+    "checked": form.geo_area_type.initial and value in form.geo_area_type.initial,
     "conditional": {
       "html": option_html[value]
     } if option_html[value] else {}

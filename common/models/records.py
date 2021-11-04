@@ -3,9 +3,13 @@ from __future__ import annotations
 import re
 from datetime import date
 from typing import Any
+from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Set
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -42,7 +46,7 @@ from common.util import classproperty
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
-Cls = TypeVar("Cls")
+Cls = TypeVar("Cls", bound="TrackedModel")
 
 
 class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
@@ -225,7 +229,7 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
 
     def _get_current_related_lookups(
         self, model, *lookups, prefix="", recurse_level=0
-    ) -> list[str]:
+    ) -> List[str]:
         """
         Build a list of lookups for the current versions of related objects.
 
@@ -418,13 +422,13 @@ class TrackedModel(PolymorphicModel):
     ones.
     """
 
-    identifying_fields: Iterable[str] = ("sid",)
+    identifying_fields: Sequence[str] = ("sid",)
     """
     The fields which together form a composite unique key for each model.
 
     The system ID (or SID) field is normally the unique identifier of a TARIC
     model, but in places where this does not exist models can declare their own.
-    (Note that because mutliple versions of each model will exist this does not
+    (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
     """
 
@@ -498,8 +502,14 @@ class TrackedModel(PolymorphicModel):
             or field.name not in self.system_set_field_names
         }
 
+        new_object_overrides = {
+            name: value
+            for name, value in overrides.items()
+            if name not in [f.name for f in self.deferred_set_fields]
+        }
+
         new_object_kwargs["update_type"] = update_type
-        new_object_kwargs.update(overrides)
+        new_object_kwargs.update(new_object_overrides)
 
         if transaction is None:
             transaction = workbasket.new_transaction()
@@ -509,6 +519,22 @@ class TrackedModel(PolymorphicModel):
 
         if save:
             new_object.save()
+
+            # TODO: make this work with save=False!
+            # Maybe the deferred values could be saved on the model
+            # and then handled with a post_save signal?
+            deferred_kwargs = {
+                field.name: field.value_from_object(self)
+                for field in self.deferred_set_fields
+            }
+            deferred_overrides = {
+                name: value
+                for name, value in overrides.items()
+                if name in [f.name for f in self.deferred_set_fields]
+            }
+            deferred_kwargs.update(deferred_overrides)
+            for field in deferred_kwargs:
+                getattr(new_object, field).set(deferred_kwargs[field])
 
         return new_object
 
@@ -607,7 +633,7 @@ class TrackedModel(PolymorphicModel):
     def get_identifying_fields(
         self,
         identifying_fields: Optional[Iterable[str]] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
 
@@ -648,7 +674,7 @@ class TrackedModel(PolymorphicModel):
         return self.get_versions().approved_up_to_transaction(transaction).get()
 
     @classproperty
-    def relations(cls) -> dict[Union[Field, ForeignObjectRel], type[TrackedModel]]:
+    def relations(cls) -> Dict[Union[Field, ForeignObjectRel], Type[TrackedModel]]:
         """
         Returns all the models that are related to this one.
 
@@ -668,7 +694,7 @@ class TrackedModel(PolymorphicModel):
     @classproperty
     def models_linked_to(
         cls,
-    ) -> dict[Union[Field, ForeignObjectRel], type[TrackedModel]]:
+    ) -> Dict[Union[Field, ForeignObjectRel], Type[TrackedModel]]:
         """Returns all the models that are related to this one via a foreign key
         stored on this model (one-to-many reverse related models are not
         included in the returned results)."""
@@ -738,6 +764,23 @@ class TrackedModel(PolymorphicModel):
             and field.related_model.record_code == cls.record_code
         }
 
+    @classproperty
+    def deferred_set_fields(cls):
+        """
+        Returns a set of fields that can only be saved (using the
+        ``instance.field.set()`` method) after the object has been saved first.
+
+        This is any field that is a many-to-many relationship with an auto-
+        generated through model.
+        """
+        return {
+            field
+            for field in cls._meta.get_fields()
+            if field.many_to_many
+            and hasattr(field.remote_field, "through")
+            and field.remote_field.through._meta.auto_created
+        }
+
     def copy(
         self: Cls,
         transaction,
@@ -793,14 +836,7 @@ class TrackedModel(PolymorphicModel):
         # Now copy any many-to-many fields with an auto-created through model.
         # These must be handled after creation of the new model. We only need to
         # do this for auto-created models because others will be handled below.
-        deferred_set_fields = {
-            field
-            for field in self._meta.get_fields()
-            if field.many_to_many
-            and hasattr(field.remote_field, "through")
-            and field.remote_field.through._meta.auto_created
-        }
-        for field in deferred_set_fields:
+        for field in self.deferred_set_fields:
             getattr(new_object, field.name).set(field.value_from_object(self))
 
         # Now go and create copies of all of the models that reference this one
