@@ -647,3 +647,86 @@ def test_footnote_association_goods_nomenclature_importer(imported_fields_match)
             "associated_footnote": factories.FootnoteFactory,
         },
     )
+
+
+@pytest.mark.parametrize(
+    (
+        "current_indent_start_date,"
+        "imported_indent_start_date,"
+        "curent_node_end_date,"
+        "imported_node_end_date"
+    ),
+    (
+        (
+            date.today() + relativedelta(months=-1),
+            date.today() + relativedelta(months=+1),
+            date.today() + relativedelta(months=+1, days=-1),
+            None,
+        ),
+        (
+            date.today() + relativedelta(months=+1),
+            date.today() + relativedelta(months=-1),
+            None,
+            date.today() + relativedelta(months=+1, days=-1),
+        ),
+        (
+            None,
+            date.today() + relativedelta(months=-1),
+            None,
+            None,
+        ),
+    ),
+    ids=(
+        "preceding_indent",
+        "succeeding_indent",
+        "no_adjacent_indents",
+    ),
+)
+def test_sync_indent_node_end_dates_on_indent_import(
+    run_xml_import,
+    current_indent_start_date,
+    imported_indent_start_date,
+    curent_node_end_date,
+    imported_node_end_date,
+):
+    """
+    Asserts that indent node end dates are synced on new indent imports.
+
+    This unit test covers three scenarios:
+    - preceding indent: the imported indent has a preceding indent,
+      in which case the node on the preceding indent needs to be end-dated
+    - succeeding indent: the imported indent has a succeeding indent,
+      in which case the node on the importend indent needs to be end-dated
+    - no adjacent indents: the imported indent has no adjacent indents,
+      in which case no action is needed and its node's end-date should be None
+    """
+    good = factories.SimpleGoodsNomenclatureFactory.create(
+        item_id="1200000000",
+        suffix="80",
+    )
+
+    if current_indent_start_date:
+        current_indent = run_xml_import(
+            lambda: factories.GoodsNomenclatureIndentFactory.build(
+                validity_start=current_indent_start_date,
+                indented_goods_nomenclature=good,
+                indent=0,
+            ),
+            serializers.GoodsNomenclatureIndentSerializer,
+        )
+
+    imported_indent = run_xml_import(
+        lambda: factories.GoodsNomenclatureIndentFactory.build(
+            validity_start=imported_indent_start_date,
+            indented_goods_nomenclature=good,
+            indent=0,
+        ),
+        serializers.GoodsNomenclatureIndentSerializer,
+    )
+
+    if current_indent_start_date:
+        current_node = current_indent.nodes.first()
+        assert current_node.valid_between.upper == curent_node_end_date
+
+    imported_node = imported_indent.nodes.first()
+    assert imported_node.valid_between.upper == imported_node_end_date
