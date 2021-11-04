@@ -40,7 +40,7 @@ def column(label, optional=False, many=False):
             if optional and (value is None or value == ""):
                 return None
             elif many:
-                value = split("[" + "".join(self.separators) + "]", value)
+                value = split("[" + "".join(self.separators) + "]", value or "")
                 return [fn(self, v) for v in value]
             else:
                 return fn(self, value)
