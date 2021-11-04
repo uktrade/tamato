@@ -7,6 +7,7 @@ from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from measures import business_rules as measures_business_rules
@@ -44,7 +45,7 @@ class CertificateType(TrackedModel, ValidityMixin):
         return self.sid
 
 
-class Certificate(TrackedModel, ValidityMixin):
+class Certificate(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "205"
     subrecord_code = "00"
     sid = models.CharField(

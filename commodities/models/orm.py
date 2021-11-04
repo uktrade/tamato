@@ -16,6 +16,7 @@ from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.description import DescriptionQueryset
 from common.models.mixins.validity import ValidityMixin
@@ -107,7 +108,7 @@ class CommodityCode:
         return self.code
 
 
-class GoodsNomenclature(TrackedModel, ValidityMixin):
+class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "00"
 

@@ -8,6 +8,7 @@ from common.fields import LongDescription
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from footnotes import business_rules
@@ -63,7 +64,7 @@ class FootnoteType(TrackedModel, ValidityMixin):
         )
 
 
-class Footnote(TrackedModel, ValidityMixin):
+class Footnote(TrackedModel, ValidityMixin, DescribedMixin):
     """A footnote relates to a piece of text, and either clarifies it (in the
     case of nomenclature) or limits its application (as in the case of
     measures)."""

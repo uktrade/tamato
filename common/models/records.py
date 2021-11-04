@@ -37,7 +37,6 @@ from polymorphic.query import PolymorphicQuerySet
 from common import exceptions
 from common import validators
 from common.exceptions import IllegalSaveError
-from common.exceptions import NoDescriptionError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
@@ -544,57 +543,6 @@ class TrackedModel(PolymorphicModel):
         query = Q(**self.get_identifying_fields())
         return self.__class__.objects.filter(query)
 
-    def get_description(self):
-        return self.get_descriptions(transaction=self.transaction).last()
-
-    def get_descriptions(self, transaction=None, request=None) -> TrackedModelQuerySet:
-        """
-        Get the latest descriptions related to this instance of the Tracked
-        Model.
-
-        If there is no Description relation existing a `NoDescriptionError` is raised.
-
-        If a transaction is provided then all latest descriptions that are either approved
-        or in the workbasket of the transaction up to the transaction will be provided.
-        """
-        try:
-            descriptions_model = self.descriptions.model
-        except AttributeError as e:
-            raise NoDescriptionError(
-                f"Model {self.__class__.__name__} has no descriptions relation.",
-            ) from e
-
-        for field, model in descriptions_model.relations.items():
-            if isinstance(self, model):
-                field_name = field.name
-                break
-        else:
-            raise NoDescriptionError(
-                f"No foreign key back to model {self.__class__.__name__} "
-                f"found on description model {descriptions_model.__name__}.",
-            )
-
-        filter_kwargs = {
-            f"{field_name}__{key}": value
-            for key, value in self.get_identifying_fields().items()
-        }
-
-        query = descriptions_model.objects.filter(**filter_kwargs).order_by(
-            *descriptions_model._meta.ordering
-        )
-
-        if transaction:
-            return query.approved_up_to_transaction(transaction=transaction)
-
-        if request:
-            from workbaskets.models import WorkBasket
-
-            return query.approved_up_to_transaction(
-                transaction=WorkBasket.get_current_transaction(request),
-            )
-
-        return query.latest_approved()
-
     def identifying_fields_unique(
         self,
         identifying_fields: Optional[Iterable[str]] = None,
@@ -650,18 +598,6 @@ class TrackedModel(PolymorphicModel):
     @property
     def structure_code(self):
         return str(self)
-
-    @property
-    def structure_description(self):
-        description = None
-        if hasattr(self, "descriptions"):
-            description = self.get_descriptions().last()
-            if description:
-                # Get the actual description, not just the object
-                description = description.description
-        if hasattr(self, "description"):
-            description = self.description
-        return description or None
 
     @property
     def current_version(self: Cls) -> Cls:

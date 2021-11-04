@@ -153,28 +153,34 @@ def validity_range_contains_range(
     return True
 
 
-def get_field_tuple(model, field):
+def get_field_tuple(
+    model: Model,
+    field_name: str,
+    default: Any = None,
+) -> tuple(str, Any):
     """
     Get the value of the named field of the specified model.
+
+    Follows field lookups that span relations, eg: "footnote_type__application_code"
 
     Handles special case for "valid_between__lower".
     """
 
-    if field == "valid_between__lower":
-        return ("valid_between__startswith", model.valid_between.lower)
+    if field_name == "valid_between__lower":
+        return "valid_between__startswith", model.valid_between.lower
 
-    if "__" in field:
-        child, child_field = field.split("__", 1)
-        child_instance = getattr(model, child)
-        if not child_instance:
+    if "__" in field_name:
+        related, related_field_name = field_name.split("__", 1)
+        related_model = getattr(model, related)
+        if not related_model:
             value = None
         else:
-            _, value = get_field_tuple(getattr(model, child), child_field)
+            _, value = get_field_tuple(related_model, related_field_name)
 
     else:
-        value = getattr(model, field)
+        value = getattr(model, field_name)
 
-    return field, value
+    return field_name, value
 
 
 class TableLock:
