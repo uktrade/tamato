@@ -72,12 +72,12 @@ run: collectstatic migrate
 test-fast:
 	@echo
 	@echo "> Running tests..."
-	@${PYTHON} -m pytest -x -n=auto --dist=loadfile
+	@${PYTHON} -m pytest -x -n=auto --dist=loadfile ${TEST_OPTS}
 
 test:
 	@echo
 	@echo "> Running tests..."
-	@${PYTHON} -m pytest -n=auto --dist=loadfile --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
+	@${PYTHON} -m pytest -n=auto --dist=loadfile --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml ${TEST_OPTS}
 
 ## docker-image: Build docker image
 docker-image:
@@ -96,7 +96,7 @@ docker-test:
 	@echo
 	@echo "> Running tests in Docker..."
 	@docker-compose run \
-		${PROJECT} sh -c "docker/wait_for_db && ${PYTHON} manage.py test -- -n=auto --dist=loadfile --cov"
+		${PROJECT} sh -c "docker/wait_for_db && ${PYTHON} manage.py test -- -n=auto --dist=loadfile --cov" ${TEST_OPTS}
 
 ## build-docs: Build the project documentation
 build-docs html:
