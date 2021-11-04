@@ -92,9 +92,6 @@ class MeasureSheetRow(SheetRowMixin):
 
     @cached_property
     def excluded_origins(self) -> Sequence[GeographicalArea]:
-        if not self.excluded_origin_descriptions:
-            return []
-
         return [
             desc.described_geographicalarea
             for desc in GeographicalAreaDescription.objects.latest_approved()
