@@ -50,7 +50,8 @@ class Command(BaseCommand):
                 "Override the default selection of APPROVED workbaskets "
                 "with a comma-separated list of workbasket ids."
             ),
-            type="str",
+            nargs="*",
+            type=int,
             default=None,
             action="store",
         )
@@ -59,7 +60,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         workbasket_ids = options.get("workbasket_ids")
         if workbasket_ids:
-            workbasket_ids = tuple(map(int, workbasket_ids.split(",")))
             query = dict(id__in=workbasket_ids)
         else:
             query = dict(status=WorkflowStatus.APPROVED)
