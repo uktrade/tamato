@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from common.models.transactions import TransactionPartition
 from common.tests import factories
 from importer import tasks
 from importer.models import ImporterChunkStatus
@@ -21,7 +20,7 @@ def test_import_chunk(
     tasks.import_chunk(
         chunk.pk,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -41,7 +40,7 @@ def test_import_chunk_failed(valid_user, chunk):
         tasks.import_chunk(
             chunk.pk,
             "PUBLISHED",
-            TransactionPartition.REVISION.value,
+            "REVISION_ONLY",
             valid_user.username,
         )
     except KeyError:
@@ -61,7 +60,7 @@ def test_setup_chunk_task_already_running(mock_import_chunk, batch, valid_user):
     tasks.setup_chunk_task(
         batch,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -74,7 +73,7 @@ def test_setup_chunk_task_no_chunks(mock_import_chunk, batch, valid_user):
     tasks.setup_chunk_task(
         batch,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -87,7 +86,7 @@ def test_setup_chunk_task(mock_import_chunk, chunk, valid_user):
     tasks.setup_chunk_task(
         chunk.batch,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -97,7 +96,7 @@ def test_setup_chunk_task(mock_import_chunk, chunk, valid_user):
     mock_import_chunk.delay.assert_called_once_with(
         chunk.pk,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -114,7 +113,7 @@ def test_find_and_run_next_batch_chunks_already_running(
     tasks.find_and_run_next_batch_chunks(
         batch,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -136,7 +135,7 @@ def test_find_and_run_next_batch_chunks_finished_runs_dependencies(
     tasks.find_and_run_next_batch_chunks(
         batch_dependency.depends_on,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
     batch = batch_dependency.dependent_batch
@@ -147,7 +146,7 @@ def test_find_and_run_next_batch_chunks_finished_runs_dependencies(
     mock_import_chunk.delay.assert_called_once_with(
         batch.chunks.first().pk,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -161,7 +160,7 @@ def test_find_and_run_next_batch_chunks(mock_import_chunk, batch, valid_user):
     tasks.find_and_run_next_batch_chunks(
         batch,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
@@ -170,6 +169,6 @@ def test_find_and_run_next_batch_chunks(mock_import_chunk, batch, valid_user):
     mock_import_chunk.delay.assert_called_once_with(
         batch.chunks.first().pk,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )

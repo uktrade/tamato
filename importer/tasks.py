@@ -7,7 +7,7 @@ from common.celery import app
 from importer import models
 from importer.taric import process_taric_xml_stream
 from importer.utils import build_dependency_tree
-from workbaskets.models import TransactionPartitionScheme
+from workbaskets.models import get_partition_scheme
 
 logger = getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = getLogger(__name__)
 def import_chunk(
     chunk_pk: int,
     workbasket_status: str,
-    partition_scheme: TransactionPartitionScheme,
+    partition_scheme_setting: str,
     username: str,
 ):
     """
@@ -26,6 +26,7 @@ def import_chunk(
     process, whether it is currently running, errored or done. Once complete it
     is also responsible for finding and setting up the next chunk tasks.
     """
+    partition_scheme = get_partition_scheme(partition_scheme_setting)
     chunk = models.ImporterXMLChunk.objects.get(pk=chunk_pk)
 
     logger.info(
@@ -65,7 +66,7 @@ def import_chunk(
 def setup_chunk_task(
     batch: models.ImportBatch,
     workbasket_status: str,
-    partition_scheme: TransactionPartitionScheme,
+    partition_scheme_setting: str,
     username: str,
     record_code: str = None,
     **kwargs
@@ -78,6 +79,11 @@ def setup_chunk_task(
     `ERRORED` or `DONE` the task is not setup. If the status is `WAITING` then
     the status is updated to `RUNNING` and the task is setup.
     """
+
+    # Call get_partition_scheme before invoking celery so that it can raise ImproperlyConfigured if
+    # partition_scheme_setting is invalid.
+    get_partition_scheme(partition_scheme_setting)
+
     if batch.ready_chunks.filter(
         record_code=record_code, status=models.ImporterChunkStatus.RUNNING, **kwargs
     ).exists():
@@ -97,7 +103,7 @@ def setup_chunk_task(
     import_chunk.delay(
         chunk.pk,
         workbasket_status,
-        partition_scheme,
+        partition_scheme_setting,
         username,
     )
 
@@ -105,7 +111,7 @@ def setup_chunk_task(
 def find_and_run_next_batch_chunks(
     batch: models.ImportBatch,
     workbasket_status: str,
-    partition_scheme: TransactionPartitionScheme,
+    partition_scheme_setting: str,
     username: str,
 ):
     """
@@ -146,12 +152,12 @@ def find_and_run_next_batch_chunks(
             find_and_run_next_batch_chunks(
                 dependent_batch,
                 workbasket_status,
-                partition_scheme,
+                partition_scheme_setting,
                 username,
             )
 
     if not batch.split_job:  # We only run one chunk at a time when the job isn't split
-        setup_chunk_task(batch, workbasket_status, partition_scheme, username)
+        setup_chunk_task(batch, workbasket_status, partition_scheme_setting, username)
         return
 
     # If the job is a split job (should only be used for seed files) the following logic applies.
@@ -187,7 +193,7 @@ def find_and_run_next_batch_chunks(
                 setup_chunk_task(
                     batch,
                     workbasket_status,
-                    partition_scheme,
+                    partition_scheme_setting,
                     username,
                     record_code=code,
                     chapter=chapter,
@@ -198,7 +204,7 @@ def find_and_run_next_batch_chunks(
                 setup_chunk_task(
                     batch,
                     workbasket_status,
-                    partition_scheme,
+                    partition_scheme_setting,
                     username,
                     record_code=code,
                     chapter=chunk.chapter,
@@ -208,7 +214,7 @@ def find_and_run_next_batch_chunks(
             setup_chunk_task(
                 batch,
                 workbasket_status,
-                partition_scheme,
+                partition_scheme_setting,
                 username,
                 record_code=code,
             )
