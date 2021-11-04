@@ -44,3 +44,33 @@ def test_quota_update_types(
     assert check_update_validation(
         factory,
     )
+
+
+def test_required_certificates_persist_across_versions():
+    cert = factories.CertificateFactory.create()
+    quota = factories.QuotaOrderNumberFactory.create(required_certificates=[cert])
+    assert quota.required_certificates.get() == cert
+
+    new_version = quota.new_version(quota.transaction.workbasket)
+    assert new_version.required_certificates.get() == cert
+
+
+def test_required_certificates_changed_if_specified():
+    cert = factories.CertificateFactory.create()
+    quota = factories.QuotaOrderNumberFactory.create(required_certificates=[cert])
+    assert quota.required_certificates.get() == cert
+
+    new_version = quota.new_version(
+        quota.transaction.workbasket,
+        required_certificates=[],
+    )
+    assert quota.required_certificates.get() == cert
+    assert not new_version.required_certificates.exists()
+
+    third_version = new_version.new_version(
+        new_version.transaction.workbasket,
+        required_certificates=[cert],
+    )
+    assert quota.required_certificates.get() == cert
+    assert not new_version.required_certificates.exists()
+    assert third_version.required_certificates.get() == cert
