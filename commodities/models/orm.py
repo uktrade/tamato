@@ -326,9 +326,6 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
             .first()
         )
 
-        if not parent:
-            return
-
         # The end dates on some historically created nodes
         # may have not been synced with the implied end date of their indent
         # when a succeeding indent has been introduced at a later point in time.
