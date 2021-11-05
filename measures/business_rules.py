@@ -548,7 +548,7 @@ class ME12(BusinessRule):
         if (
             measure.additional_code
             and not AdditionalCodeTypeMeasureType.objects.approved_up_to_transaction(
-                measure.transaction,
+                self.transaction,
             )
             .filter(
                 additional_code_type__sid=measure.additional_code.type.sid,
