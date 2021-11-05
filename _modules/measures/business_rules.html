@@ -583,11 +583,19 @@
 <span class="sd">    have a relationship with the measure type.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME12.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME12.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">AdditionalCodeTypeMeasureType</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">additional_code_types</span><span class="o">.</span><span class="n">through</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">additional_code_types</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">AdditionalCodeTypeMeasureType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">additional_code_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
