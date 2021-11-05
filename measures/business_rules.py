@@ -542,11 +542,19 @@ class ME12(BusinessRule):
     have a relationship with the measure type."""
 
     def validate(self, measure):
+        AdditionalCodeTypeMeasureType = (
+            measure.measure_type.additional_code_types.through
+        )
         if (
             measure.additional_code
-            and not measure.measure_type.additional_code_types.filter(
-                sid=measure.additional_code.type.sid,
-            ).exists()
+            and not AdditionalCodeTypeMeasureType.objects.approved_up_to_transaction(
+                self.transaction,
+            )
+            .filter(
+                additional_code_type__sid=measure.additional_code.type.sid,
+                measure_type__sid=measure.measure_type.sid,
+            )
+            .exists()
         ):
             raise self.violation(measure)
 

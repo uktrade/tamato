@@ -778,6 +778,22 @@ def test_ME12():
     business_rules.ME12(measure.transaction).validate(measure)
 
 
+def test_ME12_after_measure_type_updated():
+    additional_code = factories.AdditionalCodeFactory.create()
+    measure_type = factories.MeasureTypeFactory.create()
+    factories.AdditionalCodeTypeMeasureTypeFactory.create(
+        measure_type=measure_type,
+        additional_code_type=additional_code.type,
+    )
+    measure_type = measure_type.new_version(measure_type.transaction.workbasket)
+    measure = factories.MeasureFactory.create(
+        measure_type=measure_type,
+        additional_code=additional_code,
+    )
+
+    business_rules.ME12(measure.transaction).validate(measure)
+
+
 @requires_meursing_tables
 def test_ME13():
     """If the additional code type is related to a Meursing table plan then only
