@@ -159,8 +159,8 @@ def test_user_partition_scheme_passes_approved_workbaskets(
 @pytest.mark.parametrize(
     "partition_scheme,expected_partition,command_line_name",
     [
-        (SEED_ONLY, TransactionPartition.SEED_FILE, "seed"),
-        (REVISION_ONLY, TransactionPartition.REVISION, "revision"),
+        (SEED_ONLY, TransactionPartition.SEED_FILE, "SEED_ONLY"),
+        (REVISION_ONLY, TransactionPartition.REVISION, "REVISION_ONLY"),
     ],
 )
 def test_user_partitions_have_expected_values(
