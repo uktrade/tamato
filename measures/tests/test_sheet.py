@@ -1,3 +1,5 @@
+import datetime
+
 import factory
 import openpyxl
 import pytest
@@ -5,6 +7,7 @@ import pytest
 from common.tests import factories
 from common.tests.util import assert_many_records_match
 from measures.sheet_importers import MeasureSheetRow
+from measures.sheet_importers import process_date_value
 from measures.tests.factories import MeasureSheetRowFactory
 
 pytestmark = pytest.mark.django_db
@@ -96,3 +99,19 @@ def test_measure_sheet_importer(measure_worksheet, measures):
             imported_measure.conditions.all(),
             ignore={"sid", "component_sequence_number", "dependent_measure"},
         )
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        datetime.date.today(),
+        datetime.datetime.now(),
+    ),
+    ids=(
+        "date",
+        "datetime",
+    ),
+)
+def test_process_date_value(value):
+    d = process_date_value(value)
+    assert type(d) == datetime.date

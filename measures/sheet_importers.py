@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from datetime import datetime
 from functools import cached_property
@@ -23,6 +24,20 @@ from measures.patterns import MeasureCreationPattern
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
+
+logger = logging.getLogger(__name__)
+
+
+def process_date_value(value: CellValue) -> date:
+    """
+    Returns a date instance corresponding to the cell value.
+
+    The date part of the value must be in "%Y-%m-%d" format. If a value
+    representing date and time is provided, this method will take the date part
+    only.
+    """
+    value = str(value).split(" ", 1)[0]
+    return datetime.strptime(value, r"%Y-%m-%d").date()
 
 
 class MeasureSheetRow(SheetRowMixin):
@@ -55,7 +70,7 @@ class MeasureSheetRow(SheetRowMixin):
 
     @column("C")
     def duty_sentence(self, value: CellValue) -> str:
-        return str(value)
+        return str(value) if value else ""
 
     @column("D")
     def origin_description(self, value: CellValue) -> str:
@@ -109,11 +124,11 @@ class MeasureSheetRow(SheetRowMixin):
 
     @column("G")
     def validity_start_date(self, value: CellValue) -> date:
-        return datetime.strptime(str(value), r"%Y-%m-%d").date()
+        return process_date_value(value)
 
     @column("H", optional=True)
     def validity_end_date(self, value: CellValue) -> date:
-        return datetime.strptime(str(value), r"%Y-%m-%d").date()
+        return process_date_value(value)
 
     @column("I")
     def regulation_id(self, value: CellValue) -> str:
@@ -185,19 +200,25 @@ class MeasureSheetRow(SheetRowMixin):
             workbasket=workbasket,
             base_date=self.validity_start_date,
         )
-        return creator.create(
-            duty_sentence=self.duty_sentence,
-            measure_type=self.measure_type,
-            goods_nomenclature=self.goods_nomenclature,
-            validity_start=self.validity_start_date,
-            validity_end=self.validity_end_date,
-            geographical_area=self.origin,
-            exclusions=self.excluded_origins,
-            generating_regulation=self.regulation,
-            order_number=self.quota,
-            dead_order_number=self.dead_order_number,
-            additional_code=self.additional_code,
-            dead_additional_code=self.dead_additional_code,
-            footnotes=self.footnotes,
-            condition_sentence=self.conditions,
-        )
+
+        try:
+            return creator.create(
+                duty_sentence=self.duty_sentence,
+                measure_type=self.measure_type,
+                goods_nomenclature=self.goods_nomenclature,
+                validity_start=self.validity_start_date,
+                validity_end=self.validity_end_date,
+                geographical_area=self.origin,
+                exclusions=self.excluded_origins,
+                generating_regulation=self.regulation,
+                order_number=self.quota,
+                dead_order_number=self.dead_order_number,
+                additional_code=self.additional_code,
+                dead_additional_code=self.dead_additional_code,
+                footnotes=self.footnotes,
+                condition_sentence=self.conditions,
+            )
+        except GoodsNomenclature.DoesNotExist:
+            logger.warning(
+                f"Commodity {self.item_id}: not imported from EU Taric files yet.",
+            )
