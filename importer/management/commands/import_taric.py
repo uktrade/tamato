@@ -1,11 +1,9 @@
 from django.core.management import BaseCommand
 
-from common.models.transactions import TransactionPartition
 from importer.management.commands.chunk_taric import chunk_taric
 from importer.management.commands.chunk_taric import setup_batch
 from importer.management.commands.run_import_batch import run_batch
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
-from workbaskets.models import TransactionPartitionScheme
 from workbaskets.validators import WorkflowStatus
 
 
@@ -13,7 +11,7 @@ def import_taric(
     taric3_file: str,
     username: str,
     status: str,
-    partition_scheme: TransactionPartitionScheme,
+    partition_scheme_setting: str,
     name: str,
     split_codes: bool = False,
     dependencies=None,
@@ -26,7 +24,7 @@ def import_taric(
     with open(taric3_file, "rb") as seed_file:
         batch = chunk_taric(seed_file, batch)
 
-    run_batch(batch.name, status, partition_scheme, username)
+    run_batch(batch.name, status, partition_scheme_setting, username)
 
 
 class Command(BaseCommand):
@@ -86,7 +84,7 @@ class Command(BaseCommand):
             taric3_file=options["taric3_file"],
             username=options["username"],
             status=options["status"],
-            partition_scheme=TransactionPartition[options["partition_scheme"]],
+            partition_scheme_setting=options["partition_scheme"],
             name=options["name"],
             split_codes=options["split_codes"],
             dependencies=options["dependencies"],
