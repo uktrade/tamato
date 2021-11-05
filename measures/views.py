@@ -292,7 +292,7 @@ class MeasureUpdate(
         )
         formset = forms.MeasureFootnotesFormSet()
         formset.initial = initial
-        formset.form_kwargs = {"request": self.request}
+        formset.form_kwargs = {"path": self.request.path}
         context["formset"] = formset
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
