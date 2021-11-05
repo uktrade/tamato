@@ -5,7 +5,6 @@ import pytest
 from common.tests import factories
 from importer import tasks
 from importer.models import ImporterChunkStatus
-from workbaskets.models import REVISION_ONLY
 
 pytestmark = pytest.mark.django_db
 
@@ -29,7 +28,7 @@ def test_import_chunk(
     mock_find_and_run.assert_called_once_with(
         chunk.batch,
         "PUBLISHED",
-        REVISION_ONLY,
+        "REVISION_ONLY",
         valid_user.username,
     )
 
