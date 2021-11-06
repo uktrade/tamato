@@ -252,7 +252,7 @@ class AmendmentFactory(TrackedModelMixin):
     )
     enacting_regulation = factory.SubFactory(
         RegulationFactory,
-        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+        transaction=factory.SelfAttribute("..transaction"),
     )
 
 
@@ -266,7 +266,7 @@ class ExtensionFactory(TrackedModelMixin):
     )
     enacting_regulation = factory.SubFactory(
         RegulationFactory,
-        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+        transaction=factory.SelfAttribute("..transaction"),
     )
 
 
@@ -280,7 +280,7 @@ class SuspensionFactory(TrackedModelMixin):
     )
     enacting_regulation = factory.SubFactory(
         RegulationFactory,
-        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+        transaction=factory.SelfAttribute("..transaction"),
     )
 
 
@@ -294,7 +294,7 @@ class TerminationFactory(TrackedModelMixin):
     )
     enacting_regulation = factory.SubFactory(
         RegulationFactory,
-        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+        transaction=factory.SelfAttribute("..transaction"),
     )
 
     effective_date = Dates().datetime_now
@@ -310,7 +310,7 @@ class ReplacementFactory(TrackedModelMixin):
     )
     enacting_regulation = factory.SubFactory(
         RegulationFactory,
-        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+        transaction=factory.SelfAttribute("..transaction"),
     )
     measure_type_id = "123456"
     geographical_area_id = "GB"
@@ -355,7 +355,7 @@ class GeographicalMembershipFactory(TrackedModelMixin, ValidityFactoryMixin):
     )
     member = factory.SubFactory(
         GeographicalAreaFactory,
-        # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
+        transaction=factory.SelfAttribute("..transaction"),
     )
 
 
