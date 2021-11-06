@@ -290,7 +290,7 @@ class MeasureUpdate(
             f"formset_initial_{self.kwargs.get('sid')}",
             [],
         )
-        formset = forms.MeasureFootnotesFormSet()
+        formset = forms.MeasureUpdateFootnotesFormSet()
         formset.initial = initial
         formset.form_kwargs = {"path": self.request.path}
         context["formset"] = formset
