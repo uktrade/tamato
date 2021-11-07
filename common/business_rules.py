@@ -265,10 +265,12 @@ class NoOverlapping(BusinessRule):
 class PreventDeleteIfInUse(BusinessRule):
     """Rule preventing deleting an in-use model."""
 
-    in_use_check = "in_use"
+    in_use_check: str = "in_use"
+    via_relation: Optional[str] = None
 
     def has_violation(self, model) -> bool:
-        return getattr(model, self.in_use_check)()
+        names = [self.via_relation] if self.via_relation else []
+        return getattr(model, self.in_use_check)(self.transaction, *names)
 
     def validate(self, model):
         if self.has_violation(model):
@@ -341,7 +343,7 @@ class ValidityPeriodContains(BusinessRule):
                     for (field, value) in model.get_identifying_fields().items()
                 }
             )
-            .approved_up_to_transaction(model.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exclude(
                 **{
                     f"{contained_model.validity_field_name}__contained_by": model.valid_between,

@@ -53,15 +53,6 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
-    def in_use(self):
-        return (
-            MeasureType.objects.filter(
-                measure_type_series__sid=self.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
 
 class MeasurementUnit(TrackedModel, ValidityMixin):
     """The measurement unit refers to the ISO measurement unit code."""
@@ -291,13 +282,6 @@ class MeasureType(TrackedModel, ValidityMixin):
     def autocomplete_label(self):
         return f"{self} - {self.description}"
 
-    def in_use(self):
-        return (
-            Measure.objects.filter(measure_type__sid=self.sid)
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
     @property
     def components_mandatory(self):
         return (
@@ -373,15 +357,6 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"{self.code} - {self.description}"
 
-    def used_in_component(self):
-        return (
-            MeasureConditionComponent.objects.filter(
-                condition__condition_code__code=self.code,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
 
 class MeasureAction(TrackedModel, ValidityMixin):
     """
@@ -421,15 +396,6 @@ class MeasureAction(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return f"{self.code} - {self.description}"
-
-    def in_use(self):
-        return (
-            MeasureConditionComponent.objects.filter(
-                condition__action__code=self.code,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
 
 
 class Measure(TrackedModel, ValidityMixin):
@@ -629,28 +595,24 @@ class Measure(TrackedModel, ValidityMixin):
         counters.remove(cls._meta.get_field("export_refund_nomenclature_sid"))
         return counters
 
-    def has_components(self):
+    def has_components(self, transaction):
         return (
-            MeasureComponent.objects.approved_up_to_transaction(
-                transaction=self.transaction,
-            )
+            MeasureComponent.objects.approved_up_to_transaction(transaction)
             .filter(component_measure__sid=self.sid)
             .exists()
         )
 
-    def has_condition_components(self):
+    def has_condition_components(self, transaction):
         return (
-            MeasureConditionComponent.objects.approved_up_to_transaction(
-                transaction=self.transaction,
-            )
+            MeasureConditionComponent.objects.approved_up_to_transaction(transaction)
             .filter(condition__dependent_measure__sid=self.sid)
             .exists()
         )
 
-    def get_conditions(self):
+    def get_conditions(self, transaction):
         return MeasureCondition.objects.filter(
             dependent_measure__sid=self.sid,
-        ).latest_approved()
+        ).approved_up_to_transaction(transaction)
 
     def terminate(self, workbasket, when: date):
         """

@@ -658,7 +658,7 @@ def in_use_check_respects_deletes(valid_user):
     ):
         instance = factory.create()
         in_use = getattr(instance, in_use_check)
-        assert not in_use(), f"New {instance!r} already in use"
+        assert not in_use(instance.transaction), f"New {instance!r} already in use"
 
         workbasket = factories.WorkBasketFactory.create(
             status=WorkflowStatus.PROPOSED,
@@ -668,7 +668,12 @@ def in_use_check_respects_deletes(valid_user):
             if through:
                 create_kwargs = {relation: getattr(instance, through)}
             dependant = dependant_factory.create(**create_kwargs, **extra_kwargs)
-        assert not in_use(), f"Unapproved {instance!r} already in use"
+        assert in_use(
+            dependant.transaction,
+        ), f"Unapproved {instance!r} not in use in draft workbasket"
+        assert not in_use(
+            Transaction.approved.last(),
+        ), f"Unapproved {instance!r} already in use"
 
         with patch(
             "exporter.tasks.upload_workbaskets.delay",
@@ -678,13 +683,13 @@ def in_use_check_respects_deletes(valid_user):
                 get_partition_scheme(),
             )
         workbasket.save()
-        assert in_use(), f"Approved {instance!r} not in use"
+        assert in_use(dependant.transaction), f"Approved {instance!r} not in use"
 
-        dependant.new_version(
+        deleted = dependant.new_version(
             workbasket,
             update_type=UpdateType.DELETE,
         )
-        assert not in_use(), f"Deleted {instance!r} in use"
+        assert not in_use(deleted.transaction), f"Deleted {instance!r} in use"
 
         return True
 

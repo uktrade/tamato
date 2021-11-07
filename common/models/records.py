@@ -24,6 +24,7 @@ from django.db.models import When
 from django.db.models.expressions import Expression
 from django.db.models.fields.reverse_related import ForeignObjectRel
 from django.db.models.options import Options
+from django.db.models.query import QuerySet
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
 from django.template import loader
@@ -43,6 +44,7 @@ from common.fields import SignedIntSID
 from common.models import TimestampedMixin
 from common.querysets import ValidityQuerySet
 from common.util import classproperty
+from common.util import get_accessor
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
@@ -544,8 +546,8 @@ class TrackedModel(PolymorphicModel):
         query = Q(**self.get_identifying_fields())
         return self.__class__.objects.filter(query)
 
-    def get_description(self):
-        return self.get_descriptions(transaction=self.transaction).last()
+    def get_description(self, transaction=None):
+        return self.get_descriptions(transaction).last()
 
     def get_descriptions(self, transaction=None, request=None) -> TrackedModelQuerySet:
         """
@@ -584,7 +586,7 @@ class TrackedModel(PolymorphicModel):
         )
 
         if transaction:
-            return query.approved_up_to_transaction(transaction=transaction)
+            return query.approved_up_to_transaction(transaction)
 
         if request:
             from workbaskets.models import WorkBasket
@@ -851,6 +853,73 @@ class TrackedModel(PolymorphicModel):
                 model.copy(transaction, **{reverse_field_name: new_object})
 
         return new_object
+
+    def in_use_by(self, via_relation: str, transaction=None) -> QuerySet[TrackedModel]:
+        """
+        Returns all of the models that are referencing this one via the
+        specified relation and exist as of the passed transaction.
+
+        ``via_relation`` should be the name of a relation, and a ``KeyError``
+        will be raised if the relation name is not valid for this model.
+        Relations are accessible via ``TrackedModel.relations``.
+        """
+
+        relation = {r.name: r for r in self.relations.keys()}[via_relation]
+        remote_model = relation.remote_field.model
+        remote_field_name = get_accessor(relation.remote_field)
+
+        return remote_model.objects.filter(
+            **{f"{remote_field_name}__version_group": self.version_group}
+        ).approved_up_to_transaction(transaction)
+
+    def in_use(self, transaction=None, *relations: str) -> bool:
+        """
+        Returns True if there are any models that are using this one as of the
+        specified transaction.
+
+        This can be any model this this model is related to, but igoring any
+        subrecords (because e.g. a footnote is not considered "in use by" its
+        own description) and then filtering for only things that link _to_ this
+        model.
+
+        The list of relations can be filtered by passing in the name of a
+        relation. If a name is passed in that does not refer to a relation on
+        this model, ``ValueError`` will be raised.
+        """
+        # Get the list of models that use models of this type.
+        using_models = set(
+            relation.name
+            for relation in (
+                self.relations.keys()
+                - self.subrecord_relations
+                - self.models_linked_to.keys()
+            )
+        )
+
+        # If the user has specified names, check that they are sane
+        # and then filter the relations to them,
+        if relations:
+            bad_names = set(relations) - set(using_models)
+            if any(bad_names):
+                raise ValueError(
+                    f"{bad_names} are unknown relations; use one of {using_models}",
+                )
+
+            using_models = {
+                relation for relation in using_models if relation in relations
+            }
+
+        # If this model doesn't have any using relations, it cannot be in use.
+        if not any(using_models):
+            return False
+
+        # If we find any objects for any relation, then the model is in use.
+        for relation_name in using_models:
+            relation_queryset = self.in_use_by(relation_name, transaction)
+            if relation_queryset.exists():
+                return True
+
+        return False
 
     @atomic
     def save(self, *args, force_write=False, **kwargs):

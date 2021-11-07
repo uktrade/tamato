@@ -78,6 +78,8 @@ class MT4(MustExist):
 class MT7(PreventDeleteIfInUse):
     """A measure type cannot be deleted if it is in use in a measure."""
 
+    via_relation = "measure"
+
 
 class MT10(ValidityPeriodContained):
     """The validity period of the measure type series must span the validity
@@ -105,8 +107,6 @@ class MC3(MeasureValidityPeriodContained):
 class MC4(PreventDeleteIfInUse):
     """The measure condition code cannot be deleted if it is used in a measure
     condition component."""
-
-    in_use_check = "used_in_component"
 
 
 # 355 - MEASURE ACTION
@@ -693,8 +693,8 @@ class ME40(BusinessRule):
     """
 
     def validate(self, measure):
-        has_components = measure.has_components()
-        has_condition_components = measure.has_condition_components()
+        has_components = measure.has_components(self.transaction)
+        has_condition_components = measure.has_condition_components(self.transaction)
 
         if measure.measure_type.components_mandatory and not (
             has_components or has_condition_components
@@ -801,7 +801,7 @@ class ComponentApplicability(BusinessRule):
             )
             if (
                 components.filter(inapplicable)
-                .approved_up_to_transaction(measure.transaction)
+                .approved_up_to_transaction(self.transaction)
                 .exists()
             ):
                 raise self.violation(measure, self.messages[code].format(self))

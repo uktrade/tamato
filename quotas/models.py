@@ -77,15 +77,6 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     def autocomplete_label(self):
         return str(self)
 
-    def in_use(self):
-        return (
-            self.measure_set.model.objects.filter(
-                order_number__sid=self.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
     @property
     def is_origin_quota(self):
         return any(self.required_certificates.all())
@@ -127,14 +118,8 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
-    def in_use(self):
-        return (
-            self.order_number.measure_set.model.objects.filter(
-                order_number__sid=self.order_number.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
+    def order_number_in_use(self, transaction):
+        return self.order_number.in_use(transaction)
 
 
 class QuotaOrderNumberOriginExclusion(TrackedModel):
