@@ -1,5 +1,3 @@
-from typing import Type
-
 from django.db import models
 from django.db.models import Max
 
@@ -53,15 +51,6 @@ class FootnoteType(TrackedModel, ValidityMixin):
     def __str__(self):
         return self.footnote_type_id
 
-    def in_use(self):
-        return (
-            Footnote.objects.filter(
-                footnote_type__footnote_type_id=self.footnote_type_id,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
 
 class Footnote(TrackedModel, ValidityMixin):
     """A footnote relates to a piece of text, and either clarifies it (in the
@@ -103,32 +92,6 @@ class Footnote(TrackedModel, ValidityMixin):
     @property
     def autocomplete_label(self):
         return f"{self} - {self.get_description().description}"
-
-    def _used_in(self, dependent_type: Type[TrackedModel]):
-        return (
-            dependent_type.objects.filter(
-                associated_footnote__footnote_id=self.footnote_id,
-                associated_footnote__footnote_type__footnote_type_id=self.footnote_type.footnote_type_id,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
-    def used_in_additional_code(self):
-        return self._used_in(self.footnoteassociationadditionalcode_set.model)
-
-    def used_in_goods_nomenclature(self):
-        return self._used_in(self.footnoteassociationgoodsnomenclature_set.model)
-
-    def used_in_measure(self):
-        return self._used_in(self.footnoteassociationmeasure_set.model)
-
-    def in_use(self):
-        return (
-            self.used_in_additional_code()
-            or self.used_in_goods_nomenclature()
-            or self.used_in_measure()
-        )
 
     class Meta:
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]

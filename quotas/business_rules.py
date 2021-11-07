@@ -128,11 +128,15 @@ class ON10(ValidityPeriodContains):
 class ON11(PreventDeleteIfInUse):
     """The quota order number cannot be deleted if it is used in a measure."""
 
+    via_relation = "measure"
+
 
 @only_applicable_after("2007-12-31")
 class ON12(PreventDeleteIfInUse):
     """The quota order number origin cannot be deleted if it is used in a
     measure."""
+
+    in_use_check = "order_number_in_use"
 
 
 class ON13(BusinessRule):

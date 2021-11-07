@@ -17,7 +17,7 @@ def test_footnote_type_in_use(in_use_check_respects_deletes):
 def test_footnote_used_in_additional_code(in_use_check_respects_deletes):
     assert in_use_check_respects_deletes(
         factories.FootnoteFactory,
-        "used_in_additional_code",
+        "in_use",
         factories.FootnoteAssociationAdditionalCodeFactory,
         "associated_footnote",
     )
@@ -26,7 +26,7 @@ def test_footnote_used_in_additional_code(in_use_check_respects_deletes):
 def test_footnote_used_in_goods_nomenclature(in_use_check_respects_deletes):
     assert in_use_check_respects_deletes(
         factories.FootnoteFactory,
-        "used_in_goods_nomenclature",
+        "in_use",
         factories.FootnoteAssociationGoodsNomenclatureFactory,
         "associated_footnote",
     )
@@ -35,7 +35,7 @@ def test_footnote_used_in_goods_nomenclature(in_use_check_respects_deletes):
 def test_footnote_used_in_measure(in_use_check_respects_deletes):
     assert in_use_check_respects_deletes(
         factories.FootnoteFactory,
-        "used_in_measure",
+        "in_use",
         factories.FootnoteAssociationMeasureFactory,
         "associated_footnote",
     )
