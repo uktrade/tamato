@@ -548,14 +548,7 @@ class MeasureFootnotesForm(forms.Form):
         queryset=Footnote.objects.all(),
     )
 
-    def __init__(self, *args, request, **kwargs):
-        # Check whether form is being used as part of measure edit view
-        # and pass edit-footnotes url if this is the case
-        self.request = request
-        path = self.request.path
-        self.path = None
-        if "edit" in path:
-            self.path = path[:-1] + "-footnotes/"
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -571,6 +564,30 @@ class MeasureFootnotesForm(forms.Form):
 
 class MeasureFootnotesFormSet(FormSet):
     form = MeasureFootnotesForm
+
+
+class MeasureUpdateFootnotesForm(MeasureFootnotesForm):
+    """
+    Used with edit measure, this form has two buttons each submitting to
+    different routes: one for submitting to the edit measure view
+    (MeasureUpdate) and the other for submitting to the edit measure footnote
+    view (MeasureFootnotesUpdate).
+
+    This is done by setting the submit button's "formaction" attribute. This
+    requires that the path is passed here on kwargs, allowing it to be accessed
+    and used when rendering the edit forms' submit buttons.
+    """
+
+    def __init__(self, *args, **kwargs):
+        path = kwargs.pop("path")
+        if "edit" in path:
+            self.path = path[:-1] + "-footnotes/"
+
+        super().__init__(*args, **kwargs)
+
+
+class MeasureUpdateFootnotesFormSet(FormSet):
+    form = MeasureUpdateFootnotesForm
 
 
 class MeasureReviewForm(forms.Form):
