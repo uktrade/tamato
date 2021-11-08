@@ -33,21 +33,22 @@ def index(request):
     workbasket = WorkBasket.objects.is_not_approved().last()
 
     if not workbasket:
+        id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
         workbasket = WorkBasket.objects.create(
-            title=f"Workbasket {WorkBasket.objects.last().pk+1}",
+            title=f"Workbasket {id}",
             author=request.user,
         )
 
-    paginated_tracked_models = Paginator(workbasket.tracked_models, per_page=10)
-    page = paginated_tracked_models.get_page(request.GET.get("page", 1))
+    paginator = Paginator(workbasket.tracked_models, per_page=10)
+    page = paginator.get_page(request.GET.get("page", 1))
+
     return render(
         request,
         "common/index.jinja",
         context={
             "workbasket": workbasket,
             "page_obj": page,
-            "paginator": paginated_tracked_models,
-            "object_list": page.object_list,
+            "paginator": paginator,
         },
     )
 

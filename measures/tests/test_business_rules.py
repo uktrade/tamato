@@ -1090,15 +1090,17 @@ def test_ME40(applicability_code, component, condition_component, error_expected
     )
 
     if component:
-        factories.MeasureComponentFactory.create(component_measure=measure)
+        component = factories.MeasureComponentFactory.create(component_measure=measure)
 
     if condition_component:
-        factories.MeasureConditionComponentFactory.create(
+        condition_component = factories.MeasureConditionComponentFactory.create(
             condition__dependent_measure=measure,
         )
 
     with raises_if(BusinessRuleViolation, error_expected):
-        business_rules.ME40(measure.transaction).validate(measure)
+        business_rules.ME40(
+            (condition_component or component or measure).transaction,
+        ).validate(measure)
 
 
 def test_ME41(reference_nonexistent_record):
@@ -1500,13 +1502,17 @@ def test_ME108(expression, same_condition, expect_error):
 
 
 @pytest.mark.parametrize(
-    "applicability_code, amount",
+    ("applicability_code", "amount", "error_expected"),
     [
-        (ApplicabilityCode.MANDATORY, None),
-        (ApplicabilityCode.NOT_PERMITTED, Decimal(1)),
+        (ApplicabilityCode.MANDATORY, None, True),
+        (ApplicabilityCode.MANDATORY, Decimal(1), False),
+        (ApplicabilityCode.NOT_PERMITTED, Decimal(1), True),
+        (ApplicabilityCode.NOT_PERMITTED, None, False),
+        (ApplicabilityCode.PERMITTED, Decimal(1), False),
+        (ApplicabilityCode.PERMITTED, None, False),
     ],
 )
-def test_ME109(applicability_code, amount):
+def test_ME109(applicability_code, amount, error_expected):
     """
     If the flag 'amount' on duty expression is 'mandatory' then an amount must
     be specified.
@@ -1521,18 +1527,22 @@ def test_ME109(applicability_code, amount):
         duty_amount=amount,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME109(condition.transaction).validate(measure)
 
 
 @pytest.mark.parametrize(
-    "applicability_code, monetary_unit",
+    ("applicability_code", "monetary_unit", "error_expected"),
     [
-        (ApplicabilityCode.MANDATORY, None),
-        (ApplicabilityCode.NOT_PERMITTED, True),
+        (ApplicabilityCode.MANDATORY, False, True),
+        (ApplicabilityCode.MANDATORY, True, False),
+        (ApplicabilityCode.NOT_PERMITTED, True, True),
+        (ApplicabilityCode.NOT_PERMITTED, False, False),
+        (ApplicabilityCode.PERMITTED, True, False),
+        (ApplicabilityCode.PERMITTED, False, False),
     ],
 )
-def test_ME110(applicability_code, monetary_unit):
+def test_ME110(applicability_code, monetary_unit, error_expected):
     """
     If the flag 'monetary unit' on duty expression is 'mandatory' then a
     monetary unit must be specified.
@@ -1540,8 +1550,7 @@ def test_ME110(applicability_code, monetary_unit):
     If the flag is set to 'not permitted' then no monetary unit may be entered.
     """
 
-    if monetary_unit:
-        monetary_unit = factories.MonetaryUnitFactory.create()
+    monetary_unit = factories.MonetaryUnitFactory.create() if monetary_unit else None
 
     measure = factories.MeasureFactory.create()
     condition = factories.MeasureConditionComponentFactory.create(
@@ -1550,18 +1559,22 @@ def test_ME110(applicability_code, monetary_unit):
         monetary_unit=monetary_unit,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME110(condition.transaction).validate(measure)
 
 
 @pytest.mark.parametrize(
-    "applicability_code, measurement",
+    ("applicability_code", "measurement", "error_expected"),
     [
-        (ApplicabilityCode.MANDATORY, None),
-        (ApplicabilityCode.NOT_PERMITTED, True),
+        (ApplicabilityCode.MANDATORY, False, True),
+        (ApplicabilityCode.MANDATORY, True, False),
+        (ApplicabilityCode.NOT_PERMITTED, True, True),
+        (ApplicabilityCode.NOT_PERMITTED, False, False),
+        (ApplicabilityCode.PERMITTED, True, False),
+        (ApplicabilityCode.PERMITTED, False, False),
     ],
 )
-def test_ME111(applicability_code, measurement):
+def test_ME111(applicability_code, measurement, error_expected):
     """
     If the flag 'measurement unit' on duty expression is 'mandatory' then a
     measurement unit must be specified.
@@ -1570,8 +1583,7 @@ def test_ME111(applicability_code, measurement):
     entered.
     """
 
-    if measurement:
-        measurement = factories.MeasurementFactory.create()
+    measurement = factories.MeasurementFactory.create() if measurement else None
 
     measure = factories.MeasureFactory.create()
     condition = factories.MeasureConditionComponentWithMeasurementFactory.create(
@@ -1580,22 +1592,30 @@ def test_ME111(applicability_code, measurement):
         component_measurement=measurement,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME111(condition.transaction).validate(measure)
 
 
 # -- Measure excluded geographical area
 
 
-def test_ME65():
+@pytest.mark.parametrize(
+    ("area_code", "error_expected"),
+    (
+        (AreaCode.COUNTRY, True),
+        (AreaCode.REGION, True),
+        (AreaCode.GROUP, False),
+    ),
+)
+def test_ME65(area_code, error_expected):
     """An exclusion can only be entered if the measure is applicable to a geographical
     area group (area code = 1)."""
 
     exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
-        modified_measure__geographical_area__area_code=AreaCode.COUNTRY,
+        modified_measure__geographical_area__area_code=area_code,
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME65(exclusion.transaction).validate(exclusion)
 
 

@@ -129,7 +129,7 @@ def test_scenario4_change_time_span(scenario_4: TScenario):
     validate_captured_side_effect(change, association, UpdateType.DELETE)
 
     # NIG30 / NIG31
-    measures = change.candidate.obj.dependent_measures.order_by("id")
+    measures = change.candidate.obj.get_dependent_measures().order_by("id")
 
     # Case 1 - measure that still overlaps with the good's new validity span
     # It should be picked up in side effects with a flag UPDATE
@@ -158,7 +158,7 @@ def test_scenario5_intermediate_suffix(scenario_5: TScenario):
     change = changes[1]
 
     # ME7
-    measure = change.candidate.obj.dependent_measures.first()
+    measure = change.candidate.obj.get_dependent_measures().first()
     validate_captured_side_effect(change, measure, UpdateType.DELETE)
 
 

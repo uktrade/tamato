@@ -77,21 +77,21 @@ class FO11(PreventDeleteIfInUse):
     """When a footnote is used in a measure then the footnote may not be
     deleted."""
 
-    in_use_check = "used_in_measure"
+    via_relation = "footnoteassociationmeasure"
 
 
 class FO12(PreventDeleteIfInUse):
     """When a footnote is used in a goods nomenclature then the footnote may not
     be deleted."""
 
-    in_use_check = "used_in_goods_nomenclature"
+    via_relation = "footnoteassociationgoodsnomenclature"
 
 
 class FO15(PreventDeleteIfInUse):
     """When a footnote is used in an additional code then the footnote may not
     be deleted."""
 
-    in_use_check = "used_in_additional_code"
+    via_relation = "footnoteassociationadditionalcode"
 
 
 class FO17(ValidityPeriodContained):

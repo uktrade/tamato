@@ -17,7 +17,7 @@ def test_quota_order_number_in_use(in_use_check_respects_deletes):
 def test_quota_order_number_origin_in_use(in_use_check_respects_deletes):
     assert in_use_check_respects_deletes(
         factories.QuotaOrderNumberOriginFactory,
-        "in_use",
+        "order_number_in_use",
         factories.MeasureFactory,
         "order_number",
         through="order_number",

@@ -16,18 +16,42 @@ completeness and potential future interest.
   :maxdepth: 2
   :glob:
 
-  *
+  data-access-keys
+  edifact
+  extractions
+  interpretation-of-dates
+  record-sequencing
 
 Glossary Of Terminology
 -----------------------
 
-- EDIFACT: Electronic Data Interchange For Administration, Commerce And Transport
-- ERN: Export Refund Nomenclature
-- FTS: Full Temporary Stop Regulation
-- ID: Identifier
-- ISO: International Standards Organisation
-- OJ: Official Journal
-- PTS: Partial Temporary Stop Regulation
-- SID: System Identifier
-- UTF: Unicode transformation format
+.. glossary::
+
+   EDIFACT
+       Electronic Data Interchange For Administration, Commerce And Transport
+
+   ERN
+       Export Refund Nomenclature
+
+   FTS
+       Full Temporary Stop Regulation
+
+   ID
+       Identifier
+
+   ISO
+       International Standards Organisation
+
+   OJ
+       Official Journal
+
+   PTS
+       Partial Temporary Stop Regulation
+
+   SID
+       System Identifier
+
+   UTF
+       Unicode transformation format
+
 

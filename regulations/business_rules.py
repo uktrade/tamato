@@ -32,7 +32,7 @@ class ROIMB8(BusinessRule):
                 generating_regulation__regulation_id=regulation.regulation_id,
                 generating_regulation__role_type=regulation.role_type,
             )
-            .approved_up_to_transaction(regulation.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exclude(
                 valid_between__contained_by=regulation.valid_between,
             )

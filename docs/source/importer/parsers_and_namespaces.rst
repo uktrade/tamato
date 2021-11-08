@@ -1,5 +1,5 @@
-The Importer - Parsers and Namespaces
-=====================================
+Parsers and Namespaces
+======================
 
 .. automodule:: importer.parsers
     :members:
