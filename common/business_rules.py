@@ -491,9 +491,13 @@ class UpdateValidity(BusinessRule):
     """
 
     def validate(self, model):
-        existing_objects = model.__class__.objects.filter(
-            version_group=model.version_group,
-        ).exclude(id=model.id)
+        existing_objects = (
+            model.__class__.objects.filter(
+                version_group=model.version_group,
+            )
+            .exclude(id=model.id)
+            .versions_up_to(self.transaction)
+        )
 
         if existing_objects.exists():
             if model.update_type == UpdateType.CREATE:

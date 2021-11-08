@@ -715,6 +715,14 @@ def check_first_update_validation(request):
     def check(factory):
         instance = factory.create(update_type=update_type)
 
+        # Create a future instance – the business rule should ignore this
+        # but the test for CREATE will fail if it does not.
+        factory.create(
+            update_type=UpdateType.UPDATE,
+            transaction__workbasket=instance.transaction.workbasket,
+            transaction__order=instance.transaction.order + 1,
+        )
+
         with raises_if(UpdateValidity.Violation, expected_error):
             UpdateValidity(instance.transaction).validate(instance)
 
