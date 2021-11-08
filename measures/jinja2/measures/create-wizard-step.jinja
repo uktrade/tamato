@@ -11,6 +11,10 @@
       <span class="govuk-caption-l">{{ page_subtitle|default("") }}</span>
       <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
+      {% if step_metadata[step].info %}
+      <p class="govuk-body">{{ step_metadata[step].info }}</p>
+      {% endif %}
+
       {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
         {{ wizard.management_form }}
         {% block form %}{{ crispy(form) }}{% endblock %}
