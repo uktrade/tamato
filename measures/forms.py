@@ -555,10 +555,14 @@ class MeasureFootnotesForm(forms.Form):
         self.helper.form_tag = False
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "footnote",
-            Field("DELETE", template="includes/common/formset-delete-button.jinja")
-            if not self.prefix.endswith("__prefix__")
-            else None,
+            Fieldset(
+                "footnote",
+                Field("DELETE", template="includes/common/formset-delete-button.jinja")
+                if not self.prefix.endswith("__prefix__")
+                else None,
+                legend="Footnote",
+                legend_size=Size.SMALL,
+            ),
         )
 
 
