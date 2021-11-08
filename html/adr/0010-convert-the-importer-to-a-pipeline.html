@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>10. Convert the XML importer to a pipeline - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/javascripts/_analytics.js"></script>
+    <script src="../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../_static/javascripts/_start_modules.js"></script>
+    <script src="../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../_static/javascripts/theme.js"></script>
+    <link href="../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Architectural Decision Records</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html">2. Use pytest-bdd for BDD testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html">3. Use Django REST Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html">4. XML Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html">5. Use tracked models and workbaskets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html">6. Use Django Polymorphic for Multi-Table Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html">7. Changes go through a stateful workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html">8. Simplify workflow states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0009-record-generated-envelopes.html">9. Generate envelope files</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">10. Convert the XML importer to a pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#context">Context</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-problem">The problem</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-pipeline">The pipeline</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#the-xml-parser">The XML Parser</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#code-example">Code example</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#the-object-nursery">The Object Nursery</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#the-record-cache">The record cache</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#the-object-handler">The Object Handler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pros">Pros:</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#highly-customisable">Highly customisable</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#highly-decoupled">Highly Decoupled</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#works-with-existing-serializers">Works with existing serializers</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#cons-many-of-these-are-still-the-case-for-alternative-solutions">Cons (many of these are still the case for alternative solutions):</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#it-s-complex">It’s complex</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#doesn-t-handle-incomplete-data-well">Doesn’t handle incomplete data well</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#relies-on-unique-keys-actually-being-unique">Relies on unique keys actually being unique</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#doesn-t-handle-optional-foreign-keys-well">Doesn’t handle optional foreign keys well</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#alternatives-considered">Alternatives Considered</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#handling-dependencies-in-the-xml">Handling dependencies in the XML</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sorting-the-records-within-the-xml">Sorting the records within the XML</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#future-suggestions">Future suggestions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#clean-up-process">Clean up process</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#batching">Batching</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#implement-sorting">Implement sorting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#more-intricate-dependency-and-link-checks">More intricate dependency and link checks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="0011-store-and-check-preference-codes.html">11. Store and check business rules around preference codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0012-ordering-of-tariff-transactions.html">12. Ordering of tariff transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0013-import-taric-nomenclature-updates.html">13. Import TARIC nomenclature updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0014-simplify-current-transaction-queries.html">14. Simplification of current transaction queries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">10. Convert the XML importer to a pipeline</a><ul>
+<li><a class="reference internal" href="#status">Status</a></li>
+<li><a class="reference internal" href="#context">Context</a><ul>
+<li><a class="reference internal" href="#the-problem">The problem</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#decision">Decision</a><ul>
+<li><a class="reference internal" href="#the-pipeline">The pipeline</a><ul>
+<li><a class="reference internal" href="#the-xml-parser">The XML Parser</a><ul>
+<li><a class="reference internal" href="#code-example">Code example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-object-nursery">The Object Nursery</a><ul>
+<li><a class="reference internal" href="#the-record-cache">The record cache</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-object-handler">The Object Handler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#consequences">Consequences</a><ul>
+<li><a class="reference internal" href="#pros">Pros:</a><ul>
+<li><a class="reference internal" href="#highly-customisable">Highly customisable</a></li>
+<li><a class="reference internal" href="#highly-decoupled">Highly Decoupled</a></li>
+<li><a class="reference internal" href="#works-with-existing-serializers">Works with existing serializers</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#cons-many-of-these-are-still-the-case-for-alternative-solutions">Cons (many of these are still the case for alternative solutions):</a><ul>
+<li><a class="reference internal" href="#it-s-complex">It’s complex</a></li>
+<li><a class="reference internal" href="#doesn-t-handle-incomplete-data-well">Doesn’t handle incomplete data well</a></li>
+<li><a class="reference internal" href="#relies-on-unique-keys-actually-being-unique">Relies on unique keys actually being unique</a></li>
+<li><a class="reference internal" href="#doesn-t-handle-optional-foreign-keys-well">Doesn’t handle optional foreign keys well</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#alternatives-considered">Alternatives Considered</a><ul>
+<li><a class="reference internal" href="#handling-dependencies-in-the-xml">Handling dependencies in the XML</a></li>
+<li><a class="reference internal" href="#sorting-the-records-within-the-xml">Sorting the records within the XML</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#future-suggestions">Future suggestions</a><ul>
+<li><a class="reference internal" href="#clean-up-process">Clean up process</a></li>
+<li><a class="reference internal" href="#batching">Batching</a></li>
+<li><a class="reference internal" href="#implement-sorting">Implement sorting</a></li>
+<li><a class="reference internal" href="#more-intricate-dependency-and-link-checks">More intricate dependency and link checks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <section id="convert-the-xml-importer-to-a-pipeline">
+<span id="id1"></span><h1>10. Convert the XML importer to a pipeline<a class="headerlink" href="#convert-the-xml-importer-to-a-pipeline" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2020-08-20</p>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
+<p>Proposed</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>Migrating legacy and new data into the Tariff Management Tool (TaMaTo)
+is integral to keeping the system up-to-date. Historically the
+serialized data medium has been TARIC3 XML. This is a relatively strict
+medium, in terms of its content, which is heavily coupled to the legacy
+data models. Therefore it is important to have an importing solution
+which works with TARIC3 XML.</p>
+<p>Previously a generic XML importing system has been written which
+extracts XML data into python objects effectively. However a newly
+realised problem within the project stops this from being a complete
+solution.</p>
+<section id="the-problem">
+<h3>The problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h3>
+<p>Over the course of TaMaTo’s redevelopment several data models have been
+determined as unnecessary abstractions. These unnecessary models have
+mostly been merged with related models to keep the system terse and
+easier to understand. For example the legacy system had a
+<code class="docutils literal notranslate"><span class="pre">GoodsNomenclature</span></code> model (describing a good), a
+<code class="docutils literal notranslate"><span class="pre">GoodsNomenclatureOrigin</span></code> model (describing how one good originated
+from another good), and a <code class="docutils literal notranslate"><span class="pre">GoodsNomenclatureSuccessor</span></code> model
+(describing how some goods succeeded from another good). This has been
+replaced with the singular <code class="docutils literal notranslate"><span class="pre">GoodsNomenclature</span></code> model which has one
+extra column <code class="docutils literal notranslate"><span class="pre">origin</span></code>. This single column can be used to replace the
+full functionality of the other two tables.</p>
+<p>These changes simplify the development experience whilst keeping the
+same functionality for users. However these changes also have a serious
+impact on importing legacy data. This is because legacy data is naive to
+the changes made. So a model such as <code class="docutils literal notranslate"><span class="pre">GoodsNomenclature</span></code> is still
+treated as the three original models from the legacy system. Therefore
+the data received by the importer for the <code class="docutils literal notranslate"><span class="pre">GoodsNomenclature</span></code> model is
+received as three separate records. There is no guaranteed order in
+which the records will arrive. There also is no guarantee that the
+records will even arrive in the same transaction.</p>
+<p>Consequentially there were two false assumptions made when designing the
+initial importer:</p>
+<ol class="arabic simple">
+<li><p>All records come complete and ready to insert into the database.</p></li>
+<li><p>All records come in the correct order.</p></li>
+</ol>
+<p>The current importer was designed as a sequential XML parser. It
+extracts each record individually and immediately tries to dispatch it
+to the database as a complete object. In most cases the data is
+incomplete and the data validation fails - halting the process.</p>
+</section>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
+<p>To be able to handle the incomplete data records being input the
+importer is being split into 3 components which work together as a
+pipeline. The three components are as follows:</p>
+<ol class="arabic simple">
+<li><p>XML Parser - parses XML data into a python dict.</p></li>
+<li><p>Object Nursery - Collects python dicts and stores them until a complete object can be made.</p></li>
+<li><p>Object Handler - Fetches python dicts from the nursery and turns them into database objects.</p></li>
+</ol>
+<p>A cache has also been introduced to store the python dicts whilst a
+handler waits for further data.</p>
+<section id="the-pipeline">
+<h3>The pipeline<a class="headerlink" href="#the-pipeline" title="Permalink to this headline">¶</a></h3>
+<p>The flow between these three components looks roughly like the following
+diagram:</p>
+<p><img alt="Importer Pipeline Flow Diagram" src="../_images/importer-pipeline-flow.png" /></p>
+<section id="the-xml-parser">
+<h4>The XML Parser<a class="headerlink" href="#the-xml-parser" title="Permalink to this headline">¶</a></h4>
+<p>Initially an XML file is passed to the XML parser.</p>
+<p>The parser reflects the XML file structure with each elemnt being a
+<code class="docutils literal notranslate"><span class="pre">Parser</span></code> class. Each <code class="docutils literal notranslate"><span class="pre">Parser</span></code> class contains other <code class="docutils literal notranslate"><span class="pre">Parser</span></code>
+classes as attributes which reflect the elements expected to be
+contained within the “parent” <code class="docutils literal notranslate"><span class="pre">Parser</span></code>s tag. At the <code class="docutils literal notranslate"><span class="pre">Record</span></code> level
+of the TARIC3 XML the data is extracted, converted into a python
+dictionary, and emitted to the Nursery with the Workbasket ID and XML
+tag.</p>
+<p>The important factor here is how the data is extracted and put into the
+dictionary. The naming of each piece of data is integral to how the
+handler uses that data later on.</p>
+<section id="code-example">
+<h5>Code example<a class="headerlink" href="#code-example" title="Permalink to this headline">¶</a></h5>
+<p>A basic set of XML Parser classes may look like:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
+<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">Tag</span>
+<span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ElementParser</span>
+<span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">TextElement</span>
+
+<span class="k">class</span> <span class="nc">Record</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;record&quot;</span><span class="p">)</span>
+    <span class="n">transaction_id</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;transaction.id&quot;</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;app.message&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">Record</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">Message</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This would automatically parse an XML file that looks like:</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;transaction&gt;</span>
+    <span class="nt">&lt;message&gt;</span>
+        <span class="nt">&lt;record&gt;</span>
+            <span class="nt">&lt;transaction.id&gt;</span>1<span class="nt">&lt;/transaction.id&gt;</span>
+        <span class="nt">&lt;/record&gt;</span>
+        <span class="nt">&lt;record&gt;</span>
+            <span class="nt">&lt;transaction.id&gt;</span>2<span class="nt">&lt;/transaction.id&gt;</span>
+        <span class="nt">&lt;/record&gt;</span>
+    <span class="nt">&lt;/message&gt;</span>
+    <span class="nt">&lt;message&gt;</span>
+        <span class="nt">&lt;record&gt;</span>
+            <span class="nt">&lt;transaction.id&gt;</span>3<span class="nt">&lt;/transaction.id&gt;</span>
+        <span class="nt">&lt;/record&gt;</span>
+        <span class="nt">&lt;record&gt;</span>
+            <span class="nt">&lt;transaction.id&gt;</span>4<span class="nt">&lt;/transaction.id&gt;</span>
+        <span class="nt">&lt;/record&gt;</span>
+    <span class="nt">&lt;/message&gt;</span>
+<span class="nt">&lt;/transaction&gt;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="the-object-nursery">
+<h4>The Object Nursery<a class="headerlink" href="#the-object-nursery" title="Permalink to this headline">¶</a></h4>
+<p>The Object Nursery acts as a go-between for the parser. The nursery
+itself does very little. But it is here where the handling of incomplete
+records and belated linked records is enabled (not handled, enabled).</p>
+<p>The Nursery has 4 core functions:</p>
+<ol class="arabic simple">
+<li><p>To receive a python dictionary with a workbasket ID and a unique identifier for the record type (in the case
+of the XML parser the unique identifier is the tag name).</p></li>
+<li><p>To match these python dictionaries against the handlers responsible for building them into database records.</p></li>
+<li><p>To store any records that cannot yet be processed by a handler.</p></li>
+<li><p>To fetch a record when it is ready to be processed by a handler.</p></li>
+</ol>
+<p>It is important to note that the Nursery does not know when a record is
+ready to be processed or when it needs to be stored. Instead it takes
+the cue for these actions from the handler being used. The nursery
+simply presents an interface for the handler to interact with the cache,
+whilst also acting as a gateway before to start the handling process.</p>
+<section id="the-record-cache">
+<h5>The record cache<a class="headerlink" href="#the-record-cache" title="Permalink to this headline">¶</a></h5>
+<p>The record cache is an intermediate storage which holds record objects.
+These record objects contain their data, workbasket ID, and a unique
+identifier matching them to their handler. The format of the cache does
+not matter as long as a standard interface is present between the cache
+and the nursery. This means the cache could be anything ranging from
+local file storage to a redis cluster to an in process dictionary.
+Currently the most simple approach has been taken - an in process
+dictionary.</p>
+</section>
+</section>
+<section id="the-object-handler">
+<h4>The Object Handler<a class="headerlink" href="#the-object-handler" title="Permalink to this headline">¶</a></h4>
+<p>The Object Handler is where most of the processing happens.</p>
+<p>A handler defines the serializer it uses to validate data and insert the
+data into the database. It also defines the unique identifier required
+to match it to a record. It defines any other handlers it may be
+interdependent on. Lastly it defines any other database records it may
+have foreign keys to and how to find the relevant data for this key.</p>
+<p>When a handler receives a record it uses the above definitions to first
+try and resolve any depdendencies and merge their data together. If the
+dependencies are found and merged the handler then tries to build the
+foreign keys by finding records in the database.</p>
+<p>If either of the above steps fail the handler returns a falsy message to
+the nursery. The nursery takes a falsy value to indicate the current
+record needs to be cached for later processing. It is this mechanism
+that allows the importer to handle partial data being passed to it with
+an indeterminate order. If the data is determined to be incomplete it is
+simply cached and then attempted to be reprocessed when one of the
+dependent records is given to a handler.</p>
+<p>If both steps are successful the handler validates the data and inserts
+it into the database. If either validation or insertion fails then an
+error will be raised.</p>
+</section>
+</section>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
+<p>The system is relatively complex but has several benefits.</p>
+<section id="pros">
+<h3>Pros:<a class="headerlink" href="#pros" title="Permalink to this headline">¶</a></h3>
+<section id="highly-customisable">
+<h4>Highly customisable<a class="headerlink" href="#highly-customisable" title="Permalink to this headline">¶</a></h4>
+<p>Both handlers and parsers can be changed extensively to match individual
+model needs.</p>
+</section>
+<section id="highly-decoupled">
+<h4>Highly Decoupled<a class="headerlink" href="#highly-decoupled" title="Permalink to this headline">¶</a></h4>
+<p>Most of the system acts in a decoupled way. The Nursery doesn’t care
+where it gets data from. Nor does the nursery care where the data is
+cached. Nurseries don’t even need Handlers to act in the same way at
+all, they just need something to match the unique identifiers against.
+Handlers similarly expect a nursery like object but don’t actually care
+if it is a nursery - they just need an interface to the cache.</p>
+<p>With this in mind it is simple to change the actual caching system. Or
+to add a new integration for other clients who don’t want to use TARIC
+XML as an input. It is also simple to create entirely custom handlers
+for certain models.</p>
+</section>
+<section id="works-with-existing-serializers">
+<h4>Works with existing serializers<a class="headerlink" href="#works-with-existing-serializers" title="Permalink to this headline">¶</a></h4>
+<p>API serializers are reused for validation purposes, easing some of the
+complexities.</p>
+</section>
+</section>
+<section id="cons-many-of-these-are-still-the-case-for-alternative-solutions">
+<h3>Cons (many of these are still the case for alternative solutions):<a class="headerlink" href="#cons-many-of-these-are-still-the-case-for-alternative-solutions" title="Permalink to this headline">¶</a></h3>
+<section id="it-s-complex">
+<h4>It’s complex<a class="headerlink" href="#it-s-complex" title="Permalink to this headline">¶</a></h4>
+<p>There are a lot of moving parts involved in the system. This makes it
+relatively fragile and non-trivial to conceptualize while working on it.</p>
+</section>
+<section id="doesn-t-handle-incomplete-data-well">
+<h4>Doesn’t handle incomplete data well<a class="headerlink" href="#doesn-t-handle-incomplete-data-well" title="Permalink to this headline">¶</a></h4>
+<p>This is incomplete data that cannot be completed. If partial data comes
+through and its dependencies do not, the data will end up stuck in the
+cache. The nursery will not handle this.</p>
+</section>
+<section id="relies-on-unique-keys-actually-being-unique">
+<h4>Relies on unique keys actually being unique<a class="headerlink" href="#relies-on-unique-keys-actually-being-unique" title="Permalink to this headline">¶</a></h4>
+<p>An assumption is made that we can build unique keys for each record
+using the identifying data it contains. This may not be the case (keys
+may not be unique). In this case records in the cache may be
+overwritten.</p>
+</section>
+<section id="doesn-t-handle-optional-foreign-keys-well">
+<h4>Doesn’t handle optional foreign keys well<a class="headerlink" href="#doesn-t-handle-optional-foreign-keys-well" title="Permalink to this headline">¶</a></h4>
+<p>Optional foreign keys are generally ignored if not found. This may be a
+problem when the foreign keys are presented later on.</p>
+</section>
+</section>
+</section>
+<section id="alternatives-considered">
+<h2>Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Permalink to this headline">¶</a></h2>
+<section id="handling-dependencies-in-the-xml">
+<h3>Handling dependencies in the XML<a class="headerlink" href="#handling-dependencies-in-the-xml" title="Permalink to this headline">¶</a></h3>
+<p>Another solution was to let the XML parser handle the entire process. If
+an interdependent record is found it could pass it to the parent
+element. The parent element would look for dependencies and if not find
+any would pass it to its parent. This would carry on recursively until
+all dependencies found.</p>
+<p>This approach is similar to the one taken (store data until the
+dependencies are found). But everything is done within the parser. As a
+result there are 3 issues with this approach compared to the current
+solution:</p>
+<ol class="arabic simple">
+<li><p>There is no guarantee the dependent data is found within the same XML file being parsed.</p></li>
+<li><p>The system is tightly coupled, it would be far harder to adapt to varying model needs.</p></li>
+<li><p>The storage is tied to the system memory which may present problems for big inputs.</p></li>
+</ol>
+</section>
+<section id="sorting-the-records-within-the-xml">
+<h3>Sorting the records within the XML<a class="headerlink" href="#sorting-the-records-within-the-xml" title="Permalink to this headline">¶</a></h3>
+<p>Another solution was to parse the XML and sort it before inserting rows.
+This would allow assigning unique keys, merging dependencies and then
+inserting in the order we expect. However the main issue with this is
+the lack of assurance on where items come within the input. Therefore
+the amount of data required to store in memory could be significant.</p>
+<p>However this solution may still be desirable. The nursery approach does
+not preclude sorting as an impossibility.</p>
+</section>
+</section>
+<section id="future-suggestions">
+<h2>Future suggestions<a class="headerlink" href="#future-suggestions" title="Permalink to this headline">¶</a></h2>
+<section id="clean-up-process">
+<h3>Clean up process<a class="headerlink" href="#clean-up-process" title="Permalink to this headline">¶</a></h3>
+<p>Currently there is no way to know when an input is finished. As a result
+this may leave straggling records in the cache. A clean up process
+should be implemented to allow these records to be wrapped up before the
+process dies.</p>
+</section>
+<section id="batching">
+<h3>Batching<a class="headerlink" href="#batching" title="Permalink to this headline">¶</a></h3>
+<p>As the nursery controls when records are first handled it would be
+trivial to implement a batching system. This would involve the nursery
+holding onto records at first until some milestone is reached (e.g. <em>x</em>
+number of records, or an entire XMl transaction or similar). Once the
+milestone is reached the entire batch could be processed in one go.</p>
+</section>
+<section id="implement-sorting">
+<h3>Implement sorting<a class="headerlink" href="#implement-sorting" title="Permalink to this headline">¶</a></h3>
+<p>If batching is implemented then sorting the data appropriately would be
+a trivial addition to this system.</p>
+</section>
+<section id="more-intricate-dependency-and-link-checks">
+<h3>More intricate dependency and link checks<a class="headerlink" href="#more-intricate-dependency-and-link-checks" title="Permalink to this headline">¶</a></h3>
+<p>Currently the system for adding links is very adaptable, however the
+system for <em>checking</em> if a link is needed is not. It may be worth adding
+more complex checks (probably function based). This would allow the
+importer to more closely match the business rules.</p>
+</section>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/adr/0010-convert-the-importer-to-a-pipeline.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'adr/0010-convert-the-importer-to-a-pipeline.rst'&amp;body=Problem%20with%20'adr/0010-convert-the-importer-to-a-pipeline.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

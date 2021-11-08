@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" width="744" height="172" fill="none" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="10">
+  <g id="person" fill="#fff" stroke="#000" transform="translate(-107 -211)">
+    <path d="M108 327v-33 0a32 32 0 0165 0v33z"/>
+    <path d="M110 244v0c0-17 14-31 30-31v0a30 30 0 0131 31v0c0 16-14 30-31 30v0c-16 0-30-14-30-30z"/>
+  </g>
+  <g id="database" stroke="#595959" transform="translate(-107 -211)">
+    <path fill="#eee" d="M599 231c0-10 20-19 45-19s45 9 45 19v78c0 10-20 19-45 19s-45-9-45-19z"/>
+    <path d="M689 231v0c0 11-20 20-45 20s-45-9-45-20"/>
+  </g>
+  <g id="arrow" fill="#a7a7a7" stroke="#a7a7a7" stroke-width="3">
+    <path d="M582 83h72"/>
+    <path stroke-linejoin="miter" d="M654 88l14-5-14-5z"/>
+  </g>
+  <use transform="translate(-180)" xlink:href="#arrow"/>
+  <use transform="translate(-361)" xlink:href="#arrow"/>
+  <use transform="translate(-516)" xlink:href="#arrow"/>
+  <use transform="translate(672)" xlink:href="#person"/>
+  <use transform="translate(155)" xlink:href="#person"/>
+  <use transform="translate(-180)" xlink:href="#database"/>
+  <g fill="#000" style="line-height:1.25; font-family: sans-serif; font-weight: 700" font-size="18.7" text-anchor="middle">
+    <text x="356.6" y="74.5">
+      <tspan>TaMaTo</tspan>
+    </text>
+    <text x="536.6" y="74.5">
+      <tspan>CDS</tspan>
+    </text>
+    <text x="32.2" y="144.1">
+      <tspan>Policy</tspan>
+    </text>
+    <text x="188.2" y="144.1">
+      <tspan x="191.4" y="144.1">Tariff</tspan>
+      <tspan x="188.2" y="167.5">Operations</tspan>
+    </text>
+    <text x="704.8" y="144.1">
+      <tspan>Traders</tspan>
+    </text>
+  </g>
+</svg>

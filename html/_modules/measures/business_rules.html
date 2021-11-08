@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>measures.business_rules - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/javascripts/_analytics.js"></script>
+    <script src="../../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../../_static/javascripts/_start_modules.js"></script>
+    <script src="../../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../../_static/javascripts/theme.js"></script>
+    <link href="../../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <h1>Source code for measures.business_rules</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Business rules for measures.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">dateutil.relativedelta</span> <span class="kn">import</span> <span class="n">relativedelta</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
+
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">FootnoteApplicability</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">MustExist</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_deleted</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">TaricDateRange</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">ApplicabilityCode</span>
+<span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
+<span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
+
+
+<div class="viewcode-block" id="MeasureValidityPeriodContained"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MeasureValidityPeriodContained">[docs]</a><span class="k">class</span> <span class="nc">MeasureValidityPeriodContained</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">query_contains_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">container</span><span class="p">,</span> <span class="n">contained</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="n">container</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">container</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">(),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">container</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;Measure&quot;</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">db_effective_valid_between__contains</span><span class="o">=</span><span class="n">contained</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">contained</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;Measure&quot;</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">contained</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">valid_between__contains</span><span class="o">=</span><span class="n">contained</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">queryset</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div>
+
+
+<span class="c1"># 140 - MEASURE TYPE SERIES</span>
+
+
+<div class="viewcode-block" id="MTS1"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MTS1">[docs]</a><span class="k">class</span> <span class="nc">MTS1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The measure type series must be unique.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MTS2"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MTS2">[docs]</a><span class="k">class</span> <span class="nc">MTS2</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The measure type series cannot be deleted if it is associated with a</span>
+<span class="sd">    measure type.&quot;&quot;&quot;</span></div>
+
+
+<span class="c1"># 235 - MEASURE TYPE</span>
+
+
+<div class="viewcode-block" id="MT1"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MT1">[docs]</a><span class="k">class</span> <span class="nc">MT1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The measure type code must be unique.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MT3"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MT3">[docs]</a><span class="k">class</span> <span class="nc">MT3</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a measure type is used in a measure then the validity period of the</span>
+<span class="sd">    measure type must span the validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="MT4"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MT4">[docs]</a><span class="k">class</span> <span class="nc">MT4</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced measure type series must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure_type_series&quot;</span></div>
+
+
+<div class="viewcode-block" id="MT7"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MT7">[docs]</a><span class="k">class</span> <span class="nc">MT7</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A measure type cannot be deleted if it is in use in a measure.&quot;&quot;&quot;</span>
+
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="MT10"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MT10">[docs]</a><span class="k">class</span> <span class="nc">MT10</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the measure type series must span the validity</span>
+<span class="sd">    period of the measure type.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure_type_series&quot;</span></div>
+
+
+<span class="c1"># 350 - MEASURE CONDITION CODE</span>
+
+
+<div class="viewcode-block" id="MC1"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MC1">[docs]</a><span class="k">class</span> <span class="nc">MC1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The code of the measure condition code must be unique.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MC3"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MC3">[docs]</a><span class="k">class</span> <span class="nc">MC3</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If a measure condition code is used in a measure then the validity period</span>
+<span class="sd">    of the measure condition code must span the validity period of the</span>
+<span class="sd">    measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;condition_code&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;dependent_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="MC4"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MC4">[docs]</a><span class="k">class</span> <span class="nc">MC4</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The measure condition code cannot be deleted if it is used in a measure</span>
+<span class="sd">    condition component.&quot;&quot;&quot;</span></div>
+
+
+<span class="c1"># 355 - MEASURE ACTION</span>
+
+
+<div class="viewcode-block" id="MA1"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MA1">[docs]</a><span class="k">class</span> <span class="nc">MA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The code of the measure action must be unique.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MA2"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MA2">[docs]</a><span class="k">class</span> <span class="nc">MA2</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The measure action cannot be deleted if it is used in a measure condition</span>
+<span class="sd">    component.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MA4"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MA4">[docs]</a><span class="k">class</span> <span class="nc">MA4</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If a measure action is used in a measure then the validity period of the</span>
+<span class="sd">    measure action must span the validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;action&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;dependent_measure&quot;</span></div>
+
+
+<span class="c1"># 430 - MEASURE</span>
+
+
+<div class="viewcode-block" id="ME1"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME1">[docs]</a><span class="k">class</span> <span class="nc">ME1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The combination of measure type, geographical area, goods nomenclature</span>
+<span class="sd">    item id, additional code type, additional code, order number, reduction</span>
+<span class="sd">    indicator and start date must be unique.&quot;&quot;&quot;</span>
+
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;measure_type&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;geographical_area&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;goods_nomenclature&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;additional_code&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dead_additional_code&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;order_number&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dead_order_number&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reduction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ME2"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME2">[docs]</a><span class="k">class</span> <span class="nc">ME2</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The measure type must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure_type&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME3"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME3">[docs]</a><span class="k">class</span> <span class="nc">ME3</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the measure type must span the validity period of</span>
+<span class="sd">    the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;measure_type&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME4"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME4">[docs]</a><span class="k">class</span> <span class="nc">ME4</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The geographical area must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;geographical_area&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME5"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME5">[docs]</a><span class="k">class</span> <span class="nc">ME5</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the geographical area must span the validity</span>
+<span class="sd">    period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;geographical_area&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME6"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME6">[docs]</a><span class="k">class</span> <span class="nc">ME6</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The goods code must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;goods_nomenclature&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME7"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME7">[docs]</a><span class="k">class</span> <span class="nc">ME7</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The goods nomenclature code must be a product code.</span>
+
+<span class="sd">    It may not be an intermediate line.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME7.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME7.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">and</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;80&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME8"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME8">[docs]</a><span class="k">class</span> <span class="nc">ME8</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the goods code must span the validity period of</span>
+<span class="sd">    the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;goods_nomenclature&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME88"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME88">[docs]</a><span class="k">class</span> <span class="nc">ME88</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The level of the goods code cannot exceed the explosion level of the</span>
+<span class="sd">    measure type.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME88.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME88.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">goods</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">explosion_level</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">measure_explosion_level</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="ow">not</span> <span class="n">good</span><span class="o">.</span><span class="n">item_id</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;0&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">-</span> <span class="n">explosion_level</span><span class="p">))</span> <span class="k">for</span> <span class="n">good</span> <span class="ow">in</span> <span class="n">goods</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME16"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME16">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2004-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ME16</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Integrating a measure with an additional code when an equivalent or</span>
+<span class="sd">    overlapping measures without additional code already exists and vice-versa,</span>
+<span class="sd">    should be forbidden.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME16.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME16.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;order_number__order_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">order_number</span>
+        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dead_order_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;order_number__isnull&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dead_order_number__isnull&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span> <span class="ow">or</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_additional_code</span><span class="p">:</span>
+            <span class="n">additional_code_query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">Q</span><span class="p">(</span>
+                <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">additional_code_query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">|</span> <span class="n">Q</span><span class="p">(</span>
+                <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">additional_code_query</span><span class="p">,</span>
+                <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">sid</span>
+                <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span>
+                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">reduction</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">reduction</span><span class="p">,</span>
+                <span class="n">db_effective_valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="s2">&quot;A measure with an additional code cannot be added when an equivalent &quot;</span>
+                <span class="s2">&quot;or overlapping measure without an additional code already exists and &quot;</span>
+                <span class="s2">&quot;vice-versa.&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME115"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME115">[docs]</a><span class="k">class</span> <span class="nc">ME115</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the referenced additional code must span the</span>
+<span class="sd">    validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;additional_code&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME25"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME25">[docs]</a><span class="k">class</span> <span class="nc">ME25</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If the measure’s end date is specified (implicitly or explicitly) then</span>
+<span class="sd">    the start date of the measure must be less than or equal to the end date.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME25.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME25.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">effective_end_date</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">effective_end_date</span>
+
+        <span class="k">if</span> <span class="n">effective_end_date</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;</span> <span class="n">effective_end_date</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME32"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME32">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="k">class</span> <span class="nc">ME32</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    There may be no overlap in time with other measure occurrences with a goods</span>
+<span class="sd">    code in the same nomenclature hierarchy which references the same measure</span>
+<span class="sd">    type, geo area, order number, additional code and reduction indicator.</span>
+
+<span class="sd">    This rule is not applicable for Meursing additional codes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
+            <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">reduction</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">reduction</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">order_number__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">dead_order_number</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">order_number__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dead_order_number__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_additional_code</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">dead_additional_code</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">dead_additional_code</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">query</span>
+
+    <span class="k">def</span> <span class="nf">matching_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ME32.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME32.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># build the query for measures matching the given measure</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_query</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+        <span class="n">matching_measures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matching_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+
+        <span class="c1"># get all goods nomenclature versions associated with this measure</span>
+        <span class="n">GoodsNomenclature</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="p">)</span>
+        <span class="n">goods</span> <span class="o">=</span> <span class="n">GoodsNomenclature</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># hack to avoid circular import</span>
+        <span class="n">Indent</span> <span class="o">=</span> <span class="n">GoodsNomenclature</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span>
+        <span class="n">Node</span> <span class="o">=</span> <span class="n">Indent</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span>
+
+        <span class="c1"># for each goods nomenclature version, get all indents</span>
+        <span class="k">for</span> <span class="n">good</span> <span class="ow">in</span> <span class="n">goods</span><span class="p">:</span>
+            <span class="n">indents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">Indent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_end_date</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                    <span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                    <span class="n">indented_goods_nomenclature</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="n">nodes</span> <span class="o">=</span> <span class="n">Node</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                <span class="n">indent__in</span><span class="o">=</span><span class="n">indents</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># for each indent, get the goods tree</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="n">tree</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">get_ancestors</span><span class="p">()</span>
+                    <span class="o">|</span> <span class="n">node</span><span class="o">.</span><span class="n">get_descendants</span><span class="p">()</span>
+                    <span class="o">|</span> <span class="n">Node</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># check for any measures associated to commodity codes in the tree which</span>
+                <span class="c1"># clash with the specified measure</span>
+                <span class="n">clashing_measures</span> <span class="o">=</span> <span class="n">matching_measures</span><span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">goods_nomenclature__indents__nodes__in</span><span class="o">=</span><span class="n">tree</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
+                        <span class="s2">&quot;pk&quot;</span><span class="p">,</span>
+                        <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">db_effective_valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">clashing_measures</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># -- Ceiling/quota definition existence</span>
+
+
+<div class="viewcode-block" id="ME10"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME10">[docs]</a><span class="k">class</span> <span class="nc">ME10</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The order number must be specified if the &quot;order number flag&quot; (specified in</span>
+<span class="sd">    the measure type record) has the value &quot;mandatory&quot;.</span>
+
+<span class="sd">    If the flag is set to &quot;not permitted&quot; then the field cannot be entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME10.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME10.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span> <span class="ow">and</span> <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">order_number_not_permitted</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="s1">&#39;If the order number flag is set to &quot;not permitted&quot; then the order number &#39;</span>
+                <span class="s2">&quot;cannot be entered.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span>
+            <span class="ow">and</span> <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">order_number_mandatory</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="s1">&#39;The order number must be specified if the &quot;order number flag&quot; has the &#39;</span>
+                <span class="s1">&#39;value &quot;mandatory&quot;.&#39;</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME116"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME116">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ME116</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
+<span class="sd">    of the quota order number must span the validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME117"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME117">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ME117</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    When a measure has a quota measure type then the origin must exist as a</span>
+<span class="sd">    quota order number origin.</span>
+
+<span class="sd">    Only origins for quota order numbers managed by the first come first served</span>
+<span class="sd">    principle are in scope; these order number are starting with &#39;09&#39;; except order</span>
+<span class="sd">    numbers starting with &#39;094&#39;.</span>
+
+<span class="sd">    Quota measure types are the following:</span>
+<span class="sd">        122 - Non preferential tariff quota</span>
+<span class="sd">        123 - Non preferential tariff quota under end-use</span>
+<span class="sd">        143 - Preferential tariff quota</span>
+<span class="sd">        146 - Preferential tariff quota under end-use</span>
+<span class="sd">        147 - Customs Union Quota</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME117.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME117.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">quotas.models</span> <span class="kn">import</span> <span class="n">QuotaOrderNumberOrigin</span>
+
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">mechanism</span> <span class="o">!=</span> <span class="n">AdministrationMechanism</span><span class="o">.</span><span class="n">FCFS</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># check the measure geo area exists as a quota order number origin (and is not</span>
+        <span class="c1"># excluded)</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">QuotaOrderNumberOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">geographical_area__members__member__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">),</span>
+            <span class="n">order_number__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">excluded_origins</span> <span class="o">=</span> <span class="n">QuotaOrderNumberOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">excluded_areas__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">order_number__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">excluded_origins</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span>
+
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME119"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME119">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ME119</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
+<span class="sd">    of the quota order number origin must span the validity period of the</span>
+<span class="sd">    measure.&quot;&quot;&quot;</span>
+
+    <span class="c1"># This checks the same thing as ON10 from the other side of the relation</span>
+
+<div class="viewcode-block" id="ME119.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME119.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="c1"># TODO: Ignore this for now - the data from HMRC has violations. Investigate and fix later.</span>
+        <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">quotaordernumberorigin_set</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># -- Relation with additional codes</span>
+
+
+<div class="viewcode-block" id="ME9"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME9">[docs]</a><span class="k">class</span> <span class="nc">ME9</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If no additional code is specified then the goods code is mandatory.</span>
+
+<span class="sd">    A measure can be assigned to:</span>
+
+<span class="sd">    - a commodity code only (most measures)</span>
+<span class="sd">    - a commodity code plus an additional code (e.g. trade remedies, pharma duties,</span>
+<span class="sd">      routes of ingress)</span>
+<span class="sd">    - an additional code only (only for Meursing codes, which will be removed in the UK</span>
+<span class="sd">      tariff).</span>
+
+<span class="sd">    This means that a goods code is always mandatory in the UK tariff, however this</span>
+<span class="sd">    business rule is still needed for historical EU measures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME9.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME9.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span> <span class="ow">or</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_additional_code</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME12"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME12">[docs]</a><span class="k">class</span> <span class="nc">ME12</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If the additional code is specified then the additional code type must</span>
+<span class="sd">    have a relationship with the measure type.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME12.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME12.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">AdditionalCodeTypeMeasureType</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">additional_code_types</span><span class="o">.</span><span class="n">through</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">AdditionalCodeTypeMeasureType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">additional_code_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME17"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME17">[docs]</a><span class="k">class</span> <span class="nc">ME17</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the additional code type has as application &quot;non-Meursing&quot; then the</span>
+<span class="sd">    additional code must exist as a non-Meursing additional code.</span>
+
+<span class="sd">    UK tariff does not use meursing tables, so this is essentially saying that an</span>
+<span class="sd">    additional code must exist.</span>
+
+<span class="sd">    This refers to the fact that the TARIC Measure record has separate</span>
+<span class="sd">    additional_code_type and additional_code fields. Our data model combines these into</span>
+<span class="sd">    a single foreign key relation to AdditionalCode.</span>
+
+<span class="sd">    It is not possible to violate this rule as a result.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;additional_code&quot;</span></div>
+
+
+<span class="c1"># -- Export Refund nomenclature measures</span>
+
+<span class="c1"># -- Export Refund for Processed Agricultural Goods measures</span>
+
+<span class="c1"># -- Relation with regulations</span>
+
+
+<div class="viewcode-block" id="ME24"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME24">[docs]</a><span class="k">class</span> <span class="nc">ME24</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The role + regulation id must exist.</span>
+
+<span class="sd">    If no measure start date is specified it defaults to the regulation start</span>
+<span class="sd">    date.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;generating_regulation&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME87"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME87">[docs]</a><span class="k">class</span> <span class="nc">ME87</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The validity period of the measure (implicit or explicit) must reside within</span>
+<span class="sd">    the effective validity period of its supporting regulation.</span>
+
+<span class="sd">    The effective validity period is the validity period of the regulation taking into</span>
+<span class="sd">    account extensions and abrogation.</span>
+
+<span class="sd">    A regulation’s validity period is hugely complex in the EU’s world.</span>
+
+<span class="sd">    - A regulation is initially assigned a start date. It may be assigned an end date as</span>
+<span class="sd">      well at the point of creation but this is rare.</span>
+<span class="sd">    - The EU then may choose to end date the regulation using its end date field – in</span>
+<span class="sd">      this case provision must be made to end date all of the measures that would</span>
+<span class="sd">      otherwise extend beyond the end of this regulation end date.</span>
+<span class="sd">    - The EU may also choose to end date the measure (regulation?) via 2 other means which we are</span>
+<span class="sd">      abandoning (abrogation and prorogation).</span>
+<span class="sd">    - Only the measure validity end date and the regulation validity end date field will</span>
+<span class="sd">      need to be compared in the UK Tariff. However, in terminating measures from the EU</span>
+<span class="sd">      tariff to make way for UK equivalents, and to avoid data clashes such as ME32, we DO</span>
+<span class="sd">      need to be aware of this multiplicity of end dates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME87.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME87.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="o">.</span><span class="n">upper_inf</span>
+            <span class="ow">and</span> <span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="o">&lt;</span> <span class="n">date</span><span class="p">(</span><span class="mi">2008</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="c1"># Exclude measure ending before 2008 - ME87 only counts from 2008 onwards.</span>
+            <span class="k">return</span>
+
+        <span class="n">regulation_validity</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">generating_regulation</span><span class="o">.</span><span class="n">valid_between</span>
+        <span class="n">effective_end_date</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">generating_regulation</span><span class="o">.</span><span class="n">effective_end_date</span>
+
+        <span class="k">if</span> <span class="n">effective_end_date</span><span class="p">:</span>
+            <span class="n">regulation_validity</span> <span class="o">=</span> <span class="n">TaricDateRange</span><span class="p">(</span>
+                <span class="n">regulation_validity</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
+                <span class="n">date</span><span class="p">(</span>
+                    <span class="n">year</span><span class="o">=</span><span class="n">effective_end_date</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+                    <span class="n">month</span><span class="o">=</span><span class="n">effective_end_date</span><span class="o">.</span><span class="n">month</span><span class="p">,</span>
+                    <span class="n">day</span><span class="o">=</span><span class="n">effective_end_date</span><span class="o">.</span><span class="n">day</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">validity_range_contains_range</span><span class="p">(</span>
+            <span class="n">regulation_validity</span><span class="p">,</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME33"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME33">[docs]</a><span class="k">class</span> <span class="nc">ME33</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A justification regulation may not be entered if the measure end date is</span>
+<span class="sd">    not filled in.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME33.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME33.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">measure</span><span class="o">.</span><span class="n">terminating_regulation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME34"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME34">[docs]</a><span class="k">class</span> <span class="nc">ME34</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A justification regulation must be entered if the measure end date is</span>
+<span class="sd">    filled in.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME34.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME34.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">measure</span><span class="o">.</span><span class="n">terminating_regulation</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># -- Measure component</span>
+
+
+<div class="viewcode-block" id="ME40"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME40">[docs]</a><span class="k">class</span> <span class="nc">ME40</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the flag &quot;duty expression&quot; on measure type is &quot;mandatory&quot; then at least</span>
+<span class="sd">    one measure component or measure condition component record must be</span>
+<span class="sd">    specified.  If the flag is set &quot;not permitted&quot; then no measure component or</span>
+<span class="sd">    measure condition component must exist.  Measure components and measure</span>
+<span class="sd">    condition components are mutually exclusive. A measure can have either</span>
+<span class="sd">    components or condition components (if the &quot;duty expression&quot; flag is</span>
+<span class="sd">    &quot;mandatory&quot; or &quot;optional&quot;) but not both.</span>
+
+<span class="sd">    This describes the fact that measures of certain types MUST have components</span>
+<span class="sd">    (duties) assigned to them, whereas others must not. Note the sub-clause also</span>
+<span class="sd">    – if the value of the field “Component applicable” is set to 1 (mandatory)</span>
+<span class="sd">    on a measure type, then when the measure is created, there must be either</span>
+<span class="sd">    measure components or measure condition components assigned to the measure,</span>
+<span class="sd">    but not both. CDS will generate errors if either of these conditions are not</span>
+<span class="sd">    met.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME40.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME40.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">has_components</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">has_components</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+        <span class="n">has_condition_components</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">has_condition_components</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">components_mandatory</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">has_components</span> <span class="ow">or</span> <span class="n">has_condition_components</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="s1">&#39;If the flag &quot;duty expression&quot; on measure type is &quot;mandatory&quot; then &#39;</span>
+                <span class="s2">&quot;at least one measure component or measure condition component &quot;</span>
+                <span class="s2">&quot;record must be specified.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">components_not_permitted</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">has_components</span> <span class="ow">or</span> <span class="n">has_condition_components</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="s1">&#39;If the flag &quot;duty expression&quot; on measure type is &quot;not permitted&quot; then no &#39;</span>
+                <span class="s2">&quot;measure component or measure condition must exist.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">has_components</span> <span class="ow">and</span> <span class="n">has_condition_components</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="s2">&quot;Measure components and measure condition components are mutually &quot;</span>
+                <span class="s2">&quot;exclusive.&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME41"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME41">[docs]</a><span class="k">class</span> <span class="nc">ME41</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced duty expression must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;duty_expression&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME42"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME42">[docs]</a><span class="k">class</span> <span class="nc">ME42</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the duty expression must span the validity period</span>
+<span class="sd">    of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;duty_expression&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;component_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME43"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME43">[docs]</a><span class="k">class</span> <span class="nc">ME43</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The same duty expression can only be used once with the same measure.</span>
+
+<span class="sd">    Even if an expression that (in English) reads the same needs to be used more</span>
+<span class="sd">    than once in a measure, we must use a different expression ID, never the</span>
+<span class="sd">    same one twice.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME43.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME43.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure_component</span><span class="p">):</span>
+        <span class="n">duty_expressions_used</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">measure_component</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure_component</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">with_workbasket</span><span class="p">(</span><span class="n">measure_component</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure_component</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">measure_component</span><span class="o">.</span><span class="n">pk</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure_component</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">component_measure__sid</span><span class="o">=</span><span class="n">measure_component</span><span class="o">.</span><span class="n">component_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;duty_expression__sid&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">measure_component</span><span class="o">.</span><span class="n">duty_expression</span><span class="o">.</span><span class="n">sid</span> <span class="ow">in</span> <span class="n">duty_expressions_used</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure_component</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ComponentApplicability"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ComponentApplicability">[docs]</a><span class="k">class</span> <span class="nc">ComponentApplicability</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Rule enforcing component applicability.&quot;&quot;&quot;</span>
+
+    <span class="n">messages</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">ApplicabilityCode</span><span class="o">.</span><span class="n">MANDATORY</span><span class="p">:</span> <span class="s1">&#39;If the flag &quot;</span><span class="si">{0.component_name}</span><span class="s1">&quot; on duty expression &#39;</span>
+        <span class="s1">&#39;is &quot;mandatory&quot; then </span><span class="si">{0.article}</span><span class="s1"> </span><span class="si">{0.component_name}</span><span class="s1"> must be specified.&#39;</span><span class="p">,</span>
+        <span class="n">ApplicabilityCode</span><span class="o">.</span><span class="n">NOT_PERMITTED</span><span class="p">:</span> <span class="s1">&#39;If the flag &quot;</span><span class="si">{0.component_name}</span><span class="s1">&quot; on duty &#39;</span>
+        <span class="s1">&#39;expression is &quot;not permitted&quot; then no </span><span class="si">{0.component_name}</span><span class="s1"> may be entered.&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">applicability_field</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">article</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;a&quot;</span>
+    <span class="n">component_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">component_field</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="nf">get_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_applicability_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">applicability_field</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;duty_expression__</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">component_field</span><span class="si">}</span><span class="s2">_applicability_code&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ComponentApplicability.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ComponentApplicability.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_components</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">ApplicabilityCode</span><span class="o">.</span><span class="n">MANDATORY</span><span class="p">,</span>
+            <span class="n">ApplicabilityCode</span><span class="o">.</span><span class="n">NOT_PERMITTED</span><span class="p">,</span>
+        <span class="p">):</span>
+
+            <span class="n">inapplicable</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_applicability_field</span><span class="p">():</span> <span class="n">code</span><span class="p">})</span> <span class="o">&amp;</span> <span class="n">Q</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">component_field</span><span class="si">}</span><span class="s2">__isnull&quot;</span><span class="p">:</span> <span class="n">code</span>
+                    <span class="o">==</span> <span class="n">ApplicabilityCode</span><span class="o">.</span><span class="n">MANDATORY</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">components</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">inapplicable</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">[</span><span class="n">code</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="MeasureComponentApplicability"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MeasureComponentApplicability">[docs]</a><span class="k">class</span> <span class="nc">MeasureComponentApplicability</span><span class="p">(</span><span class="n">ComponentApplicability</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">measure</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;duty_expression&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ME45"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME45">[docs]</a><span class="k">class</span> <span class="nc">ME45</span><span class="p">(</span><span class="n">MeasureComponentApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the flag &quot;amount&quot; on duty expression is &quot;mandatory&quot; then an amount must</span>
+<span class="sd">    be specified.</span>
+
+<span class="sd">    If the flag is set &quot;not permitted&quot; then no amount may be entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">article</span> <span class="o">=</span> <span class="s2">&quot;an&quot;</span>
+    <span class="n">component_name</span> <span class="o">=</span> <span class="s2">&quot;amount&quot;</span>
+    <span class="n">component_field</span> <span class="o">=</span> <span class="s2">&quot;duty_amount&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME46"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME46">[docs]</a><span class="k">class</span> <span class="nc">ME46</span><span class="p">(</span><span class="n">MeasureComponentApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the flag &quot;monetary unit&quot; on duty expression is &quot;mandatory&quot; then a</span>
+<span class="sd">    monetary unit must be specified.</span>
+
+<span class="sd">    If the flag is set &quot;not permitted&quot; then no monetary unit may be entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">component_name</span> <span class="o">=</span> <span class="s2">&quot;monetary unit&quot;</span>
+    <span class="n">component_field</span> <span class="o">=</span> <span class="s2">&quot;monetary_unit&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME47"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME47">[docs]</a><span class="k">class</span> <span class="nc">ME47</span><span class="p">(</span><span class="n">MeasureComponentApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the flag &quot;measurement unit&quot; on duty expression is &quot;mandatory&quot; then a</span>
+<span class="sd">    measurement unit must be specified.</span>
+
+<span class="sd">    If the flag is set &quot;not permitted&quot; then no measurement unit may be entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">applicability_field</span> <span class="o">=</span> <span class="s2">&quot;duty_expression__measurement_unit_applicability_code&quot;</span>
+    <span class="n">component_name</span> <span class="o">=</span> <span class="s2">&quot;measurement unit&quot;</span>
+    <span class="n">component_field</span> <span class="o">=</span> <span class="s2">&quot;component_measurement__measurement_unit&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME48"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME48">[docs]</a><span class="k">class</span> <span class="nc">ME48</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced monetary unit must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;monetary_unit&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME49"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME49">[docs]</a><span class="k">class</span> <span class="nc">ME49</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the referenced monetary unit must span the</span>
+<span class="sd">    validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;monetary_unit&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;component_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME50"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME50">[docs]</a><span class="k">class</span> <span class="nc">ME50</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The combination measurement unit + measurement unit qualifier must</span>
+<span class="sd">    exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;component_measurement&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME51"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME51">[docs]</a><span class="k">class</span> <span class="nc">ME51</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the measurement unit must span the validity period</span>
+<span class="sd">    of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;component_measurement__measurement_unit&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;component_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME52"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME52">[docs]</a><span class="k">class</span> <span class="nc">ME52</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the measurement unit qualifier must span the</span>
+<span class="sd">    validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;component_measurement__measurement_unit_qualifier&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;component_measure&quot;</span></div>
+
+
+<span class="c1"># -- Measure condition and Measure condition component</span>
+
+
+<div class="viewcode-block" id="ME53"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME53">[docs]</a><span class="k">class</span> <span class="nc">ME53</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced measure condition must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;condition&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME56"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME56">[docs]</a><span class="k">class</span> <span class="nc">ME56</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced certificate must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;required_certificate&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME57"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME57">[docs]</a><span class="k">class</span> <span class="nc">ME57</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the referenced certificate must span the validity</span>
+<span class="sd">    period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;required_certificate&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;dependent_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME58"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME58">[docs]</a><span class="k">class</span> <span class="nc">ME58</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The same certificate can only be referenced once by the same measure and</span>
+<span class="sd">    the same condition type.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME58.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME58.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure_condition</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">measure_condition</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">condition_code__code</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">condition_code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+                <span class="n">required_certificate__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">required_certificate__certificate_type__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span><span class="o">.</span><span class="n">certificate_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">dependent_measure__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">dependent_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure_condition</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME59"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME59">[docs]</a><span class="k">class</span> <span class="nc">ME59</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced action code must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;action&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME60"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME60">[docs]</a><span class="k">class</span> <span class="nc">ME60</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced monetary unit must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;monetary_unit&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME61"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME61">[docs]</a><span class="k">class</span> <span class="nc">ME61</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the referenced monetary unit must span the</span>
+<span class="sd">    validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;monetary_unit&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;dependent_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME62"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME62">[docs]</a><span class="k">class</span> <span class="nc">ME62</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The combination measurement unit + measurement unit qualifier must</span>
+<span class="sd">    exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;condition_measurement&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME63"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME63">[docs]</a><span class="k">class</span> <span class="nc">ME63</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the measurement unit must span the validity period</span>
+<span class="sd">    of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;condition_measurement__measurement_unit&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;dependent_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME64"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME64">[docs]</a><span class="k">class</span> <span class="nc">ME64</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the measurement unit qualifier must span the</span>
+<span class="sd">    validity period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;condition_measurement__measurement_unit_qualifier&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;dependent_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME105"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME105">[docs]</a><span class="k">class</span> <span class="nc">ME105</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced duty expression must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;duty_expression&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME106"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME106">[docs]</a><span class="k">class</span> <span class="nc">ME106</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the duty expression must span the validity period</span>
+<span class="sd">    of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;duty_expression&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;condition__dependent_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME108"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME108">[docs]</a><span class="k">class</span> <span class="nc">ME108</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The same duty expression can only be used once within condition components</span>
+<span class="sd">    of the same condition of the same measure.</span>
+
+<span class="sd">    (i.e. it can be re-used in other conditions, no matter what condition type,</span>
+<span class="sd">    of the same measure).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME108.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME108.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">component</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">with_workbasket</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">condition__sid</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">duty_expression__sid</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">duty_expression</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">component</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MeasureConditionComponentApplicability"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MeasureConditionComponentApplicability">[docs]</a><span class="k">class</span> <span class="nc">MeasureConditionComponentApplicability</span><span class="p">(</span><span class="n">ComponentApplicability</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">measure</span><span class="o">.</span><span class="n">conditions</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">&quot;components&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
+            <span class="s2">&quot;components__duty_expression&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ME109"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME109">[docs]</a><span class="k">class</span> <span class="nc">ME109</span><span class="p">(</span><span class="n">MeasureConditionComponentApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the flag &#39;amount&#39; on duty expression is &#39;mandatory&#39; then an amount must</span>
+<span class="sd">    be specified.</span>
+
+<span class="sd">    If the flag is set to &#39;not permitted&#39; then no amount may be entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">article</span> <span class="o">=</span> <span class="s2">&quot;an&quot;</span>
+    <span class="n">component_name</span> <span class="o">=</span> <span class="s2">&quot;amount&quot;</span>
+    <span class="n">component_field</span> <span class="o">=</span> <span class="s2">&quot;components__duty_amount&quot;</span>
+    <span class="n">applicability_field</span> <span class="o">=</span> <span class="s2">&quot;components__duty_expression__duty_amount_applicability_code&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME110"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME110">[docs]</a><span class="k">class</span> <span class="nc">ME110</span><span class="p">(</span><span class="n">MeasureConditionComponentApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the flag &#39;monetary unit&#39; on duty expression is &#39;mandatory&#39; then a</span>
+<span class="sd">    monetary unit must be specified.</span>
+
+<span class="sd">    If the flag is set to &#39;not permitted&#39; then no monetary unit may be entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">component_name</span> <span class="o">=</span> <span class="s2">&quot;monetary unit&quot;</span>
+    <span class="n">component_field</span> <span class="o">=</span> <span class="s2">&quot;components__monetary_unit&quot;</span>
+    <span class="n">applicability_field</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;components__duty_expression__monetary_unit_applicability_code&quot;</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ME111"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME111">[docs]</a><span class="k">class</span> <span class="nc">ME111</span><span class="p">(</span><span class="n">MeasureConditionComponentApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the flag &#39;measurement unit&#39; on duty expression is &#39;mandatory&#39; then a</span>
+<span class="sd">    measurement unit must be specified.</span>
+
+<span class="sd">    If the flag is set to &#39;not permitted&#39; then no measurement unit may be</span>
+<span class="sd">    entered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">component_name</span> <span class="o">=</span> <span class="s2">&quot;measurement unit&quot;</span>
+    <span class="n">component_field</span> <span class="o">=</span> <span class="s2">&quot;components__component_measurement__measurement_unit&quot;</span>
+    <span class="n">applicability_field</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;components__duty_expression__measurement_unit_applicability_code&quot;</span>
+    <span class="p">)</span></div>
+
+
+<span class="c1"># -- Measure excluded geographical area</span>
+
+
+<div class="viewcode-block" id="ME65"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME65">[docs]</a><span class="k">class</span> <span class="nc">ME65</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An exclusion can only be entered if the measure is applicable to a geographical</span>
+<span class="sd">    area group (area code = 1).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME65.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME65.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">area_code</span> <span class="o">!=</span> <span class="n">AreaCode</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME66"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME66">[docs]</a><span class="k">class</span> <span class="nc">ME66</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The excluded geographical area must be a member of the geographical area</span>
+<span class="sd">    group.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME66.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME66.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+        <span class="n">geo_group</span> <span class="o">=</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">geographical_area</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">geo_group</span><span class="o">.</span><span class="n">memberships</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME67"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME67">[docs]</a><span class="k">class</span> <span class="nc">ME67</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The membership period of the excluded geographical area must span the</span>
+<span class="sd">    valid period of the measure.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME67.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME67.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+        <span class="k">return</span>  <span class="c1"># TODO: Verify this rule</span>
+
+        <span class="n">geo_group</span> <span class="o">=</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">geographical_area</span>
+        <span class="n">excluded</span> <span class="o">=</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">geo_group</span><span class="o">.</span><span class="n">members</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">member__sid</span><span class="o">=</span><span class="n">excluded</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME68"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME68">[docs]</a><span class="k">class</span> <span class="nc">ME68</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The same geographical area can only be excluded once by the same</span>
+<span class="sd">    measure.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME68.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME68.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">excluded_geographical_area__sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">modified_measure__sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># -- Footnote association</span>
+
+
+<div class="viewcode-block" id="ME69"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME69">[docs]</a><span class="k">class</span> <span class="nc">ME69</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The associated footnote must exist.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;associated_footnote&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME70"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME70">[docs]</a><span class="k">class</span> <span class="nc">ME70</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The same footnote can only be associated once with the same measure.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME70.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME70.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">association</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">association</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">with_workbasket</span><span class="p">(</span><span class="n">association</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">footnoted_measure__sid</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">footnoted_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">associated_footnote__footnote_id</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">associated_footnote</span><span class="o">.</span><span class="n">footnote_id</span><span class="p">,</span>
+                <span class="n">associated_footnote__footnote_type__footnote_type_id</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">associated_footnote</span><span class="o">.</span><span class="n">footnote_type</span><span class="o">.</span><span class="n">footnote_type_id</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ME71"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME71">[docs]</a><span class="k">class</span> <span class="nc">ME71</span><span class="p">(</span><span class="n">FootnoteApplicability</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Footnotes with a footnote type for which the application type = &quot;CN footnotes&quot;</span>
+<span class="sd">    cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">applicable_field</span> <span class="o">=</span> <span class="s2">&quot;footnoted_measure&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME73"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME73">[docs]</a><span class="k">class</span> <span class="nc">ME73</span><span class="p">(</span><span class="n">MeasureValidityPeriodContained</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The validity period of the associated footnote must span the validity</span>
+<span class="sd">    period of the measure.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;associated_footnote&quot;</span>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;footnoted_measure&quot;</span></div>
+
+
+<span class="c1"># -- Partial temporary stop</span>
+
+<span class="c1"># -- Justification regulation</span>
+
+
+<div class="viewcode-block" id="ME104"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME104">[docs]</a><span class="k">class</span> <span class="nc">ME104</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The justification regulation must be either:</span>
+
+<span class="sd">        - the measure’s measure-generating regulation, or</span>
+<span class="sd">        - a measure-generating regulation, valid on the day after the measure’s</span>
+<span class="sd">          (explicit) end date.</span>
+
+<span class="sd">    If the measure’s measure-generating regulation is ‘approved’, then so must be the</span>
+<span class="sd">    justification regulation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME104.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME104.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="n">generating</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">generating_regulation</span>
+        <span class="n">terminating</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">terminating_regulation</span>
+
+        <span class="k">if</span> <span class="n">terminating</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># TODO: Verify this is needed</span>
+        <span class="c1"># if generating.approved and not terminating.approved:</span>
+        <span class="c1">#     raise self.violation(</span>
+        <span class="c1">#         measure,</span>
+        <span class="c1">#         &quot;If the measure&#39;s measure-generating regulation is &#39;approved&#39;, then so &quot;</span>
+        <span class="c1">#         &quot;must be the justification regulation.&quot;,</span>
+        <span class="c1">#     )</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">terminating</span><span class="o">.</span><span class="n">regulation_id</span> <span class="o">==</span> <span class="n">generating</span><span class="o">.</span><span class="n">regulation_id</span>
+            <span class="ow">and</span> <span class="n">terminating</span><span class="o">.</span><span class="n">role_type</span> <span class="o">==</span> <span class="n">generating</span><span class="o">.</span><span class="n">role_type</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># TODO: verify this day (should be 2004-01-01 really, except for measure 2700491 (at least), and 2939413))</span>
+        <span class="c1"># TODO: And carrying on past 2020 with 3784976</span>
+        <span class="k">if</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&lt;</span> <span class="n">date</span><span class="p">(</span><span class="mi">2007</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">valid_day</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">effective_end_date</span> <span class="o">+</span> <span class="n">relativedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">valid_day</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">terminating</span><span class="o">.</span><span class="n">valid_between</span><span class="p">:</span>
+            <span class="n">amends</span> <span class="o">=</span> <span class="n">terminating</span><span class="o">.</span><span class="n">amends</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">amends</span> <span class="ow">and</span> <span class="n">valid_day</span> <span class="ow">in</span> <span class="n">TaricDateRange</span><span class="p">(</span>
+                <span class="n">amends</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
+                <span class="n">terminating</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="k">return</span>
+
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">measure</span><span class="p">,</span>
+                <span class="s2">&quot;The justification regulation must be either the measure&#39;s measure-generating &quot;</span>
+                <span class="s2">&quot;regulation, or a measure-generating regulation valid on the day after the &quot;</span>
+                <span class="s2">&quot;measure&#39;s end date.&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
+</pre></div>
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/_modules/measures/business_rules">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'_modules/measures/business_rules'&amp;body=Problem%20with%20'_modules/measures/business_rules'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

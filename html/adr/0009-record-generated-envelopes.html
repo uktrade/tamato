@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>9. Generate envelope files - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/javascripts/_analytics.js"></script>
+    <script src="../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../_static/javascripts/_start_modules.js"></script>
+    <script src="../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../_static/javascripts/theme.js"></script>
+    <link href="../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Architectural Decision Records</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html">2. Use pytest-bdd for BDD testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html">3. Use Django REST Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html">4. XML Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html">5. Use tracked models and workbaskets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html">6. Use Django Polymorphic for Multi-Table Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html">7. Changes go through a stateful workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html">8. Simplify workflow states</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">9. Generate envelope files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#context">Context</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#https-interface">HTTPS interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hmrc-interface">HMRC interface</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#envelopes">Envelopes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html">10. Convert the XML importer to a pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0011-store-and-check-preference-codes.html">11. Store and check business rules around preference codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0012-ordering-of-tariff-transactions.html">12. Ordering of tariff transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0013-import-taric-nomenclature-updates.html">13. Import TARIC nomenclature updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0014-simplify-current-transaction-queries.html">14. Simplification of current transaction queries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">9. Generate envelope files</a><ul>
+<li><a class="reference internal" href="#status">Status</a></li>
+<li><a class="reference internal" href="#context">Context</a><ul>
+<li><a class="reference internal" href="#https-interface">HTTPS interface</a></li>
+<li><a class="reference internal" href="#hmrc-interface">HMRC interface</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#decision">Decision</a><ul>
+<li><a class="reference internal" href="#envelopes">Envelopes</a></li>
+<li><a class="reference internal" href="#transactions">Transactions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <section id="generate-envelope-files">
+<span id="id1"></span><h1>9. Generate envelope files<a class="headerlink" href="#generate-envelope-files" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2020-10-14</p>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
+<p>Proposed</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>We must geneate XML envelope files as a way of communicating tariff data to HMRC
+and our other consumers. The spec for envelope files is defined as an XSD
+schema. An envelope file contains multiple transactions.</p>
+<p>The way in which database models are packed into transactions is partly defined
+by the TARIC spec. HMRC systems place additional requirements on the
+transactions that are still partially undefined.</p>
+<p>We have known since the beginning that CDS would accept or reject changes sent
+from TaMaTo. We have also had some notion that this happens in two stages with
+different validations applied at each stage. The first stage will reject an
+entire envelope if it contains erroneous data. The second stage will only reject
+specific transactions. It was, until recently, unknown what CDS expects as
+replacement data in either of these failure modes.</p>
+<p>We have since learnt more about interacting with the CDS system and the use of
+TARIC3 XML. Particularly around the metadata associated with the interface in
+the form of a gateway API call, envelopes, transactions and messages. This has
+come from a better understanding of the new HMRC design and through further
+review of the pre-existing Trade Tariff Management (TTM) codebase.</p>
+<p>The envelope, transaction or message ID are always set automatically in TTM and
+can’t be manually controlled. The envelope ID is set based on the current date
+and a sequence number. The transaction and message IDs are both set sequentially
+on a per-envelope basis. When a validation error occurs at CDS a new envelope ID
+is used.</p>
+<section id="https-interface">
+<h3>HTTPS interface<a class="headerlink" href="#https-interface" title="Permalink to this headline">¶</a></h3>
+<p>HTTPS clients already expect TARIC3 XML over an HTTPS API. The existing HTTPS
+API in TTM provides TARIC3 XML envelopes and metadata about them including the
+envelope ID. There may be little to substantially change about this API – it
+returns a list of envelopes generated per day.</p>
+<p>There is no limit on the size of returned envelopes and there is no limit on the
+number of envelopes generated in one day.</p>
+</section>
+<section id="hmrc-interface">
+<h3>HMRC interface<a class="headerlink" href="#hmrc-interface" title="Permalink to this headline">¶</a></h3>
+<p>According to HMRC envelope and transaction IDs affect the sequence numbers used
+by CDS for processing. TaMaTo should use the same envelope ID when an envelope
+is rejected. Transaction IDs should also be reused when individual transactions
+are errored. It is possible in the past that data that errored in CDS was
+corrected manually. As we are using a new API pattern from HMRC it may be more
+difficult to correct things manually.</p>
+<p>Metadata submitted to HMRC must include a checksum and file size. The filename
+should match the envelope ID.</p>
+<p>The files transferred have a maximum file size. Rather than trying to ensure
+workbaskets don’t get too large it may better for a large transaction to be
+split across multiple envelopes. The transactions in the envelopes will require
+different and subsequent transaction IDs.</p>
+<p>The HMRC interface can support multiple envelope files transferred in one day
+but it is unknown if there is a limit. This means that it may be discovered in
+the future that we need to pack multiple transactions into a single envelope.</p>
+<p>This essentially means that a “workbasket” does not correspond to any specific
+element in HMRC XML – it could be formed from several transactions across
+several envelopes.</p>
+</section>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
+<p>The concept of “workbasket”, “transaction” and “envelope” will all be separated
+and therefore tracked with separate sequence numbers.</p>
+<section id="envelopes">
+<h3>Envelopes<a class="headerlink" href="#envelopes" title="Permalink to this headline">¶</a></h3>
+<p>The envelope ID is a numeric value that ends up as an attribute on the root
+element of the envelope. It will be prepended with ‘DIT’ when used as the
+filename of the envelope. E.g. an envelope with ID 200001 will be called
+DIT200001.xml.</p>
+<p>The pattern for envelope IDs will be <cite>YYxxxx</cite> where <cite>YY</cite> is the current year and
+<cite>xxxx</cite> is a sequential envelope ID through this year. Every year the sequence
+will be reset for the first envelope generated in the year, e.g
+190001, 200001, 210001. This is the format agreed with HMRC. We may need to
+reuse envelope IDs if we send data that contains errors and it is rejected.</p>
+<p>An envelope must not end up larger than the maximum file size of 50Mb.</p>
+<p>An envelope should not contain any empty transaction elements. Transaction
+elements should not be split across envelopes. Transactions must appear ordered
+in the file by their transaction ID.</p>
+<p>Generating an envelope will be a function of one or more workbaskets and the
+sequence numbers for envelopes and transactions. Envelope files should be
+generated to wholly contain the passed workbaskets and this might require
+multiple files, and hence multiple envelope IDs. An example signature of a
+function to do this might be:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">generate_envelopes</span><span class="p">(</span>
+    <span class="n">envelope_counter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">transaction_counter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="o">*</span><span class="n">workbaskets</span><span class="p">:</span> <span class="n">WorkBasket</span>
+<span class="p">):</span>
+  <span class="c1"># TODO: code</span>
+</pre></div>
+</div>
+</section>
+<section id="transactions">
+<h3>Transactions<a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h3>
+<p>Transactions should contain the minimum number of records required to represent
+a “logical” database operation that passes all reqired validations. For most use
+cases this means only one record will need to be contained.</p>
+<p>In particular, in cases where we are replacing one model with another (like
+end-dating a measure and creating a new one) we must always output the old model
+in a previous transaction to a new one. It is not enough to ensure the business
+rules are validated at the end of the transaction in the case of ME32 – they
+must be valid after every model addition and are only validated against the view
+of measures as per the start of the transaction.</p>
+<p>Multiple records within a transaction should have the same record code and
+differ only in their subrecord code.</p>
+<p>Records in a transaction should be sorted by subrecord code. E.g. the record for
+a new footnote description period (20005) should come before the record for the
+new description (20010).</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p>Updating a measure end-date: only one measure record</p></li>
+<li><p>Replacing a measure: one transaction containing the end-dating followed by
+one transaction containing the measure along with any components and
+conditions</p></li>
+<li><p>Adding a footnote: three records, one for the new footnote, followed by one
+for the description period, followed by one for the description.</p></li>
+</ul>
+</section>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
+<p>As the rules for forming transactions are complex, and partially dependent on
+what has already been added to an envelope, it does not necessarily make sense
+to keep track internally of what models have ended up in what transactions.
+However, we still expect both transactions and envelopes to come back as
+“ERRORED” from HMRC. It might make sense to retire our current table of
+transactions and only use workbaskets for internal grouping purposes.</p>
+<p>We could choose to deal with errors in an automated fashion and build a complex
+system that maps model versions to the individual transactions that were put
+into envelopes (taking into account that this is a many-to-many relationship).
+Or we can record minimal information and handle error conditions as a special
+case manually.</p>
+<p>By keeping a record of envelopes we have sent and their metadata, we would:</p>
+<ul class="simple">
+<li><p>Have a record of what was sent to HMRC, even in unhappy path cases where
+errors have occured</p></li>
+<li><p>Stay flexible about what external envelope IDs we use, including reusing them
+or changing them if necessary</p></li>
+<li><p>Have a way to quickly generate API responses without calling out to an
+existing file store, if we choose to cache generated files</p></li>
+</ul>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/adr/0009-record-generated-envelopes.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'adr/0009-record-generated-envelopes.rst'&amp;body=Problem%20with%20'adr/0009-record-generated-envelopes.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>11. Store and check business rules around preference codes - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/javascripts/_analytics.js"></script>
+    <script src="../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../_static/javascripts/_start_modules.js"></script>
+    <script src="../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../_static/javascripts/theme.js"></script>
+    <link href="../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Architectural Decision Records</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html">2. Use pytest-bdd for BDD testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html">3. Use Django REST Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html">4. XML Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html">5. Use tracked models and workbaskets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html">6. Use Django Polymorphic for Multi-Table Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html">7. Changes go through a stateful workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html">8. Simplify workflow states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0009-record-generated-envelopes.html">9. Generate envelope files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html">10. Convert the XML importer to a pipeline</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">11. Store and check business rules around preference codes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#context">Context</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#it-controls-when-additional-duties-get-applied">It controls when additional duties get applied</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#it-controls-requirements-around-presence-of-supporting-measures">It controls requirements around presence of supporting measures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#it-specifies-regulation-groups">It specifies regulation groups</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="0012-ordering-of-tariff-transactions.html">12. Ordering of tariff transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0013-import-taric-nomenclature-updates.html">13. Import TARIC nomenclature updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0014-simplify-current-transaction-queries.html">14. Simplification of current transaction queries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">11. Store and check business rules around preference codes</a><ul>
+<li><a class="reference internal" href="#status">Status</a></li>
+<li><a class="reference internal" href="#context">Context</a><ul>
+<li><a class="reference internal" href="#it-controls-when-additional-duties-get-applied">It controls when additional duties get applied</a></li>
+<li><a class="reference internal" href="#it-controls-requirements-around-presence-of-supporting-measures">It controls requirements around presence of supporting measures</a></li>
+<li><a class="reference internal" href="#it-specifies-regulation-groups">It specifies regulation groups</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#decision">Decision</a></li>
+<li><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <section id="store-and-check-business-rules-around-preference-codes">
+<span id="store-and-check-preference-codes"></span><h1>11. Store and check business rules around preference codes<a class="headerlink" href="#store-and-check-business-rules-around-preference-codes" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2021-02-11</p>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
+<p>Proposed</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>There are many different mechanisms in the tariff to give traders preferential
+access to the market. For example, the same trader might have available to them
+a non-preferential (WTO) quota whilst also having access to a preferential rate
+from a free trade agreement. The trader also may not wish to use the latter
+because of the extra compliance required around rules of origin. In general,
+customs systems cannot (and should not) try and apply the “best” tariff.</p>
+<p>Traders therefore require some way to specify at the point of declaration what
+their preferred treatment is. This is specified using <a class="reference external" href="https://www.gov.uk/government/publications/uk-trade-tariff-imports-and-community-transport-inwards/uk-trade-tariff-imports-and-community-transport-inwards#box-36---preference">Box 36 of the SAD form</a>.
+Traders write a 3-digit preference code in box 36 to specify their desired
+treatment, and declaration systems apply the treatment if it is available or
+return an error if it is not.</p>
+<p>Preference codes are not specified as part of the tariff file. Instead, a
+separate correlation table is used that maps preference codes to the measure
+types that should be applied. For example, specifying preference code “100”
+selects measure type 103 for the Erga Omnes third-country duty.</p>
+<p>This mechanism has three extra purposes.</p>
+<section id="it-controls-when-additional-duties-get-applied">
+<h3>It controls when additional duties get applied<a class="headerlink" href="#it-controls-when-additional-duties-get-applied" title="Permalink to this headline">¶</a></h3>
+<p>Any measure type specified against the preference code in the correlation table
+is “added on” to the final tariff. So in addition to the third-country duty
+(103) specified for preference code “100”, safeguard duties (696),
+representative price securities (651) and additional CIF duties (652) are also
+present. This means that those additional duties (if present) will also be
+charged. This is the means by which safeguard quotas can “switch off” the normal
+safeguard duty because the preference code for non-preferential quotas does not
+include 696 measures.</p>
+</section>
+<section id="it-controls-requirements-around-presence-of-supporting-measures">
+<h3>It controls requirements around presence of supporting measures<a class="headerlink" href="#it-controls-requirements-around-presence-of-supporting-measures" title="Permalink to this headline">¶</a></h3>
+<p>Some preference codes are only valid when two measure types are found together.
+For example, the preference code “323” covers preferential tariff quotas subject
+to end-use. There are two ways for this preference code to be activated:</p>
+<ul class="simple">
+<li><p>by the presence of an end-use preferential quota (146),</p></li>
+<li><p>by the presence of a normal preferential quota (143) and a declaration of
+subheading submitted to end-use provisions measure (464).</p></li>
+</ul>
+<p>The presence of these two measure types in the same table represents an “option”
+because 143 and 146 both come from the same measure type series which has its
+combination field set to zero, so only one can apply.</p>
+</section>
+<section id="it-specifies-regulation-groups">
+<h3>It specifies regulation groups<a class="headerlink" href="#it-specifies-regulation-groups" title="Permalink to this headline">¶</a></h3>
+<p>For each preference code and measure type, the correlation table can specify a
+list of regulation groups. The measure generating regulation must then sit in
+one of those groups for the preference code to be applicable. For example,
+preference code “120” is only applicable when there is a measure with type 122
+and regulation group KON. This means that any non-preferential tariff quotas
+must always be linked to a regulation in the correct group.</p>
+</section>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
+<p>Tables of the current preference code correlation data will be stored in TaMaTo
+using the following schema:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PreferenceCode</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
+
+    <span class="n">sid</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+      <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+      <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The code used in Box 36 of the SAD form.&quot;</span><span class="p">,</span>
+      <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">RegexValidator</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[0-9]</span><span class="si">{3}</span><span class="s2">&quot;</span><span class="p">)],</span>
+    <span class="p">)</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
+      <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;A short description of the policy mechanism</span>
+<span class="s2">        the trader will use through the use of this code.&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">description</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
+      <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;A detailed description of the general treatment</span>
+<span class="s2">        the trader will receive through the use of this code or more</span>
+<span class="s2">        information on the circumstances in which this code applies.&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PreferenceCodeMapping</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
+
+    <span class="n">sid</span> <span class="o">=</span> <span class="n">SignedIntSID</span><span class="p">()</span>
+
+    <span class="n">preference_code</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">PreferenceCode</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;mappings&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">measure_types</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="s2">&quot;measures.MeasureType&quot;</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;PreferenceCodeMappingMeasureType&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The measure types required for this mapping to apply.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">regulation_groups</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="s2">&quot;regulations.Group&quot;</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;PreferenceCodeMappingRegulationGroup&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;The regulation groups that the generating regulation of</span>
+<span class="s2">        a measure must have for this mapping to apply to that measure.&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">condition_codes</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="s2">&quot;measures.MeasureConditionCode&quot;</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;PreferenceCodeMappingConditionCode&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;The condition codes that the measure condition must have</span>
+<span class="s2">        one of for this mapping to apply to that measure.&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">choice_of_types</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BoolField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;True when any of the attached measure types can be</span>
+<span class="s2">            present, False when all of the attached measure types must be present.&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PreferenceCodeMappingMeasureType</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mapping__id&quot;</span><span class="p">,</span> <span class="s2">&quot;measure_type__sid&quot;</span><span class="p">)</span>
+
+    <span class="n">mapping</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">PreferenceCodeMapping</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;measure_types&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">measure_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;measures.MeasureType&quot;</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;preference_code_mappings&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PreferenceCodeMappingRegulationGroup</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mapping__id&quot;</span><span class="p">,</span> <span class="s2">&quot;regulation_group__group_id&quot;</span><span class="p">)</span>
+
+    <span class="n">mapping</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">PreferenceCodeMapping</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;regulation_groups&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">regulation_group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;regulations.Group&quot;</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;preference_code_mappings&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PreferenceCodeMappingConditionCode</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
+    <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mapping__id&quot;</span><span class="p">,</span> <span class="s2">&quot;condition_code__code&quot;</span><span class="p">)</span>
+
+    <span class="n">mapping</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">PreferenceCodeMapping</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;condition_codes&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">condition_code</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;measures.MeasureConditionCode&quot;</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;preference_code_mappings&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>The following business rules will apply to preference codes:</p>
+<ul class="simple">
+<li><p>PC1: The validity start date of a preference code cannot be after the validity
+end date, if defined.</p></li>
+</ul>
+<p>The following business rules will apply to preference code mappings:</p>
+<ul class="simple">
+<li><p>PCM1: The preference code referenced by the preference code mapping must exist.</p></li>
+<li><p>PCM2: The validity period of the preference code must span the validity period
+of the preference code mapping.</p></li>
+<li><p>PCM3: The validity start date of a preference code mapping cannot be after the
+validity end date, if defined.</p></li>
+<li><p>PCM4: Where a preference code mapping references a measure type, the validity
+period of the measure type must span the validity period of the preference
+code mapping.</p></li>
+<li><p>PCM5: Where a preference code mapping references a regulation group, the
+validity period of the regulation group must span the validity period of the
+preference code mapping.</p></li>
+<li><p>PCM6: Where a preference code mapping references a condition code, the
+validity period of the condition code must span the validity period of the
+preference code mapping.</p></li>
+<li><p>PCM6: If a preference code mapping references a measure type along with a
+regulation group, all other preference code mappings (even for other
+preference codes) that reference that measure type must also declare a
+regulation group.</p></li>
+</ul>
+<p>The following business rule will apply to measures:</p>
+<ul class="simple">
+<li><p>ME120: Where a measure’s type is used in any preference code mapping, then at
+least one preference code must apply to that measure. This business rule is
+only applicable for measures with start date after 2021-02-11.</p></li>
+</ul>
+<p>A preference code “applies to” a measure if the following are all true:</p>
+<ul class="simple">
+<li><p>If the preference code has a mapping that mentions the measure’s type.</p></li>
+<li><p>If the mapping has a False choice field, there
+exist measures for all of the other measure types for the same goods
+nomenclature, geographical area, order number, additional code, reduction
+indicator for the validity period of the measure.</p></li>
+<li><p>If the mapping declares regulation groups, the regulation group of the
+measure’s generating regulation must be one of the declared groups.</p></li>
+<li><p>If the mapping declares condition codes, the measure must have conditions that
+use one of the declared condition codes. If the mapping does not declare any
+condition codes then the measure may have any or no conditions.</p></li>
+</ul>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
+<p>The main motivation for storing preference code tables is to implement ME120.
+With this rule, users are prevented from creating measures that traders are
+unable to actually declare because there is no valid preference code for them.</p>
+<p>The additional motive is that it would allow exposing these tables as
+part of citizen-facing services. For the first time it would be possible to
+derive what preference codes would be required to use a given measure, if any.
+For this reason the human-readable text from the table is also included.</p>
+<p>Even though preference codes are not contained in the tariff file and there is
+currently no way of communicating desired changes to them, any changes do
+need to be tracked and have the usual date-based validity rules apply. This is
+because if one day the correlation is changed ME120 will still need to be
+able to refer to previous versions of the table for use against old measures. It
+is clear from the text version of the correlation table that changes to both the
+codes and the mappings are possible independently.</p>
+<p>Note that the interaction with condition codes is currently not very interesting
+because in the current version of the table there are no measure types with
+conditions that do not also have a counterpart without conditions – hence from
+an ME120 perspective the conditions make no difference.</p>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/adr/0011-store-and-check-preference-codes.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'adr/0011-store-and-check-preference-codes.rst'&amp;body=Problem%20with%20'adr/0011-store-and-check-preference-codes.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

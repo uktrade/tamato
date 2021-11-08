@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Index - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/javascripts/_analytics.js"></script>
+    <script src="_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="_static/javascripts/_govuk/modules.js"></script>
+    <script src="_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="_static/javascripts/_modules/navigation.js"></script>
+    <script src="_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="_static/javascripts/_start_modules.js"></script>
+    <script src="_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="_static/javascripts/_vendor/lodash.js"></script>
+    <script src="_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="_static/javascripts/theme.js"></script>
+    <link href="_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ | <a href="#X"><strong>X</strong></a>
+ 
+</div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.Meta.abstract">abstract (common.models.DescriptionMixin.Meta attribute)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.TimestampedMixin.Meta.abstract">(common.models.TimestampedMixin.Meta attribute)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.ValidityMixin.Meta.abstract">(common.models.ValidityMixin.Meta attribute)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.Meta.abstract">(common.models.ValidityStartMixin.Meta attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN1">ACN1 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN1.Violation">ACN1.Violation</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN13">ACN13 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN13.Violation">ACN13.Violation</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN14">ACN14 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN14.Violation">ACN14.Violation</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN17">ACN17 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN17.Violation">ACN17.Violation</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN2">ACN2 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN2.Violation">ACN2.Violation</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN4">ACN4 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN4.Violation">ACN4.Violation</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN5">ACN5 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN5.Violation">ACN5.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.add_to_transaction">add_to_transaction() (common.models.Transaction method)</a>
+</li>
+      <li>
+    additional_codes
+
+      <ul>
+        <li><a href="architecture/index.html#module-additional_codes">module</a>
+</li>
+      </ul></li>
+      <li>
+    additional_codes.business_rules
+
+      <ul>
+        <li><a href="business_rules/additional_codes.html#module-additional_codes.business_rules">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.additionalcode">additionalcode (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.additionalcodedescription">additionalcodedescription (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.additionalcodetype">additionalcodetype (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.additionalcodetypemeasuretype">additionalcodetypemeasuretype (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.amendment">amendment (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.ApplicabilityCode">ApplicabilityCode (class in common.models)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.FootnoteApplicability.applicable_field">applicable_field (common.business_rules.FootnoteApplicability attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.approved">approved (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="architecture/index.html#common.models.records.TrackedModelQuerySet.approved_up_to_transaction">approved_up_to_transaction() (common.models.records.TrackedModelQuerySet method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.auto_value_fields">auto_value_fields (common.models.TrackedModel property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler">BaseHandler (class in importer.handlers)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandlerMeta">BaseHandlerMeta (class in importer.handlers)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.BlockingOnlyOfFCFSQuotas">BlockingOnlyOfFCFSQuotas (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.BlockingOnlyOfFCFSQuotas.Violation">BlockingOnlyOfFCFSQuotas.Violation</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.BooleanElement">BooleanElement (class in importer.parsers)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.build">build() (importer.handlers.BaseHandler method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.business_rules">business_rules (common.models.DescriptionMixin attribute)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.TrackedModel.business_rules">(common.models.TrackedModel attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="business_rules/common.html#common.business_rules.BusinessRule">BusinessRule (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.BusinessRuleBase">BusinessRuleBase (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.BusinessRuleViolation">BusinessRuleViolation</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.cache_current_instances">cache_current_instances() (importer.nursery.TariffObjectNursery method)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.cache_object">cache_object() (importer.nursery.TariffObjectNursery method)</a>
+</li>
+      <li><a href="envvars.html#index-0">CACHE_URL</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE2">CE2 (class in certificates.business_rules)</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE2.Violation">CE2.Violation</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE4">CE4 (class in certificates.business_rules)</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE4.Violation">CE4.Violation</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE5">CE5 (class in certificates.business_rules)</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE5.Violation">CE5.Violation</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE6">CE6 (class in certificates.business_rules)</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE6.Violation">CE6.Violation</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE7">CE7 (class in certificates.business_rules)</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CE7.Violation">CE7.Violation</a>
+</li>
+      <li><a href="envvars.html#index-1">CELERY_BROKER_URL</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.certificate">certificate (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.certificatedescription">certificatedescription (common.models.TrackedModel attribute)</a>
+</li>
+      <li>
+    certificates
+
+      <ul>
+        <li><a href="architecture/index.html#module-certificates">module</a>
+</li>
+      </ul></li>
+      <li>
+    certificates.business_rules
+
+      <ul>
+        <li><a href="business_rules/certificates.html#module-certificates.business_rules">module</a>
+</li>
+      </ul></li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.CertificatesMustExist">CertificatesMustExist (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.CertificatesMustExist.Violation">CertificatesMustExist.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.certificatetype">certificatetype (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber">CertificateValidityPeriodMustSpanQuotaOrderNumber (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber.Violation">CertificateValidityPeriodMustSpanQuotaOrderNumber.Violation</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CET1">CET1 (class in certificates.business_rules)</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CET1.Violation">CET1.Violation</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CET2">CET2 (class in certificates.business_rules)</a>
+</li>
+      <li><a href="business_rules/certificates.html#certificates.business_rules.CET2.Violation">CET2.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.clean">clean() (common.models.Transaction method)</a>
+
+      <ul>
+        <li><a href="importer/handlers.html#importer.handlers.BaseHandler.clean">(importer.handlers.BaseHandler method)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.BooleanElement.clean">(importer.parsers.BooleanElement method)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.CompoundElement.clean">(importer.parsers.CompoundElement method)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ConstantElement.clean">(importer.parsers.ConstantElement method)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser.clean">(importer.parsers.ElementParser method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.clear_cache">clear_cache() (importer.nursery.TariffObjectNursery method)</a>
+</li>
+      <li>
+    commodities
+
+      <ul>
+        <li><a href="architecture/index.html#module-commodities">module</a>
+</li>
+      </ul></li>
+      <li>
+    commodities.business_rules
+
+      <ul>
+        <li><a href="business_rules/commodities.html#module-commodities.business_rules">module</a>
+</li>
+      </ul></li>
+      <li>
+    common
+
+      <ul>
+        <li><a href="api/common/common.html#module-common">module</a>
+</li>
+      </ul></li>
+      <li>
+    common.business_rules
+
+      <ul>
+        <li><a href="business_rules/common.html#module-common.business_rules">module</a>
+</li>
+      </ul></li>
+      <li>
+    common.models
+
+      <ul>
+        <li><a href="api/common/common.models.html#module-common.models">module</a>
+</li>
+      </ul></li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ComponentApplicability">ComponentApplicability (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ComponentApplicability.Violation">ComponentApplicability.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.composite_key">composite_key (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.CompoundElement">CompoundElement (class in importer.parsers)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ConstantElement">ConstantElement (class in importer.parsers)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.copy">copy() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.copyable_fields">copyable_fields (common.models.TrackedModel property)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.Writable.create">create() (importer.parsers.Writable method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin.created_at">created_at (common.models.TimestampedMixin attribute)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.CT1">CT1 (class in additional_codes.business_rules)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.CT1.Violation">CT1.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.current_version">current_version (common.models.TrackedModel property)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.VersionGroup.current_version">(common.models.VersionGroup attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.VersionGroup.current_version_id">current_version_id (common.models.VersionGroup attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#index-0">DATABASE_URL</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.ApplicabilityCode.deconstruct">deconstruct() (common.models.ApplicabilityCode method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.NumericSID.deconstruct">(common.models.NumericSID method)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.ShortDescription.deconstruct">(common.models.ShortDescription method)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.SignedIntSID.deconstruct">(common.models.SignedIntSID method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.deferred_set_fields">deferred_set_fields (common.models.TrackedModel property)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.Writable.delete">delete() (importer.parsers.Writable method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.described_object_field">described_object_field (common.models.DescriptionMixin property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin">DescriptionMixin (class in common.models)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.Meta">DescriptionMixin.Meta (class in common.models)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.DescriptionNotEmpty">DescriptionNotEmpty (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.DescriptionNotEmpty.Violation">DescriptionNotEmpty.Violation</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.DescriptionsRules">DescriptionsRules (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.DescriptionsRules.Violation">DescriptionsRules.Violation</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.dispatch">dispatch() (importer.handlers.BaseHandler method)</a>
+</li>
+      <li><a href="testing.html#index-0">DJANGO_SETTINGS_MODULE</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.dutyexpression">dutyexpression (common.models.TrackedModel attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="taric/index.html#term-EDIFACT"><strong>EDIFACT</strong></a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser">ElementParser (class in importer.parsers)</a>
+</li>
+      <li><a href="exporter/celery-tasks.html#taric.models.Envelope">Envelope (class in taric.models)</a>
+</li>
+      <li><a href="importer/taric.html#importer.taric.EnvelopeError">EnvelopeError</a>
+</li>
+      <li><a href="importer/taric.html#importer.taric.EnvelopeParser">EnvelopeParser (class in importer.taric)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.envelopes">envelopes (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="exporter/celery-tasks.html#taric.models.EnvelopeTransaction">EnvelopeTransaction (class in taric.models)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.envelopetransaction_set">envelopetransaction_set (common.models.Transaction attribute)</a>
+</li>
+      <li>
+    environment variable
+
+      <ul>
+        <li><a href="envvars.html#envvar-AUTHBROKER_CLIENT_ID">AUTHBROKER_CLIENT_ID</a>
+</li>
+        <li><a href="envvars.html#envvar-AUTHBROKER_CLIENT_SECRET">AUTHBROKER_CLIENT_SECRET</a>
+</li>
+        <li><a href="envvars.html#envvar-AUTHBROKER_URL">AUTHBROKER_URL</a>
+</li>
+        <li><a href="envvars.html#envvar-AWS_ACCESS_KEY_ID">AWS_ACCESS_KEY_ID</a>
+</li>
+        <li><a href="envvars.html#envvar-AWS_S3_ENDPOINT_URL">AWS_S3_ENDPOINT_URL</a>
+</li>
+        <li><a href="envvars.html#envvar-AWS_SECRET_ACCESS_KEY">AWS_SECRET_ACCESS_KEY</a>
+</li>
+        <li><a href="envvars.html#envvar-AWS_STORAGE_BUCKET_NAME">AWS_STORAGE_BUCKET_NAME</a>
+</li>
+        <li><a href="envvars.html#envvar-CACHE_URL">CACHE_URL</a>, <a href="envvars.html#index-0">[1]</a>
+</li>
+        <li><a href="envvars.html#envvar-CELERY_BROKER_URL">CELERY_BROKER_URL</a>, <a href="envvars.html#index-1">[1]</a>
+</li>
+        <li><a href="envvars.html#envvar-CELERY_LOG_LEVEL">CELERY_LOG_LEVEL</a>
+</li>
+        <li><a href="envvars.html#envvar-CELERY_RESULT_BACKEND">CELERY_RESULT_BACKEND</a>
+</li>
+        <li><a href="envvars.html#envvar-DATABASE_URL">DATABASE_URL</a>, <a href="index.html#index-0">[1]</a>
+</li>
+        <li><a href="envvars.html#envvar-DJANGO_SETTINGS_MODULE">DJANGO_SETTINGS_MODULE</a>, <a href="testing.html#index-0">[1]</a>
+</li>
+        <li><a href="envvars.html#envvar-GOOGLE_ANALYTICS_ID">GOOGLE_ANALYTICS_ID</a>
+</li>
+        <li><a href="envvars.html#envvar-HMRC_STORAGE_BUCKET_NAME">HMRC_STORAGE_BUCKET_NAME</a>
+</li>
+        <li><a href="envvars.html#envvar-HMRC_STORAGE_DIRECTORY">HMRC_STORAGE_DIRECTORY</a>
+</li>
+        <li><a href="envvars.html#envvar-LOG_LEVEL">LOG_LEVEL</a>
+</li>
+        <li><a href="envvars.html#envvar-MINIO_ACCESS_KEY">MINIO_ACCESS_KEY</a>
+</li>
+        <li><a href="envvars.html#envvar-MINIO_SECRET_KEY">MINIO_SECRET_KEY</a>
+</li>
+        <li><a href="envvars.html#envvar-NURSERY_CACHE_ENGINE">NURSERY_CACHE_ENGINE</a>
+</li>
+        <li><a href="envvars.html#envvar-SKIP_VALIDATION">SKIP_VALIDATION</a>
+</li>
+        <li><a href="envvars.html#envvar-SQLITE_S3_ACCESS_KEY_ID">SQLITE_S3_ACCESS_KEY_ID</a>
+</li>
+        <li><a href="envvars.html#envvar-SQLITE_S3_ENDPOINT_URL">SQLITE_S3_ENDPOINT_URL</a>
+</li>
+        <li><a href="envvars.html#envvar-SQLITE_S3_SECRET_ACCESS_KEY">SQLITE_S3_SECRET_ACCESS_KEY</a>
+</li>
+        <li><a href="envvars.html#envvar-SQLITE_STORAGE_BUCKET_NAME">SQLITE_STORAGE_BUCKET_NAME</a>
+</li>
+        <li><a href="envvars.html#envvar-SQLITE_STORAGE_DIRECTORY">SQLITE_STORAGE_DIRECTORY</a>
+</li>
+        <li><a href="envvars.html#envvar-SSO_ENABLED">SSO_ENABLED</a>
+</li>
+        <li><a href="envvars.html#envvar-TAMATO_IMPORT_USERNAME">TAMATO_IMPORT_USERNAME</a>
+</li>
+        <li><a href="envvars.html#envvar-USE_IMPORTER_CACHE">USE_IMPORTER_CACHE</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="taric/index.html#term-ERN"><strong>ERN</strong></a>
+</li>
+      <li>
+    exporter
+
+      <ul>
+        <li><a href="architecture/index.html#module-exporter">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.extension">extension (common.models.TrackedModel attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag.first">first() (importer.namespaces.Tag method)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO11">FO11 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO11.Violation">FO11.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO12">FO12 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO12.Violation">FO12.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO15">FO15 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO15.Violation">FO15.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO17">FO17 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO17.Violation">FO17.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO2">FO2 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO2.Violation">FO2.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO4">FO4 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO4.Violation">FO4.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO5">FO5 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO5.Violation">FO5.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO6">FO6 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO6.Violation">FO6.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO9">FO9 (class in footnotes.business_rules)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FO9.Violation">FO9.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.footnote">footnote (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.FootnoteApplicability.footnote_type_field">footnote_type_field (common.business_rules.FootnoteApplicability attribute)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.FootnoteApplicability">FootnoteApplicability (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.FootnoteApplicability.Violation">FootnoteApplicability.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.footnoteassociationadditionalcode">footnoteassociationadditionalcode (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.footnoteassociationgoodsnomenclature">footnoteassociationgoodsnomenclature (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.footnoteassociationmeasure">footnoteassociationmeasure (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.footnotedescription">footnotedescription (common.models.TrackedModel attribute)</a>
+</li>
+      <li>
+    footnotes
+
+      <ul>
+        <li><a href="architecture/index.html#module-footnotes">module</a>
+</li>
+      </ul></li>
+      <li>
+    footnotes.business_rules
+
+      <ul>
+        <li><a href="business_rules/footnotes.html#module-footnotes.business_rules">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.footnotetype">footnotetype (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FOT1">FOT1 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FOT1.Violation">FOT1.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FOT2">FOT2 (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.FOT2.Violation">FOT2.Violation</a>
+</li>
+      <li><a href="taric/index.html#term-FTS"><strong>FTS</strong></a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA1">GA1 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA1.Violation">GA1.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA10">GA10 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA10.Violation">GA10.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA11">GA11 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA11.Violation">GA11.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA12">GA12 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA12.Violation">GA12.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA13">GA13 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA13.Violation">GA13.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA14">GA14 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA14.Violation">GA14.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA16">GA16 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA16.Violation">GA16.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA17">GA17 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA17.Violation">GA17.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA18">GA18 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA18.Violation">GA18.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA19">GA19 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA19.Violation">GA19.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA20">GA20 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA20.Violation">GA20.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA21">GA21 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA21.Violation">GA21.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA22">GA22 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA22.Violation">GA22.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA23">GA23 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA23.Violation">GA23.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA3">GA3 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA3.Violation">GA3.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA4">GA4 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA4.Violation">GA4.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA5">GA5 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA5.Violation">GA5.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA6">GA6 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA6.Violation">GA6.Violation</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA7">GA7 (class in geo_areas.business_rules)</a>
+</li>
+      <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA7.Violation">GA7.Violation</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.generate_cache_key">generate_cache_key() (importer.nursery.TariffObjectNursery class method)</a>
+</li>
+      <li>
+    geo_areas
+
+      <ul>
+        <li><a href="architecture/index.html#module-geo_areas">module</a>
+</li>
+      </ul></li>
+      <li>
+    geo_areas.business_rules
+
+      <ul>
+        <li><a href="business_rules/geo_areas.html#module-geo_areas.business_rules">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.geographicalarea">geographicalarea (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.geographicalareadescription">geographicalareadescription (common.models.TrackedModel attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.geographicalmembership">geographicalmembership (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.get_all_partition_transitions">get_all_partition_transitions() (common.models.Transaction method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.get_available_partition_transitions">get_available_partition_transitions() (common.models.Transaction method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.get_available_user_partition_transitions">get_available_user_partition_transitions() (common.models.Transaction method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.get_described_object">get_described_object() (common.models.DescriptionMixin method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_description">get_description() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_descriptions">get_descriptions() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.get_generic_link">get_generic_link() (importer.handlers.BaseHandler method)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.get_handler">get_handler() (importer.nursery.TariffObjectNursery method)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.get_handler_link_fields">get_handler_link_fields() (importer.nursery.TariffObjectNursery method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_identifying_fields">get_identifying_fields() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_indefinite_article">get_indefinite_article() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.BusinessRule.get_linked_models">get_linked_models() (common.business_rules.BusinessRule class method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin.get_next_by_created_at">get_next_by_created_at() (common.models.TimestampedMixin method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction.get_next_by_created_at">(common.models.Transaction method)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.VersionGroup.get_next_by_created_at">(common.models.VersionGroup method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin.get_next_by_updated_at">get_next_by_updated_at() (common.models.TimestampedMixin method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction.get_next_by_updated_at">(common.models.Transaction method)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.VersionGroup.get_next_by_updated_at">(common.models.VersionGroup method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.get_next_by_validity_start">get_next_by_validity_start() (common.models.DescriptionMixin method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.get_next_by_validity_start">(common.models.ValidityStartMixin method)</a>
+</li>
+      </ul></li>
+      <li><a href="importer/nursery.html#importer.nursery.get_nursery">get_nursery() (in module importer.nursery)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.get_obj_from_cache">get_obj_from_cache() (importer.nursery.TariffObjectNursery class method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.get_partition_display">get_partition_display() (common.models.Transaction method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin.get_previous_by_created_at">get_previous_by_created_at() (common.models.TimestampedMixin method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction.get_previous_by_created_at">(common.models.Transaction method)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.VersionGroup.get_previous_by_created_at">(common.models.VersionGroup method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin.get_previous_by_updated_at">get_previous_by_updated_at() (common.models.TimestampedMixin method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction.get_previous_by_updated_at">(common.models.Transaction method)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.VersionGroup.get_previous_by_updated_at">(common.models.VersionGroup method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.get_previous_by_validity_start">get_previous_by_validity_start() (common.models.DescriptionMixin method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.get_previous_by_validity_start">(common.models.ValidityStartMixin method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_taric_template">get_taric_template() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_update_type_display">get_update_type_display() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.get_url">get_url() (common.models.DescriptionMixin method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.TrackedModel.get_url">(common.models.TrackedModel method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_url_pattern_name_prefix">get_url_pattern_name_prefix() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.get_versions">get_versions() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.goods_nomenclature_indent_nodes">goods_nomenclature_indent_nodes (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.goodsnomenclature">goodsnomenclature (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.goodsnomenclaturedescription">goodsnomenclaturedescription (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.goodsnomenclatureindent">goodsnomenclatureindent (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.goodsnomenclatureorigin">goodsnomenclatureorigin (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.goodsnomenclaturesuccessor">goodsnomenclaturesuccessor (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.group">group (common.models.TrackedModel attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/nursery.html#importer.nursery.HandlerDoesNotExistError">HandlerDoesNotExistError</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    hmrc_sdes
+
+      <ul>
+        <li><a href="architecture/index.html#module-hmrc_sdes">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="taric/index.html#term-ID"><strong>ID</strong></a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.id">id (common.models.TrackedModel attribute)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction.id">(common.models.Transaction attribute)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.VersionGroup.id">(common.models.VersionGroup attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.identifying_fields">identifying_fields (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.identifying_fields_to_string">identifying_fields_to_string() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.identifying_fields_unique">identifying_fields_unique() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.import_transaction_id">import_transaction_id (common.models.Transaction attribute)</a>
+</li>
+      <li>
+    importer
+
+      <ul>
+        <li><a href="architecture/index.html#module-importer">module</a>
+</li>
+      </ul></li>
+      <li>
+    importer.handlers
+
+      <ul>
+        <li><a href="importer/handlers.html#module-importer.handlers">module</a>
+</li>
+      </ul></li>
+      <li>
+    importer.namespaces
+
+      <ul>
+        <li><a href="importer/parsers_and_namespaces.html#module-importer.namespaces">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    importer.nursery
+
+      <ul>
+        <li><a href="importer/nursery.html#module-importer.nursery">module</a>
+</li>
+      </ul></li>
+      <li>
+    importer.parsers
+
+      <ul>
+        <li><a href="importer/parsers_and_namespaces.html#module-importer.parsers">module</a>
+</li>
+      </ul></li>
+      <li>
+    importer.taric
+
+      <ul>
+        <li><a href="importer/taric.html#module-importer.taric">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.in_use">in_use() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.in_use_by">in_use_by() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.indirect_business_rules">indirect_business_rules (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.IntElement">IntElement (class in importer.parsers)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.InvalidDataError">InvalidDataError</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser.is_parser_for_element">is_parser_for_element() (importer.parsers.ElementParser method)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag.is_pattern">is_pattern (importer.namespaces.Tag property)</a>
+</li>
+      <li><a href="taric/index.html#term-ISO"><strong>ISO</strong></a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag.iter">iter() (importer.namespaces.Tag method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="architecture/index.html#common.models.records.TrackedModelQuerySet.latest_approved">latest_approved() (common.models.records.TrackedModelQuerySet method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.load_link">load_link() (importer.handlers.BaseHandler method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/measures.html#measures.business_rules.MA1">MA1 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MA1.Violation">MA1.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MA2">MA2 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MA2.Violation">MA2.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MA4">MA4 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MA4.Violation">MA4.Violation</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.make_schema_dataclass">make_schema_dataclass() (in module importer.namespaces)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MC1">MC1 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MC1.Violation">MC1.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MC3">MC3 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MC3.Violation">MC3.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MC4">MC4 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MC4.Violation">MC4.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME1">ME1 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME1.Violation">ME1.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME10">ME10 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME10.Violation">ME10.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME104">ME104 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME104.Violation">ME104.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME105">ME105 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME105.Violation">ME105.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME106">ME106 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME106.Violation">ME106.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME108">ME108 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME108.Violation">ME108.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME109">ME109 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME109.Violation">ME109.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME110">ME110 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME110.Violation">ME110.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME111">ME111 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME111.Violation">ME111.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME115">ME115 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME115.Violation">ME115.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME116">ME116 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME116.Violation">ME116.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME117">ME117 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME117.Violation">ME117.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME119">ME119 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME119.Violation">ME119.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME12">ME12 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME12.Violation">ME12.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME16">ME16 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME16.Violation">ME16.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME17">ME17 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME17.Violation">ME17.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME2">ME2 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME2.Violation">ME2.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME24">ME24 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME24.Violation">ME24.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME25">ME25 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME25.Violation">ME25.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME3">ME3 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME3.Violation">ME3.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME32">ME32 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME32.Violation">ME32.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME33">ME33 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME33.Violation">ME33.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME34">ME34 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME34.Violation">ME34.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME4">ME4 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME4.Violation">ME4.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME40">ME40 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME40.Violation">ME40.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME41">ME41 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME41.Violation">ME41.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME42">ME42 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME42.Violation">ME42.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME43">ME43 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME43.Violation">ME43.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME45">ME45 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME45.Violation">ME45.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME46">ME46 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME46.Violation">ME46.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME47">ME47 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME47.Violation">ME47.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME48">ME48 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME48.Violation">ME48.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME49">ME49 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME49.Violation">ME49.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME5">ME5 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME5.Violation">ME5.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME50">ME50 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME50.Violation">ME50.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME51">ME51 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME51.Violation">ME51.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME52">ME52 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME52.Violation">ME52.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME53">ME53 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME53.Violation">ME53.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME56">ME56 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME56.Violation">ME56.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME57">ME57 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME57.Violation">ME57.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME58">ME58 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME58.Violation">ME58.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME59">ME59 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME59.Violation">ME59.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME6">ME6 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME6.Violation">ME6.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME60">ME60 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME60.Violation">ME60.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME61">ME61 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME61.Violation">ME61.Violation</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME62">ME62 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME62.Violation">ME62.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME63">ME63 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME63.Violation">ME63.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME64">ME64 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME64.Violation">ME64.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME65">ME65 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME65.Violation">ME65.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME66">ME66 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME66.Violation">ME66.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME67">ME67 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME67.Violation">ME67.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME68">ME68 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME68.Violation">ME68.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME69">ME69 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME69.Violation">ME69.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME7">ME7 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME7.Violation">ME7.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME70">ME70 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME70.Violation">ME70.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME71">ME71 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME71.Violation">ME71.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME73">ME73 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME73.Violation">ME73.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME8">ME8 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME8.Violation">ME8.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME87">ME87 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME87.Violation">ME87.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME88">ME88 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME88.Violation">ME88.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME9">ME9 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME9.Violation">ME9.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measure">measure (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measureaction">measureaction (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measurecomponent">measurecomponent (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MeasureComponentApplicability">MeasureComponentApplicability (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MeasureComponentApplicability.Violation">MeasureComponentApplicability.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measurecondition">measurecondition (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measureconditioncode">measureconditioncode (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measureconditioncomponent">measureconditioncomponent (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MeasureConditionComponentApplicability">MeasureConditionComponentApplicability (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MeasureConditionComponentApplicability.Violation">MeasureConditionComponentApplicability.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measureexcludedgeographicalarea">measureexcludedgeographicalarea (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measurement">measurement (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measurementunit">measurementunit (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measurementunitqualifier">measurementunitqualifier (common.models.TrackedModel attribute)</a>
+</li>
+      <li>
+    measures
+
+      <ul>
+        <li><a href="architecture/index.html#module-measures">module</a>
+</li>
+      </ul></li>
+      <li>
+    measures.business_rules
+
+      <ul>
+        <li><a href="business_rules/measures.html#module-measures.business_rules">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measuretype">measuretype (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.measuretypeseries">measuretypeseries (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MeasureValidityPeriodContained">MeasureValidityPeriodContained (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MeasureValidityPeriodContained.Violation">MeasureValidityPeriodContained.Violation</a>
+</li>
+      <li><a href="importer/taric.html#importer.taric.MessageParser">MessageParser (class in importer.taric)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.MismatchedSerializerError">MismatchedSerializerError</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.models_linked_to">models_linked_to (common.models.TrackedModel property)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="architecture/index.html#module-additional_codes">additional_codes</a>
+</li>
+        <li><a href="business_rules/additional_codes.html#module-additional_codes.business_rules">additional_codes.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-certificates">certificates</a>
+</li>
+        <li><a href="business_rules/certificates.html#module-certificates.business_rules">certificates.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-commodities">commodities</a>
+</li>
+        <li><a href="business_rules/commodities.html#module-commodities.business_rules">commodities.business_rules</a>
+</li>
+        <li><a href="api/common/common.html#module-common">common</a>
+</li>
+        <li><a href="business_rules/common.html#module-common.business_rules">common.business_rules</a>
+</li>
+        <li><a href="api/common/common.models.html#module-common.models">common.models</a>
+</li>
+        <li><a href="architecture/index.html#module-exporter">exporter</a>
+</li>
+        <li><a href="architecture/index.html#module-footnotes">footnotes</a>
+</li>
+        <li><a href="business_rules/footnotes.html#module-footnotes.business_rules">footnotes.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-geo_areas">geo_areas</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#module-geo_areas.business_rules">geo_areas.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-hmrc_sdes">hmrc_sdes</a>
+</li>
+        <li><a href="architecture/index.html#module-importer">importer</a>
+</li>
+        <li><a href="importer/handlers.html#module-importer.handlers">importer.handlers</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#module-importer.namespaces">importer.namespaces</a>
+</li>
+        <li><a href="importer/nursery.html#module-importer.nursery">importer.nursery</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#module-importer.parsers">importer.parsers</a>
+</li>
+        <li><a href="importer/taric.html#module-importer.taric">importer.taric</a>
+</li>
+        <li><a href="architecture/index.html#module-measures">measures</a>
+</li>
+        <li><a href="business_rules/measures.html#module-measures.business_rules">measures.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-quotas">quotas</a>
+</li>
+        <li><a href="business_rules/quotas.html#module-quotas.business_rules">quotas.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-regulations">regulations</a>
+</li>
+        <li><a href="business_rules/regulations.html#module-regulations.business_rules">regulations.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-taric">taric</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.monetaryunit">monetaryunit (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT1">MT1 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT1.Violation">MT1.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT10">MT10 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT10.Violation">MT10.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT3">MT3 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT3.Violation">MT3.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT4">MT4 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT4.Violation">MT4.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT7">MT7 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MT7.Violation">MT7.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MTS1">MTS1 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MTS1.Violation">MTS1.Violation</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MTS2">MTS2 (class in measures.business_rules)</a>
+</li>
+      <li><a href="business_rules/measures.html#measures.business_rules.MTS2.Violation">MTS2.Violation</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.MustExist">MustExist (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.MustExist.Violation">MustExist.Violation</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag.namespace">namespace (importer.namespaces.Tag property)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.BooleanElement.native_type">native_type (importer.parsers.BooleanElement attribute)</a>
+
+      <ul>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.CompoundElement.native_type">(importer.parsers.CompoundElement attribute)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.IntElement.native_type">(importer.parsers.IntElement attribute)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.TextElement.native_type">(importer.parsers.TextElement attribute)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ValueElementMixin.native_type">(importer.parsers.ValueElementMixin attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.new_version">new_version() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG1">NIG1 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG1.Violation">NIG1.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG10">NIG10 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG10.Violation">NIG10.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG11">NIG11 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG11.Violation">NIG11.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG12">NIG12 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG12.Violation">NIG12.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG18">NIG18 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG18.Violation">NIG18.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG2">NIG2 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG2.Violation">NIG2.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG22">NIG22 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG22.Violation">NIG22.Violation</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG23">NIG23 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG23.Violation">NIG23.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG24">NIG24 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG24.Violation">NIG24.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG30">NIG30 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG30.Violation">NIG30.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG31">NIG31 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG31.Violation">NIG31.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG34">NIG34 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG34.Violation">NIG34.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG35">NIG35 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG35.Violation">NIG35.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG5">NIG5 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG5.Violation">NIG5.Violation</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG7">NIG7 (class in commodities.business_rules)</a>
+</li>
+      <li><a href="business_rules/commodities.html#commodities.business_rules.NIG7.Violation">NIG7.Violation</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.NoBlankDescription">NoBlankDescription (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.NoBlankDescription.Violation">NoBlankDescription.Violation</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.NoOverlapping">NoOverlapping (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.NoOverlapping.Violation">NoOverlapping.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.NumericSID">NumericSID (class in common.models)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.objects">objects (common.models.DescriptionMixin attribute)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.TrackedModel.objects">(common.models.TrackedModel attribute)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.Transaction.objects">(common.models.Transaction attribute)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.objects">(common.models.ValidityStartMixin attribute)</a>
+</li>
+        <li><a href="api/common/common.models.html#common.models.VersionGroup.objects">(common.models.VersionGroup attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.ValidityMixin.objects_with_validity_field">objects_with_validity_field() (common.models.ValidityMixin class method)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.objects_with_validity_field">(common.models.ValidityStartMixin class method)</a>
+</li>
+      </ul></li>
+      <li><a href="taric/index.html#term-OJ"><strong>OJ</strong></a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON1">ON1 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON1.Violation">ON1.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON10">ON10 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON10.Violation">ON10.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON11">ON11 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON11.Violation">ON11.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON12">ON12 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON12.Violation">ON12.Violation</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON13">ON13 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON13.Violation">ON13.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON14">ON14 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON14.Violation">ON14.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON2">ON2 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON2.Violation">ON2.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON5">ON5 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON5.Violation">ON5.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON6">ON6 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON6.Violation">ON6.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON7">ON7 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON7.Violation">ON7.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON8">ON8 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON8.Violation">ON8.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON9">ON9 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.ON9.Violation">ON9.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.order">order (common.models.Transaction attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ParserError">ParserError</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.partition">partition (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag.pattern">pattern (importer.namespaces.Tag property)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.polymorphic_ctype">polymorphic_ctype (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.polymorphic_primary_key_name">polymorphic_primary_key_name (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.polymorphic_super_sub_accessors_replaced">polymorphic_super_sub_accessors_replaced (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.post_save">post_save() (importer.handlers.BaseHandler method)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.pre_save">pre_save() (importer.handlers.BaseHandler method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag.prefixed_name">prefixed_name (importer.namespaces.Tag property)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.PreventDeleteIfInUse">PreventDeleteIfInUse (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.PreventDeleteIfInUse.Violation">PreventDeleteIfInUse.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions">PreventDeletingLinkedQuotaDefinitions (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions.Violation">PreventDeletingLinkedQuotaDefinitions.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.PreventQuotaDefinitionDeletion">PreventQuotaDefinitionDeletion (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.PreventQuotaDefinitionDeletion.Violation">PreventQuotaDefinitionDeletion.Violation</a>
+</li>
+      <li><a href="importer/taric.html#importer.taric.process_taric_xml_stream">process_taric_xml_stream() (in module importer.taric)</a>
+</li>
+      <li><a href="taric/index.html#term-PTS"><strong>PTS</strong></a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA1">QA1 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA1.Violation">QA1.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA2">QA2 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA2.Violation">QA2.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA3">QA3 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA3.Violation">QA3.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA4">QA4 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA4.Violation">QA4.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA5">QA5 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA5.Violation">QA5.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA6">QA6 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QA6.Violation">QA6.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QBP2">QBP2 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QBP2.Violation">QBP2.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD1">QD1 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD1.Violation">QD1.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD10">QD10 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD10.Violation">QD10.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD11">QD11 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD11.Violation">QD11.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD7">QD7 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD7.Violation">QD7.Violation</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD8">QD8 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QD8.Violation">QD8.Violation</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QSP2">QSP2 (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QSP2.Violation">QSP2.Violation</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag.qualified_name">qualified_name (importer.namespaces.Tag property)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotaassociation">quotaassociation (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QuotaAssociationMustReferToANonDeletedSubQuota">QuotaAssociationMustReferToANonDeletedSubQuota (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QuotaAssociationMustReferToANonDeletedSubQuota.Violation">QuotaAssociationMustReferToANonDeletedSubQuota.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotablocking">quotablocking (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition">QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition.Violation">QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotadefinition">quotadefinition (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotaevent">quotaevent (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotaordernumber">quotaordernumber (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotaordernumberorigin">quotaordernumberorigin (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotaordernumberoriginexclusion">quotaordernumberoriginexclusion (common.models.TrackedModel attribute)</a>
+</li>
+      <li>
+    quotas
+
+      <ul>
+        <li><a href="architecture/index.html#module-quotas">module</a>
+</li>
+      </ul></li>
+      <li>
+    quotas.business_rules
+
+      <ul>
+        <li><a href="business_rules/quotas.html#module-quotas.business_rules">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.quotasuspension">quotasuspension (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition">QuotaSuspensionMustReferToANonDeletedQuotaDefinition (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition.Violation">QuotaSuspensionMustReferToANonDeletedQuotaDefinition.Violation</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.RangeLowerElement">RangeLowerElement (class in importer.parsers)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.RangeUpperElement">RangeUpperElement (class in importer.parsers)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.record_code">record_code (common.models.TrackedModel attribute)</a>
+
+      <ul>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser.record_code">(importer.parsers.ElementParser attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="importer/taric.html#importer.taric.RecordParser">RecordParser (class in importer.taric)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.register_dependant">register_dependant() (importer.handlers.BaseHandler class method)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.register_handler">register_handler() (importer.nursery.TariffObjectNursery class method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.regulation">regulation (common.models.TrackedModel attribute)</a>
+</li>
+      <li>
+    regulations
+
+      <ul>
+        <li><a href="architecture/index.html#module-regulations">module</a>
+</li>
+      </ul></li>
+      <li>
+    regulations.business_rules
+
+      <ul>
+        <li><a href="business_rules/regulations.html#module-regulations.business_rules">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.relations">relations (common.models.TrackedModel property)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.remove_object_from_cache">remove_object_from_cache() (importer.nursery.TariffObjectNursery method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.replacement">replacement (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.resolve_dependencies">resolve_dependencies() (importer.handlers.BaseHandler method)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.resolve_links">resolve_links() (importer.handlers.BaseHandler method)</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB1">ROIMB1 (class in regulations.business_rules)</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB1.Violation">ROIMB1.Violation</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB4">ROIMB4 (class in regulations.business_rules)</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB4.Violation">ROIMB4.Violation</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB44">ROIMB44 (class in regulations.business_rules)</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB44.Violation">ROIMB44.Violation</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB46">ROIMB46 (class in regulations.business_rules)</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB46.Violation">ROIMB46.Violation</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB47">ROIMB47 (class in regulations.business_rules)</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB47.Violation">ROIMB47.Violation</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB8">ROIMB8 (class in regulations.business_rules)</a>
+</li>
+      <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB8.Violation">ROIMB8.Violation</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.save">save() (common.models.TrackedModel method)</a>
+
+      <ul>
+        <li><a href="importer/taric.html#importer.taric.MessageParser.save">(importer.taric.MessageParser method)</a>
+</li>
+        <li><a href="importer/taric.html#importer.taric.RecordParser.save">(importer.taric.RecordParser method)</a>
+</li>
+        <li><a href="importer/taric.html#importer.taric.TransactionParser.save">(importer.taric.TransactionParser method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.save_draft">save_draft() (common.models.Transaction method)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.SchemaTagsBase">SchemaTagsBase (class in importer.namespaces)</a>
+</li>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.serialize">serialize() (importer.handlers.BaseHandler method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.ShortDescription">ShortDescription (class in common.models)</a>
+</li>
+      <li><a href="taric/index.html#term-SID"><strong>SID</strong></a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.SignedIntSID">SignedIntSID (class in common.models)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.skip_when_update_type">skip_when_update_type() (in module common.business_rules)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser.start">start() (importer.parsers.ElementParser method)</a>
+
+      <ul>
+        <li><a href="importer/taric.html#importer.taric.EnvelopeParser.start">(importer.taric.EnvelopeParser method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.structure_code">structure_code (common.models.TrackedModel property)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.structure_description">structure_description (common.models.TrackedModel property)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.submit">submit() (importer.nursery.TariffObjectNursery method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.subrecord_code">subrecord_code (common.models.TrackedModel attribute)</a>
+
+      <ul>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser.subrecord_code">(importer.parsers.ElementParser attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.subrecord_relations">subrecord_relations (common.models.TrackedModel property)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.suspension">suspension (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.SuspensionsOnlyToFCFSQuotas">SuspensionsOnlyToFCFSQuotas (class in quotas.business_rules)</a>
+</li>
+      <li><a href="business_rules/quotas.html#quotas.business_rules.SuspensionsOnlyToFCFSQuotas.Violation">SuspensionsOnlyToFCFSQuotas.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.system_set_field_names">system_set_field_names (common.models.TrackedModel attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.Tag">Tag (class in importer.namespaces)</a>
+</li>
+      <li>
+    taric
+
+      <ul>
+        <li><a href="architecture/index.html#module-taric">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.taric_template">taric_template (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery">TariffObjectNursery (class in importer.nursery)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.ValidityMixin.terminate">terminate() (common.models.ValidityMixin method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.termination">termination (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.testmodel1">testmodel1 (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.testmodel2">testmodel2 (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.testmodel3">testmodel3 (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.testmodeldescription1">testmodeldescription1 (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.TextElement">TextElement (class in importer.parsers)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin">TimestampedMixin (class in common.models)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin.Meta">TimestampedMixin.Meta (class in common.models)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.Transaction.to_json">to_json() (common.models.Transaction method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.tracked_models">tracked_models (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel">TrackedModel (class in common.models)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.DoesNotExist">TrackedModel.DoesNotExist</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.MultipleObjectsReturned">TrackedModel.MultipleObjectsReturned</a>
+</li>
+      <li><a href="architecture/index.html#common.models.records.TrackedModelQuerySet">TrackedModelQuerySet (class in common.models.records)</a>
+</li>
+      <li><a href="glossary.html#term-Transaction"><strong>Transaction</strong></a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction">(class in common.models)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.transaction">transaction (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.DoesNotExist">Transaction.DoesNotExist</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.MultipleObjectsReturned">Transaction.MultipleObjectsReturned</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.transaction_id">transaction_id (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.Transaction.transactiongroup_set">transactiongroup_set (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="importer/taric.html#importer.taric.TransactionParser">TransactionParser (class in importer.taric)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="business_rules/common.html#common.business_rules.UniqueIdentifyingFields">UniqueIdentifyingFields (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.UniqueIdentifyingFields.Violation">UniqueIdentifyingFields.Violation</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.Writable.update">update() (importer.parsers.Writable method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.update_type">update_type (common.models.TrackedModel attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.TimestampedMixin.updated_at">updated_at (common.models.TimestampedMixin attribute)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.UpdateValidity">UpdateValidity (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.UpdateValidity.Violation">UpdateValidity.Violation</a>
+</li>
+      <li><a href="exporter/celery-tasks.html#exporter.models.Upload">Upload (class in exporter.models)</a>
+</li>
+      <li><a href="taric/index.html#term-UTF"><strong>UTF</strong></a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.ValidityMixin.valid_between">valid_between (common.models.ValidityMixin attribute)</a>
+</li>
+      <li><a href="business_rules/additional_codes.html#additional_codes.business_rules.ACN2.validate">validate() (additional_codes.business_rules.ACN2 method)</a>
+
+      <ul>
+        <li><a href="business_rules/commodities.html#commodities.business_rules.NIG10.validate">(commodities.business_rules.NIG10 method)</a>
+</li>
+        <li><a href="business_rules/commodities.html#commodities.business_rules.NIG2.validate">(commodities.business_rules.NIG2 method)</a>
+</li>
+        <li><a href="business_rules/commodities.html#commodities.business_rules.NIG24.validate">(commodities.business_rules.NIG24 method)</a>
+</li>
+        <li><a href="business_rules/commodities.html#commodities.business_rules.NIG30.validate">(commodities.business_rules.NIG30 method)</a>
+</li>
+        <li><a href="business_rules/commodities.html#commodities.business_rules.NIG35.validate">(commodities.business_rules.NIG35 method)</a>
+</li>
+        <li><a href="business_rules/commodities.html#commodities.business_rules.NIG5.validate">(commodities.business_rules.NIG5 method)</a>
+</li>
+        <li><a href="business_rules/commodities.html#commodities.business_rules.NIG7.validate">(commodities.business_rules.NIG7 method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.BusinessRule.validate">(common.business_rules.BusinessRule method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.FootnoteApplicability.validate">(common.business_rules.FootnoteApplicability method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.MustExist.validate">(common.business_rules.MustExist method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.NoBlankDescription.validate">(common.business_rules.NoBlankDescription method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.NoOverlapping.validate">(common.business_rules.NoOverlapping method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.PreventDeleteIfInUse.validate">(common.business_rules.PreventDeleteIfInUse method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.UniqueIdentifyingFields.validate">(common.business_rules.UniqueIdentifyingFields method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.UpdateValidity.validate">(common.business_rules.UpdateValidity method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodContained.validate">(common.business_rules.ValidityPeriodContained method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodContains.validate">(common.business_rules.ValidityPeriodContains method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodSpansContainer.validate">(common.business_rules.ValidityPeriodSpansContainer method)</a>
+</li>
+        <li><a href="business_rules/common.html#common.business_rules.ValidityStartDateRules.validate">(common.business_rules.ValidityStartDateRules method)</a>
+</li>
+        <li><a href="business_rules/footnotes.html#footnotes.business_rules.ValidityPeriodContainsIfInUse.validate">(footnotes.business_rules.ValidityPeriodContainsIfInUse method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.DescriptionNotEmpty.validate">(geo_areas.business_rules.DescriptionNotEmpty method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA11.validate">(geo_areas.business_rules.GA11 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA13.validate">(geo_areas.business_rules.GA13 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA16.validate">(geo_areas.business_rules.GA16 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA17.validate">(geo_areas.business_rules.GA17 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA18.validate">(geo_areas.business_rules.GA18 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA19.validate">(geo_areas.business_rules.GA19 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA20.validate">(geo_areas.business_rules.GA20 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA4.validate">(geo_areas.business_rules.GA4 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA5.validate">(geo_areas.business_rules.GA5 method)</a>
+</li>
+        <li><a href="business_rules/geo_areas.html#geo_areas.business_rules.GA6.validate">(geo_areas.business_rules.GA6 method)</a>
+</li>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser.validate">(importer.parsers.ElementParser method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ComponentApplicability.validate">(measures.business_rules.ComponentApplicability method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME10.validate">(measures.business_rules.ME10 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME104.validate">(measures.business_rules.ME104 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME108.validate">(measures.business_rules.ME108 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME116.validate">(measures.business_rules.ME116 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME117.validate">(measures.business_rules.ME117 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME119.validate">(measures.business_rules.ME119 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME12.validate">(measures.business_rules.ME12 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME16.validate">(measures.business_rules.ME16 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME25.validate">(measures.business_rules.ME25 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME32.validate">(measures.business_rules.ME32 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME33.validate">(measures.business_rules.ME33 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME34.validate">(measures.business_rules.ME34 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME40.validate">(measures.business_rules.ME40 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME43.validate">(measures.business_rules.ME43 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME58.validate">(measures.business_rules.ME58 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME65.validate">(measures.business_rules.ME65 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME66.validate">(measures.business_rules.ME66 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME67.validate">(measures.business_rules.ME67 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME68.validate">(measures.business_rules.ME68 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME7.validate">(measures.business_rules.ME7 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME70.validate">(measures.business_rules.ME70 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME87.validate">(measures.business_rules.ME87 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME88.validate">(measures.business_rules.ME88 method)</a>
+</li>
+        <li><a href="business_rules/measures.html#measures.business_rules.ME9.validate">(measures.business_rules.ME9 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.BlockingOnlyOfFCFSQuotas.validate">(quotas.business_rules.BlockingOnlyOfFCFSQuotas method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON10.validate">(quotas.business_rules.ON10 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON11.validate">(quotas.business_rules.ON11 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON12.validate">(quotas.business_rules.ON12 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON13.validate">(quotas.business_rules.ON13 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON14.validate">(quotas.business_rules.ON14 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON2.validate">(quotas.business_rules.ON2 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON5.validate">(quotas.business_rules.ON5 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON6.validate">(quotas.business_rules.ON6 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.ON9.validate">(quotas.business_rules.ON9 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions.validate">(quotas.business_rules.PreventDeletingLinkedQuotaDefinitions method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.PreventQuotaDefinitionDeletion.validate">(quotas.business_rules.PreventQuotaDefinitionDeletion method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.QA3.validate">(quotas.business_rules.QA3 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.QA4.validate">(quotas.business_rules.QA4 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.QA5.validate">(quotas.business_rules.QA5 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.QA6.validate">(quotas.business_rules.QA6 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.QBP2.validate">(quotas.business_rules.QBP2 method)</a>
+</li>
+        <li><a href="business_rules/quotas.html#quotas.business_rules.SuspensionsOnlyToFCFSQuotas.validate">(quotas.business_rules.SuspensionsOnlyToFCFSQuotas method)</a>
+</li>
+        <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB44.validate">(regulations.business_rules.ROIMB44 method)</a>
+</li>
+        <li><a href="business_rules/regulations.html#regulations.business_rules.ROIMB8.validate">(regulations.business_rules.ROIMB8 method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.ValidityMixin.validity_field_name">validity_field_name (common.models.ValidityMixin attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.DescriptionMixin.validity_over">validity_over (common.models.DescriptionMixin property)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.validity_over">(common.models.ValidityStartMixin attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.validity_start">validity_start (common.models.ValidityStartMixin attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.ValidityMixin">ValidityMixin (class in common.models)</a>
+
+      <ul>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ValidityMixin">(class in importer.parsers)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.ValidityMixin.Meta">ValidityMixin.Meta (class in common.models)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodContained">ValidityPeriodContained (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodContained.Violation">ValidityPeriodContained.Violation</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodContains">ValidityPeriodContains (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodContains.Violation">ValidityPeriodContains.Violation</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.ValidityPeriodContainsIfInUse">ValidityPeriodContainsIfInUse (class in footnotes.business_rules)</a>
+</li>
+      <li><a href="business_rules/footnotes.html#footnotes.business_rules.ValidityPeriodContainsIfInUse.Violation">ValidityPeriodContainsIfInUse.Violation</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodSpansContainer">ValidityPeriodSpansContainer (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityPeriodSpansContainer.Violation">ValidityPeriodSpansContainer.Violation</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityStartDateRules">ValidityStartDateRules (class in common.business_rules)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.ValidityStartDateRules.Violation">ValidityStartDateRules.Violation</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.ValidityStartMixin">ValidityStartMixin (class in common.models)</a>
+
+      <ul>
+        <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ValidityStartMixin">(class in importer.parsers)</a>
+</li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.ValidityStartMixin.Meta">ValidityStartMixin.Meta (class in common.models)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ValueElementMixin">ValueElementMixin (class in importer.parsers)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.version_at">version_at() (common.models.TrackedModel method)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.version_group">version_group (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.version_group_id">version_group_id (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.VersionGroup">VersionGroup (class in common.models)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.versiongroup">versiongroup (common.models.TrackedModel attribute)</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.VersionGroup.DoesNotExist">VersionGroup.DoesNotExist</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.VersionGroup.MultipleObjectsReturned">VersionGroup.MultipleObjectsReturned</a>
+</li>
+      <li><a href="api/common/common.models.html#common.models.VersionGroup.versions">versions (common.models.VersionGroup attribute)</a>
+</li>
+      <li><a href="business_rules/common.html#common.business_rules.BusinessRule.violation">violation() (common.business_rules.BusinessRule method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.Transaction.workbasket">workbasket (common.models.Transaction attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/common/common.models.html#common.models.Transaction.workbasket_id">workbasket_id (common.models.Transaction attribute)</a>
+</li>
+      <li><a href="importer/parsers_and_namespaces.html#importer.parsers.Writable">Writable (class in importer.parsers)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="X">X</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/parsers_and_namespaces.html#importer.namespaces.xsd_schema_paths">xsd_schema_paths (in module importer.namespaces)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/genindex">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'genindex'&amp;body=Problem%20with%20'genindex'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

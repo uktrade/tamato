@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>common.models.transactions - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/javascripts/_analytics.js"></script>
+    <script src="../../../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../../../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../../../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../../../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../../../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../../../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../../../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../../../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../../../_static/javascripts/_start_modules.js"></script>
+    <script src="../../../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../../../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../../../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../../../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../../../_static/javascripts/theme.js"></script>
+    <link href="../../../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../../../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../../../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../../../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../../../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../../../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <h1>Source code for common.models.transactions</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Transaction model and manager.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">django.core.serializers.json</span> <span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">F</span>
+<span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
+<span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">FSMIntegerField</span>
+<span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">transition</span>
+
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRuleChecker</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRuleViolation</span>
+<span class="kn">from</span> <span class="nn">common.models.mixins</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TransactionPartition</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transactions are partitioned into global groupings based on type.</span>
+
+<span class="sd">    Within a partition, a transactions order applies, to obtain a global</span>
+<span class="sd">    ordering a order_by(&quot;partition&quot;, &quot;order&quot;) must be used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SEED_FILE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Seed&quot;</span>
+    <span class="n">REVISION</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Revision&quot;</span>
+    <span class="n">DRAFT</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Draft&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">approved_partitions</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">SEED_FILE</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">REVISION</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">TransactionManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sorts TrackedModels by record_number and subrecord_number.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">annotate_record_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">annotate_record_codes</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
+            <span class="s2">&quot;record_code&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;subrecord_code&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+                <span class="n">models</span><span class="o">.</span><span class="n">Prefetch</span><span class="p">(</span><span class="s2">&quot;tracked_models&quot;</span><span class="p">,</span> <span class="n">queryset</span><span class="o">=</span><span class="n">annotate_record_code</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ApprovedTransactionManager</span><span class="p">(</span><span class="n">TransactionManager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">partition__in</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">approved_partitions</span><span class="p">())</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TransactionsAlreadyApproved</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">unordered_tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Usually &#39;ordered_tracked_models&#39; is required.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span>
+
+    <span class="k">def</span> <span class="nf">ordered_tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;TrackedModel in order of their transactions creation order.&quot;&quot;&quot;</span>
+
+        <span class="n">tracked_models</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unordered_tracked_models</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
+                <span class="s2">&quot;transaction__partition&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;transaction__order&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># order_by record_code, subrecord_code already happened in get_queryset</span>
+        <span class="k">return</span> <span class="n">tracked_models</span>
+
+    <span class="k">def</span> <span class="nf">approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Currently approved Transactions are SEED_FILE and REVISION this can be</span>
+<span class="sd">        more efficiently expressed as != DRAFT.</span>
+
+<span class="sd">        Using exclude(DRAFT) should be marginally more efficient than</span>
+<span class="sd">        filter(partition__in=TransactionPartition.approved_partitions())</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">partition</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="p">)</span>
+
+    <span class="nd">@atomic</span>
+    <span class="k">def</span> <span class="nf">save_drafts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save draft transactions as either SEED_FILE or REVISION transactions.</span>
+
+<span class="sd">        Contained tracked models to become the current version. Order field is</span>
+<span class="sd">        updated so these transactions are at the end of the approved partition</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approved</span><span class="p">()</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">pks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;One or more Transactions was not in the DRAFT partition: </span><span class="si">{</span><span class="n">pks</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TransactionsAlreadyApproved</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># Find the transaction in the destination approved partition with the highest order</span>
+        <span class="c1"># get_approved_partition may raise a ValueError, e.g. when attempting to create</span>
+        <span class="c1"># a seed transaction when revisions exist, so it is called before any of the</span>
+        <span class="c1"># later queries.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Save drafts with partition scheme </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">partition_scheme</span><span class="p">))</span>
+        <span class="n">approved_partition</span> <span class="o">=</span> <span class="n">partition_scheme</span><span class="o">.</span><span class="n">get_approved_partition</span><span class="p">()</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Approved partition </span><span class="si">%s</span><span class="s2"> selected by partition_scheme.&quot;</span><span class="p">,</span>
+            <span class="n">approved_partition</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update versions_group.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unordered_tracked_models</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">):</span>
+            <span class="n">version_group</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version_group</span>
+            <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="n">new_tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">new_tx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Draft contains no transactions, bailing out early.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Ensure order of the transactions in this query to start at the end of the existing approved partition.</span>
+        <span class="n">existing_tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">partition</span><span class="o">=</span><span class="n">approved_partition</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="n">order_start</span> <span class="o">=</span> <span class="n">existing_tx</span><span class="o">.</span><span class="n">order</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">order_difference</span> <span class="o">=</span> <span class="n">order_start</span> <span class="o">-</span> <span class="n">new_tx</span><span class="o">.</span><span class="n">order</span> <span class="k">if</span> <span class="n">new_tx</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Update draft transactions in query starting from </span><span class="si">%s</span><span class="s2"> to start after transaction </span><span class="si">%s</span><span class="s2">.&quot;</span>
+            <span class="s2">&quot;  order_start: </span><span class="si">%s</span><span class="s2">, order_difference: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">new_tx</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">new_tx</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">existing_tx</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">order_start</span><span class="p">,</span>
+            <span class="n">order_difference</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">order</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">order_difference</span><span class="p">,</span>
+            <span class="n">partition</span><span class="o">=</span><span class="n">approved_partition</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction">[docs]</a><span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Contains a group of one or more TrackedModel instances that must be applied</span>
+<span class="sd">    atomically.</span>
+
+<span class="sd">    Linked to a WorkBasket and may be contained by one or more Envelopes when exported.</span>
+
+<span class="sd">    Business rule validation is performed at Transaction level for creates, updates and</span>
+<span class="sd">    deletes. Business rules are also validated at the TrackedModel level for creates.</span>
+
+<span class="sd">    Mutation rules:</span>
+
+<span class="sd">    Only transactions in the DRAFT partition should be modified - at that point they may be</span>
+<span class="sd">    moved to SEED_FILE or REVISION partitions, and the order field will be updated.</span>
+
+<span class="sd">    Transactions in SEED_FILE or REVISION partitions should not be modified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="c1"># See TransactionPartition for information on workbasket_status order.</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">)</span>
+
+    <span class="c1"># FSMField protects against unexpected state changes.</span>
+    <span class="n">partition</span> <span class="o">=</span> <span class="n">FSMIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">protected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">import_transaction_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">workbasket</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;workbaskets.WorkBasket&quot;</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;transactions&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Order of transaction within its partition.</span>
+    <span class="c1"># The default order (&quot;partition&quot;, &quot;order&quot;) gives global ordering.</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+
+    <span class="n">composite_key</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">TransactionManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span><span class="n">TransactionQueryset</span><span class="p">)()</span>
+
+    <span class="n">approved</span> <span class="o">=</span> <span class="n">ApprovedTransactionManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span><span class="n">TransactionQueryset</span><span class="p">)()</span>
+
+<div class="viewcode-block" id="Transaction.save_draft"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.save_draft">[docs]</a>    <span class="nd">@transition</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">partition</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">REVISION</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">save_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finalise a single DRAFT transaction as a REVISION.</span>
+
+<span class="sd">        Delegates to Transaction.objects.save_drafts() which is a better choice</span>
+<span class="sd">        if updating many records.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">save_drafts</span><span class="p">(</span><span class="n">partition_scheme</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Transaction.clean"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate business rules against contained TrackedModels.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">SKIP_VALIDATION</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">BusinessRuleChecker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">BusinessRuleViolation</span> <span class="k">as</span> <span class="n">violation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">violation</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Transaction.to_json"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Serialize to JSON.</span>
+
+<span class="sd">        Used for storing in the session.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">&quot;_state&quot;</span><span class="p">},</span>
+            <span class="bp">cls</span><span class="o">=</span><span class="n">DjangoJSONEncoder</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">pre_save</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">add_to_transaction</span><span class="p">,</span> <span class="n">dispatch_uid</span><span class="o">=</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc</span><span class="p">):</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">pre_save</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_to_transaction</span><span class="p">,</span>
+            <span class="n">dispatch_uid</span><span class="o">=</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;Transaction pk=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">, order=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="si">}</span><span class="s2">, partition=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+
+<div class="viewcode-block" id="Transaction.add_to_transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.add_to_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">add_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;transaction&quot;</span><span class="p">):</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="bp">self</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">TransactionGroup</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An ordered group of Transactions.</span>
+
+<span class="sd">    Transactions often must be applied in a specific sequence, for example to ensure</span>
+<span class="sd">    a Measure exists before a Footnote can be associated with it.</span>
+
+<span class="sd">    A Transaction may belong to several groups, for example a group associated with an</span>
+<span class="sd">    imported Envelope, and with a WorkBasket.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">order_in_group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">transaction</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Transaction</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
+</pre></div>
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/_modules/common/models/transactions">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'_modules/common/models/transactions'&amp;body=Problem%20with%20'_modules/common/models/transactions'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../../../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Architecture - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/javascripts/_analytics.js"></script>
+    <script src="../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../_static/javascripts/_start_modules.js"></script>
+    <script src="../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../_static/javascripts/theme.js"></script>
+    <link href="../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#bird-s-eye-view">Bird’s Eye View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#concepts">Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#taric">TARIC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validity-dates-as-version-control">Validity dates as version control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tracked-models-as-version-control">Tracked models as version control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#domain-modules">Domain Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Commodities</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#tp-803-commodity-tree-changes">TP-803: Commodity Tree Changes</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#issues-to-consider-when-changing-the-tree">Issues To Consider When Changing The Tree</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#requirements-for-tackling-the-issues">Requirements For Tackling The Issues</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#tp-803-s-bootstrapping-implementation">TP-803’s Bootstrapping Implementation</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#tp-803-workflow">TP-803 Workflow</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#tp-803-scope">TP-803 Scope</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-additional_codes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">additional_codes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-quotas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">quotas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-certificates"><code class="xref py py-mod docutils literal notranslate"><span class="pre">certificates</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-geo_areas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">geo_areas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-footnotes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">footnotes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#inside-domain-modules">Inside Domain Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#models"><code class="docutils literal notranslate"><span class="pre">models</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#business-rules"><code class="docutils literal notranslate"><span class="pre">business_rules</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#patterns"><code class="docutils literal notranslate"><span class="pre">patterns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#serializers"><code class="docutils literal notranslate"><span class="pre">serializers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#import-parsers-and-import-handlers"><code class="docutils literal notranslate"><span class="pre">import_parsers</span></code> and <code class="docutils literal notranslate"><span class="pre">import_handlers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validators"><code class="docutils literal notranslate"><span class="pre">validators</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#querysets"><code class="docutils literal notranslate"><span class="pre">querysets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parsers"><code class="docutils literal notranslate"><span class="pre">parsers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#filters"><code class="docutils literal notranslate"><span class="pre">filters</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#views"><code class="docutils literal notranslate"><span class="pre">views</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cross-cutting-modules">Cross-Cutting Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-importer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">Architecture</a><ul>
+<li><a class="reference internal" href="#bird-s-eye-view">Bird’s Eye View</a></li>
+<li><a class="reference internal" href="#concepts">Concepts</a><ul>
+<li><a class="reference internal" href="#taric">TARIC</a></li>
+<li><a class="reference internal" href="#validity-dates-as-version-control">Validity dates as version control</a></li>
+<li><a class="reference internal" href="#tracked-models-as-version-control">Tracked models as version control</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#domain-modules">Domain Modules</a><ul>
+<li><a class="reference internal" href="#module-measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a></li>
+<li><a class="reference internal" href="#module-commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><ul>
+<li><a class="reference internal" href="#id1">Commodities</a><ul>
+<li><a class="reference internal" href="#tp-803-commodity-tree-changes">TP-803: Commodity Tree Changes</a><ul>
+<li><a class="reference internal" href="#issues-to-consider-when-changing-the-tree">Issues To Consider When Changing The Tree</a></li>
+<li><a class="reference internal" href="#requirements-for-tackling-the-issues">Requirements For Tackling The Issues</a></li>
+<li><a class="reference internal" href="#tp-803-s-bootstrapping-implementation">TP-803’s Bootstrapping Implementation</a></li>
+<li><a class="reference internal" href="#tp-803-workflow">TP-803 Workflow</a></li>
+<li><a class="reference internal" href="#tp-803-scope">TP-803 Scope</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-additional_codes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">additional_codes</span></code></a></li>
+<li><a class="reference internal" href="#module-quotas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">quotas</span></code></a></li>
+<li><a class="reference internal" href="#module-certificates"><code class="xref py py-mod docutils literal notranslate"><span class="pre">certificates</span></code></a></li>
+<li><a class="reference internal" href="#module-geo_areas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">geo_areas</span></code></a></li>
+<li><a class="reference internal" href="#module-regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a></li>
+<li><a class="reference internal" href="#module-footnotes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">footnotes</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#inside-domain-modules">Inside Domain Modules</a><ul>
+<li><a class="reference internal" href="#models"><code class="docutils literal notranslate"><span class="pre">models</span></code></a></li>
+<li><a class="reference internal" href="#business-rules"><code class="docutils literal notranslate"><span class="pre">business_rules</span></code></a></li>
+<li><a class="reference internal" href="#patterns"><code class="docutils literal notranslate"><span class="pre">patterns</span></code></a></li>
+<li><a class="reference internal" href="#serializers"><code class="docutils literal notranslate"><span class="pre">serializers</span></code></a></li>
+<li><a class="reference internal" href="#import-parsers-and-import-handlers"><code class="docutils literal notranslate"><span class="pre">import_parsers</span></code> and <code class="docutils literal notranslate"><span class="pre">import_handlers</span></code></a></li>
+<li><a class="reference internal" href="#validators"><code class="docutils literal notranslate"><span class="pre">validators</span></code></a></li>
+<li><a class="reference internal" href="#querysets"><code class="docutils literal notranslate"><span class="pre">querysets</span></code></a></li>
+<li><a class="reference internal" href="#parsers"><code class="docutils literal notranslate"><span class="pre">parsers</span></code></a></li>
+<li><a class="reference internal" href="#filters"><code class="docutils literal notranslate"><span class="pre">filters</span></code></a></li>
+<li><a class="reference internal" href="#views"><code class="docutils literal notranslate"><span class="pre">views</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#cross-cutting-modules">Cross-Cutting Modules</a><ul>
+<li><a class="reference internal" href="#module-importer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importer</span></code></a></li>
+<li><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
+<li><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <section id="architecture">
+<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
+<p>This page describes the high-level architecture of TaMaTo. If you want to
+familiarize yourself with the code base, you are in just the right place!</p>
+<section id="bird-s-eye-view">
+<h2>Bird’s Eye View<a class="headerlink" href="#bird-s-eye-view" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/birds-eye.svg" src="../_images/birds-eye.svg" /><p>TaMaTo is a data storage and management system that acts as the single source of
+truth for the UK customs tariff. Its role is to represent trade policy as
+designed by HM Government’s policy teams in the data domain and transmit this
+downstream to border systems and other third-party users. It takes data in
+various formats, validates it, and outputs it in various other formats.</p>
+<p>The general principle for UK tariff data is to have border services working from
+this single source of tariff data as much as possible. This avoids border
+service delivery teams from having to manually interpret complex tariff policy
+and configure their services accordingly. In general, we are trying to maximise
+data flow from the source in policy to use at the border.</p>
+<p>Policy teams forming trade policy have a number of levers to use in achieving
+their aims. New or updated policies will change the tariff rates and controls
+that are applied, and these changes then need to be reflected in the UK tariff
+stored in TaMaTo. The main “format” used to do this is the user interface being
+operated by a domain-aware tariff operations manager, who interprets and applies
+the policy on behalf of all downstream consumers. Future work will consider more
+input interfaces, such as the ability of policy teams to control the data
+directly.</p>
+<p>HMRC’s Customs Declaration Services (CDS) system is a primary consumer of data
+from TaMaTo. There are also a number of other consumers: the Jersey and Guernsey
+border systems Caesar and GEMS, policy-makers via DIT’s Data Workspace and other
+third parties via open data.</p>
+</section>
+<section id="concepts">
+<h2>Concepts<a class="headerlink" href="#concepts" title="Permalink to this headline">¶</a></h2>
+<section id="taric">
+<h3>TARIC<a class="headerlink" href="#taric" title="Permalink to this headline">¶</a></h3>
+<p>Most UK border systems were previously designed to take customs tariff updates
+from the European Union. For this reason the tariff domain model and output
+interfaces match those still used by the EU. This standard is called TARIC
+(TARif Intégré Communautaire, or Integrated Tariff of the European Communities).</p>
+<p>TARIC is a data exchange specification – the models, fields and formats that are
+used to communicate the tariff are thus pre-specified and are difficult to
+change. Primarily an XML format is used which follows a TARIC XSD.</p>
+<p>TARIC was designed to communicate <em>changes</em> about the tariff – hence there are a
+number of features that exist specifically to do this. Most notably, the TARIC
+specification models the tariff as an ever changing <em>transaction stream</em> where
+each transaction represents a change to a model to be applied.</p>
+<p>The streaming nature means that the entire state of the system is decided by the
+sum total of all of the transactions that have currently been applied – any
+future transactions are not yet visible. This has an architectural implication
+that TaMaTo must be able to read data and apply business rules as of a certain
+transaction as opposed to just considering all data that is present (including
+e.g. draft data). More detail on what practical difference this makes is in the
+documentation on <a class="reference internal" href="../adr/0012-ordering-of-tariff-transactions.html#ordering-of-tariff-transactions"><span class="std std-ref">12. Ordering of tariff transactions</span></a>.</p>
+</section>
+<section id="validity-dates-as-version-control">
+<h3>Validity dates as version control<a class="headerlink" href="#validity-dates-as-version-control" title="Permalink to this headline">¶</a></h3>
+<p>The domain model implements a version control system that specifies which models
+of the tariff are live on the border on a given day. This allows a tariff update
+to be sent to border systems in advance and take effect correctly at some future
+time. Most models use a pair of validity dates, implemented using the
+<a class="reference internal" href="../api/common/common.models.html#common.models.ValidityMixin" title="common.models.mixins.validity.ValidityMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code></a>.</p>
+<p>Description models have a requirement that there must always be one live
+description at any time. For this reason, descriptions do not have end dates and
+only have start dates. The description is live up until the start date of the
+next description record. This is implemented using the
+<a class="reference internal" href="../api/common/common.models.html#common.models.ValidityStartMixin" title="common.models.mixins.validity.ValidityStartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityStartMixin</span></code></a>.</p>
+</section>
+<section id="tracked-models-as-version-control">
+<h3>Tracked models as version control<a class="headerlink" href="#tracked-models-as-version-control" title="Permalink to this headline">¶</a></h3>
+<p>The TARIC data exchange communicates about models in terms of what changes are
+being made to them. Hence, it is not enough for a TARIC-aware system to just
+have the latest data applied and stored – the system must also keep track of
+previous versions of models and be able to describe the changes that have been
+done to them.</p>
+<p>Each model will exist multiple times in the database, with each row representing
+a new version of that model. This is implemented using the
+<a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.records.TrackedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code></a> system.</p>
+<p>Note that which version of a model is the “current” one depends in general on
+what transactions have been applied. Each row is pinned to a specific
+transaction in order to allow working out which model is the current version as
+of a certain transaction. As TaMaTo will also deal with draft data, what is
+“current” is somewhat dependent on what draft data is being considered.</p>
+<p>In general, the system will consider any version that has been “approved” to be
+eligible to be “current”, such that the version from the most recent transaction
+that is not draft is considered to be “current”.</p>
+<p>There are a number of convenience methods for finding “current” models.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.records.TrackedModelQuerySet">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.records.</span></span><span class="sig-name descname"><span class="pre">TrackedModelQuerySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/models/records.html#TrackedModelQuerySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="common.models.records.TrackedModelQuerySet.approved_up_to_transaction">
+<span class="sig-name descname"><span class="pre">approved_up_to_transaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../_modules/common/models/records.html#TrackedModelQuerySet.approved_up_to_transaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet.approved_up_to_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the approved versions of the model being queried, unless there
+exists a version of the model in a draft state within a transaction
+preceding (and including) the given transaction in the workbasket of the
+given transaction.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.records.TrackedModelQuerySet.latest_approved">
+<span class="sig-name descname"><span class="pre">latest_approved</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../_modules/common/models/records.html#TrackedModelQuerySet.latest_approved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.records.TrackedModelQuerySet.latest_approved" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the latest versions of the model being queried which have been
+approved.</p>
+<p>This will specifically fetch the most recent approved row pertaining to an object.
+If a row is unapproved, or has subsequently been rejected after approval, it should
+not be included in the returned QuerySet. Likewise any objects which have never been
+approved (are in draft as an initial create step) should not appear in the queryset.
+Any row marked as deleted will also not be fetched.</p>
+<p>If done from the TrackedModel this will return the objects for all tracked models.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+<section id="domain-modules">
+<h2>Domain Modules<a class="headerlink" href="#domain-modules" title="Permalink to this headline">¶</a></h2>
+<p>The tariffs domain model is implemented across a number of <strong>domain modules</strong>,
+each itself a Django App. Each module is responsible for one family of tariff
+objects.</p>
+<section id="module-measures">
+<span id="measures"></span><h3><a class="reference internal" href="#module-measures" title="measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a><a class="headerlink" href="#module-measures" title="Permalink to this headline">¶</a></h3>
+<p>Measures are the fundamental building blocks of the tariff, they link
+everything together, and each piece of trade legislation that impacts the trade
+of goods must be translated into one or more measures.</p>
+</section>
+<section id="module-commodities">
+<span id="commodities"></span><h3><a class="reference internal" href="#module-commodities" title="commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><a class="headerlink" href="#module-commodities" title="Permalink to this headline">¶</a></h3>
+<section id="id1">
+<h4>Commodities<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>Commodity codes are 10-digit codes that refer to specific products. Traders must put
+these codes on their declaration forms when importing or exporting goods.</p>
+<p>Nomenclature, also known as goods classification, goods nomenclature or commodity code
+classification, is the name for the full list of products in the UK Tariff.</p>
+<section id="tp-803-commodity-tree-changes">
+<h5>TP-803: Commodity Tree Changes<a class="headerlink" href="#tp-803-commodity-tree-changes" title="Permalink to this headline">¶</a></h5>
+<section id="issues-to-consider-when-changing-the-tree">
+<h6>Issues To Consider When Changing The Tree<a class="headerlink" href="#issues-to-consider-when-changing-the-tree" title="Permalink to this headline">¶</a></h6>
+<p>Changes to the commodity tree have two main types of considerations:</p>
+<ol class="arabic simple">
+<li><p>Do we have a correct commodity tree after the change?</p>
+<ul class="simple">
+<li><p>e.g. are all parent, child, sibling and other relations as they should be</p></li>
+<li><p>the question applies for the changing commodity as well as all commodities in its
+hierarchy prior and post change (these may or may not be the same depending on the
+change)</p></li>
+</ul>
+</li>
+<li><p>Have we dealt with any side effects on any related taric records</p>
+<ul class="simple">
+<li><p>related records may include measures, footnote associations, etc.</p></li>
+<li><p>affected records may be related to the changing commodity itself or to any
+commodity in the surrounding hierarchy pre- and post-change (e.g. business rule
+NIG30 might mean we need to terminate a measure)</p></li>
+<li><p>side effects are incidental violations of business rules resulting from the changes
+made to the commodity tree and as such can be caught in the vast majority of cases
+using existing business rule validation logic in TaMaTo</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="requirements-for-tackling-the-issues">
+<h6>Requirements For Tackling The Issues<a class="headerlink" href="#requirements-for-tackling-the-issues" title="Permalink to this headline">¶</a></h6>
+<p>In order to handle well commodity tree chanegs in the context of the above two main
+considerations, we need to adopt a new approach that:</p>
+<ol class="arabic simple">
+<li><p>Avoids late fails in terms of firing off business rule violations
+or post-mortem re-evaluations of the materialized commodity hierarchy</p>
+<ul class="simple">
+<li><p>this is particularly relevant when making large-scale
+changes to the tree, e.g. in the context of HS22</p></li>
+</ul>
+</li>
+<li><p>Takes advantage of early detection of side effects by providing
+automated decision logic for the correct remedy in each case</p></li>
+</ol>
+</section>
+<section id="tp-803-s-bootstrapping-implementation">
+<h6>TP-803’s Bootstrapping Implementation<a class="headerlink" href="#tp-803-s-bootstrapping-implementation" title="Permalink to this headline">¶</a></h6>
+<p>The new approach in TP-803 satisfies the above criteria by “bootstrapping” any pending
+changes to the commodity tree, providing the ability to view “before” and “after”
+snapshots of the commodity tree hierarchy pre- and post- pending changes, detecting any
+potential side effects on related records, and providing a list of pending related
+record changes that need to be applied alongside the commodity changes.</p>
+<p>The following constructs make the bootstrapping approach possible:</p>
+<ol class="arabic simple">
+<li><p>Commodity wrapper</p>
+<ul class="simple">
+<li><p>the primary benefit of the wrapper is the ability to “fake” changes to the wrapped
+underlying record for the purposes of previewing the effects and side effects of
+the change.</p></li>
+<li><p>one example is “masking” relations fields to avoid complications of dealing with
+related meta records (e.g. indents in commodities).</p></li>
+<li><p>the wrapper provides a range of “convenience” methods as additional perks</p></li>
+</ul>
+</li>
+<li><p>CommodityCollection</p>
+<ul class="simple">
+<li><p>this is just a bag of commodities</p>
+<ul>
+<li><p>included commodities may or may not be effective at the same point in time</p></li>
+<li><p>the may wrap any version of a good object</p></li>
+</ul>
+</li>
+<li><p>commodity changes are applied to this collection construct</p></li>
+</ul>
+</li>
+<li><p>CommodityTreeSnapshot</p>
+<ul class="simple">
+<li><p>a collection provides the ability to take “snapshots”</p></li>
+<li><p>a snapshot is a collection of commodities that are in effect as of a given moment,
+and constitute the tree hierarchy as of that moment</p></li>
+<li><p>a snapshot can be taken based on one of two “clocks”, but not both:</p>
+<ul>
+<li><p>a calendar clock (what goods were in effect as of date x)</p></li>
+<li><p>a transaction clock (what goods were in effect as of transaction x)</p></li>
+<li><p>see the Tariff Manual for further discussion on calendar vs transaction clocks</p></li>
+</ul>
+</li>
+<li><p>a snapshot has a tree hierarchy with parent, children and sibling relations as well
+as traversal-style relations such as ancestors and descendants</p></li>
+</ul>
+</li>
+<li><p>SnapshotDiff</p>
+<ul class="simple">
+<li><p>a dedicated construct for evaluating snapshot diffs</p></li>
+<li><p>the key benefit of the construct is clean code</p></li>
+<li><p>a diff is evaluated in terms of members of a single relation for a single commodity</p>
+<ul>
+<li><p>e.g. what is the difference in the siblings of commodity x between snapshot a and
+snapshot b?</p></li>
+</ul>
+</li>
+<li><p>there are two motivations for using a snapshot diff:</p>
+<ul>
+<li><p>compare the “before” and “after” snapshots around a commodity change</p></li>
+<li><p>compare the state of the commodity tree at two different points in time (even
+outside the context of a commodity change)</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>CommodityChange</p>
+<ul class="simple">
+<li><p>a dedicated construct for pending commodity changes</p></li>
+<li><p>this construct serves as a “watchdog” for pending changes:</p>
+<ul>
+<li><p>it evaluates the “sanity” of a requested change (e.g. if someone requests an
+update to a non-existing commodity)</p></li>
+<li><p>it evaluates and determines remedies for any side effects incidental to the
+pending change</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>SideEffect</p>
+<ul class="simple">
+<li><p>a dedicated construct for side effects and related remedies</p></li>
+<li><p>the key benefit of the construct is clean code</p></li>
+</ul>
+</li>
+<li><p>CommodityTreeLoader</p>
+<ul class="simple">
+<li><p>responsible for loading any subset of the tariff db commodity tree into a
+CommodityCollection (up to a chapter level)</p></li>
+<li><p>see notes on workfow below for more detail</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="tp-803-workflow">
+<h6>TP-803 Workflow<a class="headerlink" href="#tp-803-workflow" title="Permalink to this headline">¶</a></h6>
+<p>With the above in mind, the intended workflow that TP-803 envisions (parts of which are
+implemented elsewhere) is the following:</p>
+<ol class="arabic simple">
+<li><p>An incoming Taric envelope is parsed selectively to isolate commodity changes</p>
+<ul class="simple">
+<li><p>the initial input can in theory be anything else, e.g. a spreadsheet</p></li>
+</ul>
+</li>
+<li><p>The existing commodity tree in the database is loaded into a CommodityCollection
+using the CommodityTreeLoader (chapter by chapter)</p></li>
+<li><p>The pending commodity changes are wrapped in CommodityChange instances</p>
+<ul class="simple">
+<li><p>side effects are detected at this stage</p></li>
+<li><p>this involves collection updates, taking “before” and “after” snapshots, plus
+probing for any related records that might be affected by the change</p></li>
+<li><p>any required remedies are stored in the instance’s SideEffects list</p></li>
+</ul>
+</li>
+<li><p>The collection is updated with the pending changes represented by these objects</p></li>
+<li><p>At this point we have everything we need in order to be able to write changes to the
+tariff db that have the intended effect on the tree hierarchy and remedy any side
+effects on any related records caught up in the change</p>
+<ul class="simple">
+<li><p>this is picked up by a separate handler downstream (see scope below)</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="tp-803-scope">
+<h6>TP-803 Scope<a class="headerlink" href="#tp-803-scope" title="Permalink to this headline">¶</a></h6>
+<p>All of the above can be viewed simply as a holding bay slash decision engine; no action
+is taken until the pending changes to commodities and related records are ultimately
+applied as transactions in a workbasket downstream.  This write stage is the the conern
+of import handlers and is implemented as a separate feature (see TP-931).</p>
+</section>
+</section>
+</section>
+</section>
+<section id="module-additional_codes">
+<span id="additional-codes"></span><h3><a class="reference internal" href="#module-additional_codes" title="additional_codes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">additional_codes</span></code></a><a class="headerlink" href="#module-additional_codes" title="Permalink to this headline">¶</a></h3>
+<p>Additional codes are used when the 10-digit commodity code is not enough to
+identify the context for the trade.</p>
+<p>For example, for trade remedy purposes most additional codes identify the
+companies that the trade is coming from.</p>
+</section>
+<section id="module-quotas">
+<span id="quotas"></span><h3><a class="reference internal" href="#module-quotas" title="quotas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">quotas</span></code></a><a class="headerlink" href="#module-quotas" title="Permalink to this headline">¶</a></h3>
+<p>Quotas are used to control quantities of particular goods being imported.</p>
+</section>
+<section id="module-certificates">
+<span id="certificates"></span><h3><a class="reference internal" href="#module-certificates" title="certificates"><code class="xref py py-mod docutils literal notranslate"><span class="pre">certificates</span></code></a><a class="headerlink" href="#module-certificates" title="Permalink to this headline">¶</a></h3>
+<p>Certificates, licenses, and non-paper conditions are sometimes required to bring
+goods through customs.</p>
+<p>A certificate is not a representation of the actual document itself – the
+database stores only a certificate code (4 digits) and a description of that
+code.</p>
+</section>
+<section id="module-geo_areas">
+<span id="geo-areas"></span><h3><a class="reference internal" href="#module-geo_areas" title="geo_areas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">geo_areas</span></code></a><a class="headerlink" href="#module-geo_areas" title="Permalink to this headline">¶</a></h3>
+<p>Geographical areas represent areas to which goods can be imported or exported.</p>
+<p>All measures and quotas apply to a geographical area which may contain single or
+multiple countries.</p>
+</section>
+<section id="module-regulations">
+<span id="regulations"></span><h3><a class="reference internal" href="#module-regulations" title="regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a><a class="headerlink" href="#module-regulations" title="Permalink to this headline">¶</a></h3>
+<p>Regulations represent pieces of legislation that empower tariff measures.</p>
+</section>
+<section id="module-footnotes">
+<span id="footnotes"></span><h3><a class="reference internal" href="#module-footnotes" title="footnotes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">footnotes</span></code></a><a class="headerlink" href="#module-footnotes" title="Permalink to this headline">¶</a></h3>
+<p>Footnotes are used to give more human-readable information about measures or
+the use of commodity codes.</p>
+</section>
+</section>
+<section id="inside-domain-modules">
+<h2>Inside Domain Modules<a class="headerlink" href="#inside-domain-modules" title="Permalink to this headline">¶</a></h2>
+<p>Each domain module has a similar layout, some of which is inherited from the
+Django system. Inside each domain module, you might expect to see the following,
+either as modules themselves or single files.</p>
+<section id="models">
+<h3><code class="docutils literal notranslate"><span class="pre">models</span></code><a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
+<p>Classes representing domain models. With again a few exceptions, most models
+correspond directly to an element in the TARIC specification. Most of these will
+inherit from <a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.records.TrackedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code></a> which represents a
+model for whom history is being tracked.</p>
+<p>(The main exception is
+<code class="xref py py-class docutils literal notranslate"><span class="pre">GoodsNomenclatureIndentNode</span></code> which is really just a
+cache of the commodity code tree stored in the database and is not updated
+independently of related models.)</p>
+<p>The most notable places where the database schema has diverged from the TARIC
+specification is on descriptions, which have been flattened into a single model
+that represents both the description and the description period on the
+assumption that we will only support English as a language, and for
+<a class="reference internal" href="#module-regulations" title="regulations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">regulations</span></code></a>, where the UK legislative model is considerably simpler than
+its European counterpart.</p>
+</section>
+<section id="business-rules">
+<h3><code class="docutils literal notranslate"><span class="pre">business_rules</span></code><a class="headerlink" href="#business-rules" title="Permalink to this headline">¶</a></h3>
+<p>Classes that implement business logic checking on models. Most of the business
+rules are defined by the TARIC specification. There are also some places where
+new business rules have been written either based on observation of how
+downstream systems react to certain situations or through a desire to more
+tightly control the function of the system.</p>
+<p>Business rules from the TARIC specification are named for the business rule code
+used in that spec (e.g. <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME32" title="measures.business_rules.ME32"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME32</span></code></a>) and business
+rules that have been added to the system are given descriptive names. Each
+business rule has a docstring that describes the rule.</p>
+</section>
+<section id="patterns">
+<h3><code class="docutils literal notranslate"><span class="pre">patterns</span></code><a class="headerlink" href="#patterns" title="Permalink to this headline">¶</a></h3>
+<p>Objects that implement an operation on the data taking into account the
+high-level domain logic around how the tariff actually works. These are
+responsible for providing a simple interface to create data that will pass the
+more complex business rules around relationships between models and for encoding
+how certain situations are handled.</p>
+<p>For example, “origin quotas” are a special kind of quota that require a proof of
+origin certificate, and the <code class="xref py py-class docutils literal notranslate"><span class="pre">MeasureCreationPattern</span></code>
+has a specific argument to its
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code> method that will set up
+the measure conditions correctly to handle this use case. There is nothing in
+the business rules that specifies how origin quotas should be handled (and hence
+it may change in the future), but at the moment they are always implemented in a
+specific way and the pattern encodes that implementation.</p>
+<p>So where the tariff works a certain way as the result of a business decision as
+opposed to a constraint in the data, that decision should be implemented as a
+pattern.</p>
+</section>
+<section id="serializers">
+<h3><code class="docutils literal notranslate"><span class="pre">serializers</span></code><a class="headerlink" href="#serializers" title="Permalink to this headline">¶</a></h3>
+<p>Classes that implement serialization logic. Most are derived from Django REST
+Framework’s serializer base class. The serializers are mostly used to output
+TARIC3 XML and for this they rely on XML templates written in the Jinja2
+templating language.</p>
+</section>
+<section id="import-parsers-and-import-handlers">
+<h3><code class="docutils literal notranslate"><span class="pre">import_parsers</span></code> and <code class="docutils literal notranslate"><span class="pre">import_handlers</span></code><a class="headerlink" href="#import-parsers-and-import-handlers" title="Permalink to this headline">¶</a></h3>
+<p>These are classes that extract data from TARIC XML and process that data into
+complete models with all linked dependencies respectively.</p>
+<p>See the documentation on <a class="reference internal" href="../importer/index.html#the-importer"><span class="std std-ref">the importer</span></a> for a full
+description.</p>
+</section>
+<section id="validators">
+<h3><code class="docutils literal notranslate"><span class="pre">validators</span></code><a class="headerlink" href="#validators" title="Permalink to this headline">¶</a></h3>
+<p>Classes that implement model-specific validation routines. These mostly
+implement rules around the correct formatting of data (e.g. if the code of a
+model has the correct number of digits) compared to the business rules which
+check correctness of fields and relationships between models.</p>
+</section>
+<section id="querysets">
+<h3><code class="docutils literal notranslate"><span class="pre">querysets</span></code><a class="headerlink" href="#querysets" title="Permalink to this headline">¶</a></h3>
+<p>Implementations of custom Django QuerySet classes that represent complex
+database queries. In some places it is desirable to more tightly control how the
+system fetches it’s data – for example, to efficiently generate a new field using
+aggregates.</p>
+<p>The <a class="reference internal" href="#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModelQuerySet</span></code></a> is one of the most used
+as it implements selecting the correct versions from the version control system.</p>
+</section>
+<section id="parsers">
+<h3><code class="docutils literal notranslate"><span class="pre">parsers</span></code><a class="headerlink" href="#parsers" title="Permalink to this headline">¶</a></h3>
+<p>Classes that implement custom parsers for use in translating from simple strings
+in the user interface or spreadsheets into model objects (or sets of them).
+These do not generally follow a specific implementation pattern.</p>
+</section>
+<section id="filters">
+<h3><code class="docutils literal notranslate"><span class="pre">filters</span></code><a class="headerlink" href="#filters" title="Permalink to this headline">¶</a></h3>
+<p>Django-style filter objects used by the search interfaces.</p>
+</section>
+<section id="views">
+<h3><code class="docutils literal notranslate"><span class="pre">views</span></code><a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h3>
+<p>Django-style view objects used by the user interface.</p>
+</section>
+</section>
+<section id="cross-cutting-modules">
+<h2>Cross-Cutting Modules<a class="headerlink" href="#cross-cutting-modules" title="Permalink to this headline">¶</a></h2>
+<p>As well as domain modules, there are also a number of modules that provide
+cross-cutting concerns to the rest of the system.</p>
+<section id="module-importer">
+<span id="importer"></span><h3><a class="reference internal" href="#module-importer" title="importer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importer</span></code></a><a class="headerlink" href="#module-importer" title="Permalink to this headline">¶</a></h3>
+<p>Implements a scalable and robust system for extracting data from TARIC XML seed
+and delta files and storing them correctly in TaMaTo.</p>
+<p>See the documentation on the <a class="reference internal" href="../importer/nursery.html#module-importer.nursery" title="importer.nursery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nursery</span></code></a>,
+<a class="reference internal" href="../importer/handlers.html#module-importer.handlers" title="importer.handlers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">handlers</span></code></a>, <a class="reference internal" href="../importer/parsers_and_namespaces.html#module-importer.parsers" title="importer.parsers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">parsers</span></code></a>, <a class="reference internal" href="../importer/parsers_and_namespaces.html#module-importer.namespaces" title="importer.namespaces"><code class="xref py py-mod docutils literal notranslate"><span class="pre">namespaces</span></code></a>
+and <a class="reference internal" href="../importer/taric.html#module-importer.taric" title="importer.taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a> for more information.</p>
+</section>
+<section id="module-exporter">
+<span id="exporter"></span><h3><a class="reference internal" href="#module-exporter" title="exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a><a class="headerlink" href="#module-exporter" title="Permalink to this headline">¶</a></h3>
+<p>Classes for exposing a number of different output data formats.</p>
+<p>Most notably, the exporter module implements the correct output of the
+transaction stream into TARIC XML envelopes and handles the process by which
+these envelopes are marshalled to CDS.</p>
+<p>This module also makes available the objects in the system as an <a class="reference external" href="https://www.w3.org/TR/activitypub/">ActivityPub</a> endpoint.</p>
+<p>See the documentation on <a class="reference internal" href="../exporter/index.html#the-exporter"><span class="std std-ref">the exporter</span></a> for a full
+description.</p>
+</section>
+<section id="module-hmrc_sdes">
+<span id="hmrc-sdes"></span><h3><a class="reference internal" href="#module-hmrc_sdes" title="hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a><a class="headerlink" href="#module-hmrc_sdes" title="Permalink to this headline">¶</a></h3>
+<p>Provides the ability to communicate with HMRC’s Secure Data Exchange Service
+(SDES).</p>
+<p>When TaMaTo wants to send tariff updates to CDS, it must first make an
+<a class="reference internal" href="../exporter/celery-tasks.html#taric.models.Envelope" title="taric.models.Envelope"><code class="xref py py-class docutils literal notranslate"><span class="pre">Envelope</span></code></a> file available from an SFTP endpoint. It must
+then notify SDES via an HTTPS API that a file is ready to be downloaded. This
+module makes available the API client library to make the call.</p>
+<p>More information about SDES is available from <a class="reference external" href="https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0">the HMRC developer hub</a>.</p>
+</section>
+<section id="id2">
+<h3><a class="reference internal" href="#module-taric" title="taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-taric"></span><p>Implements models used by the <a class="reference internal" href="#module-exporter" title="exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a> to keep track of which
+envelopes the system has generated and which transactions they contained.</p>
+</section>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/architecture/index.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'architecture/index.rst'&amp;body=Problem%20with%20'architecture/index.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

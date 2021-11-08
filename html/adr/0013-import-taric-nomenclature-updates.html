@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>13. Import TARIC nomenclature updates - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/javascripts/_analytics.js"></script>
+    <script src="../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../_static/javascripts/_start_modules.js"></script>
+    <script src="../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../_static/javascripts/theme.js"></script>
+    <link href="../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Architectural Decision Records</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html">2. Use pytest-bdd for BDD testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html">3. Use Django REST Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html">4. XML Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html">5. Use tracked models and workbaskets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html">6. Use Django Polymorphic for Multi-Table Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html">7. Changes go through a stateful workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html">8. Simplify workflow states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0009-record-generated-envelopes.html">9. Generate envelope files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html">10. Convert the XML importer to a pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0011-store-and-check-preference-codes.html">11. Store and check business rules around preference codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0012-ordering-of-tariff-transactions.html">12. Ordering of tariff transactions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">13. Import TARIC nomenclature updates</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#context">Context</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scenarios">Scenarios</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-1-add-new-code">Scenario 1: Add new code</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-2-delete-code-with-a-measure">Scenario 2: Delete code with a measure</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-3-delete-parent-causing-child-to-have-new-parent">Scenario 3: Delete parent causing child to have new parent</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-4-change-time-span">Scenario 4: Change time span</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-5-change-suffix-from-real-to-intermediate">Scenario 5: Change suffix from real to intermediate</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-6-increase-indent-level-to-get-sibling-as-parent">Scenario 6: Increase indent level to get sibling as parent</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-7-change-indent-results-in-child-with-new-parent">Scenario 7: Change indent results in child with new parent</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scenario-8-indent-change-results-in-taking-children-from-other-parent">Scenario 8: Indent change results in taking children from other parent</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#behaviour-in-responding-to-business-rules">Behaviour in responding to business rules</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#nig30-or-nig31">NIG30 or NIG31</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#nig22">NIG22</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#nig34-or-nig35">NIG34 or NIG35</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#footnote-association">Footnote association</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#me1-or-me32">ME1 or ME32</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#me7">ME7</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#me88-me71-and-nig18">ME88, ME71 and NIG18</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#full-algorithm">Full algorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="0014-simplify-current-transaction-queries.html">14. Simplification of current transaction queries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">13. Import TARIC nomenclature updates</a><ul>
+<li><a class="reference internal" href="#status">Status</a></li>
+<li><a class="reference internal" href="#context">Context</a><ul>
+<li><a class="reference internal" href="#scenarios">Scenarios</a><ul>
+<li><a class="reference internal" href="#scenario-1-add-new-code">Scenario 1: Add new code</a></li>
+<li><a class="reference internal" href="#scenario-2-delete-code-with-a-measure">Scenario 2: Delete code with a measure</a></li>
+<li><a class="reference internal" href="#scenario-3-delete-parent-causing-child-to-have-new-parent">Scenario 3: Delete parent causing child to have new parent</a></li>
+<li><a class="reference internal" href="#scenario-4-change-time-span">Scenario 4: Change time span</a></li>
+<li><a class="reference internal" href="#scenario-5-change-suffix-from-real-to-intermediate">Scenario 5: Change suffix from real to intermediate</a></li>
+<li><a class="reference internal" href="#scenario-6-increase-indent-level-to-get-sibling-as-parent">Scenario 6: Increase indent level to get sibling as parent</a></li>
+<li><a class="reference internal" href="#scenario-7-change-indent-results-in-child-with-new-parent">Scenario 7: Change indent results in child with new parent</a></li>
+<li><a class="reference internal" href="#scenario-8-indent-change-results-in-taking-children-from-other-parent">Scenario 8: Indent change results in taking children from other parent</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#decision">Decision</a><ul>
+<li><a class="reference internal" href="#behaviour-in-responding-to-business-rules">Behaviour in responding to business rules</a><ul>
+<li><a class="reference internal" href="#nig30-or-nig31">NIG30 or NIG31</a></li>
+<li><a class="reference internal" href="#nig22">NIG22</a></li>
+<li><a class="reference internal" href="#nig34-or-nig35">NIG34 or NIG35</a></li>
+<li><a class="reference internal" href="#footnote-association">Footnote association</a></li>
+<li><a class="reference internal" href="#me1-or-me32">ME1 or ME32</a></li>
+<li><a class="reference internal" href="#me7">ME7</a></li>
+<li><a class="reference internal" href="#me88-me71-and-nig18">ME88, ME71 and NIG18</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#full-algorithm">Full algorithm</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <section id="import-taric-nomenclature-updates">
+<h1>13. Import TARIC nomenclature updates<a class="headerlink" href="#import-taric-nomenclature-updates" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2021-04-26</p>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
+<p>Approved</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>The Northern Ireland Protocol (NIP) requires the classification hierarchy of the
+United Kingdom to be the same or a superset of the classification hierarchy of
+the European Union (so that a trade against a product from the UK tariff can be
+unambiguously mapped to a product in the EU tariff).</p>
+<p>This means that any changes made to the TARIC nomenclature must also be made to
+the UK nomenclature. Specifically, this means only changes to the following
+TARIC record types need to be reflected:</p>
+<ul class="simple">
+<li><p>Goods nomenclature</p></li>
+<li><p>Goods nomenclature indent</p></li>
+<li><p>Goods nomenclature description</p></li>
+<li><p>Goods nomenclature origin</p></li>
+<li><p>Goods nomenclature successor</p></li>
+</ul>
+<p>We will continue to have access to a TARIC XML feed that incorporates all of the
+goods nomenclature changes for the lifetime of the NIP. We also have
+<a class="reference internal" href="../importer/index.html#the-importer"><span class="std std-ref">The Importer</span></a> that can read this XML format and reflect the contents in
+our database.</p>
+<section id="scenarios">
+<h3>Scenarios<a class="headerlink" href="#scenarios" title="Permalink to this headline">¶</a></h3>
+<section id="scenario-1-add-new-code">
+<h4>Scenario 1: Add new code<a class="headerlink" href="#scenario-1-add-new-code" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-ebc07274170adc2ef50200bac0d7b5287bb3fcb0.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph CodeAdded {
+node [shape=circle, width=0.6, fixedsize=true];
+C1 -- C2;
+C1 -- C3;
+C2 [color=green, fillcolor=lightgreen];
+}</p></object></div>
+<p>When a new child code is added, there is not any scope for business rule
+violations on related data.</p>
+</section>
+<section id="scenario-2-delete-code-with-a-measure">
+<h4>Scenario 2: Delete code with a measure<a class="headerlink" href="#scenario-2-delete-code-with-a-measure" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-ad0b22e727fba8ca4aac1b6671939ba32c5a59b6.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph CodeDeleted {
+node [shape=circle, width=0.6, fixedsize=true]
+C1 -- C2;
+C1 -- C3;
+C2 [color=red, fillcolor=pink];
+
+C2 -- C2 [headlabel=&quot;M&quot;, color=transparent]
+}</p></object></div>
+<p><a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG34" title="commodities.business_rules.NIG34"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG34</span></code></a> and
+<a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG35" title="commodities.business_rules.NIG35"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG35</span></code></a> do not allow a code to be deleted if
+it still has a measure attached.</p>
+</section>
+<section id="scenario-3-delete-parent-causing-child-to-have-new-parent">
+<h4>Scenario 3: Delete parent causing child to have new parent<a class="headerlink" href="#scenario-3-delete-parent-causing-child-to-have-new-parent" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-e22e6be65063f9a330ac175ec84182efd761f209.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph ParentCodeDeleted {
+node [shape=circle, width=0.6, fixedsize=true]
+C1 -- C2;
+C1 -- C3;
+C3 -- C4;
+C2 -- C4 [style=dotted];
+
+C3 [color=red, fillcolor=pink];
+
+C2 -- C2 [headlabel=&quot;M&quot;, color=transparent];
+C4 -- C4 [headlabel=&quot;M&quot;, color=transparent];
+}</p></object></div>
+<p>Deleting (or moving) a parent node can will cause the child node to inherit a
+new parent. This happens implicitly without any change required to the child or
+parent themselves. <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME32" title="measures.business_rules.ME32"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME32</span></code></a> will not allow the
+child code and its new parent to have measures that overlap.</p>
+</section>
+<section id="scenario-4-change-time-span">
+<h4>Scenario 4: Change time span<a class="headerlink" href="#scenario-4-change-time-span" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-646dca2a3e3683a0c65627bd4db882f947f6e34d.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph ChangeTimeSpan {
+node [shape=circle, width=0.6, fixedsize=true]
+C1 -- C2;
+C1 -- C3;
+C2 [color=goldenrod, fillcolor=lightgoldenrod];
+
+C2 -- C2 [headlabel=&quot;M, F&quot;, color=transparent]
+}</p></object></div>
+<p><a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG30" title="commodities.business_rules.NIG30"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG30</span></code></a> and
+<a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG31" title="commodities.business_rules.NIG31"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG31</span></code></a> do not allow a code to have its
+validity dates modified if they don’t span the validity range of any measure
+attached. <a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG22" title="commodities.business_rules.NIG22"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG22</span></code></a> has the same requirement
+for footnotes.</p>
+</section>
+<section id="scenario-5-change-suffix-from-real-to-intermediate">
+<h4>Scenario 5: Change suffix from real to intermediate<a class="headerlink" href="#scenario-5-change-suffix-from-real-to-intermediate" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-2469b121a249e7c7806561b2bf3ca1cded237980.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph ChangeSuffix {
+node [shape=circle, width=0.6, fixedsize=true]
+C1 -- C2;
+C1 -- C3;
+C3 -- C4;
+
+C3 [color=goldenrod, fillcolor=lightgoldenrod];
+C4 [color=green, fillcolor=lightgreen];
+
+C3 -- C3 [headlabel=&quot;M&quot;, color=transparent];
+}</p></object></div>
+<p>When a code receives new children, a code can be converted into a non-declarable
+code and new codes created underneath. If the suffix on a code is updated from
+80 to non-80, <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME7" title="measures.business_rules.ME7"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME7</span></code></a> does not allow measures to
+continue to exist on the code.</p>
+</section>
+<section id="scenario-6-increase-indent-level-to-get-sibling-as-parent">
+<h4>Scenario 6: Increase indent level to get sibling as parent<a class="headerlink" href="#scenario-6-increase-indent-level-to-get-sibling-as-parent" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-ba160d987591769ab6a1d65ae0e4a5c1158a1495.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph IncreaseIndent {
+node [shape=circle, width=0.6, fixedsize=true]
+C1 -- C2;
+C1 -- &quot;C3 v1&quot;;
+C2 -- &quot;C3 v2&quot; [style=dotted, color=goldenrod];
+
+&quot;C3 v1&quot; [color=goldenrod, fillcolor=lightgoldenrod];
+&quot;C3 v2&quot; [color=goldenrod, fillcolor=lightgoldenrod];
+
+&quot;C3 v1&quot; -- &quot;C3 v1&quot; [headlabel=&quot;M, F&quot;, color=transparent];
+&quot;C3 v2&quot; -- &quot;C3 v2&quot; [headlabel=&quot;M, F&quot;, color=transparent];
+C2 -- C2 [headlabel=&quot;M&quot;, color=transparent];
+}</p></object></div>
+<p>If the indent of a code is increased it can now appear under a new parent. Both
+of the codes could have measures that previously did not overlap but now would.
+<a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME32" title="measures.business_rules.ME32"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME32</span></code></a> does not allow two measures in the same
+commodity code hierarchy to overlap.</p>
+<p>If the item ID of the commodity code gets updated as well, it’s possible for
+<a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME88" title="measures.business_rules.ME88"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME88</span></code></a> to complain because any measures that
+exist on the code may only have applied to codes at a higher explosion level.</p>
+<p>There is a similar problem for footnotes caused by
+<a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME71" title="measures.business_rules.ME71"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME71</span></code></a> and
+<a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG18" title="commodities.business_rules.NIG18"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG18</span></code></a>.</p>
+</section>
+<section id="scenario-7-change-indent-results-in-child-with-new-parent">
+<h4>Scenario 7: Change indent results in child with new parent<a class="headerlink" href="#scenario-7-change-indent-results-in-child-with-new-parent" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-17bd4efc243feee2aab4140b1bdc6d81a6286487.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph IndentChangeNewChild {
+node [shape=circle, width=0.6, fixedsize=true]
+C1 -- C2;
+C1 -- &quot;C3 v1&quot;;
+C2 -- &quot;C3 v2&quot; [style=dotted, color=goldenrod];
+&quot;C3 v1&quot; -- C4;
+C2 -- C4 [style=dotted, color=goldenrod];
+
+&quot;C3 v1&quot; [color=goldenrod, fillcolor=lightgoldenrod];
+&quot;C3 v2&quot; [color=goldenrod, fillcolor=lightgoldenrod];
+
+C2 -- C2 [headlabel=&quot;M&quot;, color=transparent];
+C4 -- C4 [headlabel=&quot;M&quot;, color=transparent];
+}</p></object></div>
+<p>In the same way as Scenario 6, changing the indent and/or item ID of a code can
+cause measure business rules to fire. In this case however the measures do not
+need to be on the code being moved. If the moved code had children which have
+now received new parents, it’s possible to get any of the above errors on that
+child’s measures instead, even though no change was made to the child itself.</p>
+</section>
+<section id="scenario-8-indent-change-results-in-taking-children-from-other-parent">
+<h4>Scenario 8: Indent change results in taking children from other parent<a class="headerlink" href="#scenario-8-indent-change-results-in-taking-children-from-other-parent" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="../_images/graphviz-c02117469245c6fe9c9b8a39ffc1b2201663ef4f.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph IndentChangeWithStolenChild {
+node [shape=circle, width=0.6, fixedsize=true]
+C1 -- C2;
+C2 -- &quot;C3 v1&quot;;
+C2 -- C4;
+C1 -- &quot;C3 v2&quot; [style=dotted, color=goldenrod];
+&quot;C3 v2&quot; -- C4 [style=dotted, color=goldenrod];
+
+&quot;C3 v1&quot; [color=goldenrod, fillcolor=lightgoldenrod];
+&quot;C3 v2&quot; [color=goldenrod, fillcolor=lightgoldenrod];
+
+&quot;C3 v1&quot; -- &quot;C3 v1&quot; [headlabel=&quot;M&quot;, color=transparent];
+&quot;C3 v2&quot; -- &quot;C3 v2&quot; [headlabel=&quot;M&quot;, color=transparent];
+C4 -- C4 [headlabel=&quot;M&quot;, color=transparent];
+}</p></object></div>
+<p>In this case an indent change causes a code to take on new children again at a
+risk of <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME32" title="measures.business_rules.ME32"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME32</span></code></a> errors. Note though that there
+aren’t any other business rules that the child can trigger through having a new
+parent.</p>
+<p>Hence we learn that it will be sufficient to check all business rules on
+a commodity code after its update and its <em>old</em> children – new children do not
+need to be checked.</p>
+</section>
+</section>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
+<p>We will extend the importer system to be able to read and process just the goods
+nomenclature changes in a TARIC XML delta and whilst ignoring all other changes.</p>
+<p>The EU has the opportunity to update any of its own data to avoid business rule
+errors that would occur when a nomenclature change is made. For example, to
+avoid a <a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG30" title="commodities.business_rules.NIG30"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG30</span></code></a> error may require some
+updates to measure end or start dates, and these will need to be made in a
+transaction <em>before</em> the nomenclature change.</p>
+<p>But the UK tariff will not know about possible nomenclature changes before
+ingesting them, so in general a change to the nomenclature could introduce a
+business rule error. To account for this, the import system will need to look
+for errors as each nomenclature change is ingested and retroactively add
+transactions that update related data to avoid those errors from occuring.</p>
+<p>In the simplest version of the algorithm, business rules are checked at the end
+of each transaction and related data can simply be updated or deleted. Any holes
+in the data that are left will need to be corrected manually.</p>
+<p>Added transactions could simply delete all related data that causes errors, but
+there are opportunities for automatic fixes that remove some need to manually
+recreate errored data. Where these fixes are safe to generally make, they should
+be used in favour of simply deleting data to minimise manual rework.</p>
+<p>There are also opportunities for errors to occur on models that aren’t even
+changed by the transaction, such as in Scenarios 3 and 7 above. So in addition
+to running business rules on the goods nomenclature objects themselves, we will
+also need to run them on any of the commodity code’s children that it had
+<em>before</em> it was updated.</p>
+<section id="behaviour-in-responding-to-business-rules">
+<h3>Behaviour in responding to business rules<a class="headerlink" href="#behaviour-in-responding-to-business-rules" title="Permalink to this headline">¶</a></h3>
+<p>The algorithm will need to respond to the following business rule violations:</p>
+<section id="nig30-or-nig31">
+<h4>NIG30 or NIG31<a class="headerlink" href="#nig30-or-nig31" title="Permalink to this headline">¶</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">commodities.business_rules.</span></span><span class="sig-name descname"><span class="pre">NIG30</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG30"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>When a goods nomenclature is used in a goods measure then the validity
+period of the goods nomenclature must span the validity period of the goods
+measure.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">commodities.business_rules.</span></span><span class="sig-name descname"><span class="pre">NIG31</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG31"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>When a goods nomenclature is used in an additional nomenclature measure
+then the validity period of the goods nomenclature must span the validity
+period of the additional nomenclature measure.</p>
+</dd></dl>
+
+<p>This can occur if goods nomenclature validity dates have been changed (e.g. to
+introduce an end date where one was not present) but there are measures using that
+nomenclature that are valid outside of the new period.</p>
+<p>The course of action will be to reduce the validity period of the measure to
+match the new constraint of the nomenclature. The validity period of the measure
+should not be increased as this may not represent policy intent.</p>
+<ul class="simple">
+<li><p>If the nomenclature now ends before the measure, set the measure end date to
+be the end date of the nomenclature.</p></li>
+<li><p>If the nomenclature now starts after the measure, set the measure start date
+to be the start date of the nomenclature.</p></li>
+<li><p>If the nomenclature dates now no longer overlap with the measure, delete the measure.</p></li>
+</ul>
+</section>
+<section id="nig22">
+<h4>NIG22<a class="headerlink" href="#nig22" title="Permalink to this headline">¶</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">commodities.business_rules.</span></span><span class="sig-name descname"><span class="pre">NIG22</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG22"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>The period of the association with a footnote must be within the validity
+period of the nomenclature.</p>
+</dd></dl>
+
+<p>This is similar to the above where the goods nomenclature validity dates have
+been changed and now no longer cover the validity dates of a footnote
+association.</p>
+<p>The same rules as above should be applied with the footnote association in place
+of the measure.</p>
+</section>
+<section id="nig34-or-nig35">
+<h4>NIG34 or NIG35<a class="headerlink" href="#nig34-or-nig35" title="Permalink to this headline">¶</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">commodities.business_rules.</span></span><span class="sig-name descname"><span class="pre">NIG34</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG34"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>A goods nomenclature cannot be deleted if it is used in a goods
+measure.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">commodities.business_rules.</span></span><span class="sig-name descname"><span class="pre">NIG35</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG35"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>A goods nomenclature cannot be deleted if it is used in an additional
+nomenclature measure.</p>
+</dd></dl>
+
+<p>The goods nomenclature has just been deleted but there are a number of measures
+that remain in existence.</p>
+<p>The only course of action here is to delete the remaining measures.</p>
+</section>
+<section id="footnote-association">
+<h4>Footnote association<a class="headerlink" href="#footnote-association" title="Permalink to this headline">¶</a></h4>
+<p>There is in fact another case here which no business rule accounts for: the
+goods nomenclature can be deleted whilst still in use on a footnote association.</p>
+<p>As above, the only course of action is to delete the remaining associations.</p>
+</section>
+<section id="me1-or-me32">
+<h4>ME1 or ME32<a class="headerlink" href="#me1-or-me32" title="Permalink to this headline">¶</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME1"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>The combination of measure type, geographical area, goods nomenclature
+item id, additional code type, additional code, order number, reduction
+indicator and start date must be unique.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME32</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME32"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>There may be no overlap in time with other measure occurrences with a goods
+code in the same nomenclature hierarchy which references the same measure
+type, geo area, order number, additional code and reduction indicator.</p>
+<p>This rule is not applicable for Meursing additional codes.</p>
+</dd></dl>
+
+<p>In this case a goods nomenclature is now a parent of something where before it
+was not, and the measures defined on that nomenclature now overlap with measures
+on another code.</p>
+<p>This can be if:</p>
+<ol class="arabic simple">
+<li><p>the delta has created a new indent</p></li>
+<li><p>the delta has updated the dates on an old indent</p></li>
+<li><p>the delta has updated the indent on an old indent</p></li>
+<li><p>the delta has deleted some other indent and now this one is valid longer</p></li>
+<li><p>the delta has changed the item id on the commodity and now it lives elsewhere</p></li>
+</ol>
+<p>The strategy is to try and manouever the measure around the problematic indent
+by updating the dates, which in case #1 or #2 can preserve as much data as
+possible. If this isn’t possible, we have to just give up and delete the
+measure.</p>
+<ul class="simple">
+<li><p>If the measure overlaps with start of indent, update measure end date to be
+indent validity end</p></li>
+<li><p>If the measure overlaps with the end of indent, update measure start date to
+be indent validity end</p></li>
+<li><p>If the measure overlaps with the full range of indent, delete measure</p></li>
+</ul>
+<p>A more complicated automatic fix involving trying to identify child codes that
+should now host the measure is possible but requires more complex human
+intervention, so it should not be used for now.</p>
+</section>
+<section id="me7">
+<h4>ME7<a class="headerlink" href="#me7" title="Permalink to this headline">¶</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME7</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME7"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>The goods nomenclature code must be a product code.</p>
+<p>It may not be an intermediate line.</p>
+</dd></dl>
+
+<p>It is technically possible to have the suffix of a goods nomenclature updated to
+turn it from real to intermediate code where measures cannot be created.</p>
+<p>The only feasible option is to delete the measure.</p>
+</section>
+<section id="me88-me71-and-nig18">
+<h4>ME88, ME71 and NIG18<a class="headerlink" href="#me88-me71-and-nig18" title="Permalink to this headline">¶</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME71</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME71"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Footnotes with a footnote type for which the application type = “CN footnotes”
+cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME88</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME88"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>The level of the goods code cannot exceed the explosion level of the
+measure type.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">commodities.business_rules.</span></span><span class="sig-name descname"><span class="pre">NIG18</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG18"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Footnotes with a footnote type for which the application type = “CN
+footnotes” must be linked to CN lines (all codes up to 8 digits).</p>
+</dd></dl>
+
+<p>When the item ID of the goods nomenclature is updated, its possible that the
+measures or footnotes attached to the goods nomenclature are no longer allowed
+to be present because the application code of the associated footnote or
+explosion level of the associated measure type may limit how low in the goods
+hierarchy the association can be made.</p>
+<p>In the case of ME71 or NIG18, the footnote associations with the measure or
+commodity code respectively will need to be deleted. (Changes to item ID do not
+have validity dates associated with them, but should be very rare.)</p>
+<p>In the case of ME88, the measure will need to be deleted.</p>
+</section>
+</section>
+<section id="full-algorithm">
+<h3>Full algorithm<a class="headerlink" href="#full-algorithm" title="Permalink to this headline">¶</a></h3>
+<div class="graphviz"><object data="../_images/graphviz-1c170cbfb8797364fbb51030c23213c9df13c382.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph BasicAlgorithm {
+node [shape=box]
+graph [ratio=1.414]
+
+Start [shape=circle, color=green, label=&quot;&quot;]
+Start -&gt; &quot;Find business rule violations&quot; [label=&quot;Model is a Goods Nomenclature or Indent&quot;]
+Start -&gt; &quot;Save model&quot; [label=&quot;Model is Goods Nomenclature\nDescription,\nOrigin or Successor&quot;]
+Start -&gt; &quot;Ignore model&quot; [label=&quot;Model is something else&quot;]
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is NIG30/31&quot;
+  &quot;Violation is NIG30/31&quot; -&gt; &quot;Update measure end date&quot; [label=&quot;Updated to end sooner&quot;]
+      &quot;Update measure end date&quot; -&gt; &quot;Re-run business rules&quot;
+  &quot;Violation is NIG30/31&quot; -&gt; &quot;Update measure start date&quot; [label=&quot;Updated to start later&quot;]
+      &quot;Update measure start date&quot; -&gt; &quot;Re-run business rules&quot;
+  &quot;Violation is NIG30/31&quot; -&gt; &quot;Delete measure&quot; [label=&quot;No longer overlaps&quot;]
+      &quot;Delete measure&quot; -&gt; &quot;Re-run business rules&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is NIG22&quot;
+  &quot;Violation is NIG22&quot; -&gt; &quot;Update footnote association\nend date&quot; [label=&quot;Updated to end sooner&quot;]
+      &quot;Update footnote association\nend date&quot; -&gt; &quot;Re-run business rules&quot;
+  &quot;Violation is NIG22&quot; -&gt; &quot;Update footnote association\nstart date&quot; [label=&quot;Updated to start later&quot;]
+      &quot;Update footnote association\nstart date&quot; -&gt; &quot;Re-run business rules&quot;
+  &quot;Violation is NIG22&quot; -&gt; &quot;Delete association&quot; [label=&quot;No longer overlaps&quot;]
+      &quot;Delete association&quot; -&gt; &quot;Re-run business rules&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Footnote association still exists&quot;
+  &quot;Footnote association still exists&quot; -&gt; &quot;Delete association&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is NIG34/35&quot;
+  &quot;Violation is NIG34/35&quot; -&gt; &quot;Delete measure&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is ME32&quot;
+  &quot;Violation is ME32&quot; -&gt; &quot;Update measure end date\nto be indent validity start&quot; [label=&quot;Measure overlaps with\nstart of indent&quot;]
+    &quot;Update measure end date\nto be indent validity start&quot; -&gt; &quot;Re-run business rules&quot;
+  &quot;Violation is ME32&quot; -&gt; &quot;Update measure start date\nto be indent validity end&quot; [label=&quot;Measure overlaps with\nend of indent&quot;]
+    &quot;Update measure start date\nto be indent validity end&quot; -&gt; &quot;Re-run business rules&quot;
+  &quot;Violation is ME32&quot; -&gt; &quot;Delete measure&quot; [label=&quot;Measure overlaps with\nfull range of indent&quot;]
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is ME7&quot;
+  &quot;Violation is ME7&quot; -&gt; &quot;Delete measure&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is ME1&quot;
+  &quot;Violation is ME1&quot; -&gt; &quot;Delete measure&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is ME71&quot;
+  &quot;Violation is ME71&quot; -&gt; &quot;Delete association&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is NIG18&quot;
+  &quot;Violation is NIG18&quot; -&gt; &quot;Delete association&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;Violation is ME88&quot;
+  &quot;Violation is ME88&quot; -&gt; &quot;Delete measure&quot;
+
+&quot;Re-run business rules&quot; -&gt; &quot;Find business rule violations&quot;
+
+&quot;Find business rule violations&quot; -&gt; &quot;No violations on any measure&quot;
+  &quot;No violations on any measure&quot; -&gt; &quot;Save model&quot;
+}</p></object></div>
+<p>Note that “save model” in the above diagram does not imply saving to the
+database hasn’t already occured. In order to check most of these business rules
+it will be necessary to save the goods nomenclature model first and then to put
+the measure “before” it. Hence, the system will also need to be able to reorder
+transactions that may have already been saved.</p>
+<p>Note also that transaction IDs present in the XML should be ignored and each
+transaction allocated the next subsequent transaction ID in UK global order.</p>
+</section>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
+<p>Note that it is very possible for the EU to update goods nomenclature objects in
+a way that break its own rules. But as the system doesn’t have a huge amount of
+choice in the matter of whether to apply these, even if business rules on
+imported nomenclature objects are checked, they need to be saved anyway.</p>
+<p>If the system makes a change to related data the business rules for it will also
+need to be run. This could result in violations of some business rule not listed
+here which is outside the scope of the algorithm. In this case, the import will
+need to abort and all changes should be rolled back.</p>
+<p>As with any algorithm that makes arbitrary changes to its own state, it is
+possible that repeated automatic fixes of data could result in a loop – one
+business rule fix causes another to fire and the fix to that one causes the
+original data to be recreated, etc. As a safety mechanism, the algorithm
+probably needs a depth counter to understand how many passes of fixes have been
+attempted for a given model. If this counter exceeds some finite configured
+value, the import should fail and all changes should be rolled back.</p>
+<p>Some advanced automatic fixing that avoids more holes in data is possible by
+considering changes across multiple transactions. An example that has been
+observed is a goods nomenclature being deleted and then recreated under a
+different SID. Another example might be a goods nomenclature being removed and
+then being recreated under a different heading.</p>
+<p>In both of these cases, it would be nice to be able to apply automatic
+resolutions based on all of the transactions processed, however this is
+significantly harder to achieve as it requires a lot more storage of state. In
+principle, state may need to be examined between import runs if the EU removes a
+code on one day and then resurrects it on a subsequent day. So for now the
+algorithm will only do the minimum required to avoid business rule violations
+and only consider one transaction at a time with no memory between them.</p>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/adr/0013-import-taric-nomenclature-updates.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'adr/0013-import-taric-nomenclature-updates.rst'&amp;body=Problem%20with%20'adr/0013-import-taric-nomenclature-updates.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

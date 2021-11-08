@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Tariff Management Tool - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/javascripts/_analytics.js"></script>
+    <script src="_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="_static/javascripts/_govuk/modules.js"></script>
+    <script src="_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="_static/javascripts/_modules/navigation.js"></script>
+    <script src="_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="_static/javascripts/_start_modules.js"></script>
+    <script src="_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="_static/javascripts/_vendor/lodash.js"></script>
+    <script src="_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="_static/javascripts/theme.js"></script>
+    <link href="_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="#" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">Tariff Management Tool</a><ul>
+<li><a class="reference internal" href="#getting-started">Getting started</a></li>
+<li><a class="reference internal" href="#development-environment">Development environment</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#database">Database</a></li>
+<li><a class="reference internal" href="#installing">Installing</a></li>
+<li><a class="reference internal" href="#running">Running</a></li>
+<li><a class="reference internal" href="#testing">Testing</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-the-importer">Using the importer</a></li>
+<li><a class="reference internal" href="#using-the-exporter">Using the exporter</a><ul>
+<li><a class="reference internal" href="#running-the-exporter">Running the exporter</a></li>
+<li><a class="reference internal" href="#manually-trigger-the-upload-to-s3">Manually trigger the upload to s3</a></li>
+<li><a class="reference internal" href="#dump-transactions">Dump transactions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#how-to-contribute">How to contribute</a></li>
+<li><a class="reference internal" href="#how-to-deploy">How to deploy</a><ul>
+<li><a class="reference internal" href="#accessing-databases-in-gov-uk-paas">Accessing databases in GOV.UK PaaS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <div class="toctree-wrapper compound">
+</div>
+<section id="tariff-management-tool">
+<h1>Tariff Management Tool<a class="headerlink" href="#tariff-management-tool" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://codecov.io/gh/uktrade/tamato"><img alt="codecov" src="https://codecov.io/gh/uktrade/tamato/branch/master/graph/badge.svg" /></a></p>
+<p>The Tariff Management Tool (TaMaTo) is a web application that enables Tariff Managers to
+browse and make changes to the UK Global Tariff, and submit these changes to HMRC.</p>
+<p>The tool is available at <a class="reference external" href="https://www.manage-trade-tariffs.trade.gov.uk/">https://www.manage-trade-tariffs.trade.gov.uk/</a></p>
+<section id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>A local instance of the tool can be run using <a class="reference external" href="https://www.docker.com/">Docker</a>.</p>
+<p>Download the codebase:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:uktrade/tamato
+$ <span class="nb">cd</span> tamato
+</pre></div>
+</div>
+<p>Build the Docker image:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose build
+</pre></div>
+</div>
+<p>Run the tamato app:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ cp sample.env .env
+$ docker-compose up
+</pre></div>
+</div>
+<p>Go to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> in your web browser to view the app</p>
+<p>Import from a dump of the database:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose <span class="nb">exec</span> -T db psql -U postgres &lt; tamato-db-dump.sql
+</pre></div>
+</div>
+<p>To get a database dump, please contact the <a class="reference external" href="mailto:stephen&#46;corder&#37;&#52;&#48;trade&#46;gov&#46;uk?subject=TaMaTo+database+dump+request">TAP team</a>.</p>
+<p>Run database migrations (in another terminal):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose <span class="nb">exec</span> tamato python manage.py migrate
+</pre></div>
+</div>
+<p>Create a superuser (in another terminal), to enable logging in to the app:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose <span class="nb">exec</span> tamato python manage.py createsuperuser
+</pre></div>
+</div>
+</section>
+<section id="development-environment">
+<h2>Development environment<a class="headerlink" href="#development-environment" title="Permalink to this headline">¶</a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>The following dependencies are required to run this app:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://python.org/">Python</a> 3.8.x</p></li>
+<li><p><a class="reference external" href="https://nodejs.org/">Node.js</a> 16.8.x</p></li>
+<li><p><a class="reference external" href="https://postgresql.org/">PostgreSQL</a> 12</p></li>
+<li><p><a class="reference external" href="https://redis.io/">Redis</a> 5.x</p></li>
+</ul>
+<p>The app requires an AWS S3 bucket or a compatible implementation, such as <a class="reference external" href="https://min.io/">MinIO</a></p>
+</section>
+<section id="database">
+<h3>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
+<p>Create a database instance and user:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ sudo su - postgres
+postgres $ createdb tamato
+postgres $ psql -c <span class="s2">&quot;CREATE USER &lt;username&gt; SUPERUSER PASSWORD &#39;&lt;password&gt;&#39;;&quot;</span>
+</pre></div>
+</div>
+<p>Make a note of the <code class="docutils literal notranslate"><span class="pre">&lt;username&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;password&gt;</span></code> for use in the
+<span class="target" id="index-0"></span><a class="reference internal" href="envvars.html#envvar-DATABASE_URL"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">DATABASE_URL</span></code></a> environment variable.</p>
+<p>Import from a dump of the database:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>postgres $ psql -d tamato -f /tmp/tamato-db-dump.sql
+</pre></div>
+</div>
+<p>To get a database dump, please contact the TAP team.</p>
+</section>
+<section id="installing">
+<h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:uktrade/tamato
+$ <span class="nb">cd</span> tamato
+$ python -m venv venv
+$ <span class="nb">source</span> venv/bin/activate
+$ pip install -U pip
+$ pip install wheel -r requirements-dev.txt
+$ npm install
+$ npm run build
+</pre></div>
+</div>
+</section>
+<section id="running">
+<h3>Running<a class="headerlink" href="#running" title="Permalink to this headline">¶</a></h3>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file containing <a class="reference internal" href="envvars.html"><span class="doc">environment variables</span></a></p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ cp sample.env .env
+</pre></div>
+</div>
+<p>Open another terminal and Compile SCSS and Javascripts:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py collectstatic
+</pre></div>
+</div>
+<p>To be able to login to the app, you will first need to create a Django user with
+superuser access:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py createsuperuser
+</pre></div>
+</div>
+<p>Then run the app:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py runserver
+</pre></div>
+</div>
+<p>Then you can browse to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> to view the app.
+To access the Django admin page, browse to <a class="reference external" href="http://localhost:8000/admin/">http://localhost:8000/admin/</a>.</p>
+</section>
+<section id="testing">
+<h3>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h3>
+<p>To run tests use the following command:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py <span class="nb">test</span>
+</pre></div>
+</div>
+<p>For more detailed information on running tests, see <a class="reference internal" href="testing.html"><span class="doc">Testing</span></a></p>
+</section>
+</section>
+<section id="using-the-importer">
+<h2>Using the importer<a class="headerlink" href="#using-the-importer" title="Permalink to this headline">¶</a></h2>
+<p>The Tariff Management Tool (TaMaTo) needs to import TARIC3 XML data from
+both the EU (for historical data) and from HMRC (for VAT measures).</p>
+<p>TaMaTo provides an import which parses TARIC3 XML and inserts the data
+into the TAMATO database.</p>
+<p>Run the script to see the command line arguments:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py import_taric --help
+</pre></div>
+</div>
+<p>This command is broken into two stages:</p>
+<ol class="arabic">
+<li><p>Chunking the file and loading into the DB. If a file is greater than
+50MB it is broken into chunks and those chunks saved into the
+database. This can be run in isolation using the command</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py chunk_taric
+</pre></div>
+</div>
+</li>
+<li><p>Passing the chunks through the importer system into TrackedModels.
+This can be run in isolation using the command</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py run_import_batch
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="using-the-exporter">
+<h2>Using the exporter<a class="headerlink" href="#using-the-exporter" title="Permalink to this headline">¶</a></h2>
+<p>The Tariff Management Tool (TaMaTo) exports data to HMRC.</p>
+<p>During normal operation uploads trigger the <code class="docutils literal notranslate"><span class="pre">upload_transactions</span></code> task
+which uploads transactions as XML to the HMRC bucket.</p>
+<section id="running-the-exporter">
+<h3>Running the exporter<a class="headerlink" href="#running-the-exporter" title="Permalink to this headline">¶</a></h3>
+<p>The exporter pushes data to a queue, which one or more asynchronous worker
+processes monitor and perform the upload to S3, so as not to block the web
+server.</p>
+<p>To run the exporter queue process, run the following command:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery -A common.celery beat --loglevel<span class="o">=</span>info
+</pre></div>
+</div>
+<p>Open another terminal and start a Celery worker:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery -A common.celery worker --loglevel<span class="o">=</span>info
+</pre></div>
+</div>
+</section>
+<section id="manually-trigger-the-upload-to-s3">
+<h3>Manually trigger the upload to s3<a class="headerlink" href="#manually-trigger-the-upload-to-s3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ celery -A common.celery call exporter.tasks.upload_transactions
+</pre></div>
+</div>
+<p>The celery job UUID is output and the command quits. To see output
+switch to the celery workers console. A more ergonomic way of launching
+the celery job is to launch the management command:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py upload_transactions
+</pre></div>
+</div>
+</section>
+<section id="dump-transactions">
+<h3>Dump transactions<a class="headerlink" href="#dump-transactions" title="Permalink to this headline">¶</a></h3>
+<p>Transactions waiting to be uploaded to the HMRC S3 bucket can be saved
+to a file or output to stdout using a management command:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py dump_transactions <span class="o">[</span>-o filename<span class="o">]</span>
+</pre></div>
+</div>
+<p>Output defaults to stdout if filename is <code class="docutils literal notranslate"><span class="pre">-</span></code> or is not supplied.</p>
+</section>
+</section>
+<section id="how-to-contribute">
+<h2>How to contribute<a class="headerlink" href="#how-to-contribute" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference internal" href="CONTRIBUTING.html#contributing"><span class="std std-ref">How to contribute</span></a></p>
+</section>
+<section id="how-to-deploy">
+<h2>How to deploy<a class="headerlink" href="#how-to-deploy" title="Permalink to this headline">¶</a></h2>
+<p>The app is deployed with Jenkins via the <cite>Tariffs/TaMaTo</cite> job. The <code class="docutils literal notranslate"><span class="pre">master</span></code> branch
+may be deployed to <code class="docutils literal notranslate"><span class="pre">development</span></code>, <code class="docutils literal notranslate"><span class="pre">staging</span></code>, <code class="docutils literal notranslate"><span class="pre">uat</span></code>, <code class="docutils literal notranslate"><span class="pre">training</span></code> or
+<code class="docutils literal notranslate"><span class="pre">production</span></code> environments by selecting the environment name from the <strong>ENV</strong>
+dropdown on the <cite>Build with Parameters</cite> page.</p>
+<section id="accessing-databases-in-gov-uk-paas">
+<h3>Accessing databases in GOV.UK PaaS<a class="headerlink" href="#accessing-databases-in-gov-uk-paas" title="Permalink to this headline">¶</a></h3>
+<p>To access databases hosted in GOV.UK PaaS directly, you will need a PaaS
+login and the <a class="reference external" href="https://docs.cloudfoundry.org/cf-cli/install-go-cli.html">cf CLI
+tool</a>.</p>
+<p>You will need to install the <a class="reference external" href="https://github.com/alphagov/paas-cf-conduit">conduit plugin</a>:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf install-plugin conduit
+</pre></div>
+</div>
+<p>Then you need to login to the DIT GOV.UK PaaS:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf login --sso -s &lt;space&gt;
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;space&gt;</span></code> is one of <code class="docutils literal notranslate"><span class="pre">tariffs-dev</span></code>, <code class="docutils literal notranslate"><span class="pre">tariffs-staging</span></code>,
+<code class="docutils literal notranslate"><span class="pre">tariffs-training</span></code> or <code class="docutils literal notranslate"><span class="pre">tariffs-uat</span></code>.</p>
+<p>Once you are logged in, you can list the services hosted in the space with</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf services
+</pre></div>
+</div>
+<p>You can access <code class="docutils literal notranslate"><span class="pre">postgres</span></code> services with the following command:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf conduit &lt;name&gt; -- psql
+</pre></div>
+</div>
+<p>So if you are logged in to the <code class="docutils literal notranslate"><span class="pre">tariffs-dev</span></code> space, you could access the dev
+environment database with <code class="docutils literal notranslate"><span class="pre">cf</span> <span class="pre">conduit</span> <span class="pre">tamato-dev-db</span> <span class="pre">--</span> <span class="pre">psql</span></code>.</p>
+</section>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/index.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'index.rst'&amp;body=Problem%20with%20'index.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

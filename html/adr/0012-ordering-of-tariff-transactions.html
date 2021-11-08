@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>12. Ordering of tariff transactions - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/javascripts/_analytics.js"></script>
+    <script src="../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../_static/javascripts/_start_modules.js"></script>
+    <script src="../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../_static/javascripts/theme.js"></script>
+    <link href="../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Architectural Decision Records</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html">2. Use pytest-bdd for BDD testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html">3. Use Django REST Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html">4. XML Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-use-model-tracking-and-workbaskets.html">5. Use tracked models and workbaskets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-use-django-polymorphic.html">6. Use Django Polymorphic for Multi-Table Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0007-changes-go-through-a-stateful-workflow.html">7. Changes go through a stateful workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-simplify-workflow-states.html">8. Simplify workflow states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0009-record-generated-envelopes.html">9. Generate envelope files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-convert-the-importer-to-a-pipeline.html">10. Convert the XML importer to a pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0011-store-and-check-preference-codes.html">11. Store and check business rules around preference codes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">12. Ordering of tariff transactions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#context">Context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ordering-within-transactions">Ordering within transactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ordering-of-transactions">Ordering of transactions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#terminating-a-geographical-area-membership-where-exclusions-exist">#1: Terminating a geographical area membership where exclusions exist</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#changing-the-length-of-a-goods-nomenclature">#2: Changing the length of a goods nomenclature</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#changing-the-volume-of-quotas-with-associations">#3: Changing the volume of quotas with associations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#changing-the-quota-order-number-of-a-quota">#4: Changing the quota order number of a quota</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-we-have-learned">What we have learned</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-business-rule-errors">Handling business rule errors</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#using-multiple-workbaskets">Using multiple workbaskets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="0013-import-taric-nomenclature-updates.html">13. Import TARIC nomenclature updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0014-simplify-current-transaction-queries.html">14. Simplification of current transaction queries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">12. Ordering of tariff transactions</a><ul>
+<li><a class="reference internal" href="#status">Status</a></li>
+<li><a class="reference internal" href="#context">Context</a></li>
+<li><a class="reference internal" href="#ordering-within-transactions">Ordering within transactions</a></li>
+<li><a class="reference internal" href="#ordering-of-transactions">Ordering of transactions</a><ul>
+<li><a class="reference internal" href="#terminating-a-geographical-area-membership-where-exclusions-exist">#1: Terminating a geographical area membership where exclusions exist</a></li>
+<li><a class="reference internal" href="#changing-the-length-of-a-goods-nomenclature">#2: Changing the length of a goods nomenclature</a></li>
+<li><a class="reference internal" href="#changing-the-volume-of-quotas-with-associations">#3: Changing the volume of quotas with associations</a></li>
+<li><a class="reference internal" href="#changing-the-quota-order-number-of-a-quota">#4: Changing the quota order number of a quota</a></li>
+<li><a class="reference internal" href="#what-we-have-learned">What we have learned</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#handling-business-rule-errors">Handling business rule errors</a><ul>
+<li><a class="reference internal" href="#using-multiple-workbaskets">Using multiple workbaskets</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#decision">Decision</a></li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <section id="ordering-of-tariff-transactions">
+<span id="id1"></span><h1>12. Ordering of tariff transactions<a class="headerlink" href="#ordering-of-tariff-transactions" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2021-02-24</p>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
+<p>Approved</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>The tariff is communicated to other systems through a stream of transactions.
+Each transaction represents an “atomic” set of changes to a single business
+object (which may involve multiple records e.g. creating a new measure results
+in the creation of the measure itself and a number of components or conditions).</p>
+<p>In particular, it’s important to stress that a transaction “should not” contain
+a collection of related changes, but “should” focus on a specific record code
+(e.g. the removal of a goods nomenclature and the measures that apply to it
+would need to happen in multiple transactions).</p>
+<p>The TARIC3 business rules almost exclusively talk about what is and is not a
+valid end-state for the data to be in. For example,
+<a class="reference internal" href="../business_rules/quotas.html#quotas.business_rules.QA3" title="quotas.business_rules.QA3"><code class="xref py py-class docutils literal notranslate"><span class="pre">QA3</span></code></a> specifies that a sub-quota must not have a
+bigger balance than it’s parent quota.</p>
+</section>
+<section id="ordering-within-transactions">
+<h2>Ordering within transactions<a class="headerlink" href="#ordering-within-transactions" title="Permalink to this headline">¶</a></h2>
+<p>The point at which the business rules are applied to each transaction is not
+consistent – the TARIC Principles doc has the following to say:</p>
+<blockquote>
+<div><p>CREATES: All  validations  can  be applied  on  a  record  by  record  basis
+for  inserts,  but  the  final acceptance should be done at transaction
+level. Validations can be applied at record level as the records are sent in
+a logical order, but the transaction should be refused as a whole if a
+validation fails.</p>
+<p>UPDATES: Validations must be applied at transaction level for updates.</p>
+<p>DELETES: Validations must be applied at transaction level for deletes.</p>
+</div></blockquote>
+<p>This leads us to the conclusion that records should be sorted by record code and
+subrecord code in a transaction in order to meet the create requirements and
+that in the best case all business rules must be met by the end of a
+transaction.</p>
+<p>In reality, it does not seem to matter what order the subrecord codes appear in
+a transaction as long as they do not depend on each other. For example, there
+seems to be no issue with sending measure footnote associations (430-20) before
+measure components (430-05).</p>
+</section>
+<section id="ordering-of-transactions">
+<h2>Ordering of transactions<a class="headerlink" href="#ordering-of-transactions" title="Permalink to this headline">¶</a></h2>
+<p>However, many of the business rules talk about the relationship between
+different business objects – and hence edits to these objects will occur in
+separate transactions. As business rules must be fulfilled at the end of every
+transaction, some of the rules therefore impose tricky constraints on the
+ordering of transactions.</p>
+<p>Here are some specific cases where the business rules describe relationships
+between models, and the ordering constraints this imposes on the transactions.</p>
+<section id="terminating-a-geographical-area-membership-where-exclusions-exist">
+<h3>#1: Terminating a geographical area membership where exclusions exist<a class="headerlink" href="#terminating-a-geographical-area-membership-where-exclusions-exist" title="Permalink to this headline">¶</a></h3>
+<p>The business rule <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME67" title="measures.business_rules.ME67"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME67</span></code></a> links membership of a
+geographical area to measure exclusions:</p>
+<blockquote>
+<div><p>The membership period of the excluded geographical area
+must span the validity period of the measure.</p>
+</div></blockquote>
+<p>This means that whenever a geographical area is to be removed from a group, any
+measures for that group that exclude the geographical area and are still active
+must be changed too. This will require one transaction to update the
+geographical area membership and another transaction per measure.</p>
+<p>The updates to the measures must happen first, because if end-dating the
+geographical membership went first ME67 would be violated at the end of the
+first transaction. So in this case we have an update to one record type (250)
+needing to come after changes to another record type (430) despite it having a
+greater record code.</p>
+<p>Because exclusions do not have their own validity dates, there are actually two
+ways to handle this depending on the intention. The measure exclusions can be
+deleted (which will affect the validity for the entire lifetime of the measure –
+may not represent reality if the geographical area really was excluded in the
+past) or the measures can be end-dated and replaced with new identical measures
+without the exclusions (presumably to coincide with the end date on the
+membership).</p>
+<p>So, note that it would not be sufficient to sort transactions by record code or
+by update type (create, delete, update) here – neither alone nor in combination
+would this result in the correct ordering. But it’s possible that a more complex
+system could understand the dependencies between objects (i.e. that memberships
+depend on geo exclusions) and could order the transactions correctly such that
+dependent records come after their dependencies.</p>
+</section>
+<section id="changing-the-length-of-a-goods-nomenclature">
+<h3>#2: Changing the length of a goods nomenclature<a class="headerlink" href="#changing-the-length-of-a-goods-nomenclature" title="Permalink to this headline">¶</a></h3>
+<p>The business rule <a class="reference internal" href="../business_rules/commodities.html#commodities.business_rules.NIG30" title="commodities.business_rules.NIG30"><code class="xref py py-class docutils literal notranslate"><span class="pre">NIG30</span></code></a> requires the
+validity of a goods nomenclature to always be greater than or equal to any
+measure that references it:</p>
+<blockquote>
+<div><p>When a goods nomenclature is used in a goods measure then the validity
+period of the goods nomenclature  must span the validity period of the goods
+measure.</p>
+</div></blockquote>
+<p>So if one wants to update the validity of a goods nomenclature code, there will
+be one transaction to change the start or end date on the code and one
+transaction per measure to update the validity dates on the measure (i.e. to
+start the measure later or end it earlier). In this case, all of the changes
+will be “updates” to existing records – no creations or deletions are needed.</p>
+<p>If the end date on the goods nomenclature is being moved earlier, changing the
+goods nomenclature first would break NIG30 so the measures must all be updated
+first. If the end date on the goods nomenclature is being moved later, changing
+the measures first would break NIG30 so the goods nomenclature must be updated
+first.</p>
+<p>So from this we see that the order of transactions cannot depend so
+simply on record codes update types, or even on a topological dependency between
+types, but is also dependent on the nature of the change being made.</p>
+</section>
+<section id="changing-the-volume-of-quotas-with-associations">
+<h3>#3: Changing the volume of quotas with associations<a class="headerlink" href="#changing-the-volume-of-quotas-with-associations" title="Permalink to this headline">¶</a></h3>
+<p>The business rule <a class="reference internal" href="../business_rules/quotas.html#quotas.business_rules.QA3" title="quotas.business_rules.QA3"><code class="xref py py-class docutils literal notranslate"><span class="pre">QA3</span></code></a> implies an ordering on
+changes to linked quota volumes:</p>
+<blockquote>
+<div><p>When converted to the measurement unit of the main quota, the volume of a
+sub-quota must always be lower than or equal to the volume of the main
+quota.</p>
+</div></blockquote>
+<p>As an example, if a main quota A and a sub-quota B are associated, QA3 implies A
+&gt;= B at the end of every transaction.</p>
+<p>If one wants to reduce the volume of both quotas, this will necessitate a
+transaction to update A and a transaction to update B. If the volume is being
+reduced, QA3 requires that the sub-quota volume is reduced in the first
+transaction (so B &lt; A) and then the main quota volume is reduced in the second
+transaction. But if the volume is being increased, the increase of A must come
+first because if we increased B first we wouldn’t have B &lt;= A at the end of the
+transaction.</p>
+<p>So in this use case, records of the same type are being updated and again the
+order of transactions is dependent on what the change actually is.</p>
+</section>
+<section id="changing-the-quota-order-number-of-a-quota">
+<h3>#4: Changing the quota order number of a quota<a class="headerlink" href="#changing-the-quota-order-number-of-a-quota" title="Permalink to this headline">¶</a></h3>
+<p>The business rule <a class="reference internal" href="../business_rules/measures.html#measures.business_rules.ME116" title="measures.business_rules.ME116"><code class="xref py py-class docutils literal notranslate"><span class="pre">ME116</span></code></a> requires a quota order
+number linked to a measure to exist:</p>
+<blockquote>
+<div><p>When a quota order number is used in a measure then the validity period of
+the quota order number must span the validity period of the measure.</p>
+</div></blockquote>
+<p>As quota order numbers can be reused with different validity periods, this
+essentially implies that where a quota order number is referenced on a measure
+at least one quota order number record must exist with a greater than or equal
+validity period.</p>
+<p>What’s interesting is that quota order number records come with a SID as a
+logical key. This means that an update to the quota order number record can
+change the order number without requiring the creation of a new record. The UK
+Tariff has done this in a couple of places because it means the quota order
+number record retains any definitions, origins or exclusions already created as
+these reference the SID. The measure however does not reference the SID –
+presumably for legacy reasons, it only references the order number.</p>
+<p>So a change of an order number requires one transaction to update the quota
+order number record and then one each to update the measures. If one was to
+update the order number first, any measures that referenced it would now be
+referencing a missing order number and would no longer be valid. If one was to
+update the measures first, they would be now referencing an order number that
+doesn’t exist yet and they wouldn’t be valid.</p>
+<p>The only solution here is to first delete all of the measures referencing the
+order number, issue a transaction changing the order number, and then recreate
+all the measures referencing the new number. This is one of many examples where
+the “single record per transaction” model breaks down and we are forced to
+delete measures to cope with an update to something they reference (there are
+similar problems with additional codes and goods nomenclature).</p>
+<p>Here there is no ordering of transactions that would not break the business
+rules if we just tried to solve the problem with updates (which would be a
+reasonable starting assumption). The system or its users will need to “know”
+that changing a quota order number can only be performed to a certain pattern.</p>
+</section>
+<section id="what-we-have-learned">
+<h3>What we have learned<a class="headerlink" href="#what-we-have-learned" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>It’s possible to define an order using dependencies between records in some
+cases.</p></li>
+<li><p>Dependencies between transactions relies not just on the type of the
+records in them but also on the exact change being made.</p></li>
+<li><p>There are certain sets of transactions that are impossible to order correctly,
+and whose changes need to be performed in a different/specific way.</p></li>
+<li><p>We therefore cannot rely completely on automatic ordering – we also have to
+solve the problem of generating transactions in the first place that correspond
+to a known pattern (whether automatically or through training).</p></li>
+</ul>
+</section>
+</section>
+<section id="handling-business-rule-errors">
+<h2>Handling business rule errors<a class="headerlink" href="#handling-business-rule-errors" title="Permalink to this headline">¶</a></h2>
+<p>Given the above learning about the inability of the system to correctly order
+transactions by itself, two options present themselves for the approach to
+business rule errors:</p>
+<ol class="arabic simple">
+<li><p>Apply the business rules after every change, and do not save any change that
+results in a business rule violation. The ordering of the transactions is just
+the order in which they were created.</p></li>
+<li><p>Let the users apply edits in any order, and only check business rules once
+all the changes have been made. The ordering of the transactions is decided
+later, and by default would be the creation order but could be tweaked to handle
+any rule violations that arise from ordering.</p></li>
+</ol>
+<p>Both of these options require users to understand the business rules violations
+and them being able to perform certain types of change correctly (e.g. #4
+above). Some features can be written to assist (e.g. by giving more helpful
+messages than just the text of the rule) but as noted above this is limited and
+so user training will always be necessary.</p>
+<p>The advantage of option 1 over option 2 is that it reduces the possibility that
+users will have to undo much of their work in order to fix violations. It is
+also easier from a system perspective to assume that any data is always
+compliant with the business rules. It also removes the need for the system to
+provide features to reorder transactions and edit away errored data.</p>
+<section id="using-multiple-workbaskets">
+<h3>Using multiple workbaskets<a class="headerlink" href="#using-multiple-workbaskets" title="Permalink to this headline">¶</a></h3>
+<p>Option 1 falls down when multiple workbaskets come into play. As each
+application of the business rules should only take into account the transactions
+that have come previously, it’s possible that two workbaskets that separately
+pass validation will not work when applied sequentially (e.g. if workbasket 1
+updates a commodity code description and workbasket 2 creates a different
+description on the same day). In general then data in a workbasket can come into
+violation of business rules even after it has been authored.</p>
+<p>Option 1 is therefore of limited use, and we are forced to accept that even if
+we enforce the business rules on edit we still have to deal with errored data
+(assuming of course that we want to support multiple draft workbaskets at once).
+We will need to provide training and/or tools to allow users to deal with these
+situations – again, the number of possibilities for the rules to be broken like
+this is numerous and automation is only of limited use.</p>
+</section>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
+<p>The business rules and the code that runs them will be refactored to reflect the
+ordering instructions: business rules will be run at the end of every
+transaction, or after every model for CREATE transactions, and will only
+consider data that has been committed as of the transaction being checked.</p>
+<p>The system will not attempt to reorder transactions itself and will instead use
+the order in which the transactions were created. Business rules will still be
+enforced on save for models in draft mode, but the system will not assume that
+draft data meets all the business rules.</p>
+<p>Patterns will be used to handle particular use cases that are tricky or
+unintuitive. These will encode the domain-level ordering required to avoid
+business rule violations (e.g. when updating an order number). They will be
+exposed in the UI in some form and may override the simpler operations in some
+cases (e.g. it may be appropriate to not allow users to update order numbers
+without using the pattern).</p>
+<p>The system will provide tools to allow users to deal with errored data. The
+exact nature of these is to be defined, but will need to include the ability to
+reorder transactions and remove errored models.</p>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/adr/0012-ordering-of-tariff-transactions.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'adr/0012-ordering-of-tariff-transactions.rst'&amp;body=Problem%20with%20'adr/0012-ordering-of-tariff-transactions.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Submodules - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/javascripts/_analytics.js"></script>
+    <script src="../../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../../_static/javascripts/_start_modules.js"></script>
+    <script src="../../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../../_static/javascripts/theme.js"></script>
+    <link href="../../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#">Submodules</a></li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <span class="target" id="module-common.models"></span><p>Models used by all apps in the project.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.ApplicabilityCode">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">ApplicabilityCode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#ApplicabilityCode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ApplicabilityCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.fields.PositiveSmallIntegerField</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.ApplicabilityCode.deconstruct">
+<span class="sig-name descname"><span class="pre">deconstruct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#ApplicabilityCode.deconstruct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ApplicabilityCode.deconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return enough information to recreate the field as a 4-tuple:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The name of the field on the model, if contribute_to_class() has
+been run.</p></li>
+<li><p>The import path of the field, including the class:e.g.
+django.db.models.IntegerField This should be the most portable
+version, so less specific may be better.</p></li>
+<li><p>A list of positional arguments.</p></li>
+<li><p>A dict of keyword arguments.</p></li>
+</ul>
+</div></blockquote>
+<p>Note that the positional or keyword arguments must contain values of
+the following types (including inner values of collection types):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>None, bool, str, int, float, complex, set, frozenset, list, tuple,
+dict</p></li>
+<li><p>UUID</p></li>
+<li><p>datetime.datetime (naive), datetime.date</p></li>
+<li><p>top-level classes, top-level functions - will be referenced by their
+full import path</p></li>
+<li><p>Storage instances - these have their own deconstruct() method</p></li>
+</ul>
+</div></blockquote>
+<p>This is because the values here must be serialized into a text format
+(possibly new Python code, possibly JSON) and these are the only types
+with encoding handlers defined.</p>
+<p>There’s no need to return the exact way the field was instantiated this
+time, just ensure that the resulting field is the same - prefer keyword
+arguments over positional ones, and omit parameters with their default
+values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">DescriptionMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/description.html#DescriptionMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.DescriptionMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#common.models.ValidityStartMixin" title="common.models.mixins.validity.ValidityStartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.models.mixins.validity.ValidityStartMixin</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.Meta">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../../_modules/common/models/mixins/description.html#DescriptionMixin.Meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.DescriptionMixin.Meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.Meta.abstract">
+<span class="sig-name descname"><span class="pre">abstract</span></span><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#common.models.DescriptionMixin.Meta.abstract" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.business_rules">
+<span class="sig-name descname"><span class="pre">business_rules</span></span><em class="property"> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'common.business_rules.NoBlankDescription'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'common.business_rules.UpdateValidity'&gt;)</span></em><a class="headerlink" href="#common.models.DescriptionMixin.business_rules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.described_object_field">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">described_object_field</span></span><em class="property"><span class="pre">:</span> <span class="pre">django.db.models.fields.Field</span></em><a class="headerlink" href="#common.models.DescriptionMixin.described_object_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.get_described_object">
+<span class="sig-name descname"><span class="pre">get_described_object</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/description.html#DescriptionMixin.get_described_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.DescriptionMixin.get_described_object" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.get_next_by_validity_start">
+<span class="sig-name descname"><span class="pre">get_next_by_validity_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateField:</span> <span class="pre">validity_start&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.DescriptionMixin.get_next_by_validity_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.get_previous_by_validity_start">
+<span class="sig-name descname"><span class="pre">get_previous_by_validity_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateField:</span> <span class="pre">validity_start&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.DescriptionMixin.get_previous_by_validity_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.get_url">
+<span class="sig-name descname"><span class="pre">get_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'detail'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/description.html#DescriptionMixin.get_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.DescriptionMixin.get_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.mixins.validity.ValidityStartQueryset</span></em><a class="headerlink" href="#common.models.DescriptionMixin.objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">with_end_date()</span></code>
+method is used to automatically compute the end date based on the other
+models in the series.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.DescriptionMixin.validity_over">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">validity_over</span></span><a class="headerlink" href="#common.models.DescriptionMixin.validity_over" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.NumericSID">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">NumericSID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#NumericSID"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.NumericSID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.fields.PositiveIntegerField</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.NumericSID.deconstruct">
+<span class="sig-name descname"><span class="pre">deconstruct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#NumericSID.deconstruct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.NumericSID.deconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return enough information to recreate the field as a 4-tuple:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The name of the field on the model, if contribute_to_class() has
+been run.</p></li>
+<li><p>The import path of the field, including the class:e.g.
+django.db.models.IntegerField This should be the most portable
+version, so less specific may be better.</p></li>
+<li><p>A list of positional arguments.</p></li>
+<li><p>A dict of keyword arguments.</p></li>
+</ul>
+</div></blockquote>
+<p>Note that the positional or keyword arguments must contain values of
+the following types (including inner values of collection types):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>None, bool, str, int, float, complex, set, frozenset, list, tuple,
+dict</p></li>
+<li><p>UUID</p></li>
+<li><p>datetime.datetime (naive), datetime.date</p></li>
+<li><p>top-level classes, top-level functions - will be referenced by their
+full import path</p></li>
+<li><p>Storage instances - these have their own deconstruct() method</p></li>
+</ul>
+</div></blockquote>
+<p>This is because the values here must be serialized into a text format
+(possibly new Python code, possibly JSON) and these are the only types
+with encoding handlers defined.</p>
+<p>There’s no need to return the exact way the field was instantiated this
+time, just ensure that the resulting field is the same - prefer keyword
+arguments over positional ones, and omit parameters with their default
+values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.ShortDescription">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">ShortDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#ShortDescription"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ShortDescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.fields.CharField</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.ShortDescription.deconstruct">
+<span class="sig-name descname"><span class="pre">deconstruct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#ShortDescription.deconstruct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ShortDescription.deconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return enough information to recreate the field as a 4-tuple:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The name of the field on the model, if contribute_to_class() has
+been run.</p></li>
+<li><p>The import path of the field, including the class:e.g.
+django.db.models.IntegerField This should be the most portable
+version, so less specific may be better.</p></li>
+<li><p>A list of positional arguments.</p></li>
+<li><p>A dict of keyword arguments.</p></li>
+</ul>
+</div></blockquote>
+<p>Note that the positional or keyword arguments must contain values of
+the following types (including inner values of collection types):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>None, bool, str, int, float, complex, set, frozenset, list, tuple,
+dict</p></li>
+<li><p>UUID</p></li>
+<li><p>datetime.datetime (naive), datetime.date</p></li>
+<li><p>top-level classes, top-level functions - will be referenced by their
+full import path</p></li>
+<li><p>Storage instances - these have their own deconstruct() method</p></li>
+</ul>
+</div></blockquote>
+<p>This is because the values here must be serialized into a text format
+(possibly new Python code, possibly JSON) and these are the only types
+with encoding handlers defined.</p>
+<p>There’s no need to return the exact way the field was instantiated this
+time, just ensure that the resulting field is the same - prefer keyword
+arguments over positional ones, and omit parameters with their default
+values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.SignedIntSID">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">SignedIntSID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#SignedIntSID"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.SignedIntSID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.fields.IntegerField</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.SignedIntSID.deconstruct">
+<span class="sig-name descname"><span class="pre">deconstruct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/fields.html#SignedIntSID.deconstruct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.SignedIntSID.deconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return enough information to recreate the field as a 4-tuple:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The name of the field on the model, if contribute_to_class() has
+been run.</p></li>
+<li><p>The import path of the field, including the class:e.g.
+django.db.models.IntegerField This should be the most portable
+version, so less specific may be better.</p></li>
+<li><p>A list of positional arguments.</p></li>
+<li><p>A dict of keyword arguments.</p></li>
+</ul>
+</div></blockquote>
+<p>Note that the positional or keyword arguments must contain values of
+the following types (including inner values of collection types):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>None, bool, str, int, float, complex, set, frozenset, list, tuple,
+dict</p></li>
+<li><p>UUID</p></li>
+<li><p>datetime.datetime (naive), datetime.date</p></li>
+<li><p>top-level classes, top-level functions - will be referenced by their
+full import path</p></li>
+<li><p>Storage instances - these have their own deconstruct() method</p></li>
+</ul>
+</div></blockquote>
+<p>This is because the values here must be serialized into a text format
+(possibly new Python code, possibly JSON) and these are the only types
+with encoding handlers defined.</p>
+<p>There’s no need to return the exact way the field was instantiated this
+time, just ensure that the resulting field is the same - prefer keyword
+arguments over positional ones, and omit parameters with their default
+values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">TimestampedMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins.html#TimestampedMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TimestampedMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.base.Model</span></code></p>
+<p>Mixin adding timestamps for creation and last update.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.Meta">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../../_modules/common/models/mixins.html#TimestampedMixin.Meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TimestampedMixin.Meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.Meta.abstract">
+<span class="sig-name descname"><span class="pre">abstract</span></span><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#common.models.TimestampedMixin.Meta.abstract" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.created_at">
+<span class="sig-name descname"><span class="pre">created_at</span></span><a class="headerlink" href="#common.models.TimestampedMixin.created_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.get_next_by_created_at">
+<span class="sig-name descname"><span class="pre">get_next_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.TimestampedMixin.get_next_by_created_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.get_next_by_updated_at">
+<span class="sig-name descname"><span class="pre">get_next_by_updated_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">updated_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.TimestampedMixin.get_next_by_updated_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.get_previous_by_created_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.TimestampedMixin.get_previous_by_created_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.get_previous_by_updated_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_updated_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">updated_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.TimestampedMixin.get_previous_by_updated_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TimestampedMixin.updated_at">
+<span class="sig-name descname"><span class="pre">updated_at</span></span><a class="headerlink" href="#common.models.TimestampedMixin.updated_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.TrackedModel">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">TrackedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymorphic_ctype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">polymorphic.models.PolymorphicModel</span></code></p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="common.models.TrackedModel.DoesNotExist">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#common.models.TrackedModel.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.core.exceptions.ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="common.models.TrackedModel.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#common.models.TrackedModel.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.core.exceptions.MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.additionalcode">
+<span class="sig-name descname"><span class="pre">additionalcode</span></span><a class="headerlink" href="#common.models.TrackedModel.additionalcode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.additionalcodedescription">
+<span class="sig-name descname"><span class="pre">additionalcodedescription</span></span><a class="headerlink" href="#common.models.TrackedModel.additionalcodedescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.additionalcodetype">
+<span class="sig-name descname"><span class="pre">additionalcodetype</span></span><a class="headerlink" href="#common.models.TrackedModel.additionalcodetype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.additionalcodetypemeasuretype">
+<span class="sig-name descname"><span class="pre">additionalcodetypemeasuretype</span></span><a class="headerlink" href="#common.models.TrackedModel.additionalcodetypemeasuretype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.amendment">
+<span class="sig-name descname"><span class="pre">amendment</span></span><a class="headerlink" href="#common.models.TrackedModel.amendment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.auto_value_fields">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">auto_value_fields</span></span><em class="property"><span class="pre">:</span> <span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">django.db.models.fields.Field</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#common.models.TrackedModel.auto_value_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the set of fields on this model that should have their value
+set automatically on save, excluding any primary keys.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.business_rules">
+<span class="sig-name descname"><span class="pre">business_rules</span></span><em class="property"><span class="pre">:</span> <span class="pre">Iterable</span></em><em class="property"> <span class="pre">=</span> <span class="pre">()</span></em><a class="headerlink" href="#common.models.TrackedModel.business_rules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.certificate">
+<span class="sig-name descname"><span class="pre">certificate</span></span><a class="headerlink" href="#common.models.TrackedModel.certificate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.certificatedescription">
+<span class="sig-name descname"><span class="pre">certificatedescription</span></span><a class="headerlink" href="#common.models.TrackedModel.certificatedescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.certificatetype">
+<span class="sig-name descname"><span class="pre">certificatetype</span></span><a class="headerlink" href="#common.models.TrackedModel.certificatetype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.records.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a copy of the model as a new logical domain object – i.e. with a
+new version group, new SID (if present) and update type of CREATE.</p>
+<p>Any dependent models that are TARIC subrecords of this model will be
+copied as well. Any many-to-many relationships will also be duplicated
+if they do not have an explicit through model.</p>
+<p>Any overrides passed in as keyword arguments will be applied to the new
+model. If the model uses SIDs, they will be automatically set to the
+next highest available SID. Models with other identifying fields should
+have thier new IDs passed in through overrides.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.copyable_fields">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">copyable_fields</span></span><a class="headerlink" href="#common.models.TrackedModel.copyable_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the set of fields that can have their values copied from one
+model to another.</p>
+<p>This is anything that is:
+- a native value
+- a foreign key to some other model</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.current_version">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">current_version</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.records.Cls</span></em><a class="headerlink" href="#common.models.TrackedModel.current_version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.deferred_set_fields">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">deferred_set_fields</span></span><a class="headerlink" href="#common.models.TrackedModel.deferred_set_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a set of fields that can only be saved (using the
+<code class="docutils literal notranslate"><span class="pre">instance.field.set()</span></code> method) after the object has been saved first.</p>
+<p>This is any field that is a many-to-many relationship with an auto-
+generated through model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.dutyexpression">
+<span class="sig-name descname"><span class="pre">dutyexpression</span></span><a class="headerlink" href="#common.models.TrackedModel.dutyexpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.extension">
+<span class="sig-name descname"><span class="pre">extension</span></span><a class="headerlink" href="#common.models.TrackedModel.extension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.footnote">
+<span class="sig-name descname"><span class="pre">footnote</span></span><a class="headerlink" href="#common.models.TrackedModel.footnote" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.footnoteassociationadditionalcode">
+<span class="sig-name descname"><span class="pre">footnoteassociationadditionalcode</span></span><a class="headerlink" href="#common.models.TrackedModel.footnoteassociationadditionalcode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.footnoteassociationgoodsnomenclature">
+<span class="sig-name descname"><span class="pre">footnoteassociationgoodsnomenclature</span></span><a class="headerlink" href="#common.models.TrackedModel.footnoteassociationgoodsnomenclature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.footnoteassociationmeasure">
+<span class="sig-name descname"><span class="pre">footnoteassociationmeasure</span></span><a class="headerlink" href="#common.models.TrackedModel.footnoteassociationmeasure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.footnotedescription">
+<span class="sig-name descname"><span class="pre">footnotedescription</span></span><a class="headerlink" href="#common.models.TrackedModel.footnotedescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.footnotetype">
+<span class="sig-name descname"><span class="pre">footnotetype</span></span><a class="headerlink" href="#common.models.TrackedModel.footnotetype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.geographicalarea">
+<span class="sig-name descname"><span class="pre">geographicalarea</span></span><a class="headerlink" href="#common.models.TrackedModel.geographicalarea" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.geographicalareadescription">
+<span class="sig-name descname"><span class="pre">geographicalareadescription</span></span><a class="headerlink" href="#common.models.TrackedModel.geographicalareadescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.geographicalmembership">
+<span class="sig-name descname"><span class="pre">geographicalmembership</span></span><a class="headerlink" href="#common.models.TrackedModel.geographicalmembership" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_description">
+<span class="sig-name descname"><span class="pre">get_description</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_description"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_descriptions">
+<span class="sig-name descname"><span class="pre">get_descriptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../architecture/index.html#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_descriptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_descriptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the latest descriptions related to this instance of the Tracked
+Model.</p>
+<p>If there is no Description relation existing a <cite>NoDescriptionError</cite> is raised.</p>
+<p>If a transaction is provided then all latest descriptions that are either approved
+or in the workbasket of the transaction up to the transaction will be provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_identifying_fields">
+<span class="sig-name descname"><span class="pre">get_identifying_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_identifying_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_identifying_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_indefinite_article">
+<span class="sig-name descname"><span class="pre">get_indefinite_article</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_indefinite_article"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_indefinite_article" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns “a” or “an” based on the verbose_name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_taric_template">
+<span class="sig-name descname"><span class="pre">get_taric_template</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_taric_template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_taric_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a TARIC XML template name for the given class.</p>
+<p>Any TrackedModel must be representable via a TARIC compatible XML
+record.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_update_type_display">
+<span class="sig-name descname"><span class="pre">get_update_type_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.PositiveSmallIntegerField:</span> <span class="pre">update_type&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.TrackedModel.get_update_type_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_url">
+<span class="sig-name descname"><span class="pre">get_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'detail'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_url_pattern_name_prefix">
+<span class="sig-name descname"><span class="pre">get_url_pattern_name_prefix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_url_pattern_name_prefix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url_pattern_name_prefix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.get_versions">
+<span class="sig-name descname"><span class="pre">get_versions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_versions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.goodsnomenclature">
+<span class="sig-name descname"><span class="pre">goodsnomenclature</span></span><a class="headerlink" href="#common.models.TrackedModel.goodsnomenclature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.goodsnomenclaturedescription">
+<span class="sig-name descname"><span class="pre">goodsnomenclaturedescription</span></span><a class="headerlink" href="#common.models.TrackedModel.goodsnomenclaturedescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.goodsnomenclatureindent">
+<span class="sig-name descname"><span class="pre">goodsnomenclatureindent</span></span><a class="headerlink" href="#common.models.TrackedModel.goodsnomenclatureindent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.goodsnomenclatureorigin">
+<span class="sig-name descname"><span class="pre">goodsnomenclatureorigin</span></span><a class="headerlink" href="#common.models.TrackedModel.goodsnomenclatureorigin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.goodsnomenclaturesuccessor">
+<span class="sig-name descname"><span class="pre">goodsnomenclaturesuccessor</span></span><a class="headerlink" href="#common.models.TrackedModel.goodsnomenclaturesuccessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.group">
+<span class="sig-name descname"><span class="pre">group</span></span><a class="headerlink" href="#common.models.TrackedModel.group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#common.models.TrackedModel.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.identifying_fields">
+<span class="sig-name descname"><span class="pre">identifying_fields</span></span><em class="property"><span class="pre">:</span> <span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">('sid',)</span></em><a class="headerlink" href="#common.models.TrackedModel.identifying_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>The fields which together form a composite unique key for each model.</p>
+<p>The system ID (or SID) field is normally the unique identifier of a TARIC
+model, but in places where this does not exist models can declare their own.
+(Note that because multiple versions of each model will exist this does not
+actually equate to a <code class="docutils literal notranslate"><span class="pre">UNIQUE</span></code> constraint in the database.)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.identifying_fields_to_string">
+<span class="sig-name descname"><span class="pre">identifying_fields_to_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.identifying_fields_to_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.identifying_fields_to_string" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.identifying_fields_unique">
+<span class="sig-name descname"><span class="pre">identifying_fields_unique</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.identifying_fields_unique"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.identifying_fields_unique" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.in_use">
+<span class="sig-name descname"><span class="pre">in_use</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">relations</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.in_use"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.in_use" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if there are any models that are using this one as of the
+specified transaction.</p>
+<p>This can be any model this this model is related to, but igoring any
+subrecords (because e.g. a footnote is not considered “in use by” its
+own description) and then filtering for only things that link _to_ this
+model.</p>
+<p>The list of relations can be filtered by passing in the name of a
+relation. If a name is passed in that does not refer to a relation on
+this model, <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> will be raised.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.in_use_by">
+<span class="sig-name descname"><span class="pre">in_use_by</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">via_relation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">django.db.models.query.QuerySet</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.in_use_by"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.in_use_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all of the models that are referencing this one via the
+specified relation and exist as of the passed transaction.</p>
+<p><code class="docutils literal notranslate"><span class="pre">via_relation</span></code> should be the name of a relation, and a <code class="docutils literal notranslate"><span class="pre">KeyError</span></code>
+will be raised if the relation name is not valid for this model.
+Relations are accessible via <code class="docutils literal notranslate"><span class="pre">TrackedModel.relations</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.indirect_business_rules">
+<span class="sig-name descname"><span class="pre">indirect_business_rules</span></span><em class="property"><span class="pre">:</span> <span class="pre">Iterable</span></em><em class="property"> <span class="pre">=</span> <span class="pre">()</span></em><a class="headerlink" href="#common.models.TrackedModel.indirect_business_rules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measure">
+<span class="sig-name descname"><span class="pre">measure</span></span><a class="headerlink" href="#common.models.TrackedModel.measure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measureaction">
+<span class="sig-name descname"><span class="pre">measureaction</span></span><a class="headerlink" href="#common.models.TrackedModel.measureaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measurecomponent">
+<span class="sig-name descname"><span class="pre">measurecomponent</span></span><a class="headerlink" href="#common.models.TrackedModel.measurecomponent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measurecondition">
+<span class="sig-name descname"><span class="pre">measurecondition</span></span><a class="headerlink" href="#common.models.TrackedModel.measurecondition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measureconditioncode">
+<span class="sig-name descname"><span class="pre">measureconditioncode</span></span><a class="headerlink" href="#common.models.TrackedModel.measureconditioncode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measureconditioncomponent">
+<span class="sig-name descname"><span class="pre">measureconditioncomponent</span></span><a class="headerlink" href="#common.models.TrackedModel.measureconditioncomponent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measureexcludedgeographicalarea">
+<span class="sig-name descname"><span class="pre">measureexcludedgeographicalarea</span></span><a class="headerlink" href="#common.models.TrackedModel.measureexcludedgeographicalarea" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measurement">
+<span class="sig-name descname"><span class="pre">measurement</span></span><a class="headerlink" href="#common.models.TrackedModel.measurement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measurementunit">
+<span class="sig-name descname"><span class="pre">measurementunit</span></span><a class="headerlink" href="#common.models.TrackedModel.measurementunit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measurementunitqualifier">
+<span class="sig-name descname"><span class="pre">measurementunitqualifier</span></span><a class="headerlink" href="#common.models.TrackedModel.measurementunitqualifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measuretype">
+<span class="sig-name descname"><span class="pre">measuretype</span></span><a class="headerlink" href="#common.models.TrackedModel.measuretype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.measuretypeseries">
+<span class="sig-name descname"><span class="pre">measuretypeseries</span></span><a class="headerlink" href="#common.models.TrackedModel.measuretypeseries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.models_linked_to">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">models_linked_to</span></span><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">django.db.models.fields.Field</span><span class="p"><span class="pre">,</span> </span><span class="pre">django.db.models.fields.reverse_related.ForeignObjectRel</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#common.models.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#common.models.TrackedModel.models_linked_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all the models that are related to this one via a foreign key
+stored on this model (one-to-many reverse related models are not
+included in the returned results).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.monetaryunit">
+<span class="sig-name descname"><span class="pre">monetaryunit</span></span><a class="headerlink" href="#common.models.TrackedModel.monetaryunit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.new_version">
+<span class="sig-name descname"><span class="pre">new_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workbasket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.validators.UpdateType</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">UpdateType.UPDATE</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.records.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.new_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.new_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new version of the object. Callers can override existing data
+by passing in keyword args.</p>
+<p>The new version is added to a transaction which is created and added to the passed in workbasket
+(or may be supplied as a keyword arg).</p>
+<p>update_type must be UPDATE or DELETE, with UPDATE as the default.</p>
+<p>By default the new object is saved; this can be disabled by passing save=False.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="../../architecture/index.html#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.PolymorphicManagerFromTrackedModelQuerySet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.TrackedModel.objects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.polymorphic_ctype">
+<span class="sig-name descname"><span class="pre">polymorphic_ctype</span></span><a class="headerlink" href="#common.models.TrackedModel.polymorphic_ctype" title="Permalink to this definition">¶</a></dt>
+<dd><p>The model field that stores the <code class="xref py py-class docutils literal notranslate"><span class="pre">ContentType</span></code> reference to the actual class.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.polymorphic_primary_key_name">
+<span class="sig-name descname"><span class="pre">polymorphic_primary_key_name</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'id'</span></em><a class="headerlink" href="#common.models.TrackedModel.polymorphic_primary_key_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.polymorphic_super_sub_accessors_replaced">
+<span class="sig-name descname"><span class="pre">polymorphic_super_sub_accessors_replaced</span></span><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#common.models.TrackedModel.polymorphic_super_sub_accessors_replaced" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotaassociation">
+<span class="sig-name descname"><span class="pre">quotaassociation</span></span><a class="headerlink" href="#common.models.TrackedModel.quotaassociation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotablocking">
+<span class="sig-name descname"><span class="pre">quotablocking</span></span><a class="headerlink" href="#common.models.TrackedModel.quotablocking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotadefinition">
+<span class="sig-name descname"><span class="pre">quotadefinition</span></span><a class="headerlink" href="#common.models.TrackedModel.quotadefinition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotaevent">
+<span class="sig-name descname"><span class="pre">quotaevent</span></span><a class="headerlink" href="#common.models.TrackedModel.quotaevent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotaordernumber">
+<span class="sig-name descname"><span class="pre">quotaordernumber</span></span><a class="headerlink" href="#common.models.TrackedModel.quotaordernumber" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotaordernumberorigin">
+<span class="sig-name descname"><span class="pre">quotaordernumberorigin</span></span><a class="headerlink" href="#common.models.TrackedModel.quotaordernumberorigin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotaordernumberoriginexclusion">
+<span class="sig-name descname"><span class="pre">quotaordernumberoriginexclusion</span></span><a class="headerlink" href="#common.models.TrackedModel.quotaordernumberoriginexclusion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.quotasuspension">
+<span class="sig-name descname"><span class="pre">quotasuspension</span></span><a class="headerlink" href="#common.models.TrackedModel.quotasuspension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.record_code">
+<span class="sig-name descname"><span class="pre">record_code</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#common.models.TrackedModel.record_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>The type id of this model’s type family in the TARIC specification.</p>
+<p>This number groups together a number of different models into ‘records’.
+Where two models share a record code, they are conceptually expressing
+different properties of the same logical model.</p>
+<p>In theory each <code class="xref py py-class docutils literal notranslate"><span class="pre">Transaction</span></code> should only contain
+models with a single <a class="reference internal" href="#common.models.TrackedModel.record_code" title="common.models.TrackedModel.record_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">record_code</span></code></a> (but differing
+<a class="reference internal" href="#common.models.TrackedModel.subrecord_code" title="common.models.TrackedModel.subrecord_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">subrecord_code</span></code></a>.)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.regulation">
+<span class="sig-name descname"><span class="pre">regulation</span></span><a class="headerlink" href="#common.models.TrackedModel.regulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.relations">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">relations</span></span><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">django.db.models.fields.Field</span><span class="p"><span class="pre">,</span> </span><span class="pre">django.db.models.fields.reverse_related.ForeignObjectRel</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#common.models.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#common.models.TrackedModel.relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all the models that are related to this one.</p>
+<p>The link can either be stored on this model (so a one-to-one or a many-
+to-one relationship) or on the related model (so a one-to-many (reverse)
+relationship).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.replacement">
+<span class="sig-name descname"><span class="pre">replacement</span></span><a class="headerlink" href="#common.models.TrackedModel.replacement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_write</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">pre_save_polymorphic()</span></code> and saves the model.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.structure_code">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">structure_code</span></span><a class="headerlink" href="#common.models.TrackedModel.structure_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.structure_description">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">structure_description</span></span><a class="headerlink" href="#common.models.TrackedModel.structure_description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.subrecord_code">
+<span class="sig-name descname"><span class="pre">subrecord_code</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#common.models.TrackedModel.subrecord_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>The type id of this model in the TARIC specification. The
+<a class="reference internal" href="#common.models.TrackedModel.subrecord_code" title="common.models.TrackedModel.subrecord_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">subrecord_code</span></code></a> when combined with the <a class="reference internal" href="#common.models.TrackedModel.record_code" title="common.models.TrackedModel.record_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">record_code</span></code></a> uniquely
+identifies the type within the specification.</p>
+<p>The subrecord code gives the intended order for models in a transaction,
+with comparatively smaller subrecord codes needing to come before larger
+ones.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="common.models.TrackedModel.subrecord_relations">
+<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">subrecord_relations</span></span><a class="headerlink" href="#common.models.TrackedModel.subrecord_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a set of relations to this model’s TARIC subrecords.</p>
+<p>E.g, a <code class="xref py py-class docutils literal notranslate"><span class="pre">Measure</span></code> and a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">measures.models.MeasureComponent</span></code> are in the same “logical
+record” but are different data models because they are many-to-one.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.suspension">
+<span class="sig-name descname"><span class="pre">suspension</span></span><a class="headerlink" href="#common.models.TrackedModel.suspension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.system_set_field_names">
+<span class="sig-name descname"><span class="pre">system_set_field_names</span></span><em class="property"> <span class="pre">=</span> <span class="pre">{'id',</span> <span class="pre">'is_current',</span> <span class="pre">'polymorphic_ctype',</span> <span class="pre">'trackedmodel_ptr',</span> <span class="pre">'transaction',</span> <span class="pre">'update_type',</span> <span class="pre">'version_group'}</span></em><a class="headerlink" href="#common.models.TrackedModel.system_set_field_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.taric_template">
+<span class="sig-name descname"><span class="pre">taric_template</span></span><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#common.models.TrackedModel.taric_template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.termination">
+<span class="sig-name descname"><span class="pre">termination</span></span><a class="headerlink" href="#common.models.TrackedModel.termination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.testmodel1">
+<span class="sig-name descname"><span class="pre">testmodel1</span></span><a class="headerlink" href="#common.models.TrackedModel.testmodel1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.testmodel2">
+<span class="sig-name descname"><span class="pre">testmodel2</span></span><a class="headerlink" href="#common.models.TrackedModel.testmodel2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.testmodel3">
+<span class="sig-name descname"><span class="pre">testmodel3</span></span><a class="headerlink" href="#common.models.TrackedModel.testmodel3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.testmodeldescription1">
+<span class="sig-name descname"><span class="pre">testmodeldescription1</span></span><a class="headerlink" href="#common.models.TrackedModel.testmodeldescription1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.transaction">
+<span class="sig-name descname"><span class="pre">transaction</span></span><a class="headerlink" href="#common.models.TrackedModel.transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.transaction_id">
+<span class="sig-name descname"><span class="pre">transaction_id</span></span><a class="headerlink" href="#common.models.TrackedModel.transaction_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.update_type">
+<span class="sig-name descname"><span class="pre">update_type</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.validators.UpdateType</span></em><a class="headerlink" href="#common.models.TrackedModel.update_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The change that was made to the model when this version of the model was
+authored.</p>
+<p>The first version should always have <code class="xref py py-data docutils literal notranslate"><span class="pre">CREATE</span></code>,
+subsequent versions will have <code class="xref py py-data docutils literal notranslate"><span class="pre">UPDATE</span></code> and the
+final version will have <code class="xref py py-data docutils literal notranslate"><span class="pre">DELETE</span></code>. Deleted
+models that reappear for the same <a class="reference internal" href="#common.models.TrackedModel.identifying_fields" title="common.models.TrackedModel.identifying_fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">identifying_fields</span></code></a> will have a new
+<a class="reference internal" href="#common.models.TrackedModel.version_group" title="common.models.TrackedModel.version_group"><code class="xref py py-attr docutils literal notranslate"><span class="pre">version_group</span></code></a> created.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.TrackedModel.version_at">
+<span class="sig-name descname"><span class="pre">version_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.records.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.version_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.version_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.version_group">
+<span class="sig-name descname"><span class="pre">version_group</span></span><a class="headerlink" href="#common.models.TrackedModel.version_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Each version group contains all of the versions of the same logical model.</p>
+<p>When a new version of a model is authored (e.g. to
+<code class="xref py py-data docutils literal notranslate"><span class="pre">DELETE</span></code> it) a new model row is created and
+added to the same version group as the existing model being changed.</p>
+<p>Models are identified logically by their <a class="reference internal" href="#common.models.TrackedModel.identifying_fields" title="common.models.TrackedModel.identifying_fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">identifying_fields</span></code></a>, so
+within one version group all of the models should have the same values for
+these fields.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.version_group_id">
+<span class="sig-name descname"><span class="pre">version_group_id</span></span><a class="headerlink" href="#common.models.TrackedModel.version_group_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.TrackedModel.versiongroup">
+<span class="sig-name descname"><span class="pre">versiongroup</span></span><a class="headerlink" href="#common.models.TrackedModel.versiongroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.Transaction">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">Transaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/transactions.html#Transaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.Transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#common.models.TimestampedMixin" title="common.models.mixins.TimestampedMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.models.mixins.TimestampedMixin</span></code></a></p>
+<p>Contains a group of one or more TrackedModel instances that must be applied
+atomically.</p>
+<p>Linked to a WorkBasket and may be contained by one or more Envelopes when exported.</p>
+<p>Business rule validation is performed at Transaction level for creates, updates and
+deletes. Business rules are also validated at the TrackedModel level for creates.</p>
+<p>Mutation rules:</p>
+<p>Only transactions in the DRAFT partition should be modified - at that point they may be
+moved to SEED_FILE or REVISION partitions, and the order field will be updated.</p>
+<p>Transactions in SEED_FILE or REVISION partitions should not be modified.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="common.models.Transaction.DoesNotExist">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#common.models.Transaction.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.core.exceptions.ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="common.models.Transaction.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#common.models.Transaction.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.core.exceptions.MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.add_to_transaction">
+<span class="sig-name descname"><span class="pre">add_to_transaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/transactions.html#Transaction.add_to_transaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.Transaction.add_to_transaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.approved">
+<span class="sig-name descname"><span class="pre">approved</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.ApprovedTransactionManagerFromTransactionQueryset</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.Transaction.approved" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.clean">
+<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/transactions.html#Transaction.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.Transaction.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate business rules against contained TrackedModels.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.composite_key">
+<span class="sig-name descname"><span class="pre">composite_key</span></span><a class="headerlink" href="#common.models.Transaction.composite_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.envelopes">
+<span class="sig-name descname"><span class="pre">envelopes</span></span><a class="headerlink" href="#common.models.Transaction.envelopes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related objects manager on the forward and reverse sides of
+a many-to-many relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Pizza</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">toppings</span> <span class="o">=</span> <span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Topping</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;pizzas&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Pizza.toppings</span></code> and <code class="docutils literal notranslate"><span class="pre">Topping.pizzas</span></code> are <code class="docutils literal notranslate"><span class="pre">ManyToManyDescriptor</span></code>
+instances.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_forward_many_to_many_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.envelopetransaction_set">
+<span class="sig-name descname"><span class="pre">envelopetransaction_set</span></span><a class="headerlink" href="#common.models.Transaction.envelopetransaction_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_forward_many_to_many_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_all_partition_transitions">
+<span class="sig-name descname"><span class="pre">get_all_partition_transitions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django_fsm.FSMIntegerField:</span> <span class="pre">partition&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_all_partition_transitions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_available_partition_transitions">
+<span class="sig-name descname"><span class="pre">get_available_partition_transitions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django_fsm.FSMIntegerField:</span> <span class="pre">partition&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_available_partition_transitions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_available_user_partition_transitions">
+<span class="sig-name descname"><span class="pre">get_available_user_partition_transitions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">user</span></em>, <em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django_fsm.FSMIntegerField:</span> <span class="pre">partition&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_available_user_partition_transitions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_next_by_created_at">
+<span class="sig-name descname"><span class="pre">get_next_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_next_by_created_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_next_by_updated_at">
+<span class="sig-name descname"><span class="pre">get_next_by_updated_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">updated_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_next_by_updated_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_partition_display">
+<span class="sig-name descname"><span class="pre">get_partition_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django_fsm.FSMIntegerField:</span> <span class="pre">partition&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_partition_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_previous_by_created_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_previous_by_created_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.get_previous_by_updated_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_updated_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">updated_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.Transaction.get_previous_by_updated_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.goods_nomenclature_indent_nodes">
+<span class="sig-name descname"><span class="pre">goods_nomenclature_indent_nodes</span></span><a class="headerlink" href="#common.models.Transaction.goods_nomenclature_indent_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_forward_many_to_many_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#common.models.Transaction.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.import_transaction_id">
+<span class="sig-name descname"><span class="pre">import_transaction_id</span></span><a class="headerlink" href="#common.models.Transaction.import_transaction_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.TransactionManagerFromTransactionQueryset</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.Transaction.objects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.order">
+<span class="sig-name descname"><span class="pre">order</span></span><a class="headerlink" href="#common.models.Transaction.order" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.partition">
+<span class="sig-name descname"><span class="pre">partition</span></span><a class="headerlink" href="#common.models.Transaction.partition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.save_draft">
+<span class="sig-name descname"><span class="pre">save_draft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition_scheme</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/transactions.html#Transaction.save_draft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.Transaction.save_draft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finalise a single DRAFT transaction as a REVISION.</p>
+<p>Delegates to Transaction.objects.save_drafts() which is a better choice
+if updating many records.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.Transaction.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/transactions.html#Transaction.to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.Transaction.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize to JSON.</p>
+<p>Used for storing in the session.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.tracked_models">
+<span class="sig-name descname"><span class="pre">tracked_models</span></span><a class="headerlink" href="#common.models.Transaction.tracked_models" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_forward_many_to_many_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.transactiongroup_set">
+<span class="sig-name descname"><span class="pre">transactiongroup_set</span></span><a class="headerlink" href="#common.models.Transaction.transactiongroup_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_forward_many_to_many_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.workbasket">
+<span class="sig-name descname"><span class="pre">workbasket</span></span><a class="headerlink" href="#common.models.Transaction.workbasket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.Transaction.workbasket_id">
+<span class="sig-name descname"><span class="pre">workbasket_id</span></span><a class="headerlink" href="#common.models.Transaction.workbasket_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.ValidityMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">ValidityMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.base.Model</span></code></p>
+<p>The model is live after the validity start date
+(<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.lower</span></code>) and before the validity end date
+(<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.upper</span></code>).</p>
+<p>Start and end validity dates are inclusive – meaning that the model is live
+from the beginning of the start date to the end of the end date. A model
+with the same start and end date is therefore live for 1 day. If the
+validity end date is blank (<code class="xref py py-attr docutils literal notranslate"><span class="pre">valid_between.upper_inf</span></code>) then the model
+is live indefinitely after the start date.</p>
+<p>Validity dates can be modified with a new version of a model, so a model
+that initially has a blank end date can be updated to subsequently add one.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.ValidityMixin.Meta">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin.Meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityMixin.Meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.ValidityMixin.Meta.abstract">
+<span class="sig-name descname"><span class="pre">abstract</span></span><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#common.models.ValidityMixin.Meta.abstract" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.ValidityMixin.objects_with_validity_field">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">objects_with_validity_field</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin.objects_with_validity_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityMixin.objects_with_validity_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a QuerySet which will have this model’s validity date field (as
+specified by <a class="reference internal" href="#common.models.ValidityMixin.validity_field_name" title="common.models.ValidityMixin.validity_field_name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_field_name</span></code></a>) present on the returned
+models.</p>
+<p>The need for this is that some models (e.g.
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Measure</span></code>) use a validity date that is computed
+on demand as part of a database query and hence is not present on the
+default queryset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.ValidityMixin.terminate">
+<span class="sig-name descname"><span class="pre">terminate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workbasket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">when</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">datetime.date</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.mixins.validity.Self</span></span></span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin.terminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityMixin.terminate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new version of the object updated to end on the specified
+date.</p>
+<p>If the object would not have started on that date, the object is deleted
+instead. If the object will already have ended by this date, then does
+nothing.</p>
+<p>Any keyword arguments passed will be applied in the case of an update
+and are ignored for a delete or no change.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.ValidityMixin.valid_between">
+<span class="sig-name descname"><span class="pre">valid_between</span></span><a class="headerlink" href="#common.models.ValidityMixin.valid_between" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.ValidityMixin.validity_field_name">
+<span class="sig-name descname"><span class="pre">validity_field_name</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><em class="property"> <span class="pre">=</span> <span class="pre">'valid_between'</span></em><a class="headerlink" href="#common.models.ValidityMixin.validity_field_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the field that should be used for validity date checking.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">ValidityStartMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityStartMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityStartMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.base.Model</span></code></p>
+<p>The model is live after the <a class="reference internal" href="#common.models.ValidityStartMixin.validity_start" title="common.models.ValidityStartMixin.validity_start"><code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_start</span></code></a> date and before the
+<a class="reference internal" href="#common.models.ValidityStartMixin.validity_start" title="common.models.ValidityStartMixin.validity_start"><code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_start</span></code></a> date of the next model in the same series.</p>
+<p>This is broadly the same as the <code class="xref py py-class docutils literal notranslate"><span class="pre">ValidityMixin</span></code>
+but the lack of an end date enforces that there is always one model of this
+type active at any one time for a given series.</p>
+<p>This validity method is used when this model tracks some time-varying
+property of a related model. For example, this model may carry a description
+of the related model, and the description can be updated independently of
+the related model. The “series” is then defined by
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">identifing_fields</span></code> of the related model,
+such that for each related model there can be multiple of this model, each
+with their own validity period.</p>
+<p>Start and end validity dates are inclusive – meaning that the model is live
+from the beginning of the start date to the end of the end date. A model
+with the same start and end date is therefore live for 1 day. If the
+validity end date is blank then the model is live indefinitely after the
+start date.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.Meta">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityStartMixin.Meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityStartMixin.Meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.Meta.abstract">
+<span class="sig-name descname"><span class="pre">abstract</span></span><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#common.models.ValidityStartMixin.Meta.abstract" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.get_next_by_validity_start">
+<span class="sig-name descname"><span class="pre">get_next_by_validity_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateField:</span> <span class="pre">validity_start&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.ValidityStartMixin.get_next_by_validity_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.get_previous_by_validity_start">
+<span class="sig-name descname"><span class="pre">get_previous_by_validity_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateField:</span> <span class="pre">validity_start&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.ValidityStartMixin.get_previous_by_validity_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.mixins.validity.ValidityStartQueryset</span></em><a class="headerlink" href="#common.models.ValidityStartMixin.objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">with_end_date()</span></code>
+method is used to automatically compute the end date based on the other
+models in the series.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.objects_with_validity_field">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">objects_with_validity_field</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityStartMixin.objects_with_validity_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityStartMixin.objects_with_validity_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a QuerySet which will have this model’s validity date range
+present on the returned models.</p>
+<p>The need for this is that ValidityStart models use a validity date range
+that is computed on demand as part of a database query and hence is not
+present on the default queryset.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.validity_over">
+<span class="sig-name descname"><span class="pre">validity_over</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#common.models.ValidityStartMixin.validity_over" title="Permalink to this definition">¶</a></dt>
+<dd><p>Models with a single validity date always represent some feature of a
+related model and are only live for as long as that model is live. The is
+the name of the field on this model that is a foreign key to the related
+model. E.g. for a description it is the described model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.ValidityStartMixin.validity_start">
+<span class="sig-name descname"><span class="pre">validity_start</span></span><a class="headerlink" href="#common.models.ValidityStartMixin.validity_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.VersionGroup">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">VersionGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updated_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_version</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#VersionGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.VersionGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#common.models.TimestampedMixin" title="common.models.mixins.TimestampedMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.models.mixins.TimestampedMixin</span></code></a></p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="common.models.VersionGroup.DoesNotExist">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#common.models.VersionGroup.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.core.exceptions.ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="common.models.VersionGroup.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#common.models.VersionGroup.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">django.core.exceptions.MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.VersionGroup.current_version">
+<span class="sig-name descname"><span class="pre">current_version</span></span><a class="headerlink" href="#common.models.VersionGroup.current_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the forward side of a one-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;restaurant&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Restaurant.place</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.VersionGroup.current_version_id">
+<span class="sig-name descname"><span class="pre">current_version_id</span></span><a class="headerlink" href="#common.models.VersionGroup.current_version_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.VersionGroup.get_next_by_created_at">
+<span class="sig-name descname"><span class="pre">get_next_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.VersionGroup.get_next_by_created_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.VersionGroup.get_next_by_updated_at">
+<span class="sig-name descname"><span class="pre">get_next_by_updated_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">updated_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.VersionGroup.get_next_by_updated_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.VersionGroup.get_previous_by_created_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.VersionGroup.get_previous_by_created_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.VersionGroup.get_previous_by_updated_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_updated_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">updated_at&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=False</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.VersionGroup.get_previous_by_updated_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.VersionGroup.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#common.models.VersionGroup.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.VersionGroup.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.VersionGroup.objects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.VersionGroup.versions">
+<span class="sig-name descname"><span class="pre">versions</span></span><a class="headerlink" href="#common.models.VersionGroup.versions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_forward_many_to_many_manager()</span></code> defined below.</p>
+</dd></dl>
+
+</dd></dl>
+
+<section id="submodules">
+<h1>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">records</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transactions</span></code></p></td>
+<td><p>Transaction model and manager.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dc</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mixins</span></code></p></td>
+<td><p>Mixins for models.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constants</span></code></p></td>
+<td><p>Includes constants and enumerators for use in orm models.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/api/common/common.models.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'api/common/common.models.rst'&amp;body=Problem%20with%20'api/common/common.models.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
