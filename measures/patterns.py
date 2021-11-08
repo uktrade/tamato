@@ -526,11 +526,14 @@ class SuspensionViaAdditionalCodePattern:
         given duty rate between the two validity dates."""
         if not copy_from:
             # If there is no MFN measure we have a problem because we don't know what
-            # rate to use on the subsequent measure, so just error out.
+            # rate to use on the subsequent measure, so just skip that.
             existing_measures = self.get_mfn_measures(code, validity_start)
-            assert (
-                existing_measures.exists()
-            ), f"No MFN found on code {code} @ {validity_start}"
+            if not existing_measures.exists():
+                self.logger.warning(
+                    "No MFN found on code %s at %s. Resulting suspension will not have MFN rate.",
+                    code,
+                    validity_start,
+                )
 
             # If the MFN measure does not have an additional code, remove it.
             # If not, keep it because the other suspension still needs it.
