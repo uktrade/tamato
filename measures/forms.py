@@ -567,13 +567,16 @@ class MeasureFootnotesFormSet(FormSet):
 
 
 class MeasureUpdateFootnotesForm(MeasureFootnotesForm):
-    # Used with edit measure, this form has two buttons each submitting
-    # to different routes: one for submitting to the edit measure view
-    # (MeasureUpdate) and the other for submitting to the edit measure
-    # footnote view (MeasureFootnotesUpdate). This is done by setting the
-    # submit button's "formaction" attribute.
-    # This requires that the path is passed here on kwargs, allowing it to
-    # be accessed and used when rendering the edit forms' submit buttons.
+    """
+    Used with edit measure, this form has two buttons each submitting to
+    different routes: one for submitting to the edit measure view
+    (MeasureUpdate) and the other for submitting to the edit measure footnote
+    view (MeasureFootnotesUpdate).
+
+    This is done by setting the submit button's "formaction" attribute. This
+    requires that the path is passed here on kwargs, allowing it to be accessed
+    and used when rendering the edit forms' submit buttons.
+    """
 
     def __init__(self, *args, **kwargs):
         path = kwargs.pop("path")
