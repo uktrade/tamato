@@ -58,7 +58,7 @@ def import_chunk(
     find_and_run_next_batch_chunks(
         chunk.batch,
         workbasket_status,
-        partition_scheme,
+        partition_scheme_setting,
         username,
     )
 
