@@ -5,7 +5,7 @@ black>=20.8b1
 boto3==1.18.51
 celery[redis]==5.0.5
 coverage[toml]==5.4
-crispy-forms-gds==0.2.2
+crispy-forms-gds @ git+https://github.com/uktrade/crispy-forms-gds.git@b50168d0e23ffacbdd30e7819ec8f9a08e055c8e
 dj-database-url==0.5.0
 django==3.1.13
 django-dotenv==1.4.2
