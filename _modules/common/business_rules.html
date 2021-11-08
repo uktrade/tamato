@@ -306,10 +306,12 @@
 <span class="k">class</span> <span class="nc">PreventDeleteIfInUse</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Rule preventing deleting an in-use model.&quot;&quot;&quot;</span>
 
-    <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;in_use&quot;</span>
+    <span class="n">in_use_check</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;in_use&quot;</span>
+    <span class="n">via_relation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">has_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use_check</span><span class="p">)()</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">via_relation</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">via_relation</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use_check</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span> <span class="o">*</span><span class="n">names</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PreventDeleteIfInUse.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.PreventDeleteIfInUse.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_violation</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
@@ -382,7 +384,7 @@
                     <span class="k">for</span> <span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                 <span class="p">}</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="o">**</span><span class="p">{</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contained_model</span><span class="o">.</span><span class="n">validity_field_name</span><span class="si">}</span><span class="s2">__contained_by&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
@@ -434,7 +436,7 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="DescriptionsRules"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.DescriptionsRules">[docs]</a><span class="k">class</span> <span class="nc">DescriptionsRules</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ValidityStartDateRules"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.ValidityStartDateRules">[docs]</a><span class="k">class</span> <span class="nc">ValidityStartDateRules</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Repeated rule pattern for descriptions.&quot;&quot;&quot;</span>
 
     <span class="n">messages</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -444,7 +446,7 @@
         <span class="s2">&quot;start after end&quot;</span><span class="p">:</span> <span class="s2">&quot;The start date of the </span><span class="si">{item}</span><span class="s2"> must be less than or equal to the end date of the </span><span class="si">{model}</span><span class="s2">.&quot;</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;description&quot;</span>
+    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span>
 
     <span class="k">def</span> <span class="nf">generate_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">message_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">[</span><span class="n">message_key</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -454,16 +456,16 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_descriptions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">transaction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclass should implement get_objects&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DescriptionsRules.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.DescriptionsRules.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="n">descriptions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;validity_start&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ValidityStartDateRules.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.ValidityStartDateRules.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="n">objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objects</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;validity_start&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;at least one&quot;</span><span class="p">)</span>
 
-        <span class="n">valid_froms</span> <span class="o">=</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;validity_start&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">valid_froms</span> <span class="o">=</span> <span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;validity_start&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
             <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">valid_froms</span><span class="p">),</span>
@@ -477,6 +479,15 @@
             <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">,</span> <span class="n">valid_froms</span><span class="p">),</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;start after end&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DescriptionsRules"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.DescriptionsRules">[docs]</a><span class="k">class</span> <span class="nc">DescriptionsRules</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Repeated rule pattern for descriptions.&quot;&quot;&quot;</span>
+
+    <span class="n">item_name</span> <span class="o">=</span> <span class="s2">&quot;description&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NoBlankDescription"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.NoBlankDescription">[docs]</a><span class="k">class</span> <span class="nc">NoBlankDescription</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
@@ -521,9 +532,13 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="UpdateValidity.validate"><a class="viewcode-back" href="../../docs/business_rules/common.html#common.business_rules.UpdateValidity.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="n">existing_objects</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">version_group</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">existing_objects</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">version_group</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">versions_up_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">existing_objects</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">:</span>

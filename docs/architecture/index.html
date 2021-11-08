@@ -240,35 +240,6 @@ that is not draft is considered to be “current”.</p>
 exists a version of the model in a draft state within a transaction
 preceding (and including) the given transaction in the workbasket of the
 given transaction.</p>
-<p>The generated SQL is equivalent to:</p>
-<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span>SELECT *,
-       Max(t3.&quot;id&quot;) filter (
-           WHERE (
-               t3.&quot;transaction_id&quot; = {TRANSACTION_ID}
-            OR (&quot;common_transaction&quot;.&quot;order&quot; &lt; {TRANSACTION_ORDER} AND &quot;common_transaction&quot;.&quot;workbasket_id&quot; = {WORKBASKET_ID})
-            OR (&quot;workbaskets_workbasket&quot;.&quot;approver_id&quot; IS NOT NULL AND &quot;workbaskets_workbasket&quot;.&quot;status&quot; IN (APPROVED_STATUSES))
-           )
-       ) AS &quot;latest&quot;
-  FROM &quot;common_trackedmodel&quot;
- INNER JOIN &quot;common_versiongroup&quot;
-    ON &quot;common_trackedmodel&quot;.&quot;version_group_id&quot; = &quot;common_versiongroup&quot;.&quot;id&quot;
-  LEFT OUTER JOIN &quot;common_trackedmodel&quot; t3
-    ON &quot;common_versiongroup&quot;.&quot;id&quot; = t3.&quot;version_group_id&quot;
-  LEFT OUTER JOIN &quot;common_transaction&quot;
-    ON t3.&quot;transaction_id&quot; = &quot;common_transaction&quot;.&quot;id&quot;
-  LEFT OUTER JOIN &quot;workbaskets_workbasket&quot;
-    ON &quot;common_transaction&quot;.&quot;workbasket_id&quot; = &quot;workbaskets_workbasket&quot;.&quot;id&quot;
- WHERE NOT &quot;common_trackedmodel&quot;.&quot;update_type&quot; = 2
- GROUP BY &quot;common_trackedmodel&quot;.&quot;id&quot;
-HAVING max(t3.&quot;id&quot;) filter (
-           WHERE (
-               t3.&quot;transaction_id&quot; = {TRANSACTION_ID}
-            OR (&quot;common_transaction&quot;.&quot;order&quot; &lt; {TRANSACTION_ORDER} AND &quot;common_transaction&quot;.&quot;workbasket_id&quot; = {WORKBASKET_ID})
-            OR (&quot;workbaskets_workbasket&quot;.&quot;approver_id&quot; IS NOT NULL AND &quot;workbaskets_workbasket&quot;.&quot;status&quot; IN (APPROVED_STATUSES))
-           )
-) = &quot;common_trackedmodel&quot;.&quot;id&quot;
-</pre></div>
-</div>
 </dd></dl>
 
 <dl class="py method">

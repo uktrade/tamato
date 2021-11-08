@@ -167,13 +167,17 @@
 
 <div class="viewcode-block" id="ON11"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON11">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ON11</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The quota order number cannot be deleted if it is used in a measure.&quot;&quot;&quot;</span></div>
+    <span class="sd">&quot;&quot;&quot;The quota order number cannot be deleted if it is used in a measure.&quot;&quot;&quot;</span>
+
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span></div>
 
 
 <div class="viewcode-block" id="ON12"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON12">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ON12</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The quota order number origin cannot be deleted if it is used in a</span>
-<span class="sd">    measure.&quot;&quot;&quot;</span></div>
+<span class="sd">    measure.&quot;&quot;&quot;</span>
+
+    <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;order_number_in_use&quot;</span></div>
 
 
 <div class="viewcode-block" id="ON13"><a class="viewcode-back" href="../../docs/business_rules/quotas.html#quotas.business_rules.ON13">[docs]</a><span class="k">class</span> <span class="nc">ON13</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>

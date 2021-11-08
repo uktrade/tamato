@@ -118,21 +118,21 @@
     <span class="sd">&quot;&quot;&quot;When a footnote is used in a measure then the footnote may not be</span>
 <span class="sd">    deleted.&quot;&quot;&quot;</span>
 
-    <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;used_in_measure&quot;</span></div>
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationmeasure&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO12"><a class="viewcode-back" href="../../docs/business_rules/footnotes.html#footnotes.business_rules.FO12">[docs]</a><span class="k">class</span> <span class="nc">FO12</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a footnote is used in a goods nomenclature then the footnote may not</span>
 <span class="sd">    be deleted.&quot;&quot;&quot;</span>
 
-    <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;used_in_goods_nomenclature&quot;</span></div>
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationgoodsnomenclature&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO15"><a class="viewcode-back" href="../../docs/business_rules/footnotes.html#footnotes.business_rules.FO15">[docs]</a><span class="k">class</span> <span class="nc">FO15</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a footnote is used in an additional code then the footnote may not</span>
 <span class="sd">    be deleted.&quot;&quot;&quot;</span>
 
-    <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;used_in_additional_code&quot;</span></div>
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationadditionalcode&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO17"><a class="viewcode-back" href="../../docs/business_rules/footnotes.html#footnotes.business_rules.FO17">[docs]</a><span class="k">class</span> <span class="nc">FO17</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>

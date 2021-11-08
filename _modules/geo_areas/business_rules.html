@@ -318,14 +318,16 @@
 
 <span class="sd">    The geographical area may be referenced in a measure as the</span>
 <span class="sd">    origin/destination or as an excluded geographical area.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;measures&quot;</span></div>
 
 
 <div class="viewcode-block" id="GA22"><a class="viewcode-back" href="../../docs/business_rules/geo_areas.html#geo_areas.business_rules.GA22">[docs]</a><span class="k">class</span> <span class="nc">GA22</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A geographical area cannot be deleted if it is referenced as a parent</span>
 <span class="sd">    geographical area group.&quot;&quot;&quot;</span>
 
-    <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;is_a_parent&quot;</span></div>
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;geographicalarea&quot;</span></div>
 
 
 <div class="viewcode-block" id="GA23"><a class="viewcode-back" href="../../docs/business_rules/geo_areas.html#geo_areas.business_rules.GA23">[docs]</a><span class="k">class</span> <span class="nc">GA23</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>

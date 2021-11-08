@@ -65,6 +65,7 @@
 <span class="kn">from</span> <span class="nn">django.db.models.expressions</span> <span class="kn">import</span> <span class="n">Expression</span>
 <span class="kn">from</span> <span class="nn">django.db.models.fields.reverse_related</span> <span class="kn">import</span> <span class="n">ForeignObjectRel</span>
 <span class="kn">from</span> <span class="nn">django.db.models.options</span> <span class="kn">import</span> <span class="n">Options</span>
+<span class="kn">from</span> <span class="nn">django.db.models.query</span> <span class="kn">import</span> <span class="n">QuerySet</span>
 <span class="kn">from</span> <span class="nn">django.db.models.query_utils</span> <span class="kn">import</span> <span class="n">DeferredAttribute</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
 <span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">loader</span>
@@ -84,6 +85,7 @@
 <span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
 <span class="kn">from</span> <span class="nn">common.querysets</span> <span class="kn">import</span> <span class="n">ValidityQuerySet</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_accessor</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
@@ -109,43 +111,10 @@
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="TrackedModelQuerySet.approved_up_to_transaction"><a class="viewcode-back" href="../../../docs/architecture/index.html#common.models.records.TrackedModelQuerySet.approved_up_to_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get the approved versions of the model being queried, unless there</span>
+        <span class="sd">&quot;&quot;&quot;Get the approved versions of the model being queried, unless there</span>
 <span class="sd">        exists a version of the model in a draft state within a transaction</span>
 <span class="sd">        preceding (and including) the given transaction in the workbasket of the</span>
-<span class="sd">        given transaction.</span>
-
-<span class="sd">        The generated SQL is equivalent to:</span>
-
-<span class="sd">        .. code:: SQL</span>
-
-<span class="sd">            SELECT *,</span>
-<span class="sd">                   Max(t3.&quot;id&quot;) filter (</span>
-<span class="sd">                       WHERE (</span>
-<span class="sd">                           t3.&quot;transaction_id&quot; = {TRANSACTION_ID}</span>
-<span class="sd">                        OR (&quot;common_transaction&quot;.&quot;order&quot; &lt; {TRANSACTION_ORDER} AND &quot;common_transaction&quot;.&quot;workbasket_id&quot; = {WORKBASKET_ID})</span>
-<span class="sd">                        OR (&quot;workbaskets_workbasket&quot;.&quot;approver_id&quot; IS NOT NULL AND &quot;workbaskets_workbasket&quot;.&quot;status&quot; IN (APPROVED_STATUSES))</span>
-<span class="sd">                       )</span>
-<span class="sd">                   ) AS &quot;latest&quot;</span>
-<span class="sd">              FROM &quot;common_trackedmodel&quot;</span>
-<span class="sd">             INNER JOIN &quot;common_versiongroup&quot;</span>
-<span class="sd">                ON &quot;common_trackedmodel&quot;.&quot;version_group_id&quot; = &quot;common_versiongroup&quot;.&quot;id&quot;</span>
-<span class="sd">              LEFT OUTER JOIN &quot;common_trackedmodel&quot; t3</span>
-<span class="sd">                ON &quot;common_versiongroup&quot;.&quot;id&quot; = t3.&quot;version_group_id&quot;</span>
-<span class="sd">              LEFT OUTER JOIN &quot;common_transaction&quot;</span>
-<span class="sd">                ON t3.&quot;transaction_id&quot; = &quot;common_transaction&quot;.&quot;id&quot;</span>
-<span class="sd">              LEFT OUTER JOIN &quot;workbaskets_workbasket&quot;</span>
-<span class="sd">                ON &quot;common_transaction&quot;.&quot;workbasket_id&quot; = &quot;workbaskets_workbasket&quot;.&quot;id&quot;</span>
-<span class="sd">             WHERE NOT &quot;common_trackedmodel&quot;.&quot;update_type&quot; = 2</span>
-<span class="sd">             GROUP BY &quot;common_trackedmodel&quot;.&quot;id&quot;</span>
-<span class="sd">            HAVING max(t3.&quot;id&quot;) filter (</span>
-<span class="sd">                       WHERE (</span>
-<span class="sd">                           t3.&quot;transaction_id&quot; = {TRANSACTION_ID}</span>
-<span class="sd">                        OR (&quot;common_transaction&quot;.&quot;order&quot; &lt; {TRANSACTION_ORDER} AND &quot;common_transaction&quot;.&quot;workbasket_id&quot; = {WORKBASKET_ID})</span>
-<span class="sd">                        OR (&quot;workbaskets_workbasket&quot;.&quot;approver_id&quot; IS NOT NULL AND &quot;workbaskets_workbasket&quot;.&quot;status&quot; IN (APPROVED_STATUSES))</span>
-<span class="sd">                       )</span>
-<span class="sd">            ) = &quot;common_trackedmodel&quot;.&quot;id&quot;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        given transaction.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">transaction</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span>
 
@@ -153,13 +122,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
                 <span class="n">latest</span><span class="o">=</span><span class="n">Max</span><span class="p">(</span>
                     <span class="s2">&quot;version_group__versions&quot;</span><span class="p">,</span>
-                    <span class="nb">filter</span><span class="o">=</span><span class="p">(</span>
-                        <span class="n">Q</span><span class="p">(</span><span class="n">version_group__versions__transaction</span><span class="o">=</span><span class="n">transaction</span><span class="p">)</span>
-                        <span class="o">|</span> <span class="n">Q</span><span class="p">(</span>
-                            <span class="n">version_group__versions__transaction__workbasket</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="p">,</span>
-                            <span class="n">version_group__versions__transaction__order__lt</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
-                        <span class="p">)</span>
-                        <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">approved_query_filter</span><span class="p">(</span><span class="s2">&quot;version_group__versions__&quot;</span><span class="p">)</span>
+                    <span class="nb">filter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">as_at_transaction_filter</span><span class="p">(</span>
+                        <span class="n">transaction</span><span class="p">,</span>
+                        <span class="s2">&quot;version_group__versions__&quot;</span><span class="p">,</span>
                     <span class="p">),</span>
                 <span class="p">),</span>
             <span class="p">)</span>
@@ -178,18 +143,18 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_current__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">since_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">versions_up_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get all instances of an object since a certain transaction (i.e. since a</span>
-<span class="sd">        particular workbasket was accepted).</span>
+<span class="sd">        Get all versions of an object up until and including the passed</span>
+<span class="sd">        transaction.</span>
 
-<span class="sd">        This will not include objects without a transaction ID - thus excluding rows which</span>
-<span class="sd">        have not been accepted yet.</span>
+<span class="sd">        If the transaction is in a draft workbasket, this will include all of</span>
+<span class="sd">        the approved transactions and any before it in the workbasket.</span>
 
-<span class="sd">        If done from the TrackedModel this will return all objects from all transactions since</span>
-<span class="sd">        the given transaction.</span>
+<span class="sd">        This is similar to `approved_up_to_transaction` except it includes all</span>
+<span class="sd">        versions, not just the most recent.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transaction__id__gt</span><span class="o">=</span><span class="n">transaction_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">as_at_transaction_filter</span><span class="p">(</span><span class="n">transaction</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">as_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">:</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -326,7 +291,8 @@
     <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate_record_codes</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;record_code&quot;</span><span class="p">,</span> <span class="s2">&quot;subrecord_code&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">approved_query_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">approved_query_filter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">common.models.transactions</span> <span class="kn">import</span> <span class="n">TransactionPartition</span>
 
         <span class="k">return</span> <span class="n">Q</span><span class="p">(</span>
@@ -334,6 +300,38 @@
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__partition__in&quot;</span><span class="p">:</span> <span class="n">TransactionPartition</span><span class="o">.</span><span class="n">approved_partitions</span><span class="p">(),</span>
             <span class="p">}</span>
         <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">as_at_transaction_filter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">transaction</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a Django filter object that will filter the returned models to</span>
+<span class="sd">        only those that exist as of the passed transaction.</span>
+
+<span class="sd">        This is different than just `object.versions` because it will only</span>
+<span class="sd">        include draft versions from the same workbasket, if the transaction is</span>
+<span class="sd">        in draft, whereas `object.versions` will include all draft versions.</span>
+
+<span class="sd">        At the database level, that is any transaction in this partition with</span>
+<span class="sd">        lower order (and in this workbasket in the case of DRAFT), or any</span>
+<span class="sd">        transaction in an earlier partition.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">common.models.transactions</span> <span class="kn">import</span> <span class="n">TransactionPartition</span>
+
+        <span class="n">this_partition</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__partition&quot;</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__order__lte&quot;</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">transaction</span><span class="o">.</span><span class="n">partition</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">TransactionPartition</span><span class="o">.</span><span class="n">approved_partitions</span><span class="p">():</span>
+            <span class="n">this_partition</span><span class="p">[</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__workbasket__id&quot;</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">transaction</span><span class="o">.</span><span class="n">workbasket_id</span>
+
+        <span class="n">earlier_parition</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">transaction__partition__lt&quot;</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="n">this_partition</span><span class="p">)</span> <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="n">earlier_parition</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_when_model_record_codes</span><span class="p">():</span>
@@ -585,8 +583,8 @@
         <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">transaction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">get_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">get_descriptions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -625,7 +623,7 @@
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">transaction</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="o">=</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">request</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">WorkBasket</span>
@@ -892,6 +890,73 @@
                 <span class="n">model</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">reverse_field_name</span><span class="p">:</span> <span class="n">new_object</span><span class="p">})</span>
 
         <span class="k">return</span> <span class="n">new_object</span>
+
+    <span class="k">def</span> <span class="nf">in_use_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">via_relation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns all of the models that are referencing this one via the</span>
+<span class="sd">        specified relation and exist as of the passed transaction.</span>
+
+<span class="sd">        ``via_relation`` should be the name of a relation, and a ``KeyError``</span>
+<span class="sd">        will be raised if the relation name is not valid for this model.</span>
+<span class="sd">        Relations are accessible via ``TrackedModel.relations``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">relation</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">keys</span><span class="p">()}[</span><span class="n">via_relation</span><span class="p">]</span>
+        <span class="n">remote_model</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">remote_field_name</span> <span class="o">=</span> <span class="n">get_accessor</span><span class="p">(</span><span class="n">relation</span><span class="o">.</span><span class="n">remote_field</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">remote_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">remote_field_name</span><span class="si">}</span><span class="s2">__version_group&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="p">}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">in_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">relations</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns True if there are any models that are using this one as of the</span>
+<span class="sd">        specified transaction.</span>
+
+<span class="sd">        This can be any model this this model is related to, but igoring any</span>
+<span class="sd">        subrecords (because e.g. a footnote is not considered &quot;in use by&quot; its</span>
+<span class="sd">        own description) and then filtering for only things that link _to_ this</span>
+<span class="sd">        model.</span>
+
+<span class="sd">        The list of relations can be filtered by passing in the name of a</span>
+<span class="sd">        relation. If a name is passed in that does not refer to a relation on</span>
+<span class="sd">        this model, ``ValueError`` will be raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the list of models that use models of this type.</span>
+        <span class="n">using_models</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">relation</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">subrecord_relations</span>
+                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">models_linked_to</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># If the user has specified names, check that they are sane</span>
+        <span class="c1"># and then filter the relations to them,</span>
+        <span class="k">if</span> <span class="n">relations</span><span class="p">:</span>
+            <span class="n">bad_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">relations</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">using_models</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">bad_names</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bad_names</span><span class="si">}</span><span class="s2"> are unknown relations; use one of </span><span class="si">{</span><span class="n">using_models</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">using_models</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">relation</span> <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">using_models</span> <span class="k">if</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">relations</span>
+            <span class="p">}</span>
+
+        <span class="c1"># If this model doesn&#39;t have any using relations, it cannot be in use.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">using_models</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># If we find any objects for any relation, then the model is in use.</span>
+        <span class="k">for</span> <span class="n">relation_name</span> <span class="ow">in</span> <span class="n">using_models</span><span class="p">:</span>
+            <span class="n">relation_queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use_by</span><span class="p">(</span><span class="n">relation_name</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">relation_queryset</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
 
     <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">force_write</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>

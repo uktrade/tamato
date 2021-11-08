@@ -117,7 +117,9 @@
 
 
 <div class="viewcode-block" id="MT7"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.MT7">[docs]</a><span class="k">class</span> <span class="nc">MT7</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A measure type cannot be deleted if it is in use in a measure.&quot;&quot;&quot;</span></div>
+    <span class="sd">&quot;&quot;&quot;A measure type cannot be deleted if it is in use in a measure.&quot;&quot;&quot;</span>
+
+    <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span></div>
 
 
 <div class="viewcode-block" id="MT10"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.MT10">[docs]</a><span class="k">class</span> <span class="nc">MT10</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
@@ -145,9 +147,7 @@
 
 <div class="viewcode-block" id="MC4"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.MC4">[docs]</a><span class="k">class</span> <span class="nc">MC4</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The measure condition code cannot be deleted if it is used in a measure</span>
-<span class="sd">    condition component.&quot;&quot;&quot;</span>
-
-    <span class="n">in_use_check</span> <span class="o">=</span> <span class="s2">&quot;used_in_component&quot;</span></div>
+<span class="sd">    condition component.&quot;&quot;&quot;</span></div>
 
 
 <span class="c1"># 355 - MEASURE ACTION</span>
@@ -734,8 +734,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME40.validate"><a class="viewcode-back" href="../../docs/business_rules/measures.html#measures.business_rules.ME40.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="n">has_components</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">has_components</span><span class="p">()</span>
-        <span class="n">has_condition_components</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">has_condition_components</span><span class="p">()</span>
+        <span class="n">has_components</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">has_components</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+        <span class="n">has_condition_components</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">has_condition_components</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">components_mandatory</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="n">has_components</span> <span class="ow">or</span> <span class="n">has_condition_components</span>
@@ -842,7 +842,7 @@
             <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="n">components</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">inapplicable</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">[</span><span class="n">code</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div></div>
@@ -961,8 +961,7 @@
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">measure_condition</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_workbasket</span><span class="p">(</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
             <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">condition_code__code</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">condition_code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
@@ -970,7 +969,7 @@
                 <span class="n">required_certificate__certificate_type__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span><span class="o">.</span><span class="n">certificate_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
                 <span class="n">dependent_measure__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">dependent_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure_condition</span><span class="p">)</span></div></div>

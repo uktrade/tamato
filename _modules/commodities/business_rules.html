@@ -43,14 +43,13 @@
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
 
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Count</span>
-
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">FootnoteApplicability</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">NoOverlapping</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityStartDateRules</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_deleted</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_not_deleted</span>
@@ -186,7 +185,7 @@
             <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="NIG11"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG11">[docs]</a><span class="k">class</span> <span class="nc">NIG11</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="NIG11"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG11">[docs]</a><span class="k">class</span> <span class="nc">NIG11</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    At least one indent record is mandatory.</span>
 
@@ -196,56 +195,15 @@
 <span class="sd">    nomenclature.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="NIG11.validate"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG11.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+    <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;goods nomenclature&quot;</span>
+    <span class="n">item_name</span> <span class="o">=</span> <span class="s2">&quot;indent&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
         <span class="n">GoodsNomenclatureIndent</span> <span class="o">=</span> <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">model</span>
 
-        <span class="n">indents</span> <span class="o">=</span> <span class="n">GoodsNomenclatureIndent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">GoodsNomenclatureIndent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">indented_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">good</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">indents</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;At least one indent record is mandatory.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">validity_start</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">&quot;The start date of the first indentation must be equal to the &quot;</span>
-                    <span class="s2">&quot;start date of the nomenclature.&quot;</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">GoodsNomenclatureIndent</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">pk__in</span><span class="o">=</span><span class="n">indents</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;validity_start&quot;</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-                <span class="n">start_date_matches</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;validity_start&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">start_date_matches__gt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;No two associated indentations may have the same start date&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">validity_start__gt</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">&quot;The start date of an associated indentation must be less than or &quot;</span>
-                    <span class="s2">&quot;equal to the end date of the nomenclature.&quot;</span>
-                <span class="p">),</span>
-            <span class="p">)</span></div></div>
+        <span class="p">)</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NIG12"><a class="viewcode-back" href="../../docs/business_rules/commodities.html#commodities.business_rules.NIG12">[docs]</a><span class="k">class</span> <span class="nc">NIG12</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
