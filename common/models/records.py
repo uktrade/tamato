@@ -102,18 +102,18 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
         """
         return self.filter(is_current__isnull=False, update_type=UpdateType.DELETE)
 
-    def since_transaction(self, transaction_id: int) -> TrackedModelQuerySet:
+    def versions_up_to(self, transaction) -> TrackedModelQuerySet:
         """
-        Get all instances of an object since a certain transaction (i.e. since a
-        particular workbasket was accepted).
+        Get all versions of an object up until and including the passed
+        transaction.
 
-        This will not include objects without a transaction ID - thus excluding rows which
-        have not been accepted yet.
+        If the transaction is in a draft workbasket, this will include all of
+        the approved transactions and any before it in the workbasket.
 
-        If done from the TrackedModel this will return all objects from all transactions since
-        the given transaction.
+        This is similar to `approved_up_to_transaction` except it includes all
+        versions, not just the most recent.
         """
-        return self.filter(transaction__id__gt=transaction_id)
+        return self.filter(self.as_at_transaction_filter(transaction))
 
     def as_at(self, date: date) -> TrackedModelQuerySet:
         """
