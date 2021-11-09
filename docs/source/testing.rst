@@ -4,46 +4,32 @@ Testing
 Running tests
 -------------
 
-To run tests use the following command:
-
-.. code:: sh
-
-    $ python manage.py test
-
-To run with coverage use the following:
-
-.. code:: sh
-
-    $ python manage.py test -- --cov 
-
-When running tests the :envvar:`DJANGO_SETTINGS_MODULE` env var defaults to
-``settings.test``
-
-Speed up tests by without running coverage
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Coverage is enabled when running tests when running with ``make`` or ``pytest``:
+There are several ways to run tests, the recommended way is to use ``make``:
 
 .. code:: sh
 
     $ make test
 
-    $ pytest
-
-Running without coverage enabled is significantly faster, use one of the
-following commands:
+This will run all tests and generate a test coverage report. To run without coverage
+(which is somewhat faster), use the following:
 
 .. code:: sh
 
     $ make test-fast
 
-    $ pytest --no-cov
+Alternatively, you can run tests using ``pytest`` for more detailed configuration of the test run. See the various
+options with the following:
+
+.. code:: sh
+
+    $ pytest --help
+
+When running tests :envvar:`DJANGO_SETTINGS_MODULE` defaults to
+``settings.test``
+
 
 Find and debug intermittent test failures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Run tests in a loop
-^^^^^^^^^^^^^^^^^^^
+-----------------------------------------
 
 The simplest way to find intermittent test failures is to keep running
 them in a loop. It's worth leaving it running for at least a few test
@@ -63,7 +49,7 @@ processes to a number higher than the amount of CPU threads, e.g. 12 or
     $ while sleep 45 && pytest -s -v -n=12; do :; done
 
 Debugging with WebPDB, IPD, PDB++
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 By default tests run in multiple processes using pytest-xdist - a side
 effect is that debuggers over stdout such as pdb, ipdb, pdb++ do not
@@ -79,7 +65,7 @@ good choices, in that case use -s so that pytest doesn't capture stdout:
     $ pytest -s
 
 Run tests in a single process
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Running in a single process can eliminate pytest-xdist as a cause of
 errors.
@@ -102,7 +88,7 @@ Use random order:
     $ pytest -n0 --random-order
 
 Speed up runtimes by using Pyston instead of CPython
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------
 
 | Pyston is a faster python implementation that aims for compatibility with the default CPython implementation.
 | Ad-hoc testing on one laptop showed tests completed in 6 minutes in CPython and 4 with Pyston.
