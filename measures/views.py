@@ -104,7 +104,11 @@ class MeasureCreateWizard(
             "conditions",
             {
                 "form_class": forms.MeasureConditionsFormSet,
-                "title": "Add one or more conditions",
+                "title": "Add any condition codes",
+                "info": (
+                    "This section is optional. If there are no condition "
+                    "codes, select continue."
+                ),
                 "link_text": "Conditions",
                 "template": "measures/create-formset.jinja",
             },
@@ -121,7 +125,11 @@ class MeasureCreateWizard(
             "footnotes",
             {
                 "form_class": forms.MeasureFootnotesFormSet,
-                "title": "Add one or more footnotes",
+                "title": "Add any footnotes",
+                "info": (
+                    "This section is optional. If there are no footnotes, "
+                    "select continue."
+                ),
                 "link_text": "Footnotes",
                 "template": "measures/create-formset.jinja",
             },
