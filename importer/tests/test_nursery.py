@@ -2,6 +2,7 @@ import pytest
 
 from common.tests import factories
 from common.tests.models import TestModel1
+from common.util import get_identifying_fields
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from importer import nursery
@@ -81,7 +82,7 @@ def test_nursery_gets_object_from_cache(settings, object_nursery):
     instance = factories.FootnoteFactory.create()
     object_nursery.cache_object(instance)
 
-    identifying_fields = instance.get_identifying_fields()
+    identifying_fields = get_identifying_fields(instance)
 
     cached_instance = object_nursery.get_obj_from_cache(
         Footnote,

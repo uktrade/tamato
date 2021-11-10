@@ -16,6 +16,7 @@ from commodities.models.dc import CommodityChange
 from commodities.models.dc import get_model_identifier
 from commodities.tests.conftest import TScenario
 from common.models.records import TrackedModel
+from common.util import get_identifying_fields
 from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
@@ -31,7 +32,7 @@ def validate_captured_side_effect(
     assert key in change.side_effects
 
     side_effect = change.side_effects[key]
-    assert side_effect.obj.get_identifying_fields() == obj.get_identifying_fields()
+    assert get_identifying_fields(side_effect.obj) == get_identifying_fields(obj)
     assert side_effect.update_type == update_type
 
 

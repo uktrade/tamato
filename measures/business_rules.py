@@ -16,6 +16,7 @@ from common.business_rules import ValidityPeriodContains
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
 from common.util import TaricDateRange
+from common.util import get_identifying_fields
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from geo_areas.validators import AreaCode
@@ -25,7 +26,7 @@ from quotas.validators import AdministrationMechanism
 class MeasureValidityPeriodContained(ValidityPeriodContained):
     def query_contains_validity(self, container, contained, model):
         queryset = container.__class__.objects.filter(
-            **container.get_identifying_fields(),
+            **get_identifying_fields(container),
         ).approved_up_to_transaction(model.transaction)
 
         if container.__class__.__name__ == "Measure":

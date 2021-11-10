@@ -275,10 +275,6 @@ def test_get_latest_relation_without_latest_links(
     assert latest_link == fetched_latest_link
 
 
-def test_get_taric_template(sample_model):
-    assert sample_model.get_taric_template() == "test_template"
-
-
 def test_current_version(sample_model):
     assert sample_model.current_version == sample_model
 
@@ -346,10 +342,6 @@ def test_new_version_uses_passed_transaction(sample_model):
 def test_new_version_works_for_all_models(trackedmodel_factory):
     model = trackedmodel_factory.create()
     model.new_version(model.transaction.workbasket)
-
-
-def test_identifying_fields(sample_model):
-    assert sample_model.get_identifying_fields() == {"sid": sample_model.sid}
 
 
 def test_identifying_fields_unique(model1_with_history):

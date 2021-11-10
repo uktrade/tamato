@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from datetime import date
 from typing import Any
 from typing import Dict
@@ -26,7 +25,6 @@ from django.db.models.fields.reverse_related import ForeignObjectRel
 from django.db.models.options import Options
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
-from django.template import loader
 from django.urls import NoReverseMatch
 from django.urls import reverse
 from django_cte import CTEQuerySet
@@ -40,8 +38,10 @@ from common.exceptions import IllegalSaveError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.models.tracked_model_utils import get_relations
 from common.querysets import ValidityQuerySet
 from common.util import classproperty
+from common.util import get_identifying_fields
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
@@ -431,42 +431,6 @@ class TrackedModel(PolymorphicModel):
     actually equate to a ``UNIQUE`` constraint in the database.)
     """
 
-    taric_template = None
-
-    def get_taric_template(self):
-        """
-        Generate a TARIC XML template name for the given class.
-
-        Any TrackedModel must be representable via a TARIC compatible XML
-        record.
-        """
-
-        if self.taric_template:
-            return self.taric_template
-        class_name = self.__class__.__name__
-
-        # replace namesLikeThis to names_Like_This
-        name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", class_name)
-        # replace names_LIKEthis to names_like_this
-        name = re.sub(r"([A-Z]{2,})([a-z0-9_])", r"\1_\2", name).lower()
-
-        template_name = f"taric/{name}.xml"
-        try:
-            loader.get_template(template_name)
-        except loader.TemplateDoesNotExist as e:
-            raise loader.TemplateDoesNotExist(
-                f"Taric template does not exist for {class_name}. All classes that "
-                "inherit TrackedModel must either:\n"
-                "    1) Have a matching taric template with a snake_case name matching "
-                'the class at "taric/{snake_case_class_name}.xml". In this case it '
-                f'should be: "{template_name}".\n'
-                "    2) A taric_template attribute, pointing to the correct template.\n"
-                "    3) Override the get_taric_template method, returning an existing "
-                "template.",
-            ) from e
-
-        return template_name
-
     def new_version(
         self: Cls,
         workbasket,
@@ -540,7 +504,7 @@ class TrackedModel(PolymorphicModel):
     def get_versions(self):
         if hasattr(self, "version_group"):
             return self.version_group.versions.all()
-        query = Q(**self.get_identifying_fields())
+        query = Q(**get_identifying_fields(self))
         return self.__class__.objects.filter(query)
 
     def identifying_fields_unique(
@@ -549,7 +513,7 @@ class TrackedModel(PolymorphicModel):
     ) -> bool:
         return (
             self.__class__.objects.filter(
-                **self.get_identifying_fields(identifying_fields)
+                **get_identifying_fields(self, identifying_fields)
             )
             .latest_approved()
             .count()
@@ -562,7 +526,7 @@ class TrackedModel(PolymorphicModel):
     ) -> str:
         field_list = [
             f"{field}={str(value)}"
-            for field, value in self.get_identifying_fields(identifying_fields).items()
+            for field, value in get_identifying_fields(self, identifying_fields).items()
         ]
 
         return ", ".join(field_list)
@@ -578,23 +542,6 @@ class TrackedModel(PolymorphicModel):
             and self.transaction.workbasket.status in WorkflowStatus.approved_statuses()
         )
 
-    def get_identifying_fields(
-        self,
-        identifying_fields: Optional[Iterable[str]] = None,
-    ) -> Dict[str, Any]:
-        identifying_fields = identifying_fields or self.identifying_fields
-        fields = {}
-
-        for field in identifying_fields:
-            value = self
-            for layer in field.split("__"):
-                value = getattr(value, layer)
-                if value is None:
-                    break
-            fields[field] = value
-
-        return fields
-
     @property
     def structure_code(self):
         return str(self)
@@ -609,23 +556,23 @@ class TrackedModel(PolymorphicModel):
     def version_at(self: Cls, transaction) -> Cls:
         return self.get_versions().approved_up_to_transaction(transaction).get()
 
-    @classproperty
-    def relations(cls) -> Dict[Union[Field, ForeignObjectRel], Type[TrackedModel]]:
-        """
-        Returns all the models that are related to this one.
+    # @classproperty
+    # def relations(cls) -> Dict[Union[Field, ForeignObjectRel], Type[TrackedModel]]:
+    #     """
+    #     Returns all the models that are related to this one.
 
-        The link can either be stored on this model (so a one-to-one or a many-
-        to-one relationship) or on the related model (so a one-to-many (reverse)
-        relationship).
-        """
-        return dict(
-            (f, f.related_model)
-            for f in cls._meta.get_fields()
-            if (f.many_to_one or f.one_to_one or f.one_to_many)
-            and f.model == cls
-            and issubclass(f.related_model, TrackedModel)
-            and f.related_model is not TrackedModel
-        )
+    #     The link can either be stored on this model (so a one-to-one or a many-
+    #     to-one relationship) or on the related model (so a one-to-many (reverse)
+    #     relationship).
+    #     """
+    #     return dict(
+    #         (f, f.related_model)
+    #         for f in cls._meta.get_fields()
+    #         if (f.many_to_one or f.one_to_one or f.one_to_many)
+    #         and f.model == cls
+    #         and issubclass(f.related_model, TrackedModel)
+    #         and f.related_model is not TrackedModel
+    #     )
 
     @classproperty
     def models_linked_to(
@@ -636,7 +583,7 @@ class TrackedModel(PolymorphicModel):
         included in the returned results)."""
         return dict(
             (f, r)
-            for f, r in cls.relations.items()
+            for f, r in get_relations(cls).items()
             if (f.many_to_one or f.one_to_one) and not f.auto_created and f.concrete
         )
 
@@ -822,7 +769,7 @@ class TrackedModel(PolymorphicModel):
 
     def __str__(self):
         return ", ".join(
-            f"{field}={value}" for field, value in self.get_identifying_fields().items()
+            f"{field}={value}" for field, value in get_identifying_fields(self).items()
         )
 
     def __hash__(self):
@@ -831,7 +778,7 @@ class TrackedModel(PolymorphicModel):
     def get_url(self, action="detail"):
         kwargs = {}
         if action != "list":
-            kwargs = self.get_identifying_fields()
+            kwargs = get_identifying_fields(self)
         try:
             return reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",
@@ -845,9 +792,3 @@ class TrackedModel(PolymorphicModel):
         if not prefix:
             prefix = self._meta.verbose_name.replace(" ", "_")
         return prefix
-
-    def get_indefinite_article(self):
-        """Returns "a" or "an" based on the verbose_name."""
-
-        # XXX naive, but works for all current models
-        return "an" if self._meta.verbose_name[0] in ["a", "e", "i", "o", "u"] else "a"

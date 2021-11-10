@@ -25,6 +25,7 @@ from common.serializers import validate_taric_xml_record_order
 from common.util import TaricDateRange
 from common.util import get_accessor
 from common.util import get_field_tuple
+from common.util import get_identifying_fields
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
 UPDATE_IMPORTER_IMPLEMENTED = True
@@ -146,9 +147,9 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
         for name in checked_field_names
     }
     identifying_fields = {
-        name: data[name].get_identifying_fields()
+        name: get_identifying_fields(data[name])
         for name in checked_field_names
-        if hasattr(data[name], "get_identifying_fields")
+        if hasattr(data[name], "identifying_fields")
     }
     data.update(identifying_fields)
     return data

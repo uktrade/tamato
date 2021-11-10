@@ -15,6 +15,7 @@ from django.template import loader
 from django.utils.safestring import mark_safe
 
 from common.util import TaricDateRange
+from common.util import get_model_indefinite_article
 
 
 class DescriptionHelpBox(Div):
@@ -146,7 +147,7 @@ class ValidityPeriodForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields["end_date"].help_text = (
-            f"Leave empty if {self.instance.get_indefinite_article()} "
+            f"Leave empty if {get_model_indefinite_article(self.instance)} "
             f"{self.instance._meta.verbose_name} is needed for an unlimited time"
         )
 

@@ -9,7 +9,9 @@ from common.exceptions import NoDescriptionError
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.records import TrackedModelQuerySet
+from common.models.tracked_model_utils import get_relations
 from common.util import classproperty
+from common.util import get_identifying_fields
 
 
 class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
@@ -26,7 +28,7 @@ class DescriptionMixin(ValidityStartMixin):
 
     @classproperty
     def described_object_field(cls) -> Field:
-        for rel in cls.relations.keys():
+        for rel in get_relations(cls).keys():
             if rel.name.startswith("described_"):
                 return rel
         raise TypeError(f"{cls} should have a described field.")
@@ -41,9 +43,9 @@ class DescriptionMixin(ValidityStartMixin):
     def get_url(self, action="detail"):
         kwargs = {}
         if action != "list":
-            kwargs = self.get_identifying_fields()
+            kwargs = get_identifying_fields(self)
             described_object = self.get_described_object()
-            for field, value in described_object.get_identifying_fields().items():
+            for field, value in get_identifying_fields(described_object).items():
                 kwargs[f"{self.described_object_field.name}__{field}"] = value
         try:
             return reverse(
@@ -86,7 +88,7 @@ class DescribedMixin:
                 f"Model {self.__class__.__name__} has no descriptions relation.",
             ) from e
 
-        for field, model in descriptions_model.relations.items():
+        for field, model in get_relations(descriptions_model).items():
             if isinstance(self, model):
                 field_name = field.name
                 break
@@ -98,7 +100,7 @@ class DescribedMixin:
 
         filter_kwargs = {
             f"{field_name}__{key}": value
-            for key, value in self.get_identifying_fields().items()
+            for key, value in get_identifying_fields(self).items()
         }
 
         query = descriptions_model.objects.filter(**filter_kwargs).order_by(

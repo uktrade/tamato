@@ -1,9 +1,11 @@
+from unittest import mock
+
 import pytest
 
 from common import util
 from common.tests import factories
+from common.tests import models
 from common.tests.util import Dates
-
 
 pytestmark = pytest.mark.django_db
 
@@ -156,3 +158,25 @@ def test_validity_range_contains_range(overall, contained, expected):
 def test_get_field_tuple(model_data, field, expected):
     model = factories.TestModel3Factory(**model_data)
     assert util.get_field_tuple(model, field) == (field, expected)
+
+
+@pytest.fixture
+def sample_model() -> models.TestModel1:
+    return factories.TestModel1Factory.create()
+
+
+def test_get_taric_template(sample_model):
+    with mock.patch("common.util.loader.get_template"):
+        assert util.get_taric_template(sample_model) == "taric/test_model1.xml"
+
+
+def test_get_model_indefinite_article():
+    additional_code = factories.AdditionalCodeFactory()
+    measure = factories.MeasureFactory()
+
+    assert util.get_model_indefinite_article(additional_code) == "an"
+    assert util.get_model_indefinite_article(measure) == "a"
+
+
+def test_identifying_fields(sample_model):
+    assert util.get_identifying_fields(sample_model) == {"sid": sample_model.sid}

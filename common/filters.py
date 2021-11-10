@@ -34,6 +34,7 @@ from common.fields import AutoCompleteField
 from common.jinja2 import break_words
 from common.models.records import TrackedModelQuerySet
 from common.util import TaricDateRange
+from common.util import get_identifying_fields
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
 
@@ -66,10 +67,10 @@ def type_choices(queryset: TrackedModelQuerySet) -> Callable[[], Sequence[Choice
     def get_choices():
         return [
             Choice(
-                model.get_identifying_fields()[field],
+                get_identifying_fields(model)[field],
                 mark_safe(
                     "{0} - {1}".format(
-                        model.get_identifying_fields()[field],
+                        get_identifying_fields(model)[field],
                         break_words(model.description),
                     ),
                 ),

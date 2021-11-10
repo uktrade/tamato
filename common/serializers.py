@@ -21,6 +21,7 @@ from common.models import Transaction
 from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import TaricDateRange
+from common.util import get_taric_template
 from common.xml.namespaces import nsmap
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
     formats_with_template = {"xml"}
 
     def get_taric_template(self, object):
-        return object.get_taric_template()
+        return get_taric_template(object)
 
     def get_format(self):
         """
