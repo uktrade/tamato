@@ -79,6 +79,8 @@ class MT4(MustExist):
 class MT7(PreventDeleteIfInUse):
     """A measure type cannot be deleted if it is in use in a measure."""
 
+    via_relation = "measure"
+
 
 class MT10(ValidityPeriodContained):
     """The validity period of the measure type series must span the validity
@@ -106,8 +108,6 @@ class MC3(MeasureValidityPeriodContained):
 class MC4(PreventDeleteIfInUse):
     """The measure condition code cannot be deleted if it is used in a measure
     condition component."""
-
-    in_use_check = "used_in_component"
 
 
 # 355 - MEASURE ACTION
@@ -543,11 +543,19 @@ class ME12(BusinessRule):
     have a relationship with the measure type."""
 
     def validate(self, measure):
+        AdditionalCodeTypeMeasureType = (
+            measure.measure_type.additional_code_types.through
+        )
         if (
             measure.additional_code
-            and not measure.measure_type.additional_code_types.filter(
-                sid=measure.additional_code.type.sid,
-            ).exists()
+            and not AdditionalCodeTypeMeasureType.objects.approved_up_to_transaction(
+                self.transaction,
+            )
+            .filter(
+                additional_code_type__sid=measure.additional_code.type.sid,
+                measure_type__sid=measure.measure_type.sid,
+            )
+            .exists()
         ):
             raise self.violation(measure)
 
@@ -686,8 +694,8 @@ class ME40(BusinessRule):
     """
 
     def validate(self, measure):
-        has_components = measure.has_components()
-        has_condition_components = measure.has_condition_components()
+        has_components = measure.has_components(self.transaction)
+        has_condition_components = measure.has_condition_components(self.transaction)
 
         if measure.measure_type.components_mandatory and not (
             has_components or has_condition_components
@@ -794,7 +802,7 @@ class ComponentApplicability(BusinessRule):
             )
             if (
                 components.filter(inapplicable)
-                .approved_up_to_transaction(measure.transaction)
+                .approved_up_to_transaction(self.transaction)
                 .exists()
             ):
                 raise self.violation(measure, self.messages[code].format(self))
@@ -913,8 +921,7 @@ class ME58(BusinessRule):
 
         if (
             type(measure_condition)
-            .objects.with_workbasket(measure_condition.transaction.workbasket)
-            .exclude(pk=measure_condition.pk or None)
+            .objects.exclude(pk=measure_condition.pk or None)
             .excluding_versions_of(version_group=measure_condition.version_group)
             .filter(
                 condition_code__code=measure_condition.condition_code.code,
@@ -922,7 +929,7 @@ class ME58(BusinessRule):
                 required_certificate__certificate_type__sid=measure_condition.required_certificate.certificate_type.sid,
                 dependent_measure__sid=measure_condition.dependent_measure.sid,
             )
-            .approved_up_to_transaction(measure_condition.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exists()
         ):
             raise self.violation(measure_condition)

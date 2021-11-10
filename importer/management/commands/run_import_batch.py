@@ -1,22 +1,25 @@
 from django.core.management import BaseCommand
 
-from common.models.transactions import TransactionPartition
 from importer import models
 from importer.tasks import find_and_run_next_batch_chunks
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
-from workbaskets.models import TransactionPartitionScheme
 from workbaskets.validators import WorkflowStatus
 
 
 def run_batch(
     batch: str,
     status: str,
-    partition_scheme: TransactionPartitionScheme,
+    partition_scheme_setting: str,
     username: str,
 ):
     import_batch = models.ImportBatch.objects.get(name=batch)
 
-    find_and_run_next_batch_chunks(import_batch, status, partition_scheme, username)
+    find_and_run_next_batch_chunks(
+        import_batch,
+        status,
+        partition_scheme_setting,
+        username,
+    )
 
 
 class Command(BaseCommand):
@@ -58,6 +61,6 @@ class Command(BaseCommand):
         run_batch(
             batch=options["batch"],
             status=options["status"],
-            partition_scheme=TransactionPartition[options["partition_scheme"]],
+            partition_scheme_setting=options["partition_scheme"],
             username=options["username"],
         )

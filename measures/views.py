@@ -104,7 +104,11 @@ class MeasureCreateWizard(
             "conditions",
             {
                 "form_class": forms.MeasureConditionsFormSet,
-                "title": "Add one or more conditions",
+                "title": "Add any condition codes",
+                "info": (
+                    "This section is optional. If there are no condition "
+                    "codes, select continue."
+                ),
                 "link_text": "Conditions",
                 "template": "measures/create-formset.jinja",
             },
@@ -121,7 +125,11 @@ class MeasureCreateWizard(
             "footnotes",
             {
                 "form_class": forms.MeasureFootnotesFormSet,
-                "title": "Add one or more footnotes",
+                "title": "Add any footnotes",
+                "info": (
+                    "This section is optional. If there are no footnotes, "
+                    "select continue."
+                ),
                 "link_text": "Footnotes",
                 "template": "measures/create-formset.jinja",
             },
@@ -290,9 +298,9 @@ class MeasureUpdate(
             f"formset_initial_{self.kwargs.get('sid')}",
             [],
         )
-        formset = forms.MeasureFootnotesFormSet()
+        formset = forms.MeasureUpdateFootnotesFormSet()
         formset.initial = initial
-        formset.form_kwargs = {"request": self.request}
+        formset.form_kwargs = {"path": self.request.path}
         context["formset"] = formset
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False

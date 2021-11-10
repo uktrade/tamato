@@ -1,5 +1,7 @@
 import logging
+from dataclasses import dataclass
 from datetime import date
+from datetime import timedelta
 from functools import cached_property
 from typing import Any
 from typing import Dict
@@ -9,6 +11,7 @@ from typing import Sequence
 
 from django.db import transaction
 
+from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
@@ -34,6 +37,7 @@ from measures.models import MeasureType
 from measures.parsers import ConditionSentenceParser
 from measures.parsers import DutySentenceParser
 from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
@@ -391,3 +395,218 @@ class MeasureCreationPattern:
             for tracked_model in self.create_measure_tracked_models(*args, **kwargs)
         )
         return measure
+
+
+@dataclass
+class SuspensionViaAdditionalCodePattern:
+    """
+    A pattern that implements suspensions by using an additional code to
+    distinguish between the normal MFN rate and the suspended rate.
+
+    A code that is suspended using this pattern will therefore have two (or
+    more) MFN-type measures.
+
+    When the pattern implements the suspension on top of a normal single-measure
+    MFN rate, it will terminate the existing measure and replace it with two new
+    measures. The pattern can also unsuspend the rate by terminating the two
+    additional code measures and replacing them with a single measure.
+
+    If multiple suspensions of this type are applied to the same code, they all
+    have an associated MFN measure even though this means duplicating the MFN
+    rate.
+
+    If there are multiple patterns of this type applied to the same code,
+    different logic applies: adding a new suspension will not terminate the
+    existing MFN, and removing the suspension will not restore it. Only the
+    first or last suspensions will trigger this behaviour. This means that
+    suspensions can be added or removed independently of one another.
+    """
+
+    workbasket: WorkBasket
+    """The workbasket into which all modified data will be added."""
+
+    mfn_additional_code: AdditionalCode
+    """The additional code used on the measure which has the normal MFN rate."""
+
+    full_suspension_additional_code: AdditionalCode
+    """The additional code used on the measure which has the suspended rate."""
+
+    mfn_regulation: Regulation
+    """The regulation used on the measure which has the normal MFN rate."""
+
+    suspension_regulation: Regulation
+    """The regulation used on the measure which has the suspended rate."""
+
+    mfn_measure_type__sids = ("103", "105")
+
+    def __post_init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def _log(self, message: str, measure: Measure):
+        self.logger.info(
+            message + "".join([" %s"] * 8),
+            measure.sid,
+            measure.goods_nomenclature,
+            measure.valid_between,
+            measure.measure_type,
+            measure.additional_code,
+            list(measure.conditions.all()),
+            list(measure.footnotes.all()),
+            measure.update_type,
+        )
+
+    def get_measures(self, code: GoodsNomenclature, as_at: date):
+        """Returns the measures applicable to the passed code on the given
+        date."""
+        return (
+            Measure.objects_with_validity_field()
+            .with_duty_sentence()
+            .approved_up_to_transaction(self.workbasket.transactions.last())
+            .as_at(as_at)
+            .filter(goods_nomenclature__sid=code.sid)
+        )
+
+    def get_mfn_measures(self, code: GoodsNomenclature, as_at: date):
+        """Returns any regular MFN measures applicable to the passed code on the
+        given date."""
+        return self.get_measures(code, as_at).filter(
+            measure_type__sid__in=self.mfn_measure_type__sids,
+        )
+
+    def get_suspension_measure(self, code: GoodsNomenclature, as_at: date):
+        """Returns any suspension measures applicable to the passed code on the
+        given date implemented using this pattern's additional code."""
+        return self.get_measures(code, as_at).filter(
+            additional_code=self.full_suspension_additional_code,
+        )
+
+    def get_suspended_mfn_measure(self, code: GoodsNomenclature, as_at: date):
+        """Returns any MFN measures applicable to the passed code on the given
+        date implemented using this pattern's additional code."""
+        return self.get_mfn_measures(code, as_at).filter(
+            additional_code=self.mfn_additional_code,
+        )
+
+    def create_suspension(
+        self,
+        code: GoodsNomenclature,
+        duty: str,
+        validity_start: date,
+        validity_end: Optional[date],
+        footnotes=frozenset(),
+    ):
+        """Create a new measure which will suspend tariffs on the passed code
+        down to the given duty rate between the two validity dates."""
+        mfn_measure = self.get_suspended_mfn_measure(code, validity_start).get()
+        creator = MeasureCreationPattern(self.workbasket, base_date=validity_start)
+        suspension_measure = creator.create(
+            duty_sentence=duty,
+            goods_nomenclature=code,
+            validity_start=validity_start,
+            validity_end=validity_end,
+            geographical_area=mfn_measure.geographical_area,
+            measure_type=mfn_measure.measure_type,
+            additional_code=self.full_suspension_additional_code,
+            generating_regulation=self.suspension_regulation,
+            footnotes=footnotes,
+        )
+        self._log("Created suspension measure", suspension_measure)
+        return suspension_measure
+
+    def suspend(
+        self,
+        code: GoodsNomenclature,
+        duty: str,
+        validity_start: date,
+        validity_end: Optional[date],
+        footnotes=frozenset(),
+        copy_from: Optional[Measure] = None,
+    ):
+        """Implement a new suspension on tariffs on the passed code down to the
+        given duty rate between the two validity dates."""
+        if not copy_from:
+            # If there is no MFN measure we have a problem because we don't know what
+            # rate to use on the subsequent measure, so just skip that.
+            existing_measures = self.get_mfn_measures(code, validity_start)
+            if not existing_measures.exists():
+                self.logger.warning(
+                    "No MFN found on code %s at %s. Resulting suspension will not have MFN rate.",
+                    code,
+                    validity_start,
+                )
+
+            # If the MFN measure does not have an additional code, remove it.
+            # If not, keep it because the other suspension still needs it.
+            if (
+                existing_measures.count() == 1
+                and existing_measures.get().additional_code is None
+            ):
+                deleted_mfn_measure = existing_measures.get().terminate(
+                    self.workbasket,
+                    validity_start - timedelta(days=1),
+                )
+                self._log("Terminated", deleted_mfn_measure)
+
+        # Now create the new MFN measure.
+        maybe_mfn = self.get_suspended_mfn_measure(code, validity_start)
+        if not maybe_mfn.exists():
+            mfn_measure = (copy_from or existing_measures.last()).copy(
+                goods_nomenclature=code,
+                additional_code=self.mfn_additional_code,
+                generating_regulation=self.mfn_regulation,
+                valid_between=TaricDateRange(validity_start, validity_end),
+                transaction=self.workbasket.new_transaction(),
+            )
+            self._log("Created MFN measure", mfn_measure)
+
+        # Now create the suspended measure.
+        return self.create_suspension(
+            code,
+            duty,
+            validity_start,
+            validity_end,
+            footnotes,
+        )
+
+    def unsuspend(
+        self,
+        code: GoodsNomenclature,
+        validity_start: date,
+        validity_end: Optional[date],
+        replace_onto: Optional[GoodsNomenclature] = None,
+    ):
+        """End the suspension on tariffs on the passed code as of the passed
+        validity dates."""
+        if not replace_onto:
+            replace_onto = code
+
+        # Find the existing suspension measures and terminate them.
+        terminated_suspension = self.get_suspension_measure(code, validity_start).get()
+        self._log(
+            "Terminated",
+            terminated_suspension.terminate(
+                self.workbasket,
+                validity_start - timedelta(days=1),
+            ),
+        )
+
+        terminated_mfn = self.get_suspended_mfn_measure(code, validity_start).get()
+        self._log(
+            "Terminated",
+            terminated_mfn.terminate(
+                self.workbasket,
+                validity_start - timedelta(days=1),
+            ),
+        )
+
+        # If there are any other codes left, we don't need to recreate the MFN
+        # Else, set up a new MFN measure
+        if not self.get_mfn_measures(code, validity_start).exists():
+            new_mfn = terminated_mfn.copy(
+                goods_nomenclature=replace_onto,
+                generating_regulation=self.mfn_regulation,
+                additional_code=None,
+                valid_between=TaricDateRange(validity_start, validity_end),
+                transaction=self.workbasket.new_transaction(),  # TODO footnotes
+            )
+            self._log("Created plain MFN", new_mfn)

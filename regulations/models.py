@@ -238,6 +238,7 @@ class Regulation(TrackedModel, ValidityMixin):
 
     def used_as_terminating_regulation_or_draft_generating_and_terminating_regulation(
         self,
+        transaction,
     ):
         if self.role_type != validators.RoleType.BASE:
             return
@@ -252,7 +253,7 @@ class Regulation(TrackedModel, ValidityMixin):
                 generating_regulation__regulation_id=self.regulation_id,
                 generating_regulation__role_type=self.role_type,
             )
-            .approved_up_to_transaction(transaction=self.transaction)
+            .approved_up_to_transaction(transaction)
             .exists()
         )
 

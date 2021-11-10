@@ -5,19 +5,21 @@ from django.db import migrations
 
 def forwards(apps, schema_editor):
     MeasurementUnitQualifier = apps.get_model("measures", "MeasurementUnitQualifier")
-    code_n_qualifier = MeasurementUnitQualifier.objects.filter(code="N").first()
-    # Migrations are run before seeding the db, so a check is needed to ensure the qualifier exists before trying to update
-    if code_n_qualifier:
-        code_n_qualifier.abbreviation = "net"
-        code_n_qualifier.save()
+    # Originally this used MeasurementUnitQualifier.objects.filter(code="N").first()
+    # but this tries to access valid_between which may not be created yet and then things
+    # break.
+    MeasurementUnitQualifier.objects.filter(code="N").update(abbreviation="net")
+
+
+def backwards(app, schema_editor):
+    pass
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("measures", "0008_auto_20210628_1641"),
     ]
 
     operations = [
-        migrations.RunPython(forwards),
+        migrations.RunPython(forwards, backwards),
     ]

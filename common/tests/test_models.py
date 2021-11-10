@@ -112,9 +112,14 @@ def test_get_current(model1_with_history, model2_with_history):
     }
 
 
-def test_since_transaction(model1_with_history):
-    transaction = model1_with_history.active_model.transaction
-    assert TrackedModel.objects.since_transaction(transaction.id).count() == 5
+def test_versions_up_to(model1_with_history):
+    """Ensure that versions_up_to returns all versions that are approved up to
+    and including the past transaction, not future ones and not just the
+    latest."""
+    for index, model in enumerate(model1_with_history.all_models):
+        versions = TestModel1.objects.versions_up_to(model.transaction)
+        assert versions.count() == index + 1
+        assert versions.last() == model
 
 
 def test_as_at(date_ranges):

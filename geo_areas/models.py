@@ -94,24 +94,6 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
             .select_related("member", "geo_group")
         )
 
-    def in_use(self):
-        return (
-            self.measures.model.objects.filter(
-                geographical_area__sid=self.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
-    def is_a_parent(self):
-        return (
-            GeographicalArea.objects.filter(
-                parent__sid=self.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
     def is_single_region_or_country(self):
         return self.area_code == AreaCode.COUNTRY or self.area_code == AreaCode.REGION
 
@@ -191,14 +173,8 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         else:
             raise ValueError(f"{area} is not part of membership {self}")
 
-    def member_used_in_measure_exclusion(self):
-        return (
-            self.member.measureexcludedgeographicalarea_set.model.objects.filter(
-                excluded_geographical_area__sid=self.member.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
+    def member_used_in_measure_exclusion(self, transaction):
+        return self.member.in_use(transaction, "measureexcludedgeographicalarea")
 
 
 class GeographicalAreaDescription(DescriptionMixin, TrackedModel):

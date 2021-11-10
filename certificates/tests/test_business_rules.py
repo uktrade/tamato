@@ -57,8 +57,11 @@ def test_CE4(date_ranges):
     """If a certificate is used in a measure condition then the validity period
     of the certificate must span the validity period of the measure."""
 
-    condition = factories.MeasureConditionWithCertificateFactory.create(
-        required_certificate__valid_between=date_ranges.starts_with_normal,
+    certificate = factories.CertificateFactory.create(
+        valid_between=date_ranges.starts_with_normal,
+    )
+    condition = factories.MeasureConditionFactory.create(
+        required_certificate=certificate,
         dependent_measure__valid_between=date_ranges.normal,
     )
 

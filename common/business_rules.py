@@ -267,10 +267,12 @@ class NoOverlapping(BusinessRule):
 class PreventDeleteIfInUse(BusinessRule):
     """Rule preventing deleting an in-use model."""
 
-    in_use_check = "in_use"
+    in_use_check: str = "in_use"
+    via_relation: Optional[str] = None
 
     def has_violation(self, model) -> bool:
-        return getattr(model, self.in_use_check)()
+        names = [self.via_relation] if self.via_relation else []
+        return getattr(model, self.in_use_check)(self.transaction, *names)
 
     def validate(self, model):
         if self.has_violation(model):
@@ -343,7 +345,7 @@ class ValidityPeriodContains(BusinessRule):
                     for (field, value) in get_identifying_fields(model).items()
                 }
             )
-            .approved_up_to_transaction(model.transaction)
+            .approved_up_to_transaction(self.transaction)
             .exclude(
                 **{
                     f"{contained_model.validity_field_name}__contained_by": model.valid_between,
@@ -395,7 +397,7 @@ class MustExist(BusinessRule):
             raise self.violation(model)
 
 
-class DescriptionsRules(BusinessRule):
+class ValidityStartDateRules(BusinessRule):
     """Repeated rule pattern for descriptions."""
 
     messages: Mapping[str, str] = {
@@ -405,7 +407,7 @@ class DescriptionsRules(BusinessRule):
         "start after end": "The start date of the {item} must be less than or equal to the end date of the {model}.",
     }
     model_name: str
-    item_name: str = "description"
+    item_name: str
 
     def generate_violation(self, model, message_key: str):
         msg = self.messages[message_key].format(
@@ -415,16 +417,16 @@ class DescriptionsRules(BusinessRule):
 
         return self.violation(model, msg)
 
-    def get_descriptions(self, model) -> QuerySet:
-        return model.get_descriptions(transaction=self.transaction)
+    def get_objects(self, model) -> QuerySet:
+        raise NotImplementedError("Subclass should implement get_objects")
 
     def validate(self, model):
-        descriptions = self.get_descriptions(model).order_by("validity_start")
+        objects = self.get_objects(model).order_by("validity_start")
 
-        if descriptions.count() < 1:
+        if objects.count() < 1:
             raise self.generate_violation(model, "at least one")
 
-        valid_froms = descriptions.values_list("validity_start", flat=True)
+        valid_froms = objects.values_list("validity_start", flat=True)
 
         if not any(
             filter(lambda x: x == model.valid_between.lower, valid_froms),
@@ -438,6 +440,15 @@ class DescriptionsRules(BusinessRule):
             filter(lambda x: x > model.valid_between.upper, valid_froms),
         ):
             raise self.generate_violation(model, "start after end")
+
+
+class DescriptionsRules(ValidityStartDateRules):
+    """Repeated rule pattern for descriptions."""
+
+    item_name = "description"
+
+    def get_objects(self, model):
+        return model.get_descriptions(self.transaction)
 
 
 class NoBlankDescription(BusinessRule):
@@ -482,9 +493,13 @@ class UpdateValidity(BusinessRule):
     """
 
     def validate(self, model):
-        existing_objects = model.__class__.objects.filter(
-            version_group=model.version_group,
-        ).exclude(id=model.id)
+        existing_objects = (
+            model.__class__.objects.filter(
+                version_group=model.version_group,
+            )
+            .exclude(id=model.id)
+            .versions_up_to(self.transaction)
+        )
 
         if existing_objects.exists():
             if model.update_type == UpdateType.CREATE:

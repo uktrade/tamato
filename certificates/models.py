@@ -34,13 +34,6 @@ class CertificateType(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
-    def in_use(self):
-        return (
-            Certificate.objects.filter(certificate_type__sid=self.sid)
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
-
     def __str__(self):
         return self.sid
 
@@ -88,16 +81,6 @@ class Certificate(TrackedModel, ValidityMixin, DescribedMixin):
     @property
     def autocomplete_label(self):
         return f"{self} - {self.get_description().description}"
-
-    def in_use(self):
-        return (
-            self.measurecondition_set.model.objects.filter(
-                required_certificate__sid=self.sid,
-                required_certificate__certificate_type=self.certificate_type,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exists()
-        )
 
 
 class CertificateDescription(DescriptionMixin, TrackedModel):

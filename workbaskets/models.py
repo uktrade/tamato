@@ -1,7 +1,9 @@
 """WorkBasket models."""
 import importlib
+import logging
 from abc import ABCMeta
 from abc import abstractmethod
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -19,6 +21,8 @@ from common.models.records import TrackedModelQuerySet
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from workbaskets.validators import WorkflowStatus
+
+logger = logging.getLogger(__name__)
 
 
 class TransactionPartitionScheme:
@@ -148,43 +152,62 @@ SEED_ONLY = UserTransactionPartitionScheme(
 )
 # Dict of transaction partition schemas by keyed name, for reference from management commands.
 TRANSACTION_PARTITION_SCHEMES = {
-    "seed_first": SEED_FIRST,
-    "seed": SEED_ONLY,
-    "revision": REVISION_ONLY,
+    "SEED_FIRST": SEED_FIRST,
+    "SEED_ONLY": SEED_ONLY,
+    "REVISION_ONLY": REVISION_ONLY,
 }
 
 
-def get_partition_scheme() -> TransactionPartitionScheme:
+def get_partition_scheme(scheme: Optional[str] = None) -> TransactionPartitionScheme:
     """
-    Resolve transaction schema class from settings.TRANSACTION_SCHEMA, which
-    must contain a fully qualified path to an instance of
-    TransactionPartitionScheme, ie.
+    :param scheme: Optional scheme, if None then settings.TRANSACTION_SCHEME is the default.
 
-    workbaskets.models.SEED_FIRST, workbaskets.models.SEED_ONLY,
-    workbaskets.models.REVISION
+    Resolve transaction schema instance from string or setting which can
+    either be a short name that is a key in TRANSACTION_PARTITION_SCHEMES or a fully
+    qualified name that is a reference to an instance of TransactionPartitionScheme,
+    for example one of:
+
+      "workbaskets.models.SEED_FIRST"
+      "workbaskets.models.SEED_ONLY"
+      "workbaskets.models.REVISION"
+
+    Celery is the use-case for passing strings instead of TransactionPartitionScheme instances as
+    they are not serializable by the default json serializer.
     """
     error_msg = (
-        "settings.TRANSACTION_SCHEMA is not an instance of workbasket.models.TransactionPartitionScheme such as "
-        "workbaskets.models.SEED_FIRST"
+        f"{'settings.TRANSACTION_SCHEMA' if scheme is None else f'scheme parameter: {scheme}'}"
+        " should be a string referencing an instance of"
+        " workbasket.models.TransactionPartitionScheme such as 'workbaskets.models.SEED_FIRST'"
     )
 
-    if (
-        not hasattr(settings, "TRANSACTION_SCHEMA")
-        or "." not in settings.TRANSACTION_SCHEMA
-    ):
-        # Setting must exist and contain a dot.
-        raise ImproperlyConfigured(error_msg)
+    if scheme is None:
+        # Default to settings.TRANSACTION_SCHEMA, verifying it is actually present.
+        if not hasattr(settings, "TRANSACTION_SCHEMA"):
+            # Setting must exist and contain a dot.
+            raise ImproperlyConfigured(error_msg)
+        scheme = settings.TRANSACTION_SCHEMA
 
-    module_name, class_name = settings.TRANSACTION_SCHEMA.rsplit(".", 1)
+    if not isinstance(scheme, str):
+        raise ValueError(error_msg)
 
+    if scheme in TRANSACTION_PARTITION_SCHEMES:
+        # Short aliases SEED_FIRST, SEED_ONLY, REVISION_ONLY are an affordance for the command-line.
+        return TRANSACTION_PARTITION_SCHEMES[scheme]
+
+    # Resolve fully qualified scheme names, to allow use of schemes TRANSACTION_PARTITION_SCHEMES
+    if "." not in scheme:
+        raise ValueError(error_msg)
+
+    module_name, class_name = scheme.rsplit(".", 1)
     try:
         module = importlib.import_module(module_name)
-    except ModuleNotFoundError:
-        raise ImproperlyConfigured(error_msg)
+    except ModuleNotFoundError as e:
+        logger.error(e)
+        raise ValueError(error_msg)
 
     schema = getattr(module, class_name, None)
     if not isinstance(schema, TransactionPartitionScheme):
-        raise ImproperlyConfigured(error_msg)
+        raise ValueError(error_msg)
 
     # All the sane ways this might be mis-configured should have been covered.
     return schema

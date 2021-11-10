@@ -6,7 +6,9 @@ import pytest
 from common.tests import factories
 from common.tests.util import Dates
 from common.util import TaricDateRange
+from common.validators import UpdateType
 from measures.patterns import MeasureCreationPattern
+from measures.patterns import SuspensionViaAdditionalCodePattern
 from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
@@ -290,3 +292,196 @@ def test_components_are_sequenced_correctly(
     assert components[0].duty_expression.sid == 1
     assert components[1].duty_amount == Decimal("1.230")
     assert components[1].duty_expression.sid == 4
+
+
+@pytest.fixture
+def additional_code_type_measure_type():
+    return factories.AdditionalCodeTypeMeasureTypeFactory.create(
+        measure_type__sid=SuspensionViaAdditionalCodePattern.mfn_measure_type__sids[0],
+    )
+
+
+@pytest.fixture
+def other_suspension_additional_code(additional_code_type_measure_type):
+    return factories.AdditionalCodeFactory.create(
+        type=additional_code_type_measure_type.additional_code_type,
+    )
+
+
+@pytest.fixture
+def suspension_pattern(
+    workbasket,
+    additional_code_type_measure_type,
+    duty_sentence_parser,
+):
+    return SuspensionViaAdditionalCodePattern(
+        workbasket,
+        factories.AdditionalCodeFactory.create(
+            type=additional_code_type_measure_type.additional_code_type,
+        ),
+        factories.AdditionalCodeFactory.create(
+            type=additional_code_type_measure_type.additional_code_type,
+        ),
+        factories.RegulationFactory.create(),
+        factories.RegulationFactory.create(),
+    )
+
+
+@pytest.fixture
+def mfn_measure(suspension_pattern, duty_expressions):
+    duty = factories.MeasureComponentFactory.create(
+        component_measure__measure_type__sid=suspension_pattern.mfn_measure_type__sids[
+            0
+        ],
+        duty_amount=Decimal("5.000"),
+        duty_expression=duty_expressions[1],
+    )
+    return duty.component_measure
+
+
+@pytest.fixture
+def other_suspended_mfn(
+    suspension_pattern,
+    duty_expressions,
+    other_suspension_additional_code,
+):
+    duty = factories.MeasureComponentFactory.create(
+        component_measure__measure_type__sid=suspension_pattern.mfn_measure_type__sids[
+            0
+        ],
+        component_measure__additional_code=other_suspension_additional_code,
+        duty_amount=Decimal("5.000"),
+        duty_expression=duty_expressions[1],
+    )
+    return duty.component_measure
+
+
+def test_suspension_pattern_creates_suspension(mfn_measure, suspension_pattern):
+    suspension = suspension_pattern.suspend(
+        mfn_measure.goods_nomenclature,
+        "0.00 %",
+        mfn_measure.valid_between.lower,
+        mfn_measure.valid_between.upper,
+    )
+    assert suspension.measure_type == mfn_measure.measure_type
+    assert suspension.goods_nomenclature == mfn_measure.goods_nomenclature
+    assert suspension.valid_between == mfn_measure.valid_between
+    assert (
+        suspension.additional_code == suspension_pattern.full_suspension_additional_code
+    )
+    assert suspension.order_number is None
+    assert suspension.generating_regulation == suspension_pattern.suspension_regulation
+    assert suspension.components.get().duty_amount == Decimal("0.00")
+
+
+def test_suspension_pattern_creates_mfn(mfn_measure, suspension_pattern):
+    suspension_pattern.suspend(
+        mfn_measure.goods_nomenclature,
+        "0.00 %",
+        mfn_measure.valid_between.lower,
+        mfn_measure.valid_between.upper,
+    )
+    created_mfn = type(mfn_measure).objects.get(
+        additional_code=suspension_pattern.mfn_additional_code,
+    )
+    assert created_mfn.measure_type == mfn_measure.measure_type
+    assert created_mfn.goods_nomenclature == mfn_measure.goods_nomenclature
+    assert created_mfn.valid_between == mfn_measure.valid_between
+    assert created_mfn.order_number is None
+    assert created_mfn.generating_regulation == suspension_pattern.mfn_regulation
+    assert created_mfn.components.get().duty_amount == Decimal("5.00")
+
+
+def test_suspension_pattern_removes_old_mfn(mfn_measure, suspension_pattern):
+    suspension_pattern.suspend(
+        mfn_measure.goods_nomenclature,
+        "0.00 %",
+        mfn_measure.valid_between.lower,
+        mfn_measure.valid_between.upper,
+    )
+    removed_mfn = type(mfn_measure).objects.filter(sid=mfn_measure.sid).last()
+    assert removed_mfn.update_type == UpdateType.DELETE
+
+
+def test_suspension_pattern_does_not_remove_other_suspended_mfn(
+    suspension_pattern,
+    other_suspended_mfn,
+):
+    suspension_pattern.suspend(
+        other_suspended_mfn.goods_nomenclature,
+        "0.00 %",
+        other_suspended_mfn.valid_between.lower,
+        other_suspended_mfn.valid_between.upper,
+    )
+    assert (
+        type(other_suspended_mfn).objects.filter(sid=other_suspended_mfn.sid).count()
+        == 1
+    )
+
+
+def test_suspension_pattern_removes_suspension_measures(
+    mfn_measure,
+    suspension_pattern,
+):
+    suspension = suspension_pattern.suspend(
+        mfn_measure.goods_nomenclature,
+        "0.00 %",
+        mfn_measure.valid_between.lower,
+        mfn_measure.valid_between.upper,
+    )
+    suspension_pattern.unsuspend(
+        mfn_measure.goods_nomenclature,
+        mfn_measure.valid_between.lower,
+        mfn_measure.valid_between.upper,
+    )
+    assert (
+        type(suspension).objects.filter(sid=suspension.sid).last().update_type
+        == UpdateType.DELETE
+    )
+    assert (
+        type(suspension)
+        .objects.filter(additional_code=suspension_pattern.mfn_additional_code)
+        .last()
+        .update_type
+        == UpdateType.DELETE
+    )
+    assert (
+        type(suspension).objects.filter(additional_code=None).last().update_type
+        == UpdateType.CREATE
+    )
+
+
+def test_suspension_pattern_does_not_recreate_old_mfn(
+    suspension_pattern,
+    other_suspended_mfn,
+):
+    suspension = suspension_pattern.suspend(
+        other_suspended_mfn.goods_nomenclature,
+        "0.00 %",
+        other_suspended_mfn.valid_between.lower,
+        other_suspended_mfn.valid_between.upper,
+    )
+    suspension_pattern.unsuspend(
+        other_suspended_mfn.goods_nomenclature,
+        other_suspended_mfn.valid_between.lower,
+        other_suspended_mfn.valid_between.upper,
+    )
+    assert (
+        type(suspension).objects.filter(sid=suspension.sid).last().update_type
+        == UpdateType.DELETE
+    )
+    assert (
+        type(suspension)
+        .objects.filter(additional_code=suspension_pattern.mfn_additional_code)
+        .last()
+        .update_type
+        == UpdateType.DELETE
+    )
+    assert (
+        type(suspension)
+        .objects.filter(additional_code=other_suspended_mfn.additional_code)
+        .last()
+        .update_type
+        == UpdateType.CREATE
+    )
+    assert not type(suspension).objects.filter(additional_code=None).exists()

@@ -279,12 +279,14 @@ class GA21(PreventDeleteIfInUse):
     origin/destination or as an excluded geographical area.
     """
 
+    via_relation = "measures"
+
 
 class GA22(PreventDeleteIfInUse):
     """A geographical area cannot be deleted if it is referenced as a parent
     geographical area group."""
 
-    in_use_check = "is_a_parent"
+    via_relation = "geographicalarea"
 
 
 class GA23(PreventDeleteIfInUse):

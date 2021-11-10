@@ -23,6 +23,7 @@ from django.db.models import When
 from django.db.models.expressions import Expression
 from django.db.models.fields.reverse_related import ForeignObjectRel
 from django.db.models.options import Options
+from django.db.models.query import QuerySet
 from django.db.models.query_utils import DeferredAttribute
 from django.db.transaction import atomic
 from django.urls import NoReverseMatch
@@ -41,6 +42,7 @@ from common.models import TimestampedMixin
 from common.models.tracked_model_utils import get_relations
 from common.querysets import ValidityQuerySet
 from common.util import classproperty
+from common.util import get_accessor
 from common.util import get_identifying_fields
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
@@ -67,43 +69,10 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
         )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
-        """
-        Get the approved versions of the model being queried, unless there
+        """Get the approved versions of the model being queried, unless there
         exists a version of the model in a draft state within a transaction
         preceding (and including) the given transaction in the workbasket of the
-        given transaction.
-
-        The generated SQL is equivalent to:
-
-        .. code:: SQL
-
-            SELECT *,
-                   Max(t3."id") filter (
-                       WHERE (
-                           t3."transaction_id" = {TRANSACTION_ID}
-                        OR ("common_transaction"."order" < {TRANSACTION_ORDER} AND "common_transaction"."workbasket_id" = {WORKBASKET_ID})
-                        OR ("workbaskets_workbasket"."approver_id" IS NOT NULL AND "workbaskets_workbasket"."status" IN (APPROVED_STATUSES))
-                       )
-                   ) AS "latest"
-              FROM "common_trackedmodel"
-             INNER JOIN "common_versiongroup"
-                ON "common_trackedmodel"."version_group_id" = "common_versiongroup"."id"
-              LEFT OUTER JOIN "common_trackedmodel" t3
-                ON "common_versiongroup"."id" = t3."version_group_id"
-              LEFT OUTER JOIN "common_transaction"
-                ON t3."transaction_id" = "common_transaction"."id"
-              LEFT OUTER JOIN "workbaskets_workbasket"
-                ON "common_transaction"."workbasket_id" = "workbaskets_workbasket"."id"
-             WHERE NOT "common_trackedmodel"."update_type" = 2
-             GROUP BY "common_trackedmodel"."id"
-            HAVING max(t3."id") filter (
-                       WHERE (
-                           t3."transaction_id" = {TRANSACTION_ID}
-                        OR ("common_transaction"."order" < {TRANSACTION_ORDER} AND "common_transaction"."workbasket_id" = {WORKBASKET_ID})
-                        OR ("workbaskets_workbasket"."approver_id" IS NOT NULL AND "workbaskets_workbasket"."status" IN (APPROVED_STATUSES))
-                       )
-            ) = "common_trackedmodel"."id"
-        """
+        given transaction."""
         if not transaction:
             return self.latest_approved()
 
@@ -111,13 +80,9 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
             self.annotate(
                 latest=Max(
                     "version_group__versions",
-                    filter=(
-                        Q(version_group__versions__transaction=transaction)
-                        | Q(
-                            version_group__versions__transaction__workbasket=transaction.workbasket,
-                            version_group__versions__transaction__order__lt=transaction.order,
-                        )
-                        | self.approved_query_filter("version_group__versions__")
+                    filter=self.as_at_transaction_filter(
+                        transaction,
+                        "version_group__versions__",
                     ),
                 ),
             )
@@ -136,18 +101,18 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
         """
         return self.filter(is_current__isnull=False, update_type=UpdateType.DELETE)
 
-    def since_transaction(self, transaction_id: int) -> TrackedModelQuerySet:
+    def versions_up_to(self, transaction) -> TrackedModelQuerySet:
         """
-        Get all instances of an object since a certain transaction (i.e. since a
-        particular workbasket was accepted).
+        Get all versions of an object up until and including the passed
+        transaction.
 
-        This will not include objects without a transaction ID - thus excluding rows which
-        have not been accepted yet.
+        If the transaction is in a draft workbasket, this will include all of
+        the approved transactions and any before it in the workbasket.
 
-        If done from the TrackedModel this will return all objects from all transactions since
-        the given transaction.
+        This is similar to `approved_up_to_transaction` except it includes all
+        versions, not just the most recent.
         """
-        return self.filter(transaction__id__gt=transaction_id)
+        return self.filter(self.as_at_transaction_filter(transaction))
 
     def as_at(self, date: date) -> TrackedModelQuerySet:
         """
@@ -284,7 +249,8 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
     def get_queryset(self):
         return self.annotate_record_codes().order_by("record_code", "subrecord_code")
 
-    def approved_query_filter(self, prefix=""):
+    @classmethod
+    def approved_query_filter(cls, prefix=""):
         from common.models.transactions import TransactionPartition
 
         return Q(
@@ -292,6 +258,38 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
                 f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
             }
         )
+
+    @classmethod
+    def as_at_transaction_filter(cls, transaction, prefix=""):
+        """
+        Return a Django filter object that will filter the returned models to
+        only those that exist as of the passed transaction.
+
+        This is different than just `object.versions` because it will only
+        include draft versions from the same workbasket, if the transaction is
+        in draft, whereas `object.versions` will include all draft versions.
+
+        At the database level, that is any transaction in this partition with
+        lower order (and in this workbasket in the case of DRAFT), or any
+        transaction in an earlier partition.
+        """
+        from common.models.transactions import TransactionPartition
+
+        this_partition = {
+            f"{prefix}transaction__partition": transaction.partition,
+            f"{prefix}transaction__order__lte": transaction.order,
+        }
+
+        if transaction.partition not in TransactionPartition.approved_partitions():
+            this_partition[
+                f"{prefix}transaction__workbasket__id"
+            ] = transaction.workbasket_id
+
+        earlier_parition = {
+            f"{prefix}transaction__partition__lt": transaction.partition,
+        }
+
+        return Q(**this_partition) | Q(**earlier_parition)
 
     @staticmethod
     def _when_model_record_codes():
@@ -734,6 +732,73 @@ class TrackedModel(PolymorphicModel):
                 model.copy(transaction, **{reverse_field_name: new_object})
 
         return new_object
+
+    def in_use_by(self, via_relation: str, transaction=None) -> QuerySet[TrackedModel]:
+        """
+        Returns all of the models that are referencing this one via the
+        specified relation and exist as of the passed transaction.
+
+        ``via_relation`` should be the name of a relation, and a ``KeyError``
+        will be raised if the relation name is not valid for this model.
+        Relations are accessible via ``TrackedModel.relations``.
+        """
+
+        relation = {r.name: r for r in self.relations.keys()}[via_relation]
+        remote_model = relation.remote_field.model
+        remote_field_name = get_accessor(relation.remote_field)
+
+        return remote_model.objects.filter(
+            **{f"{remote_field_name}__version_group": self.version_group}
+        ).approved_up_to_transaction(transaction)
+
+    def in_use(self, transaction=None, *relations: str) -> bool:
+        """
+        Returns True if there are any models that are using this one as of the
+        specified transaction.
+
+        This can be any model this this model is related to, but igoring any
+        subrecords (because e.g. a footnote is not considered "in use by" its
+        own description) and then filtering for only things that link _to_ this
+        model.
+
+        The list of relations can be filtered by passing in the name of a
+        relation. If a name is passed in that does not refer to a relation on
+        this model, ``ValueError`` will be raised.
+        """
+        # Get the list of models that use models of this type.
+        using_models = set(
+            relation.name
+            for relation in (
+                self.relations.keys()
+                - self.subrecord_relations
+                - self.models_linked_to.keys()
+            )
+        )
+
+        # If the user has specified names, check that they are sane
+        # and then filter the relations to them,
+        if relations:
+            bad_names = set(relations) - set(using_models)
+            if any(bad_names):
+                raise ValueError(
+                    f"{bad_names} are unknown relations; use one of {using_models}",
+                )
+
+            using_models = {
+                relation for relation in using_models if relation in relations
+            }
+
+        # If this model doesn't have any using relations, it cannot be in use.
+        if not any(using_models):
+            return False
+
+        # If we find any objects for any relation, then the model is in use.
+        for relation_name in using_models:
+            relation_queryset = self.in_use_by(relation_name, transaction)
+            if relation_queryset.exists():
+                return True
+
+        return False
 
     @atomic
     def save(self, *args, force_write=False, **kwargs):

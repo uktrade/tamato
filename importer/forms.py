@@ -5,11 +5,11 @@ from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
 
+import settings
 from importer import models
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.namespaces import TARIC_RECORD_GROUPS
-from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
 
@@ -44,7 +44,7 @@ class UploadTaricForm(forms.ModelForm):
         run_batch(
             batch=batch.name,
             status=self.data["status"],
-            partition_scheme=get_partition_scheme(),
+            partition_scheme_setting=settings.TRANSACTION_SCHEMA,
             username=user.username,
         )
 

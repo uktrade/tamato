@@ -4,12 +4,17 @@
 {% set current_step = wizard.steps.step0 + 1 %}
 {% set page_title = current_step ~ ". " ~ step_metadata[wizard.steps.current].title %}
 {% set page_subtitle = "Create a new measure" %}
+{% set info = "Create a new measure" %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds govuk-!-padding-right-9">
       <span class="govuk-caption-l">{{ page_subtitle|default("") }}</span>
       <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+      {% if step_metadata[wizard.steps.current].info %}
+      <p class="govuk-body">{{ step_metadata[wizard.steps.current].info }}</p>
+      {% endif %}
 
       {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
         {{ wizard.management_form }}
