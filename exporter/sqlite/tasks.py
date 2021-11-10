@@ -44,8 +44,22 @@ def export_and_upload_sqlite() -> bool:
         logger.debug("Database %s already present", export_filename)
         return False
 
+    logger.info("Deleting any S3VFS blocks from a previous partial export")
+    _, files = storage.listdir(export_filename)
+    num_files = 0
+    for file in files:
+        logger.debug("Deleting %s", file)
+        storage.delete(file)
+        num_files += 1
+    logger.info("Deleted %s files", num_files)
+
     logger.info("Generating database %s", export_filename)
     sqlite.make_export(storage.get_connection(export_filename))
+    logger.info("Generation complete")
+
+    logger.info("Serializing %s", export_filename)
+    storage.serialize(export_filename)
+    logger.info("Serializing complete")
 
     logger.info("Upload complete")
     return True
