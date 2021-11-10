@@ -55,5 +55,4 @@ def test_footnote_business_rule_application(
 ):
     description = use_update_form(factories.FootnoteDescriptionFactory(), new_data)
     with raises_if(ValidationError, not workbasket_valid):
-        print(new_data, workbasket_valid, use_update_form)
         description.transaction.workbasket.clean()
