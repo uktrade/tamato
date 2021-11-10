@@ -8,15 +8,15 @@ from typing import Dict
 from typing import Iterator
 from typing import Optional
 from typing import Sequence
+from typing import Type
 
 from django.db import transaction
+from django.db.models.aggregates import Max
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
-from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
 from common.models.trackedmodel import TrackedModel
-from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import TaricDateRange
 from common.util import maybe_max
@@ -43,6 +43,179 @@ from workbaskets.models import WorkBasket
 logger = logging.getLogger(__name__)
 
 
+def get_counter(model: Type[TrackedModel]):
+    def counter(self):
+        last_sid = model.objects.values("sid").order_by("sid").last()
+        next_sid = 1 if last_sid is None else last_sid["sid"] + 1
+        return counter_generator(next_sid)
+
+    return cached_property(counter)
+
+
+class CertificateControlPattern:
+    """
+    Implements patterns that add one or more ``MeasureCondition`` objects to a
+    measure that model certificate requirements based on some policy criteria.
+
+    Properties on the derived classes provide the objects that should be used to
+    set up the conditions.
+
+    For example, the "authorised use" pattern requires that a N990 certificate
+    be provided for a commodity and prevents imports if not provided. This
+    policy is always implemented using condition code "B", measure action "apply
+    mentioned duty" when the certificate is provided, or measure action
+    "subheading not allowed" if the certificate is not provided.
+    """
+
+    def __init__(self, workbasket: WorkBasket):
+        self.workbasket = workbasket
+        self.logger = logging.getLogger(type(self).__name__)
+
+    condition_code: MeasureConditionCode
+    with_certificate: MeasureAction
+    without_certificate: MeasureAction
+
+    sid_counter = get_counter(MeasureCondition)
+
+    # TODO: in the future, it would be nice to power these from a database table.
+    # That way, we could expose a UI for users to create and maintain these patterns,
+    # as we expect new ones to appear over time as policies change.
+
+    def _get_max_sequence_number(self, measure: Measure) -> int:
+        """Returns the maximum sequence number for conditions."""
+        return (
+            measure.conditions.approved_up_to_transaction(
+                self.workbasket.current_transaction,
+            )
+            .filter(condition_code=self.condition_code)
+            .aggregate(max=Max("component_sequence_number"))["max"]
+            or 0
+        )
+
+    def _create_conditions(self, measure: Measure, transaction=None):
+        max_sequence_number = self._get_max_sequence_number(measure)
+        certificates = self.get_certificates(measure)
+
+        if any(certificates):
+            for index, certificate in enumerate(
+                certificates,
+                start=max_sequence_number + 1,
+            ):
+                yield MeasureCondition(
+                    sid=self.sid_counter(),
+                    dependent_measure=measure,
+                    component_sequence_number=index,
+                    condition_code=self.condition_code,
+                    required_certificate=certificate,
+                    action=self.with_certificate,
+                    update_type=UpdateType.CREATE,
+                    transaction=transaction,
+                )
+            yield MeasureCondition(
+                sid=self.sid_counter(),
+                dependent_measure=measure,
+                component_sequence_number=index + 1,
+                condition_code=self.condition_code,
+                action=self.without_certificate,
+                update_type=UpdateType.CREATE,
+                transaction=transaction,
+            )
+
+    def applies_to(self, measure: Measure) -> bool:
+        raise NotImplementedError(f"Subclass must implement {self.applies_to.__name__}")
+
+    def get_certificates(self, measure: Measure) -> Sequence[Certificate]:
+        raise NotImplementedError(
+            f"Subclass must implement {self.get_certificates.__name__}",
+        )
+
+    def apply(self, measure: Measure, transaction=None) -> Sequence[MeasureCondition]:
+        if not self.applies_to(measure):
+            self.logger.warning(
+                f"Tried to apply {type(self).__name__} to {measure} but it does not apply",
+            )
+            return []
+
+        transaction = transaction or measure.transaction
+        if transaction not in self.workbasket.transactions.all():
+            raise ValueError(f"{transaction} is not in {self.workbasket}")
+
+        conditions = []
+        for condition in self._create_conditions(measure, transaction):
+            condition.save()
+            self.logger.debug("Created %s", condition)
+            conditions.append(condition)
+
+        return conditions
+
+
+class AuthorisedUsePattern(CertificateControlPattern):
+    """Implements a pattern that adds a N990 certificate requirement to a
+    measure if the measure type has an authorised use measure type."""
+
+    @cached_property
+    def authorised_use_measure_types(self):
+        return set(
+            MeasureType.objects.approved_up_to_transaction(
+                self.workbasket.current_transaction,
+            ).filter(description__contains="authorised use"),
+        )
+
+    @cached_property
+    def condition_code(self) -> MeasureConditionCode:
+        return MeasureConditionCode.objects.get(code="B")
+
+    @cached_property
+    def certificates(self) -> Sequence[Certificate]:
+        return [
+            Certificate.objects.approved_up_to_transaction(
+                self.workbasket.current_transaction,
+            ).get(
+                certificate_type__sid="N",
+                sid="990",
+            ),
+        ]
+
+    @cached_property
+    def with_certificate(self) -> MeasureAction:
+        return MeasureAction.objects.get(code="27")
+
+    @cached_property
+    def without_certificate(self) -> MeasureAction:
+        return MeasureAction.objects.get(code="08")
+
+    def applies_to(self, measure: Measure) -> bool:
+        return measure.measure_type in self.authorised_use_measure_types
+
+    def get_certificates(self, measure: Measure) -> Sequence[Certificate]:
+        return self.certificates
+
+
+class OriginQuotaPattern(CertificateControlPattern):
+    """Implements a pattern that adds required certificates to the measure if
+    the measure references an origin quota."""
+
+    @cached_property
+    def with_certificate(self) -> MeasureAction:
+        return MeasureAction.objects.get(code="27")
+
+    @cached_property
+    def without_certificate(self) -> MeasureAction:
+        return MeasureAction.objects.get(code="07")
+
+    @cached_property
+    def condition_code(self) -> MeasureConditionCode:
+        return MeasureConditionCode.objects.get(code="Q")
+
+    def applies_to(self, measure: Measure) -> bool:
+        return (
+            measure.order_number and measure.order_number.required_certificates.exists()
+        )
+
+    def get_certificates(self, measure: Measure) -> Sequence[Certificate]:
+        return measure.order_number.required_certificates.all()
+
+
 class MeasureCreationPattern:
     """
     A pattern used for creating measures. This pattern will create new measures
@@ -67,6 +240,10 @@ class MeasureCreationPattern:
     ) -> None:
         self.workbasket = workbasket
         self.defaults = defaults
+        self.condition_patterns = (
+            AuthorisedUsePattern(workbasket),
+            OriginQuotaPattern(workbasket),
+        )
         self.duty_sentence_parser = duty_sentence_parser or DutySentenceParser.get(
             base_date,
         )
@@ -77,101 +254,8 @@ class MeasureCreationPattern:
             )
         )
 
-    @cached_property
-    def measure_sid_counter(self) -> Counter:
-        last_sid = Measure.objects.values("sid").order_by("sid").last()
-        next_sid = 1 if last_sid is None else last_sid["sid"] + 1
-        return counter_generator(next_sid)
-
-    @cached_property
-    def measure_condition_sid_counter(self) -> Counter:
-        last_sid = MeasureCondition.objects.values("sid").order_by("sid").last()
-        next_sid = 1 if last_sid is None else last_sid["sid"] + 1
-        return counter_generator(next_sid)
-
-    @cached_property
-    def authorised_use_measure_types(self):
-        return set(MeasureType.objects.filter(description__contains="authorised use"))
-
-    @cached_property
-    def presentation_of_certificate(self) -> MeasureConditionCode:
-        return MeasureConditionCode.objects.get(code="B")
-
-    @cached_property
-    def presentation_of_endorsed_certificate(self) -> MeasureConditionCode:
-        return MeasureConditionCode.objects.get(code="Q")
-
-    @cached_property
-    def end_use_certificate(self) -> Certificate:
-        return Certificate.objects.get(
-            sid="990",
-            certificate_type=CertificateType.objects.get(sid="N"),
-        )
-
-    @cached_property
-    def apply_mentioned_duty(self) -> MeasureAction:
-        return MeasureAction.objects.get(code="27")
-
-    @cached_property
-    def subheading_not_allowed(self) -> MeasureAction:
-        return MeasureAction.objects.get(code="08")
-
-    @cached_property
-    def measure_not_applicable(self) -> MeasureAction:
-        return MeasureAction.objects.get(code="07")
-
-    def create_measure_authorised_use_measure_conditions(
-        self,
-        measure: Measure,
-    ) -> Sequence[MeasureCondition]:
-        return [
-            MeasureCondition.objects.create(
-                sid=self.measure_condition_sid_counter(),
-                dependent_measure=measure,
-                component_sequence_number=1,
-                condition_code=self.presentation_of_certificate,
-                required_certificate=self.end_use_certificate,
-                action=self.apply_mentioned_duty,
-                update_type=UpdateType.CREATE,
-                transaction=measure.transaction,
-            ),
-            MeasureCondition.objects.create(
-                sid=self.measure_condition_sid_counter(),
-                dependent_measure=measure,
-                component_sequence_number=2,
-                condition_code=self.presentation_of_certificate,
-                action=self.subheading_not_allowed,
-                update_type=UpdateType.CREATE,
-                transaction=measure.transaction,
-            ),
-        ]
-
-    def create_measure_origin_quota_conditions(
-        self,
-        measure: Measure,
-        certificates: Sequence[Certificate],
-    ) -> Iterator[MeasureCondition]:
-        if any(certificates):
-            for index, certificate in enumerate(certificates, start=1):
-                yield MeasureCondition.objects.create(
-                    sid=self.measure_condition_sid_counter(),
-                    dependent_measure=measure,
-                    component_sequence_number=index,
-                    condition_code=self.presentation_of_endorsed_certificate,
-                    required_certificate=certificate,
-                    action=self.apply_mentioned_duty,
-                    update_type=UpdateType.CREATE,
-                    transaction=measure.transaction,
-                )
-            yield MeasureCondition.objects.create(
-                sid=self.measure_condition_sid_counter(),
-                dependent_measure=measure,
-                component_sequence_number=index + 1,
-                condition_code=self.presentation_of_endorsed_certificate,
-                action=self.measure_not_applicable,
-                update_type=UpdateType.CREATE,
-                transaction=measure.transaction,
-            )
+    measure_sid_counter = get_counter(Measure)
+    measure_condition_sid_counter = get_counter(MeasureCondition)
 
     def create_measure_components_from_duty_rate(
         self,
@@ -391,24 +475,14 @@ class MeasureCreationPattern:
         # Output any footnote associations required.
         yield from self.create_measure_footnotes(new_measure, footnotes)
 
-        # If this is a measure under authorised use, we need to add
-        # some measure conditions with the N990 certificate.
-        if new_measure.measure_type in self.authorised_use_measure_types:
-            yield from self.create_measure_authorised_use_measure_conditions(
-                new_measure,
-            )
-
-        # If this is a measure for an origin quota, we need to add
-        # some measure conditions with the origin quota required certificates.
-        if order_number and order_number.required_certificates.exists():
-            yield from self.create_measure_origin_quota_conditions(
-                new_measure,
-                order_number.required_certificates.all(),
-            )
-
         # If we have a condition sentence, parse and add to the measure.
         if condition_sentence:
             yield from self.create_measure_conditions(new_measure, condition_sentence)
+
+        # If any patterns apply to this measure, apply them now.
+        for pattern in self.condition_patterns:
+            if pattern.applies_to(new_measure):
+                yield from pattern.apply(new_measure)
 
         # If there is a duty_sentence parse it and generate the duty components from the duty rate.
         if duty_sentence:

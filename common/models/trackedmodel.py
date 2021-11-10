@@ -576,7 +576,7 @@ class TrackedModel(PolymorphicModel):
         if not force_write and not self._can_write():
             raise IllegalSaveError(
                 "TrackedModels cannot be updated once written and approved. "
-                "If writing a new row, use `.new_draft` instead",
+                f"If writing a new row, use `{self.new_version.__name__}` instead",                
             )
 
         if not hasattr(self, "version_group"):
