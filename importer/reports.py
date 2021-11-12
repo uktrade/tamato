@@ -248,7 +248,6 @@ class CommodityChangeReports:
             [
                 record
                 for transaction in self.transactions
-                if transaction.order < 0
                 for record in transaction.tracked_models.all()
                 if type(record) == Measure
             ],
