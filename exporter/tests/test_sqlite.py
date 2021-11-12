@@ -145,6 +145,7 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
     expected_key = path.join(
         settings.SQLITE_STORAGE_DIRECTORY,
         "000000123.db",
+        "0" * 10,
     )
     sqlite_storage.save(expected_key, BytesIO(b""))
 
@@ -186,6 +187,7 @@ def test_export_task_ignores_unapproved_transactions(
     expected_key = path.join(
         settings.SQLITE_STORAGE_DIRECTORY,
         "000000123.db",
+        "0" * 10,
     )
     sqlite_storage.save(expected_key, BytesIO(b""))
 
