@@ -228,9 +228,34 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             indent.validity_start - timedelta(days=1),
         )
 
-        # The preceding node itself needs to be fixed, update and save
-        preceding_node.valid_between = valid_between
-        preceding_node.save()
+        # We need a new preceding node as of this transaction
+        # with the correct end date, and we need to create a new one
+        node_data = {
+            "indent": preceding_indent,
+            "valid_between": valid_between,
+            "creating_transaction_id": indent.transaction.id,
+        }
+
+        if preceding_indent.is_root:
+            new_preceding_node = models.GoodsNomenclatureIndentNode.add_root(
+                **node_data
+            )
+        else:
+            indent_shift = indent.indented_goods_nomenclature.indent_shift
+            parent_depth = preceding_indent.indent + 1 + indent_shift
+            parent_node = preceding_indent.get_parent_node(
+                parent_depth=parent_depth,
+            )
+            new_preceding_node = parent_node.add_child(**node_data)
+
+        # Move the children of the preceding node to its new version
+        preceding_node.copy_tree(
+            parent=new_preceding_node,
+            valid_between=valid_between,
+            transaction=indent.transaction,
+        )
+
+        return preceding_node
 
     def get_indent_end_date(
         self,
@@ -265,7 +290,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         item_id = data["indented_goods_nomenclature"].item_id
 
         indent = super().save(data)
-        self.set_preceding_node_end_date(indent)
+        preceding_node = self.set_preceding_node_end_date(indent)
 
         indent = models.GoodsNomenclatureIndent.objects.with_end_date().get(
             pk=indent.pk,
@@ -277,7 +302,15 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         }
 
         if indent.is_root:
-            models.GoodsNomenclatureIndentNode.add_root(**node_data)
+            indent_node = models.GoodsNomenclatureIndentNode.add_root(**node_data)
+
+            if preceding_node:
+                preceding_node.copy_tree(
+                    parent=indent_node,
+                    valid_between=indent.valid_between,
+                    transaction=indent.transaction,
+                )
+
             return indent
 
         indent_shift = indent.indented_goods_nomenclature.indent_shift
@@ -324,11 +357,17 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             )
 
             node_data["valid_between"] = TaricDateRange(indent_start, indent_end)
-            next_parent.add_child(**node_data)
+            indent_node = next_parent.add_child(**node_data)
+            preceding_node.copy_tree(
+                parent=indent_node,
+                valid_between=node_data["valid_between"],
+                transaction=indent.transaction,
+            )
 
             start_date = (
                 indent_end + relativedelta(days=+1) if indent_end else indent_end
             )
+
         return indent
 
     @transaction.atomic

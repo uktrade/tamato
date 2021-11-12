@@ -285,7 +285,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         parent_depth: int,
         as_of_transaction: Optional[Transaction] = None,
         start_date: Optional[date] = None,
-    ) -> Optional[GoodsNomenclatureIndent]:
+    ) -> Optional[GoodsNomenclatureIndentNode]:
         """
         Returns the parent of the indent given a parent depth.
 

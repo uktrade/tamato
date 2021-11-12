@@ -725,7 +725,7 @@ def test_sync_indent_node_end_dates_on_indent_import(
     )
 
     if current_indent_start_date:
-        current_node = current_indent.nodes.first()
+        current_node = current_indent.nodes.order_by("creating_transaction_id").last()
         assert current_node.valid_between.upper == curent_node_end_date
 
     imported_node = imported_indent.nodes.first()
