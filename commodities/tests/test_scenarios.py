@@ -15,7 +15,7 @@ import pytest
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import get_model_identifier
 from commodities.tests.conftest import TScenario
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.util import get_identifying_fields
 from common.validators import UpdateType
 

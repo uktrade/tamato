@@ -8,8 +8,8 @@ from common.business_rules import UpdateValidity
 from common.exceptions import NoDescriptionError
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
-from common.models.records import TrackedModelQuerySet
 from common.models.tracked_model_utils import get_relations
+from common.models.trackedmodel_queryset import TrackedModelQuerySet
 from common.util import classproperty
 from common.util import get_identifying_fields
 
@@ -108,7 +108,7 @@ class DescribedMixin:
         )
 
         if transaction:
-            return query.approved_up_to_transaction(transaction=transaction)
+            return query.approved_up_to_transaction(transaction)
 
         if request:
             from workbaskets.models import WorkBasket
@@ -119,8 +119,8 @@ class DescribedMixin:
 
         return query.latest_approved()
 
-    def get_description(self):
-        return self.get_descriptions(transaction=self.transaction).last()
+    def get_description(self, transaction=None):
+        return self.get_descriptions(transaction=transaction).last()
 
     @property
     def structure_description(self) -> str:

@@ -14,8 +14,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
-from common.models.records import TrackedModel
 from common.models.tracked_model_utils import get_relations
+from common.models.trackedmodel import TrackedModel
 from common.util import get_field_tuple
 from common.util import get_identifying_fields
 from common.validators import UpdateType
@@ -103,7 +103,7 @@ class BusinessRule(metaclass=BusinessRuleBase):
         """Returns all model instances that are linked to the passed ``model``
         and have this business rule listed in their ``business_rules``
         attribute."""
-        for field, related_model in get_relations(model).items():
+        for field, related_model in get_relations(model.__class__).items():
             business_rules = getattr(related_model, "business_rules", [])
             if cls in business_rules:
                 if field.one_to_many or field.many_to_many:

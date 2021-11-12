@@ -7,8 +7,8 @@ from common.models.mixins import TimestampedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from common.models.mixins.validity import ValidityStartMixin
-from common.models.records import TrackedModel
-from common.models.records import VersionGroup
+from common.models.trackedmodel import TrackedModel
+from common.models.trackedmodel import VersionGroup
 from common.models.transactions import Transaction
 
 __all__ = [

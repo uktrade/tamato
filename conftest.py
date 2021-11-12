@@ -690,6 +690,7 @@ def in_use_check_respects_deletes(valid_user):
             workbasket,
             update_type=UpdateType.DELETE,
         )
+        breakpoint()
         assert not in_use(deleted.transaction), f"Deleted {instance!r} in use"
 
         return True

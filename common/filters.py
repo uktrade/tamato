@@ -32,7 +32,7 @@ from rest_framework.settings import api_settings
 
 from common.fields import AutoCompleteField
 from common.jinja2 import break_words
-from common.models.records import TrackedModelQuerySet
+from common.models.trackedmodel_queryset import TrackedModelQuerySet
 from common.util import TaricDateRange
 from common.util import get_identifying_fields
 

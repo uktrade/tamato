@@ -27,7 +27,7 @@ from commodities.util import date_ranges_overlap
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType

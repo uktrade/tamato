@@ -16,8 +16,8 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
-from common.models.records import TrackedModel
-from common.models.records import TrackedModelQuerySet
+from common.models.trackedmodel import TrackedModel
+from common.models.trackedmodel_queryset import TrackedModelQuerySet
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from workbaskets.validators import WorkflowStatus
