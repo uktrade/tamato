@@ -12,6 +12,7 @@ from common.models.tracked_model_utils import get_relations
 from common.models.trackedmodel_queryset import TrackedModelQuerySet
 from common.util import classproperty
 from common.util import get_identifying_fields
+from common.util import get_identifying_fields_to_string
 
 
 class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
@@ -56,7 +57,8 @@ class DescriptionMixin(ValidityStartMixin):
             return
 
     def __str__(self):
-        return self.identifying_fields_to_string(
+        return get_identifying_fields_to_string(
+            self,
             identifying_fields=(
                 self.described_object_field.name,
                 "validity_start",

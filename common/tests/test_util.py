@@ -180,3 +180,13 @@ def test_get_model_indefinite_article():
 
 def test_identifying_fields(sample_model):
     assert util.get_identifying_fields(sample_model) == {"sid": sample_model.sid}
+
+
+def test_identifying_fields_to_string(sample_model):
+    assert (
+        util.get_identifying_fields_to_string(sample_model) == f"sid={sample_model.sid}"
+    )
+
+
+def test_identifying_fields_unique(sample_model):
+    assert util.get_identifying_fields_unique(sample_model)

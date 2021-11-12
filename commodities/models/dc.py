@@ -30,6 +30,7 @@ from common.models.dc.base import BaseModel
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
+from common.util import get_identifying_fields_to_string
 from common.validators import UpdateType
 from measures import business_rules as mbr
 from measures.models import FootnoteAssociationMeasure
@@ -1329,7 +1330,7 @@ def get_model_preferred_key(obj: TrackedModel) -> str:
 
 def get_model_identifier(obj: TrackedModel) -> str:
     """Returns the preferred identifier for a model."""
-    identifier = obj.identifying_fields_to_string()
+    identifier = get_identifying_fields_to_string(obj)
     label = obj._meta.label
     return f"{label}: {identifier}"
 

@@ -349,14 +349,6 @@ def test_new_version_works_for_all_models(trackedmodel_factory):
     model.new_version(model.transaction.workbasket)
 
 
-def test_identifying_fields_unique(model1_with_history):
-    assert model1_with_history.active_model.identifying_fields_unique()
-
-
-def test_identifying_fields_to_string(sample_model):
-    assert sample_model.identifying_fields_to_string() == f"sid={sample_model.sid}"
-
-
 def test_current_as_of(sample_model):
     transaction = factories.UnapprovedTransactionFactory.create()
 

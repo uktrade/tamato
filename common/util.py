@@ -317,3 +317,29 @@ def get_identifying_fields(
         fields[field] = value
 
     return fields
+
+
+def get_identifying_fields_to_string(
+    class_: type[Model],
+    identifying_fields: Optional[Iterable[str]] = None,
+) -> str:
+    field_list = [
+        f"{field}={str(value)}"
+        for field, value in get_identifying_fields(class_, identifying_fields).items()
+    ]
+
+    return ", ".join(field_list)
+
+
+def get_identifying_fields_unique(
+    class_: type[Model],
+    identifying_fields: Optional[Iterable[str]] = None,
+) -> bool:
+    return (
+        class_.__class__.objects.filter(
+            **get_identifying_fields(class_, identifying_fields)
+        )
+        .latest_approved()
+        .count()
+        <= 1
+    )

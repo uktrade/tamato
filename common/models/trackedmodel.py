@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 from typing import Iterable
-from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import TypeVar
@@ -206,30 +205,6 @@ class TrackedModel(PolymorphicModel):
             return self.version_group.versions.all()
         query = Q(**get_identifying_fields(self))
         return self.__class__.objects.filter(query)
-
-    def identifying_fields_unique(
-        self,
-        identifying_fields: Optional[Iterable[str]] = None,
-    ) -> bool:
-        return (
-            self.__class__.objects.filter(
-                **get_identifying_fields(self, identifying_fields)
-            )
-            .latest_approved()
-            .count()
-            <= 1
-        )
-
-    def identifying_fields_to_string(
-        self,
-        identifying_fields: Optional[Iterable[str]] = None,
-    ) -> str:
-        field_list = [
-            f"{field}={str(value)}"
-            for field, value in get_identifying_fields(self, identifying_fields).items()
-        ]
-
-        return ", ".join(field_list)
 
     def _get_version_group(self) -> VersionGroup:
         if self.update_type == validators.UpdateType.CREATE:
