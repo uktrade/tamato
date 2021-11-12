@@ -16,6 +16,8 @@ from typing import Set
 from typing import Tuple
 from typing import Union
 
+from django.db.models import Q
+
 from commodities import business_rules as cbr
 from commodities.models.constants import SUFFIX_DECLARABLE
 from commodities.models.constants import TreeNodeRelation
@@ -525,7 +527,11 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         except KeyError:
             return []
 
-    def get_dependent_measures(self, commodity: Commodity) -> MeasuresQuerySet:
+    def get_dependent_measures(
+        self,
+        commodity: Commodity,
+        as_at: Optional[date] = None,
+    ) -> MeasuresQuerySet:
         if commodity not in self.commodities:
             logger.warning(f"Commodity {commodity} not found in this snapshot.")
             return Measure.objects.none()
@@ -541,13 +547,14 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             qs = qs.latest_approved()
 
         if self.clock_type.is_calendar_clock:
-            effective_date = self.snapshot_date
+            qs = qs.with_effective_valid_between().filter(
+                db_effective_valid_between__contains=self.snapshot_date,
+            )
         else:
-            effective_date = date.today()
-
-        qs = qs.with_effective_valid_between().filter(
-            db_effective_valid_between__contains=effective_date,
-        )
+            qs = qs.with_effective_valid_between().filter(
+                Q(db_effective_valid_between__upper_inf=True)
+                | Q(db_effective_valid_between__upper__gte=date.today()),
+            )
 
         return qs
 
@@ -1060,10 +1067,10 @@ class CommodityChange(BaseModel):
         measures = self._get_dependent_measures(before, after)
 
         # NIG30 / NIG31
-        try:
-            cbr.NIG30().validate(good)
-        except BusinessRuleViolation:
-            for measure in measures:
+        uncontained_measures = cbr.NIG30().uncontained_measures(good)
+
+        if uncontained_measures.exists():
+            for measure in uncontained_measures.order_by("sid"):
                 self._handle_validity_conflicts(good, measure)
 
         # NIG22: Invoked from the POV of a footnote association
@@ -1200,6 +1207,8 @@ class CommodityChange(BaseModel):
 
         # Check if the changing commodity has ME32 clashes in its new hierarchy
         if self.update_type == UpdateType.UPDATE:
+            self.candidate.get_valid_between().upper
+
             measures = {
                 _get_measure_key(measure): measure
                 for measure in after.get_dependent_measures(self.candidate)
