@@ -40,6 +40,9 @@ class SQLiteStorage(S3Boto3Storage):
         )
         return super().generate_filename(filename)
 
+    def exists(self, filename: str) -> bool:
+        return any(self.listdir(filename))
+
     def serialize(self, filename):
         vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
         self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
