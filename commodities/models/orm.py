@@ -199,6 +199,39 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
     def is_taric_code(self) -> bool:
         return self.code.is_taric_code
 
+    @property
+    def indent_shift(self) -> int:
+        """
+        Returns the depth offset for the good.
+
+        Indent shifts come into play when we need to construct a goods
+        nomenclature hierarchy tree. In some cases, where there are phantom
+        headers at the 4 digit level in a chapter, the indent is shifted by + 1.
+        A phantom header is any good with a suffix != "80". In the real world
+        this represents a good that does not appear in any legislature and is
+        non-declarable. i.e. it does not exist outside of the database and is
+        purely for "convenience". This algorithm doesn't apply to chapter 99.
+        """
+        chapter = self.code.chapter
+        indent_shift = 0
+
+        extra_headings = (
+            GoodsNomenclature.objects.filter(
+                item_id__startswith=chapter,
+                item_id__endswith="000000",
+            )
+            .exclude(suffix="80")
+            .exists()
+        ) and chapter != "99"
+
+        if extra_headings and (self.item_id[-6:] != "000000" or self.suffix == "80"):
+            indent_shift += 1
+
+        return indent_shift
+
+    def in_use(self):
+        return self.dependent_measures.exists()
+
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"

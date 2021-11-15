@@ -358,11 +358,13 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
             node_data["valid_between"] = TaricDateRange(indent_start, indent_end)
             indent_node = next_parent.add_child(**node_data)
-            preceding_node.copy_tree(
-                parent=indent_node,
-                valid_between=node_data["valid_between"],
-                transaction=indent.transaction,
-            )
+
+            if preceding_node:
+                preceding_node.copy_tree(
+                    parent=indent_node,
+                    valid_between=node_data["valid_between"],
+                    transaction=indent.transaction,
+                )
 
             start_date = (
                 indent_end + relativedelta(days=+1) if indent_end else indent_end
