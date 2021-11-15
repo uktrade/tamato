@@ -550,10 +550,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             qs = qs.with_effective_valid_between().filter(
                 db_effective_valid_between__contains=self.snapshot_date,
             )
-        else:
+        elif as_at is not None:
             qs = qs.with_effective_valid_between().filter(
-                Q(db_effective_valid_between__upper_inf=True)
-                | Q(db_effective_valid_between__upper__gte=date.today()),
+                Q(db_effective_valid_between__contains=as_at)
+                | Q(valid_between__startswith__gte=as_at),
             )
 
         return qs
@@ -1035,13 +1035,13 @@ class CommodityChange(BaseModel):
         - NIG35: Not used as it is redundant in this context after NIG34
         """
         # NIG34 / NIG35
-        for measure in before.get_dependent_measures(self.current):
+        for measure in before.get_dependent_measures(self.current, self.as_at_date):
             self._add_pending_delete(measure)
 
         # No BR: delete related footnote associations
         qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
         for association in qs.filter(
-            goods_nomenclature__item_id=self.current.code,
+            goods_nomenclature__item_id=self.current.get_item_id(),
         ):
             self._add_pending_delete(association)
 
@@ -1063,7 +1063,11 @@ class CommodityChange(BaseModel):
 
         good = self.candidate.good
 
-        footnote_associations = good.footnote_associations.all()
+        footnote_associations = (
+            FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
+                goods_nomenclature__item_id=self.current.get_item_id(),
+            )
+        )
         measures = self._get_dependent_measures(before, after)
 
         # NIG30 / NIG31
@@ -1211,12 +1215,18 @@ class CommodityChange(BaseModel):
 
             measures = {
                 _get_measure_key(measure): measure
-                for measure in after.get_dependent_measures(self.candidate)
+                for measure in after.get_dependent_measures(
+                    self.candidate,
+                    self.as_at_date,
+                )
             }
 
             for attr in ["get_ancestors", "get_descendants"]:
                 for relative in getattr(after, attr)(self.candidate):
-                    related_measures = after.get_dependent_measures(relative)
+                    related_measures = after.get_dependent_measures(
+                        relative,
+                        self.as_at_date,
+                    )
 
                     for related_measure in related_measures:
                         key = _get_measure_key(related_measure)
@@ -1234,7 +1244,7 @@ class CommodityChange(BaseModel):
 
         measures = {
             _get_measure_key(measure): measure
-            for measure in before.get_dependent_measures(self.current)
+            for measure in before.get_dependent_measures(self.current, self.as_at_date)
         }
 
         # Check if commodity's before-children have new parents
@@ -1243,7 +1253,10 @@ class CommodityChange(BaseModel):
             if before.compare_parents(child, after).diff:
                 # ...then check if before-child has ME32 clashes with new ancestors
                 for ancestor in after.get_ancestors(child):
-                    ancestor_measures = after.get_dependent_measures(ancestor)
+                    ancestor_measures = after.get_dependent_measures(
+                        ancestor,
+                        self.as_at_date,
+                    )
 
                     for ancestor_measure in ancestor_measures:
                         key = _get_measure_key(ancestor_measure)
@@ -1312,9 +1325,24 @@ class CommodityChange(BaseModel):
         before: CommodityTreeSnapshot,
         after: CommodityTreeSnapshot,
     ) -> Set[Measure]:
-        b = before.get_dependent_measures(self.current or self.candidate)
-        a = after.get_dependent_measures(self.candidate or self.current)
+        b = before.get_dependent_measures(
+            self.current or self.candidate,
+            self.as_at_date,
+        )
+        a = after.get_dependent_measures(
+            self.candidate or self.current,
+            self.as_at_date,
+        )
         return set(a).union(set(b))
+
+    @property
+    def as_at_date(self):
+        if self.candidate:
+            if self.update_type == UpdateType.UPDATE:
+                return self.candidate.get_valid_between().upper
+            else:
+                return self.candidate.get_valid_between().lower
+        return self.current.get_valid_between().upper
 
 
 # TODO: Move the loader to a more appropriate module
