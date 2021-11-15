@@ -229,9 +229,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin):
 
         return indent_shift
 
-    def in_use(self):
-        return self.dependent_measures.exists()
-
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"
