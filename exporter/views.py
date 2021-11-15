@@ -11,7 +11,6 @@ from django.views.decorators.http import require_GET
 from common.models import TrackedModel
 from common.models.tracked_utils import get_models_linked_to
 from common.serializers import TrackedModelSerializer
-from common.util import get_identifying_fields
 
 
 def get_latest_tracked_models(request, per_page: int = 20) -> List[TrackedModel]:
@@ -62,7 +61,7 @@ def get_activity_stream_item_type(obj: TrackedModel) -> str:
 
 def get_activity_stream_item_id(obj: TrackedModel) -> str:
     item_type = get_activity_stream_item_type(obj)
-    return f"{item_type}:{''.join(str(value) for value in get_identifying_fields(obj).values())}"
+    return f"{item_type}:{''.join(str(value) for value in obj.get_identifying_fields().values())}"
 
 
 def tracked_model_to_activity_stream_item(obj: TrackedModel):

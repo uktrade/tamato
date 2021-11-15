@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import Dict
 from typing import Iterable
+from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import TypeVar
@@ -25,15 +27,13 @@ from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
 from common.models.tracked_qs import TrackedModelQuerySet
-from common.models.tracked_utils import get_copyable_fields
 from common.models.tracked_utils import get_deferred_set_fields
 from common.models.tracked_utils import get_models_linked_to
 from common.models.tracked_utils import get_relations
 from common.models.tracked_utils import get_subrecord_relations
 from common.util import classproperty
 from common.util import get_accessor
-from common.util import get_identifying_fields
-from common.util import get_identifying_fields_to_string
+from common.util import get_field_tuple
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
@@ -204,7 +204,7 @@ class TrackedModel(PolymorphicModel):
     def get_versions(self):
         if hasattr(self, "version_group"):
             return self.version_group.versions.all()
-        query = Q(**get_identifying_fields(self))
+        query = Q(**self.get_identifying_fields())
         return self.__class__.objects.filter(query)
 
     def _get_version_group(self) -> VersionGroup:
@@ -217,6 +217,29 @@ class TrackedModel(PolymorphicModel):
             self.pk
             and self.transaction.workbasket.status in WorkflowStatus.approved_statuses()
         )
+
+    def get_identifying_fields(
+        self,
+        identifying_fields: Optional[Iterable[str]] = None,
+    ) -> Dict[str, Any]:
+        identifying_fields = identifying_fields or self.identifying_fields
+        fields = {}
+
+        for field in identifying_fields:
+            _, fields[field] = get_field_tuple(self, field)
+
+        return fields
+
+    def identifying_fields_to_string(
+        self,
+        identifying_fields: Optional[Iterable[str]] = None,
+    ) -> str:
+        field_list = [
+            f"{field}={str(value)}"
+            for field, value in self.get_identifying_fields(identifying_fields).items()
+        ]
+
+        return ", ".join(field_list)
 
     @property
     def structure_code(self):
@@ -231,6 +254,22 @@ class TrackedModel(PolymorphicModel):
 
     def version_at(self: Cls, transaction) -> Cls:
         return self.get_versions().approved_up_to_transaction(transaction).get()
+
+    @classproperty
+    def copyable_fields(cls):
+        """
+        Return the set of fields that can have their values copied from one
+        model to another. This is anything that is:
+
+        - a native value
+        - a foreign key to some other model
+        """
+        return {
+            field
+            for field in cls._meta.get_fields()
+            if not any((field.many_to_many, field.one_to_many))
+            and field.name not in cls.system_set_field_names
+        }
 
     _meta: Options
 
@@ -280,7 +319,7 @@ class TrackedModel(PolymorphicModel):
         # otherwise when we convert foreign keys to IDs (below) Django will
         # ignore the object from the overrides and just take the ID from the
         # basic data.
-        basic_fields = get_copyable_fields(self)
+        basic_fields = self.copyable_fields
         for field_name in overrides:
             field = self._meta.get_field(field_name)
             basic_fields.remove(field)
@@ -430,7 +469,7 @@ class TrackedModel(PolymorphicModel):
         return return_value
 
     def __str__(self):
-        return get_identifying_fields_to_string(self)
+        return self.identifying_fields_to_string()
 
     def __hash__(self):
         return hash(f"{__name__}.{self.__class__.__name__}")
@@ -438,7 +477,7 @@ class TrackedModel(PolymorphicModel):
     def get_url(self, action="detail"):
         kwargs = {}
         if action != "list":
-            kwargs = get_identifying_fields(self)
+            kwargs = self.get_identifying_fields()
         try:
             return reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",

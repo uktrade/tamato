@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
 from typing import List
 
 from django.db.models import Case
@@ -16,11 +15,17 @@ from polymorphic.query import PolymorphicQuerySet
 
 from common import exceptions
 from common.models.tracked_utils import get_models_linked_to
+from common.querysets import TransactionPartitionQuerySet
 from common.querysets import ValidityQuerySet
 from common.validators import UpdateType
 
 
-class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
+class TrackedModelQuerySet(
+    PolymorphicQuerySet,
+    CTEQuerySet,
+    ValidityQuerySet,
+    TransactionPartitionQuerySet,
+):
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
@@ -82,26 +87,6 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
         """
         return self.filter(self.as_at_transaction_filter(transaction))
 
-    def as_at(self, date: date) -> TrackedModelQuerySet:
-        """
-        Return the instances of the model that were represented at a particular
-        date.
-
-        If done from the TrackedModel this will return all instances of all
-        tracked models as represented at a particular date.
-        """
-        return self.filter(valid_between__contains=date)
-
-    def active(self) -> TrackedModelQuerySet:
-        """
-        Return the instances of the model that are represented at the current
-        date.
-
-        If done from the TrackedModel this will return all instances of all
-        tracked models as represented at the current date.
-        """
-        return self.as_at(date.today())
-
     def get_versions(self, **kwargs) -> TrackedModelQuerySet:
         for field in self.model.identifying_fields:
             if field not in kwargs:
@@ -114,29 +99,12 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
         """Gets the latest version of a specific object."""
         return self.get_versions(**kwargs).latest_approved().get()
 
-    def get_current_version(self, **kwargs):
-        """Gets the current version of a specific object."""
-        return self.get_versions(**kwargs).active().get()
-
     def get_first_version(self, **kwargs):
         """Get the original version of a specific object."""
         return self.get_versions(**kwargs).order_by("id").first()
 
     def excluding_versions_of(self, version_group):
         return self.exclude(version_group=version_group)
-
-    def with_workbasket(self, workbasket):
-        """Add the latest versions of objects from the specified workbasket."""
-
-        if workbasket is None:
-            return self
-
-        query = Q()
-
-        # get models in the workbasket
-        in_workbasket = self.model.objects.filter(transaction__workbasket=workbasket)
-        # add latest version of models from the current workbasket
-        return self.filter(query) | in_workbasket
 
     def has_approved_state(self):
         """Get objects which have been approved/sent-to-cds/published."""
@@ -215,47 +183,6 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
     def get_queryset(self):
         return self.annotate_record_codes().order_by("record_code", "subrecord_code")
 
-    @classmethod
-    def approved_query_filter(cls, prefix=""):
-        from common.models.transactions import TransactionPartition
-
-        return Q(
-            **{
-                f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
-            }
-        )
-
-    @classmethod
-    def as_at_transaction_filter(cls, transaction, prefix=""):
-        """
-        Return a Django filter object that will filter the returned models to
-        only those that exist as of the passed transaction.
-
-        This is different than just `object.versions` because it will only
-        include draft versions from the same workbasket, if the transaction is
-        in draft, whereas `object.versions` will include all draft versions. At
-        the database level, that is any transaction in this partition with lower
-        order (and in this workbasket in the case of DRAFT), or any transaction
-        in an earlier partition.
-        """
-        from common.models.transactions import TransactionPartition
-
-        this_partition = {
-            f"{prefix}transaction__partition": transaction.partition,
-            f"{prefix}transaction__order__lte": transaction.order,
-        }
-
-        if transaction.partition not in TransactionPartition.approved_partitions():
-            this_partition[
-                f"{prefix}transaction__workbasket__id"
-            ] = transaction.workbasket_id
-
-        earlier_parition = {
-            f"{prefix}transaction__partition__lt": transaction.partition,
-        }
-
-        return Q(**this_partition) | Q(**earlier_parition)
-
     @staticmethod
     def _when_model_record_codes():
         """
@@ -306,3 +233,16 @@ class TrackedModelQuerySet(PolymorphicQuerySet, CTEQuerySet, ValidityQuerySet):
             )
             for model in TrackedModel.__subclasses__()
         ]
+
+    def with_workbasket(self, workbasket):
+        """Add the latest versions of objects from the specified workbasket."""
+
+        if workbasket is None:
+            return self
+
+        query = Q()
+
+        # get models in the workbasket
+        in_workbasket = self.model.objects.filter(transaction__workbasket=workbasket)
+        # add latest version of models from the current workbasket
+        return self.filter(query) | in_workbasket

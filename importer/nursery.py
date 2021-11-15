@@ -11,7 +11,6 @@ from django.core.cache import cache
 
 from commodities.exceptions import InvalidIndentError
 from common.models import TrackedModel
-from common.util import get_identifying_fields
 from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
 from importer.utils import generate_key
@@ -193,7 +192,7 @@ class TariffObjectNursery:
             cache_key = self.generate_cache_key(
                 model,
                 identifying_fields,
-                get_identifying_fields(obj, identifying_fields),
+                obj.get_identifying_fields(identifying_fields),
             )
             cache.set(cache_key, (obj.pk, model.__name__), timeout=None)
 
@@ -213,7 +212,7 @@ class TariffObjectNursery:
             cache_key = self.generate_cache_key(
                 model,
                 identifying_fields,
-                get_identifying_fields(obj, identifying_fields),
+                obj.get_identifying_fields(identifying_fields),
             )
             cache.delete(cache_key)
 

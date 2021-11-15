@@ -4,8 +4,6 @@ from __future__ import annotations
 import re
 from platform import python_version_tuple
 from typing import Any
-from typing import Dict
-from typing import Iterable
 from typing import Optional
 from typing import TypeVar
 from typing import Union
@@ -299,33 +297,3 @@ def get_model_indefinite_article(model_instance: Model) -> Optional[str]:
     # verbose_name is initialized to None, so typing thinks it is Optional
     if name:
         return "an" if name[0] in ["a", "e", "i", "o", "u"] else "a"
-
-
-def get_identifying_fields(
-    model: Model,
-    identifying_fields: Optional[Iterable[str]] = None,
-) -> Dict[str, Any]:
-    identifying_fields = identifying_fields or model.identifying_fields
-    fields = {}
-
-    for field in identifying_fields:
-        value = model
-        for layer in field.split("__"):
-            value = getattr(value, layer)
-            if value is None:
-                break
-        fields[field] = value
-
-    return fields
-
-
-def get_identifying_fields_to_string(
-    class_: type[Model],
-    identifying_fields: Optional[Iterable[str]] = None,
-) -> str:
-    field_list = [
-        f"{field}={str(value)}"
-        for field, value in get_identifying_fields(class_, identifying_fields).items()
-    ]
-
-    return ", ".join(field_list)

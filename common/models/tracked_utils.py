@@ -64,23 +64,6 @@ def get_models_linked_to(
     )
 
 
-def get_copyable_fields(class_: type[Model]) -> Set[Field]:
-    """
-    Return the set of fields that can have their values copied from one model to
-    another.
-
-    This is anything that is:
-    - a native value
-    - a foreign key to some other model
-    """
-    return {
-        field
-        for field in class_._meta.get_fields()
-        if not any((field.many_to_many, field.one_to_many))
-        and field.name not in class_.system_set_field_names
-    }
-
-
 def get_deferred_set_fields(class_: type[Model]) -> Set[Field]:
     """
     Returns a set of fields that can only be saved (using the

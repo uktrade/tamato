@@ -7,7 +7,6 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
-from common.util import get_identifying_fields
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ class ROIMB44(BusinessRule):
             if (
                 type(regulation)
                 .objects.filter(
-                    **get_identifying_fields(regulation),
+                    **regulation.get_identifying_fields(),
                     approved=True,
                 )
                 .exclude(pk=regulation.pk)

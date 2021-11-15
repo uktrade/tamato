@@ -16,7 +16,6 @@ from common.business_rules import ValidityPeriodContains
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
 from common.util import TaricDateRange
-from common.util import get_identifying_fields
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from geo_areas.validators import AreaCode
@@ -26,7 +25,7 @@ from quotas.validators import AdministrationMechanism
 class MeasureValidityPeriodContained(ValidityPeriodContained):
     def query_contains_validity(self, container, contained, model):
         queryset = container.__class__.objects.filter(
-            **get_identifying_fields(container),
+            **container.get_identifying_fields(),
         ).approved_up_to_transaction(model.transaction)
 
         if container.__class__.__name__ == "Measure":
@@ -751,7 +750,6 @@ class ME43(BusinessRule):
         duty_expressions_used = (
             type(measure_component)
             .objects.approved_up_to_transaction(measure_component.transaction)
-            .with_workbasket(measure_component.transaction.workbasket)
             .exclude(pk=measure_component.pk if measure_component.pk else None)
             .excluding_versions_of(version_group=measure_component.version_group)
             .filter(
@@ -1005,7 +1003,6 @@ class ME108(BusinessRule):
         if (
             type(component)
             .objects.approved_up_to_transaction(component.transaction)
-            .with_workbasket(component.transaction.workbasket)
             .exclude(pk=component.pk or None)
             .excluding_versions_of(version_group=component.version_group)
             .filter(
@@ -1145,7 +1142,6 @@ class ME70(BusinessRule):
         if (
             type(association)
             .objects.approved_up_to_transaction(association.transaction)
-            .with_workbasket(association.transaction.workbasket)
             .exclude(pk=association.pk or None)
             .excluding_versions_of(version_group=association.version_group)
             .filter(

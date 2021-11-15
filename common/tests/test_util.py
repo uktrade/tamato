@@ -176,13 +176,3 @@ def test_get_model_indefinite_article():
 
     assert util.get_model_indefinite_article(additional_code) == "an"
     assert util.get_model_indefinite_article(measure) == "a"
-
-
-def test_identifying_fields(sample_model):
-    assert util.get_identifying_fields(sample_model) == {"sid": sample_model.sid}
-
-
-def test_identifying_fields_to_string(sample_model):
-    assert (
-        util.get_identifying_fields_to_string(sample_model) == f"sid={sample_model.sid}"
-    )

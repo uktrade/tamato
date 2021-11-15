@@ -17,7 +17,6 @@ from django.db.models import QuerySet
 from common.models.tracked_utils import get_relations
 from common.models.trackedmodel import TrackedModel
 from common.util import get_field_tuple
-from common.util import get_identifying_fields
 from common.validators import UpdateType
 
 log = logging.getLogger(__name__)
@@ -293,7 +292,7 @@ class ValidityPeriodContained(BusinessRule):
         if (
             not type(container)
             .objects.filter(
-                **get_identifying_fields(container),
+                **container.get_identifying_fields(),
             )
             .approved_up_to_transaction(self.transaction)
             .filter(
@@ -343,7 +342,7 @@ class ValidityPeriodContains(BusinessRule):
             .filter(
                 **{
                     f"{'__'.join(reversed(relation_path))}__{field}": value
-                    for (field, value) in get_identifying_fields(model).items()
+                    for (field, value) in model.get_identifying_fields().items()
                 }
             )
             .approved_up_to_transaction(self.transaction)

@@ -11,8 +11,6 @@ from common.models.mixins.validity import ValidityStartQueryset
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_relations
 from common.util import classproperty
-from common.util import get_identifying_fields
-from common.util import get_identifying_fields_to_string
 
 
 class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
@@ -44,9 +42,9 @@ class DescriptionMixin(ValidityStartMixin):
     def get_url(self, action="detail"):
         kwargs = {}
         if action != "list":
-            kwargs = get_identifying_fields(self)
+            kwargs = self.get_identifying_fields()
             described_object = self.get_described_object()
-            for field, value in get_identifying_fields(described_object).items():
+            for field, value in described_object.get_identifying_fields().items():
                 kwargs[f"{self.described_object_field.name}__{field}"] = value
         try:
             return reverse(
@@ -57,8 +55,7 @@ class DescriptionMixin(ValidityStartMixin):
             return
 
     def __str__(self):
-        return get_identifying_fields_to_string(
-            self,
+        return self.identifying_fields_to_string(
             identifying_fields=(
                 self.described_object_field.name,
                 "validity_start",
@@ -102,7 +99,7 @@ class DescribedMixin:
 
         filter_kwargs = {
             f"{field_name}__{key}": value
-            for key, value in get_identifying_fields(self).items()
+            for key, value in self.get_identifying_fields().items()
         }
 
         query = descriptions_model.objects.filter(**filter_kwargs).order_by(

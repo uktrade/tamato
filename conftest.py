@@ -40,7 +40,6 @@ from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
-from common.util import get_identifying_fields
 from common.validators import UpdateType
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
@@ -291,7 +290,7 @@ def use_update_form(valid_user_api_client: APIClient):
     def use(object: TrackedModel, new_data: dict[str, Callable[[Any], Any]]):
         model = type(object)
         versions = set(
-            model.objects.filter(**get_identifying_fields(object)).values_list(
+            model.objects.filter(**object.get_identifying_fields()).values_list(
                 "pk",
                 flat=True,
             ),
@@ -317,7 +316,7 @@ def use_update_form(valid_user_api_client: APIClient):
         if response.status_code not in (301, 302):
             assert (
                 set(
-                    model.objects.filter(**get_identifying_fields(object)).values_list(
+                    model.objects.filter(**object.get_identifying_fields()).values_list(
                         "pk",
                         flat=True,
                     ),
@@ -394,7 +393,7 @@ def run_xml_import(valid_user, settings):
             username=valid_user.username,
         )
 
-        db_kwargs = get_identifying_fields(model)
+        db_kwargs = model.get_identifying_fields()
         try:
             imported = model_class.objects.get_latest_version(**db_kwargs)
         except model_class.DoesNotExist:
@@ -459,7 +458,7 @@ def imported_fields_match(run_xml_import, update_type):
 
         if update_type in (UpdateType.UPDATE, UpdateType.DELETE):
             previous_version = factory.create(**kwargs)
-            kwargs.update(get_identifying_fields(previous_version))
+            kwargs.update(previous_version.get_identifying_fields())
 
         updated_model = run_xml_import(
             lambda: factory.build(

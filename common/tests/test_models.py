@@ -135,9 +135,9 @@ def test_as_at(date_ranges):
     assert set(queryset.values_list("pk", flat=True)) == pks
 
 
-def test_active(model1_with_history):
+def test_as_at_today(model1_with_history):
     """Ensure only the currently active records are fetched."""
-    queryset = TestModel1.objects.active()
+    queryset = TestModel1.objects.as_at_today()
 
     assert set(queryset.values_list("pk", flat=True)) == {
         model1_with_history.active_model.pk,
@@ -152,21 +152,6 @@ def test_get_version_raises_error():
 
     with pytest.raises(NoIdentifyingValuesGivenError):
         TestModel2.objects.get_versions(sid=1)
-
-
-def test_get_current_version(model1_with_history):
-    """Ensure getting the current version works with a standard sid
-    identifier."""
-    model = model1_with_history.active_model
-
-    assert TestModel1.objects.get_current_version(sid=model.sid) == model
-
-
-def test_get_current_version_custom_identifier(model2_with_history):
-    """Ensure getting the current version works with a custom identifier."""
-    model = model2_with_history.active_model
-
-    assert TestModel2.objects.get_current_version(custom_sid=model.custom_sid) == model
 
 
 def test_get_latest_version(model1_with_history):
