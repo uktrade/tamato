@@ -12,14 +12,17 @@ from common.validators import UpdateType
 pytestmark = pytest.mark.django_db
 
 
-def test_goods_nomenclature_importer(imported_fields_match):
+def test_goods_nomenclature_importer(imported_fields_match, mocked_responses):
     assert imported_fields_match(
         factories.GoodsNomenclatureFactory,
         serializers.GoodsNomenclatureSerializer,
     )
 
 
-def test_goods_nomenclature_description_importer(imported_fields_match):
+def test_goods_nomenclature_description_importer(
+    imported_fields_match,
+    mocked_responses,
+):
     assert imported_fields_match(
         factories.GoodsNomenclatureDescriptionFactory,
         serializers.GoodsNomenclatureDescriptionSerializer,
@@ -33,6 +36,7 @@ def test_goods_nomenclature_origin_importer(
     update_type,
     date_ranges,
     imported_fields_match,
+    mocked_responses,
 ):
     origin = factories.GoodsNomenclatureFactory.create(
         update_type=UpdateType.CREATE.value,
@@ -63,7 +67,12 @@ def test_goods_nomenclature_origin_importer(
         assert origins.get().derived_from_goods_nomenclature == origin
 
 
-def test_goods_nomenclature_successor_importer_create(run_xml_import, date_ranges):
+def test_goods_nomenclature_successor_importer_create(
+    run_xml_import,
+    date_ranges,
+    mocked_responses,
+):
+
     good = factories.GoodsNomenclatureFactory(
         update_type=UpdateType.CREATE.value,
         valid_between=date_ranges.normal,
@@ -91,7 +100,11 @@ def test_goods_nomenclature_successor_importer_create(run_xml_import, date_range
     assert db_good.successors.get() == successor
 
 
-def test_goods_nomenclature_successor_importer_delete(run_xml_import, date_ranges):
+def test_goods_nomenclature_successor_importer_delete(
+    run_xml_import,
+    date_ranges,
+    mocked_responses,
+):
     good = factories.GoodsNomenclatureFactory(
         update_type=UpdateType.CREATE.value,
         valid_between=date_ranges.normal,
@@ -150,6 +163,7 @@ def test_goods_nomenclature_indent_importer(imported_fields_match):
 
 def test_goods_nomenclature_indent_importer_with_parent_low_indent(
     imported_fields_match,
+    mocked_responses,
 ):
     parent_indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__item_id="1200000000",
@@ -174,6 +188,7 @@ def test_goods_nomenclature_indent_importer_with_parent_low_indent(
 
 def test_goods_nomenclature_indent_importer_with_parent_high_indent(
     imported_fields_match,
+    mocked_responses,
 ):
     """Ensure Goods Nomenclature Indent importers can appropriately handle
     importing indents into the hierarchy when receiving codes which have already
@@ -208,6 +223,7 @@ def test_goods_nomenclature_indent_importer_with_parent_high_indent(
 def test_goods_nomenclature_indent_importer_multiple_parents(
     imported_fields_match,
     date_ranges,
+    mocked_responses,
 ):
     """
     In some cases there is an indent which is created which already expects to
@@ -263,6 +279,7 @@ def test_goods_nomenclature_indent_importer_multiple_parents(
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_multiple_parents(
     run_xml_import,
+    mocked_responses,
     update_type,
 ):
     parent_indent = factories.SimpleGoodsNomenclatureIndentFactory.create(
@@ -323,6 +340,7 @@ def test_goods_nomenclature_indent_importer_update_multiple_parents(
 @pytest.mark.parametrize("item_id,suffix", [("1402000000", "80"), ("1401010000", "20")])
 def test_goods_nomenclature_indent_importer_with_triple_00_indent(
     imported_fields_match,
+    mocked_responses,
     item_id,
     suffix,
 ):
@@ -363,7 +381,10 @@ def test_goods_nomenclature_indent_importer_with_triple_00_indent(
     )
 
 
-def test_goods_nomenclature_indent_importer_create_out_of_order(run_xml_import):
+def test_goods_nomenclature_indent_importer_create_out_of_order(
+    run_xml_import,
+    mocked_responses,
+):
     """
     This test checks that if indents are loaded out of order (i.e. children
     first) then when the actual parents are loaded they will correctly inherit
@@ -473,6 +494,7 @@ def test_goods_nomenclature_indent_importer_with_branch_shift(
     make_inappropriate_family,
     imported_fields_match,
     date_ranges,
+    mocked_responses,
 ):
     """
     In some scenarios a new indent can step in between an existing Goods
@@ -536,6 +558,7 @@ def test_goods_nomenclature_indent_importer_with_overlapping_branch_shift(
     make_inappropriate_family,
     imported_fields_match,
     date_ranges,
+    mocked_responses,
 ):
     """
     In some scenarios a new indent can step in between an existing Goods
@@ -582,6 +605,7 @@ def test_goods_nomenclature_indent_importer_with_overlapping_branch_shift(
 @pytest.mark.parametrize("update_type", [UpdateType.UPDATE, UpdateType.DELETE])
 def test_goods_nomenclature_indent_importer_update_with_children(
     run_xml_import,
+    mocked_responses,
     update_type,
     date_ranges,
 ):
@@ -684,6 +708,7 @@ def test_footnote_association_goods_nomenclature_importer(imported_fields_match)
 )
 def test_sync_indent_node_end_dates_on_indent_import(
     run_xml_import,
+    mocked_responses,
     current_indent_start_date,
     imported_indent_start_date,
     curent_node_end_date,

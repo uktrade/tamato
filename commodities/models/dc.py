@@ -662,6 +662,9 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         for commodity in self.commodities:
             indent = commodity.get_indent()
 
+            if indent is None:
+                continue
+
             if indent == 0:
                 if not indents[0]:
                     parent = None
