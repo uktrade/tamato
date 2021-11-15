@@ -1,15 +1,18 @@
 """Miscellaneous utility functions."""
 from __future__ import annotations
 
+import re
+from datetime import timedelta
+from functools import partial
 from platform import python_version_tuple
 from typing import Any
 from typing import Dict
-from typing import Tuple
 from typing import Optional
+from typing import Tuple
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
-import re
 import wrapt
 from django.db import transaction
 from django.db.models import F
@@ -17,10 +20,16 @@ from django.db.models import Func
 from django.db.models import Model
 from django.db.models import QuerySet
 from django.db.models import Value
+from django.db.models.expressions import Case
+from django.db.models.expressions import Expression
+from django.db.models.expressions import When
+from django.db.models.fields import DateField
 from django.db.models.fields import Field
 from django.db.models.fields import IntegerField
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.functions import Cast
+from django.db.models.functions.text import Lower
+from django.db.models.functions.text import Upper
 from django.db.transaction import atomic
 from django.template import loader
 from psycopg2.extras import DateRange
@@ -111,6 +120,38 @@ class TaricDateTimeRange(DateTimeRange):
         if not upper:
             bounds = "[)"
         super().__init__(lower, upper, bounds, empty)
+
+
+def get_inclusive_date(
+    field_name: str,
+    extractor: Type[Func],
+    add_on_exclusive: int,
+) -> Expression:
+    """
+    Our date ranges are inclusive but Postgres stores them as exclusive on the
+    upper bound.
+
+    Hence we sometimes need to subtract a day from the date if we want to get
+    inclusive value.
+    """
+    return Cast(
+        extractor(field_name, output_field=DateField())
+        - Case(
+            When(
+                **{f"{field_name}__{extractor.__name__.lower()}_inc": True},
+                then=timedelta(days=0),
+            ),
+            default=timedelta(days=add_on_exclusive),
+        ),
+        output_field=DateField(),
+    )
+
+
+StartDate = partial(get_inclusive_date, extractor=Lower, add_on_exclusive=-1)
+"""SQL expression to extract an inclusive start date from a date range."""
+
+EndDate = partial(get_inclusive_date, extractor=Upper, add_on_exclusive=1)
+"""SQL expression to extract an inclusive end date from a date range."""
 
 
 def validity_range_contains_range(
