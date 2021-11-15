@@ -1,13 +1,15 @@
 """Miscellaneous utility functions."""
 from __future__ import annotations
 
-import re
 from platform import python_version_tuple
 from typing import Any
+from typing import Dict
+from typing import Tuple
 from typing import Optional
 from typing import TypeVar
 from typing import Union
 
+import re
 import wrapt
 from django.db import transaction
 from django.db.models import F
@@ -159,7 +161,7 @@ def get_field_tuple(
     model: Model,
     field_name: str,
     default: Any = None,
-) -> tuple(str, Any):
+) -> Tuple[str, Any]:
     """
     Get the value of the named field of the specified model.
 
@@ -257,7 +259,7 @@ def get_next_id(queryset: QuerySet[Model], id_field: Field, max_len: int):
     )
 
 
-def get_record_code(record: dict[str, Any]) -> str:
+def get_record_code(record: Dict[str, Any]) -> str:
     """Returns the concatenated codes for a taric record."""
     return f"{record['record_code']}{record['subrecord_code']}"
 

@@ -881,12 +881,12 @@ def unordered_transactions():
     """
     Fixture that creates some transactions, where one is a draft.
 
-    The draft transaction is has approved transactions on either side, to allow
-    testing of save_draft and it's callers, to verify the transactions are get
+    The draft transaction has approved transactions on either side, this allows
+    testing of save_draft and it's callers to verify the transactions are getting
     sorted.
 
-    UnorderedTransactionData is returned, so the user can the DRAFT transaction as new_transaction
-    and one example of an existing_transaction.
+    UnorderedTransactionData is returned, so the user can set the new_transaction partition to DRAFT
+    and while also using an existing_transaction.
     """
     from common.tests.factories import ApprovedTransactionFactory
     from common.tests.factories import FootnoteFactory
