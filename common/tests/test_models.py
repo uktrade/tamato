@@ -122,15 +122,18 @@ def test_versions_up_to(model1_with_history):
         assert versions.last() == model
 
 
-def test_as_at(date_ranges):
+def test_as_at(date_ranges, validity_factory):
     """Ensure only records active at a specific date are fetched."""
+    if validity_factory is factories.GoodsNomenclatureIndentNodeFactory:
+        pytest.xfail("Does not implement as_at")
 
     pks = {
-        factories.TestModel1Factory.create(valid_between=date_ranges.later).pk,
-        factories.TestModel1Factory.create(valid_between=date_ranges.later).pk,
+        validity_factory.create(valid_between=date_ranges.later).pk,
+        validity_factory.create(valid_between=date_ranges.later).pk,
     }
+    Model = validity_factory._meta.get_model_class()
 
-    queryset = TestModel1.objects.as_at(date_ranges.later.lower)
+    queryset = Model.objects.as_at(date_ranges.later.lower)
 
     assert set(queryset.values_list("pk", flat=True)) == pks
 
