@@ -46,6 +46,11 @@ def export_and_upload_sqlite() -> bool:
 
     logger.info("Generating database %s", export_filename)
     sqlite.make_export(storage.get_connection(export_filename))
+    logger.info("Generation complete")
+
+    logger.info("Serializing %s", export_filename)
+    storage.serialize(export_filename)
+    logger.info("Serializing complete")
 
     logger.info("Upload complete")
     return True
