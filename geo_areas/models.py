@@ -10,8 +10,8 @@ from common.fields import SignedIntSID
 from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
+from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
-from common.models.trackedmodel_queryset import TrackedModelQuerySet
 from geo_areas import business_rules
 from geo_areas.validators import AreaCode
 from geo_areas.validators import area_id_validator

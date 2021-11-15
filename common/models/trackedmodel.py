@@ -24,15 +24,16 @@ from common.exceptions import IllegalSaveError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
-from common.models.tracked_model_utils import get_copyable_fields
-from common.models.tracked_model_utils import get_deferred_set_fields
-from common.models.tracked_model_utils import get_models_linked_to
-from common.models.tracked_model_utils import get_relations
-from common.models.tracked_model_utils import get_subrecord_relations
-from common.models.trackedmodel_queryset import TrackedModelQuerySet
+from common.models.tracked_qs import TrackedModelQuerySet
+from common.models.tracked_utils import get_copyable_fields
+from common.models.tracked_utils import get_deferred_set_fields
+from common.models.tracked_utils import get_models_linked_to
+from common.models.tracked_utils import get_relations
+from common.models.tracked_utils import get_subrecord_relations
 from common.util import classproperty
 from common.util import get_accessor
 from common.util import get_identifying_fields
+from common.util import get_identifying_fields_to_string
 from common.validators import UpdateType
 from workbaskets.validators import WorkflowStatus
 
@@ -389,11 +390,9 @@ class TrackedModel(PolymorphicModel):
             return False
 
         # If we find any objects for any relation, then the model is in use.
-
         for relation_name in using_models:
             relation_queryset = self.in_use_by(relation_name, transaction)
             if relation_queryset.exists():
-
                 return True
 
         return False
@@ -431,9 +430,7 @@ class TrackedModel(PolymorphicModel):
         return return_value
 
     def __str__(self):
-        return ", ".join(
-            f"{field}={value}" for field, value in get_identifying_fields(self).items()
-        )
+        return get_identifying_fields_to_string(self)
 
     def __hash__(self):
         return hash(f"{__name__}.{self.__class__.__name__}")

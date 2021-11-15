@@ -15,7 +15,7 @@ from django_cte import CTEQuerySet
 from polymorphic.query import PolymorphicQuerySet
 
 from common import exceptions
-from common.models.tracked_model_utils import get_models_linked_to
+from common.models.tracked_utils import get_models_linked_to
 from common.querysets import ValidityQuerySet
 from common.validators import UpdateType
 

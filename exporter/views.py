@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET
 
 from common.models import TrackedModel
-from common.models.tracked_model_utils import get_models_linked_to
+from common.models.tracked_utils import get_models_linked_to
 from common.serializers import TrackedModelSerializer
 from common.util import get_identifying_fields
 
@@ -81,7 +81,7 @@ def tracked_model_to_activity_stream_item(obj: TrackedModel):
     # Find all the relations to remove and replace with activity stream IDs.
     exclusions = []
     extra_data = {}
-    for relation, _ in get_models_linked_to(obj.__class__).items():
+    for relation, _ in get_models_linked_to(type(obj)).items():
         exclusions.append(relation.name)
         relation_obj = getattr(obj, relation.name, None)
         if relation_obj:

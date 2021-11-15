@@ -329,17 +329,3 @@ def get_identifying_fields_to_string(
     ]
 
     return ", ".join(field_list)
-
-
-def get_identifying_fields_unique(
-    class_: type[Model],
-    identifying_fields: Optional[Iterable[str]] = None,
-) -> bool:
-    return (
-        class_.__class__.objects.filter(
-            **get_identifying_fields(class_, identifying_fields)
-        )
-        .latest_approved()
-        .count()
-        <= 1
-    )

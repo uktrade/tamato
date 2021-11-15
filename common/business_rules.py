@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
-from common.models.tracked_model_utils import get_relations
+from common.models.tracked_utils import get_relations
 from common.models.trackedmodel import TrackedModel
 from common.util import get_field_tuple
 from common.util import get_identifying_fields
@@ -103,7 +103,7 @@ class BusinessRule(metaclass=BusinessRuleBase):
         """Returns all model instances that are linked to the passed ``model``
         and have this business rule listed in their ``business_rules``
         attribute."""
-        for field, related_model in get_relations(model.__class__).items():
+        for field, related_model in get_relations(type(model)).items():
             business_rules = getattr(related_model, "business_rules", [])
             if cls in business_rules:
                 if field.one_to_many or field.many_to_many:
@@ -291,7 +291,8 @@ class ValidityPeriodContained(BusinessRule):
 
     def query_contains_validity(self, container, contained, model):
         if (
-            not container.__class__.objects.filter(
+            not type(container)
+            .objects.filter(
                 **get_identifying_fields(container),
             )
             .approved_up_to_transaction(self.transaction)

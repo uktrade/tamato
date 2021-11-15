@@ -8,8 +8,8 @@ from common.business_rules import UpdateValidity
 from common.exceptions import NoDescriptionError
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
-from common.models.tracked_model_utils import get_relations
-from common.models.trackedmodel_queryset import TrackedModelQuerySet
+from common.models.tracked_qs import TrackedModelQuerySet
+from common.models.tracked_utils import get_relations
 from common.util import classproperty
 from common.util import get_identifying_fields
 from common.util import get_identifying_fields_to_string

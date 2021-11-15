@@ -18,7 +18,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from lxml import etree
 
-from common.models.tracked_model_utils import get_copyable_fields
+from common.models.tracked_utils import get_copyable_fields
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.renderers import counter_generator
@@ -142,9 +142,7 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
         #    },
         # }
     """
-    checked_field_names = {
-        f.name for f in get_copyable_fields(model.__class__)
-    } - ignore
+    checked_field_names = {f.name for f in get_copyable_fields(type(model))} - ignore
     data = {
         name: getattr(model, get_accessor(model._meta.get_field(name)))
         for name in checked_field_names

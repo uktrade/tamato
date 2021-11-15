@@ -12,7 +12,7 @@ from typing import TypedDict
 from django.db.models.query_utils import DeferredAttribute
 
 from common.models import TrackedModel
-from common.models.tracked_model_utils import get_relations
+from common.models.tracked_utils import get_relations
 
 
 def col(label: str) -> int:
