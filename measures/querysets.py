@@ -11,7 +11,7 @@ from django.db.models.functions import Concat
 from django.db.models.functions.text import Trim
 
 from common.fields import TaricDateRangeField
-from common.models.records import TrackedModelQuerySet
+from common.models.tracked_qs import TrackedModelQuerySet
 
 
 class DutySentenceMixin(QuerySet):

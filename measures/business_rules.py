@@ -750,7 +750,6 @@ class ME43(BusinessRule):
         duty_expressions_used = (
             type(measure_component)
             .objects.approved_up_to_transaction(measure_component.transaction)
-            .with_workbasket(measure_component.transaction.workbasket)
             .exclude(pk=measure_component.pk if measure_component.pk else None)
             .excluding_versions_of(version_group=measure_component.version_group)
             .filter(
@@ -1004,7 +1003,6 @@ class ME108(BusinessRule):
         if (
             type(component)
             .objects.approved_up_to_transaction(component.transaction)
-            .with_workbasket(component.transaction.workbasket)
             .exclude(pk=component.pk or None)
             .excluding_versions_of(version_group=component.version_group)
             .filter(
@@ -1144,7 +1142,6 @@ class ME70(BusinessRule):
         if (
             type(association)
             .objects.approved_up_to_transaction(association.transaction)
-            .with_workbasket(association.transaction.workbasket)
             .exclude(pk=association.pk or None)
             .excluding_versions_of(version_group=association.version_group)
             .filter(

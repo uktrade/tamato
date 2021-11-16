@@ -2,7 +2,7 @@ from django.db.models import BooleanField
 from django.db.models import Case
 from django.db.models import When
 
-from common.models.records import TrackedModelQuerySet
+from common.models.tracked_qs import TrackedModelQuerySet
 
 
 class QuotaOrderNumberQuerySet(TrackedModelQuerySet):

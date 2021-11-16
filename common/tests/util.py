@@ -18,7 +18,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from lxml import etree
 
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
@@ -148,7 +148,7 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
     identifying_fields = {
         name: data[name].get_identifying_fields()
         for name in checked_field_names
-        if hasattr(data[name], "get_identifying_fields")
+        if hasattr(data[name], "identifying_fields")
     }
     data.update(identifying_fields)
     return data

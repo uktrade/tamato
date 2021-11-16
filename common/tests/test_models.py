@@ -122,22 +122,25 @@ def test_versions_up_to(model1_with_history):
         assert versions.last() == model
 
 
-def test_as_at(date_ranges):
+def test_as_at(date_ranges, validity_factory):
     """Ensure only records active at a specific date are fetched."""
+    if validity_factory is factories.GoodsNomenclatureIndentNodeFactory:
+        pytest.xfail("Does not implement as_at")
 
     pks = {
-        factories.TestModel1Factory.create(valid_between=date_ranges.later).pk,
-        factories.TestModel1Factory.create(valid_between=date_ranges.later).pk,
+        validity_factory.create(valid_between=date_ranges.later).pk,
+        validity_factory.create(valid_between=date_ranges.later).pk,
     }
+    Model = validity_factory._meta.get_model_class()
 
-    queryset = TestModel1.objects.as_at(date_ranges.later.lower)
+    queryset = Model.objects.as_at(date_ranges.later.lower)
 
     assert set(queryset.values_list("pk", flat=True)) == pks
 
 
-def test_active(model1_with_history):
+def test_as_at_today(model1_with_history):
     """Ensure only the currently active records are fetched."""
-    queryset = TestModel1.objects.active()
+    queryset = TestModel1.objects.as_at_today()
 
     assert set(queryset.values_list("pk", flat=True)) == {
         model1_with_history.active_model.pk,
@@ -152,21 +155,6 @@ def test_get_version_raises_error():
 
     with pytest.raises(NoIdentifyingValuesGivenError):
         TestModel2.objects.get_versions(sid=1)
-
-
-def test_get_current_version(model1_with_history):
-    """Ensure getting the current version works with a standard sid
-    identifier."""
-    model = model1_with_history.active_model
-
-    assert TestModel1.objects.get_current_version(sid=model.sid) == model
-
-
-def test_get_current_version_custom_identifier(model2_with_history):
-    """Ensure getting the current version works with a custom identifier."""
-    model = model2_with_history.active_model
-
-    assert TestModel2.objects.get_current_version(custom_sid=model.custom_sid) == model
 
 
 def test_get_latest_version(model1_with_history):
@@ -280,10 +268,6 @@ def test_get_latest_relation_without_latest_links(
     assert latest_link == fetched_latest_link
 
 
-def test_get_taric_template(sample_model):
-    assert sample_model.get_taric_template() == "test_template"
-
-
 def test_current_version(sample_model):
     assert sample_model.current_version == sample_model
 
@@ -351,18 +335,6 @@ def test_new_version_uses_passed_transaction(sample_model):
 def test_new_version_works_for_all_models(trackedmodel_factory):
     model = trackedmodel_factory.create()
     model.new_version(model.transaction.workbasket)
-
-
-def test_identifying_fields(sample_model):
-    assert sample_model.get_identifying_fields() == {"sid": sample_model.sid}
-
-
-def test_identifying_fields_unique(model1_with_history):
-    assert model1_with_history.active_model.identifying_fields_unique()
-
-
-def test_identifying_fields_to_string(sample_model):
-    assert sample_model.identifying_fields_to_string() == f"sid={sample_model.sid}"
 
 
 def test_current_as_of(sample_model):

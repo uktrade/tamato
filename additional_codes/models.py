@@ -8,6 +8,7 @@ from common.fields import LongDescription
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from footnotes import business_rules as footnotes_business_rules
@@ -54,7 +55,7 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         return f"AdditionalcodeType {self.sid}: {self.description}"
 
 
-class AdditionalCode(TrackedModel, ValidityMixin):
+class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The additional code identifies a piece of text associated with a goods
     nomenclature code within a measure.
