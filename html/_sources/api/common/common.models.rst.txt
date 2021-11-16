@@ -8,7 +8,9 @@ Submodules
 ~~~~~~~~~~
 
 .. autosummary::
-   records
+   trackedmodel
+   tracked_utils
+   tracked_qs
    transactions
    dc
    mixins
