@@ -14,7 +14,7 @@ from footnotes import validators
 from measures import business_rules as measures_business_rules
 
 
-class FootnoteType(TrackedModel, ValidityMixin):
+class FootnoteType(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The footnote type record allows all footnotes to be classified according to
     type.
@@ -98,7 +98,7 @@ class Footnote(TrackedModel, ValidityMixin, DescribedMixin):
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
 
 
-class FootnoteDescription(DescriptionMixin, TrackedModel):
+class FootnoteDescription(DescriptionMixin, TrackedModel, DescribedMixin):
     """
     The footnote description contains the text associated with a footnote, for a
     given language and for a particular period.

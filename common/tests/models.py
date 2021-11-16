@@ -21,7 +21,7 @@ class TestModel1(TrackedModel, ValidityMixin, DescribedMixin):
     name = models.CharField(max_length=24, null=True)
 
 
-class TestModel2(TrackedModel, ValidityMixin):
+class TestModel2(TrackedModel, ValidityMixin, DescribedMixin):
     __test__ = False
     record_code = "02"
     subrecord_code = "01"
@@ -32,7 +32,7 @@ class TestModel2(TrackedModel, ValidityMixin):
     identifying_fields = ("custom_sid",)
 
 
-class TestModel3(TrackedModel, ValidityMixin):
+class TestModel3(TrackedModel, ValidityMixin, DescribedMixin):
     __test__ = False
     record_code = "03"
     subrecord_code = "01"
@@ -41,7 +41,7 @@ class TestModel3(TrackedModel, ValidityMixin):
     linked_model = models.ForeignKey(TestModel1, null=True, on_delete=models.PROTECT)
 
 
-class TestModelDescription1(DescriptionMixin, TrackedModel):
+class TestModelDescription1(DescriptionMixin, TrackedModel, DescribedMixin):
     __test__ = False
     record_code = "01"
     subrecord_code = "02"

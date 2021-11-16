@@ -196,7 +196,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
         return self.code.is_taric_code
 
 
-class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
+class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "05"
 
@@ -385,7 +385,7 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         return f"path={self.path}, indent=({self.indent})"
 
 
-class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
+class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel, DescribedMixin):
     record_code = "400"
     subrecord_code = "15"
     period_record_code = "400"
@@ -407,7 +407,7 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
         ordering = ("validity_start",)
 
 
-class GoodsNomenclatureOrigin(TrackedModel):
+class GoodsNomenclatureOrigin(TrackedModel, DescribedMixin):
     """
     Represents a link between a newly-created GoodsNomenclature and the codes
     that previously represented it.
@@ -445,7 +445,7 @@ class GoodsNomenclatureOrigin(TrackedModel):
         )
 
 
-class GoodsNomenclatureSuccessor(TrackedModel):
+class GoodsNomenclatureSuccessor(TrackedModel, DescribedMixin):
     """
     Represents a link between a end-dated GoodsNomenclature and the codes that
     have replaced it (or in TARIC parlance have "absorbed" it).
@@ -481,7 +481,7 @@ class GoodsNomenclatureSuccessor(TrackedModel):
         )
 
 
-class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
+class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "20"
 

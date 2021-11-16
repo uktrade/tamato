@@ -9,6 +9,7 @@ from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.validity import ValidityMixin
 from common.util import TaricDateRange
 from common.util import classproperty
@@ -22,7 +23,7 @@ from quotas import business_rules as quotas_business_rules
 from quotas.validators import quota_order_number_validator
 
 
-class MeasureTypeSeries(TrackedModel, ValidityMixin):
+class MeasureTypeSeries(TrackedModel, ValidityMixin, DescribedMixin):
     """
     Measure types may be grouped into series.
 
@@ -54,7 +55,7 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     )
 
 
-class MeasurementUnit(TrackedModel, ValidityMixin):
+class MeasurementUnit(TrackedModel, ValidityMixin, DescribedMixin):
     """The measurement unit refers to the ISO measurement unit code."""
 
     record_code = "210"
@@ -81,7 +82,7 @@ class MeasurementUnit(TrackedModel, ValidityMixin):
     business_rules = (UpdateValidity,)
 
 
-class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
+class MeasurementUnitQualifier(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The measurement unit qualifier is used to qualify a measurement unit.
 
@@ -114,7 +115,7 @@ class MeasurementUnitQualifier(TrackedModel, ValidityMixin):
     business_rules = (UpdateValidity,)
 
 
-class Measurement(TrackedModel, ValidityMixin):
+class Measurement(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The measurement defines the relationship between a measurement unit and a
     measurement unit qualifier.
@@ -146,7 +147,7 @@ class Measurement(TrackedModel, ValidityMixin):
     business_rules = (UpdateValidity,)
 
 
-class MonetaryUnit(TrackedModel, ValidityMixin):
+class MonetaryUnit(TrackedModel, ValidityMixin, DescribedMixin):
     """The monetary unit identifies the currency code used in the system."""
 
     record_code = "225"
@@ -175,7 +176,7 @@ class MonetaryUnit(TrackedModel, ValidityMixin):
     business_rules = (UpdateValidity,)
 
 
-class DutyExpression(TrackedModel, ValidityMixin):
+class DutyExpression(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The duty expression identifies the type of duty which must be applied for a
     given measure component.
@@ -216,7 +217,7 @@ class DutyExpression(TrackedModel, ValidityMixin):
     business_rules = (UpdateValidity,)
 
 
-class MeasureType(TrackedModel, ValidityMixin):
+class MeasureType(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The measure type identifies a customs measure.
 
@@ -307,7 +308,7 @@ class MeasureType(TrackedModel, ValidityMixin):
         )
 
 
-class AdditionalCodeTypeMeasureType(TrackedModel, ValidityMixin):
+class AdditionalCodeTypeMeasureType(TrackedModel, ValidityMixin, DescribedMixin):
     """The relation between an additional code type and a measure type ensures a
     coherent association between additional codes and measures."""
 
@@ -325,7 +326,7 @@ class AdditionalCodeTypeMeasureType(TrackedModel, ValidityMixin):
     business_rules = (UpdateValidity,)
 
 
-class MeasureConditionCode(TrackedModel, ValidityMixin):
+class MeasureConditionCode(TrackedModel, ValidityMixin, DescribedMixin):
     """A measure condition code identifies a broad area where conditions are
     required, for example "C" will have the description "required to present a
     certificate"."""
@@ -358,7 +359,7 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
         return f"{self.code} - {self.description}"
 
 
-class MeasureAction(TrackedModel, ValidityMixin):
+class MeasureAction(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The measure action identifies the action to take when a given condition is
     met.
@@ -398,7 +399,7 @@ class MeasureAction(TrackedModel, ValidityMixin):
         return f"{self.code} - {self.description}"
 
 
-class Measure(TrackedModel, ValidityMixin):
+class Measure(TrackedModel, ValidityMixin, DescribedMixin):
     """
     Defines the validity period in which a particular measure type is applicable
     to particular nomenclature for a particular geographical area.
@@ -654,7 +655,7 @@ class Measure(TrackedModel, ValidityMixin):
         return super().save(*args, force_write=force_write, **kwargs)
 
 
-class MeasureComponent(TrackedModel):
+class MeasureComponent(TrackedModel, DescribedMixin):
     """Contains the duty information or part of the duty information."""
 
     record_code = "430"
@@ -706,7 +707,7 @@ class MeasureComponent(TrackedModel):
     )
 
 
-class MeasureCondition(TrackedModel):
+class MeasureCondition(TrackedModel, DescribedMixin):
     """
     A measure may be dependent on conditions.
 
@@ -810,9 +811,6 @@ class MeasureCondition(TrackedModel):
         elif self.is_certificate_required():
             out.append("On presentation of no certificate,")
 
-        if self.reference_price_string:
-            out.append(f"If reference price > {self.reference_price_string},")
-
         out.append(f"perform action {self.action.code} - {self.action.description}")
 
         if self.condition_string:
@@ -847,7 +845,7 @@ class MeasureCondition(TrackedModel):
         return "".join(out)
 
 
-class MeasureConditionComponent(TrackedModel):
+class MeasureConditionComponent(TrackedModel, DescribedMixin):
     """Contains the duty information or part of the duty information of the
     measure condition."""
 
@@ -902,7 +900,7 @@ class MeasureConditionComponent(TrackedModel):
     )
 
 
-class MeasureExcludedGeographicalArea(TrackedModel):
+class MeasureExcludedGeographicalArea(TrackedModel, DescribedMixin):
     """The measure excluded geographical area modifies the applicable
     geographical area of a measure, which must be a geographical area group."""
 
@@ -930,7 +928,7 @@ class MeasureExcludedGeographicalArea(TrackedModel):
     )
 
 
-class FootnoteAssociationMeasure(TrackedModel):
+class FootnoteAssociationMeasure(TrackedModel, DescribedMixin):
     """The association of a footnote and a measure is always applicable for the
     entire period of the measure."""
 

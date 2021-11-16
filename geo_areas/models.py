@@ -119,7 +119,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
         )
 
 
-class GeographicalMembership(TrackedModel, ValidityMixin):
+class GeographicalMembership(TrackedModel, ValidityMixin, DescribedMixin):
     """
     A Geographical Membership describes the membership of a region or country to
     a group.
@@ -177,7 +177,7 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         return self.member.in_use(transaction, "measureexcludedgeographicalarea")
 
 
-class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
+class GeographicalAreaDescription(DescriptionMixin, TrackedModel, DescribedMixin):
     record_code = "250"
     subrecord_code = "10"
 

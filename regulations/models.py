@@ -8,6 +8,7 @@ from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import TaricDateRangeField
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.validity import ValidityMixin
 from geo_areas.validators import area_id_validator
 from measures.validators import measure_type_id_validator
@@ -15,7 +16,7 @@ from regulations import business_rules
 from regulations import validators
 
 
-class Group(TrackedModel, ValidityMixin):
+class Group(TrackedModel, ValidityMixin, DescribedMixin):
     """
     A regulation group allows regulations to be grouped within the same logical
     unit. This allows the regulations covered by a certain regulation group to
@@ -56,7 +57,7 @@ class Group(TrackedModel, ValidityMixin):
         return f"{self.group_id}: {self.description}"
 
 
-class Regulation(TrackedModel, ValidityMixin):
+class Regulation(TrackedModel, ValidityMixin, DescribedMixin):
     """
     The main legal acts at the basis of the Union tariff and commercial
     legislation are regulations and decisions.
@@ -258,7 +259,7 @@ class Regulation(TrackedModel, ValidityMixin):
         )
 
 
-class Amendment(TrackedModel):
+class Amendment(TrackedModel, DescribedMixin):
     """
     This regulation amends a base regulation or an antidumping regulation.
 
@@ -291,7 +292,7 @@ class Amendment(TrackedModel):
     business_rules = (UpdateValidity,)
 
 
-class Extension(TrackedModel):
+class Extension(TrackedModel, DescribedMixin):
     """
     Prorogation regulations have no validity period of their own but extend the
     validity end date of a base or modification regulation. This means that the
@@ -326,7 +327,7 @@ class Extension(TrackedModel):
     business_rules = (UpdateValidity,)
 
 
-class Suspension(TrackedModel):
+class Suspension(TrackedModel, DescribedMixin):
     """
     A FTS regulation suspends the applicability of a regulation for a period of
     time.
@@ -362,7 +363,7 @@ class Suspension(TrackedModel):
     business_rules = (UpdateValidity,)
 
 
-class Termination(TrackedModel):
+class Termination(TrackedModel, DescribedMixin):
     """
     This regulation abrogates a base, modification or FTS regulation at a given
     date. It puts an end date to an open ended regulation or brings the already
@@ -397,7 +398,7 @@ class Termination(TrackedModel):
     business_rules = (UpdateValidity,)
 
 
-class Replacement(TrackedModel):
+class Replacement(TrackedModel, DescribedMixin):
     """
     This record holds the information specifying which draft regulations are
     replaced by a definitive regulation.
