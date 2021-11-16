@@ -1,4 +1,5 @@
 """Parsers for TARIC envelope entities."""
+import json
 import logging
 import os
 import time
@@ -149,12 +150,10 @@ class TransactionParser(ElementParser):
                         transaction = obj.transaction
                         order = transaction.order
                         commodity = change.candidate or change.current
-                        code = commodity.code.dot_code
+                        commodity.code.dot_code
+                        reason = json.dumps(side_effect.explain())
                         logger.info(
-                            f"Saving preemptive transaction {order}: "
-                            f"commodity {code} -"
-                            f"{obj._meta.label} {obj.sid} - "
-                            f"{obj.update_type}",
+                            f"Saving preemptive transaction {order}: {reason}",
                         )
 
                         EnvelopeTransaction.objects.create(
