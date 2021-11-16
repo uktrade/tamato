@@ -482,6 +482,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         see if any should be moved from their current parent to the new indent.
         """
         try:
+            # while in the import handler,
+            # we may have indents that have no nodes yet,
+            # which could lead to exceptions
             nodes = obj.nodes.all()
         except (AttributeError, TypeError):
             return

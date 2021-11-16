@@ -497,15 +497,6 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         return new_valid_between
 
     @property
-    def parent_depth(self) -> int:
-        """
-        Returns parent depth factoring in the good's indent shift.
-
-        See the docs to `GoodsNomenclature.indent_shift` for context.
-        """
-        return self.depth + 1 + self.good.indent_shift
-
-    @property
     def good(self) -> GoodsNomenclature:
         """Returns the node indent's indented good."""
         return self.indent.indented_goods_nomenclature
