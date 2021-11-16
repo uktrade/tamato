@@ -545,3 +545,27 @@ def test_save_drafts_transaction_updates(unordered_transactions):
         == unordered_transactions.new_transaction.order
     )
     assert_transaction_order(Transaction.objects.all())
+
+
+def test_structure_description(trackedmodel_factory):
+    model = trackedmodel_factory.create()
+    description = model.structure_description
+
+    if description:
+        assert type(description) == str
+
+    if "structure_description" in type(model).__dict__:
+        pass
+    elif hasattr(type(model), "descriptions") and model.get_descriptions().last():
+        assert description == model.get_descriptions().last().description
+    elif hasattr(type(model), "description"):
+        assert description == model.description
+    else:
+        assert description == None
+
+
+def test_described(description_factory):
+    description = description_factory.create()
+    described = description.get_described_object()
+
+    assert described.get_description() == description

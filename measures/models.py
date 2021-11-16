@@ -810,7 +810,7 @@ class MeasureCondition(TrackedModel):
         elif self.is_certificate_required():
             out.append("On presentation of no certificate,")
 
-        if self.reference_price_string:
+        if hasattr(self, "reference_price_string") and self.reference_price_string:
             out.append(f"If reference price > {self.reference_price_string},")
 
         out.append(f"perform action {self.action.code} - {self.action.description}")

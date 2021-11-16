@@ -120,7 +120,3 @@ class DescribedMixin:
 
     def get_description(self, transaction=None):
         return self.get_descriptions(transaction=transaction).last()
-
-    @property
-    def structure_description(self) -> str:
-        return self.get_description().description
