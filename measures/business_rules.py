@@ -5,6 +5,7 @@ from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
+from django.db.utils import DataError
 
 from common.business_rules import BusinessRule
 from common.business_rules import FootnoteApplicability
@@ -289,12 +290,17 @@ class ME25(BusinessRule):
     the start date of the measure must be less than or equal to the end date."""
 
     def validate(self, measure):
-        effective_end_date = measure.effective_end_date
+        try:
+            effective_end_date = measure.effective_end_date
 
-        if effective_end_date is None:
-            return
+            if effective_end_date is None:
+                return
 
-        if measure.valid_between.lower > effective_end_date:
+            if measure.valid_between.lower > effective_end_date:
+                raise self.violation(measure)
+        except DataError:
+            # ``effective_end_date`` will raise a database error if it tries to
+            # compute the date and it breaks this rule
             raise self.violation(measure)
 
 
