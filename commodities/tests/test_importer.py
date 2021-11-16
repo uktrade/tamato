@@ -8,6 +8,7 @@ from commodities import serializers
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from importer.reports import CommodityChangeReports
 
 pytestmark = pytest.mark.django_db
 
@@ -755,3 +756,34 @@ def test_sync_indent_node_end_dates_on_indent_import(
 
     imported_node = imported_indent.nodes.first()
     assert imported_node.valid_between.upper == imported_node_end_date
+
+
+def test_future_affected_measures_are_detected(
+    run_xml_import,
+    date_ranges,
+):
+    attrs = dict(
+        item_id="1199102030",
+        suffix="80",
+    )
+
+    good = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end, **attrs
+    )
+    future_measure = factories.MeasureFactory(
+        goods_nomenclature=good,
+        valid_between=date_ranges.adjacent_even_later,
+    )
+
+    imported_good = run_xml_import(
+        lambda: factories.GoodsNomenclatureFactory.build(
+            valid_between=date_ranges.normal, update_type=UpdateType.UPDATE, **attrs
+        ),
+        serializers.GoodsNomenclatureSerializer,
+    )
+
+    workbasket = imported_good.transaction.workbasket
+    reports = CommodityChangeReports(workbasket)
+    affected_measures = reports.affected_measures
+    affected_measures_sids = [m.sid for m in affected_measures]
+    assert future_measure in affected_measures_sids

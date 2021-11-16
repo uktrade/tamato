@@ -218,10 +218,7 @@ class CommodityChangeReports:
 
         return data
 
-    def report_related_measures(
-        self,
-        as_defined: Optional[bool] = True,
-    ) -> TMadItemCollection:
+    def report_related_measures(self) -> TMadItemCollection:
         """
         Returns related measures from a commodity import in CM layout.
 
