@@ -415,7 +415,7 @@ object the first time, the query is executed.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="common.models.TrackedModel">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">TrackedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymorphic_ctype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">TrackedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymorphic_ctype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">polymorphic.models.PolymorphicModel</span></code></p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="common.models.TrackedModel.DoesNotExist">
@@ -547,7 +547,7 @@ relation.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.copy">
-<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.records.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.copy" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.trackedmodel.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a copy of the model as a new logical domain object – i.e. with a
 new version group, new SID (if present) and update type of CREATE.</p>
 <p>Any dependent models that are TARIC subrecords of this model will be
@@ -563,25 +563,17 @@ have thier new IDs passed in through overrides.</p>
 <dt class="sig sig-object py" id="common.models.TrackedModel.copyable_fields">
 <em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">copyable_fields</span></span><a class="headerlink" href="#common.models.TrackedModel.copyable_fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the set of fields that can have their values copied from one
-model to another.</p>
-<p>This is anything that is:
-- a native value
-- a foreign key to some other model</p>
+model to another. This is anything that is:</p>
+<ul class="simple">
+<li><p>a native value</p></li>
+<li><p>a foreign key to some other model</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="common.models.TrackedModel.current_version">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">current_version</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.records.Cls</span></em><a class="headerlink" href="#common.models.TrackedModel.current_version" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">current_version</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.trackedmodel.Cls</span></em><a class="headerlink" href="#common.models.TrackedModel.current_version" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="common.models.TrackedModel.deferred_set_fields">
-<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">deferred_set_fields</span></span><a class="headerlink" href="#common.models.TrackedModel.deferred_set_fields" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a set of fields that can only be saved (using the
-<code class="docutils literal notranslate"><span class="pre">instance.field.set()</span></code> method) after the object has been saved first.</p>
-<p>This is any field that is a many-to-many relationship with an auto-
-generated through model.</p>
-</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.dutyexpression">
@@ -727,38 +719,9 @@ relation.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="common.models.TrackedModel.get_description">
-<span class="sig-name descname"><span class="pre">get_description</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_description"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_description" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.models.TrackedModel.get_descriptions">
-<span class="sig-name descname"><span class="pre">get_descriptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../architecture/index.html#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_descriptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_descriptions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the latest descriptions related to this instance of the Tracked
-Model.</p>
-<p>If there is no Description relation existing a <cite>NoDescriptionError</cite> is raised.</p>
-<p>If a transaction is provided then all latest descriptions that are either approved
-or in the workbasket of the transaction up to the transaction will be provided.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.get_identifying_fields">
-<span class="sig-name descname"><span class="pre">get_identifying_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_identifying_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_identifying_fields" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_identifying_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.get_identifying_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_identifying_fields" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.models.TrackedModel.get_indefinite_article">
-<span class="sig-name descname"><span class="pre">get_indefinite_article</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_indefinite_article"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_indefinite_article" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns “a” or “an” based on the verbose_name.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.models.TrackedModel.get_taric_template">
-<span class="sig-name descname"><span class="pre">get_taric_template</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_taric_template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_taric_template" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a TARIC XML template name for the given class.</p>
-<p>Any TrackedModel must be representable via a TARIC compatible XML
-record.</p>
-</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.get_update_type_display">
@@ -767,17 +730,17 @@ record.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.get_url">
-<span class="sig-name descname"><span class="pre">get_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'detail'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'detail'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.get_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.get_url_pattern_name_prefix">
-<span class="sig-name descname"><span class="pre">get_url_pattern_name_prefix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_url_pattern_name_prefix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url_pattern_name_prefix" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_url_pattern_name_prefix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.get_url_pattern_name_prefix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url_pattern_name_prefix" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.get_versions">
-<span class="sig-name descname"><span class="pre">get_versions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.get_versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_versions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_versions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.get_versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_versions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -877,20 +840,15 @@ actually equate to a <code class="docutils literal notranslate"><span class="pre
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.identifying_fields_to_string">
-<span class="sig-name descname"><span class="pre">identifying_fields_to_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.identifying_fields_to_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.identifying_fields_to_string" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.models.TrackedModel.identifying_fields_unique">
-<span class="sig-name descname"><span class="pre">identifying_fields_unique</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.identifying_fields_unique"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.identifying_fields_unique" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">identifying_fields_to_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.identifying_fields_to_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.identifying_fields_to_string" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.in_use">
-<span class="sig-name descname"><span class="pre">in_use</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">relations</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.in_use"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.in_use" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">in_use</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">relations</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.in_use"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.in_use" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns True if there are any models that are using this one as of the
 specified transaction.</p>
-<p>This can be any model this this model is related to, but igoring any
+<p>This can be any model this model is related to, but ignoring any
 subrecords (because e.g. a footnote is not considered “in use by” its
 own description) and then filtering for only things that link _to_ this
 model.</p>
@@ -901,12 +859,12 @@ this model, <code class="docutils literal notranslate"><span class="pre">ValueEr
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.in_use_by">
-<span class="sig-name descname"><span class="pre">in_use_by</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">via_relation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">django.db.models.query.QuerySet</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.in_use_by"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.in_use_by" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">in_use_by</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">via_relation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">django.db.models.query.QuerySet</span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.in_use_by"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.in_use_by" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns all of the models that are referencing this one via the
 specified relation and exist as of the passed transaction.</p>
 <p><code class="docutils literal notranslate"><span class="pre">via_relation</span></code> should be the name of a relation, and a <code class="docutils literal notranslate"><span class="pre">KeyError</span></code>
 will be raised if the relation name is not valid for this model.
-Relations are accessible via <code class="docutils literal notranslate"><span class="pre">TrackedModel.relations</span></code>.</p>
+Relations are accessible via get_relations helper method.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1070,14 +1028,6 @@ relation.</p>
 <p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="common.models.TrackedModel.models_linked_to">
-<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">models_linked_to</span></span><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">django.db.models.fields.Field</span><span class="p"><span class="pre">,</span> </span><span class="pre">django.db.models.fields.reverse_related.ForeignObjectRel</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#common.models.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#common.models.TrackedModel.models_linked_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns all the models that are related to this one via a foreign key
-stored on this model (one-to-many reverse related models are not
-included in the returned results).</p>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.monetaryunit">
 <span class="sig-name descname"><span class="pre">monetaryunit</span></span><a class="headerlink" href="#common.models.TrackedModel.monetaryunit" title="Permalink to this definition">¶</a></dt>
@@ -1093,7 +1043,7 @@ relation.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.new_version">
-<span class="sig-name descname"><span class="pre">new_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workbasket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.validators.UpdateType</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">UpdateType.UPDATE</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.records.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.new_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.new_version" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">new_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workbasket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">common.validators.UpdateType</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">UpdateType.UPDATE</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.trackedmodel.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.new_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.new_version" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a new version of the object. Callers can override existing data
 by passing in keyword args.</p>
 <p>The new version is added to a transaction which is created and added to the passed in workbasket
@@ -1104,7 +1054,7 @@ by passing in keyword args.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.objects">
-<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="../../architecture/index.html#common.models.records.TrackedModelQuerySet" title="common.models.records.TrackedModelQuerySet"><span class="pre">common.models.records.TrackedModelQuerySet</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.PolymorphicManagerFromTrackedModelQuerySet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.TrackedModel.objects" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.tracked_qs.TrackedModelQuerySet</span></em><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.PolymorphicManagerFromTrackedModelQuerySet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.TrackedModel.objects" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1252,15 +1202,6 @@ relation.</p>
 <p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="common.models.TrackedModel.relations">
-<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">relations</span></span><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">django.db.models.fields.Field</span><span class="p"><span class="pre">,</span> </span><span class="pre">django.db.models.fields.reverse_related.ForeignObjectRel</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#common.models.TrackedModel" title="common.models.records.TrackedModel"><span class="pre">common.models.records.TrackedModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#common.models.TrackedModel.relations" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns all the models that are related to this one.</p>
-<p>The link can either be stored on this model (so a one-to-one or a many-
-to-one relationship) or on the related model (so a one-to-many (reverse)
-relationship).</p>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.replacement">
 <span class="sig-name descname"><span class="pre">replacement</span></span><a class="headerlink" href="#common.models.TrackedModel.replacement" title="Permalink to this definition">¶</a></dt>
@@ -1276,18 +1217,13 @@ relation.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_write</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.save" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_write</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">pre_save_polymorphic()</span></code> and saves the model.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="common.models.TrackedModel.structure_code">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">structure_code</span></span><a class="headerlink" href="#common.models.TrackedModel.structure_code" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="common.models.TrackedModel.structure_description">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">structure_description</span></span><a class="headerlink" href="#common.models.TrackedModel.structure_description" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1299,15 +1235,6 @@ identifies the type within the specification.</p>
 <p>The subrecord code gives the intended order for models in a transaction,
 with comparatively smaller subrecord codes needing to come before larger
 ones.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="common.models.TrackedModel.subrecord_relations">
-<em class="property"><span class="pre">class</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">subrecord_relations</span></span><a class="headerlink" href="#common.models.TrackedModel.subrecord_relations" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a set of relations to this model’s TARIC subrecords.</p>
-<p>E.g, a <code class="xref py py-class docutils literal notranslate"><span class="pre">Measure</span></code> and a
-<code class="xref py py-class docutils literal notranslate"><span class="pre">measures.models.MeasureComponent</span></code> are in the same “logical
-record” but are different data models because they are many-to-one.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1326,11 +1253,6 @@ relation.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.system_set_field_names">
 <span class="sig-name descname"><span class="pre">system_set_field_names</span></span><em class="property"> <span class="pre">=</span> <span class="pre">{'id',</span> <span class="pre">'is_current',</span> <span class="pre">'polymorphic_ctype',</span> <span class="pre">'trackedmodel_ptr',</span> <span class="pre">'transaction',</span> <span class="pre">'update_type',</span> <span class="pre">'version_group'}</span></em><a class="headerlink" href="#common.models.TrackedModel.system_set_field_names" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="common.models.TrackedModel.taric_template">
-<span class="sig-name descname"><span class="pre">taric_template</span></span><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#common.models.TrackedModel.taric_template" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1430,7 +1352,7 @@ models that reappear for the same <a class="reference internal" href="#common.mo
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.version_at">
-<span class="sig-name descname"><span class="pre">version_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.records.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/records.html#TrackedModel.version_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.version_at" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">version_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.trackedmodel.Cls</span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.version_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.version_at" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1839,7 +1761,7 @@ object the first time, the query is executed.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="common.models.VersionGroup">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">VersionGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updated_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_version</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/records.html#VersionGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.VersionGroup" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.</span></span><span class="sig-name descname"><span class="pre">VersionGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updated_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_version</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#VersionGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.VersionGroup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#common.models.TimestampedMixin" title="common.models.mixins.TimestampedMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.models.mixins.TimestampedMixin</span></code></a></p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="common.models.VersionGroup.DoesNotExist">
@@ -1927,19 +1849,16 @@ class built by <code class="docutils literal notranslate"><span class="pre">crea
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">records</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transactions</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transactions</span></code></p></td>
 <td><p>Transaction model and manager.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dc</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dc</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mixins</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mixins</span></code></p></td>
 <td><p>Mixins for models.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constants</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">constants</span></code></p></td>
 <td><p>Includes constants and enumerators for use in orm models.</p></td>
 </tr>
 </tbody>

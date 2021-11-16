@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>common.models.trackedmodel - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/javascripts/_analytics.js"></script>
+    <script src="../../../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../../../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../../../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../../../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../../../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../../../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../../../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../../../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../../../_static/javascripts/_start_modules.js"></script>
+    <script src="../../../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../../../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../../../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../../../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../../../_static/javascripts/theme.js"></script>
+    <link href="../../../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../../../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../../../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../../../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../../../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../../../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <h1>Source code for common.models.trackedmodel</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
+
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">F</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Field</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
+<span class="kn">from</span> <span class="nn">django.db.models.expressions</span> <span class="kn">import</span> <span class="n">Expression</span>
+<span class="kn">from</span> <span class="nn">django.db.models.options</span> <span class="kn">import</span> <span class="n">Options</span>
+<span class="kn">from</span> <span class="nn">django.db.models.query</span> <span class="kn">import</span> <span class="n">QuerySet</span>
+<span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">NoReverseMatch</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span> <span class="nn">polymorphic.managers</span> <span class="kn">import</span> <span class="n">PolymorphicManager</span>
+<span class="kn">from</span> <span class="nn">polymorphic.models</span> <span class="kn">import</span> <span class="n">PolymorphicModel</span>
+
+<span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">validators</span>
+<span class="kn">from</span> <span class="nn">common.exceptions</span> <span class="kn">import</span> <span class="n">IllegalSaveError</span>
+<span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">NumericSID</span>
+<span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">SignedIntSID</span>
+<span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span> <span class="nn">common.models.tracked_qs</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
+<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_deferred_set_fields</span>
+<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_models_linked_to</span>
+<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
+<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_subrecord_relations</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_accessor</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_field_tuple</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
+<span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
+
+
+<div class="viewcode-block" id="VersionGroup"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.VersionGroup">[docs]</a><span class="k">class</span> <span class="nc">VersionGroup</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
+    <span class="n">current_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="s2">&quot;common.TrackedModel&quot;</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_query_name</span><span class="o">=</span><span class="s2">&quot;is_current&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<span class="n">Cls</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Cls&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;TrackedModel&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TrackedModel"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel">[docs]</a><span class="k">class</span> <span class="nc">TrackedModel</span><span class="p">(</span><span class="n">PolymorphicModel</span><span class="p">):</span>
+    <span class="n">transaction</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;common.Transaction&quot;</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;tracked_models&quot;</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">update_type</span><span class="p">:</span> <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The change that was made to the model when this version of the model was</span>
+<span class="sd">    authored.</span>
+
+<span class="sd">    The first version should always have :data:`~validators.UpdateType.CREATE`,</span>
+<span class="sd">    subsequent versions will have :data:`~validators.UpdateType.UPDATE` and the</span>
+<span class="sd">    final version will have :data:`~validators.UpdateType.DELETE`. Deleted</span>
+<span class="sd">    models that reappear for the same :attr:`identifying_fields` will have a new</span>
+<span class="sd">    :attr:`version_group` created.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">version_group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">VersionGroup</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;versions&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Each version group contains all of the versions of the same logical model.</span>
+
+<span class="sd">    When a new version of a model is authored (e.g. to</span>
+<span class="sd">    :data:`~validators.UpdateType.DELETE` it) a new model row is created and</span>
+<span class="sd">    added to the same version group as the existing model being changed.</span>
+
+<span class="sd">    Models are identified logically by their :attr:`identifying_fields`, so</span>
+<span class="sd">    within one version group all of the models should have the same values for</span>
+<span class="sd">    these fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">objects</span><span class="p">:</span> <span class="n">TrackedModelQuerySet</span> <span class="o">=</span> <span class="n">PolymorphicManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span>
+        <span class="n">TrackedModelQuerySet</span><span class="p">,</span>
+    <span class="p">)()</span>
+
+    <span class="n">business_rules</span><span class="p">:</span> <span class="n">Iterable</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">indirect_business_rules</span><span class="p">:</span> <span class="n">Iterable</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="n">record_code</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The type id of this model&#39;s type family in the TARIC specification.</span>
+
+<span class="sd">    This number groups together a number of different models into &#39;records&#39;.</span>
+<span class="sd">    Where two models share a record code, they are conceptually expressing</span>
+<span class="sd">    different properties of the same logical model.</span>
+
+<span class="sd">    In theory each :class:`~common.transactions.Transaction` should only contain</span>
+<span class="sd">    models with a single :attr:`record_code` (but differing</span>
+<span class="sd">    :attr:`subrecord_code`.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">subrecord_code</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The type id of this model in the TARIC specification. The</span>
+<span class="sd">    :attr:`subrecord_code` when combined with the :attr:`record_code` uniquely</span>
+<span class="sd">    identifies the type within the specification.</span>
+
+<span class="sd">    The subrecord code gives the intended order for models in a transaction,</span>
+<span class="sd">    with comparatively smaller subrecord codes needing to come before larger</span>
+<span class="sd">    ones.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The fields which together form a composite unique key for each model.</span>
+
+<span class="sd">    The system ID (or SID) field is normally the unique identifier of a TARIC</span>
+<span class="sd">    model, but in places where this does not exist models can declare their own.</span>
+<span class="sd">    (Note that because multiple versions of each model will exist this does not</span>
+<span class="sd">    actually equate to a ``UNIQUE`` constraint in the database.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TrackedModel.new_version"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.new_version">[docs]</a>    <span class="k">def</span> <span class="nf">new_version</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span>
+        <span class="n">workbasket</span><span class="p">,</span>
+        <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">update_type</span><span class="p">:</span> <span class="n">UpdateType</span> <span class="o">=</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">overrides</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a new version of the object. Callers can override existing data</span>
+<span class="sd">        by passing in keyword args.</span>
+
+<span class="sd">        The new version is added to a transaction which is created and added to the passed in workbasket</span>
+<span class="sd">        (or may be supplied as a keyword arg).</span>
+
+<span class="sd">        update_type must be UPDATE or DELETE, with UPDATE as the default.</span>
+
+<span class="sd">        By default the new object is saved; this can be disabled by passing save=False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">update_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span>
+            <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;update_type must be UPDATE or DELETE&quot;</span><span class="p">)</span>
+
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+
+        <span class="n">new_object_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">fields</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s2">&quot;version_group&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_set_field_names</span>
+        <span class="p">}</span>
+
+        <span class="n">new_object_overrides</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+        <span class="p">}</span>
+
+        <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;update_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_type</span>
+        <span class="n">new_object_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_object_overrides</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">transaction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">transaction</span> <span class="o">=</span> <span class="n">workbasket</span><span class="o">.</span><span class="n">new_transaction</span><span class="p">()</span>
+        <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;transaction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">transaction</span>
+
+        <span class="n">new_object</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">new_object_kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+            <span class="n">new_object</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+            <span class="c1"># TODO: make this work with save=False!</span>
+            <span class="c1"># Maybe the deferred values could be saved on the model</span>
+            <span class="c1"># and then handled with a post_save signal?</span>
+            <span class="n">deferred_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">value_from_object</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="p">}</span>
+            <span class="n">deferred_overrides</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">value</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+            <span class="p">}</span>
+            <span class="n">deferred_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">deferred_overrides</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">deferred_kwargs</span><span class="p">:</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">new_object</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">deferred_kwargs</span><span class="p">[</span><span class="n">field</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">new_object</span></div>
+
+<div class="viewcode-block" id="TrackedModel.get_versions"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_versions">[docs]</a>    <span class="k">def</span> <span class="nf">get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;version_group&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">versions</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_version_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VersionGroup</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">VersionGroup</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">version_group</span>
+
+    <span class="k">def</span> <span class="nf">_can_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pk</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">approved_statuses</span><span class="p">()</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="TrackedModel.get_identifying_fields"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_identifying_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_identifying_fields</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">identifying_fields</span> <span class="o">=</span> <span class="n">identifying_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">identifying_fields</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">fields</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_field_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fields</span></div>
+
+<div class="viewcode-block" id="TrackedModel.identifying_fields_to_string"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.identifying_fields_to_string">[docs]</a>    <span class="k">def</span> <span class="nf">identifying_fields_to_string</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">field_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">(</span><span class="n">identifying_fields</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">field_list</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">structure_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+        <span class="n">current_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span>
+        <span class="k">if</span> <span class="n">current_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">(</span><span class="s2">&quot;Object has no current version&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">current_version</span>
+
+<div class="viewcode-block" id="TrackedModel.version_at"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.version_at">[docs]</a>    <span class="k">def</span> <span class="nf">version_at</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">copyable_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the set of fields that can have their values copied from one</span>
+<span class="sd">        model to another. This is anything that is:</span>
+
+<span class="sd">        - a native value</span>
+<span class="sd">        - a foreign key to some other model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">field</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">((</span><span class="n">field</span><span class="o">.</span><span class="n">many_to_many</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">one_to_many</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">system_set_field_names</span>
+        <span class="p">}</span>
+
+    <span class="n">_meta</span><span class="p">:</span> <span class="n">Options</span>
+
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">auto_value_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">Field</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Returns the set of fields on this model that should have their value</span>
+<span class="sd">        set automatically on save, excluding any primary keys.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">f</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">SignedIntSID</span><span class="p">,</span> <span class="n">NumericSID</span><span class="p">))</span>
+        <span class="p">}</span>
+
+    <span class="c1"># Fields that we don&#39;t want to copy from one object to a new one, either</span>
+    <span class="c1"># because they will be set by the system automatically or because we will</span>
+    <span class="c1"># always want to override them.</span>
+    <span class="n">system_set_field_names</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;is_current&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;version_group&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;polymorphic_ctype&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;update_type&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;trackedmodel_ptr&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;transaction&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="TrackedModel.copy"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span>
+        <span class="n">transaction</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">overrides</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a copy of the model as a new logical domain object – i.e. with a</span>
+<span class="sd">        new version group, new SID (if present) and update type of CREATE.</span>
+
+<span class="sd">        Any dependent models that are TARIC subrecords of this model will be</span>
+<span class="sd">        copied as well. Any many-to-many relationships will also be duplicated</span>
+<span class="sd">        if they do not have an explicit through model.</span>
+
+<span class="sd">        Any overrides passed in as keyword arguments will be applied to the new</span>
+<span class="sd">        model. If the model uses SIDs, they will be automatically set to the</span>
+<span class="sd">        next highest available SID. Models with other identifying fields should</span>
+<span class="sd">        have thier new IDs passed in through overrides.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Remove any fields from the basic data that are overriden, because</span>
+        <span class="c1"># otherwise when we convert foreign keys to IDs (below) Django will</span>
+        <span class="c1"># ignore the object from the overrides and just take the ID from the</span>
+        <span class="c1"># basic data.</span>
+        <span class="n">basic_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copyable_fields</span>
+        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">overrides</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+            <span class="n">basic_fields</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+
+        <span class="c1"># Remove any SIDs from the copied data. This allows them to either</span>
+        <span class="c1"># automatically pick the next highest value or to be passed in.</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_value_fields</span><span class="p">:</span>
+            <span class="n">basic_fields</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+
+        <span class="c1"># Build the dictionary of data that the new model will have. Convert any</span>
+        <span class="c1"># foreign keys into ids because ``value_from_object`` returns PKs.</span>
+        <span class="n">model_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">name</span>
+            <span class="o">+</span> <span class="p">(</span>
+                <span class="s2">&quot;_id&quot;</span> <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">f</span><span class="o">.</span><span class="n">many_to_one</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">one_to_one</span><span class="p">))</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+            <span class="p">):</span> <span class="n">f</span><span class="o">.</span><span class="n">value_from_object</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">basic_fields</span>
+        <span class="p">}</span>
+
+        <span class="n">new_object_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">model_data</span><span class="p">,</span>
+            <span class="s2">&quot;transaction&quot;</span><span class="p">:</span> <span class="n">transaction</span><span class="p">,</span>
+            <span class="s2">&quot;update_type&quot;</span><span class="p">:</span> <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">overrides</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">new_object</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">new_object_data</span><span class="p">)</span>
+
+        <span class="c1"># Now copy any many-to-many fields with an auto-created through model.</span>
+        <span class="c1"># These must be handled after creation of the new model. We only need to</span>
+        <span class="c1"># do this for auto-created models because others will be handled below.</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">new_object</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">value_from_object</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="c1"># Now go and create copies of all of the models that reference this one</span>
+        <span class="c1"># with a foreign key that are part of the same record family. Find all</span>
+        <span class="c1"># of the related models and then recursively call copy on them, but with</span>
+        <span class="c1"># the new model substituted in place of this one. It&#39;s done this way to</span>
+        <span class="c1"># give these related models a chance to increment SIDs, etc.</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">get_subrecord_relations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_accessor_name</span><span class="p">())</span>
+            <span class="n">reverse_field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">queryset</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">):</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">reverse_field_name</span><span class="p">:</span> <span class="n">new_object</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">new_object</span></div>
+
+<div class="viewcode-block" id="TrackedModel.in_use_by"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.in_use_by">[docs]</a>    <span class="k">def</span> <span class="nf">in_use_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">via_relation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns all of the models that are referencing this one via the</span>
+<span class="sd">        specified relation and exist as of the passed transaction.</span>
+
+<span class="sd">        ``via_relation`` should be the name of a relation, and a ``KeyError``</span>
+<span class="sd">        will be raised if the relation name is not valid for this model.</span>
+<span class="sd">        Relations are accessible via get_relations helper method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">relation</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">get_relations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()}[</span>
+            <span class="n">via_relation</span>
+        <span class="p">]</span>
+        <span class="n">remote_model</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">remote_field_name</span> <span class="o">=</span> <span class="n">get_accessor</span><span class="p">(</span><span class="n">relation</span><span class="o">.</span><span class="n">remote_field</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">remote_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">remote_field_name</span><span class="si">}</span><span class="s2">__version_group&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="p">}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TrackedModel.in_use"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.in_use">[docs]</a>    <span class="k">def</span> <span class="nf">in_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">relations</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns True if there are any models that are using this one as of the</span>
+<span class="sd">        specified transaction.</span>
+
+<span class="sd">        This can be any model this model is related to, but ignoring any</span>
+<span class="sd">        subrecords (because e.g. a footnote is not considered &quot;in use by&quot; its</span>
+<span class="sd">        own description) and then filtering for only things that link _to_ this</span>
+<span class="sd">        model.</span>
+
+<span class="sd">        The list of relations can be filtered by passing in the name of a</span>
+<span class="sd">        relation. If a name is passed in that does not refer to a relation on</span>
+<span class="sd">        this model, ``ValueError`` will be raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the list of models that use models of this type.</span>
+        <span class="n">class_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="n">using_models</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">relation</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="n">get_relations</span><span class="p">(</span><span class="n">class_</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="o">-</span> <span class="n">get_subrecord_relations</span><span class="p">(</span><span class="n">class_</span><span class="p">)</span>
+                <span class="o">-</span> <span class="n">get_models_linked_to</span><span class="p">(</span><span class="n">class_</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># If the user has specified names, check that they are sane</span>
+        <span class="c1"># and then filter the relations to them,</span>
+        <span class="k">if</span> <span class="n">relations</span><span class="p">:</span>
+            <span class="n">bad_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">relations</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">using_models</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">bad_names</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bad_names</span><span class="si">}</span><span class="s2"> are unknown relations; use one of </span><span class="si">{</span><span class="n">using_models</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">using_models</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">relation</span> <span class="k">for</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">using_models</span> <span class="k">if</span> <span class="n">relation</span> <span class="ow">in</span> <span class="n">relations</span>
+            <span class="p">}</span>
+
+        <span class="c1"># If this model doesn&#39;t have any using relations, it cannot be in use.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">using_models</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># If we find any objects for any relation, then the model is in use.</span>
+        <span class="k">for</span> <span class="n">relation_name</span> <span class="ow">in</span> <span class="n">using_models</span><span class="p">:</span>
+            <span class="n">relation_queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use_by</span><span class="p">(</span><span class="n">relation_name</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">relation_queryset</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="TrackedModel.save"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.save">[docs]</a>    <span class="nd">@atomic</span>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">force_write</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">force_write</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_write</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">IllegalSaveError</span><span class="p">(</span>
+                <span class="s2">&quot;TrackedModels cannot be updated once written and approved. &quot;</span>
+                <span class="s2">&quot;If writing a new row, use `.new_draft` instead&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;version_group&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_version_group</span><span class="p">()</span>
+
+        <span class="n">return_value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">approved_statuses</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="n">auto_fields</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">field</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_value_fields</span>
+            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">attname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">attname</span><span class="p">),</span> <span class="p">(</span><span class="n">Expression</span><span class="p">,</span> <span class="n">F</span><span class="p">))</span>
+        <span class="p">}</span>
+
+        <span class="c1"># If the model contains any fields that are built in the database, the</span>
+        <span class="c1"># fields will still contain the expression objects. So remove them now</span>
+        <span class="c1"># and Django will lazy fetch the real values if they are accessed.</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">auto_fields</span><span class="p">:</span>
+            <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">return_value</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields_to_string</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TrackedModel.get_url"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;detail&quot;</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">action</span> <span class="o">!=</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_url_pattern_name_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2">-ui-</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">NoReverseMatch</span><span class="p">:</span>
+            <span class="k">return</span></div>
+
+<div class="viewcode-block" id="TrackedModel.get_url_pattern_name_prefix"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url_pattern_name_prefix">[docs]</a>    <span class="k">def</span> <span class="nf">get_url_pattern_name_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;url_pattern_name_prefix&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prefix</span></div></div>
+</pre></div>
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/_modules/common/models/trackedmodel">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'_modules/common/models/trackedmodel'&amp;body=Problem%20with%20'_modules/common/models/trackedmodel'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../../../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

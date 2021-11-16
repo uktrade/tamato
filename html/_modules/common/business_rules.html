@@ -142,7 +142,8 @@
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
 
-<span class="kn">from</span> <span class="nn">common.models.records</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
+<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
+<span class="kn">from</span> <span class="nn">common.models.trackedmodel</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_field_tuple</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 
@@ -229,7 +230,7 @@
         <span class="sd">&quot;&quot;&quot;Returns all model instances that are linked to the passed ``model``</span>
 <span class="sd">        and have this business rule listed in their ``business_rules``</span>
 <span class="sd">        attribute.&quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">related_model</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">relations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">related_model</span> <span class="ow">in</span> <span class="n">get_relations</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">))</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">business_rules</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">related_model</span><span class="p">,</span> <span class="s2">&quot;business_rules&quot;</span><span class="p">,</span> <span class="p">[])</span>
             <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">business_rules</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">one_to_many</span> <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">many_to_many</span><span class="p">:</span>
@@ -417,7 +418,8 @@
 
     <span class="k">def</span> <span class="nf">query_contains_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">container</span><span class="p">,</span> <span class="n">contained</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="ow">not</span> <span class="n">container</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="o">**</span><span class="n">container</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">(),</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
