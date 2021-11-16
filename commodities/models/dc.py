@@ -28,6 +28,7 @@ from commodities.models.orm import GoodsNomenclatureIndent
 from commodities.util import clean_item_id
 from commodities.util import contained_date_range
 from commodities.util import date_ranges_overlap
+from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
@@ -898,6 +899,8 @@ class SideEffect(BaseModel):
 
     obj: TrackedModel
     update_type: UpdateType
+    code: CommodityCode
+    rule: BusinessRule
     attrs: Dict[str, Any] = None
 
     def to_transaction(self, workbasket: WorkBasket) -> TrackedModel:
@@ -920,6 +923,18 @@ class SideEffect(BaseModel):
             return PREEMPTIVE_TRANSACTION_SEED
 
         return max([transaction.order for transaction in preemptive_transactions]) + 1
+
+    def explain(self) -> dict[str, Any]:
+        """Returns a dict explaining the context of the side effect."""
+        identifier = "|".join(map(str, self.obj.get_identifying_fields().values()))
+        identifier = f"{self.obj.__qualname__} {identifier}"
+        return dict(
+            commodity_code=self.code.dot_code,
+            business_rule=self.rule.__qualname__ if self.rule else "None",
+            affected=identifier,
+            affected_code=self.obj.goods_nomenclature.code.dot_code,
+            update_type=self.update_type.name,
+        )
 
 
 @dataclass
@@ -1039,14 +1054,14 @@ class CommodityChange(BaseModel):
         """
         # NIG34 / NIG35
         for measure in before.get_dependent_measures(self.current, self.as_at_date):
-            self._add_pending_delete(measure)
+            self._add_pending_delete(measure, cbr.NIG34)
 
         # No BR: delete related footnote associations
         qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
         for association in qs.filter(
             goods_nomenclature__item_id=self.current.get_item_id(),
         ):
-            self._add_pending_delete(association)
+            self._add_pending_delete(association, None)
 
     def _handle_update_side_effects(
         self,
@@ -1078,7 +1093,7 @@ class CommodityChange(BaseModel):
 
         if uncontained_measures.exists():
             for measure in uncontained_measures.order_by("sid"):
-                self._handle_validity_conflicts(good, measure)
+                self._handle_validity_conflicts(good, measure, cbr.NIG30)
 
         # NIG22: Invoked from the POV of a footnote association
         # here, find all related associations and invoke the BR
@@ -1087,7 +1102,7 @@ class CommodityChange(BaseModel):
             try:
                 cbr.NIG22(good.transaction).validate(association)
             except BusinessRuleViolation:
-                self._handle_validity_conflicts(good, association)
+                self._handle_validity_conflicts(good, association, cbr.NIG22)
 
         # ME7: Invoked from the POV of a measure
         # here, find all related measures and invoke the BR
@@ -1097,7 +1112,7 @@ class CommodityChange(BaseModel):
                 try:
                     mbr.ME7().validate(measure)
                 except BusinessRuleViolation:
-                    self._add_pending_delete(measure)
+                    self._add_pending_delete(measure, mbr.ME7)
 
         # ME88: Invoked from the POV of a measure
         # here, find all related measures and invoke the BR
@@ -1108,7 +1123,7 @@ class CommodityChange(BaseModel):
                 try:
                     mbr.ME88().validate(measure)
                 except BusinessRuleViolation:
-                    self._add_pending_delete(measure)
+                    self._add_pending_delete(measure, mbr.ME88)
 
         # ME71 / NIG18: Invoked from the POV-s of footnote associations
         # here, find all related footnote associations
@@ -1119,7 +1134,7 @@ class CommodityChange(BaseModel):
                 try:
                     cbr.NIG18().validate(association)
                 except BusinessRuleViolation:
-                    self._add_pending_delete(association)
+                    self._add_pending_delete(association, cbr.NIG18)
 
             qs = FootnoteAssociationMeasure.objects.latest_approved()
             for measure in measures:
@@ -1127,12 +1142,13 @@ class CommodityChange(BaseModel):
                     try:
                         mbr.ME71().validate(association)
                     except BusinessRuleViolation:
-                        self._add_pending_delete(association)
+                        self._add_pending_delete(association, mbr.ME75)
 
     def _handle_validity_conflicts(
         self,
         good: GoodsNomenclature,
         obj: TrackedModel,
+        rule: BusinessRule,
     ) -> None:
         """Handle conflicts related to validity span rule violations."""
         gvb = good.valid_between
@@ -1141,7 +1157,7 @@ class CommodityChange(BaseModel):
         # If obj validity does not overlap the good validity at all,
         # mark the object for deletion
         if date_ranges_overlap(gvb, ovb) is False:
-            self._add_pending_delete(obj)
+            self._add_pending_delete(obj, rule)
             return
 
         # Determine whether the obj validity is trimmed
@@ -1158,7 +1174,7 @@ class CommodityChange(BaseModel):
         if type(obj) == Measure:
             attrs["terminating_regulation"] = obj.generating_regulation
 
-        self._add_pending_update(obj, attrs)
+        self._add_pending_update(obj, attrs, rule)
 
     def _handle_hierarchy_side_effects(
         self,
@@ -1241,7 +1257,7 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 related_measure.valid_between,
                             ):
-                                self._add_pending_delete(related_measure)
+                                self._add_pending_delete(related_measure, mbr.ME32)
                         except KeyError:
                             continue
 
@@ -1270,20 +1286,27 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 ancestor_measure.valid_between,
                             ):
-                                self._add_pending_delete(ancestor_measure)
+                                self._add_pending_delete(ancestor_measure, mbr.ME32)
                         except KeyError:
                             continue
 
-    def _add_pending_delete(self, obj: TrackedModel) -> None:
+    def _add_pending_delete(self, obj: TrackedModel, rule: BusinessRule) -> None:
         """Add a pending related object delete operation to side effects."""
         key = get_model_identifier(obj)
 
         self.side_effects[key] = SideEffect(
             obj=obj,
             update_type=UpdateType.DELETE,
+            code=(self.current or self.candidate).code,
+            rule=rule,
         )
 
-    def _add_pending_update(self, obj: TrackedModel, attrs: Dict[str, Any]) -> None:
+    def _add_pending_update(
+        self,
+        obj: TrackedModel,
+        attrs: Dict[str, Any],
+        rule: BusinessRule,
+    ) -> None:
         """Add a pending related object update operation to side effects."""
         key = get_model_identifier(obj)
 
@@ -1293,6 +1316,8 @@ class CommodityChange(BaseModel):
             self.side_effects[key] = SideEffect(
                 obj=obj,
                 update_type=UpdateType.UPDATE,
+                code=(self.candidate or self.current).code,
+                rule=rule,
                 attrs=attrs,
             )
 
