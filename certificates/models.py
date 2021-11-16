@@ -13,7 +13,7 @@ from common.models.mixins.validity import ValidityMixin
 from measures import business_rules as measures_business_rules
 
 
-class CertificateType(TrackedModel, ValidityMixin, DescribedMixin):
+class CertificateType(TrackedModel, ValidityMixin):
     record_code = "110"
     subrecord_code = "00"
 
@@ -83,7 +83,7 @@ class Certificate(TrackedModel, ValidityMixin, DescribedMixin):
         return f"{self} - {self.get_description().description}"
 
 
-class CertificateDescription(DescriptionMixin, TrackedModel, DescribedMixin):
+class CertificateDescription(DescriptionMixin, TrackedModel):
     record_code = "205"
     subrecord_code = "10"
 

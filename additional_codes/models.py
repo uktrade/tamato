@@ -15,7 +15,7 @@ from footnotes import business_rules as footnotes_business_rules
 from measures import business_rules as measures_business_rules
 
 
-class AdditionalCodeType(TrackedModel, ValidityMixin, DescribedMixin):
+class AdditionalCodeType(TrackedModel, ValidityMixin):
     """
     The additional code type allows all additional codes to be classified
     according to type.
@@ -97,7 +97,7 @@ class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
         return f"{self} - {self.get_description().description}"
 
 
-class AdditionalCodeDescription(DescriptionMixin, TrackedModel, DescribedMixin):
+class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
     """
     The additional code description contains the description of the additional
     code for a particular period.
@@ -137,7 +137,7 @@ class AdditionalCodeDescription(DescriptionMixin, TrackedModel, DescribedMixin):
         ordering = ("validity_start",)
 
 
-class FootnoteAssociationAdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
+class FootnoteAssociationAdditionalCode(TrackedModel, ValidityMixin):
     """A footnote may be associated with an additional code for part of the
     validity period of the footnote and part of the validity period of the
     additional code."""

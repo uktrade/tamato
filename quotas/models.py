@@ -8,14 +8,13 @@ from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
-from common.models.mixins.description import DescribedMixin
 from common.models.mixins.validity import ValidityMixin
 from quotas import business_rules
 from quotas import querysets
 from quotas import validators
 
 
-class QuotaOrderNumber(TrackedModel, ValidityMixin, DescribedMixin):
+class QuotaOrderNumber(TrackedModel, ValidityMixin):
     """
     The order number is the identification of a quota.
 
@@ -86,7 +85,7 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin, DescribedMixin):
         verbose_name = "quota"
 
 
-class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin, DescribedMixin):
+class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to
     imports from a specific origin, usually a country or group of countries."""
 
@@ -123,7 +122,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin, DescribedMixin):
         return self.order_number.in_use(transaction)
 
 
-class QuotaOrderNumberOriginExclusion(TrackedModel, DescribedMixin):
+class QuotaOrderNumberOriginExclusion(TrackedModel):
     """Origin exclusions specify countries (or groups of countries, or other
     origins) to exclude from the quota number origin."""
 
@@ -145,7 +144,7 @@ class QuotaOrderNumberOriginExclusion(TrackedModel, DescribedMixin):
     )
 
 
-class QuotaDefinition(TrackedModel, ValidityMixin, DescribedMixin):
+class QuotaDefinition(TrackedModel, ValidityMixin):
     """
     Defines the validity period and quantity for which a quota is applicable.
     This model also represents sub-quotas, via a parent-child recursive relation
@@ -220,7 +219,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin, DescribedMixin):
         return str(self.sid)
 
 
-class QuotaAssociation(TrackedModel, DescribedMixin):
+class QuotaAssociation(TrackedModel):
     """The quota association defines the relation between quota and sub-
     quotas."""
 
@@ -260,7 +259,7 @@ class QuotaAssociation(TrackedModel, DescribedMixin):
     )
 
 
-class QuotaSuspension(TrackedModel, ValidityMixin, DescribedMixin):
+class QuotaSuspension(TrackedModel, ValidityMixin):
     """Defines a suspension period for a quota."""
 
     record_code = "370"
@@ -273,7 +272,7 @@ class QuotaSuspension(TrackedModel, ValidityMixin, DescribedMixin):
     business_rules = (business_rules.QSP2, UpdateValidity)
 
 
-class QuotaBlocking(TrackedModel, ValidityMixin, DescribedMixin):
+class QuotaBlocking(TrackedModel, ValidityMixin):
     """Defines a blocking period for a (sub-)quota."""
 
     record_code = "370"
@@ -289,7 +288,7 @@ class QuotaBlocking(TrackedModel, ValidityMixin, DescribedMixin):
     business_rules = (business_rules.QBP2, UpdateValidity)
 
 
-class QuotaEvent(TrackedModel, DescribedMixin):
+class QuotaEvent(TrackedModel):
     """
     We do not care about quota events, except to store historical data.
 

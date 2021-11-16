@@ -246,6 +246,18 @@ class TrackedModel(PolymorphicModel):
         return str(self)
 
     @property
+    def structure_description(self) -> str:
+        description = None
+        if hasattr(self, "descriptions"):
+            description = self.get_descriptions().last()
+            if description:
+                # Get the actual description, not just the object
+                description = description.description
+        if hasattr(self, "description"):
+            description = self.description
+        return description or None
+
+    @property
     def current_version(self: Cls) -> Cls:
         current_version = self.version_group.current_version
         if current_version is None:

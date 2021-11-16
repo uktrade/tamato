@@ -562,3 +562,10 @@ def test_structure_description(trackedmodel_factory):
         assert description == model.description
     else:
         assert description == None
+
+
+def test_described(description_factory):
+    description = description_factory.create()
+    described = description.get_described_object()
+
+    assert described.get_description() == description
