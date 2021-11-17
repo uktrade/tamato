@@ -142,6 +142,8 @@ class TransactionParser(ElementParser):
             loader = CommodityChangeRecordLoader()
             loader.load(transaction)
 
+            reasons = []
+
             for chapter_changes in loader.chapter_changes.values():
                 for change in chapter_changes.changes:
                     for side_effect in change.side_effects.values():
@@ -151,9 +153,12 @@ class TransactionParser(ElementParser):
                         order = transaction.order
                         commodity = change.candidate or change.current
                         commodity.code.dot_code
-                        reason = json.dumps(side_effect.explain())
+
+                        reason = side_effect.explain()
+                        reasons.append(reason)
+
                         logger.info(
-                            f"Saving preemptive transaction {order}: {reason}",
+                            f"Saving preemptive transaction {order}: {json.dumps(reason)}",
                         )
 
                         EnvelopeTransaction.objects.create(
@@ -161,6 +166,10 @@ class TransactionParser(ElementParser):
                             transaction=transaction,
                             order=order,
                         )
+
+            if reasons:
+                with open(f"env/{envelope.envelope_id}.log", "a") as f:
+                    f.write("\n".join(map(str, reasons)) + "\n")
 
         try:
             transaction.clean()
