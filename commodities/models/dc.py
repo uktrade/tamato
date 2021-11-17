@@ -685,7 +685,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
                     parent = None
             else:
                 try:
-                    parent = indents[indent - 1]
+                    parent = indents[:indent][-1]
+                    # the case where we're using the 0-indent for the parent
+                    if isinstance(parent, list):
+                        parent = parent[0]
                 except IndexError:
                     parent = None
 
@@ -693,9 +696,11 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
             if indent == 0:
                 indents[indent].append(commodity)
+                indents = indents[: indent + 1]
             else:
                 try:
                     indents[indent] = commodity
+                    indents = indents[: indent + 1]
                 except IndexError:
                     indents.append(commodity)
 
@@ -901,7 +906,8 @@ class SideEffect(BaseModel):
     update_type: UpdateType
     code: CommodityCode
     rule: BusinessRule
-    attrs: Dict[str, Any] = None
+    variant: Optional[str] = None
+    attrs: Optional[Dict[str, Any]] = None
 
     def to_transaction(self, workbasket: WorkBasket) -> TrackedModel:
         order = self._get_preemptive_transaction_order(workbasket)
@@ -927,10 +933,15 @@ class SideEffect(BaseModel):
     def explain(self) -> dict[str, Any]:
         """Returns a dict explaining the context of the side effect."""
         identifier = "|".join(map(str, self.obj.get_identifying_fields().values()))
-        identifier = f"{self.obj.__qualname__} {identifier}"
+        identifier = f"{type(self.obj).__qualname__} {identifier}"
+
+        br_identifier = self.rule.__qualname__ if self.rule else "None"
+        if self.variant:
+            br_identifier += self.variant
+
         return dict(
             commodity_code=self.code.dot_code,
-            business_rule=self.rule.__qualname__ if self.rule else "None",
+            business_rule=br_identifier,
             affected=identifier,
             affected_code=self.obj.goods_nomenclature.code.dot_code,
             update_type=self.update_type.name,
@@ -1257,7 +1268,7 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 related_measure.valid_between,
                             ):
-                                self._add_pending_delete(related_measure, mbr.ME32)
+                                self._add_pending_delete(related_measure, mbr.ME32, "a")
                         except KeyError:
                             continue
 
@@ -1268,9 +1279,9 @@ class CommodityChange(BaseModel):
 
         # Check if commodity's before-children have new parents
         for child in before.get_children(self.current):
-            # If the commodity's before-child has new parent...
+            # If the commodity's before-child has a new parent...
             if before.compare_parents(child, after).diff:
-                # ...then check if before-child has ME32 clashes with new ancestors
+                # ...then check if before-child has ME32 clashes with any new ancestors
                 for ancestor in after.get_ancestors(child):
                     ancestor_measures = after.get_dependent_measures(
                         ancestor,
@@ -1286,11 +1297,20 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 ancestor_measure.valid_between,
                             ):
-                                self._add_pending_delete(ancestor_measure, mbr.ME32)
+                                self._add_pending_delete(
+                                    ancestor_measure,
+                                    mbr.ME32,
+                                    "b",
+                                )
                         except KeyError:
                             continue
 
-    def _add_pending_delete(self, obj: TrackedModel, rule: BusinessRule) -> None:
+    def _add_pending_delete(
+        self,
+        obj: TrackedModel,
+        rule: BusinessRule,
+        variant: Optional[str] = None,
+    ) -> None:
         """Add a pending related object delete operation to side effects."""
         key = get_model_identifier(obj)
 
@@ -1299,6 +1319,7 @@ class CommodityChange(BaseModel):
             update_type=UpdateType.DELETE,
             code=(self.current or self.candidate).code,
             rule=rule,
+            variant=variant,
         )
 
     def _add_pending_update(
@@ -1306,6 +1327,7 @@ class CommodityChange(BaseModel):
         obj: TrackedModel,
         attrs: Dict[str, Any],
         rule: BusinessRule,
+        variant: Optional[str] = None,
     ) -> None:
         """Add a pending related object update operation to side effects."""
         key = get_model_identifier(obj)
@@ -1318,6 +1340,7 @@ class CommodityChange(BaseModel):
                 update_type=UpdateType.UPDATE,
                 code=(self.candidate or self.current).code,
                 rule=rule,
+                variant=variant,
                 attrs=attrs,
             )
 
