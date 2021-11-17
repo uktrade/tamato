@@ -279,7 +279,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
 
         return succeeding_indent.validity_start - timedelta(days=-1)
 
-    @transaction.atomic
+    # @transaction.atomic
     def save(self, data: dict):
         depth = self.extra_data.pop("indent")
         data.update(**self.extra_data)
@@ -336,8 +336,11 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             else:
                 next_parent = indent.get_parent_node(
                     parent_depth,
+                    as_of_transaction=indent.transaction,
                     start_date=start_date,
                 )
+
+                # we may be accidentall
             if not next_parent:
                 raise InvalidIndentError(
                     f"Parent indent not found for {item_id} for date {start_date}",
