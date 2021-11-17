@@ -335,7 +335,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         validity_start = start_date or self.validity_start
 
         qs = GoodsNomenclatureIndentNode.objects
-        parent: GoodsNomenclatureIndentNode = (
+        parents: GoodsNomenclatureIndentNode = (
             qs.filter(
                 Q(indent__indented_goods_nomenclature__item_id__lt=item_id)
                 | Q(
@@ -353,8 +353,10 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
                 "-indent__validity_start",
                 "-creating_transaction",
             )
-            .first()
+            .all()
         )
+
+        parent = parents.first()
 
         # The end dates on some historically created nodes
         # may have not been synced with the implied end date of their indent
@@ -520,9 +522,12 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         if not indent:
             return
 
-        return indent.nodes.order_by(
-            "valid_between__startswith",
-        ).last()
+        return (
+            GoodsNomenclatureIndentNode.objects.filter(indent=indent)
+            .exclude(valid_between=self.valid_between)
+            .order_by("valid_between__startswith")
+            .last()
+        )
 
     def get_succeeding_node(
         self,
