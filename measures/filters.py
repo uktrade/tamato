@@ -1,9 +1,6 @@
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import DateField
 from django.db.models import Q
-from django.db.models.functions import Lower
-from django.db.models.functions import Upper
 from django.urls import reverse_lazy
 from django_filters import CharFilter
 from django_filters import ChoiceFilter
@@ -15,6 +12,8 @@ from common.filters import AutoCompleteFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.forms import DateInputFieldFixed
+from common.util import EndDate
+from common.util import StartDate
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from measures.forms import MeasureFilterForm
@@ -160,7 +159,7 @@ class MeasureFilter(TamatoFilter):
             else:
                 filter_query = Q(start_date=value)
             queryset = queryset.annotate(
-                start_date=Lower("valid_between", output_field=DateField()),
+                start_date=StartDate("valid_between"),
             ).filter(filter_query)
         return queryset
 
@@ -175,12 +174,7 @@ class MeasureFilter(TamatoFilter):
                 filter_query = Q(end_date=value)
             queryset = (
                 queryset.with_effective_valid_between()
-                .annotate(
-                    end_date=Upper(
-                        "db_effective_valid_between",
-                        output_field=DateField(),
-                    ),
-                )
+                .annotate(end_date=EndDate("db_effective_valid_between"))
                 .filter(filter_query)
             )
         return queryset

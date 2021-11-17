@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Any
 from typing import Iterable
 from typing import Tuple
@@ -7,20 +6,17 @@ from typing import Union
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.base import Model
-from django.db.models.expressions import Case
 from django.db.models.expressions import Expression
 from django.db.models.expressions import F
-from django.db.models.expressions import When
 from django.db.models.fields import CharField
-from django.db.models.fields import DateField
 from django.db.models.fields import IntegerField
 from django.db.models.fields import TextField
 from django.db.models.functions import Cast
-from django.db.models.functions import Lower
-from django.db.models.functions import Upper
 from django.db.models.query import QuerySet
 
 from common.models.mixins.validity import ValidityMixin
+from common.util import EndDate
+from common.util import StartDate
 
 
 def column_to_expr(column: str, model: Type[Model]) -> Union[Expression, F]:
@@ -39,24 +35,9 @@ def column_to_expr(column: str, model: Type[Model]) -> Union[Expression, F]:
     except FieldDoesNotExist:
         field = ValidityMixin.valid_between.field
         if column == "validity_start":
-            return Cast(Lower(field.name), output_field=CharField())
+            return Cast(StartDate(field.name), output_field=CharField())
         elif column == "validity_end":
-            # Our date ranges are inclusive but Postgres stores them as
-            # exclusive on the upper bound. Hence we need to subtract a day from
-            # the date if we want to get inclusive value.
-            return Cast(
-                Cast(
-                    Upper(field.name, output_field=DateField())
-                    - Case(
-                        When(
-                            **{f"{field.name}__upper_inc": True}, then=timedelta(days=0)
-                        ),
-                        default=timedelta(days=1),
-                    ),
-                    output_field=DateField(),
-                ),
-                output_field=CharField(),
-            )
+            return Cast(EndDate(field.name), output_field=CharField())
         else:
             raise
 

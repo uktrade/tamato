@@ -40,3 +40,66 @@ class ValidityQuerySet(QuerySet):
         current = self.approved_up_to_transaction(asof_transaction)
 
         return self.difference(current)
+
+    def as_at(self, date: date) -> QuerySet:
+        """
+        Return the instances of the model that were represented at a particular
+        date.
+
+        If done from the TrackedModel this will return all instances of all
+        tracked models as represented at a particular date.
+        """
+        return self.filter(valid_between__contains=date)
+
+    def as_at_today(self) -> QuerySet:
+        """
+        Return the instances of the model that are represented at the current
+        date.
+
+        If done from the TrackedModel this will return all instances of all
+        tracked models as represented at the current date.
+        """
+        return self.as_at(date.today())
+
+
+class TransactionPartitionQuerySet(QuerySet):
+    @classmethod
+    def approved_query_filter(cls, prefix=""):
+        from common.models.transactions import TransactionPartition
+
+        return Q(
+            **{
+                f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
+            }
+        )
+
+    @classmethod
+    def as_at_transaction_filter(cls, transaction, prefix=""):
+        """
+        Return a Django filter object that will filter the returned models to
+        only those that exist as of the passed transaction.
+
+        This is different than just `object.versions` because it will only
+        include draft versions from the same workbasket, if the transaction is
+        in draft, whereas `object.versions` will include all draft versions. At
+        the database level, that is any transaction in this partition with lower
+        order (and in this workbasket in the case of DRAFT), or any transaction
+        in an earlier partition.
+        """
+        from common.models.transactions import TransactionPartition
+
+        this_partition = {
+            f"{prefix}transaction__partition": transaction.partition,
+            f"{prefix}transaction__order__lte": transaction.order,
+        }
+
+        if transaction.partition not in TransactionPartition.approved_partitions():
+            this_partition[
+                f"{prefix}transaction__workbasket__id"
+            ] = transaction.workbasket_id
+
+        earlier_parition = {
+            f"{prefix}transaction__partition__lt": transaction.partition,
+        }
+
+        return Q(**this_partition) | Q(**earlier_parition)

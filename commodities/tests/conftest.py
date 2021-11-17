@@ -38,7 +38,7 @@ from commodities.models.dc import Commodity
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityCollection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.util import TaricDateRange

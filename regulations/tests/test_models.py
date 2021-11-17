@@ -24,3 +24,10 @@ def test_regulation_update_types(
     assert check_update_validation(
         factory,
     )
+
+
+def test_structure_description_uses_information_text():
+    regulation = factories.RegulationFactory.create(
+        information_text="a descriptive description",
+    )
+    assert regulation.structure_description == "a descriptive description"

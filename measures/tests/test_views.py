@@ -2,6 +2,9 @@ import pytest
 from django.urls import reverse
 
 from common.tests import factories
+from common.tests.util import assert_model_view
+from common.tests.util import get_detail_class_based_view_urls_matching_url
+from common.tests.util import view_urlpattern_ids
 from measures.views import MeasureFootnotesUpdate
 
 pytestmark = pytest.mark.django_db
@@ -76,3 +79,14 @@ def test_measure_footnotes_update_post_without_remove_ignores_delete_keys(
     assert client.session[f"formset_initial_{measure.sid}"] == [
         {"footnote": str(footnote_1.pk)},
     ]
+
+
+@pytest.mark.parametrize(
+    ("view", "url_pattern"),
+    get_detail_class_based_view_urls_matching_url("measures/"),
+    ids=view_urlpattern_ids,
+)
+def test_measure_detail_views(view, url_pattern, valid_user_client):
+    """Verify that measure detail views are under the url measures/ and don't
+    return an error."""
+    assert_model_view(view, url_pattern, valid_user_client)

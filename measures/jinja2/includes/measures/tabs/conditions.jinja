@@ -1,16 +1,16 @@
-{% from 'macros/create_link.jinja' import create_link %} 
+{% from 'macros/create_link.jinja' import create_link %}
 
 <h2 class="govuk-heading-l">Conditions</h2>
-{% if object.get_conditions() %}
+{% if object.get_conditions(get_current_workbasket(request).last_transaction) %}
     {% set table_rows = [] %}
-    {% for condition in object.get_conditions().with_duty_sentence() -%}
+    {% for condition in object.get_conditions(get_current_workbasket(request).last_transaction).with_duty_sentence() -%}
         {{ table_rows.append([
             {"text": condition.condition_code.code ~ condition.component_sequence_number},
             {"text": condition.duty_sentence if condition.duty_sentence else '-'},
             {"text": condition.action.description},
             {"text": create_link(condition.required_certificate.get_url(), condition.required_certificate.code) if condition.required_certificate else '-'},
             {"text": condition.required_certificate.get_description().description if condition.required_certificate else '-'},
-        ]) or "" }} 
+        ]) or "" }}
     {% endfor %}
     {{ govukTable({
     "head": [

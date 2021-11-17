@@ -6,6 +6,8 @@ from django.db import DataError
 
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
+from common.tests.factories import date_ranges
+from common.tests.factories import end_date
 from common.tests.util import Dates
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
@@ -371,7 +373,23 @@ def test_ME115(date_ranges):
         business_rules.ME115(measure.transaction).validate(measure)
 
 
-def test_ME25(date_ranges):
+@pytest.mark.parametrize(
+    ("measure_dates", "regulation_dates", "regulation_effective_end", "error_expected"),
+    (
+        ("normal", "no_end", "no_end", False),
+        ("no_end", "no_end", "no_end", False),
+        ("no_end", "normal", "no_end", False),
+        ("no_end", "no_end", "normal", False),
+        ("no_end", "no_end", "earlier", True),
+        ("no_end", "earlier", "no_end", True),
+    ),
+)
+def test_ME25(
+    measure_dates,
+    regulation_dates,
+    regulation_effective_end,
+    error_expected,
+):
     """
     If the measure’s end date is specified (implicitly or explicitly) then the
     start date of the measure must be less than or equal to the end date.
@@ -381,33 +399,13 @@ def test_ME25(date_ranges):
     the regulation to have an end date and an optional "effective end date". If
     the effective end date is present it should override the original end date.
     """
-    measure = factories.MeasureFactory.create(valid_between=date_ranges.normal)
-
-    business_rules.ME25(measure.transaction).validate(measure)
-
     measure = factories.MeasureFactory.create(
-        valid_between=date_ranges.no_end,
-        generating_regulation__valid_between=date_ranges.earlier,
-        generating_regulation__effective_end_date=None,
+        valid_between=date_ranges(measure_dates),
+        generating_regulation__valid_between=date_ranges(regulation_dates),
+        generating_regulation__effective_end_date=end_date(regulation_effective_end),
     )
-    business_rules.ME25(measure.transaction).validate(measure)
 
-    measure = factories.MeasureFactory.create(
-        valid_between=date_ranges.no_end,
-        generating_regulation__valid_between=date_ranges.no_end,
-        generating_regulation__effective_end_date=None,
-    )
-    business_rules.ME25(measure.transaction).validate(measure)
-
-    with pytest.raises(DataError):
-        factories.MeasureFactory.create(valid_between=date_ranges.backwards)
-
-    measure = factories.MeasureFactory.create(
-        valid_between=date_ranges.no_end,
-        generating_regulation__valid_between=date_ranges.earlier,
-        generating_regulation__effective_end_date=date_ranges.earlier.upper,
-    )
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME25(measure.transaction).validate(measure)
 
 
