@@ -18,6 +18,7 @@ from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
 
 logger = getLogger(__name__)
+PREEMPTIVE_TRANSACTION_SEED = -100000
 
 
 class TransactionPartition(models.IntegerChoices):
@@ -93,6 +94,21 @@ class TransactionQueryset(models.QuerySet):
         """
         return self.exclude(partition=TransactionPartition.DRAFT)
 
+    def handle_negative_order_transactions(self) -> None:
+        """
+        Makes all order numbers negative if there is even one negative order
+        number.
+
+        Negative order numbers happen in preemptive transactions, e.g. when we
+        import commodity code changes
+        """
+        if self.count() and self.order_by("order").first().order < 0:
+            order = PREEMPTIVE_TRANSACTION_SEED
+            for tx in self.order_by("order").all():
+                order += 1
+                tx.order = order
+                tx.save()
+
     @atomic
     def save_drafts(self, partition_scheme):
         """
@@ -123,6 +139,8 @@ class TransactionQueryset(models.QuerySet):
             version_group = obj.version_group
             version_group.current_version = obj
             version_group.save()
+
+        self.handle_negative_order_transactions()
 
         new_tx = self.first()
         if new_tx is None:
