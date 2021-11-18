@@ -1103,15 +1103,26 @@ class ME67(BusinessRule):
     valid period of the measure."""
 
     def validate(self, exclusion):
-        return  # TODO: Verify this rule
+        GeographicalMembership = type(
+            exclusion.excluded_geographical_area,
+        ).memberships.through
 
         geo_group = exclusion.modified_measure.geographical_area
         excluded = exclusion.excluded_geographical_area
 
-        if not geo_group.members.filter(
-            member__sid=excluded.sid,
-            valid_between__contains=exclusion.modified_measure.effective_valid_between,
-        ).exists():
+        if (
+            not GeographicalMembership.objects.approved_up_to_transaction(
+                self.transaction,
+            )
+            .as_at(
+                exclusion.modified_measure.effective_valid_between,
+            )
+            .filter(
+                geo_group__version_group=geo_group.version_group,
+                member__version_group=excluded.version_group,
+            )
+            .exists()
+        ):
             raise self.violation(exclusion)
 
 
