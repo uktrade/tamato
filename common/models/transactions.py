@@ -94,7 +94,7 @@ class TransactionQueryset(models.QuerySet):
         """
         return self.exclude(partition=TransactionPartition.DRAFT)
 
-    def handle_negative_order_transactions(self) -> None:
+    def preorder_negative_transactions(self) -> None:
         """
         Makes all order numbers negative if there is even one negative order
         number.
@@ -140,7 +140,7 @@ class TransactionQueryset(models.QuerySet):
             version_group.current_version = obj
             version_group.save()
 
-        self.handle_negative_order_transactions()
+        self.preorder_negative_transactions()
 
         new_tx = self.first()
         if new_tx is None:
