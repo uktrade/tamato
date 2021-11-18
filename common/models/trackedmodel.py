@@ -39,6 +39,10 @@ from workbaskets.validators import WorkflowStatus
 
 
 class VersionGroup(TimestampedMixin):
+    """
+    A group that contains all versions of the same TrackedModel.
+    """
+
     current_version = models.OneToOneField(
         "common.TrackedModel",
         on_delete=models.SET_NULL,
@@ -204,6 +208,9 @@ class TrackedModel(PolymorphicModel):
         return new_object
 
     def get_versions(self):
+        """
+        Find all versions of this model.
+        """
         if hasattr(self, "version_group"):
             return self.version_group.versions.all()
         query = Q(**self.get_identifying_fields())
@@ -247,6 +254,13 @@ class TrackedModel(PolymorphicModel):
         self,
         identifying_fields: Optional[Iterable[str]] = None,
     ) -> Dict[str, Any]:
+        """Get a name/value mapping of the fields that identify this model.
+
+        :param identifying_fields Optional[Iterable[str]]: Optionally override the
+        fields to retrieve
+        :rtype dict[str, Any]: A dict of field names to values
+        """
+
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
 
@@ -259,6 +273,14 @@ class TrackedModel(PolymorphicModel):
         self,
         identifying_fields: Optional[Iterable[str]] = None,
     ) -> str:
+        """
+        Constructs a comma separated string of the identifying fields of the model with
+        field name and value pairs delimited by "=", eg: "field1=1, field2=2"
+
+        :param identifying_fields Optional[Iterable[str]]: Optionally override the
+        fields to use in the string
+        :rtype str: The constructed string
+        """
         field_list = [
             f"{field}={str(value)}"
             for field, value in self.get_identifying_fields(identifying_fields).items()
@@ -268,10 +290,20 @@ class TrackedModel(PolymorphicModel):
 
     @property
     def structure_code(self):
+        """A string used to describe the model instance.
+
+        Used as the displayed value in an AutocompleteWidget dropdown, and in the "Your
+        tariff changes" list.
+        """
         return str(self)
 
     @property
-    def structure_description(self) -> str:
+    def structure_description(self) -> Optional[str]:
+        """The current description of the model, if it has related description models or a
+        description field.
+
+        :rtype Optional[str]: The current description
+        """
         description = None
         if hasattr(self, "descriptions"):
             description = self.get_descriptions().last()
@@ -290,12 +322,19 @@ class TrackedModel(PolymorphicModel):
 
     @property
     def current_version(self: Cls) -> Cls:
+        """The current version of this model"""
         current_version = self.version_group.current_version
         if current_version is None:
             raise self.__class__.DoesNotExist("Object has no current version")
         return current_version
 
     def version_at(self: Cls, transaction) -> Cls:
+        """The latest version of this model that was approved as of the given
+        transaction.
+
+        :param transaction Transaction: Limit versions to this transaction
+        :rtype TrackedModel:
+        """
         return self.get_versions().approved_up_to_transaction(transaction).get()
 
     @classproperty
@@ -481,6 +520,11 @@ class TrackedModel(PolymorphicModel):
 
     @atomic
     def save(self, *args, force_write=False, **kwargs):
+        """Save the model to the database.
+
+        :param force_write bool: Ignore append-only restrictions and write to the
+        database even if the model already exists
+        """
         if not force_write and not self._can_write():
             raise IllegalSaveError(
                 "TrackedModels cannot be updated once written and approved. "
@@ -517,7 +561,13 @@ class TrackedModel(PolymorphicModel):
     def __hash__(self):
         return hash(f"{__name__}.{self.__class__.__name__}")
 
-    def get_url(self, action="detail"):
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Generate a URL to a representation of the model in the webapp.
+
+        :param action str: The view type to generate a URL for (default "detail"),
+        eg: "list" or "edit"
+        :rtype Optional[str]: The generated URL
+        """
         kwargs = {}
         if action != "list":
             kwargs = self.get_identifying_fields()
@@ -530,6 +580,13 @@ class TrackedModel(PolymorphicModel):
             return
 
     def get_url_pattern_name_prefix(self):
+        """Get the prefix string for a view name for this model.
+
+        By default, this is the verbose name of the model with spaces replaced by
+        underscores, but this method allows this to be overridden.
+
+        :rtype str: The prefix
+        """
         prefix = getattr(self, "url_pattern_name_prefix", None)
         if not prefix:
             prefix = self._meta.verbose_name.replace(" ", "_")

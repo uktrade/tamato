@@ -106,6 +106,12 @@ class TrackedModelQuerySet(
         return self.get_versions(**kwargs).first()
 
     def excluding_versions_of(self, version_group):
+        """
+        Exclude results which have the specified version_group.
+
+        :param version_group VersionGroup: Exclude the members of this version group
+        :rtype QuerySet:
+        """
         return self.exclude(version_group=version_group)
 
     def has_approved_state(self):
@@ -114,6 +120,8 @@ class TrackedModelQuerySet(
 
     def annotate_record_codes(self) -> TrackedModelQuerySet:
         """
+        Annotate results with TARIC Record code and Subrecord code.
+
         :return: Query annotated with record_code and subrecord_code.
         """
         # Generates case statements to do the mapping from model to record_code and subrecord_code.
