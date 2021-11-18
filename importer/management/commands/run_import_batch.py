@@ -2,7 +2,6 @@ from django.core.management import BaseCommand
 
 from importer import models
 from importer.tasks import find_and_run_next_batch_chunks
-from importer.tasks import order_transactions
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
 

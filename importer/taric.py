@@ -27,8 +27,6 @@ from importer.nursery import get_nursery
 from importer.parsers import ElementParser
 from importer.parsers import ParserError
 from importer.parsers import TextElement
-from importer.reports import CommodityChangeReports
-from importer.reports import write_report
 from taric.models import Envelope
 from taric.models import EnvelopeTransaction
 from workbaskets.models import TransactionPartitionScheme
@@ -294,9 +292,3 @@ def process_taric_xml_stream(
         if event == "end":
             if handler.end(elem):
                 elem.clear()
-
-    reports = CommodityChangeReports(handler.workbasket)
-    data = reports.report_affected_measures()
-
-    if data:
-        write_report(data, handler.workbasket)
