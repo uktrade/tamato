@@ -98,7 +98,7 @@ def test_pre_ordering_of_querysets_with_negative_transaction_orders():
     ids = (transaction_first.id, transaction_second.id)
     qs = Transaction.objects.filter(id__in=ids)
 
-    qs.handle_negative_order_transactions()
+    qs.preorder_negative_transactions()
     assert all(tx.order < 0 for tx in qs.all())
 
 
