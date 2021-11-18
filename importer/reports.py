@@ -5,6 +5,7 @@ import logging
 from collections import OrderedDict
 from contextlib import closing
 from typing import Any
+from typing import Dict
 from typing import Generator
 from typing import Iterable
 from typing import Optional
@@ -96,8 +97,8 @@ MAPPING_MAD_CMT = (
 )
 
 
-TMadItemGenerator = Generator[None, OrderedDict[str, Any], None]
-TMadItemCollection = Tuple[OrderedDict[str, Any]]
+TMadItemGenerator = Generator[None, Dict[str, Any], None]
+TMadItemCollection = Tuple[Dict[str, Any]]
 TGoods = Tuple[GoodsNomenclature]
 
 # Acronyms:
