@@ -1,3 +1,9 @@
+"""
+Common URLs.
+
+Adds routes for views that are not specific to any part of the tariff, eg the
+home page and user login
+"""
 from django.urls import include
 from django.urls import path
 from django.urls import register_converter
