@@ -1231,15 +1231,26 @@
 <span class="sd">    valid period of the measure.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME67.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME67.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
-        <span class="k">return</span>  <span class="c1"># TODO: Verify this rule</span>
+        <span class="n">GeographicalMembership</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">memberships</span><span class="o">.</span><span class="n">through</span>
 
         <span class="n">geo_group</span> <span class="o">=</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">geographical_area</span>
         <span class="n">excluded</span> <span class="o">=</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">geo_group</span><span class="o">.</span><span class="n">members</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">member__sid</span><span class="o">=</span><span class="n">excluded</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-            <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">GeographicalMembership</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">as_at</span><span class="p">(</span>
+                <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">geo_group__version_group</span><span class="o">=</span><span class="n">geo_group</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
+                <span class="n">member__version_group</span><span class="o">=</span><span class="n">excluded</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
 
 
