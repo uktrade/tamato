@@ -33,6 +33,7 @@ from typing import Tuple
 from typing import Union
 
 import pytest
+import responses
 
 from commodities.models.dc import Commodity
 from commodities.models.dc import CommodityChange
@@ -43,11 +44,21 @@ from common.models.transactions import Transaction
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from importer.reports import URL_DEF
 from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 TScenario = Tuple[CommodityCollection, List[CommodityChange]]
+
+
+@pytest.fixture
+def mocked_responses():
+    """Provides a mocked responses fixture for use with commodity importer
+    tests."""
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, url=URL_DEF)
+        yield rsps
 
 
 def copy_commodity(
