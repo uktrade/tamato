@@ -198,20 +198,16 @@
 <span class="k">class</span> <span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">unordered_tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Usually &#39;ordered_tracked_models&#39; is required.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">ordered_tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;TrackedModel in order of their transactions creation order.&quot;&quot;&quot;</span>
 
-        <span class="n">tracked_models</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">unordered_tracked_models</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
-                <span class="s2">&quot;transaction__partition&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;transaction__order&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
+        <span class="n">tracked_models</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unordered_tracked_models</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
+            <span class="s2">&quot;transaction__partition&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;transaction__order&quot;</span><span class="p">,</span>
         <span class="p">)</span>  <span class="c1"># order_by record_code, subrecord_code already happened in get_queryset</span>
         <span class="k">return</span> <span class="n">tracked_models</span>
 
