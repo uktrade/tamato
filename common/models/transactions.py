@@ -70,20 +70,16 @@ class TransactionsAlreadyApproved(Exception):
 class TransactionQueryset(models.QuerySet):
     def unordered_tracked_models(self):
         """Usually 'ordered_tracked_models' is required."""
-        return self.model.tracked_models.rel.related_model.objects
+        return self.model.tracked_models.rel.related_model.objects.filter(
+            transaction__in=self,
+        )
 
     def ordered_tracked_models(self):
         """TrackedModel in order of their transactions creation order."""
 
-        tracked_models = (
-            self.unordered_tracked_models()
-            .filter(
-                transaction__in=self,
-            )
-            .order_by(
-                "transaction__partition",
-                "transaction__order",
-            )
+        tracked_models = self.unordered_tracked_models().order_by(
+            "transaction__partition",
+            "transaction__order",
         )  # order_by record_code, subrecord_code already happened in get_queryset
         return tracked_models
 
