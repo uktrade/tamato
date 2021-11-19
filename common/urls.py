@@ -8,7 +8,7 @@ from common.path_converters import NumericSIDConverter
 register_converter(NumericSIDConverter, "sid")
 
 urlpatterns = [
-    path("", views.index, name="index"),
+    path("", views.Dashboard.as_view(), name="index"),
     path("healthcheck", views.healthcheck, name="healthcheck"),
     path("login", views.LoginView.as_view(), name="login"),
     path("logout", views.LogoutView.as_view(), name="logout"),

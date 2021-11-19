@@ -15,8 +15,8 @@ from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
 from django.views import generic
+from django.views.generic.edit import FormView
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
@@ -25,32 +25,56 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from workbaskets.forms import SelectableWorkBasketItemsForm
 from workbaskets.models import WorkBasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-def index(request):
-    workbasket = WorkBasket.objects.is_not_approved().last()
+class Dashboard(FormView):
+    """UI endpoint providing a dashboard view, including a user selected set of
+    workbasket items."""
 
-    if not workbasket:
-        id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
-        workbasket = WorkBasket.objects.create(
-            title=f"Workbasket {id}",
-            author=request.user,
+    form_class = SelectableWorkBasketItemsForm
+    template_name = "common/index.jinja"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.workbasket = self._get_workbasket()
+
+    def _get_workbasket(self):
+        workbasket = WorkBasket.objects.is_not_approved().last()
+        if not workbasket:
+            id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
+            workbasket = WorkBasket.objects.create(
+                title=f"Workbasket {id}",
+                author=self.request.user,
+            )
+        return workbasket
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["workbasket"] = self.workbasket
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        paginator = Paginator(self.workbasket.tracked_models, per_page=10)
+        page = paginator.get_page(self.request.GET.get("page", 1))
+
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "paginator": paginator,
+            },
         )
+        return context
 
-    paginator = Paginator(workbasket.tracked_models, per_page=10)
-    page = paginator.get_page(request.GET.get("page", 1))
-
-    return render(
-        request,
-        "common/index.jinja",
-        context={
-            "workbasket": workbasket,
-            "page_obj": page,
-            "paginator": paginator,
-        },
-    )
+    def get_success_url(self):
+        # TODO:
+        # Get success URL based upon the button used to submit the form.
+        return super().get_success_url()
 
 
 class HealthCheckResponse(HttpResponse):
