@@ -338,7 +338,30 @@
     <span class="k">def</span> <span class="nf">_get_version_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VersionGroup</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">VersionGroup</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">version_group</span>
+
+        <span class="n">latest_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">latest_version</span><span class="p">:</span>
+            <span class="c1"># An object may be created and deleted/updated in the same workbasket.</span>
+            <span class="c1"># If the workbasket status is not WorkflowStatus.PUBLISHED,</span>
+            <span class="c1"># then latest_approved() in the above line of code will return None.</span>
+            <span class="c1"># Trying to get the version group off that will throw an exception.</span>
+            <span class="c1"># The extra bit of logic below deals with such cases</span>
+            <span class="c1"># It will attempt to find the corresponding CREATE record</span>
+            <span class="c1"># in the current workbasket and return that as the latest_version.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">latest_version</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">record</span>
+                    <span class="k">for</span> <span class="n">transaction</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="o">.</span><span class="n">transactions</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">transaction</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span>
+                    <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span>
+                <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">return</span>
+
+        <span class="k">return</span> <span class="n">latest_version</span><span class="o">.</span><span class="n">version_group</span>
 
     <span class="k">def</span> <span class="nf">_can_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span>
