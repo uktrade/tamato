@@ -120,3 +120,5 @@ def test_ordering_of_querysets_with_negative_transaction_orders():
 
     qs.save_drafts(partition_scheme)
     assert sorted(tx.order for tx in qs.all()) == [0, 1]
+    assert qs.get(pk=transaction_first.pk).order == 0
+    assert qs.get(pk=transaction_second.pk).order == 1
