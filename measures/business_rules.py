@@ -336,74 +336,23 @@ class ME32(BusinessRule):
 
         return query
 
-    def matching_measures(self, measure, query):
-        return (
-            type(measure)
-            .objects.filter(query)
-            .approved_up_to_transaction(measure.transaction)
-            .exclude(version_group=measure.version_group)
-        )
-
     def validate(self, measure):
         if measure.goods_nomenclature is None:
             return
 
         # build the query for measures matching the given measure
+        from measures.snapshots import MeasureSnapshot
+
         query = self.compile_query(measure)
-        matching_measures = self.matching_measures(measure, query)
-
-        # get all goods nomenclature versions associated with this measure
-        GoodsNomenclature = type(measure.goods_nomenclature)
-        goods = GoodsNomenclature.objects.approved_up_to_transaction(
-            measure.transaction,
-        ).filter(
-            sid=measure.goods_nomenclature.sid,
-            valid_between__overlap=measure.effective_valid_between,
-        )
-
-        # hack to avoid circular import
-        Indent = GoodsNomenclature.indents.rel.related_model
-        Node = Indent.nodes.rel.related_model
-
-        # for each goods nomenclature version, get all indents
-        for good in goods:
-            indents = (
-                Indent.objects.with_end_date()
-                .approved_up_to_transaction(
-                    measure.transaction,
-                )
-                .filter(
-                    valid_between__overlap=measure.effective_valid_between,
-                    indented_goods_nomenclature=good,
-                )
+        clashing_measures = type(measure).objects.none()
+        for snapshot in MeasureSnapshot.get_snapshots(measure, self.transaction):
+            clashing_measures = clashing_measures.union(
+                snapshot.overlaps(measure).filter(query),
+                all=True,
             )
 
-            nodes = Node.objects.filter(
-                valid_between__overlap=measure.effective_valid_between,
-                indent__in=indents,
-            )
-
-            # for each indent, get the goods tree
-            for node in nodes:
-                tree = (
-                    node.get_ancestors()
-                    | node.get_descendants()
-                    | Node.objects.filter(pk=node.pk)
-                ).filter(
-                    valid_between__overlap=measure.effective_valid_between,
-                )
-
-                # check for any measures associated to commodity codes in the tree which
-                # clash with the specified measure
-                clashing_measures = matching_measures.with_effective_valid_between().filter(
-                    goods_nomenclature__indents__nodes__in=tree.values_list(
-                        "pk",
-                        flat=True,
-                    ),
-                    db_effective_valid_between__overlap=measure.effective_valid_between,
-                )
-                if clashing_measures.exists():
-                    raise self.violation(measure)
+        if clashing_measures.exists():
+            raise self.violation(measure)
 
 
 # -- Ceiling/quota definition existence
@@ -658,7 +607,7 @@ class ME33(BusinessRule):
 
     def validate(self, measure):
         if (
-            measure.effective_valid_between.upper is None
+            measure.valid_between.upper is None
             and measure.terminating_regulation is not None
         ):
             raise self.violation(measure)

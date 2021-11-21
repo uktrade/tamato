@@ -417,14 +417,23 @@ def existing_goods_nomenclature(date_ranges):
 
 
 def updated_goods_nomenclature(e):
+    original = e.indents.get()
+    original.indent = 1
+    original.save(force_write=True)
+
     good = factories.GoodsNomenclatureFactory.create(
+        item_id=e.item_id[:8] + "90",
         valid_between=e.valid_between,
+        indent__indent=e.indents.first().indent + 1,
         indent__node__parent=e.indents.first().nodes.first(),
     )
 
     factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good,
         update_type=UpdateType.UPDATE,
         version_group=good.indents.first().version_group,
+        validity_start=good.indents.first().validity_start,
+        indent=e.indents.first().indent - 1,
         node__parent=None,
     )
 
@@ -436,6 +445,7 @@ def updated_goods_nomenclature(e):
         (lambda e: e, True),
         (
             lambda e: factories.GoodsNomenclatureFactory.create(
+                item_id=e.item_id[:8] + "90",
                 indent__node__parent=e.indents.first().nodes.first(),
                 valid_between=e.valid_between,
             ),
@@ -599,10 +609,7 @@ def test_ME32(related_measure_data):
     related_data, error_expected = related_measure_data
     related = factories.MeasureFactory.create(**related_data)
 
-    if error_expected:
-        with pytest.raises(BusinessRuleViolation):
-            business_rules.ME32(related.transaction).validate(related)
-    else:
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME32(related.transaction).validate(related)
 
 
