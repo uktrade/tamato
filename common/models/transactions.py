@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import F
 from django.db.transaction import atomic
 from django_fsm import FSMIntegerField
 from django_fsm import transition
@@ -16,6 +15,7 @@ from django_fsm import transition
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
+from common.renderers import counter_generator
 
 logger = getLogger(__name__)
 PREEMPTIVE_TRANSACTION_SEED = -100000
@@ -94,20 +94,43 @@ class TransactionQueryset(models.QuerySet):
         """
         return self.exclude(partition=TransactionPartition.DRAFT)
 
-    def preorder_negative_transactions(self) -> None:
+    @atomic
+    def apply_transaction_order(self, partition_scheme) -> None:
         """
-        Makes all order numbers negative if there is even one negative order
-        number.
+        Reorder transactions in the workbasket.
 
-        Negative order numbers happen in preemptive transactions, e.g. when we
-        import commodity code changes
+        Note that transaction orders may not be contiguous,
+        e.g. when the workbasket has preemptive transactions
+        (created by the commodity code change handler).
+
+        TODO: Enhance this method to order based on partitions also.
         """
-        if self.count() and self.order_by("order").first().order < 0:
-            order = PREEMPTIVE_TRANSACTION_SEED
-            for tx in self.order_by("order").all():
-                order += 1
-                tx.order = order
-                tx.save()
+        first_tx = self.order_by("order").first()
+
+        if self.order_by("order").first().order < 0:
+            pass
+        else:
+            first_tx.order
+
+        # Ensure order of the transactions in this query to start at the end of the existing approved partition.
+        existing_tx = self.model.objects.filter(
+            partition=partition_scheme.get_approved_partition(),
+        ).last()
+        order_start = existing_tx.order + 1 if existing_tx else 0
+
+        counter = counter_generator(start=order_start + 1)
+
+        logger.debug(
+            "Update draft transactions in query starting from %s "
+            "to start after transaction %s. order_start: %s",
+            first_tx.pk,
+            existing_tx.pk if existing_tx else None,
+            order_start,
+        )
+
+        for tx in self.order_by("order").all():
+            tx.order = counter()
+            tx.save()
 
     @atomic
     def save_drafts(self, partition_scheme):
@@ -123,6 +146,10 @@ class TransactionQueryset(models.QuerySet):
             logger.error(msg)
             raise TransactionsAlreadyApproved(msg)
 
+        if self.first() is None:
+            logger.info("Draft contains no transactions, bailing out early.")
+            return
+
         # Find the transaction in the destination approved partition with the highest order
         # get_approved_partition may raise a ValueError, e.g. when attempting to create
         # a seed transaction when revisions exist, so it is called before any of the
@@ -135,38 +162,14 @@ class TransactionQueryset(models.QuerySet):
             approved_partition,
         )
         logger.debug("Update versions_group.")
+
         for obj in self.unordered_tracked_models().order_by("pk"):
             version_group = obj.version_group
             version_group.current_version = obj
             version_group.save()
 
-        self.preorder_negative_transactions()
-
-        new_tx = self.first()
-        if new_tx is None:
-            logger.info("Draft contains no transactions, bailing out early.")
-            return
-
-        # Ensure order of the transactions in this query to start at the end of the existing approved partition.
-        existing_tx = self.model.objects.filter(
-            partition=approved_partition,
-        ).last()
-        order_start = existing_tx.order + 1 if existing_tx else 0
-        order_difference = order_start - new_tx.order if new_tx else 1
-
-        logger.debug(
-            "Update draft transactions in query starting from %s to start after transaction %s."
-            "  order_start: %s, order_difference: %s",
-            new_tx.pk if new_tx else None,
-            existing_tx.pk if existing_tx else None,
-            order_start,
-            order_difference,
-        )
-
-        self.update(
-            order=F("order") + order_difference,
-            partition=approved_partition,
-        )
+        self.apply_transaction_order(partition_scheme)
+        self.update(partition=approved_partition)
 
 
 class Transaction(TimestampedMixin):
