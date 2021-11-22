@@ -77,7 +77,7 @@ class GeographicalAreaFormMixin(forms.Form):
             GeographicalArea.objects.filter(
                 area_code=AreaCode.GROUP,
             )
-            .active()
+            .as_at_today()
             .approved_up_to_transaction(tx)
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")
@@ -91,7 +91,7 @@ class GeographicalAreaFormMixin(forms.Form):
             GeographicalArea.objects.exclude(
                 area_code=AreaCode.GROUP,
             )
-            .active()
+            .as_at_today()
             .approved_up_to_transaction(tx)
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")

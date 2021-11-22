@@ -236,3 +236,67 @@ def test_commodity_code_change_performs_DELETE_and_CREATE(GoodsNomenclatureFacto
     assert deleted_measure is not None
     assert created_measure is not None
     assert Measure.objects.count() == 3
+
+
+@pytest.fixture(
+    params=(
+        ("normal", "no_end", "normal"),
+        ("no_end", "normal", "normal"),
+        ("no_end", "no_end", "no_end"),
+    ),
+    ids=(
+        "normal",
+        "effective_normal",
+        "no_end",
+    ),
+)
+def regulation_date_ranges(request, date_ranges):
+    valid_between, effective_valid_between, expected_range = request.param
+    return {
+        "valid_between": getattr(date_ranges, valid_between),
+        "effective_end_date": getattr(date_ranges, effective_valid_between).upper,
+    }, getattr(date_ranges, expected_range)
+
+
+@pytest.fixture(
+    params=(
+        (factories.BaseRegulationFactory, ""),
+        (factories.ModifiedBaseRegulationFactory, "amendment__enacting_regulation__"),
+        (factories.ModificationRegulationFactory, "amendment__target_regulation__"),
+        (factories.ModificationRegulationFactory, ""),
+    ),
+    ids=(
+        "base_with_own_end",
+        "base_with_ended_modification",
+        "modification_with_ended_base",
+        "modification_with_own_end",
+    ),
+)
+def measure_regulation(request, regulation_date_ranges):
+    factory, attr = request.param
+    dates, expected_range = regulation_date_ranges
+    data = {(attr + field): value for field, value in dates.items()}
+    model = factory(**data)
+    return model, expected_range
+
+
+@pytest.mark.parametrize(
+    ("measure_dates"),
+    ("normal", "no_end"),
+    ids=("implicit", "explicit"),
+)
+def test_effective_valid_between(measure_regulation, measure_dates, date_ranges):
+    regulation, regulation_range = measure_regulation
+    measure_range = getattr(date_ranges, measure_dates)
+    measure: Measure = factories.MeasureFactory.create(
+        generating_regulation=regulation,
+        valid_between=measure_range,
+    )
+
+    expected_dates = (
+        measure_range
+        if regulation_range.upper_is_greater(measure_range)
+        else regulation_range
+    )
+    assert measure.effective_valid_between == expected_dates
+    assert measure.effective_end_date == expected_dates.upper

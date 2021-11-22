@@ -32,7 +32,7 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
@@ -1484,7 +1484,7 @@ def get_model_preferred_key(obj: TrackedModel) -> str:
 
 def get_model_identifier(obj: TrackedModel) -> str:
     """Returns the preferred identifier for a model."""
-    identifier = obj.identifying_fields_to_string()
+    identifier = obj.identifying_fields_to_string
     label = obj._meta.label
     return f"{label}: {identifier}"
 

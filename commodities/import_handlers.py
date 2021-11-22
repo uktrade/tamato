@@ -219,8 +219,12 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         if not preceding_indent:
             return
 
-        preceding_node = models.GoodsNomenclatureIndentNode.objects.get(
-            indent=preceding_indent,
+        preceding_node = (
+            models.GoodsNomenclatureIndentNode.objects.filter(
+                indent=preceding_indent,
+            )
+            .order_by("creating_transaction_id")
+            .last()
         )
 
         valid_between = TaricDateRange(
@@ -248,7 +252,8 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             )
             new_preceding_node = parent_node.add_child(**node_data)
 
-        # Move the children of the preceding node to its new version
+        # The tree needs to be copied over to each new indent node separately,
+        # including the new preceding node
         preceding_node.copy_tree(
             parent=new_preceding_node,
             valid_between=valid_between,
@@ -272,12 +277,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         as the explicit end date for the new indent's related
         `GoodsNomenclatureIndentNode` object we are about to create.
         """
-        succeeding_indent = indent.get_succeeding_indent()
-
-        if not succeeding_indent:
-            return
-
-        return succeeding_indent.validity_start - timedelta(days=-1)
+        models.GoodsNomenclatureIndent.objects.with_end_date().get(
+            pk=indent.pk,
+        ).validity_end
 
     # @transaction.atomic
     def save(self, data: dict):
@@ -306,6 +308,8 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             indent_node = models.GoodsNomenclatureIndentNode.add_root(**node_data)
 
             if preceding_node:
+                # The tree needs to be copied over to each new indent node separately,
+                # in addition to the new preceding indent, including the new root indent node.
                 preceding_node.copy_tree(
                     parent=indent_node,
                     valid_between=indent.valid_between,
@@ -364,6 +368,8 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             indent_node = next_parent.add_child(**node_data)
 
             if preceding_node:
+                # The tree needs to be copied over to each new indent node separately,
+                # in addition to the new preceding indent, including this node.
                 preceding_node.copy_tree(
                     parent=indent_node,
                     valid_between=node_data["valid_between"],
@@ -480,6 +486,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         see if any should be moved from their current parent to the new indent.
         """
         try:
+            # while in the import handler,
+            # we may have indents that have no nodes yet,
+            # which could lead to exceptions
             nodes = obj.nodes.all()
         except (AttributeError, TypeError):
             return

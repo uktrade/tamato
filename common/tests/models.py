@@ -5,11 +5,12 @@ from django.db import models
 from common.fields import NumericSID
 from common.fields import ShortDescription
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 
 
-class TestModel1(TrackedModel, ValidityMixin):
+class TestModel1(TrackedModel, ValidityMixin, DescribedMixin):
     __test__ = False
     record_code = "01"
     subrecord_code = "01"

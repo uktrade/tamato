@@ -3,7 +3,7 @@ from typing import Type
 from rest_framework import permissions
 from rest_framework import viewsets
 
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin

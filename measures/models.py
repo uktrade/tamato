@@ -544,42 +544,28 @@ class Measure(TrackedModel, ValidityMixin):
     validity_field_name = "db_effective_valid_between"
 
     @property
-    def effective_end_date(self):
+    def effective_end_date(self) -> date:
         """Measure end dates may be overridden by regulations."""
-
-        # UK measures will have explicit end dates only
-        # if self.national:
-        #     return self.valid_between.upper
-
-        reg = self.generating_regulation
-        effective_end_date = (
-            date(
-                reg.effective_end_date.year,
-                reg.effective_end_date.month,
-                reg.effective_end_date.day,
+        if not hasattr(self, self.validity_field_name):
+            effective_valid_between = (
+                type(self)
+                .objects_with_validity_field()
+                .filter(pk=self.pk)
+                .get()
+                .db_effective_valid_between
             )
-            if reg.effective_end_date
-            else None
-        )
+            setattr(self, self.validity_field_name, effective_valid_between)
 
-        if self.valid_between.upper and reg and effective_end_date:
-            if self.valid_between.upper > effective_end_date:
-                return effective_end_date
-            return self.valid_between.upper
-
-        if self.valid_between.upper and self.terminating_regulation:
-            return self.valid_between.upper
-
-        if reg:
-            return effective_end_date
-
-        return self.valid_between.upper
+        return getattr(self, self.validity_field_name).upper
 
     def __str__(self):
         return str(self.sid)
 
     @property
-    def effective_valid_between(self):
+    def effective_valid_between(self) -> TaricDateRange:
+        if hasattr(self, self.validity_field_name):
+            return getattr(self, self.validity_field_name)
+
         return TaricDateRange(self.valid_between.lower, self.effective_end_date)
 
     @classmethod
@@ -810,7 +796,7 @@ class MeasureCondition(TrackedModel):
         elif self.is_certificate_required():
             out.append("On presentation of no certificate,")
 
-        if self.reference_price_string:
+        if hasattr(self, "reference_price_string") and self.reference_price_string:
             out.append(f"If reference price > {self.reference_price_string},")
 
         out.append(f"perform action {self.action.code} - {self.action.description}")

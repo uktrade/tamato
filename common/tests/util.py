@@ -1,11 +1,14 @@
 import contextlib
+import importlib
 from datetime import date
 from datetime import datetime
 from datetime import timezone
+from functools import lru_cache
 from functools import wraps
 from io import BytesIO
 from typing import Any
 from typing import Dict
+from typing import Optional
 from typing import Sequence
 
 import pytest
@@ -13,15 +16,19 @@ from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models.base import ModelBase
 from django.template.loader import render_to_string
+from django.urls import get_resolver
 from django.urls import reverse
+from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
 
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
+from common.tests import factories
 from common.util import TaricDateRange
 from common.util import get_accessor
 from common.util import get_field_tuple
@@ -148,10 +155,265 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
     identifying_fields = {
         name: data[name].get_identifying_fields()
         for name in checked_field_names
-        if hasattr(data[name], "get_identifying_fields")
+        if hasattr(data[name], "identifying_fields")
     }
     data.update(identifying_fields)
     return data
+
+
+def fully_qualified_classname(cls):
+    return f"{cls.__module__}.{cls.__qualname__}"
+
+
+def get_class_based_view_urls(prefix=lambda **kwargs: True):
+    """
+    Iterator over all class based views, and url patterns. Users may filter on
+    view or url_pattern, by providing a prefix function.
+
+    yields view, url_pattern
+
+    url_pattern is a tuple (bits, p_pattern, default_args, pattern_converters)
+    the format is decided by djangos resolver.reverse_dict, for more info
+    see the implementation there.
+
+    Class based views are de-duped, so only the first combination of view, params
+    if yielded.
+
+    def prefix(**kwargs):
+        view = kwargs["view"]
+        url_pattern = kwargs["url_pattern"]
+        # Filter by view or pattern here, e.g. on view.view_class
+        return True
+
+    >>> get_class_based_view_urls(prefix=prefix)
+    """
+    resolver = get_resolver()
+
+    views = set()
+    for view, url_pattern in resolver.reverse_dict.items():
+        # url_pattern is a tuple of:
+        #   (bits, p_pattern, default_args, pattern_converters)
+        #   See: django resolver.reverse_dict implementation
+        view_class = getattr(view, "view_class", None)
+        if view_class is None:
+            # Skip function based views.
+            continue
+
+        if prefix(view=view, url_pattern=url_pattern):
+            bits = url_pattern[0]
+            url_params = bits[0][1]
+            views_key = (fully_qualified_classname(view_class), tuple(url_params))
+            if views_key not in views:
+                views.add(views_key)
+                yield view, url_pattern
+
+
+def view_is_subclass(desired_view_class):
+    """
+    Return a Prefix function for get_class_based_views that allows filtering by
+    a subclass of a class based view.
+
+    >>> get_class_based_view_urls(prefix=view_is_subclass(TrackedModelDetailMixin))
+    """
+
+    def prefix(view=None, **kwargs):
+        return issubclass(view.view_class, desired_view_class)
+
+    return prefix
+
+
+def view_url_pattern_starts_with(url_start):
+    """Return a Prefix function for get_class_based_views that filtering views,
+    only returning those who's url_pattern starts with some string."""
+
+    def prefix(url_pattern=None, **kwargs):
+        # url_pattern is a tuple of:
+        #   (bits, p_pattern, default_args, pattern_converters)
+        #   See: django resolver.reverse_dict implementation
+        bits = url_pattern[0]
+        return bits[0][0].startswith(url_start)
+
+    return prefix
+
+
+def get_class_based_view_urls_matching_url(
+    url_start,
+    prefix=lambda **kwargs: True,
+    assert_contains_view_classes=None,
+):
+    """
+    Return a list of tuples of (view, url pattern), where url_pattern starts
+    with the supplied string.
+
+    Users may pass optionally assert_contains_view_classes to verify if certain views were found.
+
+    Use prefix to filter by particular class based views:
+
+    >>> get_class_based_view_urls_matching_url("/some-url", prefix=view_is_subclass(TrackedModelDetailMixin))
+
+    :param url_start: First part of URL
+    :param prefix: A prefix function to filter class based views with.
+    :param assert_contains_view_classes: Optional list of views, if any are not present an assertion is raise.
+    :return: List of tuples of (view, url_pattern)
+    """
+    valid_url = view_url_pattern_starts_with(url_start)
+
+    def _prefix(**kwargs):
+        return valid_url(**kwargs) and prefix(**kwargs)
+
+    view_urls = list(get_class_based_view_urls(prefix=_prefix))
+
+    # Fail if there are no matching views - it indicates the test has a bug.
+    assert len(view_urls), f"Did not find any views with a url matching {url_start}"
+
+    if assert_contains_view_classes:
+        # Optional list of views that should be under the URL
+        view_classes = [view.view_class for view, url in view_urls]
+        assert set(assert_contains_view_classes).issubset(view_classes), (
+            f"View classes: {assert_contains_view_classes} not "
+            f"found in urls: {view_urls} "
+        )
+
+    return view_urls
+
+
+def get_view_model(view_class, override_models):
+    """
+    :return view_model from a view class, if the fully qualified classname is present inf override_models
+    this is returned instead.
+    """
+    # User may supply their own model in the override_models dict, keyed by the view_class
+    fq_class_name = fully_qualified_classname(view_class)
+    if fq_class_name in override_models:
+        return override_models[fq_class_name]
+
+    if view_class.model:
+        # Class Based views (such as Tamato's detail views)
+        return view_class.model
+
+    if issubclass(view_class, FilterView):
+        # FilterViews (such as TamatoListView)
+        return view_class.filterset_class.Meta.model
+
+    raise NotImplemented(f"Retrieving model from {view_class} is not implemented.")
+
+
+def get_fields_dict(instance, field_names):
+    """
+    Retrieve dict of fields from django model instance, fetching data via the
+    double underscore __ linked models.
+
+    :param instance: Django model instance.
+    :param field_names: List of fields to retrieve.
+    :return: dict of {field_name: field_value}
+    """
+    return dict(get_field_tuple(instance, name) for name in field_names)
+
+
+def view_urlpattern_ids(param):
+    """
+    Function to use as ids= parameter for tests parameterized by sequences of
+    tuples (view, url_pattern)
+
+    Parameterizer functions that generate tuples like this include:
+     - get_class_based_view_urls and
+     - get_class_based_view_urls_matching_url.
+
+    Note:  List views have no parameters, so the test ids
+           there trailing hyphens: -.
+    """
+    if hasattr(param, "view_class"):
+        return param.view_class.__name__
+    elif isinstance(param, tuple) and len(param) == 4:
+        # tuple containing:
+        #   (bits, p_pattern, default_args, pattern_converters)
+        #   See: django resolver.reverse_dict implementation
+        bits = param[0]
+        url_params = bits[0][1]
+        return "-".join(url_params)
+
+
+@lru_cache(maxsize=None)
+def _unresolvable_objects(fully_qualified_names):
+    """
+    Given a tuple of fully_qualified_names, return a list of those that cannot
+    be resolved. fully_qualified_names must be a hashable collection such as a
+    tuple so results can be cached.
+
+    :param fully_qualified_names: tuple of fully qualified object names.
+    """
+    not_present = []
+
+    for fq_name in fully_qualified_names:
+        module_name, class_name = fq_name.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        if not hasattr(module, class_name):
+            not_present.append(fq_name)
+
+    return not_present
+
+
+def assert_objects_resolvable(fully_qualified_names):
+    """
+    Verify that every item in a list is an object that can resolved by
+    module_name.object_name.
+
+    :param fully_qualified_names: sequence of full qualified module.class names
+    """
+    unresolvable = _unresolvable_objects(tuple(fully_qualified_names))
+    if unresolvable:
+        pytest.fail(
+            "Could not resolve objects: " + ", ".join(unresolvable),
+        )
+
+
+def assert_model_view_renders(
+    view,
+    url_pattern,
+    valid_user_client,
+    override_models: Optional[Dict[str, ModelBase]] = None,
+):
+    """
+    Integration test to verify class based views.
+
+    Given a class based view and a url_pattern -
+      - Lookup the views model and relevant factory.
+      - Create data from the factory.
+      - Fetch data from the a URL constructed using the just created data.
+      - Assert that a 200 status was returned.
+
+    :param view: View for Class based model view
+    :param url_pattern:  url_pattern tuple of (bits, p_pattern, default_args, pattern_converters), see django resolver reverse_dict.
+    :param valid_user_client:
+    :param override_models: dict of {fq_view_name: Model}
+    """
+    if override_models:
+        assert_objects_resolvable(override_models.keys())
+
+    # Before calling the models view, create data by calling the corresponding factory:
+    model = get_view_model(view.view_class, override_models or {})
+
+    factory_class_name = f"{model.__name__}Factory"
+    factory = getattr(factories, factory_class_name, None)
+    assert factory is not None, f"Factory not found: factories.{factory_class_name}"
+
+    instance = factory.create()
+
+    # Build URL using fields from the model.
+    # An error retrieving model fields may indicate the class-based-view's
+    # model is not what is needed to fill out the URL.
+    # Models can be overridden using the override_models parameter.
+    bits = url_pattern[0]
+    params = get_fields_dict(instance, bits[0][1])
+    url = bits[0][0] % params
+
+    assert len(url) > 1, "No matching URLs were found."
+
+    response = valid_user_client.get(f"/{url}")
+
+    assert (
+        response.status_code == 200
+    ), f"View returned an error status: {response.status_code}"
 
 
 def assert_records_match(

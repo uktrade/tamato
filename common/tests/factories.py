@@ -47,6 +47,10 @@ def date_ranges(name):
     return factory.LazyFunction(lambda: getattr(Dates(), name))
 
 
+def end_date(name):
+    return factory.LazyFunction(lambda: getattr(Dates(), name).upper)
+
+
 class ValidityFactoryMixin(factory.django.DjangoModelFactory):
     valid_between = date_ranges("no_end")
 
@@ -210,9 +214,6 @@ class RegulationFactory(TrackedModelMixin, ValidityFactoryMixin):
     regulation_id = factory.Sequence(lambda n: f"R{Dates().now:%y}{n:04d}0")
     approved = True
     role_type = 1
-    valid_between = factory.LazyAttribute(
-        lambda o: Dates().no_end if o.role_type == 1 else None,
-    )
     community_code = 1
     regulation_group = factory.SubFactory(
         RegulationGroupFactory,
@@ -224,11 +225,25 @@ class RegulationFactory(TrackedModelMixin, ValidityFactoryMixin):
 
 
 class BaseRegulationFactory(RegulationFactory):
-    regulation_group = factory.SubFactory(
-        RegulationGroupFactory,
-        transaction=factory.SelfAttribute("..transaction"),
-    )
     role_type = 1
+    valid_between = date_ranges("no_end")
+
+
+class ModificationRegulationFactory(RegulationFactory):
+    role_type = 4
+    valid_between = date_ranges("no_end")
+
+    amendment = factory.RelatedFactory(
+        "common.tests.factories.AmendmentFactory",
+        factory_related_name="enacting_regulation",
+    )
+
+
+class ModifiedBaseRegulationFactory(BaseRegulationFactory):
+    amendment = factory.RelatedFactory(
+        "common.tests.factories.AmendmentFactory",
+        factory_related_name="target_regulation",
+    )
 
 
 class UIRegulationFactory(BaseRegulationFactory):
@@ -247,11 +262,12 @@ class AmendmentFactory(TrackedModelMixin):
         model = "regulations.Amendment"
 
     target_regulation = factory.SubFactory(
-        RegulationFactory,
+        BaseRegulationFactory,
         transaction=factory.SelfAttribute("..transaction"),
     )
     enacting_regulation = factory.SubFactory(
-        RegulationFactory,
+        ModificationRegulationFactory,
+        amendment=None,
         # FIXME synthetic-record-order make this field transaction=factory.SelfAttribute("..transaction")
     )
 

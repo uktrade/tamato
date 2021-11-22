@@ -20,6 +20,7 @@ from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
 from common.models import TrackedModel
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.description import DescriptionQueryset
 from common.models.mixins.validity import ValidityMixin
@@ -112,7 +113,7 @@ class CommodityCode:
         return self.code
 
 
-class GoodsNomenclature(TrackedModel, ValidityMixin):
+class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "00"
 
@@ -335,7 +336,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         validity_start = start_date or self.validity_start
 
         qs = GoodsNomenclatureIndentNode.objects
-        parents: GoodsNomenclatureIndentNode = (
+        parent: GoodsNomenclatureIndentNode = (
             qs.filter(
                 Q(indent__indented_goods_nomenclature__item_id__lt=item_id)
                 | Q(
@@ -353,10 +354,8 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
                 "-indent__validity_start",
                 "-creating_transaction",
             )
-            .all()
+            .first()
         )
-
-        parent = parents.first()
 
         # The end dates on some historically created nodes
         # may have not been synced with the implied end date of their indent
@@ -499,15 +498,6 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         return new_valid_between
 
     @property
-    def parent_depth(self) -> int:
-        """
-        Returns parent depth factoring in the good's indent shift.
-
-        See the docs to `GoodsNomenclature.indent_shift` for context.
-        """
-        return self.depth + 1 + self.good.indent_shift
-
-    @property
     def good(self) -> GoodsNomenclature:
         """Returns the node indent's indented good."""
         return self.indent.indented_goods_nomenclature
@@ -533,7 +523,7 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         self,
         as_of_transaction: Optional[Transaction] = None,
     ) -> Optional[GoodsNomenclatureIndentNode]:
-        """Returns the successor to this node, if any."""
+        """Returns the successeeding node to this node, if it exists."""
         indent = self.indent.get_succeeding_indent(as_of_transaction)
 
         if not indent:

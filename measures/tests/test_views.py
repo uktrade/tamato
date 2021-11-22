@@ -2,7 +2,14 @@ import pytest
 from django.urls import reverse
 
 from common.tests import factories
+from common.tests.util import assert_model_view_renders
+from common.tests.util import get_class_based_view_urls_matching_url
+from common.tests.util import view_is_subclass
+from common.tests.util import view_urlpattern_ids
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
 from measures.views import MeasureFootnotesUpdate
+from measures.views import MeasureList
 
 pytestmark = pytest.mark.django_db
 
@@ -76,3 +83,32 @@ def test_measure_footnotes_update_post_without_remove_ignores_delete_keys(
     assert client.session[f"formset_initial_{measure.sid}"] == [
         {"footnote": str(footnote_1.pk)},
     ]
+
+
+@pytest.mark.parametrize(
+    ("view", "url_pattern"),
+    get_class_based_view_urls_matching_url(
+        "measures/",
+        view_is_subclass(TrackedModelDetailMixin),
+    ),
+    ids=view_urlpattern_ids,
+)
+def test_measure_detail_views(view, url_pattern, valid_user_client):
+    """Verify that measure detail views are under the url measures/ and don't
+    return an error."""
+    assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+@pytest.mark.parametrize(
+    ("view", "url_pattern"),
+    get_class_based_view_urls_matching_url(
+        "measures/",
+        view_is_subclass(TamatoListView),
+        assert_contains_view_classes=[MeasureList],
+    ),
+    ids=view_urlpattern_ids,
+)
+def test_measure_list_view(view, url_pattern, valid_user_client):
+    """Verify that measure list view is under the url measures/ and doesn't
+    return an error."""
+    assert_model_view_renders(view, url_pattern, valid_user_client)

@@ -709,7 +709,6 @@ def test_footnote_association_goods_nomenclature_importer(imported_fields_match)
 )
 def test_sync_indent_node_end_dates_on_indent_import(
     run_xml_import,
-    mocked_responses,
     current_indent_start_date,
     imported_indent_start_date,
     curent_node_end_date,

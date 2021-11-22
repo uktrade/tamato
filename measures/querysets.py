@@ -7,11 +7,20 @@ from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models import When
+from django.db.models.aggregates import Max
+from django.db.models.fields import DateField
+from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
+from django.db.models.functions.comparison import Cast
+from django.db.models.functions.comparison import NullIf
 from django.db.models.functions.text import Trim
+from django_cte.cte import With
 
 from common.fields import TaricDateRangeField
-from common.models.records import TrackedModelQuerySet
+from common.models.tracked_qs import TrackedModelQuerySet
+from common.util import EndDate
+from common.util import StartDate
+from regulations.models import Regulation
 
 
 class DutySentenceMixin(QuerySet):
@@ -151,76 +160,79 @@ class DutySentenceMixin(QuerySet):
 class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
     def with_effective_valid_between(self):
         """
-        In many cases the measures regulation effective_end_date overrides the
-        measures validity range.
+        There are five ways in which measures can get end dated:
 
-        Annotate the queryset with the db_effective_valid_between based on the regulations and measure.
+        1. Where the measure is given an explicit end date on the measure record
+           itself
+        2. Where the measure's generating regulation is a base regulation, and
+           the base regulation itself is end-dated
+        3. Where the measure's generating regulation is a modification
+           regulation, and the modification regulation itself is end-dated
+        4. Where the measure's generating regulation is a base regulation,
+           and any of the modification regulations that modify it are end-dated
+        5. Where the measure's generating regulation is a modification
+           regulation, and the base regulation that it modifies is end-dated
 
-        Generates the following SQL:
-
-        .. code:: SQL
-
-            SELECT *,
-                   CASE
-                     WHEN (
-                       "regulations_regulation"."effective_end_date" IS NOT NULL AND
-                       "measures_measure"."valid_between" @> "regulations_regulation"."effective_end_date"::timestamp WITH time zone AND
-                       NOT Upper_inf("measures_measure"."valid_between")
-                     ) THEN Daterange(Lower("measures_measure"."valid_between"), "regulations_regulation"."effective_end_date", [])
-                     WHEN (
-                       "regulations_regulation"."effective_end_date" IS NOT NULL AND
-                       Upper_inf("measures_measure"."valid_between")
-                     ) THEN "measures_measure"."valid_between"
-                     WHEN (
-                       "measures_measure"."terminating_regulation_id" IS NOT NULL AND
-                       NOT Upper_inf("measures_measure"."valid_between")
-                     ) THEN "measures_measure"."valid_between"
-                     WHEN "measures_measure"."generating_regulation_id" IS NOT NULL THEN Daterange(Lower("measures_measure"."valid_between"), "regulations_regulation"."effective_end_date", [])
-                     ELSE "measures_measure"."valid_between"
-                   END AS "db_effective_valid_between"
-              FROM "measures_measure"
-             INNER JOIN "regulations_regulation"
-                ON "measures_measure"."generating_regulation_id" = "regulations_regulation"."trackedmodel_ptr_id"
-             INNER JOIN "common_trackedmodel"
-                ON "measures_measure"."trackedmodel_ptr_id" = "common_trackedmodel"."id"
+        Numbers 2–5 also have to take account of the "effective end date" which
+        if set should be used over any explicit date. The effective end date is
+        set when other types of regulations are used (abrogation, prorogation,
+        etc).
         """
-        return self.annotate(
-            db_effective_valid_between=Case(
-                When(
-                    valid_between__upper_inf=False,
-                    generating_regulation__effective_end_date__isnull=False,
-                    valid_between__contains=F(
-                        "generating_regulation__effective_end_date",
+
+        # Computing the end date for case 4 is expensive because it involves
+        # aggregating over all of the modifications to the base regulation,
+        # where there is one. So we pull this out into a CTE to let Postgres
+        # know that none of this caluclation depends on the queryset filters.
+        #
+        # We also turn NULLs into "infinity" such that they sort to the top:
+        # i.e. if any modification regulation is open-ended, so is the measure.
+        # We then turn infinity back into NULL to be used in the date range.
+        end_date_from_modifications = With(
+            Regulation.objects.annotate(
+                amended_end_date=NullIf(
+                    Max(
+                        Coalesce(
+                            F("amendments__enacting_regulation__effective_end_date"),
+                            EndDate("amendments__enacting_regulation__valid_between"),
+                            Cast(Value("infinity"), DateField()),
+                        ),
                     ),
-                    then=Func(
-                        Func(F("valid_between"), function="LOWER"),
-                        F("generating_regulation__effective_end_date"),
-                        Value("[]"),
-                        function="DATERANGE",
-                    ),
+                    Cast(Value("infinity"), DateField()),
                 ),
-                When(
-                    valid_between__upper_inf=False,
-                    generating_regulation__effective_end_date__isnull=False,
-                    then=F("valid_between"),
-                ),
-                When(
-                    valid_between__upper_inf=False,
-                    terminating_regulation__isnull=False,
-                    then=F("valid_between"),
-                ),
-                When(
-                    generating_regulation__isnull=False,
-                    then=Func(
-                        Func(F("valid_between"), function="LOWER"),
-                        F("generating_regulation__effective_end_date"),
-                        Value("[]"),
-                        function="DATERANGE",
-                    ),
-                ),
-                default=F("valid_between"),
-                output_field=TaricDateRangeField(),
             ),
+            "end_date_from_modifications",
+        )
+
+        return (
+            end_date_from_modifications.join(
+                self,
+                generating_regulation_id=end_date_from_modifications.col.id,
+            )
+            .with_cte(end_date_from_modifications)
+            .annotate(
+                db_effective_end_date=Coalesce(
+                    # Case 1 – explicit end date, which is always used if present
+                    EndDate("valid_between"),
+                    # Case 2 and 3 – end date of regulation
+                    F("generating_regulation__effective_end_date"),
+                    EndDate("generating_regulation__valid_between"),
+                    # Case 4 – generating regulation is a base regulation, and
+                    # the modification regulation is end-dated
+                    end_date_from_modifications.col.amended_end_date,
+                    # Case 5 – generating regulation is a modification regulation,
+                    # and the base it modifies is end-dated. Note that the above
+                    # means that this only applies if the modification has no end date.
+                    F("generating_regulation__amends__effective_end_date"),
+                    EndDate("generating_regulation__amends__valid_between"),
+                ),
+                db_effective_valid_between=Func(
+                    StartDate("valid_between"),
+                    F("db_effective_end_date"),
+                    Value("[]"),
+                    function="DATERANGE",
+                    output_field=TaricDateRangeField(),
+                ),
+            )
         )
 
 

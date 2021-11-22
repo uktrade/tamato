@@ -15,7 +15,7 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from certificates.models import CertificateType
 from commodities.models import GoodsNomenclature
-from common.models.records import TrackedModel
+from common.models.trackedmodel import TrackedModel
 from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import TaricDateRange

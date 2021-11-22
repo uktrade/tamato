@@ -5,6 +5,7 @@ from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
+from django.db.utils import DataError
 
 from common.business_rules import BusinessRule
 from common.business_rules import FootnoteApplicability
@@ -289,12 +290,17 @@ class ME25(BusinessRule):
     the start date of the measure must be less than or equal to the end date."""
 
     def validate(self, measure):
-        effective_end_date = measure.effective_end_date
+        try:
+            effective_end_date = measure.effective_end_date
 
-        if effective_end_date is None:
-            return
+            if effective_end_date is None:
+                return
 
-        if measure.valid_between.lower > effective_end_date:
+            if measure.valid_between.lower > effective_end_date:
+                raise self.violation(measure)
+        except DataError:
+            # ``effective_end_date`` will raise a database error if it tries to
+            # compute the date and it breaks this rule
             raise self.violation(measure)
 
 
@@ -750,7 +756,6 @@ class ME43(BusinessRule):
         duty_expressions_used = (
             type(measure_component)
             .objects.approved_up_to_transaction(measure_component.transaction)
-            .with_workbasket(measure_component.transaction.workbasket)
             .exclude(pk=measure_component.pk if measure_component.pk else None)
             .excluding_versions_of(version_group=measure_component.version_group)
             .filter(
@@ -1004,7 +1009,6 @@ class ME108(BusinessRule):
         if (
             type(component)
             .objects.approved_up_to_transaction(component.transaction)
-            .with_workbasket(component.transaction.workbasket)
             .exclude(pk=component.pk or None)
             .excluding_versions_of(version_group=component.version_group)
             .filter(
@@ -1099,15 +1103,26 @@ class ME67(BusinessRule):
     valid period of the measure."""
 
     def validate(self, exclusion):
-        return  # TODO: Verify this rule
+        GeographicalMembership = type(
+            exclusion.excluded_geographical_area,
+        ).memberships.through
 
         geo_group = exclusion.modified_measure.geographical_area
         excluded = exclusion.excluded_geographical_area
 
-        if not geo_group.members.filter(
-            member__sid=excluded.sid,
-            valid_between__contains=exclusion.modified_measure.effective_valid_between,
-        ).exists():
+        if (
+            not GeographicalMembership.objects.approved_up_to_transaction(
+                self.transaction,
+            )
+            .as_at(
+                exclusion.modified_measure.effective_valid_between,
+            )
+            .filter(
+                geo_group__version_group=geo_group.version_group,
+                member__version_group=excluded.version_group,
+            )
+            .exists()
+        ):
             raise self.violation(exclusion)
 
 
@@ -1144,7 +1159,6 @@ class ME70(BusinessRule):
         if (
             type(association)
             .objects.approved_up_to_transaction(association.transaction)
-            .with_workbasket(association.transaction.workbasket)
             .exclude(pk=association.pk or None)
             .excluding_versions_of(version_group=association.version_group)
             .filter(

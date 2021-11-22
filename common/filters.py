@@ -18,10 +18,8 @@ from crispy_forms_gds.layout import Size
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchVector
-from django.db.models import DateField
 from django.db.models import Q
 from django.db.models.functions import Extract
-from django.db.models.functions import Lower
 from django.utils.safestring import mark_safe
 from django_filters import CharFilter
 from django_filters import FilterSet
@@ -32,7 +30,8 @@ from rest_framework.settings import api_settings
 
 from common.fields import AutoCompleteField
 from common.jinja2 import break_words
-from common.models.records import TrackedModelQuerySet
+from common.models.tracked_qs import TrackedModelQuerySet
+from common.util import StartDate
 from common.util import TaricDateRange
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
@@ -260,7 +259,7 @@ class StartYearMixin(FilterSet):
         if value:
             queryset = queryset.annotate(
                 start_year=Extract(
-                    Lower("valid_between", output_field=DateField()),
+                    StartDate("valid_between"),
                     "year",
                 ),
             ).filter(start_year__in=value)

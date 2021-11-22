@@ -7,10 +7,11 @@ from polymorphic.managers import PolymorphicManager
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
+from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
-from common.models.records import TrackedModel
-from common.models.records import TrackedModelQuerySet
+from common.models.tracked_qs import TrackedModelQuerySet
+from common.models.trackedmodel import TrackedModel
 from geo_areas import business_rules
 from geo_areas.validators import AreaCode
 from geo_areas.validators import area_id_validator
@@ -23,7 +24,7 @@ class GeographicalAreaQuerySet(TrackedModelQuerySet):
         return self.filter(area_code=AreaCode.GROUP, area_id=1011)
 
 
-class GeographicalArea(TrackedModel, ValidityMixin):
+class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
     """
     A Geographical Area covers three distinct types of object:
 

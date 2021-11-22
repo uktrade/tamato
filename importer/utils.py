@@ -12,6 +12,7 @@ from typing import TypedDict
 from django.db.models.query_utils import DeferredAttribute
 
 from common.models import TrackedModel
+from common.models.tracked_utils import get_relations
 
 
 def col(label: str) -> int:
@@ -131,7 +132,7 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
             if record_code not in dependency_map:
                 dependency_map[record_code] = set()
 
-            for relation in subclass.relations.values():
+            for relation in get_relations(subclass).values():
                 relation_codes = get_record_codes(relation)
 
                 for relation_code in relation_codes:
