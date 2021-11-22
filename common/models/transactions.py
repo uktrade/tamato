@@ -125,7 +125,7 @@ class TransactionQueryset(models.QuerySet):
         existing_tx = self.model.objects.filter(
             partition=partition_scheme.get_approved_partition(),
         ).last()
-        order_start = existing_tx.order + 1 if existing_tx else 0
+        order_start = existing_tx.order + 1 if existing_tx else 1
 
         logger.debug(
             "Update draft transactions in query starting from %s "
@@ -135,7 +135,7 @@ class TransactionQueryset(models.QuerySet):
             order_start,
         )
 
-        counter = counter_generator(start=order_start + 1)
+        counter = counter_generator(start=order_start)
 
         for tx in self.order_by("order").all():
             tx.order = counter()
