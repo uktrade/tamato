@@ -105,12 +105,6 @@ class TransactionQueryset(models.QuerySet):
 
         TODO: Enhance this method to order based on partitions also.
         """
-        first_tx = self.order_by("order").first()
-
-        if self.order_by("order").first().order < 0:
-            pass
-        else:
-            first_tx.order
 
         # Ensure order of the transactions in this query to start at the end of the existing approved partition.
         existing_tx = self.model.objects.filter(
@@ -118,15 +112,15 @@ class TransactionQueryset(models.QuerySet):
         ).last()
         order_start = existing_tx.order + 1 if existing_tx else 0
 
-        counter = counter_generator(start=order_start + 1)
-
         logger.debug(
             "Update draft transactions in query starting from %s "
             "to start after transaction %s. order_start: %s",
-            first_tx.pk,
+            self.order_by("order").first().pk,
             existing_tx.pk if existing_tx else None,
             order_start,
         )
+
+        counter = counter_generator(start=order_start + 1)
 
         for tx in self.order_by("order").all():
             tx.order = counter()
