@@ -516,8 +516,7 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
             "valid_between__startswith",
         ).last()
 
-    @property
-    def succeeding_node(
+    def get_succeeding_node(
         self,
         as_of_transaction: Optional[Transaction] = None,
     ) -> Optional[GoodsNomenclatureIndentNode]:
