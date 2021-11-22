@@ -520,7 +520,7 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         self,
         as_of_transaction: Optional[Transaction] = None,
     ) -> Optional[GoodsNomenclatureIndentNode]:
-        """Returns the successor to this node, if any."""
+        """Returns the successeeding node to this node, if it exists."""
         indent = self.indent.get_succeeding_indent(as_of_transaction)
 
         if not indent:
