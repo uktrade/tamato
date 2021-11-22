@@ -94,6 +94,21 @@ class TransactionQueryset(models.QuerySet):
         """
         return self.exclude(partition=TransactionPartition.DRAFT)
 
+    def preorder_negative_transactions(self) -> None:
+        """
+        Makes all order numbers negative if there is even one negative order
+        number.
+
+        Negative order numbers happen in preemptive transactions, e.g. when we
+        import commodity code changes
+        """
+        if self.count() and self.order_by("order").first().order < 0:
+            order = PREEMPTIVE_TRANSACTION_SEED
+            for tx in self.order_by("order").all():
+                order += 1
+                tx.order = order
+                tx.save()
+
     @atomic
     def apply_transaction_order(self, partition_scheme) -> None:
         """
