@@ -7,6 +7,7 @@ import xml.etree.ElementTree as etree
 from typing import Any
 from typing import Mapping
 from typing import Optional
+from typing import Sequence
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -136,7 +137,12 @@ class TransactionParser(ElementParser):
         for message_data in data["message"]:
             self.message.save(message_data, transaction.id)
 
-        if self._detect_commodity_changes(data):
+        is_commodity_import = (
+            self.parent.record_group == TARIC_RECORD_GROUPS["commodities"]
+        )
+        has_commodity_changes = self._has_commodity_changes(data)
+
+        if is_commodity_import and has_commodity_changes:
             loader = CommodityChangeRecordLoader()
             loader.load(transaction)
 
@@ -196,7 +202,7 @@ class TransactionParser(ElementParser):
                 )
             return True
 
-    def _detect_commodity_changes(self, data: Mapping[str, Any]) -> bool:
+    def _has_commodity_changes(self, data: Mapping[str, Any]) -> bool:
         logging.debug(
             f"Checking for commodity changes in transaction {self.data['id']}",
         )
@@ -227,6 +233,7 @@ class EnvelopeParser(ElementParser):
         workbasket_status=None,
         partition_scheme: TransactionPartitionScheme = None,
         tamato_username=None,
+        record_group: Sequence[str] = None,
         save: bool = True,
         **kwargs,
     ):
@@ -234,6 +241,7 @@ class EnvelopeParser(ElementParser):
         self.last_transaction_id = -1
         self.workbasket_status = workbasket_status or WorkflowStatus.PUBLISHED.value
         self.tamato_username = tamato_username or settings.DATA_IMPORT_USERNAME
+        self.record_group = record_group
         self.save = save
         self.envelope: Optional[Envelope] = None
         self.workbasket: Optional[WorkBasket] = None
@@ -270,6 +278,7 @@ def process_taric_xml_stream(
     workbasket_status,
     partition_scheme,
     username,
+    record_group: Sequence[str] = None,
 ):
     """
     Parse a TARIC XML stream through the import handlers.
@@ -281,6 +290,7 @@ def process_taric_xml_stream(
         workbasket_status=workbasket_status,
         partition_scheme=partition_scheme,
         tamato_username=username,
+        record_group=record_group,
     )
     for event, elem in xmlparser:
         if event == "start":

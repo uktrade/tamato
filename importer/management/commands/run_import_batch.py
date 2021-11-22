@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from django.core.management import BaseCommand
 
 from importer import models
@@ -11,6 +13,7 @@ def run_batch(
     status: str,
     partition_scheme_setting: str,
     username: str,
+    record_group: Sequence[str] = None,
 ):
     import_batch = models.ImportBatch.objects.get(name=batch)
 
@@ -19,6 +22,7 @@ def run_batch(
         status,
         partition_scheme_setting,
         username,
+        record_group=record_group,
     )
 
 
