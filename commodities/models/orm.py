@@ -480,6 +480,10 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         valid_between: TaricDateRange,
     ) -> TaricDateRange:
         new_valid_between = self.valid_between
+
+        if new_valid_between.upper and new_valid_between.upper < valid_between.lower:
+            return valid_between
+
         if not new_valid_between.lower or (
             valid_between.lower and new_valid_between.lower < valid_between.lower
         ):
