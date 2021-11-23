@@ -86,3 +86,40 @@ def test_ordered_tracked_models_are_sorted_on_partition_and_order():
         )
         == list(ordered_tracked_models)
     )
+
+
+def test_pre_ordering_of_querysets_with_negative_transaction_orders():
+    """Asserts that querysets with negative tx orders assign negative orders to
+    all transactions."""
+    transaction_first = factories.TransactionFactory(order=-1)
+
+    transaction_second = factories.TransactionFactory(order=1)
+
+    ids = (transaction_first.id, transaction_second.id)
+    qs = Transaction.objects.filter(id__in=ids)
+
+    qs.apply_transaction_order(partition_scheme)
+
+    assert all(tx.order > 0 for tx in qs.all())
+
+
+def test_ordering_of_querysets_with_negative_transaction_orders():
+    """Asserts that querysets with negative or very large tx orders are ordered
+    correctly."""
+    transaction_first = factories.TransactionFactory(
+        partition=partition_scheme.get_partition("PROPOSED"),
+        order=-1,
+    )
+
+    transaction_second = factories.TransactionFactory(
+        partition=partition_scheme.get_partition("PROPOSED"),
+        order=99,
+    )
+
+    ids = (transaction_first.id, transaction_second.id)
+    qs = Transaction.objects.filter(id__in=ids)
+
+    qs.apply_transaction_order(partition_scheme)
+    assert sorted(tx.order for tx in qs.all()) == [1, 2]
+    assert qs.get(pk=transaction_first.pk).order == 1
+    assert qs.get(pk=transaction_second.pk).order == 2
