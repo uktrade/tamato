@@ -136,7 +136,6 @@
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.serializers.json</span> <span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">F</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
 <span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">FSMIntegerField</span>
 <span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">transition</span>
@@ -144,8 +143,10 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRuleChecker</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRuleViolation</span>
 <span class="kn">from</span> <span class="nn">common.models.mixins</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span> <span class="nn">common.renderers</span> <span class="kn">import</span> <span class="n">counter_generator</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">PREEMPTIVE_TRANSACTION_SEED</span> <span class="o">=</span> <span class="o">-</span><span class="mi">100000</span>
 
 
 <span class="k">class</span> <span class="nc">TransactionPartition</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
@@ -221,6 +222,53 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">partition</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">preorder_negative_transactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes all order numbers negative if there is even one negative order</span>
+<span class="sd">        number.</span>
+
+<span class="sd">        Negative order numbers happen in preemptive transactions, e.g. when we</span>
+<span class="sd">        import commodity code changes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">PREEMPTIVE_TRANSACTION_SEED</span>
+            <span class="k">for</span> <span class="n">tx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="n">order</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">tx</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
+                <span class="n">tx</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="nd">@atomic</span>
+    <span class="k">def</span> <span class="nf">apply_transaction_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reorder transactions in the workbasket.</span>
+
+<span class="sd">        Note that transaction orders may not be contiguous,</span>
+<span class="sd">        e.g. when the workbasket has preemptive transactions</span>
+<span class="sd">        (created by the commodity code change handler).</span>
+
+<span class="sd">        TODO: Enhance this method to order based on partitions also.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Ensure order of the transactions in this query to start at the end of the existing approved partition.</span>
+        <span class="n">existing_tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">partition</span><span class="o">=</span><span class="n">partition_scheme</span><span class="o">.</span><span class="n">get_approved_partition</span><span class="p">(),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="n">order_start</span> <span class="o">=</span> <span class="n">existing_tx</span><span class="o">.</span><span class="n">order</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Update draft transactions in query starting from </span><span class="si">%s</span><span class="s2"> &quot;</span>
+            <span class="s2">&quot;to start after transaction </span><span class="si">%s</span><span class="s2">. order_start: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="n">existing_tx</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">order_start</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">counter</span> <span class="o">=</span> <span class="n">counter_generator</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">order_start</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">tx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">tx</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">counter</span><span class="p">()</span>
+            <span class="n">tx</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
     <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">save_drafts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -235,6 +283,10 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">TransactionsAlreadyApproved</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Draft contains no transactions, bailing out early.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
         <span class="c1"># Find the transaction in the destination approved partition with the highest order</span>
         <span class="c1"># get_approved_partition may raise a ValueError, e.g. when attempting to create</span>
         <span class="c1"># a seed transaction when revisions exist, so it is called before any of the</span>
@@ -247,36 +299,14 @@
             <span class="n">approved_partition</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update versions_group.&quot;</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unordered_tracked_models</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">):</span>
             <span class="n">version_group</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version_group</span>
             <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">obj</span>
             <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-        <span class="n">new_tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">new_tx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Draft contains no transactions, bailing out early.&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="c1"># Ensure order of the transactions in this query to start at the end of the existing approved partition.</span>
-        <span class="n">existing_tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">partition</span><span class="o">=</span><span class="n">approved_partition</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
-        <span class="n">order_start</span> <span class="o">=</span> <span class="n">existing_tx</span><span class="o">.</span><span class="n">order</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">order_difference</span> <span class="o">=</span> <span class="n">order_start</span> <span class="o">-</span> <span class="n">new_tx</span><span class="o">.</span><span class="n">order</span> <span class="k">if</span> <span class="n">new_tx</span> <span class="k">else</span> <span class="mi">1</span>
-
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="s2">&quot;Update draft transactions in query starting from </span><span class="si">%s</span><span class="s2"> to start after transaction </span><span class="si">%s</span><span class="s2">.&quot;</span>
-            <span class="s2">&quot;  order_start: </span><span class="si">%s</span><span class="s2">, order_difference: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">new_tx</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">new_tx</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">existing_tx</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">order_start</span><span class="p">,</span>
-            <span class="n">order_difference</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-            <span class="n">order</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">order_difference</span><span class="p">,</span>
-            <span class="n">partition</span><span class="o">=</span><span class="n">approved_partition</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply_transaction_order</span><span class="p">(</span><span class="n">partition_scheme</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">partition</span><span class="o">=</span><span class="n">approved_partition</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction">[docs]</a><span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
