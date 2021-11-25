@@ -1354,41 +1354,33 @@ def test_ME57(date_ranges):
 
 
 @pytest.mark.parametrize(
-    "required_certificate, valid",
+    "required_certificate, expect_error",
     [
+        (factories.CertificateFactory.create, True),
+        (lambda: None, True),
         (factories.CertificateFactory.create, False),
-        (lambda: None, False),
-        (None, True),
     ],
 )
-def test_ME58(required_certificate, valid):
+def test_ME58(required_certificate, expect_error):
     """The same certificate can only be referenced once by the same measure and
     the same condition type."""
-    if required_certificate:
-        existing = factories.MeasureConditionFactory.create(
-            required_certificate=required_certificate(),
-        )
-        duplicate = factories.MeasureConditionFactory.create(
-            condition_code=existing.condition_code,
-            dependent_measure=existing.dependent_measure,
-            required_certificate=existing.required_certificate,
-        )
 
-        with pytest.raises(BusinessRuleViolation):
-            business_rules.ME58(duplicate.transaction).validate(existing)
+    existing = factories.MeasureConditionFactory.create(
+        required_certificate=required_certificate(),
+    )
+    duplicate = factories.MeasureConditionFactory.create(
+        condition_code=existing.condition_code,
+        dependent_measure=existing.dependent_measure,
+        required_certificate=existing.required_certificate
+        if expect_error
+        else factories.CertificateFactory.create(),
+    )
 
-        with pytest.raises(BusinessRuleViolation):
-            business_rules.ME58(duplicate.transaction).validate(duplicate)
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.ME58(duplicate.transaction).validate(existing)
 
-    if valid:
-        cert = factories.CertificateFactory.create()
-        condition1 = factories.MeasureConditionFactory.create(
-            required_certificate=cert,
-        )
-        condition2 = factories.MeasureConditionFactory.create(
-            required_certificate=cert,
-        )
-        business_rules.ME58(condition2.transaction).validate(condition1)
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.ME58(duplicate.transaction).validate(duplicate)
 
 
 def test_ME59(reference_nonexistent_record):
