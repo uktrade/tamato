@@ -1369,6 +1369,16 @@ def test_ME58():
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME58(duplicate.transaction).validate(existing)
 
+    not_required = factories.MeasureConditionFactory.create(required_certificate=None)
+    duplicate = factories.MeasureConditionFactory.create(
+        condition_code=not_required.condition_code,
+        dependent_measure=not_required.dependent_measure,
+        required_certificate=None,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ME58(duplicate.transaction).validate(not_required)
+
 
 def test_ME59(reference_nonexistent_record):
     """The referenced action code must exist."""

@@ -920,19 +920,25 @@ class ME58(BusinessRule):
     the same condition type."""
 
     def validate(self, measure_condition):
+        kwargs = {
+            "condition_code__code": measure_condition.condition_code.code,
+            "dependent_measure__sid": measure_condition.dependent_measure.sid,
+        }
         if measure_condition.required_certificate is None:
-            return
+            kwargs.update({"required_certificate": None})
+        else:
+            kwargs.update(
+                {
+                    "required_certificate__sid": measure_condition.required_certificate.sid,
+                    "required_certificate__certificate_type__sid": measure_condition.required_certificate.certificate_type.sid,
+                },
+            )
 
         if (
             type(measure_condition)
             .objects.exclude(pk=measure_condition.pk or None)
             .excluding_versions_of(version_group=measure_condition.version_group)
-            .filter(
-                condition_code__code=measure_condition.condition_code.code,
-                required_certificate__sid=measure_condition.required_certificate.sid,
-                required_certificate__certificate_type__sid=measure_condition.required_certificate.certificate_type.sid,
-                dependent_measure__sid=measure_condition.dependent_measure.sid,
-            )
+            .filter(**kwargs)
             .approved_up_to_transaction(self.transaction)
             .exists()
         ):
