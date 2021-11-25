@@ -71,3 +71,25 @@ def contained_date_range(
         start_date or a.lower,
         end_date or a.upper,
     )
+
+
+def get_latest_versions(qs):
+    """
+    Yields only the latest versions of each model within the provided queryset.
+
+    These may not be the current versions of each model,
+    e.g. because the queryset may be filtered as of a given transaction.
+
+    But if there are two versions of the same tracked model in the queryset,
+    only the one with the one with the latest transaction order
+    (which should be latest version) is yielded.
+    """
+    keys = set()
+
+    for model in qs.order_by("-transaction__order"):
+        key = tuple(model.get_identifying_fields().values())
+        if key not in keys:
+            keys.add(key)
+            yield model
+        else:
+            print(key in keys, key)
