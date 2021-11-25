@@ -339,6 +339,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             else:
                 next_parent = indent.get_parent_node(
                     parent_depth,
+                    as_of_transaction=indent.transaction,
                     start_date=start_date,
                 )
             if not next_parent:
