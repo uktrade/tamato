@@ -228,6 +228,25 @@ class MeasureCreateWizard(
         context["no_form_tags"].form_tag = False
         return context
 
+    def get_form_initial(self, step):
+        current_step = self.storage.current_step
+        initial_data = super().get_form_initial(step)
+
+        if (current_step, step) == ("duties", "duties"):
+            # At each step get_form_initial is called for every step, avoid a loop.
+            details_data = self.get_cleaned_data_for_step("measure_details")
+            valid_between = details_data.get("valid_between")
+
+            # The user may go through the wizard in any order, handle the case where there is no
+            # date by defaulting to None (no lower bound)
+            measure_start_date = valid_between.lower if valid_between else None
+            return {
+                "measure_start_date": measure_start_date,
+                **initial_data,
+            }
+
+        return initial_data
+
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)
         tx = WorkBasket.get_current_transaction(self.request)

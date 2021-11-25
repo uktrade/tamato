@@ -541,6 +541,16 @@ class MeasureDutiesForm(forms.Form):
             Submit("submit", "Continue"),
         )
 
+    def clean(self):
+        measure_start_date = self.initial["measure_start_date"]
+        super().clean()
+
+        if measure_start_date is not None:
+            import ipdb
+
+            ipdb.set_trace()
+            self.cleaned_data["duties"]
+
 
 class MeasureFootnotesForm(forms.Form):
     footnote = AutoCompleteField(
