@@ -29,6 +29,7 @@ from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
+from common.models.transactions import TransactionPartition
 from common.util import TaricDateRange
 from common.util import get_latest_versions
 from common.validators import UpdateType
@@ -801,11 +802,20 @@ class CommodityCollection(CommodityTreeBase):
 
         item_ids = {c.get_item_id() for c in self.commodities if c.obj}
 
-        goods = GoodsNomenclature.objects.filter(
-            item_id__in=item_ids,
-            valid_between__contains=snapshot_date,
-            transaction__order__lte=transaction_order,
-        ).order_by("item_id", "-transaction__order")
+        goods = (
+            GoodsNomenclature.objects.filter(
+                item_id__in=item_ids,
+                valid_between__contains=snapshot_date,
+                transaction__order__lte=transaction_order,
+            )
+            .exclude(
+                transaction__partition=TransactionPartition.SEED_FILE,
+            )
+            .order_by(
+                "item_id",
+                "-transaction__order",
+            )
+        )
 
         latest_versions = get_latest_versions(goods)
         pks = {good.pk for good in latest_versions}
