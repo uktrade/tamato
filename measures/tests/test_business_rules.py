@@ -1353,31 +1353,42 @@ def test_ME57(date_ranges):
         business_rules.ME57(condition.transaction).validate(condition)
 
 
-def test_ME58():
+@pytest.mark.parametrize(
+    "required_certificate, valid",
+    [
+        (factories.CertificateFactory.create, False),
+        (lambda: None, False),
+        (None, True),
+    ],
+)
+def test_ME58(required_certificate, valid):
     """The same certificate can only be referenced once by the same measure and
     the same condition type."""
+    if required_certificate:
+        existing = factories.MeasureConditionFactory.create(
+            required_certificate=required_certificate(),
+        )
+        duplicate = factories.MeasureConditionFactory.create(
+            condition_code=existing.condition_code,
+            dependent_measure=existing.dependent_measure,
+            required_certificate=existing.required_certificate,
+        )
 
-    existing = factories.MeasureConditionFactory.create(
-        required_certificate=factories.CertificateFactory.create(),
-    )
-    duplicate = factories.MeasureConditionFactory.create(
-        condition_code=existing.condition_code,
-        dependent_measure=existing.dependent_measure,
-        required_certificate=existing.required_certificate,
-    )
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.ME58(duplicate.transaction).validate(existing)
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME58(duplicate.transaction).validate(existing)
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.ME58(duplicate.transaction).validate(duplicate)
 
-    not_required = factories.MeasureConditionFactory.create(required_certificate=None)
-    duplicate = factories.MeasureConditionFactory.create(
-        condition_code=not_required.condition_code,
-        dependent_measure=not_required.dependent_measure,
-        required_certificate=None,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME58(duplicate.transaction).validate(not_required)
+    if valid:
+        cert = factories.CertificateFactory.create()
+        condition1 = factories.MeasureConditionFactory.create(
+            required_certificate=cert,
+        )
+        condition2 = factories.MeasureConditionFactory.create(
+            required_certificate=cert,
+        )
+        business_rules.ME58(condition2.transaction).validate(condition1)
 
 
 def test_ME59(reference_nonexistent_record):

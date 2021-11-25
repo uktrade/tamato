@@ -929,8 +929,7 @@ class ME58(BusinessRule):
         else:
             kwargs.update(
                 {
-                    "required_certificate__sid": measure_condition.required_certificate.sid,
-                    "required_certificate__certificate_type__sid": measure_condition.required_certificate.certificate_type.sid,
+                    "required_certificate__version_group": measure_condition.required_certificate.version_group,
                 },
             )
 
