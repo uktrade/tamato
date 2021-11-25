@@ -1,6 +1,7 @@
 import pytest
 
 from common.tests import factories
+from common.util import TaricDateRange
 
 pytestmark = pytest.mark.django_db
 
@@ -74,3 +75,22 @@ def test_required_certificates_changed_if_specified():
     assert quota.required_certificates.get() == cert
     assert not new_version.required_certificates.exists()
     assert third_version.required_certificates.get() == cert
+
+
+def get_future_date_range(prev_date_range, years):
+    lower = prev_date_range.lower.replace(year=prev_date_range.lower.year + years)
+    upper = prev_date_range.upper
+    if upper:
+        upper = prev_date_range.upper.replace(year=prev_date_range.upper.year + years)
+
+    return TaricDateRange(lower, upper)
+
+
+def test_create_new_sub_quota_and_main_quota_by_copying_association():
+    ass = factories.QuotaAssociationFactory()
+    valid_between = get_future_date_range(ass.main_quota.valid_between, 1)
+    ass.copy(
+        ass.transaction,
+        sub_quota__valid_between=valid_between,
+        main_quota__valid_between=valid_between,
+    )

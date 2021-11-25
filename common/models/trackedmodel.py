@@ -6,6 +6,7 @@ from typing import Iterable
 from typing import Optional
 from typing import Sequence
 from typing import Set
+from typing import Tuple
 from typing import TypeVar
 
 from django.db import models
@@ -331,6 +332,15 @@ class TrackedModel(PolymorphicModel):
         "transaction",
     }
 
+    def get_related_object_field(
+        self: Cls,
+        field_name: str,
+    ) -> Tuple[str, str]:
+        if "__" in field_name:
+            object_field = field_name.split("__")
+            return tuple(object_field)
+        return (None, field_name)
+
     def copy(
         self: Cls,
         transaction,
@@ -347,7 +357,7 @@ class TrackedModel(PolymorphicModel):
         Any overrides passed in as keyword arguments will be applied to the new
         model. If the model uses SIDs, they will be automatically set to the
         next highest available SID. Models with other identifying fields should
-        have thier new IDs passed in through overrides.
+        have their new IDs passed in through overrides.
         """
 
         # Remove any fields from the basic data that are overriden, because
@@ -355,9 +365,18 @@ class TrackedModel(PolymorphicModel):
         # ignore the object from the overrides and just take the ID from the
         # basic data.
         basic_fields = self.copyable_fields
+        related_object_field_names = {}
         for field_name in overrides:
-            field = self._meta.get_field(field_name)
-            basic_fields.remove(field)
+            object_name, field_name = self.get_related_object_field(field_name)
+            if object_name:
+                related_object_field_names.setdefault(object_name, []).append(
+                    field_name,
+                )
+            else:
+                field = self._meta.get_field(field_name)
+                basic_fields.remove(field)
+
+        overrides = {key: value for key, value in overrides.items() if "__" not in key}
 
         # Remove any SIDs from the copied data. This allows them to either
         # automatically pick the next highest value or to be passed in.
@@ -394,6 +413,8 @@ class TrackedModel(PolymorphicModel):
         # of the related models and then recursively call copy on them, but with
         # the new model substituted in place of this one. It's done this way to
         # give these related models a chance to increment SIDs, etc.
+
+        assert 0
         for field in get_subrecord_relations(self.__class__):
             queryset = getattr(self, field.get_accessor_name())
             reverse_field_name = field.field.name
