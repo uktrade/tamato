@@ -776,14 +776,15 @@ class CommodityCollection(CommodityTreeBase):
     def _get_snapshot_commodities(
         self,
         snapshot_date: date,
-        transaction_order: int = None,
+        transaction_order: int,
     ) -> List[Commodity]:
         """
         Returns the list of commodities than belong to a snapshot.
 
         This method needs to be very efficient -
-        In particular, it should make only ONE database round trip
-        regardless of the level of the root commodity in the tree.
+        In particular, it should require the same number
+        of database round trips regardless of the level
+        of the root commodity in the tree.
 
         The solution is fetch all goods matching the snapshot moment
         (incl. potentially multiple versions of each)
@@ -794,22 +795,21 @@ class CommodityCollection(CommodityTreeBase):
         We then efficiently find the commodities in our collection
         that match the latest_version goods.
         """
-        if snapshot_date is None:
-            snapshot_date = date.today()
-
-        if transaction_order is None:
-            transaction_order = self.max_transaction_order
-
         item_ids = {c.get_item_id() for c in self.commodities if c.obj}
+        transaction = Transaction.objects.get(
+            order=transaction_order,
+            partition__in=(
+                TransactionPartition.DRAFT,
+                TransactionPartition.REVISION,
+            ),
+        )
 
         goods = (
-            GoodsNomenclature.objects.filter(
+            GoodsNomenclature.objects.approved_up_to_transaction(transaction)
+            .filter(
                 item_id__in=item_ids,
                 valid_between__contains=snapshot_date,
                 transaction__order__lte=transaction_order,
-            )
-            .exclude(
-                transaction__partition=TransactionPartition.SEED_FILE,
             )
             .order_by(
                 "item_id",
