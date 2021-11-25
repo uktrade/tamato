@@ -24,13 +24,13 @@ from commodities.models.orm import GoodsNomenclatureIndent
 from commodities.util import clean_item_id
 from commodities.util import contained_date_range
 from commodities.util import date_ranges_overlap
-from commodities.util import get_latest_versions
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
+from common.util import get_latest_versions
 from common.validators import UpdateType
 from measures import business_rules as mbr
 from measures.models import FootnoteAssociationMeasure
