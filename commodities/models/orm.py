@@ -16,6 +16,7 @@ from treebeard.mp_tree import MP_Node
 from commodities import business_rules
 from commodities import validators
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
+from commodities.util import contained_date_range
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
@@ -479,23 +480,11 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         self,
         valid_between: TaricDateRange,
     ) -> TaricDateRange:
-        new_valid_between = self.valid_between
-        if not new_valid_between.lower or (
-            valid_between.lower and new_valid_between.lower < valid_between.lower
-        ):
-            new_valid_between = TaricDateRange(
-                valid_between.lower,
-                new_valid_between.upper,
-            )
-        if not new_valid_between.upper or (
-            valid_between.upper and new_valid_between.upper > valid_between.upper
-        ):
-            new_valid_between = TaricDateRange(
-                new_valid_between.lower,
-                valid_between.upper,
-            )
-
-        return new_valid_between
+        return contained_date_range(
+            self.valid_between,
+            valid_between,
+            fallback=valid_between,
+        )
 
     @property
     def good(self) -> GoodsNomenclature:
