@@ -91,5 +91,3 @@ def get_latest_versions(qs):
         if key not in keys:
             keys.add(key)
             yield model
-        else:
-            print(key in keys, key)
