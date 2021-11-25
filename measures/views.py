@@ -233,7 +233,7 @@ class MeasureCreateWizard(
         initial_data = super().get_form_initial(step)
 
         if (current_step, step) == ("duties", "duties"):
-            # At each step get_form_initial is called for every step, avoid a loop.
+            # At each step get_form_initial is called for every step, avoid a loop
             details_data = self.get_cleaned_data_for_step("measure_details")
             valid_between = details_data.get("valid_between")
 

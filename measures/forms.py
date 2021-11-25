@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 
 from crispy_forms_gds.helper import FormHelper
@@ -12,6 +13,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from parsec import ParseError
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -25,9 +27,12 @@ from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
 from measures import models
+from measures.parsers import DutySentenceParser
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
+
+logger = logging.getLogger(__name__)
 
 
 class MeasureForm(ValidityPeriodForm):
@@ -541,15 +546,24 @@ class MeasureDutiesForm(forms.Form):
             Submit("submit", "Continue"),
         )
 
-    def clean(self):
-        measure_start_date = self.initial["measure_start_date"]
-        super().clean()
-
+    def clean_duties(self):
+        duties = self.cleaned_data["duties"]
+        measure_start_date = self.initial.get("measure_start_date")
         if measure_start_date is not None:
-            import ipdb
+            duty_sentence_parser = DutySentenceParser.get(
+                measure_start_date,
+            )
 
-            ipdb.set_trace()
-            self.cleaned_data["duties"]
+            try:
+                duty_sentence_parser.parse(duties)
+            except ParseError as e:
+                # More helpful errors could be emitted here -
+                # for example if an amount or currency is missing
+                # it may be possible to highlight that.
+                logger.error("Error parse duty sentence %s", e)
+                raise ValidationError("Enter a valid duty sentence.")
+
+        return duties
 
 
 class MeasureFootnotesForm(forms.Form):

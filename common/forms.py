@@ -162,8 +162,11 @@ class ValidityPeriodForm(forms.ModelForm):
 
         start_date = cleaned_data.pop("start_date", None)
         end_date = cleaned_data.pop("end_date", None)
-        if end_date and start_date and end_date < start_date:
-            if start_date != self.initial["valid_between"].lower:
+
+        # Data may not be present, e.g. if the user skips ahead in the sidebar
+        valid_between = self.initial.get("valid_between")
+        if valid_between and end_date and start_date and end_date < start_date:
+            if start_date != valid_between.lower:
                 self.add_error(
                     "start_date",
                     "The start date must be the same as or before the end date.",
