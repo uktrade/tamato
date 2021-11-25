@@ -29,7 +29,6 @@ from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
-from common.models.transactions import TransactionPartition
 from common.util import TaricDateRange
 from common.util import get_latest_versions
 from common.validators import UpdateType
@@ -796,25 +795,19 @@ class CommodityCollection(CommodityTreeBase):
         that match the latest_version goods.
         """
         item_ids = {c.get_item_id() for c in self.commodities if c.obj}
-        transaction = Transaction.objects.get(
-            order=transaction_order,
-            partition__in=(
-                TransactionPartition.DRAFT,
-                TransactionPartition.REVISION,
-            ),
+        transaction = (
+            Transaction.objects.filter(
+                order=transaction_order,
+            )
+            .order_by("partition")
+            .last()
         )
 
-        goods = (
-            GoodsNomenclature.objects.approved_up_to_transaction(transaction)
-            .filter(
-                item_id__in=item_ids,
-                valid_between__contains=snapshot_date,
-                transaction__order__lte=transaction_order,
-            )
-            .order_by(
-                "item_id",
-                "-transaction__order",
-            )
+        goods = GoodsNomenclature.objects.approved_up_to_transaction(
+            transaction,
+        ).filter(
+            item_id__in=item_ids,
+            valid_between__contains=snapshot_date,
         )
 
         latest_versions = get_latest_versions(goods)

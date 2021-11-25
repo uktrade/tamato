@@ -355,7 +355,10 @@ def get_latest_versions(qs):
     """
     keys = set()
 
-    for model in qs.order_by("-transaction__order"):
+    for model in qs.order_by(
+        "-transaction__partition",
+        "-transaction__order",
+    ):
         key = tuple(model.get_identifying_fields().values())
         if key not in keys:
             keys.add(key)
