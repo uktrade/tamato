@@ -34,6 +34,7 @@ from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
+from common.models.transactions import TransactionPartition
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.namespaces import TARIC_RECORD_GROUPS
@@ -260,13 +261,6 @@ class Commodity(BaseModel):
         )
         return self.version == current_version
 
-    def _get_transactions(self) -> tuple[Transaction]:
-        """Returns the id-s of all transactions in the version group of the
-        record."""
-        return tuple(
-            [version.transaction for version in self.obj.version_group.versions.all()],
-        )
-
     def _get_transaction_ids(self) -> tuple[int]:
         """Returns the id-s of all transactions in the version group of the
         record."""
@@ -281,6 +275,15 @@ class Commodity(BaseModel):
         record."""
         transaction_orders = self.obj.version_group.versions.values_list(
             "transaction__order",
+            flat=True,
+        )
+        return tuple(transaction_orders)
+
+    def _get_transactions(self) -> tuple[int]:
+        """Returns the id-s of all transactions in the version group of the
+        record."""
+        transaction_orders = self.obj.version_group.versions.values_list(
+            "transaction",
             flat=True,
         )
         return tuple(transaction_orders)
@@ -365,20 +368,19 @@ class CommodityTreeBase(BaseModel):
 
     @property
     def max_transaction(self) -> Optional[Transaction]:
-        sorted_transactions = sorted(
-            [
-                transaction
-                for commodity in self.commodities
-                for transaction in commodity._get_transactions()
-            ],
-            key=lambda x: x.order,
-            reverse=True,
+        version_groups = (
+            commodity.obj.version_group
+            for commodity in self.commodities
+            if commodity.obj
         )
 
-        try:
-            return sorted_transactions[0]
-        except IndexError:
-            return None
+        return (
+            Transaction.objects.filter(
+                tracked_models__version_group__in=version_groups,
+            )
+            .order_by("order")
+            .last()
+        )
 
 
 @dataclass
@@ -424,6 +426,36 @@ class SnapshotDiff(BaseModel):
 
 
 @dataclass
+class SnapshotMoment:
+    """
+    Provides a model for snapshot moments.
+
+    The attributes of a moment are:
+    - transaction: the up-to transaction for snapshot models (required)
+    - date: a date on which all models in the snapshot must be effective (optional)
+    """
+
+    transaction: Transaction
+    date: Optional[date] = None
+
+    @property
+    def order(self) -> int:
+        """Returns the moment's transaction order."""
+        return self.transaction.order
+
+    @property
+    def partition(self) -> TransactionPartition:
+        return self.transaction.partition
+
+    @property
+    def clock_type(self):
+        """Returns the clock type of the moment."""
+        if self.date:
+            return ClockType.COMBINED
+        return ClockType.TRANSACTION
+
+
+@dataclass
 class CommodityTreeSnapshot(CommodityTreeBase):
     """
     Provides a model for commodity tree snapshots.
@@ -448,9 +480,8 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     For additional context on commodity trees, see the docs for CommodityTree.
     """
 
+    moment: SnapshotMoment
     commodities: List[Commodity]
-    clock_type: ClockType
-    moments: Tuple[Optional[date], Optional[int]]
     edges: Optional[Dict[str, Commodity]] = None
 
     def __post_init__(self) -> None:
@@ -478,11 +509,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             msg = "All commodities in a group must be from the same HS chapter."
             raise CommodityTreeSnapshotException(msg)
 
-        try:
-            assert len(chapters) <= 1
-        except AssertionError:
-            logger.error("All commodities in a group must be from the same HS chapter.")
-            raise
+        if len(chapters) > 1:
+            raise ValueError(
+                "All commodities in a group must be from the same HS chapter.",
+            )
 
         self._sort()
         self._traverse()
@@ -542,14 +572,14 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             goods_nomenclature__suffix=commodity.get_suffix(),
         )
 
-        if self.clock_type.is_transaction_clock:
-            qs = qs.approved_up_to_transaction(self.snapshot_transaction)
+        if self.moment.clock_type == ClockType.TRANSACTION:
+            qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
             qs = qs.latest_approved()
 
-        if self.clock_type.is_calendar_clock:
+        if self.moment.clock_type == ClockType.COMBINED:
             qs = qs.with_effective_valid_between().filter(
-                db_effective_valid_between__contains=self.snapshot_date,
+                db_effective_valid_between__contains=self.moment.date,
             )
         elif as_at is not None:
             qs = qs.with_effective_valid_between().filter(
@@ -600,29 +630,6 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.DESCENDANTS)
 
-    @property
-    def snapshot_date(self) -> Optional[date]:
-        """Returns the snapshot date if it uses the calendar clock."""
-        if self.clock_type.is_calendar_clock:
-            return self.moments[0]
-
-    @property
-    def snapshot_transaction_id(self) -> Optional[int]:
-        """Retruns the snapshot transaction if uses the transaction clock."""
-        if self.clock_type.is_transaction_clock:
-            return self.moments[1].id
-
-    @property
-    def snapshot_transaction_order(self) -> Optional[int]:
-        """Retruns the snapshot transaction if uses the transaction clock."""
-        if self.clock_type.is_transaction_clock:
-            return self.moments[1]
-
-    @property
-    def snapshot_transaction(self) -> Optional[Transaction]:
-        if self.clock_type.is_transaction_clock:
-            return self.max_transaction
-
     def _sort(self) -> None:
         """
         Sorts the commodity collection to prepare it for traversal.
@@ -663,6 +670,8 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         for commodity in self.commodities:
             indent = commodity.get_indent()
 
+            # When we import commodity changes, e.g. from EU taric files
+            # and a new commodity is created, we may not now its indent yet.
             if indent is None:
                 continue
 
@@ -742,7 +751,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         You can get one diff per commodity and relation type
         (e.g. diff the children of '9999.20.00.00' or diff the siblings of '9999.30.20.10')
         """
-        if snapshot.clock_type != self.clock_type:
+        if snapshot.moment.clock_type != self.moment.clock_type:
             raise ValueError("Cannot diff snapshots with different clock types.")
 
         attr = f"get_{relation.value}"
@@ -806,8 +815,9 @@ class CommodityCollection(CommodityTreeBase):
 
             self.commodities.append(change.candidate)
 
-    def get_calendar_clock_snapshot(
+    def get_combined_clock_snapshot(
         self,
+        transaction: Transaction,
         snapshot_date: date,
     ) -> CommodityTreeSnapshot:
         """
@@ -816,7 +826,10 @@ class CommodityCollection(CommodityTreeBase):
         If the optional snapshot_date argument is not provided, this method will
         return the snapshot as of today.
         """
-        return self._get_snapshot(snapshot_date=snapshot_date)
+        return self._get_snapshot(
+            transaction=transaction,
+            snapshot_date=snapshot_date,
+        )
 
     def get_transaction_clock_snapshot(
         self,
@@ -841,32 +854,31 @@ class CommodityCollection(CommodityTreeBase):
         A current snapshot only includes current record versions for commodities
         that are valid as of the current date.
         """
-        return self._get_snapshot()
+        return self._get_snapshot(transaction=self.max_transaction)
 
     def _get_snapshot(
         self,
+        transaction: Transaction,
         snapshot_date: Optional[date] = None,
-        transaction: Optional[Transaction] = None,
     ) -> CommodityTreeSnapshot:
-        if transaction is None == snapshot_date is None:
-            clock_type = ClockType.COMBINED
-        elif transaction is None:
-            clock_type = ClockType.CALENDAR
-        else:
-            clock_type = ClockType.TRANSACTION
-
         if transaction is None:
-            transaction = self.max_transaction
-        if snapshot_date is None:
+            raise ValueError(
+                "SnapshotMoments require a transaction.",
+            )
+
+        if not snapshot_date:
             snapshot_date = date.today()
 
+        moment = SnapshotMoment(
+            transaction=transaction,
+            date=snapshot_date,
+        )
+
         commodities = self._get_snapshot_commodities(snapshot_date, transaction)
-        order = transaction.order if transaction else None
 
         return CommodityTreeSnapshot(
+            moment=moment,
             commodities=commodities,
-            clock_type=clock_type,
-            moments=(snapshot_date, order),
         )
 
     def _get_snapshot_commodities(
@@ -874,12 +886,6 @@ class CommodityCollection(CommodityTreeBase):
         snapshot_date: Optional[date],
         transaction: Optional[Transaction] = None,
     ) -> list[Commodity]:
-        if snapshot_date is None:
-            snapshot_date = date.today()
-
-        if transaction is None:
-            transaction = self.max_transaction
-
         return [
             commodity
             for commodity in self.commodities
@@ -900,6 +906,16 @@ class SideEffect(BaseModel):
 
     A side effect is simply a pending action taken to preempt a business rule
     violation related to a commodity code change.
+
+    The attributes of a side effect are as follows:
+    - obj: the affected model (e.g. a Measure, a FootnoteAssociation, etc.)
+    - update_type: the required update type to remedy the business rule violation
+    - code: the changing commodity code that caused the side effect
+    - rule: the business rule that was violated
+    - variant: an optional note to distinguish business rule violation scenarios
+      (e.g. a business rule such as ME32 can be violated for more than one reason)
+    - attrs: optional update attributes when the side effect update_type is Update;
+      this should be null when the update type is Delete
     """
 
     obj: TrackedModel
@@ -919,16 +935,20 @@ class SideEffect(BaseModel):
             )
 
     def _get_preemptive_transaction_order(self, workbasket: WorkBasket) -> int:
-        preemptive_transactions = [
-            transaction
-            for transaction in workbasket.transactions.all()
-            if transaction.order < 0
-        ]
+        last_order = (
+            workbasket.transactions.filter(
+                order__lt=0,
+            )
+            .order_by(
+                "order",
+            )
+            .values_list("order", flat=True)
+        )
 
-        if not preemptive_transactions:
+        if not last_order:
             return PREEMPTIVE_TRANSACTION_SEED
 
-        return max([transaction.order for transaction in preemptive_transactions]) + 1
+        return last_order + 1
 
     def explain(self) -> dict[str, Any]:
         """Returns a dict explaining the context of the side effect."""
@@ -1387,7 +1407,18 @@ class CommodityChange(BaseModel):
         return set(a).union(set(b))
 
     @property
-    def as_at_date(self):
+    def as_at_date(self) -> date:
+        """
+        Returns the treshold date for the commodity code change.
+
+        Dependent measures (or other dependent models with validity spans)
+        would be exclude those with effective end date before this date.
+
+        In the case of a commodity UPDATE or DELETE,
+        the treshold the commodity's validity end date.
+        In the case of a commodity CREATE,
+        the treshold is the commodity's validity start date.
+        """
         if self.candidate:
             if self.update_type == UpdateType.UPDATE:
                 return self.candidate.get_valid_between().upper
