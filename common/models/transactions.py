@@ -27,6 +27,10 @@ class TransactionPartition(models.IntegerChoices):
 
     Within a partition, a transactions order applies, to obtain a global
     ordering a order_by("partition", "order") must be used.
+
+    The numbers chosen increment by "era" of transaction, starting
+    from approved transactions SEED_FILE and REVISION
+    then ending with DRAFT.
     """
 
     SEED_FILE = 1, "Seed"
