@@ -284,8 +284,6 @@ def filter_transaction_records(
                 subrecord_code = Tags.OUB_SUBRECORD_CODE.first(record).text
                 identifier = f"{record_code}{subrecord_code}"
 
-                Tags.OUB_UPDATE_TYPE.first(record).text
-
                 if identifier not in record_group:
                     pending_removals.append((message, transmission, record, identifier))
 
@@ -345,7 +343,7 @@ def chunk_taric(
         transaction.clear()
 
         element_counter += 1
-        if element_counter % 100 == 0:
+        if element_counter % 100000 == 0:
             logger.info("%d transactions done", element_counter)
 
     for key, chunk in chunks_in_progress.items():

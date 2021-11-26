@@ -155,8 +155,6 @@ class TransactionParser(ElementParser):
 
                         transaction = obj.transaction
                         order = transaction.order
-                        commodity = change.candidate or change.current
-                        commodity.code.dot_code
 
                         reason = side_effect.explain()
                         reasons.append(reason)
@@ -171,10 +169,6 @@ class TransactionParser(ElementParser):
                             order=order,
                         )
 
-            if reasons:
-                with open(f"env/{envelope.envelope_id}.log", "a") as f:
-                    f.write("\n".join(map(str, reasons)) + "\n")
-
         try:
             transaction.clean()
         except ValidationError as e:
@@ -187,7 +181,7 @@ class TransactionParser(ElementParser):
         super().end(element)
         if element.tag == self.tag:
             logging.debug(f"Saving import {self.data['id']}")
-            if int(self.data["id"]) % 100 == 0:
+            if int(self.data["id"]) % 1000 == 0:
                 logger.info(
                     "%s transactions done in %d seconds",
                     self.data["id"],

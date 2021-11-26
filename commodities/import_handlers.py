@@ -344,7 +344,6 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                     start_date=start_date,
                 )
 
-                # we may be accidentall
             if not next_parent:
                 raise InvalidIndentError(
                     f"Parent indent not found for {item_id} for date {start_date}",
