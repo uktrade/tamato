@@ -36,6 +36,7 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import TaricDateRange
+from common.util import get_latest_versions
 from common.validators import UpdateType
 from importer.namespaces import TARIC_RECORD_GROUPS
 from measures import business_rules as mbr
@@ -225,41 +226,6 @@ class Commodity(BaseModel):
     def is_current_version(self) -> bool:
         """Returns True if this is the current version of the Taric record."""
         return self.obj == self.obj.current_version
-
-    def is_current_as_of_transaction(
-        self,
-        transaction: Optional[Transaction] = None,
-    ) -> bool:
-        """Returns True if this is the current version of the record as of a
-        given transaction."""
-        transaction_order = transaction.order if transaction else None
-        return self.is_current_as_of_transaction_order(transaction_order)
-
-    def get_current_version_as_of_transaction_order(
-        self,
-        transaction_order: Optional[int] = None,
-    ) -> int:
-        """Returns the current version of the record as of a given transaction
-        id."""
-        if transaction_order is None:
-            return self.current_version
-
-        orders = self._get_transaction_orders()
-        return len([order for order in orders if order <= transaction_order])
-
-    def is_current_as_of_transaction_order(
-        self,
-        transaction_order: Optional[int] = None,
-    ) -> bool:
-        """Returns True if this is the current version of the record as of a
-        given transaction id."""
-        if transaction_order is None:
-            return self.is_current_version
-
-        current_version = self.get_current_version_as_of_transaction_order(
-            transaction_order,
-        )
-        return self.version == current_version
 
     def _get_transaction_ids(self) -> tuple[int]:
         """Returns the id-s of all transactions in the version group of the
@@ -874,7 +840,7 @@ class CommodityCollection(CommodityTreeBase):
             date=snapshot_date,
         )
 
-        commodities = self._get_snapshot_commodities(snapshot_date, transaction)
+        commodities = self._get_snapshot_commodities(transaction, snapshot_date)
 
         return CommodityTreeSnapshot(
             moment=moment,
@@ -883,16 +849,39 @@ class CommodityCollection(CommodityTreeBase):
 
     def _get_snapshot_commodities(
         self,
-        snapshot_date: Optional[date],
-        transaction: Optional[Transaction] = None,
-    ) -> list[Commodity]:
-        return [
-            commodity
-            for commodity in self.commodities
-            if commodity.obj is not None
-            if commodity.get_valid_between().__contains__(snapshot_date)
-            if commodity.is_current_as_of_transaction(transaction)
-        ]
+        transaction: Transaction,
+        snapshot_date: date,
+    ) -> List[Commodity]:
+        """
+        Returns the list of commodities than belong to a snapshot.
+
+        This method needs to be very efficient -
+        In particular, it should require the same number
+        of database round trips regardless of the level
+        of the root commodity in the tree.
+
+        The solution is fetch all goods matching the snapshot moment
+        (incl. potentially multiple versions of each)
+        and then call a new util method get_latest_version,
+        which efficiently yields only the latest version
+        of each good from within the returned queryset.
+
+        We then efficiently find the commodities in our collection
+        that match the latest_version goods.
+        """
+        item_ids = {c.get_item_id() for c in self.commodities if c.obj}
+        goods = GoodsNomenclature.objects.approved_up_to_transaction(
+            transaction,
+        ).filter(
+            item_id__in=item_ids,
+            valid_between__contains=snapshot_date,
+        )
+
+        latest_versions = get_latest_versions(goods)
+        pks = {good.pk for good in latest_versions}
+
+        keyed_collection = {c.obj.pk: c for c in self.commodities if c.obj}
+        return [commodity for pk, commodity in keyed_collection.items() if pk in pks]
 
     def __copy__(self) -> "CommodityCollection":
         """Returns an independent copy of the collection."""
@@ -1452,7 +1441,11 @@ class CommodityCollectionLoader:
 
         self.prefix = prefix
 
-    def load(self, current_only: bool = False) -> CommodityCollection:
+    def load(
+        self,
+        current_only: bool = False,
+        effective_only: bool = False,
+    ) -> CommodityCollection:
         """
         Returns a CommodityCollection including all commodities that match the
         prefix.
@@ -1466,7 +1459,10 @@ class CommodityCollectionLoader:
         qs = GoodsNomenclature.objects
 
         if current_only:
-            qs = qs.latest_approved().filter(
+            qs = qs.latest_approved()
+
+        if effective_only:
+            qs = qs.filter(
                 valid_between__contains=date.today(),
             )
 
