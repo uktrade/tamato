@@ -1048,19 +1048,24 @@
 <span class="sd">    the same condition type.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME58.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME58.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure_condition</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;condition_code__code&quot;</span><span class="p">:</span> <span class="n">measure_condition</span><span class="o">.</span><span class="n">condition_code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+            <span class="s2">&quot;dependent_measure__sid&quot;</span><span class="p">:</span> <span class="n">measure_condition</span><span class="o">.</span><span class="n">dependent_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+        <span class="p">}</span>
         <span class="k">if</span> <span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;required_certificate&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;required_certificate__version_group&quot;</span><span class="p">:</span> <span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">measure_condition</span><span class="p">)</span>
             <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
             <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">condition_code__code</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">condition_code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
-                <span class="n">required_certificate__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-                <span class="n">required_certificate__certificate_type__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">required_certificate</span><span class="o">.</span><span class="n">certificate_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-                <span class="n">dependent_measure__sid</span><span class="o">=</span><span class="n">measure_condition</span><span class="o">.</span><span class="n">dependent_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
