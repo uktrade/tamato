@@ -766,6 +766,21 @@ def test_correct_affected_measures_are_selected(
     is_affected,
     update_type,
 ):
+    """
+    Asserts that the commodity importer handles preemptive measure transactions
+    well.
+
+    When commodity code changes are imported (e.g. from EU taric files),
+    these changes may cause side effects in terms of business rule violations.
+    This happens often for related measures. It is important to ensure
+    that only the measures that should be changed are changed.
+    For example, future and overlapping measures relative to the good's updated validity
+    should be updated or deleted with preemptive transactions;
+    however measures whose validity period remains contained
+    within the good's updated validity should not be touched.
+
+    For context, see `commodities.models.dc.SideEffects`
+    """
     attrs = dict(
         item_id="1199102030",
         suffix="80",

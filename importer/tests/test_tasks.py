@@ -21,7 +21,6 @@ def test_import_chunk(
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
-        record_group=None,
     )
 
     chunk.refresh_from_db()
@@ -31,7 +30,6 @@ def test_import_chunk(
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
-        record_group=None,
     )
 
 
