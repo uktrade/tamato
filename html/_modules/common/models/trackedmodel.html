@@ -409,6 +409,12 @@
         <span class="k">return</span> <span class="n">description</span> <span class="ow">or</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">record_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns the record identifier as defined in TARIC3 records</span>
+<span class="sd">        specification.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">record_code</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">subrecord_code</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
         <span class="n">current_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span>
         <span class="k">if</span> <span class="n">current_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

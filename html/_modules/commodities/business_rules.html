@@ -200,8 +200,13 @@
 
         <span class="kn">from</span> <span class="nn">commodities.models</span> <span class="kn">import</span> <span class="n">GoodsNomenclatureOrigin</span>
 
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">matching_indent_exists</span> <span class="o">=</span> <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">nodes__depth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">matching_indent_exists</span> <span class="o">=</span> <span class="kc">False</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">nodes__depth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="n">matching_indent_exists</span>
             <span class="ow">or</span> <span class="n">GoodsNomenclatureOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">new_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="p">)</span>
@@ -356,19 +361,19 @@
 <span class="sd">    period of the goods nomenclature must span the validity period of the goods</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">matching_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">related_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">effective_matching_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">uncontained_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">matching_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">related_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
             <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">good</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">has_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">effective_matching_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uncontained_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
 <div class="viewcode-block" id="NIG30.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG30.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_violation</span><span class="p">(</span><span class="n">good</span><span class="p">):</span>

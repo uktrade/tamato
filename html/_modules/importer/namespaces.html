@@ -168,12 +168,14 @@
 <span class="sd">which is easily extensible to additional record groups.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="n">TARIC_RECORD_GROUPS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="c1"># Record &quot;40020&quot; is excluded from the below record group</span>
+    <span class="c1"># because we don&#39;t want to synchronize footnote associations</span>
+    <span class="c1"># with external systems when we align commodity code changes.</span>
     <span class="n">commodities</span><span class="o">=</span><span class="p">(</span>
         <span class="s2">&quot;40000&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40005&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40010&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40015&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;40020&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40025&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40035&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40040&quot;</span><span class="p">,</span>
