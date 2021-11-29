@@ -17,6 +17,7 @@ from commodities import business_rules
 from commodities import validators
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
 from commodities.util import contained_date_range
+from common.business_rules import NoBlankDescription
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
@@ -609,7 +610,10 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     description = LongDescription()
 
     indirect_business_rules = (business_rules.NIG12,)
-    business_rules = (UpdateValidity,)
+    business_rules = (
+        NoBlankDescription,
+        UpdateValidity,
+    )
 
     class Meta:
         ordering = ("validity_start",)
