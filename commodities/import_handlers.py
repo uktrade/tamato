@@ -286,8 +286,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
         depth = self.extra_data.pop("indent")
         data.update(**self.extra_data)
         if "indented_goods_nomenclature_id" in data:
+            pk = data.pop("indented_goods_nomenclature_id")
             data["indented_goods_nomenclature"] = models.GoodsNomenclature.objects.get(
-                pk=data.pop("indented_goods_nomenclature_id"),
+                pk=pk,
             )
         item_id = data["indented_goods_nomenclature"].item_id
 
@@ -342,6 +343,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
                     as_of_transaction=indent.transaction,
                     start_date=start_date,
                 )
+
             if not next_parent:
                 raise InvalidIndentError(
                     f"Parent indent not found for {item_id} for date {start_date}",
@@ -552,7 +554,7 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
     def post_save(self, obj: models.GoodsNomenclatureIndent):
         """
         There is a possible scenario when introducing an indent that the new
-        indent is put between an existing indent and it's children (i.e. it
+        indent is put between an existing indent and its children (i.e. it
         becomes the new parent for those children). This is possible as the old
         system had no real materialized tree behind it.
 
@@ -572,6 +574,14 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             .order_by("transaction__updated_at")
             .last()
         )
+
+        if not previous_version:
+            previous_version = (
+                obj.version_group.versions.exclude(pk=obj.pk)
+                .filter(transaction__workbasket=obj.transaction.workbasket)
+                .order_by("transaction__updated_at")
+                .last()
+            )
 
         for node in obj.nodes.all():
             for previous_node in previous_version.nodes.filter(

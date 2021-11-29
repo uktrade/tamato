@@ -1353,21 +1353,34 @@ def test_ME57(date_ranges):
         business_rules.ME57(condition.transaction).validate(condition)
 
 
-def test_ME58():
+@pytest.mark.parametrize(
+    "required_certificate, expect_error",
+    [
+        (factories.CertificateFactory.create, True),
+        (lambda: None, True),
+        (factories.CertificateFactory.create, False),
+    ],
+)
+def test_ME58(required_certificate, expect_error):
     """The same certificate can only be referenced once by the same measure and
     the same condition type."""
 
     existing = factories.MeasureConditionFactory.create(
-        required_certificate=factories.CertificateFactory.create(),
+        required_certificate=required_certificate(),
     )
     duplicate = factories.MeasureConditionFactory.create(
         condition_code=existing.condition_code,
         dependent_measure=existing.dependent_measure,
-        required_certificate=existing.required_certificate,
+        required_certificate=existing.required_certificate
+        if expect_error
+        else factories.CertificateFactory.create(),
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ME58(duplicate.transaction).validate(existing)
+
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.ME58(duplicate.transaction).validate(duplicate)
 
 
 def test_ME59(reference_nonexistent_record):

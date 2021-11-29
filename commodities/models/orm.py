@@ -501,9 +501,12 @@ class GoodsNomenclatureIndentNode(MP_Node, ValidityMixin):
         if not indent:
             return
 
-        return indent.nodes.order_by(
-            "valid_between__startswith",
-        ).last()
+        return (
+            GoodsNomenclatureIndentNode.objects.filter(indent=indent)
+            .exclude(valid_between=self.valid_between)
+            .order_by("valid_between__startswith")
+            .last()
+        )
 
     def get_succeeding_node(
         self,
@@ -606,6 +609,7 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     description = LongDescription()
 
     indirect_business_rules = (business_rules.NIG12,)
+    business_rules = (UpdateValidity,)
 
     class Meta:
         ordering = ("validity_start",)

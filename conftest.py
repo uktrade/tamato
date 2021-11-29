@@ -6,6 +6,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Optional
+from typing import Sequence
 from typing import Type
 from unittest.mock import patch
 
@@ -360,6 +361,8 @@ def run_xml_import(valid_user, settings):
         serializer: An optional serializer class to convert the model to its TARIC XML
             representation. If not provided, the function attempts to use a serializer
             class named after the model, eg measures.serializers.<model-class-name>Serializer
+        record_group: A taric record group, which can be used to trigger
+            specific importer behaviour, e.g. for handling commodity code changes
 
     The function serializes the model to TARIC XML, inputs this to the importer, then
     fetches the newly created model from the database and compares the fields.
@@ -371,6 +374,7 @@ def run_xml_import(valid_user, settings):
     def check(
         factory: Callable[[], TrackedModel],
         serializer: Type[TrackedModelSerializer],
+        record_group: Sequence[str] = None,
     ) -> TrackedModel:
         get_nursery().cache.clear()
         settings.SKIP_WORKBASKET_VALIDATION = True
@@ -391,6 +395,7 @@ def run_xml_import(valid_user, settings):
             workbasket_status=WorkflowStatus.PUBLISHED,
             partition_scheme=get_partition_scheme(),
             username=valid_user.username,
+            record_group=record_group,
         )
 
         db_kwargs = model.get_identifying_fields()

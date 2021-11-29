@@ -76,15 +76,19 @@ class TransactionPartitionQuerySet(QuerySet):
     @classmethod
     def as_at_transaction_filter(cls, transaction, prefix=""):
         """
-        Return a Django filter object that will filter the returned models to
-        only those that exist as of the passed transaction.
+        This Filter returns models that exist as of the provided transaction.
 
-        This is different than just `object.versions` because it will only
-        include draft versions from the same workbasket, if the transaction is
-        in draft, whereas `object.versions` will include all draft versions. At
-        the database level, that is any transaction in this partition with lower
+        If `transaction` is in draft this also includes draft versions
+        in the same workbasket.
+
+        This differs from `object.versions` which includes all draft versions.
+
+        At the database level, that is any transaction in this partition with lower
         order (and in this workbasket in the case of DRAFT), or any transaction
-        in an earlier partition.
+        in an earlier partition [1].
+
+        [1] Partition values roughly encode temporal data:  Each value represents
+        an "era" of transactions, starting at SEED_FILE and ending at DRAFT.
         """
         from common.models.transactions import TransactionPartition
 
@@ -98,8 +102,8 @@ class TransactionPartitionQuerySet(QuerySet):
                 f"{prefix}transaction__workbasket__id"
             ] = transaction.workbasket_id
 
-        earlier_parition = {
+        earlier_partition = {
             f"{prefix}transaction__partition__lt": transaction.partition,
         }
 
-        return Q(**this_partition) | Q(**earlier_parition)
+        return Q(**this_partition) | Q(**earlier_partition)
