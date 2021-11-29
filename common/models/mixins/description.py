@@ -44,6 +44,9 @@ class DescriptionMixin(ValidityStartMixin):
         if action != "list":
             kwargs = self.get_identifying_fields()
             described_object = self.get_described_object()
+            if action == "detail":
+                return described_object.get_url() + "#descriptions"
+
             for field, value in described_object.get_identifying_fields().items():
                 kwargs[f"{self.described_object_field.name}__{field}"] = value
         try:

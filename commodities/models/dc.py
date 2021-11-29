@@ -30,6 +30,7 @@ from common.models.dc.base import BaseModel
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
+from common.util import get_latest_versions
 from common.validators import UpdateType
 from measures import business_rules as mbr
 from measures.models import FootnoteAssociationMeasure
@@ -197,41 +198,6 @@ class Commodity(BaseModel):
     def is_current_version(self) -> bool:
         """Returns True if this is the current version of the Taric record."""
         return self.obj == self.obj.current_version
-
-    def is_current_as_of_transaction(
-        self,
-        transaction: Optional[Transaction] = None,
-    ) -> bool:
-        """Returns True if this is the current version of the record as of a
-        given transaction."""
-        transaction_order = transaction.order if transaction else None
-        return self.is_current_as_of_transaction_order(transaction_order)
-
-    def get_current_version_as_of_transaction_order(
-        self,
-        transaction_order: Optional[int] = None,
-    ) -> int:
-        """Returns the current version of the record as of a given transaction
-        id."""
-        if transaction_order is None:
-            return self.current_version
-
-        orders = self._get_transaction_orders()
-        return len([order for order in orders if order <= transaction_order])
-
-    def is_current_as_of_transaction_order(
-        self,
-        transaction_order: Optional[int] = None,
-    ) -> bool:
-        """Returns True if this is the current version of the record as of a
-        given transaction id."""
-        if transaction_order is None:
-            return self.is_current_version
-
-        current_version = self.get_current_version_as_of_transaction_order(
-            transaction_order,
-        )
-        return self.version == current_version
 
     def _get_transaction_ids(self) -> tuple[int]:
         """Returns the id-s of all transactions in the version group of the
@@ -550,7 +516,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             return self.moments[0]
 
     @property
-    def snapshot_transaction_id(self) -> Optional[int]:
+    def snapshot_transaction_order(self) -> Optional[int]:
         """Retruns the snapshot transaction if uses the transaction clock."""
         if self.clock_type.is_transaction_clock:
             return self.moments[1]
@@ -750,7 +716,7 @@ class CommodityCollection(CommodityTreeBase):
 
     def get_transaction_clock_snapshot(
         self,
-        transaction_id: int,
+        transaction_order: int,
     ) -> CommodityTreeSnapshot:
         """
         Return a commodity tree snapshot as of a certain transaction (based on
@@ -761,7 +727,7 @@ class CommodityCollection(CommodityTreeBase):
         will assign as the snapshot moment the highest transaction id across all
         snapshot commodities.
         """
-        return self._get_snapshot(transaction_id=transaction_id)
+        return self._get_snapshot(transaction_order=transaction_order)
 
     @property
     def current_snapshot(self) -> CommodityTreeSnapshot:
@@ -774,60 +740,81 @@ class CommodityCollection(CommodityTreeBase):
         return self._get_snapshot()
 
     @property
-    def max_transaction_id(self) -> int:
+    def max_transaction_order(self) -> int:
         return max(
-            [
-                transaction_id
-                for commodity in self.commodities
-                for transaction_id in commodity._get_transaction_ids()
-            ],
+            transaction_id
+            for commodity in self.commodities
+            for transaction_id in commodity._get_transaction_orders()
         )
 
     def _get_snapshot(
         self,
         snapshot_date: Optional[date] = None,
-        transaction_id: Optional[int] = None,
+        transaction_order: Optional[int] = None,
     ) -> CommodityTreeSnapshot:
-        if transaction_id is None == snapshot_date is None:
+        if transaction_order is None == snapshot_date is None:
             clock_type = ClockType.COMBINED
-        elif transaction_id is None:
+        elif transaction_order is None:
             clock_type = ClockType.CALENDAR
         else:
             clock_type = ClockType.TRANSACTION
 
-        if transaction_id is None:
-            transaction_id = self.max_transaction_id
+        if transaction_order is None:
+            transaction_order = self.max_transaction_order
         if snapshot_date is None:
             snapshot_date = date.today()
 
-        commodities = self._get_snapshot_commodities(snapshot_date, transaction_id)
+        commodities = self._get_snapshot_commodities(snapshot_date, transaction_order)
 
         return CommodityTreeSnapshot(
             commodities=commodities,
             clock_type=clock_type,
-            moments=(snapshot_date, transaction_id),
+            moments=(snapshot_date, transaction_order),
         )
 
     def _get_snapshot_commodities(
         self,
         snapshot_date: date,
-        transaction_id: int = None,
+        transaction_order: int,
     ) -> List[Commodity]:
-        if snapshot_date is None:
-            snapshot_date = date.today()
+        """
+        Returns the list of commodities than belong to a snapshot.
 
-        if transaction_id is None:
-            transaction_id = self.max_transaction_id
+        This method needs to be very efficient -
+        In particular, it should require the same number
+        of database round trips regardless of the level
+        of the root commodity in the tree.
 
-        transaction = Transaction.objects.get(id=transaction_id)
+        The solution is fetch all goods matching the snapshot moment
+        (incl. potentially multiple versions of each)
+        and then call a new util method get_latest_version,
+        which efficiently yields only the latest version
+        of each good from within the returned queryset.
 
-        return [
-            commodity
-            for commodity in self.commodities
-            if commodity.obj is not None
-            if commodity.get_valid_between().__contains__(snapshot_date)
-            if commodity.is_current_as_of_transaction(transaction)
-        ]
+        We then efficiently find the commodities in our collection
+        that match the latest_version goods.
+        """
+        item_ids = {c.get_item_id() for c in self.commodities if c.obj}
+        transaction = (
+            Transaction.objects.filter(
+                order=transaction_order,
+            )
+            .order_by("partition")
+            .last()
+        )
+
+        goods = GoodsNomenclature.objects.approved_up_to_transaction(
+            transaction,
+        ).filter(
+            item_id__in=item_ids,
+            valid_between__contains=snapshot_date,
+        )
+
+        latest_versions = get_latest_versions(goods)
+        pks = {good.pk for good in latest_versions}
+
+        keyed_collection = {c.obj.pk: c for c in self.commodities if c.obj}
+        return [commodity for pk, commodity in keyed_collection.items() if pk in pks]
 
     def __copy__(self) -> "CommodityCollection":
         """Returns an independent copy of the collection."""
@@ -1266,7 +1253,11 @@ class CommodityCollectionLoader:
 
         self.prefix = prefix
 
-    def load(self, current_only: bool = False) -> CommodityCollection:
+    def load(
+        self,
+        current_only: bool = False,
+        effective_only: bool = False,
+    ) -> CommodityCollection:
         """
         Returns a CommodityCollection including all commodities that match the
         prefix.
@@ -1280,7 +1271,10 @@ class CommodityCollectionLoader:
         qs = GoodsNomenclature.objects
 
         if current_only:
-            qs = qs.latest_approved().filter(
+            qs = qs.latest_approved()
+
+        if effective_only:
+            qs = qs.filter(
                 valid_between__contains=date.today(),
             )
 
