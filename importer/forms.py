@@ -46,6 +46,7 @@ class UploadTaricForm(forms.ModelForm):
             status=self.data["status"],
             partition_scheme_setting=settings.TRANSACTION_SCHEMA,
             username=user.username,
+            record_group=record_group,
         )
 
         return batch

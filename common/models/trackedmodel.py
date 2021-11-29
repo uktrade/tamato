@@ -281,6 +281,12 @@ class TrackedModel(PolymorphicModel):
         return description or None
 
     @property
+    def record_identifier(self) -> str:
+        """Returns the record identifier as defined in TARIC3 records
+        specification."""
+        return f"{self.record_code}{self.subrecord_code}"
+
+    @property
     def current_version(self: Cls) -> Cls:
         current_version = self.version_group.current_version
         if current_version is None:

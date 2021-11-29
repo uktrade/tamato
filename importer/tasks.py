@@ -2,6 +2,7 @@ import random
 import time
 from io import BytesIO
 from logging import getLogger
+from typing import Sequence
 
 from common.celery import app
 from importer import models
@@ -18,6 +19,7 @@ def import_chunk(
     workbasket_status: str,
     partition_scheme_setting: str,
     username: str,
+    record_group: Sequence[str] = None,
 ):
     """
     Task for importing an XML chunk into the database.
@@ -46,6 +48,7 @@ def import_chunk(
             workbasket_status,
             partition_scheme,
             username,
+            record_group=record_group,
         )
     except Exception as e:
         chunk.status = models.ImporterChunkStatus.ERRORED
@@ -69,7 +72,8 @@ def setup_chunk_task(
     partition_scheme_setting: str,
     username: str,
     record_code: str = None,
-    **kwargs
+    record_group: Sequence[str] = None,
+    **kwargs,
 ):
     """
     Setup tasks to be run for the given chunk.
@@ -105,6 +109,7 @@ def setup_chunk_task(
         workbasket_status,
         partition_scheme_setting,
         username,
+        record_group=record_group,
     )
 
 
@@ -113,6 +118,7 @@ def find_and_run_next_batch_chunks(
     workbasket_status: str,
     partition_scheme_setting: str,
     username: str,
+    record_group: Sequence[str] = None,
 ):
     """
     Finds the next set of chunks for a batch to run.
@@ -154,10 +160,17 @@ def find_and_run_next_batch_chunks(
                 workbasket_status,
                 partition_scheme_setting,
                 username,
+                record_group=record_group,
             )
 
     if not batch.split_job:  # We only run one chunk at a time when the job isn't split
-        setup_chunk_task(batch, workbasket_status, partition_scheme_setting, username)
+        setup_chunk_task(
+            batch,
+            workbasket_status,
+            partition_scheme_setting,
+            username,
+            record_group=record_group,
+        )
         return
 
     # If the job is a split job (should only be used for seed files) the following logic applies.
@@ -196,6 +209,7 @@ def find_and_run_next_batch_chunks(
                     partition_scheme_setting,
                     username,
                     record_code=code,
+                    record_group=record_group,
                     chapter=chapter,
                 )
         # Special case: measures when split can run entirely async
@@ -207,6 +221,7 @@ def find_and_run_next_batch_chunks(
                     partition_scheme_setting,
                     username,
                     record_code=code,
+                    record_group=record_group,
                     chapter=chunk.chapter,
                     chunk_number=chunk.chunk_number,
                 )
@@ -217,4 +232,5 @@ def find_and_run_next_batch_chunks(
                 partition_scheme_setting,
                 username,
                 record_code=code,
+                record_group=record_group,
             )

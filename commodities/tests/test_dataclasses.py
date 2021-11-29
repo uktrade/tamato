@@ -8,6 +8,7 @@ import pytest
 from commodities.models.constants import SUFFIX_DECLARABLE
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityTreeBase
+from common.models.constants import ClockType
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
@@ -239,9 +240,13 @@ def test_commodity_tree_base_get_commodity(commodities):
         "snapshot-15-days-ahead",
     ],
 )
-def test_collection_get_calendar_clock_snapshot(collection_spanned, date_ranges, case):
+def test_collection_get_combined_clock_snapshot(collection_spanned, date_ranges, case):
     snapshot_date = date.today() + timedelta(days=case["delta"])
-    snapshot = collection_spanned.get_calendar_clock_snapshot(snapshot_date)
+    transaction = collection_spanned.max_transaction
+    snapshot = collection_spanned.get_combined_clock_snapshot(
+        transaction,
+        snapshot_date,
+    )
 
     excluded_date_ranges = [
         getattr(date_ranges, range_name) for range_name in case["excluded_range_names"]
@@ -254,14 +259,15 @@ def test_collection_get_calendar_clock_snapshot(collection_spanned, date_ranges,
 
 
 def test_collection_get_transaction_clock_snapshot(collection_full):
-    transaction_orders = sorted(
-        [commodity.obj.transaction.order for commodity in collection_full.commodities],
+    transactions = sorted(
+        [commodity.obj.transaction for commodity in collection_full.commodities],
+        key=lambda x: x.order,
     )
     commodities = collection_full.commodities[::-1]
 
-    for i, transaction_order in enumerate(transaction_orders):
+    for i, transaction in enumerate(transactions):
         snapshot = collection_full.get_transaction_clock_snapshot(
-            transaction_order=transaction_order,
+            transaction=transaction,
         )
 
         assert snapshot.commodities[::-1] == commodities[: i + 1]
@@ -270,10 +276,13 @@ def test_collection_get_transaction_clock_snapshot(collection_full):
 def test_collection_current_snapshot(collection_full):
     snapshot = collection_full.current_snapshot
 
-    transaction_order = collection_full.max_transaction_order
+    transaction = collection_full.max_transaction
     snapshot_date = date.today()
-    tx_snapshot = collection_full.get_transaction_clock_snapshot(transaction_order)
-    cal_snapshot = collection_full.get_calendar_clock_snapshot(snapshot_date)
+    tx_snapshot = collection_full.get_transaction_clock_snapshot(transaction)
+    cal_snapshot = collection_full.get_combined_clock_snapshot(
+        transaction,
+        snapshot_date,
+    )
 
     tx_commodities = set(x.identifier for x in tx_snapshot.commodities)
     cal_commodities = set(x.identifier for x in cal_snapshot.commodities)
@@ -281,7 +290,7 @@ def test_collection_current_snapshot(collection_full):
 
     commodities = set(x.identifier for x in snapshot.commodities)
 
-    assert snapshot.moments == (snapshot_date, transaction_order)
+    assert snapshot.moment.clock_type == ClockType.COMBINED
     assert sorted(commodities) == sorted(tx_cal_commodities)
 
 
@@ -473,27 +482,21 @@ def test_snapshot_is_declarable(collection_basic):
 
 def test_snapshot_date(collection_basic):
     snapshot_date = date.today()
-    transaction_order = collection_basic.max_transaction_order
+    transaction = collection_basic.max_transaction
 
-    snapshot = collection_basic.get_calendar_clock_snapshot(snapshot_date)
-    assert snapshot.snapshot_date == snapshot_date
-    assert snapshot.moments == (snapshot_date, transaction_order)
-
-    transaction_order = collection_basic.max_transaction_order
-    snapshot = collection_basic.get_transaction_clock_snapshot(transaction_order)
-    assert snapshot.snapshot_date is None
+    snapshot = collection_basic.get_combined_clock_snapshot(
+        transaction,
+        snapshot_date,
+    )
+    assert snapshot.moment.date == snapshot_date
 
 
-def test_snapshot_transaction_order(collection_basic):
-    snapshot_date = date.today()
-    transaction_order = collection_basic.max_transaction_order
+def test_snapshot_transaction(collection_basic):
+    date.today()
+    transaction = collection_basic.max_transaction
 
-    snapshot = collection_basic.get_calendar_clock_snapshot(snapshot_date)
-    assert snapshot.snapshot_transaction_order is None
-
-    snapshot = collection_basic.get_transaction_clock_snapshot(transaction_order)
-    assert snapshot.snapshot_transaction_order == transaction_order
-    assert snapshot.moments == (snapshot_date, transaction_order)
+    snapshot = collection_basic.get_transaction_clock_snapshot(transaction)
+    assert snapshot.moment.transaction == transaction
 
 
 def test_change_valid_create(collection_basic, commodities):
