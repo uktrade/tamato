@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import ValidationError
 
+from commodities.models.orm import GoodsNomenclatureDescription
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
@@ -155,6 +156,10 @@ def test_description_models_have_no_blanks_business_rule(description_model):
     So this test acts as a check that all of the description models actually
     implement the business rule, either explicitly or implicitly.
     """
+    if description_model == GoodsNomenclatureDescription:
+        pytest.skip(
+            "Blank descriptions are now allowed on GoodsNomenclatureDescription.",
+        )
     assert NoBlankDescription in description_model.business_rules
 
 
