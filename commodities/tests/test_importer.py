@@ -8,6 +8,8 @@ from commodities import serializers
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from importer.namespaces import TARIC_RECORD_GROUPS
+from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
 
@@ -741,3 +743,58 @@ def test_sync_indent_node_end_dates_on_indent_import(
 
     imported_node = imported_indent.nodes.first()
     assert imported_node.valid_between.upper == imported_node_end_date
+
+
+@pytest.mark.parametrize(
+    ("measure_validity", "is_affected", "update_type"),
+    (
+        ("adjacent_later", True, UpdateType.DELETE),  # should be deleted
+        (
+            "overlap_normal_earlier",
+            True,
+            UpdateType.UPDATE,
+        ),  # should have a new start_date
+        ("overlap_normal", True, UpdateType.UPDATE),  # should have a new end date
+        ("starts_with_normal", False, None),  # should not be affected
+    ),
+    ids=("future", "earlier", "current", "shortlived"),
+)
+def test_correct_affected_measures_are_selected(
+    run_xml_import,
+    date_ranges,
+    measure_validity,
+    is_affected,
+    update_type,
+):
+    attrs = dict(
+        item_id="1199102030",
+        suffix="80",
+    )
+
+    good = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end, **attrs
+    )
+    attrs.update(sid=good.sid)
+
+    future_measure = factories.MeasureFactory(
+        goods_nomenclature=good,
+        valid_between=getattr(date_ranges, measure_validity),
+    )
+
+    imported_good = run_xml_import(
+        lambda: factories.GoodsNomenclatureFactory.build(
+            valid_between=date_ranges.normal, update_type=UpdateType.UPDATE, **attrs
+        ),
+        serializers.GoodsNomenclatureSerializer,
+        TARIC_RECORD_GROUPS["commodities"],
+    )
+
+    workbasket = imported_good.transaction.workbasket
+    affected_measures = [
+        model for model in workbasket.tracked_models.all() if type(model) == Measure
+    ]
+    affected_measure_sids = [measure.sid for measure in affected_measures]
+
+    assert (future_measure.sid in affected_measure_sids) == is_affected
+    if is_affected:
+        assert affected_measures[0].update_type == update_type
