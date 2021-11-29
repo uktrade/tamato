@@ -118,7 +118,15 @@ def get_filtered_mad_items(
     values: Iterable[str],
     as_defined: Optional[bool] = True,
 ) -> TMadItemGenerator:
-    """Returns filtered MaD data, re-arranged in CM format."""
+    """
+    Returns filtered MaD data, re-arranged in create-measures template format.
+
+    The function arguments are:
+    - key: the column name to look up in each row
+    - values: the values list that filtered rows must match in the key column
+    - as_defined: if True, use the measures-as-defined template,
+        else use the measures-as-declared template.
+    """
     url = URL_DEF if as_defined else URL_DECL
 
     with closing(requests.get(url, stream=True)) as r:
@@ -150,7 +158,8 @@ def get_goods_mad_items(
     goods: Iterable[GoodsNomenclature],
     as_defined: Optional[bool] = True,
 ) -> TMadItemGenerator:
-    """Returns CM rows that match a set of commodity codes."""
+    """Returns create-measures template rows that match a set of commodity
+    codes."""
     key = MAD_COMMODITY_CODE
     codes = [good.item_id for good in goods]
     return get_filtered_mad_items(key, codes, as_defined=as_defined)
@@ -160,7 +169,8 @@ def get_measures_mad_items(
     measures: Iterable[Measure],
     as_defined: Optional[bool] = True,
 ) -> TMadItemGenerator:
-    """Returns CM rows that match a set of measure sid-s."""
+    """Returns create-measures template rows that match a set of measure
+    sid-s."""
     key = MAD_MEASURE_SID
     sids = [str(measure.sid) for measure in measures]
     return get_filtered_mad_items(key, sids, as_defined=as_defined)
@@ -178,7 +188,8 @@ class MeasureChangeReports:
         as_defined: Optional[bool] = True,
     ) -> TMadItemCollection:
         """
-        Returns affected measures from a commodity import in CM layout.
+        Returns affected measures from a commodity import in create-measures
+        template layout.
 
         Note: This method also persists the report locally.
         """
@@ -207,7 +218,8 @@ class MeasureChangeReports:
 
     def report_related_measures(self) -> TMadItemCollection:
         """
-        Returns related measures from a commodity import in CM layout.
+        Returns related measures from a commodity import in create-measures
+        template layout.
 
         Not all measures related to the imported commodities are also affected
         by the side effects of the import.
