@@ -30,6 +30,7 @@ def test_import_chunk(
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
+        record_group=None,
     )
 
 
@@ -97,6 +98,7 @@ def test_setup_chunk_task(mock_import_chunk, chunk, valid_user):
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
+        record_group=None,
     )
 
 
@@ -147,6 +149,7 @@ def test_find_and_run_next_batch_chunks_finished_runs_dependencies(
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
+        record_group=None,
     )
 
 
@@ -170,4 +173,5 @@ def test_find_and_run_next_batch_chunks(mock_import_chunk, batch, valid_user):
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
+        record_group=None,
     )
