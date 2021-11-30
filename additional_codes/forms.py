@@ -127,7 +127,7 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
     def clean(self):
         cleaned_data = super().clean()
         cleaned_data["additional_code_description"] = models.AdditionalCodeDescription(
-            description=cleaned_data["description"],
+            description=cleaned_data.get("description"),
             validity_start=cleaned_data["valid_between"].lower,
         )
         return cleaned_data
