@@ -344,6 +344,7 @@ class TrackedModel(PolymorphicModel):
     def copy(
         self: Cls,
         transaction,
+        ignore=None,
         **overrides: Any,
     ) -> Cls:
         """
@@ -367,10 +368,11 @@ class TrackedModel(PolymorphicModel):
         basic_fields = self.copyable_fields
         related_object_field_names = {}
         for field_name in overrides:
+            value = overrides[field_name]
             object_name, field_name = self.get_related_object_field(field_name)
             if object_name:
                 related_object_field_names.setdefault(object_name, []).append(
-                    field_name,
+                    {field_name: value},
                 )
             else:
                 field = self._meta.get_field(field_name)
@@ -414,12 +416,23 @@ class TrackedModel(PolymorphicModel):
         # the new model substituted in place of this one. It's done this way to
         # give these related models a chance to increment SIDs, etc.
 
-        assert 0
         for field in get_subrecord_relations(self.__class__):
+            if field.related_model == ignore:
+                continue
             queryset = getattr(self, field.get_accessor_name())
             reverse_field_name = field.field.name
             for model in queryset.approved_up_to_transaction(transaction):
                 model.copy(transaction, **{reverse_field_name: new_object})
+
+        for name in related_object_field_names:
+            model = getattr(self, name)
+            kwargs = {
+                k: v for d in related_object_field_names[name] for k, v in d.items()
+            }
+
+            copied = model.copy(transaction, ignore=type(self), **kwargs)
+            setattr(self, name, copied)
+            self.save(force_write=True)
 
         return new_object
 

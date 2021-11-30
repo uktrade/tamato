@@ -87,10 +87,14 @@ def get_future_date_range(prev_date_range, years):
 
 
 def test_create_new_sub_quota_and_main_quota_by_copying_association():
-    ass = factories.QuotaAssociationFactory()
-    valid_between = get_future_date_range(ass.main_quota.valid_between, 1)
-    ass.copy(
-        ass.transaction,
+    qa = factories.QuotaAssociationFactory()
+    valid_between = get_future_date_range(qa.main_quota.valid_between, 1)
+    copied = qa.copy(
+        qa.transaction,
         sub_quota__valid_between=valid_between,
         main_quota__valid_between=valid_between,
+        main_quota__volume=12.333,
     )
+
+    assert qa.main_quota != copied.main_quota
+    assert qa.main_quota.valid_between.lower != copied.main_quota.valid_between.lower
