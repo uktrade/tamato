@@ -282,6 +282,9 @@ class TableLock:
 
 
 def get_next_id(queryset: QuerySet[Model], id_field: Field, max_len: int):
+    if not queryset:
+        return "1".zfill(max_len)
+
     return (
         queryset.annotate(
             next_id=Func(
