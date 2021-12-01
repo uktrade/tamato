@@ -288,7 +288,7 @@ def use_update_form(valid_user_api_client: APIClient):
     that the passed data contains errors.
     """
 
-    def use(object: TrackedModel, new_data: dict[str, Callable[[Any], Any]]):
+    def use(object: TrackedModel, new_data: Callable[[TrackedModel], dict[str, Any]]):
         model = type(object)
         versions = set(
             model.objects.filter(**object.get_identifying_fields()).values_list(
@@ -306,10 +306,10 @@ def use_update_form(valid_user_api_client: APIClient):
         # Get the data out of the edit page
         # and override it with any data that has been passed in
         data = get_form_data(response.context_data["form"])
-        assert set(new_data.keys()).issubset(data.keys())
 
         # Submit the edited data and if we expect success ensure we are redirected
-        realised_data = {key: new_data[key](data[key]) for key in new_data}
+        realised_data = new_data(object)
+        assert set(realised_data.keys()).issubset(data.keys())
         data.update(realised_data)
         response = valid_user_api_client.post(edit_url, data)
 

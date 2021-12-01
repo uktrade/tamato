@@ -5,6 +5,7 @@ from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
+from common.tests.util import valid_between_start_delta
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
@@ -17,11 +18,11 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.parametrize(
     ("new_data", "expected_valid"),
     (
-        ({}, True),
-        ({"start_date_0": lambda d: d + 1}, True),
-        ({"start_date_0": lambda d: d - 1}, False),
-        ({"start_date_1": lambda m: m + 1}, True),
-        ({"start_date_2": lambda y: y + 1}, True),
+        (lambda r: {}, True),
+        (valid_between_start_delta(days=+1), True),
+        (valid_between_start_delta(days=-1), False),
+        (valid_between_start_delta(months=1), True),
+        (valid_between_start_delta(years=1), True),
     ),
 )
 def test_regulation_update(new_data, expected_valid, use_update_form):

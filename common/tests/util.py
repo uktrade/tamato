@@ -7,6 +7,7 @@ from functools import lru_cache
 from functools import wraps
 from io import BytesIO
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Sequence
@@ -688,6 +689,32 @@ def only_applicable_after(cutoff):
     return decorator
 
 
+def date_post_data(name: str, date: date) -> Dict[str, int]:
+    """Construct a POST data fragment for the validity period start and end
+    dates of a ValidityPeriodForm from the given date objects."""
+    return {
+        f"{name}_{i}": part for i, part in enumerate([date.day, date.month, date.year])
+    }
+
+
+def valid_between_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
+    """Returns updated form data with the delta added to the "lower" date of the
+    model's valid between."""
+    return lambda model: date_post_data(
+        "start_date",
+        model.valid_between.lower + relativedelta(**delta),
+    )
+
+
+def validity_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
+    """Returns updated form data with the delta added to the "validity start"
+    date of the model."""
+    return lambda model: date_post_data(
+        "validity_start",
+        model.validity_start + relativedelta(**delta),
+    )
+
+
 def validity_period_post_data(start: date, end: date) -> Dict[str, int]:
     """
     Construct a POST data fragment for the validity period start and end dates
@@ -707,9 +734,8 @@ def validity_period_post_data(start: date, end: date) -> Dict[str, int]:
     }
     """
     return {
-        f"{name}_{i}": part
-        for name, date in (("start_date", start), ("end_date", end))
-        for i, part in enumerate([date.day, date.month, date.year])
+        **date_post_data("start_date", start),
+        **date_post_data("end_date", end),
     }
 
 
