@@ -37,8 +37,6 @@ def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(client):
         "description": "A note on feet",
     }
     form = forms.FootnoteCreateForm(data=data, request=request)
-
-    # with mock.patch("workbaskets.models.WorkBasket.current", return_value=workbasket):
     new_footnote = form.save(commit=False)
 
     assert earlier.footnote_id != new_footnote.footnote_id
