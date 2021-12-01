@@ -10,13 +10,14 @@ from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
-
+# https://uktrade.atlassian.net/browse/TP-851
 def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(client):
+    """Creates."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.save_to_session(client.session)
-    client.session.save()
+    # workbasket.save_to_session(client.session)
+    # client.session.save()
     footnote_type = factories.FootnoteTypeFactory.create()
     valid_between = TaricDateRange(date(2021, 1, 1), date(2021, 12, 1))
 
@@ -24,10 +25,6 @@ def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(client):
         footnote_type=footnote_type,
         valid_between=valid_between,
         footnote_id="001",
-    )
-    overlapping = factories.FootnoteFactory.create(
-        footnote_type=footnote_type,
-        valid_between=TaricDateRange(date(2021, 1, 1), date(2022, 3, 3)),
     )
 
     data = {
@@ -38,7 +35,6 @@ def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(client):
         "description": "A note on feet",
     }
     form = forms.FootnoteCreateForm(data=data)
-    form.is_valid()
 
     with mock.patch("workbaskets.models.WorkBasket.current", return_value=workbasket):
         new_footnote = form.save(commit=False)
