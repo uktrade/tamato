@@ -1369,7 +1369,7 @@ models that reappear for the same <a class="reference internal" href="#common.mo
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.version_group">
-<span class="sig-name descname"><span class="pre">version_group</span></span><a class="headerlink" href="#common.models.TrackedModel.version_group" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">version_group</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="#common.models.VersionGroup" title="common.models.trackedmodel.VersionGroup"><span class="pre">common.models.trackedmodel.VersionGroup</span></a></em><a class="headerlink" href="#common.models.TrackedModel.version_group" title="Permalink to this definition">¶</a></dt>
 <dd><p>Each version group contains all of the versions of the same logical model.</p>
 <p>When a new version of a model is authored (e.g. to
 <code class="xref py py-data docutils literal notranslate"><span class="pre">DELETE</span></code> it) a new model row is created and
@@ -1838,7 +1838,7 @@ object the first time, the query is executed.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.VersionGroup.versions">
-<span class="sig-name descname"><span class="pre">versions</span></span><a class="headerlink" href="#common.models.VersionGroup.versions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">versions</span></span><em class="property"><span class="pre">:</span> <span class="pre">django.db.models.query.QuerySet</span></em><a class="headerlink" href="#common.models.VersionGroup.versions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Accessor to the related objects manager on the reverse side of a
 many-to-one relation.</p>
 <p>In the example:</p>

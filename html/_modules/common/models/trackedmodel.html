@@ -172,7 +172,9 @@
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">related_query_name</span><span class="o">=</span><span class="s2">&quot;is_current&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+
+    <span class="n">versions</span><span class="p">:</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]</span></div>
 
 
 <span class="n">Cls</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Cls&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;TrackedModel&quot;</span><span class="p">)</span>
@@ -201,7 +203,7 @@
 <span class="sd">    :attr:`version_group` created.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">version_group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+    <span class="n">version_group</span><span class="p">:</span> <span class="n">VersionGroup</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">VersionGroup</span><span class="p">,</span>
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;versions&quot;</span><span class="p">,</span>
