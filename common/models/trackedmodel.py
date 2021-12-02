@@ -341,10 +341,31 @@ class TrackedModel(PolymorphicModel):
             return tuple(object_field)
         return (None, field_name)
 
+        # 1. measure.copy(goods_nomenclature=…)
+        # 2. measure.copy(conditions=[])
+        # 3. measure.copy(conditions=None)
+        # 4. measure.copy(conditions=[…, …]) <-- sets the appropriate key on the passed objects
+        #       so for conditions would set dependent_measure equal to the measure just copied
+        #       does it call force_write?
+        #       a. measure.copy(conditions=[MeasureCondition(action=…, …)])
+        #       b. measure.copy(conditions=some_other_measure.conditions)
+        #       only b and not a --> so don't call force_write
+        #
+        #       quota_definition.copy(sub_quota_associations=[QuotaAssociation(…)])
+        #       regulation.copy(amendments=[])
+        #
+        # 5. quota_definition.copy(associations__sub_quota=…)
+        # 6. measure.copy(components__amount=0) <-- same value for all components?
+        # basically the same interface as Factory.create(…)
+
+        # Remove any fields from the basic data that are overriden, because
+        # otherwise when we convert foreign keys to IDs (below) Django will
+        # ignore the object from the overrides and just take the ID from the
+        # basic data.
+
     def copy(
         self: Cls,
         transaction,
-        ignore=None,
         **overrides: Any,
     ) -> Cls:
         """
@@ -353,12 +374,11 @@ class TrackedModel(PolymorphicModel):
 
         Any dependent models that are TARIC subrecords of this model will be
         copied as well. Any many-to-many relationships will also be duplicated
-        if they do not have an explicit through model.
-
-        Any overrides passed in as keyword arguments will be applied to the new
-        model. If the model uses SIDs, they will be automatically set to the
-        next highest available SID. Models with other identifying fields should
-        have their new IDs passed in through overrides.
+        if they do not have an explicit through model. Any overrides passed in
+        as keyword arguments will be applied to the new model. If the model uses
+        SIDs, they will be automatically set to the next highest available SID.
+        Models with other identifying fields should have thier new IDs passed in
+        through overrides.
         """
 
         # Remove any fields from the basic data that are overriden, because
@@ -366,19 +386,19 @@ class TrackedModel(PolymorphicModel):
         # ignore the object from the overrides and just take the ID from the
         # basic data.
         basic_fields = self.copyable_fields
-        related_object_field_names = {}
+        subrecord_fields = {}
         for field_name in overrides:
-            value = overrides[field_name]
-            object_name, field_name = self.get_related_object_field(field_name)
-            if object_name:
-                related_object_field_names.setdefault(object_name, []).append(
-                    {field_name: value},
-                )
-            else:
+            field = None
+            if not "__" in field_name:
                 field = self._meta.get_field(field_name)
+            if field and field in basic_fields:
                 basic_fields.remove(field)
+            else:
+                subrecord_fields.update({field_name: overrides[field_name]})
 
-        overrides = {key: value for key, value in overrides.items() if "__" not in key}
+        overrides = {
+            k: v for (k, v) in overrides.items() if k not in subrecord_fields.keys()
+        }
 
         # Remove any SIDs from the copied data. This allows them to either
         # automatically pick the next highest value or to be passed in.
@@ -415,24 +435,27 @@ class TrackedModel(PolymorphicModel):
         # of the related models and then recursively call copy on them, but with
         # the new model substituted in place of this one. It's done this way to
         # give these related models a chance to increment SIDs, etc.
-
         for field in get_subrecord_relations(self.__class__):
-            if field.related_model == ignore:
-                continue
+            if field.name in subrecord_fields.keys() and subrecord_fields[field.name]:
+                for subrecord in subrecord_fields[field.name]:
+                    remote_field = [
+                        f for f in self._meta.get_fields() if f.name == field.name
+                    ][0].remote_field.name
+                    setattr(subrecord, remote_field, self)
+                    subrecord.save()
+
             queryset = getattr(self, field.get_accessor_name())
             reverse_field_name = field.field.name
-            for model in queryset.approved_up_to_transaction(transaction):
-                model.copy(transaction, **{reverse_field_name: new_object})
-
-        for name in related_object_field_names:
-            model = getattr(self, name)
-            kwargs = {
-                k: v for d in related_object_field_names[name] for k, v in d.items()
+            kwargs = {reverse_field_name: new_object}
+            nested_fields = {
+                k.split("__")[1]: v
+                for (k, v) in subrecord_fields.items()
+                if field.name in k and field.name != k
             }
+            kwargs.update(nested_fields)
 
-            copied = model.copy(transaction, ignore=type(self), **kwargs)
-            setattr(self, name, copied)
-            self.save(force_write=True)
+            for model in queryset.approved_up_to_transaction(transaction):
+                model.copy(transaction, **kwargs)
 
         return new_object
 
