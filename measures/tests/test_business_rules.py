@@ -417,14 +417,23 @@ def existing_goods_nomenclature(date_ranges):
 
 
 def updated_goods_nomenclature(e):
+    original = e.indents.get()
+    original.indent = 1
+    original.save(force_write=True)
+
     good = factories.GoodsNomenclatureFactory.create(
+        item_id=e.item_id[:8] + "90",
         valid_between=e.valid_between,
+        indent__indent=e.indents.first().indent + 1,
         indent__node__parent=e.indents.first().nodes.first(),
     )
 
     factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good,
         update_type=UpdateType.UPDATE,
         version_group=good.indents.first().version_group,
+        validity_start=good.indents.first().validity_start,
+        indent=e.indents.first().indent - 1,
         node__parent=None,
     )
 
@@ -436,6 +445,7 @@ def updated_goods_nomenclature(e):
         (lambda e: e, True),
         (
             lambda e: factories.GoodsNomenclatureFactory.create(
+                item_id=e.item_id[:8] + "90",
                 indent__node__parent=e.indents.first().nodes.first(),
                 valid_between=e.valid_between,
             ),
@@ -599,10 +609,7 @@ def test_ME32(related_measure_data):
     related_data, error_expected = related_measure_data
     related = factories.MeasureFactory.create(**related_data)
 
-    if error_expected:
-        with pytest.raises(BusinessRuleViolation):
-            business_rules.ME32(related.transaction).validate(related)
-    else:
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME32(related.transaction).validate(related)
 
 
@@ -1353,21 +1360,34 @@ def test_ME57(date_ranges):
         business_rules.ME57(condition.transaction).validate(condition)
 
 
-def test_ME58():
+@pytest.mark.parametrize(
+    "required_certificate, expect_error",
+    [
+        (factories.CertificateFactory.create, True),
+        (lambda: None, True),
+        (factories.CertificateFactory.create, False),
+    ],
+)
+def test_ME58(required_certificate, expect_error):
     """The same certificate can only be referenced once by the same measure and
     the same condition type."""
 
     existing = factories.MeasureConditionFactory.create(
-        required_certificate=factories.CertificateFactory.create(),
+        required_certificate=required_certificate(),
     )
     duplicate = factories.MeasureConditionFactory.create(
         condition_code=existing.condition_code,
         dependent_measure=existing.dependent_measure,
-        required_certificate=existing.required_certificate,
+        required_certificate=existing.required_certificate
+        if expect_error
+        else factories.CertificateFactory.create(),
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ME58(duplicate.transaction).validate(existing)
+
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.ME58(duplicate.transaction).validate(duplicate)
 
 
 def test_ME59(reference_nonexistent_record):

@@ -408,7 +408,7 @@ class WorkBasket(TimestampedMixin):
     def get_current_transaction(cls, request):
         workbasket = cls.current(request)
         if workbasket:
-            return workbasket.transactions.order_by("order").last()
+            return workbasket.current_transaction
 
         return None
 
@@ -426,7 +426,8 @@ class WorkBasket(TimestampedMixin):
     def new_transaction(self, **kwargs):
         """Create a new transaction in this workbasket."""
         if "order" not in kwargs:
-            kwargs["order"] = self.transactions.count() + 1
+            txn = self.current_transaction
+            kwargs["order"] = ((txn and txn.order) or 0) + 1
 
         if "partition" not in kwargs:
             # If partition was not specified, choose a partition scheme as configured from
@@ -443,3 +444,17 @@ class WorkBasket(TimestampedMixin):
 
         # Get Transaction model via transactions.model to avoid circular import.
         return self.transactions.model.objects.create(workbasket=self, **kwargs)
+
+    @property
+    def current_transaction(self) -> Transaction:
+        """
+        Returns the most recent transaction according to the workbasket.
+
+        The value returned is the transaction that should be used as input to
+        `approved_up_to_transaction` and friends when data in the workbasket is
+        being considered.
+
+        This is last transaction ordered by partition and order, or the most
+        recent approved transaction if no transactions are in the workbasket.
+        """
+        return self.transactions.last() or Transaction.approved.last()

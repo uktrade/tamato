@@ -6,6 +6,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Optional
+from typing import Sequence
 from typing import Type
 from unittest.mock import patch
 
@@ -287,7 +288,7 @@ def use_update_form(valid_user_api_client: APIClient):
     that the passed data contains errors.
     """
 
-    def use(object: TrackedModel, new_data: dict[str, Callable[[Any], Any]]):
+    def use(object: TrackedModel, new_data: Callable[[TrackedModel], dict[str, Any]]):
         model = type(object)
         versions = set(
             model.objects.filter(**object.get_identifying_fields()).values_list(
@@ -305,10 +306,10 @@ def use_update_form(valid_user_api_client: APIClient):
         # Get the data out of the edit page
         # and override it with any data that has been passed in
         data = get_form_data(response.context_data["form"])
-        assert set(new_data.keys()).issubset(data.keys())
 
         # Submit the edited data and if we expect success ensure we are redirected
-        realised_data = {key: new_data[key](data[key]) for key in new_data}
+        realised_data = new_data(object)
+        assert set(realised_data.keys()).issubset(data.keys())
         data.update(realised_data)
         response = valid_user_api_client.post(edit_url, data)
 
@@ -360,6 +361,8 @@ def run_xml_import(valid_user, settings):
         serializer: An optional serializer class to convert the model to its TARIC XML
             representation. If not provided, the function attempts to use a serializer
             class named after the model, eg measures.serializers.<model-class-name>Serializer
+        record_group: A taric record group, which can be used to trigger
+            specific importer behaviour, e.g. for handling commodity code changes
 
     The function serializes the model to TARIC XML, inputs this to the importer, then
     fetches the newly created model from the database and compares the fields.
@@ -371,6 +374,8 @@ def run_xml_import(valid_user, settings):
     def check(
         factory: Callable[[], TrackedModel],
         serializer: Type[TrackedModelSerializer],
+        record_group: Sequence[str] = None,
+        workflow_status: WorkflowStatus = WorkflowStatus.PUBLISHED,
     ) -> TrackedModel:
         get_nursery().cache.clear()
         settings.SKIP_WORKBASKET_VALIDATION = True
@@ -388,18 +393,26 @@ def run_xml_import(valid_user, settings):
 
         process_taric_xml_stream(
             xml,
-            workbasket_status=WorkflowStatus.PUBLISHED,
+            workbasket_status=workflow_status,
             partition_scheme=get_partition_scheme(),
             username=valid_user.username,
+            record_group=record_group,
         )
 
         db_kwargs = model.get_identifying_fields()
+        workbasket = WorkBasket.objects.last()
+        assert workbasket is not None
+
         try:
-            imported = model_class.objects.get_latest_version(**db_kwargs)
+            imported = model_class.objects.approved_up_to_transaction(
+                workbasket.current_transaction,
+            ).get(**db_kwargs)
         except model_class.DoesNotExist:
             if model.update_type == UpdateType.DELETE:
                 imported = (
-                    model_class.objects.get_versions(**db_kwargs).latest_deleted().get()
+                    model_class.objects.versions_up_to(workbasket.current_transaction)
+                    .filter(**db_kwargs)
+                    .last()
                 )
             else:
                 raise

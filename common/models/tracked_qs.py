@@ -85,7 +85,9 @@ class TrackedModelQuerySet(
         similar to `approved_up_to_transaction` except it includes all versions,
         not just the most recent.
         """
-        return self.filter(self.as_at_transaction_filter(transaction))
+        return self.filter(
+            self.as_at_transaction_filter(transaction),
+        ).version_ordering()
 
     def get_versions(self, **kwargs) -> TrackedModelQuerySet:
         for field in self.model.identifying_fields:
@@ -93,7 +95,7 @@ class TrackedModelQuerySet(
                 raise exceptions.NoIdentifyingValuesGivenError(
                     f"Field {field} expected but not found.",
                 )
-        return self.filter(**kwargs)
+        return self.filter(**kwargs).version_ordering()
 
     def get_latest_version(self, **kwargs):
         """Gets the latest version of a specific object."""
@@ -101,14 +103,13 @@ class TrackedModelQuerySet(
 
     def get_first_version(self, **kwargs):
         """Get the original version of a specific object."""
-        return self.get_versions(**kwargs).order_by("id").first()
+        return self.get_versions(**kwargs).first()
 
     def excluding_versions_of(self, version_group):
         return self.exclude(version_group=version_group)
 
     def has_approved_state(self):
         """Get objects which have been approved/sent-to-cds/published."""
-
         return self.filter(self.approved_query_filter())
 
     def annotate_record_codes(self) -> TrackedModelQuerySet:
@@ -126,6 +127,22 @@ class TrackedModelQuerySet(
                 output_field=CharField(),
             ),
         )
+
+    def version_ordering(self) -> TrackedModelQuerySet:
+        """
+        Returns objects in canonical order, i.e. by the order in which they
+        appear in transactions.
+
+        For querysets that only contain the "latest" version of a model, this
+        will return the objects in the order that the most recent version was
+        added.
+
+        For querysets that contain multiple versions of a model, this will
+        return the objects in the order those versions were added. I.e,
+        subsequently calling `first()` always selects the first version and
+        `last()` selects the most recent version (contained in the queryset).
+        """
+        return self.order_by("transaction__partition", "transaction__order")
 
     def _get_current_related_lookups(
         self, model, *lookups, prefix="", recurse_level=0

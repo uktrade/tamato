@@ -47,6 +47,8 @@ class VersionGroup(TimestampedMixin):
         related_query_name="is_current",
     )
 
+    versions: QuerySet[TrackedModel]
+
 
 Cls = TypeVar("Cls", bound="TrackedModel")
 
@@ -74,7 +76,7 @@ class TrackedModel(PolymorphicModel):
     :attr:`version_group` created.
     """
 
-    version_group = models.ForeignKey(
+    version_group: VersionGroup = models.ForeignKey(
         VersionGroup,
         on_delete=models.PROTECT,
         related_name="versions",
@@ -280,6 +282,12 @@ class TrackedModel(PolymorphicModel):
         if hasattr(self, "description"):
             description = self.description
         return description or None
+
+    @property
+    def record_identifier(self) -> str:
+        """Returns the record identifier as defined in TARIC3 records
+        specification."""
+        return f"{self.record_code}{self.subrecord_code}"
 
     @property
     def current_version(self: Cls) -> Cls:
