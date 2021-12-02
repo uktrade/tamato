@@ -932,7 +932,7 @@ class SideEffect(BaseModel):
                 "order",
             )
             .values_list("order", flat=True)
-        )
+        ).last()
 
         if not last_order:
             return PREEMPTIVE_TRANSACTION_SEED
@@ -1058,6 +1058,11 @@ class CommodityChange(BaseModel):
 
         if self.update_type != UpdateType.CREATE:
             self._handle_hierarchy_side_effects(before, after)
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        """Returns the workbasket for the commodity change."""
+        return (self.candidate or self.current).obj.transaction.workbasket
 
     def _handle_delete_side_effects(self, before: CommodityTreeSnapshot) -> None:
         """
@@ -1314,6 +1319,28 @@ class CommodityChange(BaseModel):
                         except KeyError:
                             continue
 
+    def _check_already_preempted(
+        self,
+        obj: TrackedModel,
+        verbose: Optional[bool] = True,
+    ) -> bool:
+        """Returns True if a side effect has already been preempted."""
+        key = get_model_identifier(obj)
+
+        preempted = key in (
+            get_model_identifier(model)
+            for model in self.workbasket.tracked_models.all()
+            if type(model) == type(obj)
+            if model.update_type == UpdateType.DELETE
+        )
+
+        if preempted and verbose:
+            logger.warning(
+                f"{key} is already marked for deletion due to another side effect.",
+            )
+
+        return preempted
+
     def _add_pending_delete(
         self,
         obj: TrackedModel,
@@ -1321,6 +1348,9 @@ class CommodityChange(BaseModel):
         variant: Optional[str] = None,
     ) -> None:
         """Add a pending related object delete operation to side effects."""
+        if self._check_already_preempted(obj):
+            return
+
         key = get_model_identifier(obj)
 
         self.side_effects[key] = SideEffect(
@@ -1339,6 +1369,9 @@ class CommodityChange(BaseModel):
         variant: Optional[str] = None,
     ) -> None:
         """Add a pending related object update operation to side effects."""
+        if self._check_already_preempted(obj):
+            return
+
         key = get_model_identifier(obj)
 
         try:
@@ -1511,7 +1544,7 @@ def get_model_preferred_key(obj: TrackedModel) -> str:
 
 def get_model_identifier(obj: TrackedModel) -> str:
     """Returns the preferred identifier for a model."""
-    identifier = obj.identifying_fields_to_string
+    identifier = obj.identifying_fields_to_string()
     label = obj._meta.label
     return f"{label}: {identifier}"
 
