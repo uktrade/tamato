@@ -29,6 +29,7 @@ from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from workbaskets.forms import SelectableObjectsForm
+from workbaskets.forms import SelectedObjectsStore
 from workbaskets.models import WorkBasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
@@ -137,15 +138,15 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
             )
         return success_url
 
+    def get_initial(self):
+        store = SelectedObjectsStore(self.request.session, "DASHBOARD_FORM")
+        return store.data.copy()
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         kwargs["objects"] = page.object_list
-
-        # TODO:
-        # * Provide initial data (here?) as current pk selections taken from the
-        #   SelectedObjectStore.
-        kwargs["data"] = []
+        kwargs["field_id_prefix"] = "tracked_model"
 
         return kwargs
 

@@ -7,7 +7,6 @@
   {% set name = field.id %}
   {% set value = field.id %}
   {% set checked = "" %}
-
   <div class="govuk-form-group">
     <fieldset class="govuk-fieldset">
       <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
@@ -87,7 +86,9 @@
       {% for field in form %}
         {% set obj = field.field.obj %}
         {% set object_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}</a>
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">
+          {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
+        </a>
         {%- endset %}
 
         {% set checkbox = checkbox_item(field) %}

@@ -19,25 +19,26 @@ class SelectedObjectsStore:
     """
 
     def __init__(self, session, store_id):
-        self._store_id = store_id  # "SELECTABLE_OBJECT_STORE"
+        self._store_id = store_id
         self._session = session
 
         if self._store_id not in self._session:
-            self._session[self._store_id] = {}
+            self._session[self._store_id] = dict()
 
     @property
-    def object_store(self):
+    def data(self):
         return self._session[self._store_id]
 
     def add_selected_objects(self, objs):
-        self.object_store |= objs
+        self.data.update(objs)
 
     def remove_selected_objects(self, objs):
-        self.object_store -= objs
+        for k in objs.keys():
+            self.data.pop(k, None)
 
     def clear(self):
         """Clear out all objects from the store."""
-        self.object_store.clear()
+        self.data = dict()
 
 
 class SelectableObjectField(forms.BooleanField):
@@ -54,13 +55,13 @@ class SelectableObjectsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         objects = kwargs.pop("objects")
-        selected_items = kwargs.get("data", [])
+        field_id_prefix = kwargs.pop("field_id_prefix")
 
         super().__init__(*args, **kwargs)
 
         for obj in objects:
-            self.fields[f"tracked_model_{obj.pk}"] = SelectableObjectField(
+            self.fields[f"{field_id_prefix}__{obj.pk}"] = SelectableObjectField(
                 required=False,
                 obj=obj,
-                initial=obj.pk in selected_items,
+                initial=obj.id in self.initial.keys(),
             )
