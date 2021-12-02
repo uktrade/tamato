@@ -624,9 +624,12 @@ class Measure(TrackedModel, ValidityMixin):
             and self.get_versions().order_by("transaction__order").last()
         ):
             previous = self.get_versions().order_by("transaction__order").last()
-            nomenclature_removed = not (
-                previous.goods_nomenclature and self.goods_nomenclature
-            )
+            try:
+                nomenclature_removed = not (
+                    previous.goods_nomenclature and self.goods_nomenclature
+                )
+            except type(previous.goods_nomenclature).DoesNotExist:
+                return super().save(*args, force_write=force_write, **kwargs)
             nomenclature_changed = (
                 True
                 if nomenclature_removed

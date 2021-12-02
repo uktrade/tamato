@@ -10,6 +10,7 @@ from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.namespaces import TARIC_RECORD_GROUPS
 from measures.models import Measure
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -802,6 +803,9 @@ def test_correct_affected_measures_are_selected(
         ),
         serializers.GoodsNomenclatureSerializer,
         TARIC_RECORD_GROUPS["commodities"],
+        # Need a draft workbasket status so that the measure generated
+        # as a side effect is ordered *after* the commodity it is on.
+        WorkflowStatus.PROPOSED,
     )
 
     workbasket = imported_good.transaction.workbasket

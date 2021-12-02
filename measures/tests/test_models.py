@@ -158,8 +158,8 @@ def test_measure_action_in_use(in_use_check_respects_deletes):
     assert in_use_check_respects_deletes(
         factories.MeasureActionFactory,
         "in_use",
-        factories.MeasureConditionComponentFactory,
-        "condition__action",
+        factories.MeasureConditionFactory,
+        "action",
     )
 
 

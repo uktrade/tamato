@@ -74,13 +74,13 @@ def copy_commodity(
         if field.name != "sid"
     }
 
+    attrs["indent__indent"] = kwargs.pop("indent", commodity.indent)
     attrs.update(kwargs)
 
     transaction = next(transaction_pool)
 
     obj = factories.GoodsNomenclatureFactory.create(transaction=transaction, **attrs)
-    indent = kwargs.get("indent", commodity.indent)
-    return Commodity(obj=obj, indent=indent)
+    return Commodity(obj=obj, indent_obj=obj.indents.get())
 
 
 def create_commodity(
@@ -100,9 +100,10 @@ def create_commodity(
         suffix=suffix,
         valid_between=validity,
         transaction=transaction,
+        indent__indent=indent,
     )
 
-    return Commodity(obj=obj, indent=indent)
+    return Commodity(obj=obj, indent_obj=obj.indents.get())
 
 
 def create_collection(
@@ -212,10 +213,7 @@ def commodities(date_ranges, transaction_pool) -> dict[str, Commodity]:
 
     commodities = [create_commodity(transaction_pool, *args) for args in params]
 
-    return {
-        f"{c.code.trimmed_dot_code}_{c.get_suffix()}_{c.get_indent()}": c
-        for c in commodities
-    }
+    return {f"{c.code.trimmed_dot_code}_{c.suffix}_{c.indent}": c for c in commodities}
 
 
 @pytest.fixture
@@ -237,10 +235,7 @@ def commodities_spanned(date_ranges, transaction_pool):
     )
 
     commodities = [create_commodity(transaction_pool, *args) for args in params]
-    return {
-        f"{c.code.trimmed_dot_code}_{c.get_suffix()}_{c.get_indent()}": c
-        for c in commodities
-    }
+    return {f"{c.code.trimmed_dot_code}_{c.suffix}_{c.indent}": c for c in commodities}
 
 
 @pytest.fixture
@@ -471,7 +466,11 @@ def scenario_7(commodities, transaction_pool) -> TScenario:
     collection = create_collection(commodities, keys)
 
     current = collection.get_commodity("9999.20")
-    candidate = copy_commodity(current, transaction_pool, indent=current.indent + 1)
+    candidate = copy_commodity(
+        current,
+        transaction_pool,
+        indent=current.indent + 1,
+    )
 
     changes = [
         CommodityChange(
@@ -496,7 +495,11 @@ def scenario_8(scenario_7, transaction_pool) -> TScenario:
     collection.update(changes)
 
     current = collection.get_commodity("9999.20")
-    candidate = copy_commodity(current, transaction_pool, indent=current.indent - 1)
+    candidate = copy_commodity(
+        current,
+        transaction_pool,
+        indent=current.indent - 1,
+    )
 
     changes = [
         CommodityChange(
