@@ -15,8 +15,11 @@ from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.views import generic
-from django.views.generic.edit import FormView
+from django.views.generic.base import TemplateResponseMixin
+from django.views.generic.base import View
+from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
@@ -25,21 +28,71 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
-from workbaskets.forms import SelectableWorkBasketItemsForm
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-class Dashboard(FormView):
-    """UI endpoint providing a dashboard view, including a user selected set of
-    workbasket items."""
+class DashboardView(TemplateResponseMixin, FormMixin, View):
+    """
+    UI endpoint providing a dashboard view, including a WorkBasket (list) of
+    paged user-selectable TrackedModel instances (items). Pages contain a
+    configurable maximum number of items.
 
-    form_class = SelectableWorkBasketItemsForm
+    Items are selectable (they form selections) via an associated checkbox
+    widget so that bulk operations may be performed against them.
+
+    Each page displays a maximum number of items (10 being the default), with
+    user selections preserved when navigating between pages.
+
+    Item selection is preserved in the user's session. Whenever page navigation
+    or a bulk operation is performed, item selection state is updated.
+
+    Unless client-side JavaScript is used to perform RESTful updates on checkbox
+    check/uncheck, then we can't realistically save state changes when
+    navigating away from the list view to other pages (i.e. HTTP GET requests
+    for the application or other website).
+
+    User item selection changes are calculated and applied to the Django
+    Session object by performing a three way diff between:
+    * Current selection state held in the session,
+    * Available list items (have any new items been added, or somehow removed),
+    * User submitted changes (from form POST requests)
+
+    Note:
+    --
+    Options considered to manage paged selection:
+    * Full list in form, hiding items not on current page. This would require
+      either including all items in GET request's URI after POST, dropping use
+      of GET after POST, neither seem very reasonable.
+    * Use django formtools wizard. This doesn't fit the wizard's usecase and
+      design very well and may make for an over complicated implementation.
+    * Store user selection in the session. Simplest, complete and most elegant.
+    """
+
+    form_class = SelectableObjectsForm
     template_name = "common/index.jinja"
 
+    default_page_size = 4
+    # Form action mappings to URL names.
+    action_success_urls = {
+        "publish-all": "TODO-PUBLISH-URL",
+        "remove-selected": "TODO-REMOVE-SELECTED",
+        "page-prev": "index",
+        "page-next": "index",
+    }
+
     def __init__(self, **kwargs):
+        self.per_page = kwargs.pop(
+            "per_page",
+            DashboardView.default_page_size,
+        )
         super().__init__(**kwargs)
         self.workbasket = self._get_workbasket()
+        self.paginator = Paginator(
+            self.workbasket.tracked_models,
+            per_page=self.per_page,
+        )
 
     def _get_workbasket(self):
         workbasket = WorkBasket.objects.is_not_approved().last()
@@ -51,30 +104,67 @@ class Dashboard(FormView):
             )
         return workbasket
 
+    def get(self, request, *args, **kwargs):
+        """Service GET requests by displaying the page and form."""
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        """Manage POST requests, which can either be requests to change the
+        paged form data while preserving the user's form changes, or finally
+        submit the form data for processing."""
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def add_url_page_param(self, url, form_action):
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        success_url = reverse(self.action_success_urls[form_action])
+        if form_action in ("page-prev", "page-next"):
+            success_url = self.add_url_page_param(
+                success_url,
+                form_action,
+            )
+        return success_url
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["workbasket"] = self.workbasket
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+
+        # TODO:
+        # * Provide initial data (here?) as current pk selections taken from the
+        #   SelectedObjectStore.
+        kwargs["data"] = []
+
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        paginator = Paginator(self.workbasket.tracked_models, per_page=10)
-        page = paginator.get_page(self.request.GET.get("page", 1))
-
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
         context.update(
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
-                "paginator": paginator,
+                "paginator": self.paginator,
             },
         )
         return context
 
-    def get_success_url(self):
+    def form_valid(self, form):
         # TODO:
-        # Get success URL based upon the button used to submit the form.
-        return super().get_success_url()
+        # * Update the SelectedObjectStore with current selections.
+        return super().form_valid(form)
 
 
 class HealthCheckResponse(HttpResponse):

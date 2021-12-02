@@ -1,31 +1,24 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 
-{% macro checkbox_item(name, id, value) -%}
-<div class="govuk-form-group">
-  <fieldset class="govuk-fieldset">
-    <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-      <div class="govuk-checkboxes__item">
-        <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" value="{{ value }}">
-        <label class="govuk-label govuk-checkboxes__label" for="{{ id }}"></label>
+{% macro checkbox_item(field) -%}
+  {# TODO: set local vars #}
+  {% set id = field.id %}
+  {% set name = field.id %}
+  {% set value = field.id %}
+  {% set checked = "" %}
+
+  <div class="govuk-form-group">
+    <fieldset class="govuk-fieldset">
+      <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" value="{{ value }}" {{ checked }}>
+          <label class="govuk-label govuk-checkboxes__label" for="{{ id }}"></label>
+        </div>
       </div>
-    </div>
+    </fieldset>
   </div>
 {%- endmacro %}
-
-
-{% set checkbox_check_all -%}
-<div class="govuk-form-group">
-  <fieldset class="govuk-fieldset">
-    <div class="govuk-checkboxes govuk-checkboxes--small">
-      <div class="govuk-checkboxes__item">
-        <input class="govuk-checkboxes__input" id="select-all" name="select-all" type="checkbox" value="selected-measure" onclick="toggle(this)">
-        <label class="govuk-label govuk-checkboxes__label govuk-!-padding-right-0" for="selected"></label>
-      </div>
-    </div>
-  </fieldset>
-</div>
-{%- endset %}
 
 
 {% macro status_element(status) -%}
@@ -35,65 +28,96 @@
 {%- endmacro %}
 
 
-{% if workbasket %}
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-full">
-    <h2 class="govuk-heading-l">Your tariff changes</h2>
-
-    {% set change_count = workbasket.tracked_models.count() %}
-    {% set publish_all_url = url('workbaskets:workbasket-ui-submit', args=[workbasket.pk]) %}
-
-    <p class="govuk-body">{{ change_count }} changes - [TODO] new, [TODO] not validated</p>
-
-    <details class="govuk-details" data-module="govuk-details" open="">
-      <summary class="govuk-details__summary">
-        <span class="govuk-details__summary-text">Actions on changes below</span>
-      </summary>
-      <div class="govuk-details__text">
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-one-third">
-            <a href="{{ publish_all_url }}" class="govuk-link">Publish <strong>all</strong> changes</a>
-          </div>
-          <div class="govuk-grid-column-one-third">
-            <a href="#" class="govuk-link">Remove <strong>selected</strong> changes</a>
-          </div>
+{% set checkbox_check_all -%}
+  <div class="govuk-form-group">
+    <fieldset class="govuk-fieldset">
+      <div class="govuk-checkboxes govuk-checkboxes--small">
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" id="select-all" name="select-all" type="checkbox" value="selected-measure" onclick="toggle(this)">
+          <label class="govuk-label govuk-checkboxes__label govuk-!-padding-right-0" for="selected"></label>
         </div>
       </div>
-    </details>
-
-    {% set table_rows = [] %}
-    {% for field in form %}
-      {% set obj = field.field.obj %}
-      {% set object_link -%}
-      <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}</a>
-      {%- endset %}
-      {% set checkbox = checkbox_item('example', 'example', 1) %}
-      {% set status = status_element('new') %}
-
-      {{ table_rows.append([
-      {"html": checkbox},
-      {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},
-      {"html": object_link, "classes": "govuk-!-width-one-quarter"},
-      {"text": obj.structure_description if obj.structure_description else "-", "classes": "govuk-!-width-one-quarter"},
-      {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
-      {"text": status},
-    ]) or "" }}
-    {% endfor %}
-
-    {{ govukTable({
-      "head": [
-        {"html": checkbox_check_all},
-        {"text": "Type"},
-        {"text": "ID"},
-        {"text": "Description"},
-        {"text": "Activity date"},
-        {"text": "Status"},
-      ],
-      "rows": table_rows
-    }) }}
-
-    {% include "includes/common/pagination.jinja" %}
-
+    </fieldset>
   </div>
-</div>
+{%- endset %}
+
+
+{% if workbasket %}
+<form method="post">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-l">Your tariff changes</h2>
+
+      {% set change_count = workbasket.tracked_models.count() %}
+      <p class="govuk-body">{{ change_count }} changes</p>
+
+      <details class="govuk-details" data-module="govuk-details" open="">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">Actions on changes below</span>
+        </summary>
+        <div class="govuk-details__text">
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-third">
+              <button
+                class="govuk-button govuk-!-margin-bottom-0"
+                data-module="govuk-button"
+                name="form-action"
+                value="publish-all"
+              >
+                Publish <strong>all</strong> changes
+              </button>
+            </div>
+            <div class="govuk-grid-column-one-third">
+              <button
+                class="govuk-button govuk-!-margin-bottom-0"
+                data-module="govuk-button"
+                name="form-action"
+                value="remove-selected"
+              >
+                Remove <strong>selected</strong> changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      {% set table_rows = [] %}
+      {% for field in form %}
+        {% set obj = field.field.obj %}
+        {% set object_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}</a>
+        {%- endset %}
+
+        {% set checkbox = checkbox_item(field) %}
+        {% set status = status_element('new') %}
+
+        {{ table_rows.append([
+        {"html": checkbox},
+        {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},
+        {"html": object_link, "classes": "govuk-!-width-one-quarter"},
+        {"text": obj.structure_description if obj.structure_description else "-", "classes": "govuk-!-width-one-quarter"},
+        {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
+        {"text": status},
+      ]) or "" }}
+      {% endfor %}
+
+      {{ govukTable({
+        "head": [
+          {"html": checkbox_check_all},
+          {"text": "Type"},
+          {"text": "ID"},
+          {"text": "Description"},
+          {"text": "Activity date"},
+          {"text": "Status"},
+        ],
+        "rows": table_rows
+      }) }}
+
+      {% include "includes/workbaskets/selectable-items-pagination.jinja"%}
+
+    </div>
+  </div>
+</form>
 {% endif %}
