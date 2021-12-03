@@ -58,7 +58,7 @@ def test_scenario1_add_node_diff(scenario_1: TScenario):
     assert diff == [node]
 
 
-def test_scenario2_delete_node(scenario_2: TScenario, date_ranges):
+def test_scenario2_delete_node(scenario_2: TScenario):
     """Asserts correct handling of ADR 13, scenario 2."""
     collection, changes = scenario_2
 

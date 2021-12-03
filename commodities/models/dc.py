@@ -1,6 +1,7 @@
 """Includes dataclasses used in goods nomenclature hierarchy tree management."""
 from __future__ import annotations
 
+import datetime
 import logging
 from copy import copy
 from dataclasses import dataclass
@@ -16,7 +17,9 @@ from typing import Set
 from typing import Tuple
 from typing import Union
 
-from django.db.models import Q
+from django.db.models.expressions import F
+from django.db.models.expressions import Subquery
+from django.db.models.query_utils import Q
 
 from commodities import business_rules as cbr
 from commodities.models.constants import SUFFIX_DECLARABLE
@@ -32,11 +35,15 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
+from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import TaricDateRange
+from common.util import get_field_tuple
 from common.util import get_latest_versions
+from common.util import maybe_max
+from common.util import maybe_min
 from common.validators import UpdateType
 from importer.namespaces import TARIC_RECORD_GROUPS
 from measures import business_rules as mbr
@@ -97,103 +104,75 @@ TRACKEDMODEL_PRIMARY_KEY = "pk"
 
 @dataclass
 class Commodity(BaseModel):
-    """Provides a wrapper of the GoodsNomenclature model."""
+    """
+    Represents a commodity at a specific position in the goods nomenclature
+    tree.
 
-    obj: GoodsNomenclature = None
-    item_id: Optional[str] = None
-    suffix: Optional[str] = None
-    indent: Optional[int] = None
-    valid_between: Optional[TaricDateRange] = None
+    This links together the goods nomenclature object itself and the indent that
+    decides how deep in the tree it is. The indent can change over the lifetime
+    of the goods nomenclature object, and hence the resulting `Commodity` object
+    is only correct for a certain period of time (returned by `extent`).
+    """
 
-    def get_item_id(self) -> Optional[str]:
-        """Returns the item_id attribute if set, or the object item_id field
-        otherwise."""
-        if self.item_id is not None:
-            return self.item_id
+    obj: GoodsNomenclature
 
-        if self.obj is None:
-            return
+    # When we import commodity changes, e.g. from EU taric files
+    # and a new commodity is created, we may not know its indent yet.
+    indent_obj: Optional[GoodsNomenclatureIndent] = None
 
+    @property
+    def item_id(self) -> str:
+        """Returns the item id of the commodity."""
         return self.obj.item_id
 
-    def get_suffix(self) -> Optional[str]:
-        """Returns the suffix attribute if set, or the object suffix field
-        otherwise."""
-        if self.suffix is not None:
-            return self.suffix
-
-        if self.obj is None:
-            return
-
+    @property
+    def suffix(self) -> str:
+        """Returns the suffix of the commodity."""
         return self.obj.suffix
 
-    def get_indent(self) -> Optional[int]:
-        """Returns the indent attribute if set, or the object item_id field
-        otherwise."""
-        if self.indent is not None:
-            return self.indent
-
-        if self.obj is None:
-            return
-
-        obj = (
-            GoodsNomenclatureIndent.objects.latest_approved()
-            .filter(
-                indented_goods_nomenclature__item_id=self.get_item_id(),
-            )
-            .order_by("transaction_id")
-            .last()
-        )
-
-        if obj is None:
-            return
-
-        return int(obj.indent)
-
-    def get_valid_between(self) -> TaricDateRange:
+    @property
+    def valid_between(self) -> TaricDateRange:
         """Returns the validity period for the commodity."""
-        if self.valid_between is not None:
-            return self.valid_between
-
-        if self.obj is None:
-            return
-
         return self.obj.valid_between
+
+    @property
+    def indent(self) -> Optional[int]:
+        """Returns the indent level of the commodity, or None if no indent was
+        found when the commodity was loaded."""
+        return self.indent_obj and self.indent_obj.indent
+
+    @property
+    def extent(self) -> TaricDateRange:
+        """Returns the date rate that this object accurately represents a valid
+        commodity and its position in the tree."""
+        return TaricDateRange(
+            maybe_max(
+                self.obj.valid_between.lower,
+                self.indent_obj and self.indent_obj.valid_between.lower,
+            ),
+            maybe_min(
+                self.obj.valid_between.upper,
+                self.indent_obj and self.indent_obj.valid_between.upper,
+            ),
+        )
 
     @property
     def code(self) -> CommodityCode:
         """Returns the the commodity code."""
-        return CommodityCode(code=self.get_item_id())
+        return self.obj.code
 
     @property
     def description(self) -> Optional[str]:
         """Returns the description of the commodity."""
-        if self.obj is None:
-            return
         return self.obj.get_description().description
-
-    @property
-    def start_date(self) -> date:
-        """Returns the validity start date of the commodity."""
-        return self.obj.valid_between.lower
-
-    @property
-    def end_date(self) -> Optional[date]:
-        """Returns the validity end date of the commodity."""
-        return self.obj.valid_between.upper
 
     @property
     def identifier(self) -> str:
         """Returns an override of the model instance identifier property."""
-        code = self.code.dot_code
-        extra = f"{self.get_suffix()}-{self.get_indent()}/{self.version}"
-        return f"{code}-{extra}"
+        return "-".join((self.code.dot_code, self.suffix, str(self.indent)))
 
     @property
-    def good(self) -> Optional[TrackedModelReflection]:
-        if self.obj is None:
-            return
-
+    def good(self) -> TrackedModelReflection:
         overrides = {
             attr: getattr(self, attr)
             for attr in self.get_field_names(exclude=["obj", "indent"])
@@ -202,58 +181,6 @@ class Commodity(BaseModel):
 
         return get_tracked_model_reflection(self.obj, **overrides)
 
-    @property
-    def version(self) -> int:
-        """
-        Returns the version of the object.
-
-        TrackedModel objects support version control. The version_group field
-        holds pointers to all prior and current versions of a Taric record. The
-        versions are ordered based on transaction id. This method returns the
-        version number of the object based on the place of its transaction id in
-        the version transaction ids sequence.
-        """
-        transaction_orders = self._get_transaction_orders()
-        version = transaction_orders.index(self.obj.transaction.order) + 1
-        return version
-
-    @property
-    def current_version(self) -> int:
-        """Returns the current version of the Taric record."""
-        return self.obj.version_group.versions.count()
-
-    @property
-    def is_current_version(self) -> bool:
-        """Returns True if this is the current version of the Taric record."""
-        return self.obj == self.obj.current_version
-
-    def _get_transaction_ids(self) -> tuple[int]:
-        """Returns the id-s of all transactions in the version group of the
-        record."""
-        transaction_ids = self.obj.version_group.versions.values_list(
-            "transaction_id",
-            flat=True,
-        )
-        return tuple(transaction_ids)
-
-    def _get_transaction_orders(self) -> tuple[int]:
-        """Returns the id-s of all transactions in the version group of the
-        record."""
-        transaction_orders = self.obj.version_group.versions.values_list(
-            "transaction__order",
-            flat=True,
-        )
-        return tuple(transaction_orders)
-
-    def _get_transactions(self) -> tuple[int]:
-        """Returns the id-s of all transactions in the version group of the
-        record."""
-        transaction_orders = self.obj.version_group.versions.values_list(
-            "transaction",
-            flat=True,
-        )
-        return tuple(transaction_orders)
-
     def __eq__(self, commodity: "Commodity") -> bool:
         """
         Returns true if the two commodities are equal.
@@ -261,12 +188,10 @@ class Commodity(BaseModel):
         The two commodities are considered equal if they share the same code,
         suffix, indent, version, and validity dates.
         """
-        if commodity is None:
-            return False
-
         return (
-            self.identifier == commodity.identifier
-            and self.get_valid_between() == commodity.get_valid_between()
+            commodity is not None
+            and self.identifier == commodity.identifier
+            and self.valid_between == commodity.valid_between
         )
 
     def __str__(self) -> str:
@@ -291,9 +216,7 @@ class CommodityTreeBase(BaseModel):
     def get_commodity(
         self,
         code: str,
-        suffix: Optional[str] = None,
-        version: Optional[int] = None,
-        version_group_id: Optional[int] = None,
+        suffix: str = SUFFIX_DECLARABLE,
     ) -> Optional[Commodity]:
         """
         Returns a commodity matching the provided arguments, if found.
@@ -307,25 +230,13 @@ class CommodityTreeBase(BaseModel):
 
         The method supports search by code only:
         - the suffix will default to '80';
-        - the version will default to the current version of the related GoodsNomenclature object;
-        - the version_group_id argument will not figure in the search if it is not specified.
         """
         code = clean_item_id(code)
-
-        suffix = suffix or SUFFIX_DECLARABLE
 
         try:
             return next(
                 filter(
-                    lambda x: (
-                        x.code.code == code
-                        and x.get_suffix() == suffix
-                        and x.version == (version or x.current_version)
-                        and (
-                            version_group_id is None
-                            or version_group_id == x.obj.version_group.id
-                        )
-                    ),
+                    lambda x: (x.code.code == code and x.suffix == suffix),
                     self.commodities,
                 ),
             )
@@ -344,7 +255,7 @@ class CommodityTreeBase(BaseModel):
             Transaction.objects.filter(
                 tracked_models__version_group__in=version_groups,
             )
-            .order_by("order")
+            .order_by("partition", "order")
             .last()
         )
 
@@ -402,7 +313,7 @@ class SnapshotMoment:
     """
 
     transaction: Transaction
-    date: Optional[date] = None
+    date: Optional[datetime.date] = None
 
     @property
     def order(self) -> int:
@@ -419,6 +330,9 @@ class SnapshotMoment:
         if self.date:
             return ClockType.COMBINED
         return ClockType.TRANSACTION
+
+
+NOT_PROVIDED = object()
 
 
 @dataclass
@@ -448,7 +362,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     moment: SnapshotMoment
     commodities: List[Commodity]
-    edges: Optional[Dict[str, Commodity]] = None
+    edges: Dict[str, Commodity] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """
@@ -472,13 +386,11 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         chapters = {c.code.chapter for c in self.commodities}
 
         if len(chapters) > 1:
-            msg = "All commodities in a group must be from the same HS chapter."
-            raise CommodityTreeSnapshotException(msg)
-
-        if len(chapters) > 1:
-            raise ValueError(
-                "All commodities in a group must be from the same HS chapter.",
+            msg = (
+                "All commodities must be from one HS chapter, "
+                f"but this {type(self).__name__} contains {len(chapters)}."
             )
+            raise CommodityTreeSnapshotException(msg)
 
         self._sort()
         self._traverse()
@@ -496,7 +408,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         """Returns the siblings of a commodity in the snapshot tree."""
         parent = self.get_parent(commodity)
 
-        if parent is None and commodity.is_chapter is True:
+        if parent is None and commodity.code.is_chapter is True:
             return []
 
         return [
@@ -526,40 +438,43 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     def get_dependent_measures(
         self,
-        commodity: Commodity,
-        as_at: Optional[date] = None,
+        *commodities: Commodity,
+        as_at: Optional[date] = NOT_PROVIDED,
     ) -> MeasuresQuerySet:
-        if commodity not in self.commodities:
-            logger.warning(f"Commodity {commodity} not found in this snapshot.")
-            return Measure.objects.none()
+        filter = Q()
+        for commodity in commodities:
+            if commodity not in self.commodities:
+                logger.warning(f"Commodity {commodity} not found in this snapshot.")
+                continue
 
-        qs = Measure.objects.filter(
-            goods_nomenclature__item_id=commodity.get_item_id(),
-            goods_nomenclature__suffix=commodity.get_suffix(),
-        )
+            filter |= Q(goods_nomenclature__sid=commodity.obj.sid)
+
+        qs = Measure.objects.filter(filter)
 
         if self.moment.clock_type == ClockType.TRANSACTION:
             qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
             qs = qs.latest_approved()
 
-        if self.moment.clock_type == ClockType.COMBINED:
-            qs = qs.with_effective_valid_between().filter(
-                db_effective_valid_between__contains=self.moment.date,
-            )
-        elif as_at is not None:
+        if as_at is not None and as_at is not NOT_PROVIDED:
+            logger.debug("Filtering by supplied date: %s", as_at)
             qs = qs.with_effective_valid_between().filter(
                 Q(db_effective_valid_between__contains=as_at)
                 | Q(valid_between__startswith__gte=as_at),
+            )
+        elif as_at is NOT_PROVIDED and self.moment.clock_type == ClockType.COMBINED:
+            logger.debug("Filtering by moment date: %s", self.moment.date)
+            qs = qs.with_effective_valid_between().filter(
+                db_effective_valid_between__contains=self.moment.date,
             )
 
         return qs
 
     def is_declarable(self, commodity: Commodity) -> bool:
-        if commodity.get_suffix() != SUFFIX_DECLARABLE:
-            return False
-
-        return len(self.get_children(commodity)) == 0
+        return (
+            commodity.suffix == SUFFIX_DECLARABLE
+            and len(self.get_children(commodity)) == 0
+        )
 
     def compare_parents(
         self,
@@ -596,6 +511,19 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     ) -> SnapshotDiff:
         return self._get_diff(commodity, snapshot, TreeNodeRelation.DESCENDANTS)
 
+    @property
+    def extent(self) -> TaricDateRange:
+        """
+        Returns the date range for which this snapshot accurately represents the
+        commodity code tree.
+
+        As of dates not within this range, the commodities in the snapshot or
+        the relationships between them are no longer guaranteed to be correct.
+        """
+        lower = maybe_max(*(commodity.extent.lower for commodity in self.commodities))
+        upper = maybe_min(*(commodity.extent.upper for commodity in self.commodities))
+        return TaricDateRange(lower, upper)
+
     def _sort(self) -> None:
         """
         Sorts the commodity collection to prepare it for traversal.
@@ -610,8 +538,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             self.commodities,
             key=lambda x: (
                 str(x.code),
-                x.get_suffix(),
-                x.get_indent(),
+                x.suffix,
             ),
         )
 
@@ -634,11 +561,13 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         descendants = {}
 
         for commodity in self.commodities:
-            indent = commodity.get_indent()
-
-            # When we import commodity changes, e.g. from EU taric files
-            # and a new commodity is created, we may not now its indent yet.
+            indent = commodity.indent
             if indent is None:
+                logger.warning(
+                    "No indent found for %s: "
+                    "commodity will not be included in the snapshot",
+                    commodity,
+                )
                 continue
 
             if indent == 0:
@@ -646,11 +575,9 @@ class CommodityTreeSnapshot(CommodityTreeBase):
                     parent = None
                 else:
                     try:
-                        parent = [
-                            c
-                            for c in indents[0]
-                            if c.get_suffix() < commodity.get_suffix()
-                        ][-1]
+                        parent = [c for c in indents[0] if c.suffix < commodity.suffix][
+                            -1
+                        ]
                     except IndexError:
                         parent = indents[0][0]
             elif indent == 1:
@@ -681,6 +608,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
             commodities = indents[1:indent]
             parent = commodities[0] if commodities else commodity
+            assert isinstance(parent, Commodity)
 
             while True:
                 try:
@@ -771,10 +699,9 @@ class CommodityCollection(CommodityTreeBase):
         see the docs for the CommodityChange model.
         """
         for change in changes:
-            try:
-                self.commodities.remove(change.current)
-            except ValueError:
-                pass
+            current = change.current
+            if current in self.commodities:
+                self.commodities.remove(current)
 
             if change.update_type == UpdateType.DELETE:
                 continue
@@ -869,7 +796,7 @@ class CommodityCollection(CommodityTreeBase):
         We then efficiently find the commodities in our collection
         that match the latest_version goods.
         """
-        item_ids = {c.get_item_id() for c in self.commodities if c.obj}
+        item_ids = {c.item_id for c in self.commodities if c.obj}
         goods = GoodsNomenclature.objects.approved_up_to_transaction(
             transaction,
         ).filter(
@@ -960,7 +887,7 @@ class SideEffect(BaseModel):
 @dataclass
 class CommodityChange(BaseModel):
     """
-    "Provides a model for commodity collection change requests.
+    Provides a model for commodity collection change requests.
 
     The model supports two Commodity instances:
     - current refers to an member of the commodity collection pre-change
@@ -1003,13 +930,13 @@ class CommodityChange(BaseModel):
         """
         if self.candidate is not None:
             candidate = self.collection.get_commodity(
-                self.candidate.get_item_id(),
-                self.candidate.get_suffix(),
+                self.candidate.item_id,
+                self.candidate.suffix,
             )
         if self.current is not None:
             current = self.collection.get_commodity(
-                self.current.get_item_id(),
-                self.current.get_suffix(),
+                self.current.item_id,
+                self.current.suffix,
             )
 
         if self.update_type == UpdateType.CREATE:
@@ -1072,14 +999,19 @@ class CommodityChange(BaseModel):
         - NIG34: Checks whether the good is in "use" but does not provide related measures.
         - NIG35: Not used as it is redundant in this context after NIG34
         """
+        assert self.current is not None
+
         # NIG34 / NIG35
-        for measure in before.get_dependent_measures(self.current, self.as_at_date):
+        for measure in before.get_dependent_measures(
+            self.current,
+            as_at=self.as_at_date,
+        ):
             self._add_pending_delete(measure, cbr.NIG34)
 
         # No BR: delete related footnote associations
         qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
         for association in qs.filter(
-            goods_nomenclature__item_id=self.current.get_item_id(),
+            goods_nomenclature__item_id=self.current.item_id,
         ):
             self._add_pending_delete(association, None)
 
@@ -1098,12 +1030,14 @@ class CommodityChange(BaseModel):
           the changing commodity and whether it violates a condition;
           however, for consistency we still apply these rules.
         """
+        assert self.current is not None
+        assert self.candidate is not None
 
         good = self.candidate.good
 
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
-                goods_nomenclature__item_id=self.current.get_item_id(),
+                goods_nomenclature__item_id=self.current.item_id,
             )
         )
         measures = self._get_dependent_measures(before, after)
@@ -1162,7 +1096,7 @@ class CommodityChange(BaseModel):
                     try:
                         mbr.ME71().validate(association)
                     except BusinessRuleViolation:
-                        self._add_pending_delete(association, mbr.ME75)
+                        self._add_pending_delete(association, mbr.ME71)
 
     def _handle_validity_conflicts(
         self,
@@ -1191,7 +1125,7 @@ class CommodityChange(BaseModel):
             valid_between=valid_between,
         )
 
-        if type(obj) == Measure:
+        if type(obj) is Measure:
             attrs["terminating_regulation"] = obj.generating_regulation
 
         self._add_pending_update(obj, attrs, rule)
@@ -1250,13 +1184,13 @@ class CommodityChange(BaseModel):
 
         # Check if the changing commodity has ME32 clashes in its new hierarchy
         if self.update_type == UpdateType.UPDATE:
-            self.candidate.get_valid_between().upper
+            self.candidate.valid_between.upper
 
             measures = {
                 _get_measure_key(measure): measure
                 for measure in after.get_dependent_measures(
                     self.candidate,
-                    self.as_at_date,
+                    as_at=self.as_at_date,
                 )
             }
 
@@ -1264,7 +1198,7 @@ class CommodityChange(BaseModel):
                 for relative in getattr(after, attr)(self.candidate):
                     related_measures = after.get_dependent_measures(
                         relative,
-                        self.as_at_date,
+                        as_at=self.as_at_date,
                     )
 
                     for related_measure in related_measures:
@@ -1283,7 +1217,10 @@ class CommodityChange(BaseModel):
 
         measures = {
             _get_measure_key(measure): measure
-            for measure in before.get_dependent_measures(self.current, self.as_at_date)
+            for measure in before.get_dependent_measures(
+                self.current,
+                as_at=self.as_at_date,
+            )
         }
 
         # Check if commodity's before-children have new parents
@@ -1294,7 +1231,7 @@ class CommodityChange(BaseModel):
                 for ancestor in after.get_ancestors(child):
                     ancestor_measures = after.get_dependent_measures(
                         ancestor,
-                        self.as_at_date,
+                        as_at=self.as_at_date,
                     )
 
                     for ancestor_measure in ancestor_measures:
@@ -1387,11 +1324,11 @@ class CommodityChange(BaseModel):
     ) -> Set[Measure]:
         b = before.get_dependent_measures(
             self.current or self.candidate,
-            self.as_at_date,
+            as_at=self.as_at_date,
         )
         a = after.get_dependent_measures(
             self.candidate or self.current,
-            self.as_at_date,
+            as_at=self.as_at_date,
         )
         return set(a).union(set(b))
 
@@ -1410,10 +1347,10 @@ class CommodityChange(BaseModel):
         """
         if self.candidate:
             if self.update_type == UpdateType.UPDATE:
-                return self.candidate.get_valid_between().upper
+                return self.candidate.valid_between.upper
             else:
-                return self.candidate.get_valid_between().lower
-        return self.current.get_valid_between().upper
+                return self.candidate.valid_between.lower
+        return self.current.valid_between.upper
 
 
 # TODO: Move the loader to a more appropriate module
@@ -1456,19 +1393,35 @@ class CommodityCollectionLoader:
         This is equivalent to getting the current snapshot of the commodity collection
         (see the docs for CommodityCollection for more detail on snapshots.)
         """
-        qs = GoodsNomenclature.objects
 
-        if current_only:
-            qs = qs.latest_approved()
+        def _apply_filters(qs: TrackedModelQuerySet):
+            if current_only:
+                qs = qs.latest_approved()
 
-        if effective_only:
-            qs = qs.filter(
-                valid_between__contains=date.today(),
-            )
+            if effective_only:
+                qs = qs.as_at(date.today())
 
-        qs = qs.filter(item_id__startswith=self.prefix)
+            return qs
 
-        commodities = [Commodity(obj=obj) for obj in qs.all()]
+        qs = _apply_filters(GoodsNomenclature.objects).filter(
+            item_id__startswith=self.prefix,
+        )
+
+        sids = Subquery(qs.values("sid"))
+
+        indent_query = (
+            _apply_filters(GoodsNomenclatureIndent.objects)
+            .with_end_date()
+            .filter(indented_goods_nomenclature__sid__in=sids)
+            .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
+            .all()
+        )
+
+        indents = {indent.goods_sid: indent for indent in indent_query}
+
+        commodities = [
+            Commodity(obj=obj, indent_obj=indents.get(obj.sid)) for obj in qs.all()
+        ]
 
         return CommodityCollection(commodities=commodities)
 
@@ -1580,7 +1533,7 @@ class CommodityChangeRecordLoader:
         """Instantiates the loader."""
         self.chapter_changes: dict[str, CommodityChapterChanges] = {}
 
-    def load(self, transaction: Transaction) -> list[CommodityChange]:
+    def load(self, transaction: Transaction):
         """
         Converts transaction records to corresponding CommodityChange objects.
 
@@ -1650,10 +1603,9 @@ class CommodityChangeRecordLoader:
         if not good:
             good = indent.indented_goods_nomenclature
 
-        indent_ = indent.indent if indent else None
-        current = self._get_current_commodity(good, indent_)
+        current = self._get_current_commodity(good, indent)
 
-        candidate = self._create_candidate_commodity(good)
+        candidate = self._create_candidate_commodity(good, indent)
 
         change = CommodityChange(
             collection=chapter_changes.collection,
@@ -1694,51 +1646,28 @@ class CommodityChangeRecordLoader:
     def _get_current_commodity(
         self,
         good: GoodsNomenclature,
-        indent: Optional[int] = None,
+        indent: GoodsNomenclatureIndent,
     ) -> Optional[Commodity]:
         """Returns a commodity wrapper for the current good object as of the
         record transaction."""
         if good.update_type == UpdateType.CREATE:
             return None
 
-        return Commodity(
-            obj=good,
-            indent=indent,
-        )
+        return Commodity(obj=good, indent_obj=indent)
 
     def _create_candidate_commodity(
         self,
         good: GoodsNomenclature,
+        indent: GoodsNomenclatureIndent,
     ) -> Optional[Commodity]:
         """Returns a candidate commodity wrapper with the commodity record's
         attributes."""
         if good.update_type == UpdateType.DELETE:
             return None
 
-        return Commodity(obj=good)
-
-    def _get_taric_date_range(self, data: dict[str, Any]) -> TaricDateRange:
-        """Returns a TaricDateRange instance for the record's validity
-        period."""
-        valid_between = copy(data["valid_between"])
-
-        if "upper" not in valid_between:
-            valid_between["upper"] = None
-
-        start_date, end_date = map(
-            lambda x: date(*map(int, x.split("-"))) if x else None,
-            valid_between.values(),
-        )
-
-        return TaricDateRange(start_date, end_date)
+        return Commodity(obj=good, indent_obj=indent)
 
     def _get_record_commodity_code(self, obj: TrackedModel) -> str:
         """Returns the commodity code embedded in a taric record."""
         _, attr_name = COMMODITY_RECORD_ATTRIBUTES[obj.record_identifier]
-
-        attrs = attr_name.split("__")
-        result = obj
-        for attr in attrs:
-            result = getattr(result, attr)
-
-        return result
+        return get_field_tuple(obj, attr_name)[1]

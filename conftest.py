@@ -375,6 +375,7 @@ def run_xml_import(valid_user, settings):
         factory: Callable[[], TrackedModel],
         serializer: Type[TrackedModelSerializer],
         record_group: Sequence[str] = None,
+        workflow_status: WorkflowStatus = WorkflowStatus.PUBLISHED,
     ) -> TrackedModel:
         get_nursery().cache.clear()
         settings.SKIP_WORKBASKET_VALIDATION = True
@@ -392,19 +393,26 @@ def run_xml_import(valid_user, settings):
 
         process_taric_xml_stream(
             xml,
-            workbasket_status=WorkflowStatus.PUBLISHED,
+            workbasket_status=workflow_status,
             partition_scheme=get_partition_scheme(),
             username=valid_user.username,
             record_group=record_group,
         )
 
         db_kwargs = model.get_identifying_fields()
+        workbasket = WorkBasket.objects.last()
+        assert workbasket is not None
+
         try:
-            imported = model_class.objects.get_latest_version(**db_kwargs)
+            imported = model_class.objects.approved_up_to_transaction(
+                workbasket.current_transaction,
+            ).get(**db_kwargs)
         except model_class.DoesNotExist:
             if model.update_type == UpdateType.DELETE:
                 imported = (
-                    model_class.objects.get_versions(**db_kwargs).latest_deleted().get()
+                    model_class.objects.versions_up_to(workbasket.current_transaction)
+                    .filter(**db_kwargs)
+                    .last()
                 )
             else:
                 raise
