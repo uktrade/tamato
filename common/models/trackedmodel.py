@@ -6,7 +6,6 @@ from typing import Iterable
 from typing import Optional
 from typing import Sequence
 from typing import Set
-from typing import Tuple
 from typing import TypeVar
 
 from django.db import models
@@ -340,37 +339,6 @@ class TrackedModel(PolymorphicModel):
         "transaction",
     }
 
-    def get_related_object_field(
-        self: Cls,
-        field_name: str,
-    ) -> Tuple[str, str]:
-        if "__" in field_name:
-            object_field = field_name.split("__")
-            return tuple(object_field)
-        return (None, field_name)
-
-        # 1. measure.copy(goods_nomenclature=…)
-        # 2. measure.copy(conditions=[])
-        # 3. measure.copy(conditions=None)
-        # 4. measure.copy(conditions=[…, …]) <-- sets the appropriate key on the passed objects
-        #       so for conditions would set dependent_measure equal to the measure just copied
-        #       does it call force_write?
-        #       a. measure.copy(conditions=[MeasureCondition(action=…, …)])
-        #       b. measure.copy(conditions=some_other_measure.conditions)
-        #       only b and not a --> so don't call force_write
-        #
-        #       quota_definition.copy(sub_quota_associations=[QuotaAssociation(…)])
-        #       regulation.copy(amendments=[])
-        #
-        # 5. quota_definition.copy(associations__sub_quota=…)
-        # 6. measure.copy(components__amount=0) <-- same value for all components?
-        # basically the same interface as Factory.create(…)
-
-        # Remove any fields from the basic data that are overriden, because
-        # otherwise when we convert foreign keys to IDs (below) Django will
-        # ignore the object from the overrides and just take the ID from the
-        # basic data.
-
     def copy(
         self: Cls,
         transaction,
@@ -397,13 +365,17 @@ class TrackedModel(PolymorphicModel):
         subrecord_fields = {}
         for field_name in overrides:
             field = None
+            # Check for fields on related model
             if not "__" in field_name:
                 field = self._meta.get_field(field_name)
+            # Check for non-basic fields e.g. related models
             if field and field in basic_fields:
                 basic_fields.remove(field)
+            # Add non-basic fields from overrides to subrecord_fields dict
             else:
                 subrecord_fields.update({field_name: overrides[field_name]})
 
+        # Remove related models and related model fields from overrides before generating object_data below
         overrides = {
             k: v for (k, v) in overrides.items() if k not in subrecord_fields.keys()
         }
@@ -444,13 +416,22 @@ class TrackedModel(PolymorphicModel):
         # the new model substituted in place of this one. It's done this way to
         # give these related models a chance to increment SIDs, etc.
         for field in get_subrecord_relations(self.__class__):
-            if field.name in subrecord_fields.keys() and subrecord_fields[field.name]:
-                for subrecord in subrecord_fields[field.name]:
-                    remote_field = [
-                        f for f in self._meta.get_fields() if f.name == field.name
-                    ][0].remote_field.name
-                    setattr(subrecord, remote_field, self)
-                    subrecord.save()
+            ignore = False
+            # Check if user passed related model into overrides argument
+            if field.name in subrecord_fields.keys():
+                # If user passed a new unsaved model, set the remote field value equal to self for each model passed
+                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `self`
+                if subrecord_fields[field.name]:
+                    for subrecord in subrecord_fields[field.name]:
+                        remote_field = [
+                            f for f in self._meta.get_fields() if f.name == field.name
+                        ][0].remote_field.name
+                        setattr(subrecord, remote_field, self)
+                        subrecord.save()
+                # Else, if an empty or None value is passed, set ignore to True, so that related models are not copied
+                # e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions
+                else:
+                    ignore = True
 
             queryset = getattr(self, field.get_accessor_name())
             reverse_field_name = field.field.name
@@ -462,8 +443,9 @@ class TrackedModel(PolymorphicModel):
             }
             kwargs.update(nested_fields)
 
-            for model in queryset.approved_up_to_transaction(transaction):
-                model.copy(transaction, **kwargs)
+            if not ignore:
+                for model in queryset.approved_up_to_transaction(transaction):
+                    model.copy(transaction, **kwargs)
 
         return new_object
 

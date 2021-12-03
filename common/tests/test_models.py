@@ -606,8 +606,9 @@ def test_copy_fk_related_models():
     measure = factories.MeasureFactory.create()
     workbasket = factories.ApprovedWorkBasketFactory.create()
     code = factories.MeasureConditionCodeFactory.create()
+    transaction = workbasket.new_transaction()
     condition_data = {
-        "transaction": workbasket.new_transaction(),
+        "transaction": transaction,
         "update_type": UpdateType.CREATE,
         "sid": "1",
         "component_sequence_number": 1,
@@ -615,7 +616,7 @@ def test_copy_fk_related_models():
     }
 
     copied_measure = measure.copy(
-        workbasket.new_transaction(),
+        transaction,
         conditions=[MeasureCondition(**condition_data)],
     )
 
@@ -625,14 +626,15 @@ def test_copy_fk_related_models():
 def test_copy_nested_fk():
     measure = factories.MeasureFactory.create()
     workbasket = factories.ApprovedWorkBasketFactory.create()
-    condition = factories.MeasureConditionFactory.create(
-        transaction=workbasket.new_transaction(),
+    transaction = workbasket.new_transaction()
+    factories.MeasureConditionFactory.create(
+        transaction=transaction,
         dependent_measure=measure,
     )
     condition_code = factories.MeasureConditionCodeFactory()
 
     copied_measure = measure.copy(
-        workbasket.new_transaction(),
+        transaction,
         conditions__condition_code=condition_code,
     )
 
@@ -642,13 +644,14 @@ def test_copy_nested_fk():
 def test_copy_nested_field():
     measure = factories.MeasureFactory.create()
     workbasket = factories.ApprovedWorkBasketFactory.create()
-    condition = factories.MeasureConditionFactory.create(
-        transaction=workbasket.new_transaction(),
+    transaction = workbasket.new_transaction()
+    factories.MeasureConditionFactory.create(
+        transaction=transaction,
         dependent_measure=measure,
     )
 
     copied_measure = measure.copy(
-        workbasket.new_transaction(),
+        transaction,
         conditions__component_sequence_number=999,
     )
 
