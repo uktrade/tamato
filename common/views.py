@@ -29,7 +29,7 @@ from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from workbaskets.forms import SelectableObjectsForm
-from workbaskets.forms import SelectedObjectsStore
+from workbaskets.forms import SessionStore
 from workbaskets.models import WorkBasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
@@ -73,8 +73,8 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
 
     form_class = SelectableObjectsForm
     template_name = "common/index.jinja"
+    default_per_page = 10
 
-    default_page_size = 4
     # Form action mappings to URL names.
     action_success_urls = {
         "publish-all": "TODO-PUBLISH-URL",
@@ -84,15 +84,16 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     }
 
     def __init__(self, **kwargs):
-        self.per_page = kwargs.pop(
-            "per_page",
-            DashboardView.default_page_size,
-        )
+        """Change the default maximum number of WorkBasket items per page by
+        initialising the view with a per_page parameter."""
+        per_page = kwargs.pop("per_page", DashboardView.default_per_page)
+
         super().__init__(**kwargs)
+
         self.workbasket = self._get_workbasket()
         self.paginator = Paginator(
             self.workbasket.tracked_models,
-            per_page=self.per_page,
+            per_page=per_page,
         )
 
     def _get_workbasket(self):
@@ -139,15 +140,14 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         return success_url
 
     def get_initial(self):
-        store = SelectedObjectsStore(self.request.session, "DASHBOARD_FORM")
+        store = SessionStore(self.request, "DASHBOARD_FORM")
         return store.data.copy()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         kwargs["objects"] = page.object_list
-        kwargs["field_id_prefix"] = "tracked_model"
-
+        kwargs["field_name_prefix"] = "trackedmodelselection-"
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -163,8 +163,17 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         return context
 
     def form_valid(self, form):
-        # TODO:
-        # * Update the SelectedObjectStore with current selections.
+        store = SessionStore(self.request, "DASHBOARD_FORM")
+        to_add = {
+            key: value for key, value in form.cleaned_data_no_prefix.items() if value
+        }
+        to_remove = {
+            key: value
+            for key, value in form.cleaned_data_no_prefix.items()
+            if key not in to_add
+        }
+        store.add_objects(to_add)
+        store.remove_objects(to_remove)
         return super().form_valid(form)
 
 

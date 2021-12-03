@@ -1,44 +1,44 @@
 from django import forms
 
 
-class SelectedObjectsStore:
-    """
-    This class provides a storage and update abstraction for user-selected
-    items. An example use is when the contents of a Workbasket instance are
-    presented to the user for selection over several pages. Because items are
-    paged, a mechanism is required to preserve selections when navigating
-    between item pages or away from the pages entirely.
+class SessionStore:
+    """Session-backed dictionary store."""
 
-    Django's Session class is used to preserve items.
-
-    Selection state is updated by performing a three way difference between:
-    1. State held in the session,
-    2. Available list items (have any new items been added, or somehow removed),
-    3. User submitted changes (POST requests performed by changing page or
-       submitting a bulk operation).
-    """
-
-    def __init__(self, session, store_id):
+    def __init__(self, request, store_id):
         self._store_id = store_id
-        self._session = session
+        self._request = request
 
-        if self._store_id not in self._session:
-            self._session[self._store_id] = dict()
+        if self._store_id not in self._request.session:
+            self._init_data()
 
-    @property
-    def data(self):
-        return self._session[self._store_id]
+    def _init_data(self):
+        self._request.session[self._store_id] = dict()
+        self._request.session.modified = True
 
-    def add_selected_objects(self, objs):
-        self.data.update(objs)
+    def _get_data(self):
+        self._request.session.modified = True
+        return self._request.session[self._store_id]
 
-    def remove_selected_objects(self, objs):
+    def _set_data(self, value):
+        self._request.session[self._store_id] = value
+        self._request.session.modified = True
+
+    data = property(_get_data, _set_data)
+
+    def add_objects(self, objs):
+        copy = self.data.copy()
+        copy.update(objs)
+        self.data = copy
+
+    def remove_objects(self, objs):
+        copy = self.data.copy()
         for k in objs.keys():
-            self.data.pop(k, None)
+            copy.pop(k, None)
+        self.data = copy
 
     def clear(self):
         """Clear out all objects from the store."""
-        self.data = dict()
+        self._init_data()
 
 
 class SelectableObjectField(forms.BooleanField):
@@ -50,18 +50,29 @@ class SelectableObjectField(forms.BooleanField):
 
 
 class SelectableObjectsForm(forms.Form):
-    """Form used to dynamically construct a variable number of selectable
-    objects."""
+    """
+    Form used to dynamically build a variable number of selectable objects.
+
+    The form's initially selected objects are given in the form's initial data.
+    """
 
     def __init__(self, *args, **kwargs):
+        self.field_name_prefix = kwargs.pop("field_name_prefix")
         objects = kwargs.pop("objects")
-        field_id_prefix = kwargs.pop("field_id_prefix")
 
         super().__init__(*args, **kwargs)
 
         for obj in objects:
-            self.fields[f"{field_id_prefix}__{obj.pk}"] = SelectableObjectField(
+            self.fields[f"{self.field_name_prefix}{obj.pk}"] = SelectableObjectField(
                 required=False,
                 obj=obj,
-                initial=obj.id in self.initial.keys(),
+                initial=str(obj.id) in [str(k) for k in self.initial.keys()],
             )
+
+    @property
+    def cleaned_data_no_prefix(self):
+        """Get cleaned_data without the form field's name prefix."""
+        return {
+            key.replace(self.field_name_prefix, ""): value
+            for key, value in self.cleaned_data.items()
+        }

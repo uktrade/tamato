@@ -2,16 +2,14 @@
 
 
 {% macro checkbox_item(field) -%}
-  {# TODO: set local vars #}
-  {% set id = field.id %}
-  {% set name = field.id %}
-  {% set value = field.id %}
-  {% set checked = "" %}
+  {% set id = field.id_for_label %}
+  {% set name = field.name %}
+  {% set checked = "checked" if field.value() else "" %}
   <div class="govuk-form-group">
     <fieldset class="govuk-fieldset">
       <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
         <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" value="{{ value }}" {{ checked }}>
+          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" {{ checked }}>
           <label class="govuk-label govuk-checkboxes__label" for="{{ id }}"></label>
         </div>
       </div>
@@ -52,7 +50,7 @@
       {% set change_count = workbasket.tracked_models.count() %}
       <p class="govuk-body">{{ change_count }} changes</p>
 
-      <details class="govuk-details" data-module="govuk-details" open="">
+      <details class="govuk-details" data-module="govuk-details">
         <summary class="govuk-details__summary">
           <span class="govuk-details__summary-text">Actions on changes below</span>
         </summary>
