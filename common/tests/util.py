@@ -7,6 +7,7 @@ from functools import lru_cache
 from functools import wraps
 from io import BytesIO
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Sequence
@@ -20,6 +21,7 @@ from django.db.models.base import ModelBase
 from django.template.loader import render_to_string
 from django.urls import get_resolver
 from django.urls import reverse
+from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
 
@@ -31,7 +33,6 @@ from common.tests import factories
 from common.util import TaricDateRange
 from common.util import get_accessor
 from common.util import get_field_tuple
-from common.views import TrackedModelDetailMixin
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
 UPDATE_IMPORTER_IMPLEMENTED = True
@@ -236,32 +237,43 @@ def view_url_pattern_starts_with(url_start):
     return prefix
 
 
-def get_detail_class_based_view_urls_matching_url(url_start, must_contain_views=None):
+def get_class_based_view_urls_matching_url(
+    url_start,
+    prefix=lambda **kwargs: True,
+    assert_contains_view_classes=None,
+):
     """
-    Return class based views, and url patterns, where the url_pattern starts
-    with a supplied string.
+    Return a list of tuples of (view, url pattern), where url_pattern starts
+    with the supplied string.
 
-    Users may optionally must_contain_views to verify if certain views were found.
+    Users may pass optionally assert_contains_view_classes to verify if certain views were found.
+
+    Use prefix to filter by particular class based views:
+
+    >>> get_class_based_view_urls_matching_url("/some-url", prefix=view_is_subclass(TrackedModelDetailMixin))
 
     :param url_start: First part of URL
-    :param must_contain_views: If views are passed in here assert if they are not found,
-    :return: List of view, url_pattern
+    :param prefix: A prefix function to filter class based views with.
+    :param assert_contains_view_classes: Optional list of views, if any are not present an assertion is raise.
+    :return: List of tuples of (view, url_pattern)
     """
     valid_url = view_url_pattern_starts_with(url_start)
-    valid_view_class = view_is_subclass(TrackedModelDetailMixin)
 
-    def prefix(**kwargs):
-        return valid_url(**kwargs) and valid_view_class(**kwargs)
+    def _prefix(**kwargs):
+        return valid_url(**kwargs) and prefix(**kwargs)
 
-    view_urls = list(get_class_based_view_urls(prefix=prefix))
+    view_urls = list(get_class_based_view_urls(prefix=_prefix))
 
     # Fail if there are no matching views - it indicates the test has a bug.
     assert len(view_urls), f"Did not find any views with a url matching {url_start}"
 
-    if must_contain_views:
+    if assert_contains_view_classes:
         # Optional list of views that should be under the URL
-        views = [view for view, url in view_urls]
-        assert set(must_contain_views).issubset(views)
+        view_classes = [view.view_class for view, url in view_urls]
+        assert set(assert_contains_view_classes).issubset(view_classes), (
+            f"View classes: {assert_contains_view_classes} not "
+            f"found in urls: {view_urls} "
+        )
 
     return view_urls
 
@@ -271,9 +283,20 @@ def get_view_model(view_class, override_models):
     :return view_model from a view class, if the fully qualified classname is present inf override_models
     this is returned instead.
     """
-    return (
-        override_models.get(fully_qualified_classname(view_class)) or view_class.model
-    )
+    # User may supply their own model in the override_models dict, keyed by the view_class
+    fq_class_name = fully_qualified_classname(view_class)
+    if fq_class_name in override_models:
+        return override_models[fq_class_name]
+
+    if view_class.model:
+        # Class Based views (such as Tamato's detail views)
+        return view_class.model
+
+    if issubclass(view_class, FilterView):
+        # FilterViews (such as TamatoListView)
+        return view_class.filterset_class.Meta.model
+
+    raise NotImplemented(f"Retrieving model from {view_class} is not implemented.")
 
 
 def get_fields_dict(instance, field_names):
@@ -289,9 +312,17 @@ def get_fields_dict(instance, field_names):
 
 
 def view_urlpattern_ids(param):
-    """Function to use as ids= parameter for tests parameterized by sequences of
-    view, url_pattern, such as get_class_based_view_urls and
-    get_detail_class_based_view_urls_matching_url."""
+    """
+    Function to use as ids= parameter for tests parameterized by sequences of
+    tuples (view, url_pattern)
+
+    Parameterizer functions that generate tuples like this include:
+     - get_class_based_view_urls and
+     - get_class_based_view_urls_matching_url.
+
+    Note:  List views have no parameters, so the test ids
+           there trailing hyphens: -.
+    """
     if hasattr(param, "view_class"):
         return param.view_class.__name__
     elif isinstance(param, tuple) and len(param) == 4:
@@ -337,7 +368,7 @@ def assert_objects_resolvable(fully_qualified_names):
         )
 
 
-def assert_model_view(
+def assert_model_view_renders(
     view,
     url_pattern,
     valid_user_client,
@@ -362,7 +393,11 @@ def assert_model_view(
 
     # Before calling the models view, create data by calling the corresponding factory:
     model = get_view_model(view.view_class, override_models or {})
-    factory = getattr(factories, f"{model.__name__}Factory")
+
+    factory_class_name = f"{model.__name__}Factory"
+    factory = getattr(factories, factory_class_name, None)
+    assert factory is not None, f"Factory not found: factories.{factory_class_name}"
+
     instance = factory.create()
 
     # Build URL using fields from the model.
@@ -654,6 +689,32 @@ def only_applicable_after(cutoff):
     return decorator
 
 
+def date_post_data(name: str, date: date) -> Dict[str, int]:
+    """Construct a POST data fragment for the validity period start and end
+    dates of a ValidityPeriodForm from the given date objects."""
+    return {
+        f"{name}_{i}": part for i, part in enumerate([date.day, date.month, date.year])
+    }
+
+
+def valid_between_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
+    """Returns updated form data with the delta added to the "lower" date of the
+    model's valid between."""
+    return lambda model: date_post_data(
+        "start_date",
+        model.valid_between.lower + relativedelta(**delta),
+    )
+
+
+def validity_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
+    """Returns updated form data with the delta added to the "validity start"
+    date of the model."""
+    return lambda model: date_post_data(
+        "validity_start",
+        model.validity_start + relativedelta(**delta),
+    )
+
+
 def validity_period_post_data(start: date, end: date) -> Dict[str, int]:
     """
     Construct a POST data fragment for the validity period start and end dates
@@ -673,9 +734,8 @@ def validity_period_post_data(start: date, end: date) -> Dict[str, int]:
     }
     """
     return {
-        f"{name}_{i}": part
-        for name, date in (("start_date", start), ("end_date", end))
-        for i, part in enumerate([date.day, date.month, date.year])
+        **date_post_data("start_date", start),
+        **date_post_data("end_date", end),
     }
 
 

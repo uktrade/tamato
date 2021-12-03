@@ -417,14 +417,23 @@ def existing_goods_nomenclature(date_ranges):
 
 
 def updated_goods_nomenclature(e):
+    original = e.indents.get()
+    original.indent = 1
+    original.save(force_write=True)
+
     good = factories.GoodsNomenclatureFactory.create(
+        item_id=e.item_id[:8] + "90",
         valid_between=e.valid_between,
+        indent__indent=e.indents.first().indent + 1,
         indent__node__parent=e.indents.first().nodes.first(),
     )
 
     factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good,
         update_type=UpdateType.UPDATE,
         version_group=good.indents.first().version_group,
+        validity_start=good.indents.first().validity_start,
+        indent=e.indents.first().indent - 1,
         node__parent=None,
     )
 
@@ -436,6 +445,7 @@ def updated_goods_nomenclature(e):
         (lambda e: e, True),
         (
             lambda e: factories.GoodsNomenclatureFactory.create(
+                item_id=e.item_id[:8] + "90",
                 indent__node__parent=e.indents.first().nodes.first(),
                 valid_between=e.valid_between,
             ),
@@ -599,10 +609,7 @@ def test_ME32(related_measure_data):
     related_data, error_expected = related_measure_data
     related = factories.MeasureFactory.create(**related_data)
 
-    if error_expected:
-        with pytest.raises(BusinessRuleViolation):
-            business_rules.ME32(related.transaction).validate(related)
-    else:
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME32(related.transaction).validate(related)
 
 
@@ -1353,21 +1360,34 @@ def test_ME57(date_ranges):
         business_rules.ME57(condition.transaction).validate(condition)
 
 
-def test_ME58():
+@pytest.mark.parametrize(
+    "required_certificate, expect_error",
+    [
+        (factories.CertificateFactory.create, True),
+        (lambda: None, True),
+        (factories.CertificateFactory.create, False),
+    ],
+)
+def test_ME58(required_certificate, expect_error):
     """The same certificate can only be referenced once by the same measure and
     the same condition type."""
 
     existing = factories.MeasureConditionFactory.create(
-        required_certificate=factories.CertificateFactory.create(),
+        required_certificate=required_certificate(),
     )
     duplicate = factories.MeasureConditionFactory.create(
         condition_code=existing.condition_code,
         dependent_measure=existing.dependent_measure,
-        required_certificate=existing.required_certificate,
+        required_certificate=existing.required_certificate
+        if expect_error
+        else factories.CertificateFactory.create(),
     )
 
-    with pytest.raises(BusinessRuleViolation):
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ME58(duplicate.transaction).validate(existing)
+
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.ME58(duplicate.transaction).validate(duplicate)
 
 
 def test_ME59(reference_nonexistent_record):
@@ -1640,21 +1660,21 @@ def test_ME66():
         business_rules.ME66(exclusion.transaction).validate(exclusion)
 
 
-@pytest.mark.xfail(reason="ME67 disabled")
-def test_ME67(date_ranges):
+def test_ME67(spanning_dates):
     """The membership period of the excluded geographical area must span the
     validity period of the measure."""
+    membership_period, measure_period, fully_spans = spanning_dates
 
     membership = factories.GeographicalMembershipFactory.create(
-        valid_between=date_ranges.normal,
+        valid_between=membership_period,
     )
     exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         excluded_geographical_area=membership.member,
         modified_measure__geographical_area=membership.geo_group,
-        modified_measure__valid_between=date_ranges.overlap_normal,
+        modified_measure__valid_between=measure_period,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME67(exclusion.transaction).validate(exclusion.modified_measure)
+    with raises_if(BusinessRuleViolation, not fully_spans):
+        business_rules.ME67(exclusion.transaction).validate(exclusion)
 
 
 def test_ME68():

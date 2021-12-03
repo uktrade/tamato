@@ -46,6 +46,8 @@ class VersionGroup(TimestampedMixin):
         related_query_name="is_current",
     )
 
+    versions: QuerySet[TrackedModel]
+
 
 Cls = TypeVar("Cls", bound="TrackedModel")
 
@@ -73,7 +75,7 @@ class TrackedModel(PolymorphicModel):
     :attr:`version_group` created.
     """
 
-    version_group = models.ForeignKey(
+    version_group: VersionGroup = models.ForeignKey(
         VersionGroup,
         on_delete=models.PROTECT,
         related_name="versions",
@@ -210,7 +212,30 @@ class TrackedModel(PolymorphicModel):
     def _get_version_group(self) -> VersionGroup:
         if self.update_type == validators.UpdateType.CREATE:
             return VersionGroup.objects.create()
-        return self.get_versions().latest_approved().last().version_group
+
+        latest_version = self.get_versions().latest_approved().last()
+
+        if not latest_version:
+            # An object may be created and deleted/updated in the same workbasket.
+            # If the workbasket status is not WorkflowStatus.PUBLISHED,
+            # then latest_approved() in the above line of code will return None.
+            # Trying to get the version group off that will throw an exception.
+            # The extra bit of logic below deals with such cases
+            # It will attempt to find the corresponding CREATE record
+            # in the current workbasket and return that as the latest_version.
+            try:
+                latest_version = [
+                    record
+                    for transaction in self.transaction.workbasket.transactions.all()
+                    for record in transaction.tracked_models.all()
+                    if type(record) == type(self)
+                    if record.update_type == UpdateType.CREATE
+                    if record.get_identifying_fields() == self.get_identifying_fields()
+                ][0]
+            except IndexError:
+                return
+
+        return latest_version.version_group
 
     def _can_write(self):
         return not (
@@ -256,6 +281,12 @@ class TrackedModel(PolymorphicModel):
         if hasattr(self, "description"):
             description = self.description
         return description or None
+
+    @property
+    def record_identifier(self) -> str:
+        """Returns the record identifier as defined in TARIC3 records
+        specification."""
+        return f"{self.record_code}{self.subrecord_code}"
 
     @property
     def current_version(self: Cls) -> Cls:

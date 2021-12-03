@@ -1,3 +1,4 @@
+from typing import Any
 from typing import Optional
 from typing import Union
 
@@ -42,6 +43,7 @@ def date_ranges_overlap(a: TaricDateRange, b: TaricDateRange) -> bool:
 def contained_date_range(
     date_range: TaricDateRange,
     containing_date_range: TaricDateRange,
+    fallback: Optional[Any] = None,
 ) -> Optional[TaricDateRange]:
     """
     Returns a trimmed contained range that is fully contained by the container
@@ -55,8 +57,8 @@ def contained_date_range(
     a = date_range
     b = containing_date_range
 
-    if date_ranges_overlap(a, b) is False:
-        return None
+    if not date_ranges_overlap(a, b):
+        return fallback
 
     start_date = None
     end_date = None
