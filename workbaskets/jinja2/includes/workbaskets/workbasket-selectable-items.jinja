@@ -9,7 +9,7 @@
     <fieldset class="govuk-fieldset">
       <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
         <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" {{ checked }}>
+          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" {{ checked }} data-check-trackedmodel>
           <label class="govuk-label govuk-checkboxes__label" for="{{ id }}"></label>
         </div>
       </div>
@@ -30,7 +30,7 @@
     <fieldset class="govuk-fieldset">
       <div class="govuk-checkboxes govuk-checkboxes--small">
         <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="select-all" name="select-all" type="checkbox" value="selected-measure" onclick="toggle(this)">
+          <input class="govuk-checkboxes__input" id="select-all" name="select-all" type="checkbox" data-check-all="data-check-trackedmodel">
           <label class="govuk-label govuk-checkboxes__label govuk-!-padding-right-0" for="selected"></label>
         </div>
       </div>
