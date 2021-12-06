@@ -98,6 +98,8 @@ class MultiValueCharFilter(CharFilter):
 
 
 class LazyMultipleChoiceFilter(MultipleChoiceFilter):
+    """Fetch and cache choices only first access."""
+
     def get_field_choices(self):
         choices = self.extra.get("choices", [])
         if isinstance(choices, Callable):
@@ -142,6 +144,11 @@ class TamatoFilterMixin:
     search_regex: Optional[re.Pattern] = None
 
     def get_search_term(self, value):
+        """
+        Parse the search term from the given value using ``search_regex``.
+
+        :param value: The value to parse
+        """
         value = value.strip()
         if self.search_regex:
             match = self.search_regex.search(value)
@@ -154,6 +161,13 @@ class TamatoFilterMixin:
         return value
 
     def search_queryset(self, queryset, search_term):
+        """
+        Filter the given queryset to results with ``search_fields`` containing
+        or matching ``search_term``.
+
+        :param queryset: The queryset to filter
+        :param search_term: The term to search for
+        """
         search_term = self.get_search_term(search_term)
         return queryset.annotate(search=SearchVector(*self.search_fields)).filter(
             Q(
@@ -172,6 +186,14 @@ class TamatoFilterBackend(filters.BaseFilterBackend, TamatoFilterMixin):
     """
 
     def filter_queryset(self, request, queryset, view):
+        """
+        Filter the given queryset to results which match the search term in the
+        request parameter.
+
+        :param request: The request
+        :param queryset: The queryset to filter
+        :param view: The current view
+        """
         search_term = request.query_params.get(api_settings.SEARCH_PARAM, "")
         if search_term:
             return self.search_queryset(queryset, search_term)
@@ -224,6 +246,14 @@ class ActiveStateMixin(FilterSet):
     )
 
     def filter_active_state(self, queryset, name, value):
+        """
+        Filter the given queryset to those which have the specified active
+        state.
+
+        :param queryset: The queryset to filter
+        :param name: The name of the field
+        :param value: The value of the field
+        """
         active_status_filter = Q()
         current_date = TaricDateRange(date.today(), date.today())
         if value == ["active"]:
@@ -237,7 +267,7 @@ class ActiveStateMixin(FilterSet):
 
 
 class StartYearMixin(FilterSet):
-    """Generic filter mixin to provide an start year filter, providing the most
+    """Generic filter mixin to provide a start year filter, providing the most
     recent 10 years."""
 
     current_year = date.today().year
@@ -256,6 +286,13 @@ class StartYearMixin(FilterSet):
     )
 
     def filter_start_year(self, queryset, name, value):
+        """
+        Filter the queryset to results with start dates in the specified year.
+
+        :param queryset: The queryset to filter
+        :param name: The name of the field
+        :param value: The specified year
+        """
         if value:
             queryset = queryset.annotate(
                 start_year=Extract(
@@ -267,4 +304,7 @@ class StartYearMixin(FilterSet):
 
 
 class AutoCompleteFilter(CharFilter):
+    """A filter which uses AutoCompleteField to suggest-as-you-type the filter
+    value."""
+
     field_class = AutoCompleteField

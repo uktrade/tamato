@@ -1,4 +1,6 @@
 """Base classes for business rules and violations."""
+from __future__ import annotations
+
 import logging
 from datetime import date
 from datetime import datetime
@@ -26,6 +28,13 @@ class BusinessRuleViolation(Exception):
     """Base class for business rule violations."""
 
     def default_message(self) -> Optional[str]:
+        """
+        Get the first paragraph of the class docstring (if it exists) to use as
+        the error message.
+
+        :return Optional[str]: The error message
+        """
+
         if self.__doc__:
             # use the docstring as the error message, up to the first blank line
             message, *_ = self.__doc__.split("\n\n", 1)
@@ -45,7 +54,15 @@ class BusinessRuleViolation(Exception):
 
 
 class BusinessRuleBase(type):
-    """Metaclass for all BusinessRules."""
+    """
+    Metaclass for all BusinessRules.
+
+    Adds a :exception:BusinessRuleViolation nested class, which can be accessed
+    as ``BusinessRuleSubclass.Violation``, and sets the docstring (and hence the
+    default error message) to the docstring of the new class.
+    """
+
+    Violation: Type[BusinessRuleViolation]
 
     def __new__(cls, name, bases, attrs, **kwargs):
         parents = [parent for parent in bases if isinstance(parent, BusinessRuleBase)]
@@ -95,13 +112,20 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
     @classmethod
     def get_linked_models(
-        cls,
+        cls: Type[BusinessRule],
         model: TrackedModel,
         transaction,
     ) -> Iterator[TrackedModel]:
-        """Returns all model instances that are linked to the passed ``model``
-        and have this business rule listed in their ``business_rules``
-        attribute."""
+        """
+        Returns latest approved model instances that have relations to the
+        passed ``model`` and have this business rule listed in their
+        ``business_rules`` attribute.
+
+        :param model TrackedModel: Get models linked to this model instance
+        :param transaction Transaction: Get latest approved versions of linked models as of this
+        transaction
+        :rtype Iterator[TrackedModel]: The linked models
+        """
         for field, related_model in get_relations(type(model)).items():
             business_rules = getattr(related_model, "business_rules", [])
             if cls in business_rules:
@@ -121,7 +145,11 @@ class BusinessRule(metaclass=BusinessRuleBase):
                         continue
 
     def validate(self, *args):
-        """Perform business rule validation."""
+        """
+        Perform business rule validation.
+
+        :raises NotImplementedError: Must be overridden by subclasses
+        """
         raise NotImplementedError()
 
     def violation(
@@ -129,7 +157,13 @@ class BusinessRule(metaclass=BusinessRuleBase):
         model: Optional[TrackedModel] = None,
         message: Optional[str] = None,
     ) -> BusinessRuleViolation:
-        """Create a violation exception object."""
+        """
+        Create a violation exception object.
+
+        :param model Optional[TrackedModel]: The model that violates this business rule
+        :param message Optional[str]: A message explaining the violation
+        :rtype BusinessRuleViolation: An exception indicating a business rule violation
+        """
 
         return getattr(self.__class__, "Violation", BusinessRuleViolation)(
             model=model,
@@ -138,11 +172,21 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
 
 class BusinessRuleChecker:
+    """Runs all business rules governing a specified collection of model
+    instances and collects all violations."""
+
     def __init__(self, models: Iterable[TrackedModel], transaction):
         self.models = models
         self.transaction = transaction
 
     def validate(self):
+        """
+        Run business rules against the specified models in the given
+        transaction.
+
+        :raises ValidationError: All rule violations are raised in a single
+        ValidationError
+        """
         violations = []
 
         for model in self.models:
@@ -165,6 +209,12 @@ class BusinessRuleChecker:
 
 
 def only_applicable_after(cutoff: Union[date, datetime, str]):
+    """
+    Decorate BusinessRules to make them only applicable after a given date.
+
+    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat date
+    string of the time before which the rule should not apply
+    """
 
     if isinstance(cutoff, str):
         cutoff = date.fromisoformat(cutoff)
@@ -200,8 +250,13 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
     return decorator
 
 
-def skip_when_update_type(cls, update_types):
-    """Skip business rule validation for given update types."""
+def skip_when_update_type(cls: Type[BusinessRule], update_types: Iterable[UpdateType]):
+    """
+    Skip business rule validation for given update types.
+
+    :param cls Type[BusinessRule]: The BusinessRule to decorate
+    :param update_types Iterable[int]: The UpdateTypes to skip
+    """
     _original_validate = cls.validate
 
     @wraps(_original_validate)
@@ -215,11 +270,21 @@ def skip_when_update_type(cls, update_types):
     return cls
 
 
-def skip_when_deleted(cls):
+def skip_when_deleted(cls: Type[BusinessRule]):
+    """
+    Skip business rule when the model is being deleted.
+
+    :param cls Type[BusinessRule]: BusinessRule to decorate
+    """
     return skip_when_update_type(cls, (UpdateType.DELETE,))
 
 
-def skip_when_not_deleted(cls):
+def skip_when_not_deleted(cls: Type[BusinessRule]):
+    """
+    Skip business rule when the model is not being deleted.
+
+    :param cls Type[BusinessRule]: The BusinessRule to decorate
+    """
     return skip_when_update_type(cls, (UpdateType.CREATE, UpdateType.UPDATE))
 
 
@@ -229,6 +294,13 @@ class UniqueIdentifyingFields(BusinessRule):
     identifying_fields: Optional[Iterable[str]] = None
 
     def validate(self, model):
+        """
+        Check no other model has the same identifying fields, except other
+        versions of the same model.
+
+        :param model TrackedModel: The model to compare with
+        :raises self.violation: Rule violation
+        """
         identifying_fields = self.identifying_fields or model.identifying_fields
         query = dict(get_field_tuple(model, field) for field in identifying_fields)
 
@@ -249,6 +321,13 @@ class NoOverlapping(BusinessRule):
     identifying_fields: Optional[Iterable[str]] = None
 
     def validate(self, model):
+        """
+        Check other models with the same identifying fields do not have
+        overlapping validity periods, except other versions of the same model.
+
+        :param model TrackedModel: The model to compare with
+        :raises self.violation: Rule violation
+        """
         identifying_fields = self.identifying_fields or model.identifying_fields
         query = dict(get_field_tuple(model, field) for field in identifying_fields)
         query["valid_between__overlap"] = model.valid_between
@@ -270,10 +349,23 @@ class PreventDeleteIfInUse(BusinessRule):
     via_relation: Optional[str] = None
 
     def has_violation(self, model) -> bool:
+        """
+        Return True if the given model instance is "in use" - determined by calling the
+        method on the model instance named in ``self.in_use_check``.
+
+        :param model TrackedModel: The model to check
+        :rtype bool: True if the specified model's "in use" method returns True
+        """
         names = [self.via_relation] if self.via_relation else []
         return getattr(model, self.in_use_check)(self.transaction, *names)
 
     def validate(self, model):
+        """
+        Check whether the specified model violates this business rule.
+
+        :param model TrackedModel: The model to check
+        :raises BusinessRuleViolation: Raised if the passed model violates this business rule.
+        """
         if self.has_violation(model):
             raise self.violation(model)
 
@@ -289,6 +381,17 @@ class ValidityPeriodContained(BusinessRule):
     contained_field_name: Optional[str] = None
 
     def query_contains_validity(self, container, contained, model):
+        """
+        Raise a violation unless the contained model validity period falls
+        entirely within the validity period of the container model.
+
+        :param container TrackedModel: The model whose validity should contain that of
+        the contained model
+        :param contained TrackedModel: The model whose validity should be contained by
+        that of the container model
+        :param model TrackedModel: The model to associate with the violation
+        :raises self.violation: A business violation exception
+        """
         if (
             not type(container)
             .objects.filter(
@@ -303,6 +406,13 @@ class ValidityPeriodContained(BusinessRule):
             raise self.violation(model)
 
     def validate(self, model):
+        """
+        Check that the specified model or related model named by
+        ``contained_field_name`` has a validity period that is within the
+        validity period of the related model named by ``container_field_name``.
+
+        :param model TrackedModel: The model to check
+        """
         _, container = get_field_tuple(model, self.container_field_name)
         contained = model
         if self.contained_field_name:

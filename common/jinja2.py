@@ -17,6 +17,10 @@ from workbaskets.models import WorkBasket
 
 
 class GovukFrontendExtension(NunjucksExtension):
+    """Builds on govuk_frontend_jinja.templates.NunjucksExtension to provide
+    more template preprocessing, to fix issues translating Nunjucks templates to
+    Jinja templates."""
+
     def preprocess(self, source, name, filename=None):
         if filename and filename.endswith(".njk"):
             source = super().preprocess(source, name, filename)
@@ -62,6 +66,9 @@ class GovukFrontendExtension(NunjucksExtension):
 
 
 class GovukFrontendEnvironment(Environment):
+    """Override the govuk_frontend_jinja Environment class to use our extra
+    template preprocessing."""
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("extensions", [GovukFrontendExtension])
         super().__init__(*args, **kwargs)
@@ -81,6 +88,7 @@ def break_words(word):
 
 
 def query_transform(request, **kwargs):
+    """Override query parameters in the current request string."""
     updated = request.GET.copy()
     for key, value in kwargs.items():
         updated[key] = value
@@ -88,6 +96,11 @@ def query_transform(request, **kwargs):
 
 
 def environment(**kwargs):
+    """
+    Set up the Jinja template environment.
+
+    Add global variables and functions.
+    """
     env = GovukFrontendEnvironment(**kwargs)
 
     env.globals.update(
