@@ -517,12 +517,11 @@
 
 <span class="sd">        Any dependent models that are TARIC subrecords of this model will be</span>
 <span class="sd">        copied as well. Any many-to-many relationships will also be duplicated</span>
-<span class="sd">        if they do not have an explicit through model.</span>
-
-<span class="sd">        Any overrides passed in as keyword arguments will be applied to the new</span>
-<span class="sd">        model. If the model uses SIDs, they will be automatically set to the</span>
-<span class="sd">        next highest available SID. Models with other identifying fields should</span>
-<span class="sd">        have thier new IDs passed in through overrides.</span>
+<span class="sd">        if they do not have an explicit through model. Any overrides passed in</span>
+<span class="sd">        as keyword arguments will be applied to the new model. If the model uses</span>
+<span class="sd">        SIDs, they will be automatically set to the next highest available SID.</span>
+<span class="sd">        Models with other identifying fields should have thier new IDs passed in</span>
+<span class="sd">        through overrides.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Remove any fields from the basic data that are overriden, because</span>
@@ -530,9 +529,23 @@
         <span class="c1"># ignore the object from the overrides and just take the ID from the</span>
         <span class="c1"># basic data.</span>
         <span class="n">basic_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copyable_fields</span>
+        <span class="n">subrecord_fields</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">overrides</span><span class="p">:</span>
-            <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
-            <span class="n">basic_fields</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="c1"># Check for fields on related model</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;__&quot;</span> <span class="ow">in</span> <span class="n">field_name</span><span class="p">:</span>
+                <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+            <span class="c1"># Check for non-basic fields e.g. related models</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">and</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">basic_fields</span><span class="p">:</span>
+                <span class="n">basic_fields</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+            <span class="c1"># Add non-basic fields from overrides to subrecord_fields dict</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subrecord_fields</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">field_name</span><span class="p">:</span> <span class="n">overrides</span><span class="p">[</span><span class="n">field_name</span><span class="p">]})</span>
+
+        <span class="c1"># Remove related models and related model fields from overrides before generating object_data below</span>
+        <span class="n">overrides</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subrecord_fields</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">}</span>
 
         <span class="c1"># Remove any SIDs from the copied data. This allows them to either</span>
         <span class="c1"># automatically pick the next highest value or to be passed in.</span>
@@ -570,10 +583,36 @@
         <span class="c1"># the new model substituted in place of this one. It&#39;s done this way to</span>
         <span class="c1"># give these related models a chance to increment SIDs, etc.</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">get_subrecord_relations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
+            <span class="n">ignore</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="c1"># Check if user passed related model into overrides argument</span>
+            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">subrecord_fields</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="c1"># If user passed a new unsaved model, set the remote field value equal to self for each model passed</span>
+                <span class="c1"># e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `self`</span>
+                <span class="k">if</span> <span class="n">subrecord_fields</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">]:</span>
+                    <span class="k">for</span> <span class="n">subrecord</span> <span class="ow">in</span> <span class="n">subrecord_fields</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">]:</span>
+                        <span class="n">remote_field</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span>
+                        <span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">name</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">subrecord</span><span class="p">,</span> <span class="n">remote_field</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                        <span class="n">subrecord</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                <span class="c1"># Else, if an empty or None value is passed, set ignore to True, so that related models are not copied</span>
+                <span class="c1"># e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ignore</span> <span class="o">=</span> <span class="kc">True</span>
+
             <span class="n">queryset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">get_accessor_name</span><span class="p">())</span>
             <span class="n">reverse_field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">name</span>
-            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">queryset</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">):</span>
-                <span class="n">model</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">reverse_field_name</span><span class="p">:</span> <span class="n">new_object</span><span class="p">})</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">reverse_field_name</span><span class="p">:</span> <span class="n">new_object</span><span class="p">}</span>
+            <span class="n">nested_fields</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">v</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">subrecord_fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">k</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">k</span>
+            <span class="p">}</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">nested_fields</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ignore</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">queryset</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">):</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">new_object</span></div>
 
