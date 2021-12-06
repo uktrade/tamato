@@ -149,21 +149,47 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.BusinessRule.get_linked_models">
 <em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">get_linked_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRule.get_linked_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRule.get_linked_models" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns all model instances that are linked to the passed <code class="docutils literal notranslate"><span class="pre">model</span></code>
-and have this business rule listed in their <code class="docutils literal notranslate"><span class="pre">business_rules</span></code>
-attribute.</p>
+<dd><p>Returns latest approved model instances that have relations to the
+passed <code class="docutils literal notranslate"><span class="pre">model</span></code> and have this business rule listed in their
+<code class="docutils literal notranslate"><span class="pre">business_rules</span></code> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>TrackedModel</strong> (<em>model</em>) – Get models linked to this model instance</p></li>
+<li><p><strong>Transaction</strong> (<em>transaction</em>) – Get latest approved versions of linked models as of this</p></li>
+</ul>
+</dd>
+</dl>
+<p>transaction
+:rtype Iterator[TrackedModel]: The linked models</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.BusinessRule.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRule.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRule.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.BusinessRule.violation">
 <span class="sig-name descname"><span class="pre">violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.business_rules.BusinessRuleViolation" title="common.business_rules.BusinessRuleViolation"><span class="pre">common.business_rules.BusinessRuleViolation</span></a></span></span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRule.violation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRule.violation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a violation exception object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Optional</strong><strong>[</strong><strong>TrackedModel</strong><strong>]</strong> (<em>model</em>) – The model that violates this business rule</p></li>
+<li><p><strong>Optional</strong><strong>[</strong><strong>str</strong><strong>]</strong> (<em>message</em>) – A message explaining the violation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rtype BusinessRuleViolation</dt>
+<dd class="field-even"><p>An exception indicating a business rule violation</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -172,12 +198,47 @@ attribute.</p>
 <dt class="sig sig-object py" id="common.business_rules.BusinessRuleBase">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">BusinessRuleBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRuleBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Metaclass for all BusinessRules.</p>
+<p>Adds a :exception:BusinessRuleViolation nested class, which can be accessed
+as <code class="docutils literal notranslate"><span class="pre">BusinessRuleSubclass.Violation</span></code>, and sets the docstring (and hence the
+default error message) to the docstring of the new class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.business_rules.BusinessRuleChecker">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">BusinessRuleChecker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRuleChecker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRuleChecker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs all business rules governing a specified collection of model
+instances and collects all violations.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="common.business_rules.BusinessRuleChecker.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRuleChecker.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRuleChecker.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run business rules against the specified models in the given
+transaction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValidationError</strong> – All rule violations are raised in a single</p>
+</dd>
+</dl>
+<p>ValidationError</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="common.business_rules.BusinessRuleViolation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">BusinessRuleViolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRuleViolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRuleViolation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for business rule violations.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="common.business_rules.BusinessRuleViolation.default_message">
+<span class="sig-name descname"><span class="pre">default_message</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/common/business_rules.html#BusinessRuleViolation.default_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.BusinessRuleViolation.default_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the first paragraph of the class docstring (if it exists) to use as
+the error message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return Optional[str]</dt>
+<dd class="field-odd"><p>The error message</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -223,6 +284,11 @@ property or attribute called <code class="xref py py-attr docutils literal notra
 <dt class="sig sig-object py" id="common.business_rules.FootnoteApplicability.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#FootnoteApplicability.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.FootnoteApplicability.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -241,6 +307,11 @@ property or attribute called <code class="xref py py-attr docutils literal notra
 <dt class="sig sig-object py" id="common.business_rules.MustExist.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#MustExist.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.MustExist.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -259,6 +330,11 @@ property or attribute called <code class="xref py py-attr docutils literal notra
 <dt class="sig sig-object py" id="common.business_rules.NoBlankDescription.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#NoBlankDescription.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.NoBlankDescription.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -278,7 +354,16 @@ model.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.NoOverlapping.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#NoOverlapping.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.NoOverlapping.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check other models with the same identifying fields do not have
+overlapping validity periods, except other versions of the same model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to compare with</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>self.violation</strong> – Rule violation</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -294,9 +379,32 @@ model.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="common.business_rules.PreventDeleteIfInUse.has_violation">
+<span class="sig-name descname"><span class="pre">has_violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/common/business_rules.html#PreventDeleteIfInUse.has_violation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.PreventDeleteIfInUse.has_violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the given model instance is “in use” - determined by calling the
+method on the model instance named in <code class="docutils literal notranslate"><span class="pre">self.in_use_check</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+</dd>
+<dt class="field-even">Rtype bool</dt>
+<dd class="field-even"><p>True if the specified model’s “in use” method returns True</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.PreventDeleteIfInUse.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#PreventDeleteIfInUse.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.PreventDeleteIfInUse.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check whether the specified model violates this business rule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#common.business_rules.BusinessRuleViolation" title="common.business_rules.BusinessRuleViolation"><strong>BusinessRuleViolation</strong></a> – Raised if the passed model violates this business rule.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -314,7 +422,16 @@ model.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.UniqueIdentifyingFields.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#UniqueIdentifyingFields.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.UniqueIdentifyingFields.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check no other model has the same identifying fields, except other
+versions of the same model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to compare with</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>self.violation</strong> – Rule violation</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -341,6 +458,11 @@ transaction.</p>
 <dt class="sig sig-object py" id="common.business_rules.UpdateValidity.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#UpdateValidity.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.UpdateValidity.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -360,9 +482,33 @@ period (found through the <code class="docutils literal notranslate"><span class
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.query_contains_validity">
+<span class="sig-name descname"><span class="pre">query_contains_validity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contained</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContained.query_contains_validity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.query_contains_validity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise a violation unless the contained model validity period falls
+entirely within the validity period of the container model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>container</em>) – The model whose validity should contain that of</p>
+</dd>
+</dl>
+<p>the contained model
+:param contained TrackedModel: The model whose validity should be contained by
+that of the container model
+:param model TrackedModel: The model to associate with the violation
+:raises self.violation: A business violation exception</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContained.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check that the specified model or related model named by
+<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code> has a validity period that is within the
+validity period of the related model named by <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -383,6 +529,11 @@ object’s validity period (found through the <code class="docutils literal notr
 <dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContains.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContains.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContains.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -403,6 +554,11 @@ period of the container.</p>
 <dt class="sig sig-object py" id="common.business_rules.ValidityPeriodSpansContainer.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodSpansContainer.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodSpansContainer.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -421,14 +577,61 @@ period of the container.</p>
 <dt class="sig sig-object py" id="common.business_rules.ValidityStartDateRules.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityStartDateRules.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityStartDateRules.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="common.business_rules.only_applicable_after">
+<span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">only_applicable_after</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime.date</span><span class="p"><span class="pre">,</span> </span><span class="pre">datetime.datetime</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#only_applicable_after"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.only_applicable_after" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorate BusinessRules to make them only applicable after a given date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>str</strong><strong>]</strong> (<em>cutoff Union</em><em>[</em><em>date</em><em>, </em><em>datetime</em><em>,</em>) – The date, datetime or isoformat date</p>
+</dd>
+</dl>
+<p>string of the time before which the rule should not apply</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.business_rules.skip_when_deleted">
+<span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">skip_when_deleted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#common.business_rules.BusinessRule" title="common.business_rules.BusinessRule"><span class="pre">common.business_rules.BusinessRule</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#skip_when_deleted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.skip_when_deleted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Skip business rule when the model is being deleted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Type</strong><strong>[</strong><strong>BusinessRule</strong><strong>]</strong> (<em>cls</em>) – BusinessRule to decorate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.business_rules.skip_when_not_deleted">
+<span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">skip_when_not_deleted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#common.business_rules.BusinessRule" title="common.business_rules.BusinessRule"><span class="pre">common.business_rules.BusinessRule</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#skip_when_not_deleted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.skip_when_not_deleted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Skip business rule when the model is not being deleted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Type</strong><strong>[</strong><strong>BusinessRule</strong><strong>]</strong> (<em>cls</em>) – The BusinessRule to decorate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="common.business_rules.skip_when_update_type">
-<span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">skip_when_update_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#skip_when_update_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.skip_when_update_type" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">skip_when_update_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#common.business_rules.BusinessRule" title="common.business_rules.BusinessRule"><span class="pre">common.business_rules.BusinessRule</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_types</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">common.validators.UpdateType</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#skip_when_update_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.skip_when_update_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Skip business rule validation for given update types.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Type</strong><strong>[</strong><strong>BusinessRule</strong><strong>]</strong> (<em>cls</em>) – The BusinessRule to decorate</p></li>
+<li><p><strong>Iterable</strong><strong>[</strong><strong>int</strong><strong>]</strong> (<em>update_types</em>) – The UpdateTypes to skip</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

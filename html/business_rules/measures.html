@@ -156,6 +156,11 @@
 <dt class="sig sig-object py" id="measures.business_rules.ComponentApplicability.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ComponentApplicability.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ComponentApplicability.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -276,6 +281,11 @@ the measure type record) has the value “mandatory”.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME10.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME10.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME10.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -312,6 +322,11 @@ justification regulation.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME104.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME104.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME104.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -362,6 +377,11 @@ of the same measure).</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME108.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME108.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME108.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -445,7 +465,14 @@ of the quota order number must span the validity period of the measure.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="measures.business_rules.ME116.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME116.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check that the specified model or related model named by
+<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code> has a validity period that is within the
+validity period of the related model named by <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -488,6 +515,11 @@ numbers starting with ‘094’.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME117.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME117.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME117.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -510,6 +542,11 @@ measure.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME119.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME119.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME119.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -530,6 +567,11 @@ have a relationship with the measure type.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME12.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME12.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME12.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -552,6 +594,11 @@ should be forbidden.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME16.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME16.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME16.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -626,6 +673,11 @@ the start date of the measure must be less than or equal to the end date.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME25.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME25.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME25.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -664,6 +716,11 @@ type, geo area, order number, additional code and reduction indicator.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME32.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME32.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME32.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -684,6 +741,11 @@ not filled in.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME33.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME33.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME33.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -704,6 +766,11 @@ filled in.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME34.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME34.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME34.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -760,6 +827,11 @@ met.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME40.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME40.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME40.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -810,6 +882,11 @@ same one twice.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME43.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure_component</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME43.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME43.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -998,6 +1075,11 @@ the same condition type.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME58.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure_condition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME58.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME58.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1110,6 +1192,11 @@ area group (area code = 1).</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME65.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME65.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME65.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1130,6 +1217,11 @@ group.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME66.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME66.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME66.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1150,6 +1242,11 @@ valid period of the measure.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME67.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME67.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME67.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1170,6 +1267,11 @@ measure.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME68.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME68.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME68.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1202,6 +1304,11 @@ measure.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME7.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME7.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME7.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1220,6 +1327,11 @@ measure.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME70.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME70.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME70.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1314,6 +1426,11 @@ need to be aware of this multiplicity of end dates.</p></li>
 <dt class="sig sig-object py" id="measures.business_rules.ME87.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME87.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME87.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1334,6 +1451,11 @@ measure type.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME88.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME88.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME88.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1372,6 +1494,11 @@ business rule is still needed for historical EU measures.</p>
 <dt class="sig sig-object py" id="measures.business_rules.ME9.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME9.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME9.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1493,6 +1620,23 @@ measure type.</p>
 <dt class="sig sig-object py" id="measures.business_rules.MeasureValidityPeriodContained.Violation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.MeasureValidityPeriodContained.Violation" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="measures.business_rules.MeasureValidityPeriodContained.query_contains_validity">
+<span class="sig-name descname"><span class="pre">query_contains_validity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contained</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#MeasureValidityPeriodContained.query_contains_validity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.MeasureValidityPeriodContained.query_contains_validity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise a violation unless the contained model validity period falls
+entirely within the validity period of the container model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>container</em>) – The model whose validity should contain that of</p>
+</dd>
+</dl>
+<p>the contained model
+:param contained TrackedModel: The model whose validity should be contained by
+that of the container model
+:param model TrackedModel: The model to associate with the violation
+:raises self.violation: A business violation exception</p>
+</dd></dl>
 
 </dd></dl>
 

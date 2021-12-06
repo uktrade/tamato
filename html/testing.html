@@ -99,17 +99,11 @@
 <li class="toctree-l1"><a class="reference internal" href="index.html">Tariff Management Tool</a></li>
 <li class="toctree-l1"><a class="reference internal" href="envvars.html">Environment variables</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Testing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#running-tests">Running tests</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#speed-up-tests-by-without-running-coverage">Speed up tests by without running coverage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#find-and-debug-intermittent-test-failures">Find and debug intermittent test failures</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#run-tests-in-a-loop">Run tests in a loop</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#debugging-with-webpdb-ipd-pdb">Debugging with WebPDB, IPD, PDB++</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#run-tests-in-a-single-process">Run tests in a single process</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#speed-up-runtimes-by-using-pyston-instead-of-cpython">Speed up runtimes by using Pyston instead of CPython</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tests">Running tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#find-and-debug-intermittent-test-failures">Find and debug intermittent test failures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#debugging-with-webpdb-ipd-pdb">Debugging with WebPDB, IPD, PDB++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-tests-in-a-single-process">Run tests in a single process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#speed-up-runtimes-by-using-pyston-instead-of-cpython">Speed up runtimes by using Pyston instead of CPython</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adr/index.html">Architectural Decision Records</a></li>
@@ -130,17 +124,11 @@
       <h1>On this page</h1>
       <ul>
 <li><a class="reference internal" href="#">Testing</a><ul>
-<li><a class="reference internal" href="#running-tests">Running tests</a><ul>
-<li><a class="reference internal" href="#speed-up-tests-by-without-running-coverage">Speed up tests by without running coverage</a></li>
-<li><a class="reference internal" href="#find-and-debug-intermittent-test-failures">Find and debug intermittent test failures</a><ul>
-<li><a class="reference internal" href="#run-tests-in-a-loop">Run tests in a loop</a></li>
+<li><a class="reference internal" href="#running-tests">Running tests</a></li>
+<li><a class="reference internal" href="#find-and-debug-intermittent-test-failures">Find and debug intermittent test failures</a></li>
 <li><a class="reference internal" href="#debugging-with-webpdb-ipd-pdb">Debugging with WebPDB, IPD, PDB++</a></li>
 <li><a class="reference internal" href="#run-tests-in-a-single-process">Run tests in a single process</a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#speed-up-runtimes-by-using-pyston-instead-of-cpython">Speed up runtimes by using Pyston instead of CPython</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -158,36 +146,25 @@
 <h1>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h1>
 <section id="running-tests">
 <h2>Running tests<a class="headerlink" href="#running-tests" title="Permalink to this headline">¶</a></h2>
-<p>To run tests use the following command:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py <span class="nb">test</span>
-</pre></div>
-</div>
-<p>To run with coverage use the following:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py <span class="nb">test</span> -- --cov
-</pre></div>
-</div>
-<p>When running tests the <span class="target" id="index-0"></span><a class="reference internal" href="envvars.html#envvar-DJANGO_SETTINGS_MODULE"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">DJANGO_SETTINGS_MODULE</span></code></a> env var defaults to
-<code class="docutils literal notranslate"><span class="pre">settings.test</span></code></p>
-<section id="speed-up-tests-by-without-running-coverage">
-<h3>Speed up tests by without running coverage<a class="headerlink" href="#speed-up-tests-by-without-running-coverage" title="Permalink to this headline">¶</a></h3>
-<p>Coverage is enabled when running tests when running with <code class="docutils literal notranslate"><span class="pre">make</span></code> or <code class="docutils literal notranslate"><span class="pre">pytest</span></code>:</p>
+<p>There are several ways to run tests, the recommended way is to use <code class="docutils literal notranslate"><span class="pre">make</span></code>:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ make <span class="nb">test</span>
-
-$ pytest
 </pre></div>
 </div>
-<p>Running without coverage enabled is significantly faster, use one of the
-following commands:</p>
+<p>This will run all tests and generate a test coverage report. To run without coverage
+(which is somewhat faster), use the following:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ make test-fast
-
-$ pytest --no-cov
 </pre></div>
 </div>
+<p>Alternatively, you can run tests using <code class="docutils literal notranslate"><span class="pre">pytest</span></code> for more detailed configuration of the test run. See the various
+options with the following:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pytest --help
+</pre></div>
+</div>
+<p>When running tests <span class="target" id="index-0"></span><a class="reference internal" href="envvars.html#envvar-DJANGO_SETTINGS_MODULE"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">DJANGO_SETTINGS_MODULE</span></code></a> defaults to
+<code class="docutils literal notranslate"><span class="pre">settings.test</span></code></p>
 </section>
 <section id="find-and-debug-intermittent-test-failures">
-<h3>Find and debug intermittent test failures<a class="headerlink" href="#find-and-debug-intermittent-test-failures" title="Permalink to this headline">¶</a></h3>
-<section id="run-tests-in-a-loop">
-<h4>Run tests in a loop<a class="headerlink" href="#run-tests-in-a-loop" title="Permalink to this headline">¶</a></h4>
+<h2>Find and debug intermittent test failures<a class="headerlink" href="#find-and-debug-intermittent-test-failures" title="Permalink to this headline">¶</a></h2>
 <p>The simplest way to find intermittent test failures is to keep running
 them in a loop. It’s worth leaving it running for at least a few test
 runs.</p>
@@ -203,7 +180,7 @@ processes to a number higher than the amount of CPU threads, e.g. 12 or
 </div>
 </section>
 <section id="debugging-with-webpdb-ipd-pdb">
-<h4>Debugging with WebPDB, IPD, PDB++<a class="headerlink" href="#debugging-with-webpdb-ipd-pdb" title="Permalink to this headline">¶</a></h4>
+<h2>Debugging with WebPDB, IPD, PDB++<a class="headerlink" href="#debugging-with-webpdb-ipd-pdb" title="Permalink to this headline">¶</a></h2>
 <p>By default tests run in multiple processes using pytest-xdist - a side
 effect is that debuggers over stdout such as pdb, ipdb, pdb++ do not
 work.</p>
@@ -215,7 +192,7 @@ good choices, in that case use -s so that pytest doesn’t capture stdout:</p>
 </div>
 </section>
 <section id="run-tests-in-a-single-process">
-<h4>Run tests in a single process<a class="headerlink" href="#run-tests-in-a-single-process" title="Permalink to this headline">¶</a></h4>
+<h2>Run tests in a single process<a class="headerlink" href="#run-tests-in-a-single-process" title="Permalink to this headline">¶</a></h2>
 <p>Running in a single process can eliminate pytest-xdist as a cause of
 errors.</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pytest -n0
@@ -231,9 +208,8 @@ bugs around hidden state, install it:</p>
 </pre></div>
 </div>
 </section>
-</section>
 <section id="speed-up-runtimes-by-using-pyston-instead-of-cpython">
-<h3>Speed up runtimes by using Pyston instead of CPython<a class="headerlink" href="#speed-up-runtimes-by-using-pyston-instead-of-cpython" title="Permalink to this headline">¶</a></h3>
+<h2>Speed up runtimes by using Pyston instead of CPython<a class="headerlink" href="#speed-up-runtimes-by-using-pyston-instead-of-cpython" title="Permalink to this headline">¶</a></h2>
 <div class="line-block">
 <div class="line">Pyston is a faster python implementation that aims for compatibility with the default CPython implementation.</div>
 <div class="line">Ad-hoc testing on one laptop showed tests completed in 6 minutes in CPython and 4 with Pyston.</div>
@@ -250,7 +226,6 @@ bugs around hidden state, install it:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pyston -mvenv
 </pre></div>
 </div>
-</section>
 </section>
 </section>
 

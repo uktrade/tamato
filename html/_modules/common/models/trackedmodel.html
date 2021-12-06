@@ -167,6 +167,10 @@
 
 
 <div class="viewcode-block" id="VersionGroup"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.VersionGroup">[docs]</a><span class="k">class</span> <span class="nc">VersionGroup</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A group that contains all versions of the same TrackedModel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">current_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
         <span class="s2">&quot;common.TrackedModel&quot;</span><span class="p">,</span>
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
@@ -332,6 +336,9 @@
         <span class="k">return</span> <span class="n">new_object</span></div>
 
 <div class="viewcode-block" id="TrackedModel.get_versions"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_versions">[docs]</a>    <span class="k">def</span> <span class="nf">get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find all versions of this model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;version_group&quot;</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">versions</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
         <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">())</span>
@@ -375,6 +382,13 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Get a name/value mapping of the fields that identify this model.</span>
+
+<span class="sd">        :param identifying_fields Optional[Iterable[str]]: Optionally override the</span>
+<span class="sd">        fields to retrieve</span>
+<span class="sd">        :rtype dict[str, Any]: A dict of field names to values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">identifying_fields</span> <span class="o">=</span> <span class="n">identifying_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -387,6 +401,14 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructs a comma separated string of the identifying fields of the model with</span>
+<span class="sd">        field name and value pairs delimited by &quot;=&quot;, eg: &quot;field1=1, field2=2&quot;</span>
+
+<span class="sd">        :param identifying_fields Optional[Iterable[str]]: Optionally override the</span>
+<span class="sd">        fields to use in the string</span>
+<span class="sd">        :rtype str: The constructed string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">field_list</span> <span class="o">=</span> <span class="p">[</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">(</span><span class="n">identifying_fields</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -396,10 +418,20 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">structure_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A string used to describe the model instance.</span>
+
+<span class="sd">        Used as the displayed value in an AutocompleteWidget dropdown, and in the &quot;Your</span>
+<span class="sd">        tariff changes&quot; list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">structure_description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">structure_description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;The current description of the model, if it has related description models or a</span>
+<span class="sd">        description field.</span>
+
+<span class="sd">        :rtype Optional[str]: The current description</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">description</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;descriptions&quot;</span><span class="p">):</span>
             <span class="n">description</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">()</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
@@ -418,12 +450,19 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The current version of this model&quot;&quot;&quot;</span>
         <span class="n">current_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span>
         <span class="k">if</span> <span class="n">current_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">(</span><span class="s2">&quot;Object has no current version&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">current_version</span>
 
 <div class="viewcode-block" id="TrackedModel.version_at"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.version_at">[docs]</a>    <span class="k">def</span> <span class="nf">version_at</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The latest version of this model that was approved as of the given</span>
+<span class="sd">        transaction.</span>
+
+<span class="sd">        :param transaction Transaction: Limit versions to this transaction</span>
+<span class="sd">        :rtype TrackedModel:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
 
     <span class="nd">@classproperty</span>
@@ -609,6 +648,11 @@
 
 <div class="viewcode-block" id="TrackedModel.save"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.save">[docs]</a>    <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">force_write</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save the model to the database.</span>
+
+<span class="sd">        :param force_write bool: Ignore append-only restrictions and write to the</span>
+<span class="sd">        database even if the model already exists</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">force_write</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_write</span><span class="p">():</span>
             <span class="k">raise</span> <span class="n">IllegalSaveError</span><span class="p">(</span>
                 <span class="s2">&quot;TrackedModels cannot be updated once written and approved. &quot;</span>
@@ -645,7 +689,13 @@
     <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TrackedModel.get_url"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;detail&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="TrackedModel.get_url"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;detail&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate a URL to a representation of the model in the webapp.</span>
+
+<span class="sd">        :param action str: The view type to generate a URL for (default &quot;detail&quot;),</span>
+<span class="sd">        eg: &quot;list&quot; or &quot;edit&quot;</span>
+<span class="sd">        :rtype Optional[str]: The generated URL</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">action</span> <span class="o">!=</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span>
@@ -658,6 +708,13 @@
             <span class="k">return</span></div>
 
 <div class="viewcode-block" id="TrackedModel.get_url_pattern_name_prefix"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url_pattern_name_prefix">[docs]</a>    <span class="k">def</span> <span class="nf">get_url_pattern_name_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the prefix string for a view name for this model.</span>
+
+<span class="sd">        By default, this is the verbose name of the model with spaces replaced by</span>
+<span class="sd">        underscores, but this method allows this to be overridden.</span>
+
+<span class="sd">        :rtype str: The prefix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;url_pattern_name_prefix&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
             <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>

@@ -161,27 +161,31 @@ instead.</p>
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-DATABASE_URL">
 <span class="sig-name descname"><span class="pre">DATABASE_URL</span></span><a class="headerlink" href="#envvar-DATABASE_URL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Connection details for the database, formatted per the <a class="reference external" href="https://github.com/jacobian/dj-database-url#url-schema">dj-database-url schema</a></p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">postgres://localhost:5432/tamato</span></code>)</p>
+<p>Connection details for the database, formatted per the <a class="reference external" href="https://github.com/jacobian/dj-database-url#url-schema">dj-database-url schema</a></p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-LOG_LEVEL">
 <span class="sig-name descname"><span class="pre">LOG_LEVEL</span></span><a class="headerlink" href="#envvar-LOG_LEVEL" title="Permalink to this definition">¶</a></dt>
-<dd><p>The level of logging messages in the web app. One of <code class="docutils literal notranslate"><span class="pre">CRITICAL</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>,
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>)</p>
+<p>The level of logging messages in the web app. One of <code class="docutils literal notranslate"><span class="pre">CRITICAL</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>,
 <code class="docutils literal notranslate"><span class="pre">WARNING</span></code>, <code class="docutils literal notranslate"><span class="pre">INFO</span></code>, <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>, <code class="docutils literal notranslate"><span class="pre">NOTSET</span></code></p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-CELERY_LOG_LEVEL">
 <span class="sig-name descname"><span class="pre">CELERY_LOG_LEVEL</span></span><a class="headerlink" href="#envvar-CELERY_LOG_LEVEL" title="Permalink to this definition">¶</a></dt>
-<dd><p>The level of logging for the celery worker. One of <code class="docutils literal notranslate"><span class="pre">CRITICAL</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>,
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>)</p>
+<p>The level of logging for the celery worker. One of <code class="docutils literal notranslate"><span class="pre">CRITICAL</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>,
 <code class="docutils literal notranslate"><span class="pre">WARNING</span></code>, <code class="docutils literal notranslate"><span class="pre">INFO</span></code>, <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>, <code class="docutils literal notranslate"><span class="pre">NOTSET</span></code></p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-TAMATO_IMPORT_USERNAME">
 <span class="sig-name descname"><span class="pre">TAMATO_IMPORT_USERNAME</span></span><a class="headerlink" href="#envvar-TAMATO_IMPORT_USERNAME" title="Permalink to this definition">¶</a></dt>
-<dd><p>The TAMATO username to use for the owner of the workbaskets created</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">test</span></code>)</p>
+<p>The TAMATO username to use for the owner of the workbaskets created</p>
 </dd></dl>
 
 <dl class="std envvar">
@@ -229,13 +233,15 @@ instead.</p>
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-HMRC_STORAGE_BUCKET_NAME">
 <span class="sig-name descname"><span class="pre">HMRC_STORAGE_BUCKET_NAME</span></span><a class="headerlink" href="#envvar-HMRC_STORAGE_BUCKET_NAME" title="Permalink to this definition">¶</a></dt>
-<dd><p>Name of S3 bucket used for uploads by the exporter</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">hmrc</span></code>)</p>
+<p>Name of S3 bucket used for uploads by the exporter</p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-HMRC_STORAGE_DIRECTORY">
 <span class="sig-name descname"><span class="pre">HMRC_STORAGE_DIRECTORY</span></span><a class="headerlink" href="#envvar-HMRC_STORAGE_DIRECTORY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destination directory in S3 bucket for the exporter</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">tohmrc/staging/</span></code>)</p>
+<p>Destination directory in S3 bucket for the exporter</p>
 </dd></dl>
 
 <dl class="std envvar">
@@ -265,31 +271,36 @@ instead.</p>
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-SQLITE_STORAGE_BUCKET_NAME">
 <span class="sig-name descname"><span class="pre">SQLITE_STORAGE_BUCKET_NAME</span></span><a class="headerlink" href="#envvar-SQLITE_STORAGE_BUCKET_NAME" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bucket used for SQLite uploads</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">sqlite</span></code>)</p>
+<p>Bucket used for SQLite uploads</p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-SQLITE_S3_ACCESS_KEY_ID">
 <span class="sig-name descname"><span class="pre">SQLITE_S3_ACCESS_KEY_ID</span></span><a class="headerlink" href="#envvar-SQLITE_S3_ACCESS_KEY_ID" title="Permalink to this definition">¶</a></dt>
-<dd><p>AWS key id, used for SQLite storage bucket uploads</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">test_sqlite_key_id</span></code>)</p>
+<p>AWS key id, used for SQLite storage bucket uploads</p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-SQLITE_S3_SECRET_ACCESS_KEY">
 <span class="sig-name descname"><span class="pre">SQLITE_S3_SECRET_ACCESS_KEY</span></span><a class="headerlink" href="#envvar-SQLITE_S3_SECRET_ACCESS_KEY" title="Permalink to this definition">¶</a></dt>
-<dd><p>AWS secret key, used for SQLite storage bucket uploads</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">test_sqlite_key</span></code>)</p>
+<p>AWS secret key, used for SQLite storage bucket uploads</p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-SQLITE_S3_ENDPOINT_URL">
 <span class="sig-name descname"><span class="pre">SQLITE_S3_ENDPOINT_URL</span></span><a class="headerlink" href="#envvar-SQLITE_S3_ENDPOINT_URL" title="Permalink to this definition">¶</a></dt>
-<dd><p>AWS S3 endpoint url, used for SQLite storage bucket uploads</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">https://test-sqlite-url.local/</span></code>)</p>
+<p>AWS S3 endpoint url, used for SQLite storage bucket uploads</p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-SQLITE_STORAGE_DIRECTORY">
 <span class="sig-name descname"><span class="pre">SQLITE_STORAGE_DIRECTORY</span></span><a class="headerlink" href="#envvar-SQLITE_STORAGE_DIRECTORY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destination directory in s3 bucket for the SQLite storage bucket</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">sqlite/</span></code>)</p>
+<p>Destination directory in s3 bucket for the SQLite storage bucket</p>
 </dd></dl>
 
 <dl class="std envvar">
@@ -301,21 +312,21 @@ instead.</p>
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-MINIO_ACCESS_KEY">
 <span class="sig-name descname"><span class="pre">MINIO_ACCESS_KEY</span></span><a class="headerlink" href="#envvar-MINIO_ACCESS_KEY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Username for local Minio instance (s3 implementation)</p>
+<dd><p>Username for local MinIO instance</p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-MINIO_SECRET_KEY">
 <span class="sig-name descname"><span class="pre">MINIO_SECRET_KEY</span></span><a class="headerlink" href="#envvar-MINIO_SECRET_KEY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Password for local Minio instance (s3 implementation</p>
+<dd><p>Password for local MinIO instance</p>
 </dd></dl>
 
 <dl class="std envvar">
 <dt class="sig sig-object std" id="envvar-DJANGO_SETTINGS_MODULE">
 <span class="sig-name descname"><span class="pre">DJANGO_SETTINGS_MODULE</span></span><a class="headerlink" href="#envvar-DJANGO_SETTINGS_MODULE" title="Permalink to this definition">¶</a></dt>
-<dd><p>The dotted import path to the python module to use for Django settings.
-Options include <code class="docutils literal notranslate"><span class="pre">settings</span></code>, <code class="docutils literal notranslate"><span class="pre">settings.dev</span></code> and <code class="docutils literal notranslate"><span class="pre">settings.test</span></code>.
-(default <code class="docutils literal notranslate"><span class="pre">settings</span></code>, or <code class="docutils literal notranslate"><span class="pre">settings.test</span></code> when running tests)</p>
+<dd><p>(default <code class="docutils literal notranslate"><span class="pre">settings</span></code>, or <code class="docutils literal notranslate"><span class="pre">settings.test</span></code> when running tests)</p>
+<p>The dotted import path to the python module to use for Django settings.
+Options include <code class="docutils literal notranslate"><span class="pre">settings</span></code>, <code class="docutils literal notranslate"><span class="pre">settings.dev</span></code> and <code class="docutils literal notranslate"><span class="pre">settings.test</span></code>.</p>
 </dd></dl>
 
 </section>

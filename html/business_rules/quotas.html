@@ -156,6 +156,11 @@
 <dt class="sig sig-object py" id="quotas.business_rules.BlockingOnlyOfFCFSQuotas.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#BlockingOnlyOfFCFSQuotas.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.BlockingOnlyOfFCFSQuotas.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -216,6 +221,11 @@ measure.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.ON10.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.ON10.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -233,7 +243,15 @@ measure.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="quotas.business_rules.ON11.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.ON11.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check whether the specified model violates this business rule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="common.html#common.business_rules.BusinessRuleViolation" title="common.business_rules.BusinessRuleViolation"><strong>BusinessRuleViolation</strong></a> – Raised if the passed model violates this business rule.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -253,7 +271,15 @@ measure.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="quotas.business_rules.ON12.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.ON12.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check whether the specified model violates this business rule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="common.html#common.business_rules.BusinessRuleViolation" title="common.business_rules.BusinessRuleViolation"><strong>BusinessRuleViolation</strong></a> – Raised if the passed model violates this business rule.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -274,6 +300,11 @@ area group (area code = 1).</p>
 <dt class="sig sig-object py" id="quotas.business_rules.ON13.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#ON13.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON13.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -294,6 +325,11 @@ group.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.ON14.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#ON14.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON14.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -314,6 +350,11 @@ quota order number id.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.ON2.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#ON2.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON2.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -334,6 +375,11 @@ the same quota order number SID and geographical area id.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.ON5.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">origin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#ON5.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON5.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -353,7 +399,14 @@ period of the quota order number origin.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="quotas.business_rules.ON6.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.ON6.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
+<dd><p>Check that the specified model or related model named by
+<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code> has a validity period that is within the
+validity period of the related model named by <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -402,6 +455,11 @@ of the quota order number must span the validity period of the measure.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.ON9.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.ON9.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -422,6 +480,11 @@ relation.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.PreventDeletingLinkedQuotaDefinitions.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quota_definition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#PreventDeletingLinkedQuotaDefinitions.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.PreventDeletingLinkedQuotaDefinitions.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -442,6 +505,11 @@ relation.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.PreventQuotaDefinitionDeletion.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quota_definition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#PreventQuotaDefinitionDeletion.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.PreventQuotaDefinitionDeletion.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -500,6 +568,11 @@ has no conversion ratios or other way of relating units to each other.)</p>
 <dt class="sig sig-object py" id="quotas.business_rules.QA3.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#QA3.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA3.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -522,6 +595,11 @@ positive decimal number.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.QA4.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#QA4.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA4.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -546,6 +624,11 @@ defined with the ‘normal’ type must have a coefficient of 1.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.QA5.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#QA5.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA5.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -566,6 +649,11 @@ relation type.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.QA6.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">association</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#QA6.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QA6.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -586,6 +674,11 @@ to the start date of the quota validity period.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.QBP2.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#QBP2.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.QBP2.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -724,6 +817,11 @@ quotas.</p>
 <dt class="sig sig-object py" id="quotas.business_rules.SuspensionsOnlyToFCFSQuotas.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suspension</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#SuspensionsOnlyToFCFSQuotas.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.SuspensionsOnlyToFCFSQuotas.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
