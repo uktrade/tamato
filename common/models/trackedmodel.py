@@ -437,7 +437,7 @@ class TrackedModel(PolymorphicModel):
             reverse_field_name = field.field.name
             kwargs = {reverse_field_name: new_object}
             nested_fields = {
-                k.split("__")[1]: v
+                k.split("__", 1)[1]: v
                 for (k, v) in subrecord_fields.items()
                 if field.name in k and field.name != k
             }

@@ -656,3 +656,26 @@ def test_copy_nested_field():
     )
 
     assert copied_measure.conditions.first().component_sequence_number == 999
+
+
+def test_copy_nested_field_two_levels_deep():
+    measure = factories.MeasureFactory.create()
+    workbasket = factories.ApprovedWorkBasketFactory.create()
+    transaction = workbasket.new_transaction()
+    condition = factories.MeasureConditionFactory.create(
+        transaction=transaction,
+        dependent_measure=measure,
+    )
+    factories.MeasureConditionComponentFactory.create(
+        transaction=transaction,
+        condition=condition,
+        duty_amount=1,
+    )
+
+    measure.conditions.first().components.first().duty_amount
+    copied_measure = measure.copy(
+        transaction,
+        conditions__components__duty_amount=0,
+    )
+
+    assert copied_measure.conditions.first().components.first().duty_amount == 0
