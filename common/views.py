@@ -157,7 +157,6 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
-                "paginator": self.paginator,
             },
         )
         return context

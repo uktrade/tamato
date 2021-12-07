@@ -1,39 +1,40 @@
 
 {% if page_obj.has_other_pages() %}
-    <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
-      <div class="govuk-body">
-        Showing {{ page_obj|length }} of {{'{0:,}'.format(paginator.count)}} changes
-      </div>
-      <div class="govuk-body align-left">
-        Page {{page_obj.number}} of {{ '{0:,}'.format(paginator.num_pages)}}
-      </div>
+<nav class="pagination" role="navigation" aria-label="Pagination Navigation">
+  <div class="govuk-body">
+    Showing {{ page_obj|length }} of {{'{0:,}'.format(page_obj.paginator.count)}} changes
+  </div>
 
-      <ul class="govuk-list align-right">
-        {% if page_obj.has_previous() %}
-          <li>
-            <button
-                class="govuk-button govuk-button--secondary"
-                data-module="govuk-button"
-                name="form-action"
-                value="page-prev"
-            >
-            Prev
-            </button>
-          </li>
-        {% endif %}
+  <div class="govuk-body align-left">
+    Page {{page_obj.number}} of {{ '{0:,}'.format(page_obj.paginator.num_pages)}}
+  </div>
 
-        {% if page_obj.has_next() %}
-          <li>
-            <button
-                class="govuk-button govuk-button--secondary govuk-!-margin-left-2"
-                data-module="govuk-button"
-                name="form-action"
-                value="page-next"
-            >
-                Next
-            </button>
-          </li>
-        {% endif %}
-      </ul>
-    </nav>
-  {% endif %}
+  <ul class="govuk-list align-right">
+    {% if page_obj.has_previous() %}
+    <li>
+      <button
+        class="govuk-button govuk-button--secondary"
+        data-module="govuk-button"
+        name="form-action"
+        value="page-prev"
+      >
+        Prev
+      </button>
+    </li>
+    {% endif %}
+
+    {% if page_obj.has_next() %}
+    <li>
+      <button
+        class="govuk-button govuk-button--secondary govuk-!-margin-left-2"
+        data-module="govuk-button"
+        name="form-action"
+        value="page-next"
+      >
+        Next
+      </button>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
