@@ -18,13 +18,6 @@
 {%- endmacro %}
 
 
-{% macro status_element(status) -%}
-  {# TODO: normalise status #}
-  {% set color = {"new": "blue", "rejected": "red", "not validated": "orange"}[status] %}
-  {{ '<strong class="govuk-tag govuk-tag--{color}">{status}</strong>'.format(color=color, status=status)|safe }}
-{%- endmacro %}
-
-
 {% set checkbox_check_all -%}
   <div class="govuk-form-group">
     <fieldset class="govuk-fieldset">
@@ -90,7 +83,6 @@
         {%- endset %}
 
         {% set checkbox = checkbox_item(field) %}
-        {% set status = status_element('new') %}
 
         {{ table_rows.append([
         {"html": checkbox},
@@ -98,7 +90,6 @@
         {"html": object_link, "classes": "govuk-!-width-one-quarter"},
         {"text": obj.structure_description if obj.structure_description else "-", "classes": "govuk-!-width-one-quarter"},
         {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
-        {"text": status},
       ]) or "" }}
       {% endfor %}
 
@@ -109,7 +100,6 @@
           {"text": "ID"},
           {"text": "Description"},
           {"text": "Activity date"},
-          {"text": "Status"},
         ],
         "rows": table_rows
       }) }}
