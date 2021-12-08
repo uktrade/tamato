@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.urls import reverse
 from django.views.generic.base import RedirectView
+from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.list import ListView
@@ -64,3 +65,10 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
         workbasket.save_to_session(self.request.session)
 
         return reverse("index")
+
+
+class WorkBasketDeleteChanges(TemplateView):
+    template_name = "workbaskets/delete_changes.jinja"
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(**kwargs)

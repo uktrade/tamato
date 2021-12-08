@@ -30,8 +30,8 @@ from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from workbaskets.forms import SelectableObjectsForm
-from workbaskets.forms import SessionStore
 from workbaskets.models import WorkBasket
+from workbaskets.session_store import SessionStore
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
@@ -77,9 +77,9 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     default_per_page = 10
 
     # Form action mappings to URL names.
-    action_success_urls = {
-        "publish-all": "TODO-PUBLISH-URL",
-        "remove-selected": "TODO-REMOVE-SELECTED",
+    action_success_url_names = {
+        "publish-all": "workbaskets:workbasket-ui-submit",
+        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "index",
         "page-next": "index",
     }
@@ -134,10 +134,17 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
 
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
-        success_url = reverse(self.action_success_urls[form_action])
-        if form_action in ("page-prev", "page-next"):
-            success_url = self._append_url_page_param(success_url, form_action)
-        return success_url
+        if form_action in ("publish-all", "remove-selected"):
+            return reverse(
+                self.action_success_url_names[form_action],
+                kwargs={"pk": self.workbasket.pk},
+            )
+        elif form_action in ("page-prev", "page-next"):
+            return self._append_url_page_param(
+                reverse(self.action_success_url_names[form_action]),
+                form_action,
+            )
+        return reverse("index")
 
     def get_initial(self):
         store = SessionStore(self.request, "DASHBOARD_FORM")
