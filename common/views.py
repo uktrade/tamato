@@ -106,6 +106,17 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
             )
         return workbasket
 
+    def _append_url_page_param(self, url, form_action):
+        """Based upon 'form_action', append a 'page' URL parameter to the given
+        url param and return the result."""
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
+
     def get(self, request, *args, **kwargs):
         """Service GET requests by displaying the page and form."""
         return self.render_to_response(self.get_context_data())
@@ -120,23 +131,11 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         else:
             return self.form_invalid(form)
 
-    def add_url_page_param(self, url, form_action):
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        page_number = 1
-        if form_action == "page-prev":
-            page_number = page.previous_page_number()
-        elif form_action == "page-next":
-            page_number = page.next_page_number()
-        return f"{url}?page={page_number}"
-
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
         success_url = reverse(self.action_success_urls[form_action])
         if form_action in ("page-prev", "page-next"):
-            success_url = self.add_url_page_param(
-                success_url,
-                form_action,
-            )
+            success_url = self._append_url_page_param(success_url, form_action)
         return success_url
 
     def get_initial(self):
