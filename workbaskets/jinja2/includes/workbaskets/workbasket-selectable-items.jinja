@@ -75,20 +75,22 @@
 
       {% set table_rows = [] %}
       {% for field in form %}
+        {% set checkbox = checkbox_item(field) %}
         {% set obj = field.field.obj %}
         {% set object_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">
-          {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
-        </a>
+          <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">
+            {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
+          </a>
         {%- endset %}
-
-        {% set checkbox = checkbox_item(field) %}
+        {% set object_description -%}
+          {{ obj.structure_description if obj.structure_description else "-" }}
+        {%- endset %}
 
         {{ table_rows.append([
         {"html": checkbox},
         {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},
         {"html": object_link, "classes": "govuk-!-width-one-quarter"},
-        {"text": obj.structure_description if obj.structure_description else "-", "classes": "govuk-!-width-one-quarter"},
+        {"text": object_description, "classes": "govuk-!-width-one-quarter"},
         {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
       ]) or "" }}
       {% endfor %}
