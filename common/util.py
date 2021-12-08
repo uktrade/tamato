@@ -17,7 +17,6 @@ import wrapt
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
-from django.db.models import Model
 from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models.expressions import Case
@@ -48,7 +47,6 @@ if int(major) == 3 and int(minor) < 9:
         def __get__(self, owner_self, owner_cls):
             return self.fget(owner_cls)
 
-
 else:
 
     def classproperty(fn):
@@ -56,6 +54,12 @@ else:
 
 
 def is_truthy(value: str) -> bool:
+    """
+    Check whether a string represents a True boolean value.
+
+    :param value str: The value to check
+    :rtype: bool
+    """
     return str(value).lower() not in ("", "n", "no", "off", "f", "false", "0")
 
 
@@ -65,6 +69,9 @@ def strint(value: Union[int, str, float]) -> str:
     decimal point or places.
 
     Else just return the string.
+
+    :param value Union[int, str, float]: The value to convert
+    :rtype: str
     """
     if type(value) in (int, float):
         return str(int(value))
@@ -99,19 +106,25 @@ def get_accessor(field: Union[Field, ForeignObjectRel]) -> str:
 
 
 class TaricDateRange(DateRange):
+    """DateRange with inclusive bounds by default per TARIC specification."""
+
     def __init__(self, lower=None, upper=None, bounds="[]", empty=False):
         if not upper:
             bounds = "[)"
         super().__init__(lower, upper, bounds, empty)
 
     def upper_is_greater(self, compared_date_range: TaricDateRange) -> bool:
+        """
+        Checks whether this date range ends after the specified date range.
+
+        :param compared_date_range TaricDateRange: The date range to compare against
+        :rtype: bool
+        """
         if self.upper_inf and not compared_date_range.upper_inf:
             return True
-        if (
+        return (
             None not in {self.upper, compared_date_range.upper}
-        ) and self.upper > compared_date_range.upper:
-            return True
-        return False
+        ) and self.upper > compared_date_range.upper
 
 
 # XXX keep for migrations
@@ -164,6 +177,10 @@ def validity_range_contains_range(
 
     If either end is unbounded in the contained range,it must also be unbounded
     in the overall range.
+
+    :param overall_range DateRange: The container date range
+    :param contained_range DateRange: The contained date range
+    :rtype: bool
     """
     # XXX assumes both ranges are [] (inclusive-lower, inclusive-upper)
 
@@ -209,6 +226,10 @@ def get_field_tuple(
     Follows field lookups that span relations, eg: "footnote_type__application_code"
 
     Handles special case for "valid_between__lower".
+
+    :param model django.db.models.Model: The model to fetch the field value from
+    :param field str: The name of the field (including relation spanning lookups) to fetch
+    :rtype: Any
     """
 
     if field_name == "valid_between__lower":
@@ -229,6 +250,9 @@ def get_field_tuple(
 
 
 class TableLock:
+    """Provides a decorator for locking database tables for the duration of a
+    decorated function."""
+
     ACCESS_SHARE = "ACCESS SHARE"
     ROW_SHARE = "ROW SHARE"
     ROW_EXCLUSIVE = "ROW EXCLUSIVE"
@@ -281,7 +305,15 @@ class TableLock:
         return wrapper
 
 
-def get_next_id(queryset: QuerySet[Model], id_field: Field, max_len: int):
+def get_next_id(queryset: QuerySet, id_field: Field, max_len: int):
+    """
+    Fetch the next sequential ID value by incrementing the maximum ID value in a
+    queryset.
+
+    :param queryset QuerySet: The queryset to get the next sequential ID from
+    :param id_field Field: The ID field to consider
+    :param max_len int: The maximum length of an ID value
+    """
     return (
         queryset.annotate(
             next_id=Func(

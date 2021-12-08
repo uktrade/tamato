@@ -39,6 +39,10 @@ from workbaskets.validators import WorkflowStatus
 
 
 class VersionGroup(TimestampedMixin):
+    """
+    A group that contains all versions of the same TrackedModel.
+    """
+
     current_version = models.OneToOneField(
         "common.TrackedModel",
         on_delete=models.SET_NULL,
@@ -204,6 +208,9 @@ class TrackedModel(PolymorphicModel):
         return new_object
 
     def get_versions(self):
+        """
+        Find all versions of this model.
+        """
         if hasattr(self, "version_group"):
             return self.version_group.versions.all()
         query = Q(**self.get_identifying_fields())
@@ -247,6 +254,13 @@ class TrackedModel(PolymorphicModel):
         self,
         identifying_fields: Optional[Iterable[str]] = None,
     ) -> Dict[str, Any]:
+        """Get a name/value mapping of the fields that identify this model.
+
+        :param identifying_fields Optional[Iterable[str]]: Optionally override the
+        fields to retrieve
+        :rtype dict[str, Any]: A dict of field names to values
+        """
+
         identifying_fields = identifying_fields or self.identifying_fields
         fields = {}
 
@@ -259,6 +273,14 @@ class TrackedModel(PolymorphicModel):
         self,
         identifying_fields: Optional[Iterable[str]] = None,
     ) -> str:
+        """
+        Constructs a comma separated string of the identifying fields of the model with
+        field name and value pairs delimited by "=", eg: "field1=1, field2=2"
+
+        :param identifying_fields Optional[Iterable[str]]: Optionally override the
+        fields to use in the string
+        :rtype str: The constructed string
+        """
         field_list = [
             f"{field}={str(value)}"
             for field, value in self.get_identifying_fields(identifying_fields).items()
@@ -268,10 +290,20 @@ class TrackedModel(PolymorphicModel):
 
     @property
     def structure_code(self):
+        """A string used to describe the model instance.
+
+        Used as the displayed value in an AutocompleteWidget dropdown, and in the "Your
+        tariff changes" list.
+        """
         return str(self)
 
     @property
-    def structure_description(self) -> str:
+    def structure_description(self) -> Optional[str]:
+        """The current description of the model, if it has related description models or a
+        description field.
+
+        :rtype Optional[str]: The current description
+        """
         description = None
         if hasattr(self, "descriptions"):
             description = self.get_descriptions().last()
@@ -290,12 +322,19 @@ class TrackedModel(PolymorphicModel):
 
     @property
     def current_version(self: Cls) -> Cls:
+        """The current version of this model"""
         current_version = self.version_group.current_version
         if current_version is None:
             raise self.__class__.DoesNotExist("Object has no current version")
         return current_version
 
     def version_at(self: Cls, transaction) -> Cls:
+        """The latest version of this model that was approved as of the given
+        transaction.
+
+        :param transaction Transaction: Limit versions to this transaction
+        :rtype TrackedModel:
+        """
         return self.get_versions().approved_up_to_transaction(transaction).get()
 
     @classproperty
@@ -350,12 +389,11 @@ class TrackedModel(PolymorphicModel):
 
         Any dependent models that are TARIC subrecords of this model will be
         copied as well. Any many-to-many relationships will also be duplicated
-        if they do not have an explicit through model.
-
-        Any overrides passed in as keyword arguments will be applied to the new
-        model. If the model uses SIDs, they will be automatically set to the
-        next highest available SID. Models with other identifying fields should
-        have thier new IDs passed in through overrides.
+        if they do not have an explicit through model. Any overrides passed in
+        as keyword arguments will be applied to the new model. If the model uses
+        SIDs, they will be automatically set to the next highest available SID.
+        Models with other identifying fields should have thier new IDs passed in
+        through overrides.
         """
 
         # Remove any fields from the basic data that are overriden, because
@@ -363,9 +401,23 @@ class TrackedModel(PolymorphicModel):
         # ignore the object from the overrides and just take the ID from the
         # basic data.
         basic_fields = self.copyable_fields
+        subrecord_fields = {}
         for field_name in overrides:
-            field = self._meta.get_field(field_name)
-            basic_fields.remove(field)
+            field = None
+            # Check for fields on related model
+            if not "__" in field_name:
+                field = self._meta.get_field(field_name)
+            # Check for non-basic fields e.g. related models
+            if field and field in basic_fields:
+                basic_fields.remove(field)
+            # Add non-basic fields from overrides to subrecord_fields dict
+            else:
+                subrecord_fields.update({field_name: overrides[field_name]})
+
+        # Remove related models and related model fields from overrides before generating object_data below
+        overrides = {
+            k: v for (k, v) in overrides.items() if k not in subrecord_fields.keys()
+        }
 
         # Remove any SIDs from the copied data. This allows them to either
         # automatically pick the next highest value or to be passed in.
@@ -403,10 +455,36 @@ class TrackedModel(PolymorphicModel):
         # the new model substituted in place of this one. It's done this way to
         # give these related models a chance to increment SIDs, etc.
         for field in get_subrecord_relations(self.__class__):
+            ignore = False
+            # Check if user passed related model into overrides argument
+            if field.name in subrecord_fields.keys():
+                # If user passed a new unsaved model, set the remote field value equal to self for each model passed
+                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `self`
+                if subrecord_fields[field.name]:
+                    for subrecord in subrecord_fields[field.name]:
+                        remote_field = [
+                            f for f in self._meta.get_fields() if f.name == field.name
+                        ][0].remote_field.name
+                        setattr(subrecord, remote_field, self)
+                        subrecord.save()
+                # Else, if an empty or None value is passed, set ignore to True, so that related models are not copied
+                # e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions
+                else:
+                    ignore = True
+
             queryset = getattr(self, field.get_accessor_name())
             reverse_field_name = field.field.name
-            for model in queryset.approved_up_to_transaction(transaction):
-                model.copy(transaction, **{reverse_field_name: new_object})
+            kwargs = {reverse_field_name: new_object}
+            nested_fields = {
+                k.split("__", 1)[1]: v
+                for (k, v) in subrecord_fields.items()
+                if field.name in k and field.name != k
+            }
+            kwargs.update(nested_fields)
+
+            if not ignore:
+                for model in queryset.approved_up_to_transaction(transaction):
+                    model.copy(transaction, **kwargs)
 
         return new_object
 
@@ -481,6 +559,11 @@ class TrackedModel(PolymorphicModel):
 
     @atomic
     def save(self, *args, force_write=False, **kwargs):
+        """Save the model to the database.
+
+        :param force_write bool: Ignore append-only restrictions and write to the
+        database even if the model already exists
+        """
         if not force_write and not self._can_write():
             raise IllegalSaveError(
                 "TrackedModels cannot be updated once written and approved. "
@@ -517,7 +600,13 @@ class TrackedModel(PolymorphicModel):
     def __hash__(self):
         return hash(f"{__name__}.{self.__class__.__name__}")
 
-    def get_url(self, action="detail"):
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Generate a URL to a representation of the model in the webapp.
+
+        :param action str: The view type to generate a URL for (default "detail"),
+        eg: "list" or "edit"
+        :rtype Optional[str]: The generated URL
+        """
         kwargs = {}
         if action != "list":
             kwargs = self.get_identifying_fields()
@@ -530,6 +619,13 @@ class TrackedModel(PolymorphicModel):
             return
 
     def get_url_pattern_name_prefix(self):
+        """Get the prefix string for a view name for this model.
+
+        By default, this is the verbose name of the model with spaces replaced by
+        underscores, but this method allows this to be overridden.
+
+        :rtype str: The prefix
+        """
         prefix = getattr(self, "url_pattern_name_prefix", None)
         if not prefix:
             prefix = self._meta.verbose_name.replace(" ", "_")

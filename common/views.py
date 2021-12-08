@@ -1,3 +1,4 @@
+"""Common views."""
 import time
 from typing import Optional
 from typing import Type
@@ -209,6 +210,8 @@ class HealthCheckResponse(HttpResponse):
 
 
 def healthcheck(request):
+    """Healthcheck endpoint returns a 503 error if the database or redis is
+    down."""
     response = HealthCheckResponse()
 
     try:
@@ -233,7 +236,7 @@ class LogoutView(django.contrib.auth.views.LogoutView):
 
 
 class CreateView(PermissionRequiredMixin, generic.CreateView):
-    """Create a new tracked model."""
+    """Base view class for creating a new tracked model."""
 
     permission_required = "common.add_trackedmodel"
     UPDATE_TYPE = UpdateType.CREATE
@@ -255,7 +258,7 @@ class CreateView(PermissionRequiredMixin, generic.CreateView):
 
 
 class UpdateView(PermissionRequiredMixin, generic.UpdateView):
-    """Create an updated version of a TrackedModel."""
+    """Base view class for creating an updated version of a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.UPDATE
     permission_required = "common.add_trackedmodel"
@@ -266,19 +269,19 @@ class UpdateView(PermissionRequiredMixin, generic.UpdateView):
 
 
 class DeleteView(CreateView):
-    """Create a deletion of a TrackedModel."""
+    """Base view class for deleting a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.DELETE
 
 
 class WithPaginationListView(FilterView):
-    """Generic list view enabling pagination and adds a page link list to the
-    context."""
+    """Generic list view enabling pagination."""
 
     paginator_class = Paginator
     paginate_by = settings.REST_FRAMEWORK["PAGE_SIZE"]
 
     def get_context_data(self, *, object_list=None, **kwargs):
+        """Adds a page link list to the context."""
         data = super().get_context_data(object_list=object_list, **kwargs)
         page_obj = data["page_obj"]
         page_number = page_obj.number
@@ -297,7 +300,8 @@ class RequiresSuperuserMixin(UserPassesTestMixin):
 
 
 class TamatoListView(WithCurrentWorkBasket, WithPaginationListView):
-    pass
+    """Base view class for listing tariff components including those in the
+    current workbasket, with pagination."""
 
 
 class TrackedModelDetailMixin:
@@ -307,6 +311,13 @@ class TrackedModelDetailMixin:
     required_url_kwargs = None
 
     def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
+        """
+        Fetch the model instance by primary key or by identifying_fields in the
+        URL.
+
+        :param queryset Optional[QuerySet]: Get the object from this queryset
+        :rtype: Model
+        """
         if queryset is None:
             queryset = self.get_queryset()
 
@@ -338,7 +349,7 @@ class TrackedModelDetailView(
     TrackedModelDetailMixin,
     generic.DetailView,
 ):
-    pass
+    """Base view class for displaying a single TrackedModel."""
 
 
 class BusinessRulesMixin:
@@ -347,6 +358,12 @@ class BusinessRulesMixin:
     validate_business_rules = []
 
     def form_valid(self, form):
+        """
+        If any of the specified business rules are violated, reshow the form
+        with the violations as form errors.
+
+        :param form: The submitted form
+        """
         violations = False
         workbasket = WorkBasket.current(self.request)
         transaction = workbasket.transactions.last()

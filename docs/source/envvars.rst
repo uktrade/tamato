@@ -25,20 +25,28 @@ Environment variables
 
 .. envvar:: DATABASE_URL
 
+    (default ``postgres://localhost:5432/tamato``)
+
     Connection details for the database, formatted per the `dj-database-url schema
     <https://github.com/jacobian/dj-database-url#url-schema>`__
 
 .. envvar:: LOG_LEVEL
+
+    (default ``DEBUG``)
 
     The level of logging messages in the web app. One of ``CRITICAL``, ``ERROR``,
     ``WARNING``, ``INFO``, ``DEBUG``, ``NOTSET``
 
 .. envvar:: CELERY_LOG_LEVEL
 
+    (default ``DEBUG``)
+
     The level of logging for the celery worker. One of ``CRITICAL``, ``ERROR``,
     ``WARNING``, ``INFO``, ``DEBUG``, ``NOTSET``
 
 .. envvar:: TAMATO_IMPORT_USERNAME
+
+    (default ``test``)
 
     The TAMATO username to use for the owner of the workbaskets created
 
@@ -80,9 +88,13 @@ Environment variables
 
 .. envvar:: HMRC_STORAGE_BUCKET_NAME
 
+    (default ``hmrc``)
+
     Name of S3 bucket used for uploads by the exporter
 
 .. envvar:: HMRC_STORAGE_DIRECTORY
+
+    (default ``tohmrc/staging/``)
 
     Destination directory in S3 bucket for the exporter
 
@@ -104,21 +116,31 @@ Environment variables
 
 .. envvar:: SQLITE_STORAGE_BUCKET_NAME
 
+    (default ``sqlite``)
+
     Bucket used for SQLite uploads
 
 .. envvar:: SQLITE_S3_ACCESS_KEY_ID
+
+    (default ``test_sqlite_key_id``)
 
     AWS key id, used for SQLite storage bucket uploads
 
 .. envvar:: SQLITE_S3_SECRET_ACCESS_KEY
 
+    (default ``test_sqlite_key``)
+
     AWS secret key, used for SQLite storage bucket uploads
 
 .. envvar:: SQLITE_S3_ENDPOINT_URL
 
+    (default ``https://test-sqlite-url.local/``)
+
     AWS S3 endpoint url, used for SQLite storage bucket uploads
 
 .. envvar:: SQLITE_STORAGE_DIRECTORY
+
+    (default ``sqlite/``)
 
     Destination directory in s3 bucket for the SQLite storage bucket
 
@@ -128,14 +150,15 @@ Environment variables
 
 .. envvar:: MINIO_ACCESS_KEY
 
-    Username for local Minio instance (s3 implementation)
+    Username for local MinIO instance 
 
 .. envvar:: MINIO_SECRET_KEY
 
-    Password for local Minio instance (s3 implementation
+    Password for local MinIO instance 
 
 .. envvar:: DJANGO_SETTINGS_MODULE
 
+    (default ``settings``, or ``settings.test`` when running tests)
+
     The dotted import path to the python module to use for Django settings.
     Options include ``settings``, ``settings.dev`` and ``settings.test``.
-    (default ``settings``, or ``settings.test`` when running tests)
