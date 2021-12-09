@@ -418,6 +418,18 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         """Returns all descendants of a commodity in the snapshot tree."""
         return self.descendants.get(commodity, [])
 
+    def get_common_ancestor(self, *commodities: Commodity) -> Optional[Commodity]:
+        """Returns the lowest level commodity that is an ancestor of all of the
+        passed commodities."""
+        ancestors = set(self.commodities)
+        for commodity in commodities:
+            ancestors &= set(self.get_ancestors(commodity))
+
+        if any(ancestors):
+            return max(ancestors, key=self.commodities.index)
+
+        return None
+
     def get_dependent_measures(
         self,
         *commodities: Commodity,

@@ -425,6 +425,30 @@ def test_snapshot_get_descendants(collection_full):
             assert commodity not in snapshot.get_descendants(commodity_)
 
 
+@pytest.mark.parametrize(
+    ("item_ids_suffixes", "expected_ancestor"),
+    (
+        ([("9905", "10")], ("99", "80")),
+        ([("9905", "10"), ("9905", "80")], ("99", "80")),
+        ([("9905", "10"), ("9905", "80"), ("9910", "10")], ("99", "80")),
+        ([("9999.20.00.10", "80"), ("9910.20", "80")], ("9910", "80")),
+        ([("9999.20.00.10", "80"), ("9905", "80")], ("99", "80")),
+        ([("9910.10", "80"), ("9910.20", "80")], ("9910.10", "10")),
+    ),
+)
+def test_snapshot_get_common_ancestor(
+    item_ids_suffixes,
+    expected_ancestor,
+    collection_full,
+):
+    snapshot = collection_full.current_snapshot
+
+    commodities = [snapshot.get_commodity(*pair) for pair in item_ids_suffixes]
+    ancestor = snapshot.get_commodity(*expected_ancestor)
+
+    assert snapshot.get_common_ancestor(*commodities) == ancestor
+
+
 def test_snapshot_is_declarable(collection_basic):
     snapshot = collection_basic.current_snapshot
 
