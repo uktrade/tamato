@@ -276,7 +276,6 @@ def test_ME6(reference_nonexistent_record):
 
     def teardown(good):
         for indent in good.indents.all():
-            indent.nodes.all().delete()
             indent.delete()
         good.descriptions.all().delete()
         good.origin_links.all().delete()
@@ -425,7 +424,6 @@ def updated_goods_nomenclature(e):
         item_id=e.item_id[:8] + "90",
         valid_between=e.valid_between,
         indent__indent=e.indents.first().indent + 1,
-        indent__node__parent=e.indents.first().nodes.first(),
     )
 
     factories.GoodsNomenclatureIndentFactory.create(
@@ -434,7 +432,6 @@ def updated_goods_nomenclature(e):
         version_group=good.indents.first().version_group,
         validity_start=good.indents.first().validity_start,
         indent=e.indents.first().indent - 1,
-        node__parent=None,
     )
 
     return good
@@ -446,7 +443,6 @@ def updated_goods_nomenclature(e):
         (
             lambda e: factories.GoodsNomenclatureFactory.create(
                 item_id=e.item_id[:8] + "90",
-                indent__node__parent=e.indents.first().nodes.first(),
                 valid_between=e.valid_between,
             ),
             True,

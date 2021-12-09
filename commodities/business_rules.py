@@ -34,20 +34,21 @@ class NIG2(BusinessRule):
         return validity_range_contains_range(parent_validity, child_validity)
 
     def validate(self, indent):
-        for node in indent.nodes.filter(
-            creating_transaction__lt=self.transaction,
-        ).all():
-            parent = node.get_parent()
+        pass
+        # for node in indent.nodes.filter(
+        #     creating_transaction__lt=self.transaction,
+        # ).all():
+        #     parent = node.get_parent()
 
-            if not parent:
-                continue
+        #     if not parent:
+        #         continue
 
-            if not self.parent_spans_child(parent.indent, indent):
-                raise self.violation(indent)
+        #     if not self.parent_spans_child(parent.indent, indent):
+        #         raise self.violation(indent)
 
-            for child in node.get_children():
-                if not self.parent_spans_child(indent, child.indent):
-                    raise self.violation(indent)
+        #     for child in node.get_children():
+        #         if not self.parent_spans_child(indent, child.indent):
+        #             raise self.violation(indent)
 
 
 @skip_when_deleted
@@ -72,14 +73,14 @@ class NIG5(BusinessRule):
 
         from commodities.models import GoodsNomenclatureOrigin
 
-        try:
-            matching_indent_exists = good.indents.filter(nodes__depth=1).exists()
-        except TypeError:
-            matching_indent_exists = False
+        # try:
+        #     matching_indent_exists = good.indents.filter(nodes__depth=1).exists()
+        # except TypeError:
+        #     matching_indent_exists = False
 
         if not (
-            matching_indent_exists
-            or GoodsNomenclatureOrigin.objects.filter(
+            # matching_indent_exists
+            GoodsNomenclatureOrigin.objects.filter(
                 new_goods_nomenclature__sid=good.sid,
             )
             .approved_up_to_transaction(good.transaction)
