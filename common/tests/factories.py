@@ -588,43 +588,8 @@ class GoodsNomenclatureIndentFactory(SimpleGoodsNomenclatureIndentFactory):
     class Meta:
         model = "commodities.GoodsNomenclatureIndent"
 
-    node = factory.RelatedFactory(
-        "common.tests.factories.GoodsNomenclatureIndentNodeFactory",
-        factory_related_name="indent",
-        valid_between=factory.SelfAttribute(
-            "..indented_goods_nomenclature.valid_between",
-        ),
-        creating_transaction=factory.SelfAttribute("..transaction"),
-    )
-
 
 indent_path_generator = string_generator(4)
-
-
-def build_indent_path(good_indent_node):
-    parent = good_indent_node.parent
-    if parent is not None:
-        parent.numchild += 1
-        parent.save()
-        return parent.path + indent_path_generator()
-    return indent_path_generator()
-
-
-class GoodsNomenclatureIndentNodeFactory(ValidityFactoryMixin):
-    class Meta:
-        model = "commodities.GoodsNomenclatureIndentNode"
-        exclude = ("parent",)
-
-    parent = None
-
-    path = factory.LazyAttribute(build_indent_path)
-    depth = factory.LazyAttribute(lambda o: len(o.path) // 4)
-
-    indent = factory.SubFactory(SimpleGoodsNomenclatureIndentFactory)
-
-    creating_transaction = factory.SubFactory(
-        ApprovedTransactionFactory,
-    )
 
 
 class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
