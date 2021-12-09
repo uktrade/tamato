@@ -1,7 +1,5 @@
 import logging
-from datetime import date
 from datetime import timedelta
-from typing import Optional
 
 from django.db import transaction
 
@@ -178,25 +176,6 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
     def clean(self, data: dict) -> dict:
         self.extra_data["indent"] = int(data["indent"])
         return super(GoodsNomenclatureIndentHandler, self).clean(data)
-
-    def get_indent_end_date(
-        self,
-        indent: models.GoodsNomenclatureIndent,
-    ) -> Optional[date]:
-        """
-        Return the implied end date for an indent when there is a succeeding
-        indent.
-
-        See the docs to `self.set_preceding_node_end_date` for context.
-
-        If a new indent comes in and it already has a succeeding future indent,
-        then we need to use the implied end date for the new indent
-        as the explicit end date for the new indent's related
-        `GoodsNomenclatureIndentNode` object we are about to create.
-        """
-        models.GoodsNomenclatureIndent.objects.with_end_date().get(
-            pk=indent.pk,
-        ).validity_end
 
     @transaction.atomic
     def save(self, data: dict):
