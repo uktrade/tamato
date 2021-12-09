@@ -22,14 +22,14 @@ class SessionStore:
 
     data = property(_get_data, _set_data)
 
-    def add_objects(self, objs):
+    def add_items(self, items_dict):
         copy = self.data.copy()
-        copy.update(objs)
+        copy.update(items_dict)
         self.data = copy
 
-    def remove_objects(self, objs):
+    def remove_items(self, items_dict):
         copy = self.data.copy()
-        for k in objs.keys():
+        for k in items_dict.keys():
             copy.pop(k, None)
         self.data = copy
 

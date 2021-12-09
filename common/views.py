@@ -178,8 +178,8 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
             for key, value in form.cleaned_data_no_prefix.items()
             if key not in to_add
         }
-        store.add_objects(to_add)
-        store.remove_objects(to_remove)
+        store.add_items(to_add)
+        store.remove_items(to_remove)
         return super().form_valid(form)
 
 
