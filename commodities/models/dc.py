@@ -87,7 +87,6 @@ PREEMPTIVE_TRANSACTION_SEED = -int(1e5)
 TRACKEDMODEL_IDENTIFIER_KEYS = {
     "additional_codes.AdditionalCode": "code",
     "commodities.GoodsNomenclature": "item_id",
-    "commodities.GoodsNomenclatureIndentNode": "depth",
     "geo_areas.GeographicalArea": "area_id",
     "measures.MeasureAction": "code",
     "measures.MeasureConditionCode": "code",
@@ -1144,8 +1143,6 @@ class CommodityChange(BaseModel):
           this is the only business rule where this is a fatal problem
           as here we need to assess business rule violations
           in the context of related nodes in a changing hierarchy
-        - ME32 relies on GoodsNomenclatureIndentNodes and paths
-          as the means of identifying ancestors and descendants
 
         Importantly, the actual ME32 is still going to be run downstream
           when we validate a workbasket with transactions reflecting:
