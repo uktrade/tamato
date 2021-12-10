@@ -10,31 +10,29 @@
   </div>
 
   <ul class="govuk-list align-right">
+
     {% if page_obj.has_previous() %}
     <li>
-      <button
-        class="govuk-button govuk-button--secondary"
-        data-module="govuk-button"
-        name="form-action"
-        value="page-prev"
-      >
-        Prev
-      </button>
+      {{ govukButton({
+        "text": "Prev",
+        "classes": "govuk-button--secondary",
+        "name": "form-action",
+        "value": "page-prev"
+      }) }}
     </li>
     {% endif %}
 
     {% if page_obj.has_next() %}
     <li>
-      <button
-        class="govuk-button govuk-button--secondary govuk-!-margin-left-2"
-        data-module="govuk-button"
-        name="form-action"
-        value="page-next"
-      >
-        Next
-      </button>
+      {{ govukButton({
+        "text": "Next",
+        "classes": "govuk-button--secondary govuk-!-margin-left-2",
+        "name": "form-action",
+        "value": "page-next"
+      }) }}
     </li>
     {% endif %}
+
   </ul>
 </nav>
 {% endif %}
