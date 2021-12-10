@@ -1,4 +1,5 @@
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/button/macro.njk" import govukButton %}
 
 
 {% macro checkbox_item(field) -%}
@@ -50,24 +51,20 @@
         <div class="govuk-details__text">
           <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-third">
-              <button
-                class="govuk-button govuk-!-margin-bottom-0"
-                data-module="govuk-button"
-                name="form-action"
-                value="publish-all"
-              >
-                Publish <strong>all</strong> changes
-              </button>
+              {{ govukButton({
+                "html": "Publish <strong>all</strong> changes",
+                "classes": "govuk-!-margin-bottom-0",
+                "name": "form-action",
+                "value": "publish-all"
+              }) }}
             </div>
             <div class="govuk-grid-column-one-third">
-              <button
-                class="govuk-button govuk-!-margin-bottom-0"
-                data-module="govuk-button"
-                name="form-action"
-                value="remove-selected"
-              >
-                Remove <strong>selected</strong> changes
-              </button>
+              {{ govukButton({
+                "html": "Remove <strong>selected</strong> changes",
+                "classes": "govuk-!-margin-bottom-0",
+                "name": "form-action",
+                "value": "remove-selected"
+              }) }}
             </div>
           </div>
         </div>
