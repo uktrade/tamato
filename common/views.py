@@ -147,7 +147,10 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         return reverse("index")
 
     def get_initial(self):
-        store = SessionStore(self.request, "DASHBOARD_FORM")
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
         return store.data.copy()
 
     def get_form_kwargs(self):
@@ -169,7 +172,10 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         return context
 
     def form_valid(self, form):
-        store = SessionStore(self.request, "DASHBOARD_FORM")
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
         to_add = {
             key: value for key, value in form.cleaned_data_no_prefix.items() if value
         }

@@ -9,10 +9,12 @@ from django.views.generic.list import ListView
 from rest_framework import renderers
 from rest_framework import viewsets
 
+from common.models import TrackedModel
 from common.renderers import TaricXMLRenderer
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
+from workbaskets.session_store import SessionStore
 
 
 class WorkBasketViewSet(viewsets.ModelViewSet):
@@ -70,5 +72,22 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
 class WorkBasketDeleteChanges(TemplateView):
     template_name = "workbaskets/delete_changes.jinja"
 
+    def _get_tracked_model_queryset(self):
+        """Get the QuerySet of TrackedModels that are candidates for
+        deletion."""
+        try:
+            # TODO:
+            # * Authorise access to workbasket?
+            workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
+        except WorkBasket.DoesNotExist:
+            return TrackedModel.objects.none()
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{workbasket.pk}",
+        )
+        return workbasket.tracked_models.filter(pk__in=store.data.keys())
+
     def get_context_data(self, **kwargs):
-        return super().get_context_data(**kwargs)
+        context_data = super().get_context_data(**kwargs)
+        context_data["tracked_models"] = self._get_tracked_model_queryset()
+        return context_data
