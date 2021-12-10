@@ -84,12 +84,12 @@
         {%- endset %}
 
         {{ table_rows.append([
-        {"html": checkbox},
-        {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},
-        {"html": object_link, "classes": "govuk-!-width-one-quarter"},
-        {"text": object_description, "classes": "govuk-!-width-one-quarter"},
-        {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
-      ]) or "" }}
+          {"html": checkbox},
+          {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},
+          {"html": object_link, "classes": "govuk-!-width-one-quarter"},
+          {"text": object_description, "classes": "govuk-!-width-one-quarter"},
+          {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
+        ]) or "" }}
       {% endfor %}
 
       {{ govukTable({
