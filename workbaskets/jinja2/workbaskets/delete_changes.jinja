@@ -1,3 +1,82 @@
 {% extends "layouts/layout.jinja" %}
 
-testing
+{% from "components/accordion/macro.njk" import govukAccordion %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+
+
+{% set page_title = "Remove tariff changes" %}
+
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+
+{% block content %}
+{#
+TODO: create list of changed items to pass into govukAccordion.
+{% for obj in tracked_models %}
+{% endfor %}
+#}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">
+      Remove tariff changes
+      <span class="govuk-caption-xl"></span>
+    </h1>
+  </div>
+</div>
+
+<div class="govuk-grid-row govuk-!-margin-bottom-5">
+  <div class="govuk-grid-column-two-thirds">
+    {{ govukWarningText({
+      "text": "Are you sure you want to permanently remove the tarif changes below?",
+      "iconFallbackText": "Warning"
+    }) }}
+
+    <form method="post">
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+      <div class="govuk-button-group">
+        {{ govukButton({
+          "text": "Remove tariff changes",
+          "classes": "govuk-button--warning",
+          "name": "action",
+          "value": "delete"
+        }) }}
+
+        {{ govukButton({
+          "text": "Cancel",
+          "classes": "govuk-button--secondary",
+          "name": "action",
+          "value": "cancel"
+        }) }}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    {{ govukAccordion({
+      "id": "accordion-default",
+      "items": [
+        {
+          "heading": {"text": "Tracked model details"},
+          "content": {
+            "html": "<div>nothing</div>"
+        },
+          "summary": {}
+        },
+      ]
+    }) }}
+  </div>
+</div>
+{% endblock %}
