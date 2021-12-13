@@ -11,7 +11,6 @@ from typing import Sequence
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.transaction import atomic
 from lxml import etree
@@ -35,7 +34,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 if settings.SENTRY_ENABLED:
-    from sentry_sdk import capture_exception
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -169,19 +168,23 @@ class TransactionParser(ElementParser):
                             order=order,
                         )
 
-        try:
-            transaction.clean()
-        except ValidationError as e:
-            for message in e.messages:
-                logger.error(message)
-            if settings.SENTRY_ENABLED:
-                capture_exception(e)
+            if reasons:
+                with open(f"env/{envelope.envelope_id}.log", "a") as f:
+                    f.write("\n".join(map(str, reasons)) + "\n")
+
+        # try:
+        #     transaction.clean()
+        # except ValidationError as e:
+        #     for message in e.messages:
+        #         logger.error(message)
+        #     if settings.SENTRY_ENABLED:
+        #         capture_exception(e)
 
     def end(self, element: etree.Element):
         super().end(element)
         if element.tag == self.tag:
             logging.debug(f"Saving import {self.data['id']}")
-            if int(self.data["id"]) % 1000 == 0:
+            if int(self.data["id"]) % 100 == 0:
                 logger.info(
                     "%s transactions done in %d seconds",
                     self.data["id"],

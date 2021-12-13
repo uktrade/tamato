@@ -527,6 +527,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     def get_dependent_measures(
         self,
         commodity: Commodity,
+        as_of_transaction: Optional[Transaction] = None,
         as_at: Optional[date] = None,
     ) -> MeasuresQuerySet:
         if commodity not in self.commodities:
@@ -538,7 +539,9 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             goods_nomenclature__suffix=commodity.get_suffix(),
         )
 
-        if self.moment.clock_type == ClockType.TRANSACTION:
+        if as_of_transaction:
+            qs = qs.approved_up_to_transaction(as_of_transaction)
+        elif self.moment.clock_type == ClockType.TRANSACTION:
             qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
             qs = qs.latest_approved()
@@ -1078,7 +1081,11 @@ class CommodityChange(BaseModel):
         - NIG35: Not used as it is redundant in this context after NIG34
         """
         # NIG34 / NIG35
-        for measure in before.get_dependent_measures(self.current, self.as_at_date):
+        for measure in before.get_dependent_measures(
+            self.current,
+            as_of_transaction=self.current.obj.transaction,
+            as_at=self.as_at_date,
+        ):
             self._add_pending_delete(measure, cbr.NIG34)
 
         # No BR: delete related footnote associations
@@ -1261,7 +1268,8 @@ class CommodityChange(BaseModel):
                 _get_measure_key(measure): measure
                 for measure in after.get_dependent_measures(
                     self.candidate,
-                    self.as_at_date,
+                    as_of_transaction=self.candidate.obj.transaction,
+                    as_at=self.as_at_date,
                 )
             }
 
@@ -1269,7 +1277,8 @@ class CommodityChange(BaseModel):
                 for relative in getattr(after, attr)(self.candidate):
                     related_measures = after.get_dependent_measures(
                         relative,
-                        self.as_at_date,
+                        as_of_transaction=self.candidate.obj.transaction,
+                        as_at=self.as_at_date,
                     )
 
                     for related_measure in related_measures:
@@ -1288,7 +1297,10 @@ class CommodityChange(BaseModel):
 
         measures = {
             _get_measure_key(measure): measure
-            for measure in before.get_dependent_measures(self.current, self.as_at_date)
+            for measure in before.get_dependent_measures(
+                self.current,
+                as_at=self.as_at_date,
+            )
         }
 
         # Check if commodity's before-children have new parents
@@ -1299,7 +1311,7 @@ class CommodityChange(BaseModel):
                 for ancestor in after.get_ancestors(child):
                     ancestor_measures = after.get_dependent_measures(
                         ancestor,
-                        self.as_at_date,
+                        as_at=self.as_at_date,
                     )
 
                     for ancestor_measure in ancestor_measures:
@@ -1420,11 +1432,11 @@ class CommodityChange(BaseModel):
     ) -> Set[Measure]:
         b = before.get_dependent_measures(
             self.current or self.candidate,
-            self.as_at_date,
+            as_at=self.as_at_date,
         )
         a = after.get_dependent_measures(
             self.candidate or self.current,
-            self.as_at_date,
+            as_at=self.as_at_date,
         )
         return set(a).union(set(b))
 

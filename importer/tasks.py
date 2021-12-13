@@ -104,7 +104,7 @@ def setup_chunk_task(
 
     chunk.status = models.ImporterChunkStatus.RUNNING
     chunk.save()
-    import_chunk.delay(
+    import_chunk(
         chunk.pk,
         workbasket_status,
         partition_scheme_setting,

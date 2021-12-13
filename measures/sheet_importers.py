@@ -6,6 +6,7 @@ from functools import reduce
 from typing import Optional
 from typing import Sequence
 
+import parsec
 from django.db.models.query_utils import Q
 
 from additional_codes.models import AdditionalCode
@@ -62,11 +63,14 @@ class MeasureSheetRow(SheetRowMixin):
 
     @cached_property
     def measure_type(self) -> MeasureType:
-        return (
-            MeasureType.objects.latest_approved()
-            .as_at(self.validity_start_date)
-            .get(description=self.measure_type_description)
-        )
+        qs = MeasureType.objects.latest_approved().as_at(self.validity_start_date)
+
+        desc = self.measure_type_description.lower().strip()
+        if desc == "export control":
+            return qs.get(sid=766)
+        elif desc == "restriction on entry into free circulation":
+            return qs.get(sid=475)
+        return qs.get(description=self.measure_type_description)
 
     @column("C")
     def duty_sentence(self, value: CellValue) -> str:
@@ -78,13 +82,18 @@ class MeasureSheetRow(SheetRowMixin):
 
     @cached_property
     def origin(self) -> GeographicalArea:
-        return (
+        qs = (
             GeographicalAreaDescription.objects.latest_approved()
             .with_end_date()
             .as_at(self.validity_start_date)
-            .get(description=self.origin_description)
-            .described_geographicalarea
         )
+
+        if self.origin_description == "Myanmar (Burma)":
+            geo_area = qs.get(sid=1393)
+        else:
+            geo_area = qs.get(description=self.origin_description)
+
+        return geo_area.described_geographicalarea
 
     @column("E", many=True)
     def excluded_origin_descriptions(self, value: CellValue) -> str:
@@ -136,11 +145,14 @@ class MeasureSheetRow(SheetRowMixin):
 
     @cached_property
     def regulation(self) -> Regulation:
-        return (
-            Regulation.objects.latest_approved()
-            .as_at(self.validity_start_date)
-            .get(regulation_id=self.regulation_id)
-        )
+        try:
+            return (
+                Regulation.objects.latest_approved()
+                .as_at(self.validity_start_date)
+                .get(regulation_id=self.regulation_id)
+            )
+        except Regulation.DoesNotExist:
+            return
 
     @column("J", optional=True)
     def additional_code_id(self, value: CellValue) -> str:
@@ -182,6 +194,8 @@ class MeasureSheetRow(SheetRowMixin):
             )
             for f in self.footnote_ids
         ]
+        if not qs:
+            return []
         q = reduce(lambda x, y: x | y, qs)
         return [
             desc.described_footnote
@@ -196,13 +210,16 @@ class MeasureSheetRow(SheetRowMixin):
         return str(value)
 
     def import_row(self, workbasket: WorkBasket) -> Measure:
+        if not self.regulation:
+            return
+
         creator = MeasureCreationPattern(
             workbasket=workbasket,
             base_date=self.validity_start_date,
         )
 
         try:
-            return creator.create(
+            kwargs = dict(
                 duty_sentence=self.duty_sentence,
                 measure_type=self.measure_type,
                 goods_nomenclature=self.goods_nomenclature,
@@ -218,7 +235,11 @@ class MeasureSheetRow(SheetRowMixin):
                 footnotes=self.footnotes,
                 condition_sentence=self.conditions,
             )
+            return creator.create(**kwargs)
         except GoodsNomenclature.DoesNotExist:
             logger.warning(
                 f"Commodity {self.item_id}: not imported from EU Taric files yet.",
             )
+        except parsec.ParseError:
+            logger.warning(kwargs)
+            raise

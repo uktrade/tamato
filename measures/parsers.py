@@ -370,7 +370,7 @@ class ConditionSentenceParser:
     )
 
     CONDITION_PHRASE_PATTERN = re.compile(
-        r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z])-?(?P<c4>\d{3}) )?\((?P<c5>\d{2,3})\):\s*"
+        r"^(?P<c1>[A-Z]) (?:(?P<c2>cert:) (?P<c3>[A-Z9])-?(?P<c4>\d{3}) )?\((?P<c5>\d{2,3})\):\s*"
         f"(?:{DUTY_PHRASE_REGEX})?",
     )
 
@@ -408,6 +408,8 @@ class ConditionSentenceParser:
     ) -> Optional[MeasureConditionComponent]:
         if not (match.group("m1") or match.group("m2") or match.group("m3")):
             return None
+
+        print(match.groups())
 
         return MeasureConditionComponent(
             duty_expression=(
