@@ -141,7 +141,7 @@ class Commodity(BaseModel):
         obj = (
             GoodsNomenclatureIndent.objects.latest_approved()
             .filter(
-                indented_goods_nomenclature__item_id=self.get_item_id(),
+                indented_goods_nomenclature__sid=self.obj.sid,
             )
             .order_by("transaction_id")
             .last()
@@ -1296,6 +1296,7 @@ class CommodityChange(BaseModel):
                                 self._handle_hierarchy_side_effect(
                                     measure,
                                     related_measure,
+                                    related_is_ancestor=(attr == "get_ancestors"),
                                     rule_variant="a",
                                 )
                         except KeyError:
@@ -1332,6 +1333,7 @@ class CommodityChange(BaseModel):
                                 self._handle_hierarchy_side_effect(
                                     measure,
                                     ancestor_measure,
+                                    related_is_ancestor=True,
                                     rule_variant="b",
                                 )
                         except KeyError:
@@ -1341,15 +1343,18 @@ class CommodityChange(BaseModel):
         self,
         measure: Measure,
         related_measure: Measure,
+        related_is_ancestor: bool,
         rule_variant: str,
     ) -> None:
-        """Updates or deletes a clashing ME32 meaure."""
+        """Updates or deletes a clashing ME32 measure."""
+        affected_measure = measure if related_is_ancestor else related_measure
+
         if is_contained(
             related_measure.valid_between,
             measure.valid_between,
         ):
             return self._add_pending_delete(
-                related_measure,
+                affected_measure,
                 mbr.ME32,
                 rule_variant + ".rc",
             )
@@ -1364,21 +1369,34 @@ class CommodityChange(BaseModel):
                 rule_variant + ".mc",
             )
 
+        # end-date the lower measure in the hierarchy
         if related_measure.valid_between.lower < measure.valid_between.lower:
-            affected_measure = related_measure
-            valid_between = TaricDateRange(
-                related_measure.valid_between.lower,
-                measure.valid_between.lower + relativedelta(days=-1),
-            )
-            suffix = ".rl"
+            if affected_measure == related_measure:
+                valid_between = TaricDateRange(
+                    related_measure.valid_between.lower,
+                    measure.valid_between.lower + relativedelta(days=-1),
+                )
+                suffix = ".rl"
+            else:
+                return self._add_pending_delete(
+                    affected_measure,
+                    mbr.ME32,
+                    rule_variant + ".rl",
+                )
 
         else:
-            affected_measure = measure
-            valid_between = TaricDateRange(
-                measure.valid_between.lower,
-                related_measure.valid_between.lower + relativedelta(days=-1),
-            )
-            suffix = ".ml"
+            if affected_measure == measure:
+                valid_between = TaricDateRange(
+                    measure.valid_between.lower,
+                    related_measure.valid_between.lower + relativedelta(days=-1),
+                )
+                suffix = ".ml"
+            else:
+                return self._add_pending_delete(
+                    affected_measure,
+                    mbr.ME32,
+                    rule_variant + ".ml",
+                )
 
         regulation = (
             affected_measure.terminating_regulation
