@@ -1364,12 +1364,11 @@ class CommodityChange(BaseModel):
             related_measure.valid_between,
         ):
             return self._add_pending_delete(
-                measure,
+                affected_measure,
                 mbr.ME32,
                 rule_variant + ".mc",
             )
 
-        # end-date the lower measure in the hierarchy
         if related_measure.valid_between.lower < measure.valid_between.lower:
             if affected_measure == related_measure:
                 valid_between = TaricDateRange(
