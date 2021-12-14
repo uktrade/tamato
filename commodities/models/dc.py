@@ -16,6 +16,7 @@ from typing import Set
 from typing import Tuple
 from typing import Union
 
+from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 
 from commodities import business_rules as cbr
@@ -28,6 +29,7 @@ from commodities.models.orm import GoodsNomenclatureIndent
 from commodities.util import clean_item_id
 from commodities.util import contained_date_range
 from commodities.util import date_ranges_overlap
+from commodities.util import is_contained
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
@@ -1323,6 +1325,11 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 ancestor_measure.valid_between,
                             ):
+                                self._handle_hierarchy_side_effect(
+                                    measure,
+                                    ancestor_measure,
+                                    rule_variant="b",
+                                )
                                 self._add_pending_delete(
                                     ancestor_measure,
                                     mbr.ME32,
@@ -1330,6 +1337,66 @@ class CommodityChange(BaseModel):
                                 )
                         except KeyError:
                             continue
+
+    def _handle_hierarchy_side_effect(
+        self,
+        measure: Measure,
+        related_measure: Measure,
+        rule_variant: str,
+    ) -> None:
+        """Updates or deletes a clashing ME32 meaure."""
+        if is_contained(
+            related_measure.valid_between,
+            measure.valid_between,
+        ):
+            return self._add_pending_delete(
+                related_measure,
+                mbr.ME32,
+                rule_variant + ".rc",
+            )
+
+        if is_contained(
+            measure.valid_between,
+            related_measure.valid_between,
+        ):
+            return self._add_pending_delete(
+                measure,
+                mbr.ME32,
+                rule_variant + ".mc",
+            )
+
+        if related_measure.valid_between.lower < measure.valid_between.lower:
+            affected_measure = related_measure
+            valid_between = TaricDateRange(
+                related_measure.valid_between.lower,
+                measure.valid_between.lower + relativedelta(days=-1),
+            )
+            suffix = ".rl"
+
+        else:
+            affected_measure = measure
+            valid_between = TaricDateRange(
+                measure.valid_between.lower,
+                related_measure.valid_between.lower + relativedelta(days=-1),
+            )
+            suffix = ".ml"
+
+        regulation = (
+            affected_measure.terminating_regulation
+            or affected_measure.generating_regulation
+        )
+
+        attrs = dict(
+            terminating_regulation=regulation,
+            valid_between=valid_between,
+        )
+
+        return self._add_pending_update(
+            affected_measure,
+            attrs,
+            mbr.ME32,
+            variant=rule_variant + suffix,
+        )
 
     def _check_already_preempted(
         self,
@@ -1449,7 +1516,7 @@ class CommodityChange(BaseModel):
         would be exclude those with effective end date before this date.
 
         In the case of a commodity UPDATE or DELETE,
-        the treshold the commodity's validity end date.
+        the treshold is the commodity's validity end date.
         In the case of a commodity CREATE,
         the treshold is the commodity's validity start date.
         """

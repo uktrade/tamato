@@ -73,3 +73,17 @@ def contained_date_range(
         start_date or a.lower,
         end_date or a.upper,
     )
+
+
+def is_contained(
+    date_range: TaricDateRange,
+    containing_date_range: TaricDateRange,
+) -> bool:
+    """Returns true iof the date range is fully contained by the containing
+    range."""
+    contained_range = contained_date_range(
+        date_range,
+        containing_date_range,
+    )
+
+    return contained_range == date_range

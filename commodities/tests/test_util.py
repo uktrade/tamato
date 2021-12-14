@@ -65,6 +65,7 @@ def test_contained_date_range(
     expected_lower,
     expected_upper,
 ):
+    """Asserts that contained_date_range returns the correct date range."""
     dr = getattr(date_ranges, date_range)
     dr_containing = getattr(date_ranges, containing_range)
     dr_contained = util.contained_date_range(dr, dr_containing)
@@ -76,3 +77,33 @@ def test_contained_date_range(
         dr_end = getattr(date_ranges, expected_upper)
         assert dr_contained.lower == dr_start.lower
         assert dr_contained.upper == dr_end.upper
+
+
+@pytest.mark.parametrize(
+    "date_range, containing_range, contained",
+    [
+        ("normal", "normal", True),
+        ("normal", "overlap_normal", False),
+        ("overlap_normal_earlier", "normal", False),
+        ("normal", "big", True),
+        ("normal", "adjacent_later", False),
+    ],
+    ids=[
+        "identical",
+        "overlapped_later",
+        "overlapped_earlier",
+        "contained",
+        "adjacent",
+    ],
+)
+def test_is_contained(
+    date_ranges,
+    date_range,
+    containing_range,
+    contained,
+):
+    """Asserts that is_contained returns the correct result."""
+    dr = getattr(date_ranges, date_range)
+    dr_containing = getattr(date_ranges, containing_range)
+
+    assert util.is_contained(dr, dr_containing) == contained
