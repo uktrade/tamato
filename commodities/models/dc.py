@@ -1293,7 +1293,11 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 related_measure.valid_between,
                             ):
-                                self._add_pending_delete(related_measure, mbr.ME32, "a")
+                                self._handle_hierarchy_side_effect(
+                                    measure,
+                                    related_measure,
+                                    rule_variant="a",
+                                )
                         except KeyError:
                             continue
 
@@ -1329,11 +1333,6 @@ class CommodityChange(BaseModel):
                                     measure,
                                     ancestor_measure,
                                     rule_variant="b",
-                                )
-                                self._add_pending_delete(
-                                    ancestor_measure,
-                                    mbr.ME32,
-                                    "b",
                                 )
                         except KeyError:
                             continue
