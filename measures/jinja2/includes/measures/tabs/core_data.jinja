@@ -30,37 +30,37 @@
         },
         {
             "key": {"text": "Duties"},
-            "value": {"text": measure.duty_sentence if measure.duty_sentence else '-'},
+            "value": {"text": object.duty_sentence if object.duty_sentence else '-'},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Additional code"},
-            "value": {"text":  measure.additional_code.type.sid ~ measure.additional_code.code if measure.additional_code else '-'},
+            "value": {"text":  object.additional_code.type.sid ~ object.additional_code.code if object.additional_code else '-'},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Geographical area"},
-            "value": {"text":  measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description if measure.geographical_area else '-'},
+            "value": {"text":  object.geographical_area.area_id ~ " - " ~ object.geographical_area.get_description().description if object.geographical_area else '-'},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Quota order number"},
-            "value": {"text":  measure.order_number.sid if measure.order_number else '-'},
+            "value": {"text":  object.order_number.sid if object.order_number else '-'},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Start date"},
-            "value": {"text":  "{:%d %b %Y}".format(measure.valid_between.lower)},
+            "value": {"text":  "{:%d %b %Y}".format(object.valid_between.lower)},
             "actions": {"items": []}
         },
         {
             "key": {"text": "End date"},
-            "value": {"text":  "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-"},
+            "value": {"text":  "{:%d %b %Y}".format(object.effective_end_date) if object.effective_end_date else "-"},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Status"},
-            "value": {"text":  measure.transaction.workbasket.get_status_display()},
+            "value": {"text":  object.transaction.workbasket.get_status_display()},
             "actions": {"items": []}
         },
         ]
