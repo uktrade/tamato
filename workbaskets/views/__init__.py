@@ -70,12 +70,12 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
         return reverse("index")
 
 
-class WorkBasketDeleteChanges(PermissionRequiredMixin, TemplateView):
+class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     template_name = "workbaskets/delete_changes.jinja"
     permission_required = "workbaskets.change_workbasket"
 
-    def _get_tracked_model_queryset(self):
-        """Get the QuerySet of TrackedModels that are candidates for
+    def get_queryset(self):
+        """Returns the QuerySet of TrackedModels that are candidates for
         deletion."""
 
         try:
@@ -104,11 +104,6 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, TemplateView):
             kwargs={"pk": self.kwargs["pk"]},
         )
         return redirect(redirect_url)
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["tracked_models"] = self._get_tracked_model_queryset()
-        return context_data
 
 
 class WorkBasketDeleteChangesDone(TemplateView):
