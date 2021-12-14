@@ -573,7 +573,7 @@ model to another. This is anything that is:</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="common.models.TrackedModel.current_version">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">current_version</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.trackedmodel.Cls</span></em><a class="headerlink" href="#common.models.TrackedModel.current_version" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current version of this model</p>
+<dd><p>The current version of this model.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -752,7 +752,7 @@ relation.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.get_url_pattern_name_prefix">
-<span class="sig-name descname"><span class="pre">get_url_pattern_name_prefix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.get_url_pattern_name_prefix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url_pattern_name_prefix" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">get_url_pattern_name_prefix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.get_url_pattern_name_prefix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.get_url_pattern_name_prefix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the prefix string for a view name for this model.</p>
 <p>By default, this is the verbose name of the model with spaces replaced by
 underscores, but this method allows this to be overridden.</p>
@@ -867,11 +867,12 @@ actually equate to a <code class="docutils literal notranslate"><span class="pre
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.TrackedModel.identifying_fields_to_string">
 <span class="sig-name descname"><span class="pre">identifying_fields_to_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/common/models/trackedmodel.html#TrackedModel.identifying_fields_to_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.TrackedModel.identifying_fields_to_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Constructs a comma separated string of the identifying fields of the model with
-field name and value pairs delimited by “=”, eg: “field1=1, field2=2”</p>
+<dd><p>Constructs a comma separated string of the identifying fields of the
+model with field name and value pairs delimited by “=”, eg: “field1=1,
+field2=2”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Optional</strong><strong>[</strong><strong>Iterable</strong><strong>[</strong><strong>str</strong><strong>]</strong><strong>]</strong> (<em>identifying_fields</em>) – Optionally override the</p>
+<dd class="field-odd"><p><strong>identifying_fields</strong> – Optionally override the</p>
 </dd>
 </dl>
 <p>fields to use in the string
@@ -1273,15 +1274,15 @@ relation.</p>
 <dt class="sig sig-object py" id="common.models.TrackedModel.structure_code">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">structure_code</span></span><a class="headerlink" href="#common.models.TrackedModel.structure_code" title="Permalink to this definition">¶</a></dt>
 <dd><p>A string used to describe the model instance.</p>
-<p>Used as the displayed value in an AutocompleteWidget dropdown, and in the “Your
-tariff changes” list.</p>
+<p>Used as the displayed value in an AutocompleteWidget dropdown, and in
+the “Your tariff changes” list.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="common.models.TrackedModel.structure_description">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">structure_description</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#common.models.TrackedModel.structure_description" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current description of the model, if it has related description models or a
-description field.</p>
+<dd><p>The current description of the model, if it has related description
+models or a description field.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Rtype Optional[str]</dt>
 <dd class="field-odd"><p>The current description</p>
