@@ -148,7 +148,7 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
         #    },
         # }
     """
-    checked_field_names = {f.name for f in model.copyable_fields} - ignore
+    checked_field_names = {f.name for f in model.copyable_fields} - set(ignore)
     data = {
         name: getattr(model, get_accessor(model._meta.get_field(name)))
         for name in checked_field_names
