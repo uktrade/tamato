@@ -865,33 +865,26 @@ class ME57(MeasureValidityPeriodContained):
 
 
 class ME58(BusinessRule):
-    """The same certificate can only be referenced once by the same measure and
-    the same condition type."""
+    """The same certificate, volume or price can only be referenced once by the
+    same measure and the same condition type."""
+
+    @staticmethod
+    def match_related_model(model, key):
+        obj = getattr(model, key)
+        if obj is None:
+            return {key: None}
+        else:
+            return {f"{key}__version_group": obj.version_group}
 
     def validate(self, measure_condition):
         kwargs = {
             "condition_code__code": measure_condition.condition_code.code,
             "dependent_measure__sid": measure_condition.dependent_measure.sid,
+            "duty_amount": measure_condition.duty_amount,
+            **self.match_related_model(measure_condition, "required_certificate"),
+            **self.match_related_model(measure_condition, "condition_measurement"),
+            **self.match_related_model(measure_condition, "monetary_unit"),
         }
-        if measure_condition.required_certificate is None:
-            kwargs.update({"required_certificate": None})
-        else:
-            kwargs.update(
-                {
-                    "required_certificate__version_group": measure_condition.required_certificate.version_group,
-                },
-            )
-
-        if measure_condition.condition_measurement is None:
-            kwargs.update({"condition_measurement": None})
-        else:
-            kwargs.update(
-                {
-                    "condition_measurement__version_group": measure_condition.condition_measurement.version_group,
-                },
-            )
-
-        kwargs.update({"duty_amount": measure_condition.duty_amount})
 
         if (
             type(measure_condition)

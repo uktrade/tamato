@@ -1363,16 +1363,20 @@ def test_ME57(date_ranges):
 @pytest.mark.parametrize("existing_cert", (True, False))
 @pytest.mark.parametrize("existing_volume", (True, False))
 @pytest.mark.parametrize("existing_unit", (True, False))
+@pytest.mark.parametrize("existing_currency", (True, False))
 @pytest.mark.parametrize("duplicate_cert", (True, False))
 @pytest.mark.parametrize("duplicate_volume", (True, False))
 @pytest.mark.parametrize("duplicate_unit", (True, False))
+@pytest.mark.parametrize("duplicate_currency", (True, False))
 def test_ME58(
     existing_cert: bool,
     existing_volume: bool,
     existing_unit: bool,
+    existing_currency: bool,
     duplicate_cert: bool,
     duplicate_volume: bool,
     duplicate_unit: bool,
+    duplicate_currency: bool,
 ):
     """
     The same certificate can only be referenced once by the same measure and the
@@ -1393,16 +1397,19 @@ def test_ME58(
         (existing_cert == duplicate_cert)
         and (existing_volume == duplicate_volume)
         and (existing_unit == duplicate_unit)
+        and (existing_currency == duplicate_currency)
     )
 
     cert = factories.CertificateFactory.create()
     volume = factories.duty_amount().function()
     unit = factories.MeasurementFactory.create()
+    currency = factories.MonetaryUnitFactory.create()
 
     existing = factories.MeasureConditionFactory.create(
         required_certificate=(cert if existing_cert else None),
         duty_amount=(volume if existing_volume else None),
         condition_measurement=(unit if existing_unit else None),
+        monetary_unit=(currency if existing_currency else None),
     )
     duplicate = factories.MeasureConditionFactory.create(
         condition_code=existing.condition_code,
@@ -1410,6 +1417,7 @@ def test_ME58(
         required_certificate=(cert if duplicate_cert else None),
         duty_amount=(volume if duplicate_volume else None),
         condition_measurement=(unit if duplicate_unit else None),
+        monetary_unit=(currency if duplicate_currency else None),
     )
 
     with raises_if(BusinessRuleViolation, expect_error):
