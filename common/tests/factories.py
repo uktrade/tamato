@@ -6,6 +6,7 @@ from itertools import product
 
 import factory
 from factory.fuzzy import FuzzyChoice
+from faker import Faker
 
 from common.models import TrackedModel
 from common.models.transactions import TransactionPartition
@@ -41,6 +42,12 @@ def string_sequence(length=1, characters=string.ascii_uppercase + string.digits)
 
 def numeric_sid():
     return factory.Sequence(lambda x: x + 1)
+
+
+def duty_amount():
+    return factory.LazyFunction(
+        lambda: Faker().pydecimal(left_digits=7, right_digits=3, positive=True),
+    )
 
 
 def date_ranges(name):
@@ -1067,7 +1074,7 @@ class MeasureConditionFactory(TrackedModelMixin):
     )
     condition_code = factory.SubFactory(MeasureConditionCodeFactory)
     component_sequence_number = factory.Faker("random_int", min=1, max=999)
-    duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
+    duty_amount = duty_amount()
     monetary_unit = factory.SubFactory(MonetaryUnitFactory)
     condition_measurement = None
     action = factory.SubFactory(MeasureActionFactory)
@@ -1091,7 +1098,7 @@ class MeasureConditionComponentFactory(TrackedModelMixin):
         transaction=factory.SelfAttribute("..transaction"),
     )
     duty_expression = factory.SubFactory(DutyExpressionFactory)
-    duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
+    duty_amount = duty_amount()
     monetary_unit = factory.SubFactory(MonetaryUnitFactory)
     component_measurement = None
 
