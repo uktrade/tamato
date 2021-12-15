@@ -37,7 +37,7 @@
   {% set item =
     {
       "heading": {
-        "text": object.polymorphic_ctype.model.title() ~ ": " ~ object.sid
+        "text": object._meta.verbose_name.title() ~ ": " ~ object.sid
       },
       "content": {
         "html": item_content
