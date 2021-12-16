@@ -143,6 +143,7 @@ def condition_codes() -> Dict[str, MeasureConditionCode]:
         mcc.code: mcc
         for mcc in [
             factories.MeasureConditionCodeFactory(code="A"),
+            factories.MeasureConditionCodeFactory(code="B"),
             factories.MeasureConditionCodeFactory(code="Y"),
         ]
     }
@@ -155,6 +156,7 @@ def action_codes() -> Dict[str, MeasureAction]:
         for a in [
             factories.MeasureActionFactory(code="01"),
             factories.MeasureActionFactory(code="09"),
+            factories.MeasureActionFactory(code="24"),
             factories.MeasureActionFactory(code="299"),
         ]
     }
@@ -163,9 +165,11 @@ def action_codes() -> Dict[str, MeasureAction]:
 @pytest.fixture
 def certificates():
     d_type = factories.CertificateTypeFactory(sid="D")
+    nine_type = factories.CertificateTypeFactory(sid="9")
     return {
         "D017": factories.CertificateFactory(sid="017", certificate_type=d_type),
         "D018": factories.CertificateFactory(sid="018", certificate_type=d_type),
+        "9100": factories.CertificateFactory(sid="100", certificate_type=nine_type),
     }
 
 
