@@ -933,10 +933,22 @@ class ME58(BusinessRule):
                 },
             )
 
+        if measure_condition.condition_measurement is None:
+            kwargs.update({"condition_measurement": None})
+        else:
+            kwargs.update(
+                {
+                    "condition_measurement__version_group": measure_condition.condition_measurement.version_group,
+                },
+            )
+
+        kwargs.update({"duty_amount": measure_condition.duty_amount})
+
         if (
             type(measure_condition)
-            .objects.exclude(pk=measure_condition.pk or None)
-            .excluding_versions_of(version_group=measure_condition.version_group)
+            .objects.excluding_versions_of(
+                version_group=measure_condition.version_group,
+            )
             .filter(**kwargs)
             .approved_up_to_transaction(self.transaction)
             .exists()
