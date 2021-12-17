@@ -62,19 +62,19 @@ __all__ = [
 TTrackedModelIdentifier = Union[str, int]
 
 COMMODITY_RECORD_ATTRIBUTES: dict[str, tuple[str, str]] = {
-    "40000": ("goods_nomenclature", "item_id"),
-    "40005": ("goods_nomenclature_indent", "indented_goods_nomenclature__item_id"),
+    "40000": ("goods_nomenclature", ""),
+    "40005": ("goods_nomenclature_indent", "indented_goods_nomenclature"),
     "40010": (
         "goods_nomenclature_description_period",
-        "described_goods_nomenclature__item_id",
+        "described_goods_nomenclature",
     ),
     "40015": (
         "goods_nomenclature_description",
-        "described_goods_nomenclature__item_id",
+        "described_goods_nomenclature",
     ),
-    "40020": ("footnote_association_goods_nomenclature", "goods_nomenclature__item_id"),
-    "40035": ("goods_nomenclature_origin", "new_goods_nomenclature__item_id"),
-    "40040": ("goods_nomenclature_successor", "replaced_goods_nomenclature__item_id"),
+    "40020": ("footnote_association_goods_nomenclature", "goods_nomenclature"),
+    "40035": ("goods_nomenclature_origin", "new_goods_nomenclature"),
+    "40040": ("goods_nomenclature_successor", "replaced_goods_nomenclature"),
 }
 
 PREEMPTIVE_TRANSACTION_SEED = -int(1e5)
@@ -1731,7 +1731,7 @@ class CommodityChangeRecordLoader:
         record_group = TARIC_RECORD_GROUPS["commodities"]
 
         matching_records = [
-            (self._get_record_commodity_code(obj), obj)
+            (self._get_record_commodity_keys(obj), obj)
             for obj in transaction.tracked_models.all()
             if obj.record_identifier in record_group
         ]
@@ -1739,7 +1739,7 @@ class CommodityChangeRecordLoader:
         sorted_records = sorted(matching_records, key=lambda x: x[0])
         grouped_records = groupby(sorted_records, key=lambda x: x[0])
 
-        for commodity_code, records in grouped_records:
+        for (commodity_code, _), records in grouped_records:
             self.add_pending_change(commodity_code, records)
 
     def add_pending_change(
@@ -1860,13 +1860,13 @@ class CommodityChangeRecordLoader:
 
         return TaricDateRange(start_date, end_date)
 
-    def _get_record_commodity_code(self, obj: TrackedModel) -> str:
+    def _get_record_commodity_keys(self, obj: TrackedModel) -> Tuple[str, str]:
         """Returns the commodity code embedded in a taric record."""
-        _, attr_name = COMMODITY_RECORD_ATTRIBUTES[obj.record_identifier]
+        _, prefix = COMMODITY_RECORD_ATTRIBUTES[obj.record_identifier]
 
-        attrs = attr_name.split("__")
-        result = obj
-        for attr in attrs:
-            result = getattr(result, attr)
+        if prefix:
+            good = getattr(obj, prefix)
+        else:
+            good = obj
 
-        return result
+        return (good.item_id, good.suffix)
