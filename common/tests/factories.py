@@ -791,16 +791,34 @@ class QuotaDefinitionFactory(TrackedModelMixin, ValidityFactoryMixin):
     order_number = factory.SubFactory(QuotaOrderNumberFactory)
     volume = 0
     initial_volume = 0
-    monetary_unit = factory.SubFactory(MonetaryUnitFactory)
-    measurement_unit = factory.SubFactory(MeasurementUnitFactory)
+    monetary_unit = None
+    measurement_unit = None
+    measurement_unit_qualifier = None
     maximum_precision = 0
     quota_critical = False
     quota_critical_threshold = 80
     description = short_description()
 
+    class Params:
+        is_monetary = factory.Trait(
+            monetary_unit=factory.SubFactory(MonetaryUnitFactory),
+        )
+        is_physical = factory.Trait(
+            measurement_unit=factory.SubFactory(MeasurementUnitFactory),
+        )
+        has_qualifier = factory.Trait(
+            measurement_unit_qualifier=factory.SubFactory(
+                MeasurementUnitQualifierFactory,
+            ),
+        )
+
+    is_monetary = False
+    is_physical = True
+    has_qualifier = False
+
 
 class QuotaDefinitionWithQualifierFactory(QuotaDefinitionFactory):
-    measurement_unit_qualifier = factory.SubFactory(MeasurementUnitQualifierFactory)
+    has_qualifier = True
 
 
 class QuotaAssociationFactory(TrackedModelMixin):

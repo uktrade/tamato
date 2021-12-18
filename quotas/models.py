@@ -151,7 +151,11 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     through QuotaAssociation.
 
     The monetary unit code and the measurement unit code (with its optional unit
-    qualifier code) are mutually exclusive.
+    qualifier code) are mutually exclusive – each quota definition must have one
+    and only one of monetary or measurement unit.
+
+    The pair of measurement and measurement unit qualifier must appear as a
+    valid measurement in the measurements table.
     """
 
     record_code = "370"
@@ -214,6 +218,23 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
         UpdateValidity,
     )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    models.Q(
+                        monetary_unit__isnull=False,
+                        measurement_unit__isnull=True,
+                    )
+                    | models.Q(
+                        monetary_unit__isnull=True,
+                        measurement_unit__isnull=False,
+                    )
+                ),
+                name="quota_definition_must_have_one_unit",
+            ),
+        ]
 
     def __str__(self):
         return str(self.sid)
