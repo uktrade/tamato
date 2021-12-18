@@ -322,6 +322,8 @@ def test_QD8(date_ranges):
     definition = factories.QuotaDefinitionFactory.create(
         monetary_unit__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
+        is_monetary=True,
+        is_physical=False,
     )
 
     with pytest.raises(BusinessRuleViolation):

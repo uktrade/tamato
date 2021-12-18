@@ -1,6 +1,8 @@
 import pytest
+from django.db import IntegrityError
 
 from common.tests import factories
+from common.tests.util import raises_if
 
 pytestmark = pytest.mark.django_db
 
@@ -74,3 +76,20 @@ def test_required_certificates_changed_if_specified():
     assert quota.required_certificates.get() == cert
     assert not new_version.required_certificates.exists()
     assert third_version.required_certificates.get() == cert
+
+
+@pytest.mark.parametrize(
+    ("has_unit", "has_currency", "error_expected"),
+    (
+        (True, True, True),
+        (True, False, False),
+        (False, True, False),
+        (False, False, True),
+    ),
+)
+def test_quota_definition_must_have_one_unit(has_unit, has_currency, error_expected):
+    with raises_if(IntegrityError, error_expected):
+        factories.QuotaDefinitionFactory.create(
+            is_monetary=has_currency,
+            is_physical=has_unit,
+        )

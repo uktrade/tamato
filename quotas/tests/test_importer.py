@@ -37,15 +37,24 @@ def test_quota_order_number_origin_exclusion_importer(
     )
 
 
-def test_quota_definition_importer(imported_fields_match):
+@pytest.mark.parametrize(
+    ("dependency_data"),
+    (
+        {"monetary_unit": factories.MonetaryUnitFactory, "measurement_unit": None},
+        {"measurement_unit": factories.MeasurementUnitFactory},
+        {
+            "measurement_unit": factories.MeasurementUnitFactory,
+            "measurement_unit_qualifier": factories.MeasurementUnitQualifierFactory,
+        },
+    ),
+)
+def test_quota_definition_importer(dependency_data, imported_fields_match):
     assert imported_fields_match(
         factories.QuotaDefinitionFactory,
         serializers.QuotaDefinitionImporterSerializer,
         dependencies={
             "order_number": factories.QuotaOrderNumberFactory,
-            "monetary_unit": factories.MonetaryUnitFactory,
-            "measurement_unit": factories.MeasurementUnitFactory,
-            "measurement_unit_qualifier": factories.MeasurementUnitQualifierFactory,
+            **dependency_data,
         },
     )
 
