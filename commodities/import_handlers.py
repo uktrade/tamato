@@ -11,6 +11,7 @@ from commodities import import_parsers as parsers
 from commodities import models
 from commodities import serializers
 from commodities.exceptions import InvalidIndentError
+from common.models import Transaction
 from common.util import TaricDateRange
 from common.util import maybe_min
 from common.validators import UpdateType
@@ -231,6 +232,15 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             preceding_node.valid_between.lower,
             indent.validity_start - timedelta(days=1),
         )
+
+        if (
+            valid_between.upper < valid_between.lower
+            and Transaction.objects.get(
+                id=preceding_node.creating_transaction_id,
+            ).workbasket
+            == indent.transaction.workbasket
+        ):
+            return
 
         # We need a new preceding node as of this transaction
         # with the correct end date, and we need to create a new one
@@ -490,6 +500,9 @@ class GoodsNomenclatureIndentHandler(BaseHandler):
             # which could lead to exceptions
             nodes = obj.nodes.all()
         except (AttributeError, TypeError):
+            return
+
+        if not nodes:
             return
 
         excluded_nodes = [
