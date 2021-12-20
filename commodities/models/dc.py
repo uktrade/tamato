@@ -1001,6 +1001,7 @@ class CommodityChange(BaseModel):
         qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
         for association in qs.filter(
             goods_nomenclature__item_id=self.current.item_id,
+            goods_nomenclature__suffix=self.current.suffix,
         ):
             self._add_pending_delete(association, None)
 
@@ -1027,6 +1028,7 @@ class CommodityChange(BaseModel):
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
                 goods_nomenclature__item_id=self.current.item_id,
+                goods_nomenclature__suffix=self.current.suffix,
             )
         )
         measures = self._get_dependent_measures(before, after)
