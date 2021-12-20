@@ -1118,6 +1118,7 @@ class CommodityChange(BaseModel):
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
                 goods_nomenclature__item_id=self.current.get_item_id(),
+                goods_nomenclature__suffix=self.current.get_suffix(),
             )
         )
         measures = self._get_dependent_measures(before, after)
@@ -1736,8 +1737,9 @@ class CommodityChangeRecordLoader:
             if obj.record_identifier in record_group
         ]
 
-        sorted_records = sorted(matching_records, key=lambda x: x[0])
-        grouped_records = groupby(sorted_records, key=lambda x: x[0])
+        key_fn = lambda x: x[0]
+        sorted_records = sorted(matching_records, key=key_fn)
+        grouped_records = groupby(sorted_records, key=key_fn)
 
         for (commodity_code, _), records in grouped_records:
             self.add_pending_change(commodity_code, records)
