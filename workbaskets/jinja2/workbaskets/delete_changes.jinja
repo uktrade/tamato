@@ -10,34 +10,78 @@
 {% set accordion_items = [] %}
 
 
-{% for object in object_list %}
-  {% set omit_object_actions = True %}
+{% macro measure_detail_tabs(object, omit_actions=False) -%}
+{# Generate 'details' markup for all relevant tabs of a given measure.
+  object - the measure.
+  omit_actions - set to True to prevent an 'actions' sidebar being included in
+    the generated markup.
+#}
   {% set core_data_tab_html %}{% include "includes/measures/tabs/core_data.jinja" %}{% endset %}
   {% set conditions_tab_html %}{% include "includes/measures/tabs/conditions.jinja" %}{% endset %}
-  {% set item_content =
-    govukTabs({
-      "items": [
-        {
-          "label": "Details",
-          "id": "core-data",
-          "panel": {
-            "html": core_data_tab_html
-          }
-        },
-        {
-          "label": "Conditions",
-          "id": "conditions",
-          "panel": {
-            "html": conditions_tab_html
-          }
+  {{ govukTabs({
+    "items": [
+      {
+        "label": "Details",
+        "id": "core-data",
+        "panel": {
+          "html": core_data_tab_html
         }
-      ]
-    })
-  %}
+      },
+      {
+        "label": "Conditions",
+        "id": "conditions",
+        "panel": {
+          "html": conditions_tab_html
+        }
+      }
+    ]
+  }) }}
+{%- endmacro %}
+
+
+{% macro regulation_details_tabs(object, omit_actions=False) -%}
+{# Generate 'details' markup for all relevant tabs of a given regulation.
+  object - the measure.
+  omit_actions - set to True to prevent an 'actions' sidebar being included in
+    the generated markup.
+#}
+  {% set core_data_tab_html %}{% include "includes/regulations/tabs/core_data.jinja" %}{% endset %}
+  {% set conditions_tab_html %}{% include "includes/regulations/tabs/version_control.jinja" %}{% endset %}
+  {{ govukTabs({
+    "items": [
+      {
+        "label": "Details",
+        "id": "core-data",
+        "panel": {
+          "html": core_data_tab_html
+        }
+      },
+      {
+        "label": "Conditions",
+        "id": "conditions",
+        "panel": {
+          "html": conditions_tab_html
+        }
+      }
+    ]
+  }) }}
+{%- endmacro %}
+
+
+{# Build the accordion's item list. #}
+{% for object in object_list %}
+  {% if object._meta.model_name == "measure" %}
+    {% set item_heading = object._meta.verbose_name.title() ~ ": " ~ object.sid %}
+    {% set item_content = measure_detail_tabs(object, omit_actions=True) %}
+  {% elif object._meta.model_name == "regulation" %}
+    {% set item_heading = object._meta.verbose_name.title() ~ ": " ~ object.regulation_id %}
+    {% set item_content = regulation_details_tabs(object, omit_actions=True) %}
+  {% endif %}
+
   {% set item =
     {
       "heading": {
-        "text": object._meta.verbose_name.title() ~ ": " ~ object.sid
+        "text": item_heading
       },
       "content": {
         "html": item_content
