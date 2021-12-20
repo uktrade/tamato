@@ -39,6 +39,44 @@
 {%- endmacro %}
 
 
+{% macro footnote_detail_tabs(object, omit_actions=False) -%}
+  {# Generate 'details' markup for all relevant tabs of a given footnote.
+    Parameters:
+      * object - the footnote instance.
+      * omit_actions - True to prevent an 'Actions' sidebar being included in
+        the generated markup.
+  #}
+  {% set core_data_tab_html %}{% include "includes/footnotes/tabs/core_data.jinja" %}{% endset %}
+  {% set description_tab_html %}{% include "includes/common/tabs/descriptions.jinja" %}{% endset %}
+  {% set version_control_tab_html %}{% include "includes/footnotes/tabs/version_control.jinja" %}{% endset %}
+  {{ govukTabs({
+    "items": [
+      {
+        "label": "Details",
+        "id": "core-data",
+        "panel": {
+          "html": core_data_tab_html
+        }
+      },
+      {
+        "label": "Descriptions",
+        "id": "descriptions",
+        "panel": {
+          "html": description_tab_html
+        }
+      },
+      {
+        "label": "Version control",
+        "id": "version-control",
+        "panel": {
+          "html": version_control_tab_html
+        }
+      }
+    ]
+  }) }}
+{%- endmacro %}
+
+
 {% macro measure_detail_tabs(object, omit_actions=False) -%}
   {# Generate 'details' markup for all relevant tabs of a given measure.
     Parameters:

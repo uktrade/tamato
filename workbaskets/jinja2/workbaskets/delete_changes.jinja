@@ -2,6 +2,7 @@
 
 
 {% from 'workbaskets/macros/detail_tabs.jinja' import additional_code_detail_tabs with context %}
+{% from 'workbaskets/macros/detail_tabs.jinja' import footnote_detail_tabs with context %}
 {% from 'workbaskets/macros/detail_tabs.jinja' import measure_detail_tabs with context %}
 {% from 'workbaskets/macros/detail_tabs.jinja' import regulation_details_tabs with context %}
 
@@ -20,6 +21,9 @@
   {% if object._meta.model_name == "additionalcode" %}
     {% set item_heading = "Additional code: " ~ object.type.sid ~ object.code %}
     {% set item_content = additional_code_detail_tabs(object, omit_actions=True) %}
+  {% elif object._meta.model_name == "footnote" %}
+    {% set item_heading = "Footnote: " ~ object|string %}
+    {% set item_content = footnote_detail_tabs(object, omit_actions=True) %}
   {% elif object._meta.model_name == "measure" %}
     {% set item_heading = object._meta.verbose_name.title() ~ ": " ~ object.sid %}
     {% set item_content = measure_detail_tabs(object, omit_actions=True) %}
