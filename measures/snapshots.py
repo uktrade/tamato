@@ -56,6 +56,10 @@ class MeasureSnapshot:
             measure.goods_nomenclature.item_id,
             measure.goods_nomenclature.suffix,
         )
+
+        if not commodity:
+            return Measure.objects.none()
+
         valid_between = measure.effective_valid_between
         return (
             self.get_branch_measures(commodity)

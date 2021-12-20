@@ -90,6 +90,7 @@ def test_measure_action_importer(imported_fields_match):
     )
 
 
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
 def test_measure_importer(
     imported_fields_match,
     approved_transaction,

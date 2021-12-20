@@ -7,7 +7,7 @@ celery[redis]==5.0.5
 coverage[toml]==5.4
 crispy-forms-gds @ git+https://github.com/uktrade/crispy-forms-gds.git@b50168d0e23ffacbdd30e7819ec8f9a08e055c8e
 dj-database-url==0.5.0
-django==3.1.13
+django==3.1.14
 django-dotenv==1.4.2
 drf-extra-fields==3.0.2
 django-cte==1.1.5
@@ -33,7 +33,7 @@ govuk-frontend-jinja @ git+https://github.com/alphagov/govuk-frontend-jinja.git@
 govuk-tech-docs-sphinx-theme==1.0.0
 gunicorn==20.0.4
 Jinja2==2.11.3
-lxml==4.6.3
+lxml==4.6.5
 moto==2.1.0
 openpyxl==3.0.7
 parsec==3.8

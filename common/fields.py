@@ -18,7 +18,7 @@ from common.util import TaricDateTimeRange
 
 def get_next_by_max(field):
     return lambda: RawSQL(
-        sql=f'SELECT MAX("{field.column}") + 1 FROM "{field.model._meta.db_table}"',
+        sql=f'SELECT COALESCE(MAX("{field.column}"), 0) + 1 FROM "{field.model._meta.db_table}"',
         params=[],
     )
 
@@ -28,7 +28,7 @@ class NumericSID(models.PositiveIntegerField):
         kwargs["editable"] = False
         kwargs["validators"] = [validators.NumericSIDValidator()]
         kwargs["db_index"] = True
-        kwargs["default"] = get_next_by_max(self)
+        kwargs.setdefault("default", get_next_by_max(self))
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
@@ -44,7 +44,7 @@ class SignedIntSID(models.IntegerField):
     def __init__(self, *args, **kwargs):
         kwargs["editable"] = False
         kwargs["db_index"] = True
-        kwargs["default"] = get_next_by_max(self)
+        kwargs.setdefault("default", get_next_by_max(self))
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
