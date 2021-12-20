@@ -18,6 +18,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
 from django.test.html import parse_html
+from django.urls import reverse
 from factory.django import DjangoModelFactory
 from lxml import etree
 from moto import mock_s3
@@ -219,22 +220,22 @@ def session_workbasket(client, new_workbasket):
     return new_workbasket
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def seed_file_transaction():
     return factories.SeedFileTransactionFactory.create()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def approved_transaction():
     return factories.ApprovedTransactionFactory.create()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def unapproved_transaction():
     return factories.UnapprovedTransactionFactory.create()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def workbasket():
     return factories.WorkBasketFactory.create()
 
@@ -273,6 +274,67 @@ def validity_factory(request):
 )
 def description_factory(request):
     return request.param
+
+
+@pytest.fixture
+def use_create_form(valid_user_api_client: APIClient):
+    """
+    use_create_form, ported from use_update_form.
+
+    use_create_form works with the model class, unlike use_update_from which
+    works from an instance of a model class.
+
+    Because this function creates data there is no initial instance to inspect
+    so the implementation cannot use helpers that rely on a model instance like
+    get_identifying_fields to build its data.
+
+    Where practical this raises the same or equivalent assertions as
+    use_update_form
+    """
+
+    def use(Model: Type[TrackedModel], new_data: Callable[Dict[str, str]]):
+        """
+        :param Model: Model class to test
+        :param new_data function to populate form initial data.
+        """
+        prefix = Model.get_url_pattern_name_prefix()
+        # Prefix will be along the lines of additional_code
+        create_url = reverse(f"{prefix}-ui-create")
+        assert create_url, f"No create page found for {Model}"
+
+        # Initial rendering of url
+        response = valid_user_api_client.get(create_url)
+        assert response.status_code == 200
+
+        initial_form = response.context_data["form"]
+        data = get_form_data(initial_form)
+
+        # Submit the edited data and if we expect success ensure we are redirected
+        realised_data = new_data(data)
+        data.update(realised_data)
+
+        # There is no model instance to fetch identifying_fields from, construct
+        # them from the provided form data.
+        identifying_values = {k: data.get(k) for k in Model.identifying_fields}
+
+        response = valid_user_api_client.post(create_url, data)
+
+        # Check that if we expect failure that the new data was not persisted
+        if response.status_code not in (301, 302):
+            assert not Model.objects.filter(**identifying_values).exists()
+            raise ValidationError(
+                f"Create form contained errors: {dict(response.context_data['form'].errors)}",
+            )
+
+        new_version = Model.objects.filter(**identifying_values).get()
+
+        # Check that the new version is an update and is not approved yet
+        assert new_version.update_type == UpdateType.CREATE
+        assert not new_version.transaction.workbasket.approved
+
+        return new_version
+
+    return use
 
 
 @pytest.fixture
