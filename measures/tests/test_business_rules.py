@@ -465,26 +465,58 @@ def related_goods_nomenclature(request, existing_goods_nomenclature):
 
 @pytest.fixture(
     params=(
-        lambda d: {"valid_between": d.normal},
-        lambda d: {
-            "valid_between": d.no_end,
-            "generating_regulation__valid_between": d.normal,
-            "generating_regulation__effective_end_date": d.normal.upper,
-        },
+        (None, {"valid_between": factories.date_ranges("normal")}, True),
+        (
+            None,
+            {
+                "valid_between": factories.date_ranges("no_end"),
+                "generating_regulation__valid_between": factories.date_ranges("normal"),
+                "generating_regulation__effective_end_date": factories.end_date(
+                    "normal",
+                ),
+            },
+            True,
+        ),
+        (
+            {"valid_between": factories.date_ranges("no_end")},
+            {"update_type": UpdateType.DELETE},
+            False,
+        ),
     ),
     ids=[
         "explicit",
         "implicit",
+        "draft:previously",
     ],
 )
-def existing_measure(request, date_ranges, existing_goods_nomenclature):
-    return factories.MeasureWithQuotaFactory.create(
-        **{
-            "goods_nomenclature": existing_goods_nomenclature,
-            "additional_code": factories.AdditionalCodeFactory.create(),
-            **request.param(date_ranges),
-        }
-    )
+def existing_measure(request, existing_goods_nomenclature):
+    """
+    Returns a measure that with an attached quota and a flag indicating whether
+    the date range of the measure overlaps with the "normal" date range.
+
+    The measure will either be a new measure or a draft UPDATE to an existing
+    measure. If it is an UPDATE, the measure will be in an unapproved
+    workbasket.
+    """
+    data = {
+        "goods_nomenclature": existing_goods_nomenclature,
+        "additional_code": factories.AdditionalCodeFactory.create(),
+    }
+
+    previous, now, overlaps_normal = request.param
+    if previous:
+        old_version = factories.MeasureWithQuotaFactory.create(**data, **previous)
+        return (
+            factories.MeasureWithQuotaFactory.create(
+                version_group=old_version.version_group,
+                transaction=factories.UnapprovedTransactionFactory(),
+                **data,
+                **now,
+            ),
+            overlaps_normal,
+        )
+    else:
+        return factories.MeasureWithQuotaFactory.create(**data, **now), overlaps_normal
 
 
 @pytest.fixture(
@@ -577,6 +609,7 @@ def related_measure_data(
 ):
     nomenclature, nomenclature_overlap = related_goods_nomenclature
     validity_data, date_overlap = related_measure_dates
+    existing_measure, overlaps_normal = existing_measure
     full_data = {
         "goods_nomenclature": nomenclature,
         "measure_type": existing_measure.measure_type,
@@ -584,9 +617,10 @@ def related_measure_data(
         "order_number": existing_measure.order_number,
         "additional_code": existing_measure.additional_code,
         "reduction": existing_measure.reduction,
+        "transaction": existing_measure.transaction.workbasket.new_transaction(),
         **validity_data,
     }
-    error_expected = date_overlap and nomenclature_overlap
+    error_expected = date_overlap and nomenclature_overlap and overlaps_normal
 
     return full_data, error_expected
 
