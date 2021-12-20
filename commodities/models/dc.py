@@ -18,6 +18,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
+from dateutil.relativedelta import relativedelta
 from django.db.models.expressions import F
 from django.db.models.expressions import Subquery
 from django.db.models.query_utils import Q
@@ -32,6 +33,7 @@ from commodities.models.orm import GoodsNomenclatureIndent
 from commodities.util import clean_item_id
 from commodities.util import contained_date_range
 from commodities.util import date_ranges_overlap
+from commodities.util import is_contained
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
@@ -41,7 +43,6 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import TaricDateRange
-from common.util import get_field_tuple
 from common.util import get_latest_versions
 from common.util import maybe_max
 from common.util import maybe_min
@@ -68,19 +69,19 @@ __all__ = [
 TTrackedModelIdentifier = Union[str, int]
 
 COMMODITY_RECORD_ATTRIBUTES: dict[str, tuple[str, str]] = {
-    "40000": ("goods_nomenclature", "item_id"),
-    "40005": ("goods_nomenclature_indent", "indented_goods_nomenclature__item_id"),
+    "40000": ("goods_nomenclature", ""),
+    "40005": ("goods_nomenclature_indent", "indented_goods_nomenclature"),
     "40010": (
         "goods_nomenclature_description_period",
-        "described_goods_nomenclature__item_id",
+        "described_goods_nomenclature",
     ),
     "40015": (
         "goods_nomenclature_description",
-        "described_goods_nomenclature__item_id",
+        "described_goods_nomenclature",
     ),
-    "40020": ("footnote_association_goods_nomenclature", "goods_nomenclature__item_id"),
-    "40035": ("goods_nomenclature_origin", "new_goods_nomenclature__item_id"),
-    "40040": ("goods_nomenclature_successor", "replaced_goods_nomenclature__item_id"),
+    "40020": ("footnote_association_goods_nomenclature", "goods_nomenclature"),
+    "40035": ("goods_nomenclature_origin", "new_goods_nomenclature"),
+    "40040": ("goods_nomenclature_successor", "replaced_goods_nomenclature"),
 }
 
 PREEMPTIVE_TRANSACTION_SEED = -int(1e5)
@@ -1189,7 +1190,12 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 related_measure.valid_between,
                             ):
-                                self._add_pending_delete(related_measure, mbr.ME32, "a")
+                                self._handle_hierarchy_side_effect(
+                                    measure,
+                                    related_measure,
+                                    related_is_ancestor=(attr == "get_ancestors"),
+                                    rule_variant="a",
+                                )
                         except KeyError:
                             continue
 
@@ -1221,13 +1227,98 @@ class CommodityChange(BaseModel):
                                 measure.valid_between,
                                 ancestor_measure.valid_between,
                             ):
-                                self._add_pending_delete(
+                                self._handle_hierarchy_side_effect(
+                                    measure,
                                     ancestor_measure,
-                                    mbr.ME32,
-                                    "b",
+                                    related_is_ancestor=True,
+                                    rule_variant="b",
                                 )
                         except KeyError:
                             continue
+
+    def _handle_hierarchy_side_effect(
+        self,
+        measure: Measure,
+        related_measure: Measure,
+        related_is_ancestor: bool,
+        rule_variant: str,
+    ) -> None:
+        """
+        Updates or deletes a clashing ME32 measure.
+
+        If either measure validity period
+        is fully contained in the other's,
+        the only option is to delete one,
+        favoring the one with lower-level code.
+
+        Otherwise we have an opportunity to cap the earlier measure.
+        """
+        affected_measure = measure if related_is_ancestor else related_measure
+
+        if is_contained(
+            related_measure.valid_between,
+            measure.valid_between,
+        ):
+            return self._add_pending_delete(
+                affected_measure,
+                mbr.ME32,
+                rule_variant + ".rc",
+            )
+
+        if is_contained(
+            measure.valid_between,
+            related_measure.valid_between,
+        ):
+            return self._add_pending_delete(
+                affected_measure,
+                mbr.ME32,
+                rule_variant + ".mc",
+            )
+
+        if related_measure.valid_between.lower < measure.valid_between.lower:
+            if affected_measure == related_measure:
+                valid_between = TaricDateRange(
+                    related_measure.valid_between.lower,
+                    measure.valid_between.lower + relativedelta(days=-1),
+                )
+                suffix = ".rl"
+            else:
+                return self._add_pending_delete(
+                    affected_measure,
+                    mbr.ME32,
+                    rule_variant + ".rl",
+                )
+
+        else:
+            if affected_measure == measure:
+                valid_between = TaricDateRange(
+                    measure.valid_between.lower,
+                    related_measure.valid_between.lower + relativedelta(days=-1),
+                )
+                suffix = ".ml"
+            else:
+                return self._add_pending_delete(
+                    affected_measure,
+                    mbr.ME32,
+                    rule_variant + ".ml",
+                )
+
+        regulation = (
+            affected_measure.terminating_regulation
+            or affected_measure.generating_regulation
+        )
+
+        attrs = dict(
+            terminating_regulation=regulation,
+            valid_between=valid_between,
+        )
+
+        return self._add_pending_update(
+            affected_measure,
+            attrs,
+            mbr.ME32,
+            variant=rule_variant + suffix,
+        )
 
     def _add_pending_delete(
         self,
@@ -1534,15 +1625,16 @@ class CommodityChangeRecordLoader:
         record_group = TARIC_RECORD_GROUPS["commodities"]
 
         matching_records = [
-            (self._get_record_commodity_code(obj), obj)
+            (self._get_record_commodity_keys(obj), obj)
             for obj in transaction.tracked_models.all()
             if obj.record_identifier in record_group
         ]
 
-        sorted_records = sorted(matching_records, key=lambda x: x[0])
-        grouped_records = groupby(sorted_records, key=lambda x: x[0])
+        key_fn = lambda x: x[0]
+        sorted_records = sorted(matching_records, key=key_fn)
+        grouped_records = groupby(sorted_records, key=key_fn)
 
-        for commodity_code, records in grouped_records:
+        for (commodity_code, _), records in grouped_records:
             self.add_pending_change(commodity_code, records)
 
     def add_pending_change(
@@ -1645,7 +1737,13 @@ class CommodityChangeRecordLoader:
 
         return Commodity(obj=good, indent_obj=indent)
 
-    def _get_record_commodity_code(self, obj: TrackedModel) -> str:
+    def _get_record_commodity_keys(self, obj: TrackedModel) -> Tuple[str, str]:
         """Returns the commodity code embedded in a taric record."""
-        _, attr_name = COMMODITY_RECORD_ATTRIBUTES[obj.record_identifier]
-        return get_field_tuple(obj, attr_name)[1]
+        _, prefix = COMMODITY_RECORD_ATTRIBUTES[obj.record_identifier]
+
+        if prefix:
+            good = getattr(obj, prefix)
+        else:
+            good = obj
+
+        return (good.item_id, good.suffix)
