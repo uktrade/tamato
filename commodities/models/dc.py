@@ -442,12 +442,9 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
             filter |= Q(goods_nomenclature__sid=commodity.obj.sid)
 
-        qs = Measure.objects.filter(filter)
-
-        if self.moment.clock_type == ClockType.TRANSACTION:
-            qs = qs.approved_up_to_transaction(self.moment.transaction)
-        else:
-            qs = qs.latest_approved()
+        qs = Measure.objects.filter(filter).approved_up_to_transaction(
+            self.moment.transaction,
+        )
 
         if as_at is not None and as_at is not NOT_PROVIDED:
             logger.debug("Filtering by supplied date: %s", as_at)
