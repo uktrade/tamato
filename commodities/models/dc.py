@@ -1444,15 +1444,15 @@ class CommodityChange(BaseModel):
     @property
     def as_at_date(self) -> date:
         """
-        Returns the treshold date for the commodity code change.
+        Returns the threshold date for the commodity code change.
 
         Dependent measures (or other dependent models with validity spans)
         would be exclude those with effective end date before this date.
 
         In the case of a commodity UPDATE or DELETE,
-        the treshold the commodity's validity end date.
+        the threshold is the commodity's validity end date.
         In the case of a commodity CREATE,
-        the treshold is the commodity's validity start date.
+        the threshold is the commodity's validity start date.
         """
         if self.candidate:
             if self.update_type == UpdateType.UPDATE:
@@ -1573,7 +1573,7 @@ def get_model_preferred_key(obj: TrackedModel) -> str:
 
 def get_model_identifier(obj: TrackedModel) -> str:
     """Returns the preferred identifier for a model."""
-    identifier = obj.identifying_fields_to_string
+    identifier = obj.identifying_fields_to_string()
     label = obj._meta.label
     return f"{label}: {identifier}"
 
