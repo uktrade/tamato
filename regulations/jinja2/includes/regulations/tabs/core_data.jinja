@@ -2,51 +2,51 @@
 {% from 'macros/create_link.jinja' import create_link %}
 
 {% block data %}
-    {{
-        govukSummaryList({
-        "rows": [
+  {{
+    govukSummaryList({
+      "rows": [
         {
-            "key": {"text": "Regulation ID"},
-            "value": {"text": object.regulation_id},
-            "actions": {"items": []}
+          "key": {"text": "Regulation ID"},
+          "value": {"text": object.regulation_id},
+          "actions": {"items": []}
         },
         {
-            "key": {"text": "Regulation group"},
-            "value": {"text": (object.regulation_group.group_id ~ ": " ~object.regulation_group.description) if object.regulation_group else "-"},
-            "actions": {"items": []}
+          "key": {"text": "Regulation group"},
+          "value": {"text": (object.regulation_group.group_id ~ ": " ~object.regulation_group.description) if object.regulation_group else "-"},
+          "actions": {"items": []}
         },
         {
-            "key": {"text": "Title"},
-            "value": {"text": object.information_text if object.information_text else "-"},
-            "actions": {"items": []}
+          "key": {"text": "Title"},
+          "value": {"text": object.information_text if object.information_text else "-"},
+          "actions": {"items": []}
         },
         {
-            "key": {"text": "Public identifier"},
-            "value": {"html": create_link(object.url, object.public_identifier) if object.public_identifier else "-"},
-            "actions": {"items": []}
+          "key": {"text": "Public identifier"},
+          "value": {"html": create_link(object.url, object.public_identifier) if object.public_identifier else "-"},
+          "actions": {"items": []}
         },
 
         {
-            "key": {"text": "URL"},
-            "value": {"html": create_link(object.url, object.url) if object.url else "-"},
-            "actions": {"items": []}
+          "key": {"text": "URL"},
+          "value": {"html": create_link(object.url, object.url) if object.url else "-"},
+          "actions": {"items": []}
         },
         {
-            "key": {"text": "Start date"},
-            "value": {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
-            "actions": {"items": []}
-        }
-        ,{
-            "key": {"text": "End date"},
-            "value": {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
-            "actions": {"items": [] },
+          "key": {"text": "Start date"},
+          "value": {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
+          "actions": {"items": []}
         },
         {
-            "key": {"text": "Status"},
-            "value": {"text": object.transaction.workbasket.get_status_display()},
-            "actions": {"items": []},
+          "key": {"text": "End date"},
+          "value": {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+          "actions": {"items": [] },
+        },
+        {
+          "key": {"text": "Status"},
+          "value": {"text": object.transaction.workbasket.get_status_display()},
+          "actions": {"items": []},
         }
-    ]
-        })
-    }}
+      ]
+    })
+  }}
 {% endblock %}
