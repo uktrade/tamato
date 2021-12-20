@@ -1,6 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 
 
+{% from 'workbaskets/macros/detail_tabs.jinja' import additional_code_detail_tabs with context %}
 {% from 'workbaskets/macros/detail_tabs.jinja' import measure_detail_tabs with context %}
 {% from 'workbaskets/macros/detail_tabs.jinja' import regulation_details_tabs with context %}
 
@@ -16,7 +17,10 @@
 
 {# Build the accordion's item list. #}
 {% for object in object_list %}
-  {% if object._meta.model_name == "measure" %}
+  {% if object._meta.model_name == "additionalcode" %}
+    {% set item_heading = "Additional code: " ~ object.type.sid ~ object.code %}
+    {% set item_content = additional_code_detail_tabs(object, omit_actions=True) %}
+  {% elif object._meta.model_name == "measure" %}
     {% set item_heading = object._meta.verbose_name.title() ~ ": " ~ object.sid %}
     {% set item_content = measure_detail_tabs(object, omit_actions=True) %}
   {% elif object._meta.model_name == "regulation" %}

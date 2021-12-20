@@ -1,11 +1,50 @@
 {% from "components/tabs/macro.njk" import govukTabs %}
 
 
+{% macro additional_code_detail_tabs(object, omit_actions=False) -%}
+  {# Generate 'details' markup for all relevant tabs of a given additional code.
+    Parameters:
+      * object - the addional code instance.
+      * omit_actions - True to prevent an 'Actions' sidebar being included in
+        the generated markup.
+  #}
+  {% set core_data_tab_html %}{% include "includes/additional_codes/tabs/core_data.jinja" %}{% endset %}
+  {% set description_tab_html %}{% include "includes/common/tabs/descriptions.jinja" %}{% endset %}
+  {% set version_control_tab_html %}{% include "includes/additional_codes/tabs/version_control.jinja" %}{% endset %}
+  {{ govukTabs({
+    "items": [
+      {
+        "label": "Details",
+        "id": "core-data",
+        "panel": {
+          "html": core_data_tab_html
+        }
+      },
+      {
+        "label": "Descriptions",
+        "id": "descriptions",
+        "panel": {
+          "html": description_tab_html
+        }
+      },
+      {
+        "label": "Version control",
+        "id": "version-control",
+        "panel": {
+          "html": version_control_tab_html
+        }
+      }
+    ]
+  }) }}
+{%- endmacro %}
+
+
 {% macro measure_detail_tabs(object, omit_actions=False) -%}
   {# Generate 'details' markup for all relevant tabs of a given measure.
-    object - the measure.
-    omit_actions - set to True to prevent an 'actions' sidebar being included in
-      the generated markup.
+    Parameters:
+      * object - the measure instance.
+      * omit_actions - True to prevent an 'actions' sidebar being included in
+        the generated markup.
   #}
   {% set core_data_tab_html %}{% include "includes/measures/tabs/core_data.jinja" %}{% endset %}
   {% set conditions_tab_html %}{% include "includes/measures/tabs/conditions.jinja" %}{% endset %}
@@ -32,9 +71,10 @@
 
 {% macro regulation_details_tabs(object, omit_actions=False) -%}
   {# Generate 'details' markup for all relevant tabs of a given regulation.
-    object - the measure.
-    omit_actions - set to True to prevent an 'actions' sidebar being included in
-      the generated markup.
+    Parameters:
+      * object - the regulation instance.
+      * omit_actions - True to prevent an 'actions' sidebar being included in
+        the generated markup.
   #}
   {% set core_data_tab_html %}{% include "includes/regulations/tabs/core_data.jinja" %}{% endset %}
   {% set conditions_tab_html %}{% include "includes/regulations/tabs/version_control.jinja" %}{% endset %}
