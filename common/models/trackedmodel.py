@@ -486,7 +486,19 @@ class TrackedModel(PolymorphicModel):
             )
 
         if not hasattr(self, "version_group"):
-            self.version_group = self._get_version_group()
+            version_group = self._get_version_group()
+
+            if not version_group:
+                print(
+                    f"No version group! - {self.__class__.__name__}: "
+                    f"{self.get_identifying_fields()} "
+                    f"@ {self.transaction.order}, "
+                    f"UpdateType {self.update_type} "
+                    "(model not saved)",
+                )
+                return
+
+            self.version_group = version_group
 
         return_value = super().save(*args, **kwargs)
 
