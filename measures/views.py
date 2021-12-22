@@ -235,7 +235,9 @@ class MeasureCreateWizard(
         if (current_step, step) == ("duties", "duties"):
             # At each step get_form_initial is called for every step, avoid a loop
             details_data = self.get_cleaned_data_for_step("measure_details")
-            valid_between = details_data.get("valid_between")
+
+            # Data may not be present if the user has skipped forward.
+            valid_between = details_data.get("valid_between") if details_data else None
 
             # The user may go through the wizard in any order, handle the case where there is no
             # date by defaulting to None (no lower bound)
