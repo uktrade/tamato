@@ -7,6 +7,7 @@ from typing import Optional
 from typing import Sequence
 
 import parsec
+from django.core.exceptions import MultipleObjectsReturned
 from django.db.models.query_utils import Q
 
 from additional_codes.models import AdditionalCode
@@ -68,8 +69,13 @@ class MeasureSheetRow(SheetRowMixin):
         desc = self.measure_type_description.lower().strip()
         if desc == "export control":
             return qs.get(sid=766)
+        elif desc == "import control":
+            return qs.get(sid=760)
         elif desc == "restriction on entry into free circulation":
             return qs.get(sid=475)
+        elif desc == "restriction on export":
+            return qs.get(sid=476)
+
         return qs.get(description=self.measure_type_description)
 
     @column("C")
@@ -90,8 +96,17 @@ class MeasureSheetRow(SheetRowMixin):
 
         if self.origin_description == "Myanmar (Burma)":
             geo_area = qs.get(sid=1393)
+        elif self.origin_description == "European Union":
+            geo_area = qs.get(sid=1427)
         else:
-            geo_area = qs.get(description=self.origin_description)
+            try:
+                geo_area = qs.get(description=self.origin_description)
+            except GeographicalAreaDescription.DoesNotExist:
+                print(self.origin_description)
+                raise
+            except MultipleObjectsReturned:
+                print(self.origin_description)
+                raise
 
         return geo_area.described_geographicalarea
 
