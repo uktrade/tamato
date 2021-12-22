@@ -119,15 +119,18 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
             )
             return previous.absorbed_into_goods_nomenclature
         else:
-            must_be_active_on_date = good.valid_between.upper + timedelta(days=1)
-            return (
-                model.objects.filter(
-                    valid_between__contains=must_be_active_on_date,
-                    **kwargs,
+            if good.valid_between.upper is None:
+                return model.objects.filter(**kwargs).latest_approved().get()
+            else:
+                must_be_active_on_date = good.valid_between.upper + timedelta(days=1)
+                return (
+                    model.objects.filter(
+                        valid_between__contains=must_be_active_on_date,
+                        **kwargs,
+                    )
+                    .latest_approved()
+                    .get()
                 )
-                .latest_approved()
-                .get()
-            )
 
 
 class BaseGoodsNomenclatureDescriptionHandler(BaseHandler):
