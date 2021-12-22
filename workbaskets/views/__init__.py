@@ -11,7 +11,9 @@ from rest_framework import renderers
 from rest_framework import viewsets
 
 from common.models import TrackedModel
+from common.models import Transaction
 from common.renderers import TaricXMLRenderer
+from common.validators import UpdateType
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
@@ -87,6 +89,14 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
             f"WORKBASKET_SELECTIONS_{workbasket.pk}",
         )
 
+    def _delete(self, tracked_model):
+        """Delete a tracked model as deleted."""
+        transaction = Transaction()
+        transaction.save()
+        tracked_model.update_type = UpdateType.DELETE
+        tracked_model.transaction = transaction
+        tracked_model.save()
+
     def get_queryset(self):
         """Returns the QuerySet of TrackedModels that are candidates for
         deletion."""
@@ -101,7 +111,8 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
             # User has cancelled.
             return redirect("index")
 
-        self.get_queryset().delete()
+        for tracked_model in self.get_queryset():
+            self._delete(tracked_model)
 
         workbasket = self._workbasket()
         session_store = self._session_store(workbasket)
