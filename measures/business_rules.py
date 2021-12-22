@@ -403,6 +403,27 @@ class ME32(BusinessRule):
                     db_effective_valid_between__overlap=measure.effective_valid_between,
                 )
                 if clashing_measures.exists():
+                    print(
+                        ",".join(
+                            (
+                                measure.goods_nomenclature.item_id,
+                                measure.measure_type.description,
+                                measure.geographical_area.descriptions.order_by(
+                                    "validity_start",
+                                )
+                                .last()
+                                .description,
+                                str(measure.additional_code),
+                                str(measure.sid),
+                                "|".join(
+                                    [
+                                        f"{m.sid}_{m.goods_nomenclature.item_id}"
+                                        for m in clashing_measures
+                                    ],
+                                ),
+                            ),
+                        ),
+                    )
                     raise self.violation(measure)
 
 
