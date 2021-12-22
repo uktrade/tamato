@@ -74,18 +74,26 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     template_name = "workbaskets/delete_changes.jinja"
     permission_required = "workbaskets.change_workbasket"
 
+    def _workbasket(self):
+        try:
+            workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
+        except WorkBasket.DoesNotExist:
+            workbasket = TrackedModel.objects.none()
+        return workbasket
+
+    def _session_store(self, workbasket):
+        return SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{workbasket.pk}",
+        )
+
     def get_queryset(self):
         """Returns the QuerySet of TrackedModels that are candidates for
         deletion."""
 
-        try:
-            workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
-        except WorkBasket.DoesNotExist:
-            return TrackedModel.objects.none()
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{workbasket.pk}",
-        )
+        workbasket = self._workbasket()
+        store = self._session_store(workbasket)
+
         return workbasket.tracked_models.filter(pk__in=store.data.keys())
 
     def post(self, request, *args, **kwargs):
@@ -93,11 +101,11 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
             # User has cancelled.
             return redirect("index")
 
-        # TODO:
-        # * Delete the WorkBasket's selected items.
-        # * Clear SessionStore.
-        # * Check that this and done urls are valid URL patterns consistent
-        #   with other confirmation and done views.
+        self.get_queryset().delete()
+
+        workbasket = self._workbasket()
+        session_store = self._session_store(workbasket)
+        session_store.clear()
 
         redirect_url = reverse(
             "workbaskets:workbasket-ui-delete-changes-done",
