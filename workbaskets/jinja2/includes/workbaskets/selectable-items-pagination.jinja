@@ -13,24 +13,30 @@
 
     {% if page_obj.has_previous() %}
     <li>
-      {{ govukButton({
-        "text": "Prev",
-        "classes": "govuk-button--secondary",
-        "name": "form-action",
-        "value": "page-prev"
-      }) }}
+      <button
+        value="page-prev"
+        name="form-action"
+        class="govuk-link fake-link"
+        data-module="govuk-button"
+        role="link"
+      >
+        Prev
+      </button>
     </li>
     {% endif %}
 
     {% if page_obj.has_next() %}
     <li>
-      {{ govukButton({
-        "text": "Next",
-        "classes": "govuk-button--secondary govuk-!-margin-left-2",
-        "name": "form-action",
-        "value": "page-next"
-      }) }}
     </li>
+      <button
+        value="page-next"
+        name="form-action"
+        class="govuk-link fake-link govuk-!-margin-left-2"
+        data-module="govuk-button"
+        role="link"
+      >
+        Next
+      </button>
     {% endif %}
 
   </ul>

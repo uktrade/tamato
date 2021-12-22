@@ -48,20 +48,26 @@
       {% set actions_details_html %}
         <div class="govuk-grid-row">
           <div class="govuk-grid-column-one-third">
-            {{ govukButton({
-              "html": "Publish <strong>all</strong> changes",
-              "classes": "govuk-!-margin-bottom-0",
-              "name": "form-action",
-              "value": "publish-all"
-            }) }}
+            <button
+              value="publish-all"
+              name="form-action"
+              class="govuk-link fake-link"
+              data-module="govuk-button"
+              role="link"
+            >
+              Publish <strong>all</strong> changes
+            </button>
           </div>
           <div class="govuk-grid-column-one-third">
-            {{ govukButton({
-              "html": "Remove <strong>selected</strong> changes",
-              "classes": "govuk-!-margin-bottom-0",
-              "name": "form-action",
-              "value": "remove-selected"
-            }) }}
+            <button
+              value="remove-selected"
+              name="form-action"
+              class="govuk-link fake-link"
+              data-module="govuk-button"
+              role="link"
+            >
+              Remove <strong>selected</strong> changes
+            </button>
           </div>
         </div>
       {%- endset%}
@@ -75,7 +81,7 @@
         {% set checkbox = checkbox_item(field) %}
         {% set obj = field.field.obj %}
         {% set object_link -%}
-          <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">
+          <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
             {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
           </a>
         {%- endset %}
