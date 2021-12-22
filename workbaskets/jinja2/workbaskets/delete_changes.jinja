@@ -90,12 +90,22 @@
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
         <div class="govuk-button-group">
-          {{ govukButton({
-            "text": "Remove tariff changes",
-            "classes": "govuk-button--warning",
-            "name": "action",
-            "value": "delete"
-          }) }}
+          {% if object_list -%}
+            {{ govukButton({
+              "text": "Remove tariff changes",
+              "classes": "govuk-button--warning",
+              "name": "action",
+              "value": "delete"
+            }) }}
+          {% else %}
+            {{ govukButton({
+              "text": "Remove tariff changes",
+              "classes": "govuk-button--warning",
+              "name": "action",
+              "value": "delete",
+              "disabled": "true"
+            }) }}
+          {% endif %}
 
           {{ govukButton({
             "text": "Cancel",
