@@ -45,71 +45,73 @@
       {% set change_count = workbasket.tracked_models.count() %}
       <p class="govuk-body">{{ change_count }} changes</p>
 
-      {% set actions_details_html %}
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-one-third">
-            <button
-              value="publish-all"
-              name="form-action"
-              class="govuk-link fake-link"
-              data-module="govuk-button"
-              role="link"
-            >
-              Publish <strong>all</strong> changes
-            </button>
+      {% if form.fields %}
+        {% set actions_details_html %}
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-third">
+              <button
+                value="publish-all"
+                name="form-action"
+                class="govuk-link fake-link"
+                data-module="govuk-button"
+                role="link"
+              >
+                Publish <strong>all</strong> changes
+              </button>
+            </div>
+            <div class="govuk-grid-column-one-third">
+              <button
+                value="remove-selected"
+                name="form-action"
+                class="govuk-link fake-link"
+                data-module="govuk-button"
+                role="link"
+              >
+                Remove <strong>selected</strong> changes
+              </button>
+            </div>
           </div>
-          <div class="govuk-grid-column-one-third">
-            <button
-              value="remove-selected"
-              name="form-action"
-              class="govuk-link fake-link"
-              data-module="govuk-button"
-              role="link"
-            >
-              Remove <strong>selected</strong> changes
-            </button>
-          </div>
-        </div>
-      {%- endset%}
-      {{ govukDetails({
-        "summaryText": "Actions on changes below",
-        "html": actions_details_html
-      }) }}
+        {%- endset%}
+        {{ govukDetails({
+          "summaryText": "Actions on changes below",
+          "html": actions_details_html
+        }) }}
 
-      {% set table_rows = [] %}
-      {% for field in form %}
-        {% set checkbox = checkbox_item(field) %}
-        {% set obj = field.field.obj %}
-        {% set object_link -%}
-          <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
-            {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
-          </a>
-        {%- endset %}
-        {% set object_description -%}
-          {{ obj.structure_description if obj.structure_description else "-" }}
-        {%- endset %}
+        {% set table_rows = [] %}
+        {% for field in form %}
+          {% set checkbox = checkbox_item(field) %}
+          {% set obj = field.field.obj %}
+          {% set object_link -%}
+            <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
+              {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
+            </a>
+          {%- endset %}
+          {% set object_description -%}
+            {{ obj.structure_description if obj.structure_description else "-" }}
+          {%- endset %}
 
-        {{ table_rows.append([
-          {"html": checkbox},
-          {"text": obj._meta.verbose_name.title(), "classes": "govuk-!-width-one-quarter"},
-          {"html": object_link, "classes": "govuk-!-width-one-quarter"},
-          {"text": object_description, "classes": "govuk-!-width-one-quarter"},
-          {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
-        ]) or "" }}
-      {% endfor %}
+          {{ table_rows.append([
+            {"html": checkbox},
+            {"text": obj._meta.verbose_name.title(), "classes": "govuk-!-width-one-quarter"},
+            {"html": object_link, "classes": "govuk-!-width-one-quarter"},
+            {"text": object_description, "classes": "govuk-!-width-one-quarter"},
+            {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
+          ]) or "" }}
+        {% endfor %}
 
-      {{ govukTable({
-        "head": [
-          {"html": checkbox_check_all},
-          {"text": "Type"},
-          {"text": "ID"},
-          {"text": "Description"},
-          {"text": "Activity date"},
-        ],
-        "rows": table_rows
-      }) }}
+        {{ govukTable({
+          "head": [
+            {"html": checkbox_check_all},
+            {"text": "Type"},
+            {"text": "ID"},
+            {"text": "Description"},
+            {"text": "Activity date"},
+          ],
+          "rows": table_rows
+        }) }}
 
-      {% include "includes/workbaskets/selectable-items-pagination.jinja"%}
+        {% include "includes/workbaskets/selectable-items-pagination.jinja"%}
+      {% endif %}
     </div>
   </div>
 </form>
