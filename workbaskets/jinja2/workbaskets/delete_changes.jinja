@@ -34,13 +34,16 @@
     {# Regulation #}
     {% set item_heading = object._meta.verbose_name.title() ~ ": " ~ object.regulation_id %}
     {% set item_content = regulation_details_tabs(object, omit_actions=True) %}
+  {% else %}
+    {# Everything else #}
+    {% set object_description =
+        object.get_described_object()
+        if object.get_described_object
+        else object.structure_code
+    %}
+    {% set item_heading = object._meta.verbose_name.title() ~ ": " ~ object_description %}
+    {% set item_content = "" %}
   {% endif %}
-  {# There's currently no creational capability in UI for following
-  TrackedModel subclasses:
-    * Certificates.
-    * Geographical areas.
-    * Quotas.
-  #}
 
   {% set item =
     {
@@ -48,7 +51,8 @@
         "text": item_heading
       },
       "content": {
-        "html": item_content
+        "html": item_content,
+        "text": "",
       },
       "summary": {
       }
