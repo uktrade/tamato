@@ -10,10 +10,7 @@ from django.views.generic.list import ListView
 from rest_framework import renderers
 from rest_framework import viewsets
 
-from common.models import TrackedModel
-from common.models import Transaction
 from common.renderers import TaricXMLRenderer
-from common.validators import UpdateType
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
@@ -73,46 +70,57 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
 
 
 class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
+    """UI for user review of WorkBasket item deletion."""
+
     template_name = "workbaskets/delete_changes.jinja"
     permission_required = "workbaskets.change_workbasket"
 
     def _workbasket(self):
+        """Get the WorkBasket instance associated with this view's deletion."""
+
         try:
             workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
         except WorkBasket.DoesNotExist:
-            workbasket = TrackedModel.objects.none()
+            workbasket = WorkBasket.objects.none()
         return workbasket
 
     def _session_store(self, workbasket):
+        """Get the current user's SessionStore for the WorkBasket that they're
+        deleting, containing ids of the items that have been selected for
+        deletion."""
+
         return SessionStore(
             self.request,
             f"WORKBASKET_SELECTIONS_{workbasket.pk}",
         )
 
-    def _delete(self, tracked_model):
-        """Delete a tracked model as deleted."""
-        transaction = Transaction()
-        transaction.save()
-        tracked_model.update_type = UpdateType.DELETE
-        tracked_model.transaction = transaction
-        tracked_model.save()
-
     def get_queryset(self):
-        """Returns the QuerySet of TrackedModels that are candidates for
+        """Get TrackedModelQuerySet of instances that are candidates for
         deletion."""
 
         workbasket = self._workbasket()
         store = self._session_store(workbasket)
-
         return workbasket.tracked_models.filter(pk__in=store.data.keys())
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
-            # User has cancelled.
             return redirect("index")
 
-        for tracked_model in self.get_queryset():
-            self._delete(tracked_model)
+        # By reverse ordering on record_code + subrecord_code we're able to
+        # delete child entities first, avoiding protected foreign key
+        # violations.
+        object_list = (
+            self.get_queryset()
+            .annotate_record_codes()
+            .order_by("record_code", "subrecord_code")
+            .reverse()
+        )
+
+        for obj in object_list:
+            # Unlike situations where TrackedModels are superceded and are
+            # subject to UpdateType.DELETE, WorkBasket item deletion really
+            # should remove rows from the DB.
+            obj.delete()
 
         workbasket = self._workbasket()
         session_store = self._session_store(workbasket)
