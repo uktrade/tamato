@@ -1,6 +1,9 @@
+import logging
+
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from parsec import ParseError
 
 from common.validators import ApplicabilityCode  # noqa: simplifies import in models
 from common.validators import NumberRangeValidator
@@ -11,6 +14,8 @@ measurement_unit_qualifier_code_validator = RegexValidator(r"^[A-Z]$")
 monetary_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
 measure_type_id_validator = RegexValidator(r"^[0-9]{3}|[0-9]{6}|[A-Z]{3}$")
 measure_condition_code_validator = RegexValidator(r"^[A-Z][A-Z ]?$")
+
+logger = logging.getLogger(__name__)
 
 
 # XXX even though we can't add to or modify these, shouldn't they live in the DB?
@@ -99,6 +104,24 @@ def validate_action_code(value):
         raise ValidationError(f"Action code must be a number") from e
 
     NumberRangeValidator(1, 999)(index)
+
+
+def validate_duties(duties, measure_start_date):
+    """Validate duty sentence by parsing it."""
+    from measures.parsers import DutySentenceParser
+
+    duty_sentence_parser = DutySentenceParser.get(
+        measure_start_date,
+    )
+
+    try:
+        duty_sentence_parser.parse(duties)
+    except ParseError as e:
+        # More helpful errors could be emitted here -
+        # for example if an amount or currency is missing
+        # it may be possible to highlight that.
+        logger.error("Error parse duty sentence %s", e)
+        raise ValidationError("Enter a valid duty sentence.")
 
 
 validate_reduction_indicator = NumberRangeValidator(1, 9)
