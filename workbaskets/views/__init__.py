@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.db.models import ProtectedError
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic.base import RedirectView
@@ -104,6 +105,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
+            # The user has cancelled out of the deletion process.
             return redirect("index")
 
         # By reverse ordering on record_code + subrecord_code we're able to
@@ -120,7 +122,12 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
             # Unlike situations where TrackedModels are superceded and are
             # subject to UpdateType.DELETE, WorkBasket item deletion really
             # should remove rows from the DB.
-            obj.delete()
+            try:
+                obj.delete()
+            except ProtectedError:
+                # TODO Capture deletion failure and present back to UI.
+                # UI component(s) design in the backlog for this: TP-1148.
+                pass
 
         workbasket = self._workbasket()
         session_store = self._session_store(workbasket)
