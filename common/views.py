@@ -41,7 +41,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     paged user-selectable TrackedModel instances (items). Pages contain a
     configurable maximum number of items.
 
-    Items are selectable (they form selections) via an associated checkbox
+    Items are selectable (user selections) via an associated checkbox
     widget so that bulk operations may be performed against them.
 
     Each page displays a maximum number of items (10 being the default), with
@@ -49,11 +49,6 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
 
     Item selection is preserved in the user's session. Whenever page navigation
     or a bulk operation is performed, item selection state is updated.
-
-    Unless client-side JavaScript is used to perform RESTful updates on checkbox
-    check/uncheck, then we can't realistically save state changes when
-    navigating away from the list view to other pages (i.e. HTTP GET requests
-    for the application or other website).
 
     User item selection changes are calculated and applied to the Django
     Session object by performing a three way diff between:
@@ -74,7 +69,6 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
 
     form_class = SelectableObjectsForm
     template_name = "common/index.jinja"
-    default_per_page = 10
 
     # Form action mappings to URL names.
     action_success_url_names = {
@@ -84,20 +78,8 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         "page-next": "index",
     }
 
-    def __init__(self, **kwargs):
-        """Change the default maximum number of WorkBasket items per page by
-        initialising the view with a per_page parameter."""
-        per_page = kwargs.pop("per_page", DashboardView.default_per_page)
-
-        super().__init__(**kwargs)
-
-        self.workbasket = self._get_workbasket()
-        self.paginator = Paginator(
-            self.workbasket.tracked_models,
-            per_page=per_page,
-        )
-
-    def _get_workbasket(self):
+    @property
+    def workbasket(self):
         workbasket = WorkBasket.objects.is_not_approved().last()
         if not workbasket:
             id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
@@ -106,6 +88,10 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
                 author=self.request.user,
             )
         return workbasket
+
+    @property
+    def paginator(self):
+        return Paginator(self.workbasket.tracked_models, per_page=10)
 
     def _append_url_page_param(self, url, form_action):
         """Based upon 'form_action', append a 'page' URL parameter to the given
