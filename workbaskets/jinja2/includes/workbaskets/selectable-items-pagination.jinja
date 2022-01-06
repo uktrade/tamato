@@ -1,0 +1,44 @@
+
+{% if page_obj.has_other_pages() %}
+<nav class="pagination" role="navigation" aria-label="Pagination Navigation">
+  <div class="govuk-body">
+    Showing {{ page_obj|length }} of {{'{0:,}'.format(page_obj.paginator.count)}} changes
+  </div>
+
+  <div class="govuk-body align-left">
+    Page {{page_obj.number}} of {{ '{0:,}'.format(page_obj.paginator.num_pages)}}
+  </div>
+
+  <ul class="govuk-list align-right">
+
+    {% if page_obj.has_previous() %}
+    <li>
+      <button
+        value="page-prev"
+        name="form-action"
+        class="govuk-link fake-link"
+        data-module="govuk-button"
+        role="link"
+      >
+        Prev
+      </button>
+    </li>
+    {% endif %}
+
+    {% if page_obj.has_next() %}
+    <li>
+    </li>
+      <button
+        value="page-next"
+        name="form-action"
+        class="govuk-link fake-link govuk-!-margin-left-2"
+        data-module="govuk-button"
+        role="link"
+      >
+        Next
+      </button>
+    {% endif %}
+
+  </ul>
+</nav>
+{% endif %}
