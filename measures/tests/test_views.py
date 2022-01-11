@@ -1,13 +1,16 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
+from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from measures.validators import validate_duties
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
 
@@ -112,3 +115,22 @@ def test_measure_list_view(view, url_pattern, valid_user_client):
     """Verify that measure list view is under the url measures/ and doesn't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+@pytest.mark.parametrize(
+    ("duties", "error_expected"),
+    [
+        ("33 GBP/100kg", False),
+        ("33 GBP/100kge", True),
+    ],
+)
+def test_duties_validator(
+    duties,
+    error_expected,
+    date_ranges,
+    duty_sentence_parser,
+):
+    # duty_sentence_parser populates data needed by the DutySentenceParser
+    # removing it will cause the test to fail.
+    with raises_if(ValidationError, error_expected):
+        validate_duties(duties, date_ranges.normal)

@@ -15,6 +15,7 @@ from common.tests import models
 from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import FootnoteFactory
 from common.tests.factories import SeedFileTransactionFactory
+from common.tests.factories import TestModel1Factory
 from common.tests.factories import UnapprovedTransactionFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
@@ -567,6 +568,19 @@ def test_described(description_factory):
     described = description.get_described_object()
 
     assert described.get_description() == description
+
+
+def test_get_url_pattern_name_prefix():
+    assert TestModel1.get_url_pattern_name_prefix() == "test_model1"
+
+
+@pytest.fixture(scope="session")
+def test_numeric_sid_iteration():
+    assert isinstance(TestModel1.sid.field, common.fields.NumericSID)
+
+    sids = [TestModel1Factory.create().sid for i in range(3)]
+
+    assert sids == [1, 2, 3]
 
 
 def test_copy_related_model():

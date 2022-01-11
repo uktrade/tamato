@@ -1,4 +1,3 @@
-import re
 from copy import copy
 from datetime import date
 from datetime import timedelta
@@ -139,24 +138,6 @@ def test_commodity_suffix(commodities):
         assert commodity.suffix in used_conftest_suffixes
 
 
-def test_commodity_identifier(commodities):
-    re_identifier = re.compile(r"([0-9.]{13})-([1-8]{1}0)")
-
-    for commodity in commodities.values():
-        try:
-            match = next(re_identifier.finditer(commodity.identifier))
-        except StopIteration:
-            pytest.fail("Expected at least one commodity identifier")
-
-        groups = match.groups()
-
-        assert len(groups) == 2
-        code, suffix = groups
-
-        assert code == commodity.code.dot_code
-        assert suffix == commodity.suffix
-
-
 def test_commodity_tree_base_get_commodity(commodities):
     base = CommodityTreeBase(commodities=commodities.values())
     suffixes = (None, "10", "80")
@@ -258,14 +239,14 @@ def test_collection_current_snapshot(collection_full):
         snapshot_date,
     )
 
-    tx_commodities = set(x.identifier for x in tx_snapshot.commodities)
-    cal_commodities = set(x.identifier for x in cal_snapshot.commodities)
+    tx_commodities = set(tx_snapshot.commodities)
+    cal_commodities = set(cal_snapshot.commodities)
     tx_cal_commodities = tx_commodities.intersection(cal_commodities)
 
-    commodities = set(x.identifier for x in snapshot.commodities)
+    commodities = set(snapshot.commodities)
 
     assert snapshot.moment.clock_type == ClockType.COMBINED
-    assert sorted(commodities) == sorted(tx_cal_commodities)
+    assert commodities == tx_cal_commodities
 
 
 def test_collection_clone(collection_full):
@@ -444,6 +425,30 @@ def test_snapshot_get_descendants(collection_full):
             assert commodity not in snapshot.get_descendants(commodity_)
 
 
+@pytest.mark.parametrize(
+    ("item_ids_suffixes", "expected_ancestor"),
+    (
+        ([("9905", "10")], ("99", "80")),
+        ([("9905", "10"), ("9905", "80")], ("99", "80")),
+        ([("9905", "10"), ("9905", "80"), ("9910", "10")], ("99", "80")),
+        ([("9999.20.00.10", "80"), ("9910.20", "80")], ("9910", "80")),
+        ([("9999.20.00.10", "80"), ("9905", "80")], ("99", "80")),
+        ([("9910.10", "80"), ("9910.20", "80")], ("9910.10", "10")),
+    ),
+)
+def test_snapshot_get_common_ancestor(
+    item_ids_suffixes,
+    expected_ancestor,
+    collection_full,
+):
+    snapshot = collection_full.current_snapshot
+
+    commodities = [snapshot.get_commodity(*pair) for pair in item_ids_suffixes]
+    ancestor = snapshot.get_commodity(*expected_ancestor)
+
+    assert snapshot.get_common_ancestor(*commodities) == ancestor
+
+
 def test_snapshot_is_declarable(collection_basic):
     snapshot = collection_basic.current_snapshot
 
@@ -466,7 +471,6 @@ def test_snapshot_date(collection_basic):
 
 
 def test_snapshot_transaction(collection_basic):
-    date.today()
     transaction = collection_basic.max_transaction
 
     snapshot = collection_basic.get_transaction_clock_snapshot(transaction)
@@ -533,7 +537,12 @@ def test_change_invalid_update_no_current(collection_basic, transaction_pool):
 
 def test_change_invalid_update_no_change(collection_basic, transaction_pool):
     current = collection_basic.get_commodity("9999.20")
-    commodity = copy_commodity(current, transaction_pool)
+    commodity = copy_commodity(
+        current,
+        transaction_pool,
+        sid=current.obj.sid,
+        indent__sid=current.indent_obj.sid,
+    )
 
     with pytest.raises(ValueError):
         CommodityChange(

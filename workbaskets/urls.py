@@ -25,6 +25,16 @@ ui_patterns = [
         views.WorkBasketSubmit.as_view(),
         name="workbasket-ui-submit",
     ),
+    path(
+        f"<pk>/delete-changes/",
+        views.WorkBasketDeleteChanges.as_view(),
+        name="workbasket-ui-delete-changes",
+    ),
+    path(
+        f"<pk>/delete-changes-done/",
+        views.WorkBasketDeleteChangesDone.as_view(),
+        name="workbasket-ui-delete-changes-done",
+    ),
 ]
 
 urlpatterns = [
