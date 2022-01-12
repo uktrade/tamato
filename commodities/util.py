@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any
 from typing import Optional
 from typing import Union
@@ -73,3 +74,22 @@ def contained_date_range(
         start_date or a.lower,
         end_date or a.upper,
     )
+
+
+def get_snapshot_from_good_chapter(good):
+    from commodities.models.dc import CommodityCollectionLoader
+    from commodities.models.dc import CommodityTreeSnapshot
+    from commodities.models.dc import SnapshotMoment
+
+    loader = CommodityCollectionLoader(prefix=good.code.chapter)
+    collection = loader.load()
+    moment = SnapshotMoment(
+        transaction=good.transaction,
+        date=date.today(),
+    )
+    snapshot = CommodityTreeSnapshot(
+        moment=moment,
+        commodities=collection.commodities,
+    )
+
+    return snapshot

@@ -2,6 +2,7 @@
 from datetime import date
 from datetime import timedelta
 
+from commodities.util import get_snapshot_from_good_chapter
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import FootnoteApplicability
@@ -35,22 +36,10 @@ class NIG2(BusinessRule):
 
     def validate(self, indent):
         from commodities.models.dc import Commodity
-        from commodities.models.dc import CommodityCollectionLoader
-        from commodities.models.dc import CommodityTreeSnapshot
-        from commodities.models.dc import SnapshotMoment
 
         good = indent.indented_goods_nomenclature.version_at(self.transaction)
-        loader = CommodityCollectionLoader(prefix=good.code.chapter)
-        collection = loader.load()
         commodity = Commodity(obj=good, indent_obj=indent)
-        moment = SnapshotMoment(
-            transaction=self.transaction,
-            date=date.today(),
-        )
-        snapshot = CommodityTreeSnapshot(
-            moment=moment,
-            commodities=collection.commodities,
-        )
+        snapshot = get_snapshot_from_good_chapter(good)
 
         parent = snapshot.get_parent(commodity)
         if not parent:
@@ -63,20 +52,6 @@ class NIG2(BusinessRule):
         for child in children:
             if not self.parent_spans_child(indent, child.indent_obj):
                 raise self.violation(indent)
-        # for node in indent.nodes.filter(
-        #     creating_transaction__lt=self.transaction,
-        # ).all():
-        #     parent = node.get_parent()
-
-        #     if not parent:
-        #         continue
-
-        #     if not self.parent_spans_child(parent.indent, indent):
-        #         raise self.violation(indent)
-
-        #     for child in node.get_children():
-        #         if not self.parent_spans_child(indent, child.indent):
-        #             raise self.violation(indent)
 
 
 @skip_when_deleted
@@ -98,35 +73,16 @@ class NIG5(BusinessRule):
 
         Therefore check for these two conditions, and if neither are met ensure an origin exists.
         """
-
         from commodities.models import GoodsNomenclatureOrigin
         from commodities.models.dc import Commodity
-        from commodities.models.dc import CommodityCollectionLoader
-        from commodities.models.dc import CommodityTreeSnapshot
-        from commodities.models.dc import SnapshotMoment
 
-        loader = CommodityCollectionLoader(prefix=good.code.chapter)
-        collection = loader.load()
         indent_obj = None
         if good.indents.count():
             indent_obj = good.indents.get()
         commodity = Commodity(obj=good, indent_obj=indent_obj)
-        moment = SnapshotMoment(
-            transaction=good.transaction,
-            date=date.today(),
-        )
-        snapshot = CommodityTreeSnapshot(
-            moment=moment,
-            commodities=collection.commodities,
-        )
+        snapshot = get_snapshot_from_good_chapter(good)
         ancestors = snapshot.get_ancestors(commodity)
-
         matching_indent_exists = False if ancestors else True
-
-        # try:
-        #     matching_indent_exists = good.indents.filter(nodes__depth=1).exists()
-        # except TypeError:
-        #     matching_indent_exists = False
 
         if not (
             matching_indent_exists
