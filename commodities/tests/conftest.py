@@ -270,7 +270,7 @@ def collection_full(commodities) -> CommodityCollection:
 @pytest.fixture
 def collection_spanned(commodities_spanned) -> CommodityCollection:
     """
-    Retruns a collection with the spanned commodities.
+    Returns a collection with the spanned commodities.
 
     See the docs for the commodities_spanned fixture above for details.
     """

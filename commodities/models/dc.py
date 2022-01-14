@@ -445,7 +445,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
         qs = Measure.objects.filter(filter)
 
-        if self.moment.clock_type == ClockType.TRANSACTION:
+        if self.moment.clock_type == ClockType.is_transaction_clock:
             qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
             qs = qs.latest_approved()
@@ -456,7 +456,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
                 Q(db_effective_valid_between__contains=as_at)
                 | Q(valid_between__startswith__gte=as_at),
             )
-        elif as_at is NOT_PROVIDED and self.moment.clock_type == ClockType.COMBINED:
+        elif (
+            as_at is NOT_PROVIDED
+            and self.moment.clock_type == ClockType.is_calendar_clock
+        ):
             logger.debug("Filtering by moment date: %s", self.moment.date)
             qs = qs.with_effective_valid_between().filter(
                 db_effective_valid_between__contains=self.moment.date,

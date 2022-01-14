@@ -11,6 +11,7 @@ from common.models.constants import ClockType
 from common.validators import UpdateType
 
 from .conftest import copy_commodity
+from .conftest import create_dependent_measure
 
 pytestmark = pytest.mark.django_db
 
@@ -447,6 +448,19 @@ def test_snapshot_get_common_ancestor(
     ancestor = snapshot.get_commodity(*expected_ancestor)
 
     assert snapshot.get_common_ancestor(*commodities) == ancestor
+
+
+def test_snapshot_get_dependent_measures(
+    collection_spanned,
+    approved_transaction,
+):
+
+    snapshot = collection_spanned.current_snapshot
+    assert snapshot.get_dependent_measures().count() == 0
+
+    commodity = snapshot.get_commodity("9999.10")
+    create_dependent_measure(commodity, iter([approved_transaction]))
+    assert snapshot.get_dependent_measures().count() == 1
 
 
 def test_snapshot_is_declarable(collection_basic):
