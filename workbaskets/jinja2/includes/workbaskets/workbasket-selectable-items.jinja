@@ -39,9 +39,37 @@
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+    <div class="govuk-grid-column-two-thirds">
       <h2 class="govuk-heading-l">Your tariff changes</h2>
-
+      <p class="govuk-body"></p>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-warning-text__assistive">Warning</span>
+          "We've created an envelope"
+        </strong>
+      </div>
+      <details class="govuk-details" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">Help with your actions</span>
+        </summary>
+        <div class="govuk-details__text">
+          This is a place holder for help text about tariff managers' actions and/or next steps
+        </div>
+      </details>
+      <div class="govuk-button-group">
+        <a href download="#" class="govuk-button" data-module="govuk-button">
+          Download the envelope
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
       {% set change_count = workbasket.tracked_models.count() %}
       <p class="govuk-body">{{ change_count }} changes</p>
 
