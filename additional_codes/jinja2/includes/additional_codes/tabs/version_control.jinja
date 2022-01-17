@@ -1,3 +1,5 @@
+{% from "components/table/macro.njk" import govukTable %}
+
 <h2 class="govuk-heading-l">Version control</h2>
 {% set table_rows = [] %}
 {% for object in object.version_group.versions.all() %}

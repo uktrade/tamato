@@ -417,14 +417,23 @@ def existing_goods_nomenclature(date_ranges):
 
 
 def updated_goods_nomenclature(e):
+    original = e.indents.get()
+    original.indent = 1
+    original.save(force_write=True)
+
     good = factories.GoodsNomenclatureFactory.create(
+        item_id=e.item_id[:8] + "90",
         valid_between=e.valid_between,
+        indent__indent=e.indents.first().indent + 1,
         indent__node__parent=e.indents.first().nodes.first(),
     )
 
     factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good,
         update_type=UpdateType.UPDATE,
         version_group=good.indents.first().version_group,
+        validity_start=good.indents.first().validity_start,
+        indent=e.indents.first().indent - 1,
         node__parent=None,
     )
 
@@ -436,6 +445,7 @@ def updated_goods_nomenclature(e):
         (lambda e: e, True),
         (
             lambda e: factories.GoodsNomenclatureFactory.create(
+                item_id=e.item_id[:8] + "90",
                 indent__node__parent=e.indents.first().nodes.first(),
                 valid_between=e.valid_between,
             ),
@@ -599,10 +609,7 @@ def test_ME32(related_measure_data):
     related_data, error_expected = related_measure_data
     related = factories.MeasureFactory.create(**related_data)
 
-    if error_expected:
-        with pytest.raises(BusinessRuleViolation):
-            business_rules.ME32(related.transaction).validate(related)
-    else:
+    with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME32(related.transaction).validate(related)
 
 
@@ -1353,27 +1360,64 @@ def test_ME57(date_ranges):
         business_rules.ME57(condition.transaction).validate(condition)
 
 
-@pytest.mark.parametrize(
-    "required_certificate, expect_error",
-    [
-        (factories.CertificateFactory.create, True),
-        (lambda: None, True),
-        (factories.CertificateFactory.create, False),
-    ],
-)
-def test_ME58(required_certificate, expect_error):
-    """The same certificate can only be referenced once by the same measure and
-    the same condition type."""
+@pytest.mark.parametrize("existing_cert", (True, False))
+@pytest.mark.parametrize("existing_volume", (True, False))
+@pytest.mark.parametrize("existing_unit", (True, False))
+@pytest.mark.parametrize("existing_currency", (True, False))
+@pytest.mark.parametrize("duplicate_cert", (True, False))
+@pytest.mark.parametrize("duplicate_volume", (True, False))
+@pytest.mark.parametrize("duplicate_unit", (True, False))
+@pytest.mark.parametrize("duplicate_currency", (True, False))
+def test_ME58(
+    existing_cert: bool,
+    existing_volume: bool,
+    existing_unit: bool,
+    existing_currency: bool,
+    duplicate_cert: bool,
+    duplicate_volume: bool,
+    duplicate_unit: bool,
+    duplicate_currency: bool,
+):
+    """
+    The same certificate can only be referenced once by the same measure and the
+    same condition type.
+
+    Although the rule only mentions certificates, we have extended it to cover
+    volumes and units as well. Thus, it now checks that each combination of
+    certificate, volume and unit is unique, including where all are missing.
+
+    Volume and unit should always come together, and the same volume under a
+    different unit is allowed. So e.g. 20.000 KGM and 20.000 TNE is valid.
+
+    Note that it is not really meant to be possible to have a certificate and a
+    volume and unit, but that should be enforced elsewhere so this test checks
+    for it anyway.
+    """
+    expect_error = (
+        (existing_cert == duplicate_cert)
+        and (existing_volume == duplicate_volume)
+        and (existing_unit == duplicate_unit)
+        and (existing_currency == duplicate_currency)
+    )
+
+    cert = factories.CertificateFactory.create()
+    volume = factories.duty_amount().function()
+    unit = factories.MeasurementFactory.create()
+    currency = factories.MonetaryUnitFactory.create()
 
     existing = factories.MeasureConditionFactory.create(
-        required_certificate=required_certificate(),
+        required_certificate=(cert if existing_cert else None),
+        duty_amount=(volume if existing_volume else None),
+        condition_measurement=(unit if existing_unit else None),
+        monetary_unit=(currency if existing_currency else None),
     )
     duplicate = factories.MeasureConditionFactory.create(
         condition_code=existing.condition_code,
         dependent_measure=existing.dependent_measure,
-        required_certificate=existing.required_certificate
-        if expect_error
-        else factories.CertificateFactory.create(),
+        required_certificate=(cert if duplicate_cert else None),
+        duty_amount=(volume if duplicate_volume else None),
+        condition_measurement=(unit if duplicate_unit else None),
+        monetary_unit=(currency if duplicate_currency else None),
     )
 
     with raises_if(BusinessRuleViolation, expect_error):

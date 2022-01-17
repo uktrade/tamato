@@ -5,6 +5,8 @@ from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
+from common.tests.util import valid_between_start_delta
+from common.tests.util import validity_start_delta
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
@@ -18,11 +20,11 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.parametrize(
     ("new_data", "expected_valid"),
     (
-        ({}, True),
-        ({"start_date_0": lambda d: d + 1}, True),
-        ({"start_date_0": lambda d: d - 1}, False),
-        ({"start_date_1": lambda m: m + 1}, True),
-        ({"start_date_2": lambda y: y + 1}, True),
+        (lambda f: {}, True),
+        (valid_between_start_delta(days=+1), True),
+        (valid_between_start_delta(days=-1), False),
+        (valid_between_start_delta(months=1), True),
+        (valid_between_start_delta(years=1), True),
     ),
 )
 def test_footnote_update(new_data, expected_valid, use_update_form):
@@ -33,14 +35,13 @@ def test_footnote_update(new_data, expected_valid, use_update_form):
 @pytest.mark.parametrize(
     ("new_data", "expected_valid"),
     (
-        ({}, True),
-        # conditional to avoid false errors at end of month etc.
-        ({"validity_start_0": lambda d: d + 1 if d < 28 else 1}, True),
-        ({"validity_start_0": lambda d: d - 1 if d > 1 else 28}, True),
-        ({"validity_start_1": lambda m: m + 1 if m < 12 else 1}, True),
-        ({"validity_start_2": lambda y: y + 1}, True),
-        ({"description": lambda d: d + "AAA"}, True),
-        ({"description": lambda d: ""}, False),
+        (lambda f: {}, True),
+        (validity_start_delta(days=+1), True),
+        (validity_start_delta(days=-1), True),
+        (validity_start_delta(months=1), True),
+        (validity_start_delta(years=1), True),
+        (lambda f: {"description": f.description + "AAA"}, True),
+        (lambda f: {"description": ""}, False),
     ),
 )
 def test_footnote_description_update(new_data, expected_valid, use_update_form):
@@ -51,9 +52,9 @@ def test_footnote_description_update(new_data, expected_valid, use_update_form):
 @pytest.mark.parametrize(
     ("new_data", "workbasket_valid"),
     (
-        ({}, True),
-        ({"description": lambda d: d + "AAA"}, True),
-        ({"validity_start_0": lambda d: d + 1}, False),
+        (lambda f: {}, True),
+        (lambda f: {"description": f.description + "AAA"}, True),
+        (validity_start_delta(days=1), False),
     ),
 )
 def test_footnote_business_rule_application(

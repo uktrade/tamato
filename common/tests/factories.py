@@ -6,6 +6,7 @@ from itertools import product
 
 import factory
 from factory.fuzzy import FuzzyChoice
+from faker import Faker
 
 from common.models import TrackedModel
 from common.models.transactions import TransactionPartition
@@ -41,6 +42,12 @@ def string_sequence(length=1, characters=string.ascii_uppercase + string.digits)
 
 def numeric_sid():
     return factory.Sequence(lambda x: x + 1)
+
+
+def duty_amount():
+    return factory.LazyFunction(
+        lambda: Faker().pydecimal(left_digits=7, right_digits=3, positive=True),
+    )
 
 
 def date_ranges(name):
@@ -784,16 +791,34 @@ class QuotaDefinitionFactory(TrackedModelMixin, ValidityFactoryMixin):
     order_number = factory.SubFactory(QuotaOrderNumberFactory)
     volume = 0
     initial_volume = 0
-    monetary_unit = factory.SubFactory(MonetaryUnitFactory)
-    measurement_unit = factory.SubFactory(MeasurementUnitFactory)
+    monetary_unit = None
+    measurement_unit = None
+    measurement_unit_qualifier = None
     maximum_precision = 0
     quota_critical = False
     quota_critical_threshold = 80
     description = short_description()
 
+    class Params:
+        is_monetary = factory.Trait(
+            monetary_unit=factory.SubFactory(MonetaryUnitFactory),
+        )
+        is_physical = factory.Trait(
+            measurement_unit=factory.SubFactory(MeasurementUnitFactory),
+        )
+        has_qualifier = factory.Trait(
+            measurement_unit_qualifier=factory.SubFactory(
+                MeasurementUnitQualifierFactory,
+            ),
+        )
+
+    is_monetary = False
+    is_physical = True
+    has_qualifier = False
+
 
 class QuotaDefinitionWithQualifierFactory(QuotaDefinitionFactory):
-    measurement_unit_qualifier = factory.SubFactory(MeasurementUnitQualifierFactory)
+    has_qualifier = True
 
 
 class QuotaAssociationFactory(TrackedModelMixin):
@@ -1067,7 +1092,7 @@ class MeasureConditionFactory(TrackedModelMixin):
     )
     condition_code = factory.SubFactory(MeasureConditionCodeFactory)
     component_sequence_number = factory.Faker("random_int", min=1, max=999)
-    duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
+    duty_amount = duty_amount()
     monetary_unit = factory.SubFactory(MonetaryUnitFactory)
     condition_measurement = None
     action = factory.SubFactory(MeasureActionFactory)
@@ -1091,7 +1116,7 @@ class MeasureConditionComponentFactory(TrackedModelMixin):
         transaction=factory.SelfAttribute("..transaction"),
     )
     duty_expression = factory.SubFactory(DutyExpressionFactory)
-    duty_amount = factory.Faker("pydecimal", left_digits=7, right_digits=3)
+    duty_amount = duty_amount()
     monetary_unit = factory.SubFactory(MonetaryUnitFactory)
     component_measurement = None
 

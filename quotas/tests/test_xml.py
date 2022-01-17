@@ -27,14 +27,23 @@ def test_quota_order_number_origin_exclusion_xml(xml):
 
 
 @validate_taric_xml(factories.QuotaDefinitionWithQualifierFactory)
-def test_quota_definition_xml(xml):
+def test_physical_quota_definition_xml(xml):
     element = xml.find(".//oub:quota.definition", nsmap)
-    assert element is not None
-    element = xml.find(".//oub:monetary.unit.code", nsmap)
     assert element is not None
     element = xml.find(".//oub:measurement.unit.code", nsmap)
     assert element is not None
     element = xml.find(".//oub:measurement.unit.qualifier.code", nsmap)
+    assert element is not None
+
+
+@validate_taric_xml(
+    factories.QuotaDefinitionFactory,
+    factory_kwargs={"is_monetary": True, "is_physical": False},
+)
+def test_monetary_quota_definition_xml(xml):
+    element = xml.find(".//oub:quota.definition", nsmap)
+    assert element is not None
+    element = xml.find(".//oub:monetary.unit.code", nsmap)
     assert element is not None
 
 

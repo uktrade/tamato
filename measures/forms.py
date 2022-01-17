@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 
 from crispy_forms_gds.helper import FormHelper
@@ -25,9 +26,12 @@ from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
 from measures import models
+from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
+
+logger = logging.getLogger(__name__)
 
 
 class MeasureForm(ValidityPeriodForm):
@@ -540,6 +544,15 @@ class MeasureDutiesForm(forms.Form):
             ),
             Submit("submit", "Continue"),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        duties = cleaned_data["duties"]
+        measure_start_date = self.initial.get("measure_start_date")
+        if measure_start_date is not None:
+            validate_duties(duties, measure_start_date)
+
+        return cleaned_data
 
 
 class MeasureFootnotesForm(forms.Form):

@@ -1,4 +1,3 @@
-import re
 from copy import copy
 from datetime import date
 from datetime import timedelta
@@ -9,7 +8,6 @@ from commodities.models.constants import SUFFIX_DECLARABLE
 from commodities.models.dc import CommodityChange
 from commodities.models.dc import CommodityTreeBase
 from common.models.constants import ClockType
-from common.util import TaricDateRange
 from common.validators import UpdateType
 
 from .conftest import copy_commodity
@@ -37,7 +35,7 @@ def verify_snapshot_members(collection, snapshot, excluded_date_ranges):
 
 def test_commodity_code(commodities):
     for commodity in commodities.values():
-        assert str(commodity.code) == commodity.get_item_id()
+        assert str(commodity.code) == commodity.item_id
 
 
 def test_commodity_dot_code(commodities):
@@ -135,53 +133,14 @@ def test_commodity_suffix(commodities):
     used_conftest_suffixes = ("10", "80")
 
     for commodity in commodities.values():
-        assert len(commodity.get_suffix()) == 2
-        assert commodity.get_suffix() == commodity.obj.suffix
-        assert commodity.get_suffix() in used_conftest_suffixes
-
-
-def test_commodity_dates(commodities):
-    for commodity in commodities.values():
-        date_range = TaricDateRange(
-            commodity.start_date,
-            commodity.end_date,
-        )
-
-        assert date_range == commodity.obj.valid_between
-
-
-def test_commodity_get_indent(commodities):
-    for commodity in commodities.values():
-        a = commodity.indent is not None
-        b = commodity.get_indent() == commodity.indent
-
-        assert a == b
-
-
-def test_commodity_identifier(commodities):
-    re_identifier = re.compile(r"([0-9.]{13})-([1-8]{1}0)-([0-9]{1,2})/([0-9]{1})")
-
-    for commodity in commodities.values():
-        try:
-            match = next(re_identifier.finditer(commodity.identifier))
-        except StopIteration:
-            pytest.fail("Expected at least one commodity identifier")
-
-        groups = match.groups()
-
-        assert len(groups) == 4
-        code, suffix, indent, version = groups
-
-        assert code == commodity.code.dot_code
-        assert suffix == commodity.get_suffix()
-        assert indent == str(commodity.get_indent())
-        assert version == str(commodity.version)
+        assert len(commodity.suffix) == 2
+        assert commodity.suffix == commodity.obj.suffix
+        assert commodity.suffix in used_conftest_suffixes
 
 
 def test_commodity_tree_base_get_commodity(commodities):
     base = CommodityTreeBase(commodities=commodities.values())
     suffixes = (None, "10", "80")
-    versions = (None, 0, 1, 2)
 
     for commodity in commodities.values():
         kwargs = dict(code=str(commodity.code))
@@ -190,17 +149,13 @@ def test_commodity_tree_base_get_commodity(commodities):
             if suffix is not None:
                 kwargs.update(dict(suffix=suffix))
 
-            for version in versions:
-                kwargs.update(dict(version=version))
+            result = base.get_commodity(**kwargs)
+            suffix = suffix or SUFFIX_DECLARABLE
 
-                result = base.get_commodity(**kwargs)
-                suffix = suffix or SUFFIX_DECLARABLE
-                version = version or commodity.current_version
+            a = result == commodity
+            b = suffix == commodity.suffix
 
-                a = result == commodity
-                b = suffix == commodity.get_suffix() and version == commodity.version
-
-                assert a == b
+            assert a == b
 
 
 @pytest.mark.parametrize(
@@ -284,14 +239,14 @@ def test_collection_current_snapshot(collection_full):
         snapshot_date,
     )
 
-    tx_commodities = set(x.identifier for x in tx_snapshot.commodities)
-    cal_commodities = set(x.identifier for x in cal_snapshot.commodities)
+    tx_commodities = set(tx_snapshot.commodities)
+    cal_commodities = set(cal_snapshot.commodities)
     tx_cal_commodities = tx_commodities.intersection(cal_commodities)
 
-    commodities = set(x.identifier for x in snapshot.commodities)
+    commodities = set(snapshot.commodities)
 
     assert snapshot.moment.clock_type == ClockType.COMBINED
-    assert sorted(commodities) == sorted(tx_cal_commodities)
+    assert commodities == tx_cal_commodities
 
 
 def test_collection_clone(collection_full):
@@ -470,6 +425,30 @@ def test_snapshot_get_descendants(collection_full):
             assert commodity not in snapshot.get_descendants(commodity_)
 
 
+@pytest.mark.parametrize(
+    ("item_ids_suffixes", "expected_ancestor"),
+    (
+        ([("9905", "10")], ("99", "80")),
+        ([("9905", "10"), ("9905", "80")], ("99", "80")),
+        ([("9905", "10"), ("9905", "80"), ("9910", "10")], ("99", "80")),
+        ([("9999.20.00.10", "80"), ("9910.20", "80")], ("9910", "80")),
+        ([("9999.20.00.10", "80"), ("9905", "80")], ("99", "80")),
+        ([("9910.10", "80"), ("9910.20", "80")], ("9910.10", "10")),
+    ),
+)
+def test_snapshot_get_common_ancestor(
+    item_ids_suffixes,
+    expected_ancestor,
+    collection_full,
+):
+    snapshot = collection_full.current_snapshot
+
+    commodities = [snapshot.get_commodity(*pair) for pair in item_ids_suffixes]
+    ancestor = snapshot.get_commodity(*expected_ancestor)
+
+    assert snapshot.get_common_ancestor(*commodities) == ancestor
+
+
 def test_snapshot_is_declarable(collection_basic):
     snapshot = collection_basic.current_snapshot
 
@@ -492,7 +471,6 @@ def test_snapshot_date(collection_basic):
 
 
 def test_snapshot_transaction(collection_basic):
-    date.today()
     transaction = collection_basic.max_transaction
 
     snapshot = collection_basic.get_transaction_clock_snapshot(transaction)
@@ -519,7 +497,11 @@ def test_change_invalid_create_no_comodity(collection_basic):
 
 def test_change_invalid_create_clash(collection_basic, transaction_pool):
     current = collection_basic.get_commodity("9999.20")
-    commodity = copy_commodity(current, transaction_pool, indent=current.indent + 1)
+    commodity = copy_commodity(
+        current,
+        transaction_pool,
+        indent=current.obj.indents.get().indent + 1,
+    )
 
     with pytest.raises(ValueError):
         CommodityChange(
@@ -555,7 +537,12 @@ def test_change_invalid_update_no_current(collection_basic, transaction_pool):
 
 def test_change_invalid_update_no_change(collection_basic, transaction_pool):
     current = collection_basic.get_commodity("9999.20")
-    commodity = copy_commodity(current, transaction_pool)
+    commodity = copy_commodity(
+        current,
+        transaction_pool,
+        sid=current.obj.sid,
+        indent__sid=current.indent_obj.sid,
+    )
 
     with pytest.raises(ValueError):
         CommodityChange(
@@ -616,7 +603,7 @@ def test_snapshot_diff_update(collection_basic, transaction_pool):
     candidate = copy_commodity(
         current,
         transaction_pool,
-        indent=current.get_indent() + 1,
+        indent=current.obj.indents.get().indent + 1,
     )
 
     updates = [

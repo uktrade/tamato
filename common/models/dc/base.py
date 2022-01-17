@@ -121,7 +121,7 @@ class ModelPostProcessor:
         #     self._post_process_union(value, args, dc_field.name)
 
 
-@dataclass
+@dataclass(frozen=True, repr=True)
 class BaseModel:
     """Base class for all dataclass based models in the lab."""
 
@@ -161,7 +161,3 @@ class BaseModel:
             d[attr_name] = attr_doc
 
         return d
-
-    def _get_repr(self, extra: str) -> str:
-        """Returns a string representation of the model instance."""
-        return f"{self.__identifier__}: {extra}"
