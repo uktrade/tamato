@@ -15,6 +15,7 @@ from common.tests import models
 from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import FootnoteFactory
 from common.tests.factories import SeedFileTransactionFactory
+from common.tests.factories import TestModel1Factory
 from common.tests.factories import UnapprovedTransactionFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
@@ -22,6 +23,7 @@ from common.tests.models import TestModel3
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
+from measures.models import MeasureCondition
 from regulations.models import Group
 from regulations.models import Regulation
 
@@ -124,7 +126,7 @@ def test_versions_up_to(model1_with_history):
 
 def test_as_at(date_ranges, validity_factory):
     """Ensure only records active at a specific date are fetched."""
-    if validity_factory is factories.GoodsNomenclatureIndentNodeFactory:
+    if validity_factory is factories.GoodsNomenclatureFactory:
         pytest.xfail("Does not implement as_at")
 
     pks = {
@@ -307,9 +309,6 @@ def test_terminate(
     termination_range,
     initial_dates,
 ):
-    if validity_factory is factories.GoodsNomenclatureIndentNodeFactory:
-        pytest.xfail("Does not implement terminate")
-
     model = validity_factory.create(valid_between=getattr(date_ranges, initial_dates))
     termination_date = getattr(date_ranges, termination_range).upper
     terminated_model = model.terminate(workbasket, termination_date)
@@ -569,3 +568,125 @@ def test_described(description_factory):
     described = description.get_described_object()
 
     assert described.get_description() == description
+
+
+def test_get_url_pattern_name_prefix():
+    assert TestModel1.get_url_pattern_name_prefix() == "test_model1"
+
+
+@pytest.fixture(scope="session")
+def test_numeric_sid_iteration():
+    assert isinstance(TestModel1.sid.field, common.fields.NumericSID)
+
+    sids = [TestModel1Factory.create().sid for i in range(3)]
+
+    assert sids == [1, 2, 3]
+
+
+def test_copy_related_model():
+    measure = factories.MeasureFactory.create()
+    goods_nomenclature = factories.GoodsNomenclatureFactory.create()
+    workbasket = factories.ApprovedWorkBasketFactory.create()
+
+    copied_measure = measure.copy(
+        workbasket.new_transaction(),
+        goods_nomenclature=goods_nomenclature,
+    )
+
+    assert copied_measure.goods_nomenclature == goods_nomenclature
+
+
+@pytest.mark.parametrize(
+    "conditions",
+    [
+        ([]),
+        (None),
+    ],
+)
+def test_copy_empty_for_related_models(conditions):
+    measure = factories.MeasureFactory.create()
+    condition = factories.MeasureConditionFactory.create(dependent_measure=measure)
+    workbasket = factories.ApprovedWorkBasketFactory.create()
+
+    copied_measure = measure.copy(workbasket.new_transaction(), conditions=conditions)
+
+    assert copied_measure.conditions.count() == 0
+
+
+def test_copy_fk_related_models():
+    measure = factories.MeasureFactory.create()
+    workbasket = factories.ApprovedWorkBasketFactory.create()
+    code = factories.MeasureConditionCodeFactory.create()
+    transaction = workbasket.new_transaction()
+    condition_data = {
+        "transaction": transaction,
+        "update_type": UpdateType.CREATE,
+        "sid": "1",
+        "component_sequence_number": 1,
+        "condition_code_id": code.pk,
+    }
+
+    copied_measure = measure.copy(
+        transaction,
+        conditions=[MeasureCondition(**condition_data)],
+    )
+
+    assert copied_measure.conditions.count() == 1
+
+
+def test_copy_nested_fk():
+    measure = factories.MeasureFactory.create()
+    workbasket = factories.ApprovedWorkBasketFactory.create()
+    transaction = workbasket.new_transaction()
+    factories.MeasureConditionFactory.create(
+        transaction=transaction,
+        dependent_measure=measure,
+    )
+    condition_code = factories.MeasureConditionCodeFactory()
+
+    copied_measure = measure.copy(
+        transaction,
+        conditions__condition_code=condition_code,
+    )
+
+    assert copied_measure.conditions.first().condition_code == condition_code
+
+
+def test_copy_nested_field():
+    measure = factories.MeasureFactory.create()
+    workbasket = factories.ApprovedWorkBasketFactory.create()
+    transaction = workbasket.new_transaction()
+    factories.MeasureConditionFactory.create(
+        transaction=transaction,
+        dependent_measure=measure,
+    )
+
+    copied_measure = measure.copy(
+        transaction,
+        conditions__component_sequence_number=999,
+    )
+
+    assert copied_measure.conditions.first().component_sequence_number == 999
+
+
+def test_copy_nested_field_two_levels_deep():
+    measure = factories.MeasureFactory.create()
+    workbasket = factories.ApprovedWorkBasketFactory.create()
+    transaction = workbasket.new_transaction()
+    condition = factories.MeasureConditionFactory.create(
+        transaction=transaction,
+        dependent_measure=measure,
+    )
+    factories.MeasureConditionComponentFactory.create(
+        transaction=transaction,
+        condition=condition,
+        duty_amount=1,
+    )
+
+    measure.conditions.first().components.first().duty_amount
+    copied_measure = measure.copy(
+        transaction,
+        conditions__components__duty_amount=0,
+    )
+
+    assert copied_measure.conditions.first().components.first().duty_amount == 0

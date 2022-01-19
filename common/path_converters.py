@@ -6,4 +6,6 @@ from django.urls.converters import IntConverter
 
 
 class NumericSIDConverter(IntConverter):
+    """Parses a NumericSID from the path."""
+
     regex = r"[0-9]{1,8}"

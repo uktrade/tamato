@@ -1,3 +1,4 @@
+"""Common views."""
 import time
 from typing import Optional
 from typing import Type
@@ -15,8 +16,11 @@ from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.urls import reverse
 from django.views import generic
+from django.views.generic.base import TemplateResponseMixin
+from django.views.generic.base import View
+from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
@@ -25,32 +29,150 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
+from workbaskets.session_store import SessionStore
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-def index(request):
-    workbasket = WorkBasket.objects.is_not_approved().last()
+class DashboardView(TemplateResponseMixin, FormMixin, View):
+    """
+    UI endpoint providing a dashboard view, including a WorkBasket (list) of
+    paged user-selectable TrackedModel instances (items). Pages contain a
+    configurable maximum number of items.
 
-    if not workbasket:
-        id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
-        workbasket = WorkBasket.objects.create(
-            title=f"Workbasket {id}",
-            author=request.user,
+    Items are selectable (user selections) via an associated checkbox
+    widget so that bulk operations may be performed against them.
+
+    Each page displays a maximum number of items (10 being the default), with
+    user selections preserved when navigating between pages.
+
+    Item selection is preserved in the user's session. Whenever page navigation
+    or a bulk operation is performed, item selection state is updated.
+
+    User item selection changes are calculated and applied to the Django
+    Session object by performing a three way diff between:
+    * Current selection state held in the session,
+    * Available list items (have any new items been added, or somehow removed),
+    * User submitted changes (from form POST requests)
+
+    Note:
+    --
+    Options considered to manage paged selection:
+    * Full list in form, hiding items not on current page. This would require
+      either including all items in GET request's URI after POST, dropping use
+      of GET after POST, neither seem very reasonable.
+    * Use django formtools wizard. This doesn't fit the wizard's usecase and
+      design very well and may make for an over complicated implementation.
+    * Store user selection in the session. Simplest, complete and most elegant.
+    """
+
+    form_class = SelectableObjectsForm
+    template_name = "common/index.jinja"
+
+    # Form action mappings to URL names.
+    action_success_url_names = {
+        "publish-all": "workbaskets:workbasket-ui-submit",
+        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
+        "page-prev": "index",
+        "page-next": "index",
+    }
+
+    @property
+    def workbasket(self):
+        workbasket = WorkBasket.objects.is_not_approved().last()
+        if not workbasket:
+            id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
+            workbasket = WorkBasket.objects.create(
+                title=f"Workbasket {id}",
+                author=self.request.user,
+            )
+        return workbasket
+
+    @property
+    def paginator(self):
+        return Paginator(self.workbasket.tracked_models, per_page=10)
+
+    def _append_url_page_param(self, url, form_action):
+        """Based upon 'form_action', append a 'page' URL parameter to the given
+        url param and return the result."""
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
+
+    def get(self, request, *args, **kwargs):
+        """Service GET requests by displaying the page and form."""
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        """Manage POST requests, which can either be requests to change the
+        paged form data while preserving the user's form changes, or finally
+        submit the form data for processing."""
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action in ("publish-all", "remove-selected"):
+            return reverse(
+                self.action_success_url_names[form_action],
+                kwargs={"pk": self.workbasket.pk},
+            )
+        elif form_action in ("page-prev", "page-next"):
+            return self._append_url_page_param(
+                reverse(self.action_success_url_names[form_action]),
+                form_action,
+            )
+        return reverse("index")
+
+    def get_initial(self):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
         )
+        return store.data.copy()
 
-    paginator = Paginator(workbasket.tracked_models, per_page=10)
-    page = paginator.get_page(request.GET.get("page", 1))
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+        kwargs["field_name_prefix"] = "trackedmodelselection-"
+        return kwargs
 
-    return render(
-        request,
-        "common/index.jinja",
-        context={
-            "workbasket": workbasket,
-            "page_obj": page,
-            "paginator": paginator,
-        },
-    )
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+            },
+        )
+        return context
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        to_add = {
+            key: value for key, value in form.cleaned_data_no_prefix.items() if value
+        }
+        to_remove = {
+            key: value
+            for key, value in form.cleaned_data_no_prefix.items()
+            if key not in to_add
+        }
+        store.add_items(to_add)
+        store.remove_items(to_remove)
+        return super().form_valid(form)
 
 
 class HealthCheckResponse(HttpResponse):
@@ -87,6 +209,8 @@ class HealthCheckResponse(HttpResponse):
 
 
 def healthcheck(request):
+    """Healthcheck endpoint returns a 503 error if the database or redis is
+    down."""
     response = HealthCheckResponse()
 
     try:
@@ -111,7 +235,7 @@ class LogoutView(django.contrib.auth.views.LogoutView):
 
 
 class CreateView(PermissionRequiredMixin, generic.CreateView):
-    """Create a new tracked model."""
+    """Base view class for creating a new tracked model."""
 
     permission_required = "common.add_trackedmodel"
     UPDATE_TYPE = UpdateType.CREATE
@@ -133,7 +257,7 @@ class CreateView(PermissionRequiredMixin, generic.CreateView):
 
 
 class UpdateView(PermissionRequiredMixin, generic.UpdateView):
-    """Create an updated version of a TrackedModel."""
+    """Base view class for creating an updated version of a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.UPDATE
     permission_required = "common.add_trackedmodel"
@@ -144,19 +268,19 @@ class UpdateView(PermissionRequiredMixin, generic.UpdateView):
 
 
 class DeleteView(CreateView):
-    """Create a deletion of a TrackedModel."""
+    """Base view class for deleting a TrackedModel."""
 
     UPDATE_TYPE = UpdateType.DELETE
 
 
 class WithPaginationListView(FilterView):
-    """Generic list view enabling pagination and adds a page link list to the
-    context."""
+    """Generic list view enabling pagination."""
 
     paginator_class = Paginator
     paginate_by = settings.REST_FRAMEWORK["PAGE_SIZE"]
 
     def get_context_data(self, *, object_list=None, **kwargs):
+        """Adds a page link list to the context."""
         data = super().get_context_data(object_list=object_list, **kwargs)
         page_obj = data["page_obj"]
         page_number = page_obj.number
@@ -175,7 +299,8 @@ class RequiresSuperuserMixin(UserPassesTestMixin):
 
 
 class TamatoListView(WithCurrentWorkBasket, WithPaginationListView):
-    pass
+    """Base view class for listing tariff components including those in the
+    current workbasket, with pagination."""
 
 
 class TrackedModelDetailMixin:
@@ -185,6 +310,13 @@ class TrackedModelDetailMixin:
     required_url_kwargs = None
 
     def get_object(self, queryset: Optional[QuerySet] = None) -> Model:
+        """
+        Fetch the model instance by primary key or by identifying_fields in the
+        URL.
+
+        :param queryset Optional[QuerySet]: Get the object from this queryset
+        :rtype: Model
+        """
         if queryset is None:
             queryset = self.get_queryset()
 
@@ -216,7 +348,7 @@ class TrackedModelDetailView(
     TrackedModelDetailMixin,
     generic.DetailView,
 ):
-    pass
+    """Base view class for displaying a single TrackedModel."""
 
 
 class BusinessRulesMixin:
@@ -225,6 +357,12 @@ class BusinessRulesMixin:
     validate_business_rules = []
 
     def form_valid(self, form):
+        """
+        If any of the specified business rules are violated, reshow the form
+        with the violations as form errors.
+
+        :param form: The submitted form
+        """
         violations = False
         workbasket = WorkBasket.current(self.request)
         transaction = workbasket.transactions.last()

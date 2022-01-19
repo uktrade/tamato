@@ -15,6 +15,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Type
 from typing import Union
 
 from django.db.models.expressions import F
@@ -87,7 +88,6 @@ PREEMPTIVE_TRANSACTION_SEED = -int(1e5)
 TRACKEDMODEL_IDENTIFIER_KEYS = {
     "additional_codes.AdditionalCode": "code",
     "commodities.GoodsNomenclature": "item_id",
-    "commodities.GoodsNomenclatureIndentNode": "depth",
     "geo_areas.GeographicalArea": "area_id",
     "measures.MeasureAction": "code",
     "measures.MeasureConditionCode": "code",
@@ -102,7 +102,7 @@ TRACKEDMODEL_IDENTIFIER_FALLBACK_KEY = TrackedModel.identifying_fields[0]
 TRACKEDMODEL_PRIMARY_KEY = "pk"
 
 
-@dataclass
+@dataclass(frozen=True, repr=True)
 class Commodity(BaseModel):
     """
     Represents a commodity at a specific position in the goods nomenclature
@@ -114,32 +114,45 @@ class Commodity(BaseModel):
     is only correct for a certain period of time (returned by `extent`).
     """
 
-    obj: GoodsNomenclature
+    obj: GoodsNomenclature = field(compare=False, repr=False)
 
     # When we import commodity changes, e.g. from EU taric files
     # and a new commodity is created, we may not know its indent yet.
-    indent_obj: Optional[GoodsNomenclatureIndent] = None
+    indent_obj: Optional[GoodsNomenclatureIndent] = field(
+        default=None,
+        compare=False,
+        repr=False,
+    )
 
-    @property
-    def item_id(self) -> str:
-        """Returns the item id of the commodity."""
-        return self.obj.item_id
+    # Use these fields to check commodities for equality. We don't want to take
+    # them as parameters because they should come from their respective objects.
+    sid: int = field(compare=True, repr=False, init=False)
+    indent_sid: Optional[int] = field(
+        compare=True,
+        repr=False,
+        init=False,
+        default=None,
+    )
 
-    @property
-    def suffix(self) -> str:
-        """Returns the suffix of the commodity."""
-        return self.obj.suffix
+    # Use these fields to sort and print commodities. We don't want to take them
+    # as parameters because they should come from their respective objects.
+    item_id: str = field(compare=False, repr=True, init=False)
+    suffix: str = field(compare=False, repr=True, init=False)
+    indent: Optional[int] = field(compare=False, repr=True, init=False, default=None)
+
+    def __post_init__(self) -> None:
+        # Manually setup the fields based on the objects we have – done this way
+        # to work around the immutability, but it's safe to do it here like this.
+        object.__setattr__(self, "sid", self.obj.sid)
+        object.__setattr__(self, "indent_sid", self.indent_obj and self.indent_obj.sid)
+        object.__setattr__(self, "item_id", self.obj.item_id)
+        object.__setattr__(self, "suffix", self.obj.suffix)
+        object.__setattr__(self, "indent", self.indent_obj and self.indent_obj.indent)
 
     @property
     def valid_between(self) -> TaricDateRange:
         """Returns the validity period for the commodity."""
         return self.obj.valid_between
-
-    @property
-    def indent(self) -> Optional[int]:
-        """Returns the indent level of the commodity, or None if no indent was
-        found when the commodity was loaded."""
-        return self.indent_obj and self.indent_obj.indent
 
     @property
     def extent(self) -> TaricDateRange:
@@ -167,11 +180,6 @@ class Commodity(BaseModel):
         return self.obj.get_description().description
 
     @property
-    def identifier(self) -> str:
-        """Returns an override of the model instance identifier property."""
-        return "-".join((self.code.dot_code, self.suffix, str(self.indent)))
-
-    @property
     def good(self) -> TrackedModelReflection:
         overrides = {
             attr: getattr(self, attr)
@@ -181,29 +189,8 @@ class Commodity(BaseModel):
 
         return get_tracked_model_reflection(self.obj, **overrides)
 
-    def __eq__(self, commodity: "Commodity") -> bool:
-        """
-        Returns true if the two commodities are equal.
 
-        The two commodities are considered equal if they share the same code,
-        suffix, indent, version, and validity dates.
-        """
-        return (
-            commodity is not None
-            and self.identifier == commodity.identifier
-            and self.valid_between == commodity.valid_between
-        )
-
-    def __str__(self) -> str:
-        """Returns a string representation of the commodity."""
-        return self._get_repr(self.identifier)
-
-    def __repr__(self) -> str:
-        """Overrides the __repr__ method of the dataclass."""
-        return self._get_repr(self.identifier)
-
-
-@dataclass
+@dataclass(frozen=True)
 class CommodityTreeBase(BaseModel):
     """
     Provides a base model for commodity tree and snapshots.
@@ -260,7 +247,7 @@ class CommodityTreeBase(BaseModel):
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class SnapshotDiff(BaseModel):
     """
     Provides a construct for CommodityTreeSnapshot diffs.
@@ -335,7 +322,7 @@ class SnapshotMoment:
 NOT_PROVIDED = object()
 
 
-@dataclass
+@dataclass(frozen=True)
 class CommodityTreeSnapshot(CommodityTreeBase):
     """
     Provides a model for commodity tree snapshots.
@@ -362,7 +349,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     moment: SnapshotMoment
     commodities: List[Commodity]
-    edges: Dict[str, Commodity] = field(default_factory=dict)
+
+    edges: Dict[Commodity, Commodity] = field(default_factory=dict)
+    ancestors: Dict[Commodity, List[Commodity]] = field(default_factory=dict)
+    descendants: Dict[Commodity, List[Commodity]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """
@@ -399,10 +389,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     def get_parent(self, commodity: Commodity) -> Optional[Commodity]:
         """Returns the parent of a commodity in the snapshot tree."""
-        try:
-            return self.edges[commodity.identifier]
-        except KeyError:
-            return
+        return self.edges.get(commodity)
 
     def get_siblings(self, commodity: Commodity) -> List[Commodity]:
         """Returns the siblings of a commodity in the snapshot tree."""
@@ -424,17 +411,23 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     def get_ancestors(self, commodity: Commodity) -> List[Commodity]:
         """Returns all ancestors of a commodity in the snapshot tree."""
-        try:
-            return self.ancestors[commodity.identifier]
-        except KeyError:
-            return []
+        return self.ancestors.get(commodity, [])
 
     def get_descendants(self, commodity: Commodity) -> List[Commodity]:
         """Returns all descendants of a commodity in the snapshot tree."""
-        try:
-            return self.descendants[commodity.identifier]
-        except KeyError:
-            return []
+        return self.descendants.get(commodity, [])
+
+    def get_common_ancestor(self, *commodities: Commodity) -> Optional[Commodity]:
+        """Returns the lowest level commodity that is an ancestor of all of the
+        passed commodities."""
+        ancestors = set(self.commodities)
+        for commodity in commodities:
+            ancestors &= set(self.get_ancestors(commodity))
+
+        if any(ancestors):
+            return max(ancestors, key=self.commodities.index)
+
+        return None
 
     def get_dependent_measures(
         self,
@@ -534,13 +527,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         Note that since this is a commodity tree snapshot,
         multiple versions of the same commodity are not possible.
         """
-        self.commodities = sorted(
-            self.commodities,
-            key=lambda x: (
-                str(x.code),
-                x.suffix,
-            ),
-        )
+        self.commodities.sort(key=lambda x: (x.item_id, x.suffix))
 
     def _traverse(self):
         """
@@ -556,9 +543,6 @@ class CommodityTreeSnapshot(CommodityTreeBase):
           -- this enables assignment of the correct parents for 0-indent headings.
         """
         indents = [[]]
-        edges = {}
-        ancestors = {}
-        descendants = {}
 
         for commodity in self.commodities:
             indent = commodity.indent
@@ -594,7 +578,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
                 except IndexError:
                     parent = None
 
-            edges[commodity.identifier] = parent
+            self.edges[commodity] = parent
 
             if indent == 0:
                 indents[indent].append(commodity)
@@ -612,24 +596,20 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
             while True:
                 try:
-                    parent = edges[parent.identifier]
+                    parent = self.edges[parent]
                 except IndexError:
                     break
                 if parent is None:
                     break
                 commodities.insert(0, parent)
 
-            ancestors[commodity.identifier] = commodities
+            self.ancestors[commodity] = commodities
 
             for ancestor in commodities:
                 try:
-                    descendants[ancestor.identifier].append(commodity)
+                    self.descendants[ancestor].append(commodity)
                 except KeyError:
-                    descendants[ancestor.identifier] = [commodity]
-
-        self.edges = edges
-        self.ancestors = ancestors
-        self.descendants = descendants
+                    self.descendants[ancestor] = [commodity]
 
     def _get_diff(
         self,
@@ -665,7 +645,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class CommodityCollection(CommodityTreeBase):
     """
     Provides a model for a collection of related commodities.
@@ -815,7 +795,7 @@ class CommodityCollection(CommodityTreeBase):
         return CommodityCollection(copy(self.commodities))
 
 
-@dataclass
+@dataclass(frozen=True)
 class SideEffect(BaseModel):
     """
     "Provides a model for commodity change side effects.
@@ -837,7 +817,7 @@ class SideEffect(BaseModel):
     obj: TrackedModel
     update_type: UpdateType
     code: CommodityCode
-    rule: BusinessRule
+    rule: Type[BusinessRule]
     variant: Optional[str] = None
     attrs: Optional[Dict[str, Any]] = None
 
@@ -884,7 +864,7 @@ class SideEffect(BaseModel):
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class CommodityChange(BaseModel):
     """
     Provides a model for commodity collection change requests.
@@ -911,6 +891,7 @@ class CommodityChange(BaseModel):
     current: Optional[Commodity] = None
     candidate: Optional[Commodity] = None
     ignore_validation_rules: bool = False
+    side_effects: Dict[str, SideEffect] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Triggers validation on the fields of the model upon instantiation."""
@@ -975,7 +956,6 @@ class CommodityChange(BaseModel):
 
         See ADR13 for the scenarios covered for update or delete type changes.
         """
-        self.side_effects = {}
         before, after = self._get_before_and_after_snapshots()
 
         if self.update_type == UpdateType.DELETE:
@@ -1107,7 +1087,7 @@ class CommodityChange(BaseModel):
         self,
         good: GoodsNomenclature,
         obj: TrackedModel,
-        rule: BusinessRule,
+        rule: Type[BusinessRule],
     ) -> None:
         """Handle conflicts related to validity span rule violations."""
         gvb = good.valid_between
@@ -1149,8 +1129,6 @@ class CommodityChange(BaseModel):
           this is the only business rule where this is a fatal problem
           as here we need to assess business rule violations
           in the context of related nodes in a changing hierarchy
-        - ME32 relies on GoodsNomenclatureIndentNodes and paths
-          as the means of identifying ancestors and descendants
 
         Importantly, the actual ME32 is still going to be run downstream
           when we validate a workbasket with transactions reflecting:
@@ -1281,7 +1259,7 @@ class CommodityChange(BaseModel):
     def _add_pending_delete(
         self,
         obj: TrackedModel,
-        rule: BusinessRule,
+        rule: Type[BusinessRule],
         variant: Optional[str] = None,
     ) -> None:
         """Add a pending related object delete operation to side effects."""
@@ -1302,7 +1280,7 @@ class CommodityChange(BaseModel):
         self,
         obj: TrackedModel,
         attrs: Dict[str, Any],
-        rule: BusinessRule,
+        rule: Type[BusinessRule],
         variant: Optional[str] = None,
     ) -> None:
         """Add a pending related object update operation to side effects."""

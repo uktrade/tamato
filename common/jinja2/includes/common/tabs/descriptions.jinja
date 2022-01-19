@@ -8,7 +8,7 @@
 		{"text": "{:%d %b %Y}".format(description.validity_start)},
 		{"text": description.description},
 	]%}
-	{% if edit_url %}
+	{% if not omit_actions and edit_url %}
 		{{ description_row.append({"html": create_link(edit_url, "Edit") }) or "" }}
 	{% endif %}
 	{{ description_rows.append(description_row) or "" }}
@@ -20,7 +20,7 @@
 	{"text": "Start date", "classes":  "govuk-!-width-one-eighth"},
 	{"text": "Description"},
 ]%}
-{% if description_rows.0|length == 3 %}
+{% if not omit_actions and description_rows.0|length == 3 %}
 	{{ head.append({"text": "Actions"}) or "" }}
 {% endif %}
 {{ govukTable({

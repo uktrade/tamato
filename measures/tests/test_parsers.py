@@ -177,6 +177,12 @@ def test_seasonal_rate_parser(
                 (("A", "D017", "01"), (1, Decimal("10.0"), "XEM", None)),
             ],
         ),
+        (
+            "Cond: B cert: 9-100 (24):",
+            [
+                (("B", "9100", "24"), None),
+            ],
+        ),
     ),
 )
 def condition_sentence_data(request, get_condition_data, get_component_data):
