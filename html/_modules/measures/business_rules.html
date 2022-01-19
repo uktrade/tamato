@@ -148,6 +148,7 @@
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">ApplicabilityCode</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
+<span class="kn">from</span> <span class="nn">measures.querysets</span> <span class="kn">import</span> <span class="n">MeasuresQuerySet</span>
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
 
 
@@ -464,11 +465,15 @@
 
         <span class="k">return</span> <span class="n">query</span>
 
-<div class="viewcode-block" id="ME32.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME32.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
+<div class="viewcode-block" id="ME32.clashing_measures"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME32.clashing_measures">[docs]</a>    <span class="k">def</span> <span class="nf">clashing_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MeasuresQuerySet</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns all of the measures that clash with the passed measure over its</span>
+<span class="sd">        lifetime.</span>
 
-        <span class="c1"># build the query for measures matching the given measure</span>
+<span class="sd">        Two measures clash if any of their fields listed in this business rule</span>
+<span class="sd">        description are equal, their date ranges overlap, and one of their</span>
+<span class="sd">        commodity codes is an ancestor or equal to the other.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">measures.snapshots</span> <span class="kn">import</span> <span class="n">MeasureSnapshot</span>
 
         <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_query</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
@@ -479,7 +484,13 @@
                 <span class="nb">all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">clashing_measures</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">clashing_measures</span></div>
+
+<div class="viewcode-block" id="ME32.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME32.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clashing_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
