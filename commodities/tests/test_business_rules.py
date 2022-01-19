@@ -65,20 +65,23 @@ def test_NIG2(
 
     Also covers NIG3
     """
-
     parent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=getattr(
             date_ranges,
             parent_validity,
         ),
+        indented_goods_nomenclature__item_id="2901000000",
+        indent=0,
     )
     self = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=getattr(date_ranges, self_validity),
-        node__parent=parent.nodes.first(),
+        indented_goods_nomenclature__item_id="2901210000",
+        indent=1,
     )
     child = factories.GoodsNomenclatureIndentFactory.create(
-        node__parent=self.nodes.first(),
+        indented_goods_nomenclature__item_id="2901290000",
         indented_goods_nomenclature__valid_between=getattr(date_ranges, child_validity),
+        indent=2,
     )
 
     # Running against a lone code should never error
@@ -102,12 +105,11 @@ def test_NIG5(workbasket):
 
     This rule is only applicable to update extractions.
     """
-
-    origin = factories.GoodsNomenclatureFactory.create()
-    parent_node = factories.GoodsNomenclatureIndentFactory.create().nodes.first()
+    origin = factories.GoodsNomenclatureFactory.create(item_id="2000000000")
     bad_good = factories.GoodsNomenclatureFactory.create(
+        item_id="2000000010",
         origin=None,
-        indent__node__parent=parent_node,
+        indent__indent=1,
     )
 
     with pytest.raises(BusinessRuleViolation):
@@ -118,7 +120,7 @@ def test_NIG5(workbasket):
 
     good_good = factories.GoodsNomenclatureFactory.create(
         origin__derived_from_goods_nomenclature=origin,
-        indent__node__parent=parent_node,
+        indent__indent=1,
     )
     business_rules.NIG5(good_good.transaction).validate(good_good)
 
