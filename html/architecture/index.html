@@ -561,10 +561,6 @@ either as modules themselves or single files.</p>
 correspond directly to an element in the TARIC specification. Most of these will
 inherit from <code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code> which represents a
 model for whom history is being tracked.</p>
-<p>(The main exception is
-<code class="xref py py-class docutils literal notranslate"><span class="pre">GoodsNomenclatureIndentNode</span></code> which is really just a
-cache of the commodity code tree stored in the database and is not updated
-independently of related models.)</p>
 <p>The most notable places where the database schema has diverged from the TARIC
 specification is on descriptions, which have been flattened into a single model
 that represents both the description and the description period on the
