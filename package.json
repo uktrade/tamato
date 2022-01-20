@@ -7,8 +7,8 @@
   "repository": "https://github.com/uktrade/tamato.git",
   "licence": "MIT",
   "engines": {
-    "node": "~16.8.0",
-    "npm": "~7.19.1"
+    "node": "^16.8.0",
+    "npm": "^7.19.1"
   },
   "dependencies": {
     "accessible-autocomplete": "^2.0.3",
