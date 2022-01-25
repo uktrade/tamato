@@ -24,8 +24,7 @@ from common.util import maybe_min
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.models import GeographicalMembership
-from geo_areas.validators import AreaCode
+from geo_areas.util import materialise_geo_area
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureAction
@@ -305,33 +304,22 @@ class MeasureCreationPattern:
         measure: Measure,
         exclusion: GeographicalArea,
     ) -> Iterator[MeasureExcludedGeographicalArea]:
-        if exclusion.area_code == AreaCode.GROUP:
-            measure_origins = set(
-                m.member
-                for m in GeographicalMembership.objects.as_at(
-                    measure.valid_between.lower,
-                )
-                .filter(
-                    geo_group=measure.geographical_area,
-                )
-                .all()
-            )
-            for membership in (
-                GeographicalMembership.objects.as_at(measure.valid_between.lower)
-                .filter(geo_group=exclusion)
-                .all()
-            ):
-                member = membership.member
-                assert (
-                    member in measure_origins
-                ), f"{member.area_id} not in {list(x.area_id for x in measure_origins)}"
-                yield MeasureExcludedGeographicalArea.objects.create(
-                    modified_measure=measure,
-                    excluded_geographical_area=member,
-                    update_type=UpdateType.CREATE,
-                    transaction=measure.transaction,
-                )
-        else:
+        measure_origins = materialise_geo_area(
+            measure.geographical_area,
+            date=measure.valid_between.lower,
+            transaction=self.workbasket.current_transaction,
+        )
+
+        exclusions = materialise_geo_area(
+            exclusion,
+            date=measure.valid_between.lower,
+            transaction=self.workbasket.current_transaction,
+        )
+
+        for exclusion in exclusions:
+            assert (
+                exclusion in measure_origins
+            ), f"{exclusion.area_id} not in {list(x.area_id for x in measure_origins)}"
             yield MeasureExcludedGeographicalArea.objects.create(
                 modified_measure=measure,
                 excluded_geographical_area=exclusion,
