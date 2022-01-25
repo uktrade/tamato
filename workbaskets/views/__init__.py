@@ -85,8 +85,6 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
             )
             | send_upload_notifications.s()
         )
-        # transaction.on_commit(lambda:
-        #     upload.delay())
         upload.delay()
 
         return reverse("index")
@@ -167,6 +165,15 @@ class WorkBasketDeleteChangesDone(TemplateView):
 
 
 def download_envelope(request):
+    """
+    Creates lambda function for sorting s3 objects by `last_modified` attribute.
+
+    Creates s3 resource and bucket using AWS environment variables.
+
+    Downloads most recently added file from s3 bucket and writes to temporary file.
+
+    Returns HttpResponse with xml envelope attached.
+    """
     get_last_modified = lambda obj: int(obj.last_modified.strftime("%s"))
     s3 = boto3.resource(
         "s3",
