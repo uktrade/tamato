@@ -20,7 +20,6 @@ setup(
         "django-fsm",
         "django-health-check",
         "django-polymorphic",
-        "django-treebeard",
         "django-webpack-loader",
         "django_extensions",
         "djangorestframework",
