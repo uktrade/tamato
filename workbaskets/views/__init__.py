@@ -1,6 +1,13 @@
+import os
+import tempfile
+
+import boto3
+from botocore.client import Config
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.db.models import ProtectedError
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic.base import RedirectView
@@ -12,6 +19,8 @@ from rest_framework import renderers
 from rest_framework import viewsets
 
 from common.renderers import TaricXMLRenderer
+from exporter.tasks import send_upload_notifications
+from exporter.tasks import upload_workbasket_envelopes
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
@@ -66,6 +75,19 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
         workbasket.export_to_cds()
         workbasket.save()
         workbasket.save_to_session(self.request.session)
+
+        workbasket_ids = [workbasket.id]
+
+        upload = (
+            upload_workbasket_envelopes.s(
+                upload_status_data={},
+                workbasket_ids=workbasket_ids,
+            )
+            | send_upload_notifications.s()
+        )
+        # transaction.on_commit(lambda:
+        #     upload.delay())
+        upload.delay()
 
         return reverse("index")
 
@@ -142,3 +164,29 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
 
 class WorkBasketDeleteChangesDone(TemplateView):
     template_name = "workbaskets/delete_changes_confirm.jinja"
+
+
+def download_envelope(request):
+    get_last_modified = lambda obj: int(obj.last_modified.strftime("%s"))
+    s3 = boto3.resource(
+        "s3",
+        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(signature_version="s3v4"),
+    )
+    bucket = s3.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
+
+    last_added = [
+        obj for obj in sorted(bucket.objects.all(), key=get_last_modified, reverse=True)
+    ][0]
+
+    with tempfile.NamedTemporaryFile() as f:
+        bucket.download_file(last_added.key, f.name)
+        with open(f.name, "rb") as fh:
+            response = HttpResponse(fh.read(), content_type="text/xml")
+            response[
+                "Content-Disposition"
+            ] = "attachment; filename=" + os.path.basename(last_added.key)
+
+            return response

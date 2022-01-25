@@ -4,6 +4,7 @@ import pytest
 from django.urls import reverse
 
 from common.tests import factories
+from common.views import DashboardView
 from common.views import HealthCheckResponse
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -57,3 +58,15 @@ def test_handles_multiple_unapproved_workbaskets(valid_user_client, new_workbask
     response = valid_user_client.get(reverse("index"))
 
     assert response.status_code == 200
+
+
+def test_dashboard_view_approved_dates(valid_user, workbasket):
+    first_txn = workbasket.new_transaction()
+    last_txn = workbasket.new_transaction()
+    workbasket.status = WorkflowStatus.APPROVED
+    workbasket.approver = valid_user
+    workbasket.save()
+    view = DashboardView()
+
+    assert view.approved_dates["start"] == first_txn.updated_at
+    assert view.approved_dates["end"] == last_txn.updated_at

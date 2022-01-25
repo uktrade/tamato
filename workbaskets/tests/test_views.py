@@ -1,16 +1,29 @@
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 
 from common.tests import factories
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
+from exporter.tasks import send_upload_notifications
+from exporter.tasks import upload_workbasket_envelopes
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
 
-def test_submit_workbasket(unapproved_transaction, valid_user, client):
+@patch("exporter.tasks.upload_workbasket_envelopes.s")
+@patch("exporter.tasks.send_upload_notifications.s")
+def test_submit_workbasket(
+    notifications,
+    envelopes,
+    unapproved_transaction,
+    valid_user,
+    client,
+):
     workbasket = unapproved_transaction.workbasket
 
     url = reverse(
@@ -29,6 +42,9 @@ def test_submit_workbasket(unapproved_transaction, valid_user, client):
     assert workbasket.approver is not None
 
     assert client.session["workbasket"]["status"] == WorkflowStatus.SENT
+
+    assert notifications.called
+    assert envelopes.called
 
 
 def test_edit_after_submit(valid_user, client, date_ranges):
@@ -69,3 +85,37 @@ def test_edit_after_submit(valid_user, client, date_ranges):
     assert tx.tracked_models.count() == 1
     new_footnote_version = tx.tracked_models.first()
     assert new_footnote_version.pk != footnote.pk
+
+
+def test_download(
+    approved_workbasket,
+    client,
+    valid_user,
+    hmrc_storage,
+    s3_resource,
+    settings,
+):
+    client.force_login(valid_user)
+    bucket = "hmrc"
+    settings.HMRC_STORAGE_BUCKET_NAME = bucket
+    s3_resource.create_bucket(Bucket="hmrc")
+    with patch(
+        "exporter.storages.HMRCStorage.save",
+        wraps=MagicMock(side_effect=hmrc_storage.save),
+    ) as mock_save:
+        upload = (
+            upload_workbasket_envelopes.s(
+                upload_status_data={},
+                workbasket_ids=[approved_workbasket.id],
+            )
+            | send_upload_notifications.s()
+        )
+        upload.apply()
+        mock_save.assert_called_once()
+        url = reverse("workbaskets:workbasket-download")
+
+        response = client.get(url)
+
+        assert (
+            response.get("Content-Disposition") == "attachment; filename=DIT220001.xml"
+        )

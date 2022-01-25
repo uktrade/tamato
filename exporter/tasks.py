@@ -104,7 +104,7 @@ def upload_and_create_envelopes(
     retry_jitter=True,
 )
 @TableLock.acquire_lock(Envelope, lock="SHARE")
-def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
+def upload_workbasket_envelopes(self, upload_status_data, workbasket_ids=None) -> Dict:
     """
     Upload workbaskets.
 
@@ -112,6 +112,8 @@ def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     """
     upload_status = UploadTaskResultData(**upload_status_data)
     workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
+    if workbasket_ids:
+        workbaskets = WorkBasket.objects.is_approved().filter(id__in=workbasket_ids)
     if not workbaskets:
         msg = "Nothing to upload:  No workbaskets with status APPROVED."
         logger.info(msg)

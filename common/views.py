@@ -93,6 +93,18 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     def paginator(self):
         return Paginator(self.workbasket.tracked_models, per_page=10)
 
+    @property
+    def approved_workbasket(self):
+        return WorkBasket.objects.is_approved().last()
+
+    @property
+    def approved_dates(self):
+        transactions = self.approved_workbasket.transactions.order_by("updated_at")
+        return {
+            "start": transactions.first().updated_at,
+            "end": transactions.last().updated_at,
+        }
+
     def _append_url_page_param(self, url, form_action):
         """Based upon 'form_action', append a 'page' URL parameter to the given
         url param and return the result."""
@@ -153,6 +165,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "approved_dates": self.approved_dates,
             },
         )
         return context

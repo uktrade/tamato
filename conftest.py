@@ -565,6 +565,14 @@ def s3():
 
 
 @pytest.fixture
+def s3_resource():
+    with mock_s3() as moto:
+        moto.start()
+        s3 = boto3.resource("s3")
+        yield s3
+
+
+@pytest.fixture
 def s3_bucket_names(s3):
     def run():
         return [bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]]
