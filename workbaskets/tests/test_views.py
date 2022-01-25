@@ -102,7 +102,7 @@ def test_download(
     with patch(
         "exporter.storages.HMRCStorage.save",
         wraps=MagicMock(side_effect=hmrc_storage.save),
-    ) as mock_save:
+    ):
         upload = (
             upload_workbasket_envelopes.s(
                 upload_status_data={},
@@ -111,7 +111,6 @@ def test_download(
             | send_upload_notifications.s()
         )
         upload.apply()
-        mock_save.assert_called_once()
         url = reverse("workbaskets:workbasket-download")
 
         response = client.get(url)
