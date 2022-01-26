@@ -20,6 +20,7 @@ from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from geo_areas.validators import AreaCode
+from measures.querysets import MeasuresQuerySet
 from quotas.validators import AdministrationMechanism
 
 
@@ -336,11 +337,15 @@ class ME32(BusinessRule):
 
         return query
 
-    def validate(self, measure):
-        if measure.goods_nomenclature is None:
-            return
+    def clashing_measures(self, measure) -> MeasuresQuerySet:
+        """
+        Returns all of the measures that clash with the passed measure over its
+        lifetime.
 
-        # build the query for measures matching the given measure
+        Two measures clash if any of their fields listed in this business rule
+        description are equal, their date ranges overlap, and one of their
+        commodity codes is an ancestor or equal to the other.
+        """
         from measures.snapshots import MeasureSnapshot
 
         query = self.compile_query(measure)
@@ -351,7 +356,13 @@ class ME32(BusinessRule):
                 all=True,
             )
 
-        if clashing_measures.exists():
+        return clashing_measures
+
+    def validate(self, measure):
+        if measure.goods_nomenclature is None:
+            return
+
+        if self.clashing_measures(measure).exists():
             raise self.violation(measure)
 
 

@@ -3,7 +3,7 @@ api-client==1.3.0
 apsw-wheels==3.36.0.post1
 black==21.12b0
 boto3==1.18.51
-celery[redis]==5.0.5
+celery[redis]>=5.2.2
 coverage[toml]==5.4
 crispy-forms-gds @ git+https://github.com/uktrade/crispy-forms-gds.git@b50168d0e23ffacbdd30e7819ec8f9a08e055c8e
 dj-database-url==0.5.0
@@ -22,7 +22,6 @@ django-rest-polymorphic==0.1.9
 django-sequences==2.6
 django-staff-sso-client==3.1.1
 django-storages==1.11.1
-django-treebeard==4.5.1
 django-webpack-loader==1.0.0
 djangorestframework==3.12.2
 drf-flex-fields==0.8.9
