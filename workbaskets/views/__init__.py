@@ -1,13 +1,11 @@
-import os
-import tempfile
-
 import boto3
 from botocore.client import Config
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.db.models import ProtectedError
-from django.http import HttpResponse
+from django.http import Http404
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic.base import RedirectView
@@ -19,6 +17,7 @@ from rest_framework import renderers
 from rest_framework import viewsets
 
 from common.renderers import TaricXMLRenderer
+from exporter.models import Upload
 from exporter.tasks import send_upload_notifications
 from exporter.tasks import upload_workbasket_envelopes
 from workbaskets.models import WorkBasket
@@ -166,15 +165,14 @@ class WorkBasketDeleteChangesDone(TemplateView):
 
 def download_envelope(request):
     """
-    Creates lambda function for sorting s3 objects by `last_modified` attribute.
+    Creates s3 resource using AWS environment variables.
 
-    Creates s3 resource and bucket using AWS environment variables.
+    Tries to get filename from most recent s3 upload. If no upload exists, returns 404.
 
-    Downloads most recently added file from s3 bucket and writes to temporary file.
+    Generates presigned url from s3 client using bucket and file names.
 
-    Returns HttpResponse with xml envelope attached.
+    Returns `HttpResponseRedirect` with presigned url passed as only argument.
     """
-    get_last_modified = lambda obj: int(obj.last_modified.strftime("%s"))
     s3 = boto3.resource(
         "s3",
         endpoint_url=settings.AWS_S3_ENDPOINT_URL,
@@ -182,18 +180,22 @@ def download_envelope(request):
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         config=Config(signature_version="s3v4"),
     )
-    bucket = s3.Bucket(settings.HMRC_STORAGE_BUCKET_NAME)
 
-    last_added = [
-        obj for obj in sorted(bucket.objects.all(), key=get_last_modified, reverse=True)
-    ][0]
+    try:
+        last_added = (
+            settings.HMRC_STORAGE_DIRECTORY
+            + Upload.objects.latest("created_date").filename
+        )
+    except Upload.DoesNotExist as err:
+        raise Http404("No uploaded envelope available for download")
 
-    with tempfile.NamedTemporaryFile() as f:
-        bucket.download_file(last_added.key, f.name)
-        with open(f.name, "rb") as fh:
-            response = HttpResponse(fh.read(), content_type="text/xml")
-            response[
-                "Content-Disposition"
-            ] = "attachment; filename=" + os.path.basename(last_added.key)
+    url = s3.meta.client.generate_presigned_url(
+        ClientMethod="get_object",
+        ExpiresIn=3600,
+        Params={
+            "Bucket": settings.HMRC_STORAGE_BUCKET_NAME,
+            "Key": last_added,
+        },
+    )
 
-            return response
+    return HttpResponseRedirect(url)

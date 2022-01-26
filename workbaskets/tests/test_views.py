@@ -43,8 +43,8 @@ def test_submit_workbasket(
 
     assert client.session["workbasket"]["status"] == WorkflowStatus.SENT
 
-    assert notifications.called
-    assert envelopes.called
+    notifications.assert_called_with()
+    envelopes.assert_called_with(upload_status_data={}, workbasket_ids=[workbasket.id])
 
 
 def test_edit_after_submit(valid_user, client, date_ranges):
@@ -93,6 +93,7 @@ def test_download(
     valid_user,
     hmrc_storage,
     s3_resource,
+    s3_object_names,
     settings,
 ):
     client.force_login(valid_user)
@@ -115,6 +116,18 @@ def test_download(
 
         response = client.get(url)
 
-        assert (
-            response.get("Content-Disposition") == "attachment; filename=DIT220001.xml"
-        )
+        # the url signature will always be unique, so we can only compare the first part of the url
+        expected_url, _ = s3_resource.meta.client.generate_presigned_url(
+            ClientMethod="get_object",
+            ExpiresIn=3600,
+            Params={
+                "Bucket": settings.HMRC_STORAGE_BUCKET_NAME,
+                "Key": s3_object_names("hmrc")[0],
+            },
+        ).split("?", 1)
+
+        assert response.status_code == 302
+        assert expected_url in response.url
+        # assert (
+        #     response.get("Content-Disposition") == "attachment; filename=DIT220001.xml"
+        # )

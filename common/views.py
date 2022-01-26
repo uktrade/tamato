@@ -94,12 +94,19 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         return Paginator(self.workbasket.tracked_models, per_page=10)
 
     @property
-    def approved_workbasket(self):
+    def latest_approved_workbasket(self):
+        """Returns the most recently created WorkBasket with a status of
+        "APPROVED", "SENT", "PUBLISHED", or "ERRORED"."""
         return WorkBasket.objects.is_approved().last()
 
     @property
     def approved_dates(self):
-        transactions = self.approved_workbasket.transactions.order_by("updated_at")
+        """Gets a list of all transactions from the `latest_approved_workbasket`
+        in the order they were updated and returns a dict with the first and
+        last transactions as values for "start" and "end" keys respectively."""
+        transactions = self.latest_approved_workbasket.transactions.order_by(
+            "updated_at",
+        )
         return {
             "start": transactions.first().updated_at,
             "end": transactions.last().updated_at,

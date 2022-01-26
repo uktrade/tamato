@@ -49,7 +49,7 @@
         <span class="govuk-warning-text__icon">!</span>
         <strong class="govuk-warning-text__text">
           <span class="govuk-warning-text__assistive">Warning</span>
-          "We've created an envelope which contains your published changes between {{ "{:%d %b %Y}".format(approved_dates.start) }} and {{ "{:%d %b %Y}".format(approved_dates.end) }}. It's ready for your action"
+          We've created an envelope which contains your published changes between {{ "{:%d %b %Y}".format(approved_dates.start) }} and {{ "{:%d %b %Y}".format(approved_dates.end) }}. It's ready for your action.
         </strong>
       </div>
       <details class="govuk-details" data-module="govuk-details">
@@ -61,7 +61,7 @@
         </div>
       </details>
       <div class="govuk-button-group">
-        <a href={{ url("workbaskets:workbasket-download") }} class="govuk-button" data-module="govuk-button">
+        <a href={{ url("workbaskets:workbasket-download") }} class="govuk-button" data-module="govuk-button" download>
           Download the envelope
         </a>
       </div>
