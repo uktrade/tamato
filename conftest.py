@@ -315,7 +315,9 @@ def use_create_form(valid_user_api_client: APIClient):
 
         # There is no model instance to fetch identifying_fields from, construct
         # them from the provided form data.
-        identifying_values = {k: data.get(k) for k in Model.identifying_fields}
+        identifying_values = {
+            k: data.get(k) for k in Model.identifying_fields if "__" not in k
+        }
 
         response = valid_user_api_client.post(create_url, data)
 
