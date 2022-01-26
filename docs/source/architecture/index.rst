@@ -161,11 +161,6 @@ correspond directly to an element in the TARIC specification. Most of these will
 inherit from :class:`~common.models.tracked.TrackedModel` which represents a
 model for whom history is being tracked.
 
-(The main exception is
-:class:`~commodities.models.GoodsNomenclatureIndentNode` which is really just a
-cache of the commodity code tree stored in the database and is not updated
-independently of related models.)
-
 The most notable places where the database schema has diverged from the TARIC
 specification is on descriptions, which have been flattened into a single model
 that represents both the description and the description period on the

@@ -2,6 +2,7 @@
 from datetime import date
 from datetime import timedelta
 
+from commodities.util import get_snapshot_from_good_chapter
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import FootnoteApplicability
@@ -34,20 +35,23 @@ class NIG2(BusinessRule):
         return validity_range_contains_range(parent_validity, child_validity)
 
     def validate(self, indent):
-        for node in indent.nodes.filter(
-            creating_transaction__lt=self.transaction,
-        ).all():
-            parent = node.get_parent()
+        from commodities.models.dc import Commodity
 
-            if not parent:
-                continue
+        good = indent.indented_goods_nomenclature.version_at(self.transaction)
+        commodity = Commodity(obj=good, indent_obj=indent)
+        snapshot = get_snapshot_from_good_chapter(good)
 
-            if not self.parent_spans_child(parent.indent, indent):
+        parent = snapshot.get_parent(commodity)
+        if not parent:
+            return
+
+        if not self.parent_spans_child(parent.indent_obj, indent):
+            raise self.violation(indent)
+
+        children = snapshot.get_children(commodity)
+        for child in children:
+            if not self.parent_spans_child(indent, child.indent_obj):
                 raise self.violation(indent)
-
-            for child in node.get_children():
-                if not self.parent_spans_child(indent, child.indent):
-                    raise self.violation(indent)
 
 
 @skip_when_deleted
@@ -69,13 +73,16 @@ class NIG5(BusinessRule):
 
         Therefore check for these two conditions, and if neither are met ensure an origin exists.
         """
-
         from commodities.models import GoodsNomenclatureOrigin
+        from commodities.models.dc import Commodity
 
-        try:
-            matching_indent_exists = good.indents.filter(nodes__depth=1).exists()
-        except TypeError:
-            matching_indent_exists = False
+        indent_obj = None
+        if good.indents.count():
+            indent_obj = good.indents.get()
+        commodity = Commodity(obj=good, indent_obj=indent_obj)
+        snapshot = get_snapshot_from_good_chapter(good)
+        ancestors = snapshot.get_ancestors(commodity)
+        matching_indent_exists = False if ancestors else True
 
         if not (
             matching_indent_exists

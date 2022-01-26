@@ -88,7 +88,6 @@ PREEMPTIVE_TRANSACTION_SEED = -int(1e5)
 TRACKEDMODEL_IDENTIFIER_KEYS = {
     "additional_codes.AdditionalCode": "code",
     "commodities.GoodsNomenclature": "item_id",
-    "commodities.GoodsNomenclatureIndentNode": "depth",
     "geo_areas.GeographicalArea": "area_id",
     "measures.MeasureAction": "code",
     "measures.MeasureConditionCode": "code",
@@ -445,7 +444,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
         qs = Measure.objects.filter(filter)
 
-        if self.moment.clock_type == ClockType.TRANSACTION:
+        if self.moment.clock_type.is_transaction_clock:
             qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
             qs = qs.latest_approved()
@@ -456,7 +455,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
                 Q(db_effective_valid_between__contains=as_at)
                 | Q(valid_between__startswith__gte=as_at),
             )
-        elif as_at is NOT_PROVIDED and self.moment.clock_type == ClockType.COMBINED:
+        elif as_at is NOT_PROVIDED and self.moment.clock_type.is_calendar_clock:
             logger.debug("Filtering by moment date: %s", self.moment.date)
             qs = qs.with_effective_valid_between().filter(
                 db_effective_valid_between__contains=self.moment.date,
@@ -1125,8 +1124,6 @@ class CommodityChange(BaseModel):
           this is the only business rule where this is a fatal problem
           as here we need to assess business rule violations
           in the context of related nodes in a changing hierarchy
-        - ME32 relies on GoodsNomenclatureIndentNodes and paths
-          as the means of identifying ancestors and descendants
 
         Importantly, the actual ME32 is still going to be run downstream
           when we validate a workbasket with transactions reflecting:
