@@ -547,7 +547,7 @@ class MeasureDutiesForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        duties = cleaned_data["duties"]
+        duties = cleaned_data.get("duties", "")
         measure_start_date = self.initial.get("measure_start_date")
         if measure_start_date is not None:
             validate_duties(duties, measure_start_date)
