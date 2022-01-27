@@ -433,7 +433,6 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     def get_dependent_measures(
         self,
         *commodities: Commodity,
-        as_of_transaction: Optional[Transaction] = NOT_PROVIDED,
         as_at: Optional[date] = NOT_PROVIDED,
     ) -> MeasuresQuerySet:
         filter = Q()
@@ -992,7 +991,6 @@ class CommodityChange(BaseModel):
         # NIG34 / NIG35
         for measure in before.get_dependent_measures(
             self.current,
-            as_of_transaction=self.current.obj.transaction,
             as_at=self.as_at_date,
         ):
             self._add_pending_delete(measure, cbr.NIG34)
@@ -1179,7 +1177,6 @@ class CommodityChange(BaseModel):
                 _get_measure_key(measure): measure
                 for measure in after.get_dependent_measures(
                     self.candidate,
-                    as_of_transaction=self.candidate.obj.transaction,
                     as_at=self.as_at_date,
                 )
             }
@@ -1188,7 +1185,6 @@ class CommodityChange(BaseModel):
                 for relative in getattr(after, attr)(self.candidate):
                     related_measures = after.get_dependent_measures(
                         relative,
-                        as_of_transaction=self.candidate.obj.transaction,
                         as_at=self.as_at_date,
                     )
 
