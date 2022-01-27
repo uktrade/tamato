@@ -557,11 +557,12 @@ class SuspensionViaAdditionalCodePattern:
         """Returns the measures applicable to the passed code on the given
         date."""
         return (
-            Measure.objects.with_validity_field()
-            .with_duty_sentence()
-            .approved_up_to_transaction(self.workbasket.transactions.last())
-            .as_at(as_at)
-            .filter(goods_nomenclature__sid=code.sid)
+            Measure.objects.with_effective_valid_between()
+            .approved_up_to_transaction(self.workbasket.current_transaction)
+            .filter(
+                goods_nomenclature__sid=code.sid,
+                db_effective_valid_between__contains=as_at,
+            )
         )
 
     def get_mfn_measures(self, code: GoodsNomenclature, as_at: date):
@@ -625,21 +626,22 @@ class SuspensionViaAdditionalCodePattern:
         if not copy_from:
             # If there is no MFN measure we have a problem because we don't know what
             # rate to use on the subsequent measure, so just skip that.
-            existing_measures = self.get_mfn_measures(code, validity_start)
-            if not existing_measures.exists():
-                self.logger.warning(
-                    "No MFN found on code %s at %s. Resulting suspension will not have MFN rate.",
+            existing_measures = list(self.get_mfn_measures(code, validity_start))
+            if not any(existing_measures):
+                self.logger.error(
+                    "No MFN found on code %s at %s.",
                     code,
                     validity_start,
                 )
+                return None
 
             # If the MFN measure does not have an additional code, remove it.
             # If not, keep it because the other suspension still needs it.
             if (
-                existing_measures.count() == 1
-                and existing_measures.get().additional_code is None
+                len(existing_measures) == 1
+                and existing_measures[0].additional_code is None
             ):
-                deleted_mfn_measure = existing_measures.get().terminate(
+                deleted_mfn_measure = existing_measures[0].terminate(
                     self.workbasket,
                     validity_start - timedelta(days=1),
                 )
@@ -647,8 +649,8 @@ class SuspensionViaAdditionalCodePattern:
 
         # Now create the new MFN measure.
         maybe_mfn = self.get_suspended_mfn_measure(code, validity_start)
-        if not maybe_mfn.exists():
-            mfn_measure = (copy_from or existing_measures.last()).copy(
+        if not maybe_mfn.exists() and (copy_from or any(existing_measures)):
+            mfn_measure = (copy_from or existing_measures[0]).copy(
                 goods_nomenclature=code,
                 additional_code=self.mfn_additional_code,
                 generating_regulation=self.mfn_regulation,
