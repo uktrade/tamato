@@ -128,6 +128,3 @@ def test_download(
 
         assert response.status_code == 302
         assert expected_url in response.url
-        # assert (
-        #     response.get("Content-Disposition") == "attachment; filename=DIT220001.xml"
-        # )

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from unittest import mock
 
@@ -52,7 +53,12 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
     assert expected_bucket in s3_bucket_names()
     assert expected_key in s3_object_names(expected_bucket)
 
-    envelope = s3.get_object(Bucket=expected_bucket, Key=expected_key)["Body"].read()
+    s3_object = s3.get_object(Bucket=expected_bucket, Key=expected_key)
+    filename = os.path.basename(expected_key)
+
+    assert s3_object.get("ContentDisposition") == f"attachment; filename={filename}"
+
+    envelope = s3_object["Body"].read()
     xml = etree.XML(envelope)
 
     validate_taric_xml_record_order(xml)
