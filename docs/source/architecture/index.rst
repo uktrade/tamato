@@ -89,7 +89,7 @@ done to them.
 
 Each model will exist multiple times in the database, with each row representing
 a new version of that model. This is implemented using the
-:class:`~common.models.tracked.TrackedModel` system.
+:class:`~common.models.trackedmodel.TrackedModel` system.
 
 Note that which version of a model is the "current" one depends in general on
 what transactions have been applied. Each row is pinned to a specific
@@ -103,7 +103,7 @@ that is not draft is considered to be "current".
 
 There are a number of convenience methods for finding "current" models.
 
-.. autoclass:: common.models.tracked.TrackedModelQuerySet
+.. autoclass:: common.models.trackedmodel.TrackedModelQuerySet
   :members: latest_approved, approved_up_to_transaction
 
 Domain Modules
@@ -158,7 +158,7 @@ either as modules themselves or single files.
 
 Classes representing domain models. With again a few exceptions, most models
 correspond directly to an element in the TARIC specification. Most of these will
-inherit from :class:`~common.models.tracked.TrackedModel` which represents a
+inherit from :class:`~common.models.trackedmodel.TrackedModel` which represents a
 model for whom history is being tracked.
 
 The most notable places where the database schema has diverged from the TARIC
@@ -237,7 +237,7 @@ database queries. In some places it is desirable to more tightly control how the
 system fetches it's data – for example, to efficiently generate a new field using
 aggregates.
 
-The :class:`~common.models.tracked.TrackedModelQuerySet` is one of the most used
+The :class:`~common.models.trackedmodel.TrackedModelQuerySet` is one of the most used
 as it implements selecting the correct versions from the version control system.
 
 ``parsers``

@@ -122,8 +122,8 @@ class BusinessRule(metaclass=BusinessRuleBase):
         ``business_rules`` attribute.
 
         :param model TrackedModel: Get models linked to this model instance
-        :param transaction Transaction: Get latest approved versions of linked models as of this
-        transaction
+        :param transaction Transaction: Get latest approved versions of linked
+            models as of this transaction
         :rtype Iterator[TrackedModel]: The linked models
         """
         for field, related_model in get_relations(type(model)).items():
@@ -185,7 +185,7 @@ class BusinessRuleChecker:
         transaction.
 
         :raises ValidationError: All rule violations are raised in a single
-        ValidationError
+            ValidationError
         """
         violations = []
 
@@ -212,8 +212,8 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
     """
     Decorate BusinessRules to make them only applicable after a given date.
 
-    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat date
-    string of the time before which the rule should not apply
+    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat
+        date string of the time before which the rule should not apply
     """
 
     if isinstance(cutoff, str):
@@ -385,10 +385,10 @@ class ValidityPeriodContained(BusinessRule):
         Raise a violation unless the contained model validity period falls
         entirely within the validity period of the container model.
 
-        :param container TrackedModel: The model whose validity should contain that of
-        the contained model
-        :param contained TrackedModel: The model whose validity should be contained by
-        that of the container model
+        :param container TrackedModel: The model whose validity should contain
+            that of the contained model
+        :param contained TrackedModel: The model whose validity should be
+            contained by that of the container model
         :param model TrackedModel: The model to associate with the violation
         :raises self.violation: A business violation exception
         """

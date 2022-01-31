@@ -253,8 +253,8 @@ class TrackedModel(PolymorphicModel):
         """
         Get a name/value mapping of the fields that identify this model.
 
-        :param identifying_fields Optional[Iterable[str]]: Optionally override the
-        fields to retrieve
+        :param identifying_fields Optional[Iterable[str]]: Optionally override
+            the fields to retrieve
         :rtype dict[str, Any]: A dict of field names to values
         """
 
@@ -275,8 +275,8 @@ class TrackedModel(PolymorphicModel):
         model with field name and value pairs delimited by "=", eg: "field1=1,
         field2=2".
 
-        :param identifying_fields: Optionally override the
-        fields to use in the string
+        :param identifying_fields: Optionally override the fields to use in the
+            string
         :rtype str: The constructed string
         """
         field_list = [
@@ -563,8 +563,8 @@ class TrackedModel(PolymorphicModel):
         """
         Save the model to the database.
 
-        :param force_write bool: Ignore append-only restrictions and write to the
-        database even if the model already exists
+        :param force_write bool: Ignore append-only restrictions and write to
+            the database even if the model already exists
         """
         if not force_write and not self._can_write():
             raise IllegalSaveError(
@@ -606,8 +606,8 @@ class TrackedModel(PolymorphicModel):
         """
         Generate a URL to a representation of the model in the webapp.
 
-        :param action str: The view type to generate a URL for (default "detail"),
-        eg: "list" or "edit"
+        :param action str: The view type to generate a URL for (default
+            "detail"), eg: "list" or "edit"
         :rtype Optional[str]: The generated URL
         """
         kwargs = {}
