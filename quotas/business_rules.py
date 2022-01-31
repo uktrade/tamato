@@ -3,6 +3,7 @@ from datetime import date
 from decimal import Decimal
 
 from common.business_rules import BusinessRule
+from common.business_rules import ExclusionMembership
 from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
@@ -149,16 +150,11 @@ class ON13(BusinessRule):
             raise self.violation(exclusion)
 
 
-class ON14(BusinessRule):
+class ON14(ExclusionMembership):
     """The excluded geographical area must be a member of the geographical area
     group."""
 
-    def validate(self, exclusion):
-        if not exclusion.excluded_geographical_area.groups.filter(
-            member__sid=exclusion.excluded_geographical_area.sid,
-            geo_group__sid=exclusion.origin.geographical_area.sid,
-        ).exists():
-            raise self.violation(exclusion)
+    excluded_from = "origin"
 
 
 class CertificatesMustExist(MustExist):

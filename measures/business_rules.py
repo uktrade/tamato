@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.db.utils import DataError
 
 from common.business_rules import BusinessRule
+from common.business_rules import ExclusionMembership
 from common.business_rules import FootnoteApplicability
 from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
@@ -1055,17 +1056,11 @@ class ME65(BusinessRule):
             raise self.violation(exclusion)
 
 
-class ME66(BusinessRule):
+class ME66(ExclusionMembership):
     """The excluded geographical area must be a member of the geographical area
     group."""
 
-    def validate(self, exclusion):
-        geo_group = exclusion.modified_measure.geographical_area
-
-        if not geo_group.memberships.filter(
-            sid=exclusion.excluded_geographical_area.sid,
-        ).exists():
-            raise self.violation(exclusion)
+    excluded_from = "modified_measure"
 
 
 class ME67(BusinessRule):
