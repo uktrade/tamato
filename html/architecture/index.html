@@ -308,7 +308,7 @@ previous versions of models and be able to describe the changes that have been
 done to them.</p>
 <p>Each model will exist multiple times in the database, with each row representing
 a new version of that model. This is implemented using the
-<code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code> system.</p>
+<a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code></a> system.</p>
 <p>Note that which version of a model is the “current” one depends in general on
 what transactions have been applied. Each row is pinned to a specific
 transaction in order to allow working out which model is the current version as
@@ -318,6 +318,34 @@ of a certain transaction. As TaMaTo will also deal with draft data, what is
 eligible to be “current”, such that the version from the most recent transaction
 that is not draft is considered to be “current”.</p>
 <p>There are a number of convenience methods for finding “current” models.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.models.trackedmodel.TrackedModelQuerySet">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.models.trackedmodel.</span></span><span class="sig-name descname"><span class="pre">TrackedModelQuerySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/models/tracked_qs.html#TrackedModelQuerySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.trackedmodel.TrackedModelQuerySet" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="common.models.trackedmodel.TrackedModelQuerySet.approved_up_to_transaction">
+<span class="sig-name descname"><span class="pre">approved_up_to_transaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.trackedmodel.TrackedModelQuerySet" title="common.models.tracked_qs.TrackedModelQuerySet"><span class="pre">common.models.tracked_qs.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../_modules/common/models/tracked_qs.html#TrackedModelQuerySet.approved_up_to_transaction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.trackedmodel.TrackedModelQuerySet.approved_up_to_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the approved versions of the model being queried, unless there
+exists a version of the model in a draft state within a transaction
+preceding (and including) the given transaction in the workbasket of the
+given transaction.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.models.trackedmodel.TrackedModelQuerySet.latest_approved">
+<span class="sig-name descname"><span class="pre">latest_approved</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.trackedmodel.TrackedModelQuerySet" title="common.models.tracked_qs.TrackedModelQuerySet"><span class="pre">common.models.tracked_qs.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../_modules/common/models/tracked_qs.html#TrackedModelQuerySet.latest_approved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.trackedmodel.TrackedModelQuerySet.latest_approved" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the latest versions of the model being queried which have been
+approved.</p>
+<p>This will specifically fetch the most recent approved row pertaining to
+an object. If a row is unapproved, or has subsequently been rejected
+after approval, it should not be included in the returned QuerySet.
+Likewise any objects which have never been approved (are in draft as an
+initial create step) should not appear in the queryset. Any row marked
+as deleted will also not be fetched. If done from the TrackedModel this
+will return the objects for all tracked models.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 <section id="domain-modules">
@@ -559,7 +587,7 @@ either as modules themselves or single files.</p>
 <h3><code class="docutils literal notranslate"><span class="pre">models</span></code><a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
 <p>Classes representing domain models. With again a few exceptions, most models
 correspond directly to an element in the TARIC specification. Most of these will
-inherit from <code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code> which represents a
+inherit from <a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code></a> which represents a
 model for whom history is being tracked.</p>
 <p>The most notable places where the database schema has diverged from the TARIC
 specification is on descriptions, which have been flattened into a single model
@@ -626,7 +654,7 @@ check correctness of fields and relationships between models.</p>
 database queries. In some places it is desirable to more tightly control how the
 system fetches it’s data – for example, to efficiently generate a new field using
 aggregates.</p>
-<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModelQuerySet</span></code> is one of the most used
+<p>The <a class="reference internal" href="#common.models.trackedmodel.TrackedModelQuerySet" title="common.models.trackedmodel.TrackedModelQuerySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModelQuerySet</span></code></a> is one of the most used
 as it implements selecting the correct versions from the version control system.</p>
 </section>
 <section id="parsers">

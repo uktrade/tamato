@@ -250,8 +250,8 @@
 <span class="sd">        ``business_rules`` attribute.</span>
 
 <span class="sd">        :param model TrackedModel: Get models linked to this model instance</span>
-<span class="sd">        :param transaction Transaction: Get latest approved versions of linked models as of this</span>
-<span class="sd">        transaction</span>
+<span class="sd">        :param transaction Transaction: Get latest approved versions of linked</span>
+<span class="sd">            models as of this transaction</span>
 <span class="sd">        :rtype Iterator[TrackedModel]: The linked models</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">related_model</span> <span class="ow">in</span> <span class="n">get_relations</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">))</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -313,7 +313,7 @@
 <span class="sd">        transaction.</span>
 
 <span class="sd">        :raises ValidationError: All rule violations are raised in a single</span>
-<span class="sd">        ValidationError</span>
+<span class="sd">            ValidationError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -340,8 +340,8 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Decorate BusinessRules to make them only applicable after a given date.</span>
 
-<span class="sd">    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat date</span>
-<span class="sd">    string of the time before which the rule should not apply</span>
+<span class="sd">    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat</span>
+<span class="sd">        date string of the time before which the rule should not apply</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -513,10 +513,10 @@
 <span class="sd">        Raise a violation unless the contained model validity period falls</span>
 <span class="sd">        entirely within the validity period of the container model.</span>
 
-<span class="sd">        :param container TrackedModel: The model whose validity should contain that of</span>
-<span class="sd">        the contained model</span>
-<span class="sd">        :param contained TrackedModel: The model whose validity should be contained by</span>
-<span class="sd">        that of the container model</span>
+<span class="sd">        :param container TrackedModel: The model whose validity should contain</span>
+<span class="sd">            that of the contained model</span>
+<span class="sd">        :param contained TrackedModel: The model whose validity should be</span>
+<span class="sd">            contained by that of the container model</span>
 <span class="sd">        :param model TrackedModel: The model to associate with the violation</span>
 <span class="sd">        :raises self.violation: A business violation exception</span>
 <span class="sd">        &quot;&quot;&quot;</span>

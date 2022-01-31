@@ -129,11 +129,11 @@
 <span></span><span class="kn">from</span> <span class="nn">django.db.models.fields</span> <span class="kn">import</span> <span class="n">Field</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">NoReverseMatch</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
-<span class="kn">from</span> <span class="nn">polymorphic.managers</span> <span class="kn">import</span> <span class="n">PolymorphicManager</span>
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">NoBlankDescription</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UpdateValidity</span>
 <span class="kn">from</span> <span class="nn">common.exceptions</span> <span class="kn">import</span> <span class="n">NoDescriptionError</span>
+<span class="kn">from</span> <span class="nn">common.models.managers</span> <span class="kn">import</span> <span class="n">TrackedModelManager</span>
 <span class="kn">from</span> <span class="nn">common.models.mixins.validity</span> <span class="kn">import</span> <span class="n">ValidityStartMixin</span>
 <span class="kn">from</span> <span class="nn">common.models.mixins.validity</span> <span class="kn">import</span> <span class="n">ValidityStartQueryset</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_qs</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
@@ -146,7 +146,7 @@
 
 
 <div class="viewcode-block" id="DescriptionMixin"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin">[docs]</a><span class="k">class</span> <span class="nc">DescriptionMixin</span><span class="p">(</span><span class="n">ValidityStartMixin</span><span class="p">):</span>
-    <span class="n">objects</span> <span class="o">=</span> <span class="n">PolymorphicManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span><span class="n">DescriptionQueryset</span><span class="p">)()</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">TrackedModelManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span><span class="n">DescriptionQueryset</span><span class="p">)()</span>
 
     <span class="n">business_rules</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">NoBlankDescription</span><span class="p">,</span>

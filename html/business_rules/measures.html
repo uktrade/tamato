@@ -1638,14 +1638,18 @@ measure type.</p>
 entirely within the validity period of the container model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>container</em>) – The model whose validity should contain that of</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>TrackedModel</strong> (<em>model</em>) – The model whose validity should contain
+that of the contained model</p></li>
+<li><p><strong>TrackedModel</strong> – The model whose validity should be
+contained by that of the container model</p></li>
+<li><p><strong>TrackedModel</strong> – The model to associate with the violation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>self.violation</strong> – A business violation exception</p>
 </dd>
 </dl>
-<p>the contained model
-:param contained TrackedModel: The model whose validity should be contained by
-that of the container model
-:param model TrackedModel: The model to associate with the violation
-:raises self.violation: A business violation exception</p>
 </dd></dl>
 
 </dd></dl>

@@ -156,12 +156,14 @@ passed <code class="docutils literal notranslate"><span class="pre">model</span>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>TrackedModel</strong> (<em>model</em>) – Get models linked to this model instance</p></li>
-<li><p><strong>Transaction</strong> (<em>transaction</em>) – Get latest approved versions of linked models as of this</p></li>
+<li><p><strong>Transaction</strong> (<em>transaction</em>) – Get latest approved versions of linked
+models as of this transaction</p></li>
 </ul>
 </dd>
+<dt class="field-even">Rtype Iterator[TrackedModel]</dt>
+<dd class="field-even"><p>The linked models</p>
+</dd>
 </dl>
-<p>transaction
-:rtype Iterator[TrackedModel]: The linked models</p>
 </dd></dl>
 
 <dl class="py method">
@@ -215,10 +217,10 @@ instances and collects all violations.</p>
 transaction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><strong>ValidationError</strong> – All rule violations are raised in a single</p>
+<dd class="field-odd"><p><strong>ValidationError</strong> – All rule violations are raised in a single
+ValidationError</p>
 </dd>
 </dl>
-<p>ValidationError</p>
 </dd></dl>
 
 </dd></dl>
@@ -488,14 +490,18 @@ period (found through the <code class="docutils literal notranslate"><span class
 entirely within the validity period of the container model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>container</em>) – The model whose validity should contain that of</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>TrackedModel</strong> (<em>model</em>) – The model whose validity should contain
+that of the contained model</p></li>
+<li><p><strong>TrackedModel</strong> – The model whose validity should be
+contained by that of the container model</p></li>
+<li><p><strong>TrackedModel</strong> – The model to associate with the violation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>self.violation</strong> – A business violation exception</p>
 </dd>
 </dl>
-<p>the contained model
-:param contained TrackedModel: The model whose validity should be contained by
-that of the container model
-:param model TrackedModel: The model to associate with the violation
-:raises self.violation: A business violation exception</p>
 </dd></dl>
 
 <dl class="py method">
@@ -592,10 +598,10 @@ period of the container.</p>
 <dd><p>Decorate BusinessRules to make them only applicable after a given date.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>str</strong><strong>]</strong> (<em>cutoff Union</em><em>[</em><em>date</em><em>, </em><em>datetime</em><em>,</em>) – The date, datetime or isoformat date</p>
+<dd class="field-odd"><p><strong>str</strong><strong>]</strong> (<em>cutoff Union</em><em>[</em><em>date</em><em>, </em><em>datetime</em><em>,</em>) – The date, datetime or isoformat
+date string of the time before which the rule should not apply</p>
 </dd>
 </dl>
-<p>string of the time before which the rule should not apply</p>
 </dd></dl>
 
 <dl class="py function">

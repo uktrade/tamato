@@ -146,7 +146,6 @@
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">NoReverseMatch</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
-<span class="kn">from</span> <span class="nn">polymorphic.managers</span> <span class="kn">import</span> <span class="n">PolymorphicManager</span>
 <span class="kn">from</span> <span class="nn">polymorphic.models</span> <span class="kn">import</span> <span class="n">PolymorphicModel</span>
 
 <span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">validators</span>
@@ -154,6 +153,7 @@
 <span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">NumericSID</span>
 <span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">SignedIntSID</span>
 <span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span> <span class="nn">common.models.managers</span> <span class="kn">import</span> <span class="n">TrackedModelManager</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_qs</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_deferred_set_fields</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_models_linked_to</span>
@@ -222,7 +222,7 @@
 <span class="sd">    these fields.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">objects</span><span class="p">:</span> <span class="n">TrackedModelQuerySet</span> <span class="o">=</span> <span class="n">PolymorphicManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span>
+    <span class="n">objects</span><span class="p">:</span> <span class="n">TrackedModelQuerySet</span> <span class="o">=</span> <span class="n">TrackedModelManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span>
         <span class="n">TrackedModelQuerySet</span><span class="p">,</span>
     <span class="p">)()</span>
 
@@ -381,8 +381,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get a name/value mapping of the fields that identify this model.</span>
 
-<span class="sd">        :param identifying_fields Optional[Iterable[str]]: Optionally override the</span>
-<span class="sd">        fields to retrieve</span>
+<span class="sd">        :param identifying_fields Optional[Iterable[str]]: Optionally override</span>
+<span class="sd">            the fields to retrieve</span>
 <span class="sd">        :rtype dict[str, Any]: A dict of field names to values</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -403,8 +403,8 @@
 <span class="sd">        model with field name and value pairs delimited by &quot;=&quot;, eg: &quot;field1=1,</span>
 <span class="sd">        field2=2&quot;.</span>
 
-<span class="sd">        :param identifying_fields: Optionally override the</span>
-<span class="sd">        fields to use in the string</span>
+<span class="sd">        :param identifying_fields: Optionally override the fields to use in the</span>
+<span class="sd">            string</span>
 <span class="sd">        :rtype str: The constructed string</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">field_list</span> <span class="o">=</span> <span class="p">[</span>
@@ -691,8 +691,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the model to the database.</span>
 
-<span class="sd">        :param force_write bool: Ignore append-only restrictions and write to the</span>
-<span class="sd">        database even if the model already exists</span>
+<span class="sd">        :param force_write bool: Ignore append-only restrictions and write to</span>
+<span class="sd">            the database even if the model already exists</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">force_write</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_write</span><span class="p">():</span>
             <span class="k">raise</span> <span class="n">IllegalSaveError</span><span class="p">(</span>
@@ -734,8 +734,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a URL to a representation of the model in the webapp.</span>
 
-<span class="sd">        :param action str: The view type to generate a URL for (default &quot;detail&quot;),</span>
-<span class="sd">        eg: &quot;list&quot; or &quot;edit&quot;</span>
+<span class="sd">        :param action str: The view type to generate a URL for (default</span>
+<span class="sd">            &quot;detail&quot;), eg: &quot;list&quot; or &quot;edit&quot;</span>
 <span class="sd">        :rtype Optional[str]: The generated URL</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>

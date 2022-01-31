@@ -95,7 +95,7 @@
     <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
 
       
-      <ul>
+      <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Tariff Management Tool</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../envvars.html">Environment variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
@@ -107,7 +107,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../exporter/index.html">The Exporter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../CONTRIBUTING.html">How to contribute</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../index.html">API reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="common.html">Submodules</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Submodules</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
 </ul>
 
@@ -725,11 +729,13 @@ relation.</p>
 <dd><p>Get a name/value mapping of the fields that identify this model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Optional</strong><strong>[</strong><strong>Iterable</strong><strong>[</strong><strong>str</strong><strong>]</strong><strong>]</strong> (<em>identifying_fields</em>) – Optionally override the</p>
+<dd class="field-odd"><p><strong>Optional</strong><strong>[</strong><strong>Iterable</strong><strong>[</strong><strong>str</strong><strong>]</strong><strong>]</strong> (<em>identifying_fields</em>) – Optionally override
+the fields to retrieve</p>
+</dd>
+<dt class="field-even">Rtype dict[str, Any]</dt>
+<dd class="field-even"><p>A dict of field names to values</p>
 </dd>
 </dl>
-<p>fields to retrieve
-:rtype dict[str, Any]: A dict of field names to values</p>
 </dd></dl>
 
 <dl class="py method">
@@ -743,11 +749,13 @@ relation.</p>
 <dd><p>Generate a URL to a representation of the model in the webapp.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>str</strong> (<em>action</em>) – The view type to generate a URL for (default “detail”),</p>
+<dd class="field-odd"><p><strong>str</strong> (<em>action</em>) – The view type to generate a URL for (default
+“detail”), eg: “list” or “edit”</p>
+</dd>
+<dt class="field-even">Rtype Optional[str]</dt>
+<dd class="field-even"><p>The generated URL</p>
 </dd>
 </dl>
-<p>eg: “list” or “edit”
-:rtype Optional[str]: The generated URL</p>
 </dd></dl>
 
 <dl class="py method">
@@ -872,11 +880,13 @@ model with field name and value pairs delimited by “=”, eg: “field1=1,
 field2=2”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>identifying_fields</strong> – Optionally override the</p>
+<dd class="field-odd"><p><strong>identifying_fields</strong> – Optionally override the fields to use in the
+string</p>
+</dd>
+<dt class="field-even">Rtype str</dt>
+<dd class="field-even"><p>The constructed string</p>
 </dd>
 </dl>
-<p>fields to use in the string
-:rtype str: The constructed string</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1090,7 +1100,7 @@ by passing in keyword args.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.objects">
-<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="pre">:</span> <span class="pre">common.models.tracked_qs.TrackedModelQuerySet</span></em><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.PolymorphicManagerFromTrackedModelQuerySet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.TrackedModel.objects" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="../../architecture/index.html#common.models.trackedmodel.TrackedModelQuerySet" title="common.models.tracked_qs.TrackedModelQuerySet"><span class="pre">common.models.tracked_qs.TrackedModelQuerySet</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">&lt;django.db.models.manager.TrackedModelManagerFromTrackedModelQuerySet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#common.models.TrackedModel.objects" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1264,10 +1274,10 @@ relation.</p>
 <dd><p>Save the model to the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>bool</strong> (<em>force_write</em>) – Ignore append-only restrictions and write to the</p>
+<dd class="field-odd"><p><strong>bool</strong> (<em>force_write</em>) – Ignore append-only restrictions and write to
+the database even if the model already exists</p>
 </dd>
 </dl>
-<p>database even if the model already exists</p>
 </dd></dl>
 
 <dl class="py property">
