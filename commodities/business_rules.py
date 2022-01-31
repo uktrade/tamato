@@ -1,4 +1,5 @@
 """Business rules for commodities/goods nomenclatures."""
+import logging
 from datetime import date
 from datetime import timedelta
 
@@ -13,6 +14,7 @@ from common.business_rules import ValidityStartDateRules
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
 from common.business_rules import skip_when_not_deleted
+from common.models.trackedmodel import TrackedModel
 from common.util import validity_range_contains_range
 
 
@@ -24,6 +26,10 @@ class NIG1(NoOverlapping):
 class NIG2(BusinessRule):
     """The validity period of the goods nomenclature must be within the validity
     period of the product line above in the hierarchy."""
+
+    def __init__(self, transaction=None):
+        super().__init__(transaction)
+        self.logger = logging.getLogger(type(self).__name__)
 
     def parent_spans_child(self, parent, child) -> bool:
         parent_validity = parent.indented_goods_nomenclature.version_at(
@@ -37,7 +43,18 @@ class NIG2(BusinessRule):
     def validate(self, indent):
         from commodities.models.dc import Commodity
 
-        good = indent.indented_goods_nomenclature.version_at(self.transaction)
+        try:
+            good = indent.indented_goods_nomenclature.version_at(self.transaction)
+        except TrackedModel.DoesNotExist:
+            self.logger.warning(
+                "Goods nomenclature %s no longer exists at transaction %s"
+                "but indent %s is still referring to it.",
+                indent.indented_goods_nomenclature,
+                self.transaction,
+                indent,
+            )
+            return
+
         commodity = Commodity(obj=good, indent_obj=indent)
         snapshot = get_snapshot_from_good_chapter(good)
 
