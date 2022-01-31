@@ -592,6 +592,28 @@ class FootnoteApplicability(BusinessRule):
             raise self.violation(model)
 
 
+class ExclusionMembership(BusinessRule):
+    """The excluded geographical area must be a member of the geographical area
+    group."""
+
+    excluded_from: str
+    """The object that the geographical area is excluded from."""
+
+    def validate(self, exclusion):
+        geo_group = getattr(exclusion, self.excluded_from).geographical_area
+        Membership = geo_group._meta.get_field("members").related_model
+
+        if (
+            not Membership.objects.approved_up_to_transaction(self.transaction)
+            .filter(
+                geo_group__sid=geo_group.sid,
+                member__sid=exclusion.excluded_geographical_area.sid,
+            )
+            .exists()
+        ):
+            raise self.violation(exclusion)
+
+
 class UpdateValidity(BusinessRule):
     """
     The update type of this object must be valid.
