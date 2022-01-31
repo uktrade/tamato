@@ -4,7 +4,7 @@
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>1. Record architecture decisions - DIT Tariff Management Tool</title>
+    <title>15. Make reverse relations aware of versions - DIT Tariff Management Tool</title>
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -100,13 +100,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Architectural Decision Records</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">1. Record architecture decisions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#context">Context</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0002-use-pytest-bdd-for-bdd-testing.html">2. Use pytest-bdd for BDD testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0003-use-django-rest-framework.html">3. Use Django REST Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0004-xml-export-and-import.html">4. XML Import and Export</a></li>
@@ -120,7 +114,13 @@
 <li class="toctree-l2"><a class="reference internal" href="0012-ordering-of-tariff-transactions.html">12. Ordering of tariff transactions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0013-import-taric-nomenclature-updates.html">13. Import TARIC nomenclature updates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0014-simplify-current-transaction-queries.html">14. Simplification of current transaction queries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="0015-make-reverse-relations-aware-of-versions.html">15. Make reverse relations aware of versions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">15. Make reverse relations aware of versions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#context">Context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
@@ -139,7 +139,7 @@
       
       <h1>On this page</h1>
       <ul>
-<li><a class="reference internal" href="#">1. Record architecture decisions</a><ul>
+<li><a class="reference internal" href="#">15. Make reverse relations aware of versions</a><ul>
 <li><a class="reference internal" href="#status">Status</a></li>
 <li><a class="reference internal" href="#context">Context</a></li>
 <li><a class="reference internal" href="#decision">Decision</a></li>
@@ -157,26 +157,69 @@
           <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
 
             
-  <section id="record-architecture-decisions">
-<span id="id1"></span><h1>1. Record architecture decisions<a class="headerlink" href="#record-architecture-decisions" title="Permalink to this headline">¶</a></h1>
-<p>Date: 2020-04-01</p>
+  <section id="make-reverse-relations-aware-of-versions">
+<h1>15. Make reverse relations aware of versions<a class="headerlink" href="#make-reverse-relations-aware-of-versions" title="Permalink to this headline">¶</a></h1>
+<p>Date: 2022-01-27</p>
 <section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h2>
-<p>Accepted</p>
+<p>Current</p>
 </section>
 <section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
-<p>We need to record the architectural decisions made on this project.</p>
+<p>When tracked models exist in a one-to-many relationship (such as how one parent
+object can have many descriptions) each description object will hold a foreign
+key back to the parent object. The foreign key specifically links to the version
+it was created against.</p>
+<blockquote>
+<div><p>Parent X (primary key = 1)
+Description X (primary key = 2, parent = 1)</p>
+</div></blockquote>
+<p>Calling the reverse relation on the parent will correctly discover the
+descriptions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parent</span><span class="o">.</span><span class="n">descriptions</span>
+<span class="c1"># =&gt; [&lt;Description: pk=2&gt;]</span>
+</pre></div>
+</div>
+<p>If that parent object is updated, it receives a new row in the database, but the
+descriptions are not updated and so the primary key they point to is still the
+one of the old version.</p>
+<p>This means that the reverse relationship when called on the new version will not
+return any objects, because the reverse relationship by default tries to find
+descriptions that have the primary key of the <em>new</em> parent object:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parent_v2</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">new_version</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">parent_v2</span><span class="o">.</span><span class="n">descriptions</span> <span class="c1"># =&gt; []</span>
+</pre></div>
+</div>
+<p>This is problematic because it means writing code that works correctly in the
+presence of versions is not easy and bugs caused are not obvious – developers
+currently need to remember that this does not work. This also makes the codebase
+less intuitive to developers familiar with Django.</p>
 </section>
 <section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
-<p>We will use Architecture Decision Records, as <a class="reference external" href="http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions">described by Michael
-Nygard</a>.</p>
+<p>The way that reverse relations are calculated will be modified to search using
+version groups instead of primary keys. The version group of an object by
+definition stays constant between versions.</p>
+<p>The effect of this modification will be to change the query used by the reverse
+relation to instead be equivalent to:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Description</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">parent__version_group</span><span class="o">=</span><span class="n">parent_v2</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Permalink to this headline">¶</a></h2>
-<p>See Michael Nygard’s article, linked above. For a lightweight ADR
-toolset, see Nat Pryce’s <a class="reference external" href="https://github.com/npryce/adr-tools">adr-tools</a>.</p>
+<p>With this change, reverse relations will start to work in the familiar way. Any
+version of any object will correctly return related objects, even if the related
+objects were created against an earlier version. There are no cases we have
+discovered that won’t work under this change.</p>
+<p>Note that the result will still include all versions of any attached related
+objects, and so the call still needs to be scoped down to a specific version.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">current_descriptions</span> <span class="o">=</span> <span class="n">parent_v2</span><span class="o">.</span><span class="n">descriptions</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>A future modification may be to apply automatic version filtering as described
+in ADR #14 to reverse relations too, but the conseuqnces of this are slightly
+harder to unpick and so are left as to-do.</p>
 </section>
 </section>
 
@@ -187,8 +230,8 @@ toolset, see Nat Pryce’s <a class="reference external" href="https://github.co
           <aside>
   <ul class="contribution-banner">
     
-    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/adr/0001-record-architecture-decisions.rst">View source</a></li>
-    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'adr/0001-record-architecture-decisions.rst'&amp;body=Problem%20with%20'adr/0001-record-architecture-decisions.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/adr/0015-make-reverse-relations-aware-of-versions.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'adr/0015-make-reverse-relations-aware-of-versions.rst'&amp;body=Problem%20with%20'adr/0015-make-reverse-relations-aware-of-versions.rst'%20(docs/)">Report problem</a></li>
     <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
     
   </ul>
