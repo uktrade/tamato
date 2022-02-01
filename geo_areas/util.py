@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Set
+from typing import FrozenSet
 
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
@@ -10,8 +10,11 @@ def materialise_geo_area(
     geo_area: GeographicalArea,
     date: date,
     transaction,
-) -> Set[GeographicalArea]:
-    """Materialise a GeoArea, including its memberships."""
+) -> FrozenSet[GeographicalArea]:
+    """Returns a set of all the objects that are members of the passed
+    geographical area if it is a group, or just returns a set containing the
+    geographical area if it is not a group."""
+
     if geo_area.area_code == AreaCode.GROUP:
         memberships = (
             GeographicalMembership.objects.approved_up_to_transaction(transaction)

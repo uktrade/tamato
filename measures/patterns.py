@@ -24,7 +24,7 @@ from common.util import maybe_min
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.util import materialise_geo_area
+from geo_areas.patterns import ExclusionCreationPattern
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureAction
@@ -252,6 +252,11 @@ class MeasureCreationPattern:
                 base_date,
             )
         )
+        self.exclusion_pattern = ExclusionCreationPattern(
+            exclusion_type=MeasureExcludedGeographicalArea,
+            excluded_from_name="modified_measure",
+            workbasket=workbasket,
+        )
 
     measure_sid_counter = get_counter(Measure)
     measure_condition_sid_counter = get_counter(MeasureCondition)
@@ -298,34 +303,6 @@ class MeasureCreationPattern:
                 component.save()
 
             yield condition
-
-    def create_measure_excluded_geographical_areas(
-        self,
-        measure: Measure,
-        exclusion: GeographicalArea,
-    ) -> Iterator[MeasureExcludedGeographicalArea]:
-        measure_origins = materialise_geo_area(
-            measure.geographical_area,
-            date=measure.valid_between.lower,
-            transaction=self.workbasket.current_transaction,
-        )
-
-        exclusions = materialise_geo_area(
-            exclusion,
-            date=measure.valid_between.lower,
-            transaction=self.workbasket.current_transaction,
-        )
-
-        for exclusion in exclusions:
-            assert (
-                exclusion in measure_origins
-            ), f"{exclusion.area_id} not in {list(x.area_id for x in measure_origins)}"
-            yield MeasureExcludedGeographicalArea.objects.create(
-                modified_measure=measure,
-                excluded_geographical_area=exclusion,
-                update_type=UpdateType.CREATE,
-                transaction=measure.transaction,
-            )
 
     def create_measure_footnotes(
         self,
@@ -455,7 +432,7 @@ class MeasureCreationPattern:
         # that group will be excluded instead.
         # TODO: create multiple measures if memberships come to an end.
         for exclusion in exclusions:
-            yield from self.create_measure_excluded_geographical_areas(
+            yield from self.exclusion_pattern.create(
                 new_measure,
                 exclusion,
             )

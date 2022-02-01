@@ -1,9 +1,6 @@
-from typing import Iterator
-
 from common.util import TaricDateRange
 from common.validators import UpdateType
-from geo_areas.models import GeographicalArea
-from geo_areas.util import materialise_geo_area
+from geo_areas.patterns import ExclusionCreationPattern
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaOrderNumberOrigin
@@ -14,34 +11,11 @@ from quotas.validators import AdministrationMechanism
 class QuotaCreationPattern:
     def __init__(self, workbasket):
         self.workbasket = workbasket
-
-    def create_exclusions(
-        self,
-        origin: QuotaOrderNumberOrigin,
-        exclusion: GeographicalArea,
-    ) -> Iterator[QuotaOrderNumberOriginExclusion]:
-        quota_origins = materialise_geo_area(
-            origin.geographical_area,
-            date=origin.valid_between.lower,
-            transaction=self.workbasket.current_transaction,
+        self.exclusion_pattern = ExclusionCreationPattern(
+            exclusion_type=QuotaOrderNumberOriginExclusion,
+            excluded_from_name="origin",
+            workbasket=workbasket,
         )
-
-        exclusions = materialise_geo_area(
-            exclusion,
-            date=origin.valid_between.lower,
-            transaction=self.workbasket.current_transaction,
-        )
-
-        for exclusion in exclusions:
-            assert (
-                exclusion in quota_origins
-            ), f"{exclusion.area_id} not in {list(x.area_id for x in quota_origins)}"
-            yield QuotaOrderNumberOriginExclusion.objects.create(
-                origin=origin,
-                excluded_geographical_area=exclusion,
-                update_type=UpdateType.CREATE,
-                transaction=origin.transaction,
-            )
 
     def create(
         self,
@@ -73,7 +47,7 @@ class QuotaCreationPattern:
             )
 
             for exclusion in exclusions:
-                list(self.create_exclusions(origin, exclusion))
+                list(self.exclusion_pattern.create(origin, exclusion))
 
         return quota
 
