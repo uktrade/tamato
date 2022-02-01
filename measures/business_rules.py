@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.db.utils import DataError
 
 from common.business_rules import BusinessRule
+from common.business_rules import ExclusionMembership
 from common.business_rules import FootnoteApplicability
 from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
@@ -20,6 +21,7 @@ from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from geo_areas.validators import AreaCode
+from measures.querysets import MeasuresQuerySet
 from quotas.validators import AdministrationMechanism
 
 
@@ -336,11 +338,15 @@ class ME32(BusinessRule):
 
         return query
 
-    def validate(self, measure):
-        if measure.goods_nomenclature is None:
-            return
+    def clashing_measures(self, measure) -> MeasuresQuerySet:
+        """
+        Returns all of the measures that clash with the passed measure over its
+        lifetime.
 
-        # build the query for measures matching the given measure
+        Two measures clash if any of their fields listed in this business rule
+        description are equal, their date ranges overlap, and one of their
+        commodity codes is an ancestor or equal to the other.
+        """
         from measures.snapshots import MeasureSnapshot
 
         query = self.compile_query(measure)
@@ -351,7 +357,13 @@ class ME32(BusinessRule):
                 all=True,
             )
 
-        if clashing_measures.exists():
+        return clashing_measures
+
+    def validate(self, measure):
+        if measure.goods_nomenclature is None:
+            return
+
+        if self.clashing_measures(measure).exists():
             raise self.violation(measure)
 
 
@@ -1044,17 +1056,11 @@ class ME65(BusinessRule):
             raise self.violation(exclusion)
 
 
-class ME66(BusinessRule):
+class ME66(ExclusionMembership):
     """The excluded geographical area must be a member of the geographical area
     group."""
 
-    def validate(self, exclusion):
-        geo_group = exclusion.modified_measure.geographical_area
-
-        if not geo_group.memberships.filter(
-            sid=exclusion.excluded_geographical_area.sid,
-        ).exists():
-            raise self.violation(exclusion)
+    excluded_from = "modified_measure"
 
 
 class ME67(BusinessRule):

@@ -126,7 +126,7 @@ def test_versions_up_to(model1_with_history):
 
 def test_as_at(date_ranges, validity_factory):
     """Ensure only records active at a specific date are fetched."""
-    if validity_factory is factories.GoodsNomenclatureIndentNodeFactory:
+    if validity_factory is factories.GoodsNomenclatureFactory:
         pytest.xfail("Does not implement as_at")
 
     pks = {
@@ -309,9 +309,6 @@ def test_terminate(
     termination_range,
     initial_dates,
 ):
-    if validity_factory is factories.GoodsNomenclatureIndentNodeFactory:
-        pytest.xfail("Does not implement terminate")
-
     model = validity_factory.create(valid_between=getattr(date_ranges, initial_dates))
     termination_date = getattr(date_ranges, termination_range).upper
     terminated_model = model.terminate(workbasket, termination_date)
@@ -337,6 +334,18 @@ def test_new_version_uses_passed_transaction(sample_model):
 def test_new_version_works_for_all_models(trackedmodel_factory):
     model = trackedmodel_factory.create()
     model.new_version(model.transaction.workbasket)
+
+
+def test_new_version_retains_related_objects(sample_model):
+    description = factories.TestModelDescription1Factory(
+        described_record=sample_model,
+    )
+    assert sample_model.descriptions.get() == description
+
+    new_model = sample_model.new_version(
+        sample_model.transaction.workbasket,
+    )
+    assert new_model.descriptions.get() == description
 
 
 def test_current_as_of(sample_model):

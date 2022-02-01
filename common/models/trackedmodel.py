@@ -18,7 +18,6 @@ from django.db.models.query import QuerySet
 from django.db.transaction import atomic
 from django.urls import NoReverseMatch
 from django.urls import reverse
-from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 
 from common import validators
@@ -26,6 +25,7 @@ from common.exceptions import IllegalSaveError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.models.managers import TrackedModelManager
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_deferred_set_fields
 from common.models.tracked_utils import get_models_linked_to
@@ -94,7 +94,7 @@ class TrackedModel(PolymorphicModel):
     these fields.
     """
 
-    objects: TrackedModelQuerySet = PolymorphicManager.from_queryset(
+    objects: TrackedModelQuerySet = TrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
 
@@ -253,8 +253,8 @@ class TrackedModel(PolymorphicModel):
         """
         Get a name/value mapping of the fields that identify this model.
 
-        :param identifying_fields Optional[Iterable[str]]: Optionally override the
-        fields to retrieve
+        :param identifying_fields Optional[Iterable[str]]: Optionally override
+            the fields to retrieve
         :rtype dict[str, Any]: A dict of field names to values
         """
 
@@ -275,8 +275,8 @@ class TrackedModel(PolymorphicModel):
         model with field name and value pairs delimited by "=", eg: "field1=1,
         field2=2".
 
-        :param identifying_fields: Optionally override the
-        fields to use in the string
+        :param identifying_fields: Optionally override the fields to use in the
+            string
         :rtype str: The constructed string
         """
         field_list = [
@@ -563,8 +563,8 @@ class TrackedModel(PolymorphicModel):
         """
         Save the model to the database.
 
-        :param force_write bool: Ignore append-only restrictions and write to the
-        database even if the model already exists
+        :param force_write bool: Ignore append-only restrictions and write to
+            the database even if the model already exists
         """
         if not force_write and not self._can_write():
             raise IllegalSaveError(
@@ -606,8 +606,8 @@ class TrackedModel(PolymorphicModel):
         """
         Generate a URL to a representation of the model in the webapp.
 
-        :param action str: The view type to generate a URL for (default "detail"),
-        eg: "list" or "edit"
+        :param action str: The view type to generate a URL for (default
+            "detail"), eg: "list" or "edit"
         :rtype Optional[str]: The generated URL
         """
         kwargs = {}

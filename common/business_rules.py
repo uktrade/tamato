@@ -122,8 +122,8 @@ class BusinessRule(metaclass=BusinessRuleBase):
         ``business_rules`` attribute.
 
         :param model TrackedModel: Get models linked to this model instance
-        :param transaction Transaction: Get latest approved versions of linked models as of this
-        transaction
+        :param transaction Transaction: Get latest approved versions of linked
+            models as of this transaction
         :rtype Iterator[TrackedModel]: The linked models
         """
         for field, related_model in get_relations(type(model)).items():
@@ -185,7 +185,7 @@ class BusinessRuleChecker:
         transaction.
 
         :raises ValidationError: All rule violations are raised in a single
-        ValidationError
+            ValidationError
         """
         violations = []
 
@@ -212,8 +212,8 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
     """
     Decorate BusinessRules to make them only applicable after a given date.
 
-    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat date
-    string of the time before which the rule should not apply
+    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat
+        date string of the time before which the rule should not apply
     """
 
     if isinstance(cutoff, str):
@@ -385,10 +385,10 @@ class ValidityPeriodContained(BusinessRule):
         Raise a violation unless the contained model validity period falls
         entirely within the validity period of the container model.
 
-        :param container TrackedModel: The model whose validity should contain that of
-        the contained model
-        :param contained TrackedModel: The model whose validity should be contained by
-        that of the container model
+        :param container TrackedModel: The model whose validity should contain
+            that of the contained model
+        :param contained TrackedModel: The model whose validity should be
+            contained by that of the container model
         :param model TrackedModel: The model to associate with the violation
         :raises self.violation: A business violation exception
         """
@@ -590,6 +590,28 @@ class FootnoteApplicability(BusinessRule):
             not in applicable_model.footnote_application_codes
         ):
             raise self.violation(model)
+
+
+class ExclusionMembership(BusinessRule):
+    """The excluded geographical area must be a member of the geographical area
+    group."""
+
+    excluded_from: str
+    """The object that the geographical area is excluded from."""
+
+    def validate(self, exclusion):
+        geo_group = getattr(exclusion, self.excluded_from).geographical_area
+        Membership = geo_group._meta.get_field("members").related_model
+
+        if (
+            not Membership.objects.approved_up_to_transaction(self.transaction)
+            .filter(
+                geo_group__sid=geo_group.sid,
+                member__sid=exclusion.excluded_geographical_area.sid,
+            )
+            .exists()
+        ):
+            raise self.violation(exclusion)
 
 
 class UpdateValidity(BusinessRule):
