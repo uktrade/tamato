@@ -720,6 +720,28 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="ExclusionMembership"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ExclusionMembership">[docs]</a><span class="k">class</span> <span class="nc">ExclusionMembership</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The excluded geographical area must be a member of the geographical area</span>
+<span class="sd">    group.&quot;&quot;&quot;</span>
+
+    <span class="n">excluded_from</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;The object that the geographical area is excluded from.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ExclusionMembership.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ExclusionMembership.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+        <span class="n">geo_group</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exclusion</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">excluded_from</span><span class="p">)</span><span class="o">.</span><span class="n">geographical_area</span>
+        <span class="n">Membership</span> <span class="o">=</span> <span class="n">geo_group</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s2">&quot;members&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">related_model</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">Membership</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">geo_group__sid</span><span class="o">=</span><span class="n">geo_group</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">member__sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="UpdateValidity"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UpdateValidity">[docs]</a><span class="k">class</span> <span class="nc">UpdateValidity</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The update type of this object must be valid.</span>

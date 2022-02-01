@@ -136,6 +136,7 @@
 <span class="kn">from</span> <span class="nn">django.db.utils</span> <span class="kn">import</span> <span class="n">DataError</span>
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ExclusionMembership</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">FootnoteApplicability</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">MustExist</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
@@ -1183,17 +1184,11 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ME66"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME66">[docs]</a><span class="k">class</span> <span class="nc">ME66</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ME66"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME66">[docs]</a><span class="k">class</span> <span class="nc">ME66</span><span class="p">(</span><span class="n">ExclusionMembership</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The excluded geographical area must be a member of the geographical area</span>
 <span class="sd">    group.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ME66.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME66.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
-        <span class="n">geo_group</span> <span class="o">=</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">geographical_area</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">geo_group</span><span class="o">.</span><span class="n">memberships</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+    <span class="n">excluded_from</span> <span class="o">=</span> <span class="s2">&quot;modified_measure&quot;</span></div>
 
 
 <div class="viewcode-block" id="ME67"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME67">[docs]</a><span class="k">class</span> <span class="nc">ME67</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>

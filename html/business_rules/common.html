@@ -256,6 +256,37 @@ the error message.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="common.business_rules.ExclusionMembership">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">ExclusionMembership</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ExclusionMembership"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ExclusionMembership" title="Permalink to this definition">¶</a></dt>
+<dd><p>The excluded geographical area must be a member of the geographical area
+group.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="common.business_rules.ExclusionMembership.Violation">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.business_rules.ExclusionMembership.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The excluded geographical area must be a member of the geographical area
+group.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.business_rules.ExclusionMembership.excluded_from">
+<span class="sig-name descname"><span class="pre">excluded_from</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#common.business_rules.ExclusionMembership.excluded_from" title="Permalink to this definition">¶</a></dt>
+<dd><p>The object that the geographical area is excluded from.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.business_rules.ExclusionMembership.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ExclusionMembership.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ExclusionMembership.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="common.business_rules.FootnoteApplicability">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">FootnoteApplicability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#FootnoteApplicability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.FootnoteApplicability" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check that a footnote type can be applied to a certain model, based on
