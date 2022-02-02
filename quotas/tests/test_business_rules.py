@@ -252,6 +252,16 @@ def test_ON14():
 
     business_rules.ON14(exclusion.transaction).validate(exclusion)
 
+    deleted = factories.GeographicalMembershipFactory.create(
+        geo_group=membership.geo_group,
+        member=membership.member,
+        version_group=membership.version_group,
+        update_type=UpdateType.DELETE,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ON14(deleted.transaction).validate(exclusion)
+
 
 def test_CertificatesMustExist():
     """The referenced certificates must exist."""

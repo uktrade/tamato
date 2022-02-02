@@ -314,6 +314,9 @@ def get_next_id(queryset: QuerySet, id_field: Field, max_len: int):
     :param id_field Field: The ID field to consider
     :param max_len int: The maximum length of an ID value
     """
+    if not queryset:
+        return "1".zfill(max_len)
+
     return (
         queryset.annotate(
             next_id=Func(

@@ -1718,6 +1718,16 @@ def test_ME66():
 
     business_rules.ME66(exclusion.transaction).validate(exclusion)
 
+    deleted = factories.GeographicalMembershipFactory.create(
+        geo_group=membership.geo_group,
+        member=membership.member,
+        version_group=membership.version_group,
+        update_type=UpdateType.DELETE,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ME66(deleted.transaction).validate(exclusion)
+
     exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         modified_measure=measure,
         excluded_geographical_area=factories.GeographicalAreaFactory.create(),
