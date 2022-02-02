@@ -43,6 +43,8 @@
       <h2 class="govuk-heading-l">Your tariff changes</h2>
     </div>
   </div>
+
+  {% if download_ready %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-warning-text">
@@ -67,6 +69,8 @@
       </div>
     </div>
   </div>
+  {% endif %}
+  
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       {% set change_count = workbasket.tracked_models.count() %}

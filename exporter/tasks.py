@@ -111,9 +111,11 @@ def upload_workbasket_envelopes(self, upload_status_data, workbasket_ids=None) -
     :return :class:`~exporter.util.UploadTaskResultData`: object with user readable feedback on task status.
     """
     upload_status = UploadTaskResultData(**upload_status_data)
-    workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
+
+    workbaskets = WorkBasket.objects.is_approved()
     if workbasket_ids:
-        workbaskets = WorkBasket.objects.is_approved().filter(id__in=workbasket_ids)
+        workbaskets = workbaskets.filter(id__in=workbasket_ids)
+
     if not workbaskets:
         msg = "Nothing to upload:  No workbaskets with status APPROVED."
         logger.info(msg)
@@ -222,3 +224,13 @@ upload_workbaskets = (
 )
 
 export_and_upload_sqlite = sqlite.tasks.export_and_upload_sqlite
+
+
+def create_upload_tasks(upload_status_data={}, workbasket_ids=[]):
+    return (
+        upload_workbasket_envelopes.s(
+            upload_status_data=upload_status_data,
+            workbasket_ids=workbasket_ids,
+        )
+        | send_upload_notifications.s()
+    )

@@ -29,6 +29,7 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from exporter.models import Upload
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -98,6 +99,10 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         """Returns the most recently created WorkBasket with a status of
         "APPROVED", "SENT", "PUBLISHED", or "ERRORED"."""
         return WorkBasket.objects.is_approved().last()
+
+    @property
+    def download_ready(self):
+        return Upload.objects.count() > 0
 
     @property
     def approved_dates(self):
@@ -173,6 +178,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
                 "workbasket": self.workbasket,
                 "page_obj": page,
                 "approved_dates": self.approved_dates,
+                "download_ready": self.download_ready,
             },
         )
         return context

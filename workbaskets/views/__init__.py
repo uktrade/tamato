@@ -18,8 +18,7 @@ from rest_framework import viewsets
 
 from common.renderers import TaricXMLRenderer
 from exporter.models import Upload
-from exporter.tasks import send_upload_notifications
-from exporter.tasks import upload_workbasket_envelopes
+from exporter.tasks import create_upload_tasks
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
@@ -77,14 +76,8 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
 
         workbasket_ids = [workbasket.id]
 
-        upload = (
-            upload_workbasket_envelopes.s(
-                upload_status_data={},
-                workbasket_ids=workbasket_ids,
-            )
-            | send_upload_notifications.s()
-        )
-        upload.delay()
+        upload_baskets_by_id = create_upload_tasks(workbasket_ids=workbasket_ids)
+        upload_baskets_by_id.delay()
 
         return reverse("index")
 
