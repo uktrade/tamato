@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from datetime import date
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -26,6 +27,7 @@ from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
 from measures import models
+from measures.parsers import DutySentenceParser
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -51,6 +53,11 @@ class MeasureForm(ValidityPeriodForm):
         queryset=GoodsNomenclature.objects.all(),
         required=False,
         attrs={"min_length": 3},
+    )
+    duty_sentence = forms.CharField(
+        label="Duties",
+        widget=forms.TextInput,
+        required=False,
     )
     additional_code = AutoCompleteField(
         label="Code and description",
@@ -91,6 +98,9 @@ class MeasureForm(ValidityPeriodForm):
 
         WorkBasket.get_current_transaction(self.request)
 
+        if hasattr(self.instance, "duty_sentence"):
+            self.initial["duty_sentence"] = self.instance.duty_sentence
+
         self.initial_geographical_area = self.instance.geographical_area
 
         for field in ["geographical_area_group", "geographical_area_country_or_region"]:
@@ -115,8 +125,52 @@ class MeasureForm(ValidityPeriodForm):
                 footnote.pk for footnote in self.instance.footnotes.all()
             ]
 
+    def diff_components(
+        self,
+        duty_sentence: str,
+        measure: models.Measure,
+        start_date: date,
+    ):
+        parser = DutySentenceParser.get(
+            start_date,
+        )
+
+        new_components = parser.parse(duty_sentence)
+        old_components = measure.components.approved_up_to_transaction(
+            WorkBasket.current(self.request).current_transaction,
+        )
+        new_by_id = {c.duty_expression.id: c for c in new_components}
+        old_by_id = {c.duty_expression.id: c for c in old_components}
+        all_ids = set(new_by_id.keys()) | set(old_by_id.keys())
+        for id in all_ids:
+            new = new_by_id.get(id)
+            old = old_by_id.get(id)
+            if new and old:
+                # Component is having amount/unit changed – UPDATE it
+                new.update_type = UpdateType.UPDATE
+                new.version_group = old.version_group
+                new.dependant_measure = measure
+                new.save(transaction=measure.transaction)
+            elif new:
+                # Component exists only in new set - CREATE it
+                new.update_type = UpdateType.CREATE
+                new.dependant_measure = measure
+                new.save(transaction=measure.transaction)
+            elif old:
+                # Component exists only in old set – DELETE it
+                old = old.new_version(
+                    WorkBasket.current(),
+                    update_type=UpdateType.DELETE,
+                    transaction=measure.transaction,
+                )
+
     def clean(self):
         cleaned_data = super().clean()
+
+        duty_sentence = cleaned_data["duty_sentence"]
+        valid_between = self.initial.get("valid_between")
+        if valid_between is not None:
+            validate_duties(duty_sentence, valid_between.lower)
 
         erga_omnes_instance = (
             GeographicalArea.objects.latest_approved()
@@ -152,6 +206,12 @@ class MeasureForm(ValidityPeriodForm):
             instance.save()
 
         sid = instance.sid
+
+        self.diff_components(
+            self.cleaned_data["duty_sentence"],
+            instance,
+            self.cleaned_data["valid_between"].lower,
+        )
 
         footnote_pks = [
             dct["footnote"]
