@@ -47,7 +47,7 @@ def test_submit_workbasket(
     envelopes.assert_called_with(upload_status_data={}, workbasket_ids=[workbasket.id])
 
 
-def test_edit_after_submit(valid_user, client, date_ranges):
+def test_edit_after_submit(valid_user, client, date_ranges, hmrc_storage):
     client.force_login(valid_user)
 
     # submit a workbasket containing a newly created footnote
@@ -57,23 +57,27 @@ def test_edit_after_submit(valid_user, client, date_ranges):
             update_type=UpdateType.CREATE,
         )
 
-    response = client.get(
-        reverse(
-            "workbaskets:workbasket-ui-submit",
-            kwargs={"pk": workbasket.pk},
-        ),
-    )
-    assert response.status_code == 302
+    with patch(
+        "exporter.storages.HMRCStorage.save",
+        wraps=MagicMock(side_effect=hmrc_storage.save),
+    ):
+        response = client.get(
+            reverse(
+                "workbaskets:workbasket-ui-submit",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
+        assert response.status_code == 302
 
-    # edit the footnote
-    response = client.post(
-        footnote.get_url("edit"),
-        validity_period_post_data(
-            date_ranges.later.lower,
-            date_ranges.later.upper,
-        ),
-    )
-    assert response.status_code == 302
+        # edit the footnote
+        response = client.post(
+            footnote.get_url("edit"),
+            validity_period_post_data(
+                date_ranges.later.lower,
+                date_ranges.later.upper,
+            ),
+        )
+        assert response.status_code == 302
 
     # check that the session workbasket has been replaced by a new one
     session_workbasket = WorkBasket.load_from_session(client.session)
