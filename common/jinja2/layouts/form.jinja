@@ -42,7 +42,7 @@
       {% set formset_errors = [] %}
       {% for form in forms %}
         {% if form.errors %}
-          {{ formset_errors.append(true) }}
+          {{ formset_errors.append(true) or "" }}
         {% endif %}
       {% endfor %}
     {% if formset_errors %}
