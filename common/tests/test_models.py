@@ -336,6 +336,18 @@ def test_new_version_works_for_all_models(trackedmodel_factory):
     model.new_version(model.transaction.workbasket)
 
 
+def test_new_version_retains_related_objects(sample_model):
+    description = factories.TestModelDescription1Factory(
+        described_record=sample_model,
+    )
+    assert sample_model.descriptions.get() == description
+
+    new_model = sample_model.new_version(
+        sample_model.transaction.workbasket,
+    )
+    assert new_model.descriptions.get() == description
+
+
 def test_current_as_of(sample_model):
     transaction = factories.UnapprovedTransactionFactory.create()
 

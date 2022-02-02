@@ -176,3 +176,11 @@ def test_get_model_indefinite_article():
 
     assert util.get_model_indefinite_article(additional_code) == "an"
     assert util.get_model_indefinite_article(measure) == "a"
+
+
+def test_get_next_id_handles_empty_queryset():
+    qs = factories.FootnoteFactory._meta.model.objects.none()
+    id_field = factories.FootnoteFactory._meta.model._meta.get_field("footnote_id")
+    next_id = util.get_next_id(qs, id_field, 3)
+
+    assert next_id == "001"

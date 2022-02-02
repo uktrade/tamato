@@ -137,9 +137,7 @@ class FootnoteCreateForm(ValidityPeriodForm):
         instance.footnote_id = get_next_id(
             models.Footnote.objects.filter(
                 footnote_type__footnote_type_id=instance.footnote_type.footnote_type_id,
-            )
-            .filter(valid_between__overlap=instance.valid_between)
-            .approved_up_to_transaction(tx),
+            ).approved_up_to_transaction(tx),
             instance._meta.get_field("footnote_id"),
             max_len=3,
         )
