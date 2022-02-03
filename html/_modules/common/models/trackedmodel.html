@@ -734,6 +734,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a URL to a representation of the model in the webapp.</span>
 
+<span class="sd">        Callers should handle the case where no URL is returned.</span>
+
 <span class="sd">        :param action str: The view type to generate a URL for (default</span>
 <span class="sd">            &quot;detail&quot;), eg: &quot;list&quot; or &quot;edit&quot;</span>
 <span class="sd">        :rtype Optional[str]: The generated URL</span>
@@ -747,7 +749,7 @@
                 <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">NoReverseMatch</span><span class="p">:</span>
-            <span class="k">return</span></div>
+            <span class="k">return</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="TrackedModel.get_url_pattern_name_prefix"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url_pattern_name_prefix">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_url_pattern_name_prefix</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
