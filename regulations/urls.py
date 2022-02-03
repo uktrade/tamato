@@ -3,6 +3,7 @@ from django.urls import path
 from django.urls import register_converter
 from rest_framework import routers
 
+from common.paths import get_ui_paths
 from regulations import views
 from regulations.path_converters import RegulationIdConverter
 from regulations.path_converters import RegulationRoleTypeConverter
@@ -14,39 +15,7 @@ api_router = routers.DefaultRouter()
 api_router.register(r"regulations", views.RegulationViewSet, basename="regulation")
 
 detail = "<reg_type:role_type>/<reg_id:regulation_id>"
-
-ui_patterns = [
-    path(
-        "",
-        views.RegulationList.as_view(),
-        name="regulation-ui-list",
-    ),
-    path(
-        "create/",
-        views.RegulationCreate.as_view(),
-        name="regulation-ui-create",
-    ),
-    path(
-        f"{detail}/confirm-create/",
-        views.RegulationConfirmCreate.as_view(),
-        name="regulation-ui-confirm-create",
-    ),
-    path(
-        f"{detail}/",
-        views.RegulationDetail.as_view(),
-        name="regulation-ui-detail",
-    ),
-    path(
-        f"{detail}/edit/",
-        views.RegulationUpdate.as_view(),
-        name="regulation-ui-edit",
-    ),
-    path(
-        f"{detail}/confirm-update/",
-        views.RegulationConfirmUpdate.as_view(),
-        name="regulation-ui-confirm-update",
-    ),
-]
+ui_patterns = get_ui_paths(views, detail)
 
 urlpatterns = [
     path("regulations/", include(ui_patterns)),
