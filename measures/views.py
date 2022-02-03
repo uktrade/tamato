@@ -116,11 +116,20 @@ class MeasureCreateWizard(
             },
         ),
         (
-            "commodity",
+            "commodities",
             {
-                "form_class": forms.MeasureCommodityForm,
-                "title": "Select commodity and additional code",
-                "link_text": "Commodity and additional code",
+                "form_class": forms.MeasureCommodityFormSet,
+                "title": "Select commodities",
+                "link_text": "Commodities",
+                "template": "measures/create-formset.jinja",
+            },
+        ),
+        (
+            "additional_code",
+            {
+                "form_class": forms.MeasureAdditionalCodeForm,
+                "title": "Assign an additional code",
+                "link_text": "Additional code",
             },
         ),
         (
@@ -181,63 +190,71 @@ class MeasureCreateWizard(
             },
         )
 
-        measure_data = {
-            "measure_type": cleaned_data["measure_type"],
-            "geographical_area": cleaned_data["geographical_area"],
-            "exclusions": cleaned_data.get("geo_area_exclusions", []),
-            "goods_nomenclature": cleaned_data["goods_nomenclature"],
-            "additional_code": cleaned_data["additional_code"],
-            "order_number": cleaned_data["order_number"],
-            "validity_start": measure_start_date,
-            "validity_end": cleaned_data["valid_between"].upper,
-            "footnotes": [
-                item["footnote"]
-                for item in cleaned_data.get("formset-footnotes", [])
-                if not item["DELETE"]
-            ],
-            # condition_sentence here, or handle separately and duty_sentence after?
-            "duty_sentence": cleaned_data["duties"],
-        }
+        measures_data = []
 
-        try:
-            measure = measure_creation_pattern.create(**measure_data)
-            for i, condition_data in enumerate(
-                cleaned_data.get("formset-conditions", []),
-            ):
+        for commodity_data in cleaned_data.get("formset-commodities", []):
+            if not commodity_data["DELETE"]:
 
-                condition = MeasureCondition(
-                    sid=measure_creation_pattern.measure_condition_sid_counter(),
-                    component_sequence_number=i,
-                    dependent_measure=measure,
-                    update_type=UpdateType.CREATE,
-                    transaction=measure.transaction,
-                    condition_code=condition_data["condition_code"],
-                    action=condition_data.get("action"),
-                    required_certificate=condition_data.get("required_certificate"),
-                )
-                condition.save()
+                measure_data = {
+                    "measure_type": cleaned_data["measure_type"],
+                    "geographical_area": cleaned_data["geographical_area"],
+                    "exclusions": cleaned_data.get("geo_area_exclusions", []),
+                    "goods_nomenclature": commodity_data["commodity"],
+                    "additional_code": cleaned_data["additional_code"],
+                    "order_number": cleaned_data["order_number"],
+                    "validity_start": measure_start_date,
+                    "validity_end": cleaned_data["valid_between"].upper,
+                    "footnotes": [
+                        item["footnote"]
+                        for item in cleaned_data.get("formset-footnotes", [])
+                        if not item["DELETE"]
+                    ],
+                    # condition_sentence here, or handle separately and duty_sentence after?
+                    "duty_sentence": cleaned_data["duties"],
+                }
 
-                # XXX the design doesn't show whether the condition duty_amount field
-                # should handle duty_expression, monetary_unit or measurements, so this
-                # code assumes some sensible(?) defaults
-                if condition.duty_amount:
-                    component = MeasureConditionComponent(
-                        condition=condition,
+                measures_data.append(measure_data)
+
+        for measure_data in measures_data:
+            try:
+                measure = measure_creation_pattern.create(**measure_data)
+                for i, condition_data in enumerate(
+                    cleaned_data.get("formset-conditions", []),
+                ):
+
+                    condition = MeasureCondition(
+                        sid=measure_creation_pattern.measure_condition_sid_counter(),
+                        component_sequence_number=i,
+                        dependent_measure=measure,
                         update_type=UpdateType.CREATE,
-                        transaction=condition.transaction,
-                        duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
-                            1
-                        ],
-                        duty_amount=condition.duty_amount,
-                        monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
-                            "GBP"
-                        ],
-                        component_measurement=None,
+                        transaction=measure.transaction,
+                        condition_code=condition_data["condition_code"],
+                        action=condition_data.get("action"),
+                        required_certificate=condition_data.get("required_certificate"),
                     )
-                    component.save()
+                    condition.save()
 
-        except AssertionError as e:
-            raise ValidationError(e) from e
+                    # XXX the design doesn't show whether the condition duty_amount field
+                    # should handle duty_expression, monetary_unit or measurements, so this
+                    # code assumes some sensible(?) defaults
+                    if condition.duty_amount:
+                        component = MeasureConditionComponent(
+                            condition=condition,
+                            update_type=UpdateType.CREATE,
+                            transaction=condition.transaction,
+                            duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
+                                1
+                            ],
+                            duty_amount=condition.duty_amount,
+                            monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
+                                "GBP"
+                            ],
+                            component_measurement=None,
+                        )
+                        component.save()
+
+            except AssertionError as e:
+                raise ValidationError(e) from e
 
         return HttpResponseRedirect(
             reverse_lazy("measure-ui-confirm-create", kwargs={"sid": measure.sid}),
