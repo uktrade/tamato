@@ -147,3 +147,6 @@ webpack-stats.json
 
 # temporary db credentials files
 *-db.json
+
+# system
+.DS_Store
