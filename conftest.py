@@ -416,6 +416,69 @@ def use_update_form(valid_user_api_client: APIClient):
 
 
 @pytest.fixture
+def use_delete_form(valid_user_api_client: APIClient):
+    """
+    Uses the default delete form and view for a model to delete an object, and
+    returns the deleted version of the object.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if form thinks
+    that the object cannot be deleted..
+    """
+
+    def use(object: TrackedModel):
+        model = type(object)
+        versions = set(
+            model.objects.filter(**object.get_identifying_fields()).values_list(
+                "pk",
+                flat=True,
+            ),
+        )
+
+        # Visit the delete page and ensure it is a success
+        delete_url = object.get_url("delete")
+        assert delete_url, f"No delete page found for {object}"
+        response = valid_user_api_client.get(delete_url)
+        assert response.status_code == 200
+
+        # Get the data out of the delete page
+        data = get_form_data(response.context_data["form"])
+        response = valid_user_api_client.post(delete_url, data)
+
+        # Check that if we expect failure that the new data was not persisted
+        if response.status_code not in (301, 302):
+            assert (
+                set(
+                    model.objects.filter(**object.get_identifying_fields()).values_list(
+                        "pk",
+                        flat=True,
+                    ),
+                )
+                == versions
+            )
+            raise ValidationError(
+                f"Delete form contained errors: {response.context_data['form'].errors}",
+            )
+
+        # Check that the delete persisted and we can't delete again
+        response = valid_user_api_client.get(delete_url)
+        assert response.status_code == 404
+
+        # Check that if success was expected that the new version was persisted
+        new_version = model.objects.exclude(pk=object.pk).get(
+            version_group=object.version_group,
+        )
+        assert new_version != object
+
+        # Check that the new version is a delete and is not approved yet
+        assert new_version.update_type == UpdateType.DELETE
+        assert new_version.transaction != object.transaction
+        assert not new_version.transaction.workbasket.approved
+        return new_version
+
+    return use
+
+
+@pytest.fixture
 def run_xml_import(valid_user, settings):
     """
     Returns a function for checking a model can be imported correctly.

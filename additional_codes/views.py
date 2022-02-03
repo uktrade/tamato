@@ -10,6 +10,8 @@ from additional_codes.filters import AdditionalCodeFilter
 from additional_codes.filters import AdditionalCodeFilterBackend
 from additional_codes.forms import AdditionalCodeCreateDescriptionForm
 from additional_codes.forms import AdditionalCodeCreateForm
+from additional_codes.forms import AdditionalCodeDeleteForm
+from additional_codes.forms import AdditionalCodeDescriptionDeleteForm
 from additional_codes.forms import AdditionalCodeDescriptionForm
 from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
@@ -24,6 +26,7 @@ from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -183,3 +186,23 @@ class AdditionalCodeDescriptionConfirmUpdate(
 
 class AdditionalCodeConfirmUpdate(AdditionalCodeMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
+
+
+class AdditionalCodeDelete(
+    AdditionalCodeMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = AdditionalCodeDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (business_rules.ACN14,)
+
+
+class AdditionalCodeDescriptionDelete(
+    AdditionalCodeDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = AdditionalCodeDescriptionDeleteForm
+    success_path = "detail"

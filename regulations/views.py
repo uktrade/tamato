@@ -11,10 +11,12 @@ from regulations import business_rules
 from regulations.filters import RegulationFilter
 from regulations.filters import RegulationFilterBackend
 from regulations.forms import RegulationCreateForm
+from regulations.forms import RegulationDeleteForm
 from regulations.forms import RegulationEditForm
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -99,3 +101,14 @@ class RegulationConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_update.jinja"
+
+
+class RegulationDelete(
+    RegulationMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = RegulationDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (business_rules.ROIMB46,)

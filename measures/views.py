@@ -30,6 +30,7 @@ from measures.models import MeasureType
 from measures.patterns import MeasureCreationPattern
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -388,3 +389,12 @@ class MeasureFootnotesUpdate(View):
             ]
 
         return HttpResponseRedirect(reverse("measure-ui-edit", args=[sid]))
+
+
+class MeasureDelete(
+    MeasureMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.MeasureDeleteForm
+    success_path = "list"

@@ -16,6 +16,7 @@ from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -147,3 +148,23 @@ class CertificateDescriptionConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_update_description.jinja"
+
+
+class CertificateDelete(
+    CertificateMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.CertificateDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (business_rules.CE5,)
+
+
+class CertificateDescriptionDelete(
+    CertificateDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.CertificateDescriptionDeleteForm
+    success_path = "detail"

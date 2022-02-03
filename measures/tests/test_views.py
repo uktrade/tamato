@@ -88,6 +88,10 @@ def test_measure_footnotes_update_post_without_remove_ignores_delete_keys(
     ]
 
 
+def test_measure_delete(use_delete_form):
+    use_delete_form(factories.MeasureFactory())
+
+
 @pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(

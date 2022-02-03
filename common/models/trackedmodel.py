@@ -315,6 +315,10 @@ class TrackedModel(PolymorphicModel):
         return f"{self.record_code}{self.subrecord_code}"
 
     @property
+    def update_type_str(self) -> str:
+        return dict(UpdateType.choices)[self.update_type]
+
+    @property
     def current_version(self: Cls) -> Cls:
         """The current version of this model."""
         current_version = self.version_group.current_version

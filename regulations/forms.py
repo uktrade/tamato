@@ -18,6 +18,7 @@ from django.utils.safestring import SafeString
 
 from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from regulations.models import Group
 from regulations.models import Regulation
 from regulations.validators import UK_ID
@@ -315,3 +316,6 @@ class RegulationEditForm(RegulationFormBase):
             )
 
         return cleaned_data
+
+
+RegulationDeleteForm = delete_form_for(Regulation)

@@ -10,6 +10,7 @@ from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
 from common.forms import DescriptionHelpBox
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from common.util import get_next_id
 from footnotes import models
 from workbaskets.models import WorkBasket
@@ -172,3 +173,7 @@ class FootnoteCreateDescriptionForm(CreateDescriptionForm):
     class Meta:
         model = models.FootnoteDescription
         fields = ("described_footnote", "description", "validity_start")
+
+
+FootnoteDeleteForm = delete_form_for(models.Footnote)
+FootnoteDescriptionDeleteForm = delete_form_for(models.FootnoteDescription)

@@ -41,3 +41,15 @@ class DraftUpdateView(
     permission_required = "common.add_trackedmodel"
     template_name = "common/edit.jinja"
     success_path = "confirm-update"
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class DraftDeleteView(
+    TrackedModelChangeView,
+    generic.UpdateView,
+):
+    """Creates a new TrackedModel instance which is marked as deleted."""
+
+    update_type = UpdateType.DELETE
+    permission_required = "common.add_trackedmodel"
+    template_name = "common/delete.jinja"
