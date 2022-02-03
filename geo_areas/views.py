@@ -8,12 +8,15 @@ from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from geo_areas import business_rules
+from geo_areas import forms
 from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 
 
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
@@ -65,6 +68,16 @@ class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):
     template_name = "geo_areas/detail.jinja"
 
 
+class GeoAreaDelete(GeoAreaMixin, TrackedModelDetailMixin, DraftDeleteView):
+    form_class = forms.GeographicalAreaDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (
+        business_rules.GA21,
+        business_rules.GA22,
+    )
+
+
 class GeoAreaDescriptionCreate(
     GeoAreaCreateDescriptionMixin,
     TrackedModelDetailMixin,
@@ -86,3 +99,12 @@ class GeoAreaDescriptionConfirmCreate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_create_description.jinja"
+
+
+class GeoAreaDescriptionDelete(
+    GeoAreaDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.GeographicalAreaDescriptionDeleteForm
+    success_path = "detail"

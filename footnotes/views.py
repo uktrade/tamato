@@ -19,6 +19,7 @@ from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -152,6 +153,21 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
 
 
+class FootnoteDelete(
+    FootnoteMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.FootnoteDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (
+        business_rules.FO11,
+        business_rules.FO12,
+        business_rules.FO15,
+    )
+
+
 class FootnoteDescriptionCreate(
     FootnoteCreateDescriptionMixin,
     TrackedModelDetailMixin,
@@ -192,3 +208,12 @@ class FootnoteDescriptionConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_update_description.jinja"
+
+
+class FootnoteDescriptionDelete(
+    FootnoteDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.FootnoteDescriptionDeleteForm
+    success_path = "detail"

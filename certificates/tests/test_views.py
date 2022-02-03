@@ -2,12 +2,21 @@ import pytest
 
 from certificates.models import Certificate
 from certificates.views import CertificateList
+from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+
+
+@pytest.mark.parametrize(
+    "factory",
+    (factories.CertificateFactory, factories.CertificateDescriptionFactory),
+)
+def test_certificate_delete(factory, use_delete_form):
+    use_delete_form(factory())
 
 
 @pytest.mark.parametrize(

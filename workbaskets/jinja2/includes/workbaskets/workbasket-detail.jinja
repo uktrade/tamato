@@ -17,6 +17,7 @@
           <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() or "#" }}">{{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}</a>
         {%- endset %}
         {{ table_rows.append([
+          {"text": obj.update_type_str},
           {"text": obj._meta.verbose_name|capitalize, "classes": "govuk-!-width-one-quarter"},
           {"html": object_link, "classes": "govuk-!-width-one-quarter"},
           {"text": obj.structure_description if obj.structure_description else "-", "classes": "govuk-!-width-one-quarter"},
@@ -26,6 +27,7 @@
 
       {{ govukTable({
         "head": [
+          {"text": "Action"},
           {"text": "Type"},
           {"text": "ID"},
           {"text": "Description"},

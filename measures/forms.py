@@ -19,6 +19,7 @@ from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
@@ -642,3 +643,6 @@ class MeasureUpdateFootnotesFormSet(FormSet):
 
 class MeasureReviewForm(forms.Form):
     pass
+
+
+MeasureDeleteForm = delete_form_for(models.Measure)
