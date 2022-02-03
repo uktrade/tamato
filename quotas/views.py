@@ -2,7 +2,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.serializers import AutoCompleteSerializer
-from common.views import TamatoListView
+from common.views import TamatoListView, TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from quotas import models
 from quotas import serializers
@@ -66,13 +66,18 @@ class QuotaEventViewset(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class QuotaList(TamatoListView):
-    queryset = models.QuotaOrderNumber.objects.latest_approved()
+class QuotaMixin:
+    model = models.QuotaOrderNumber
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+
+
+class QuotaList(QuotaMixin, TamatoListView):
     template_name = "quotas/list.jinja"
     filterset_class = QuotaFilter
 
 
-class QuotaDetail(TrackedModelDetailView):
-    model = models.QuotaOrderNumber
+class QuotaDetail(QuotaMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
-    queryset = models.QuotaOrderNumber.objects.latest_approved()

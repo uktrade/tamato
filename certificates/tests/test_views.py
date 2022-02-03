@@ -1,7 +1,7 @@
 import pytest
 
 from certificates.models import Certificate
-from certificates.views import CertificatesList
+from certificates.views import CertificateList
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
@@ -31,7 +31,7 @@ def test_certificate_detail_views(view, url_pattern, valid_user_client):
     get_class_based_view_urls_matching_url(
         "certificates/",
         view_is_subclass(TamatoListView),
-        assert_contains_view_classes=[CertificatesList],
+        assert_contains_view_classes=[CertificateList],
     ),
     ids=view_urlpattern_ids,
 )
