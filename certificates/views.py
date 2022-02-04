@@ -11,7 +11,6 @@ from certificates.filters import CertificateFilterBackend
 from certificates.serializers import CertificateTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -73,7 +72,6 @@ class CertificateDetail(CertificateMixin, TrackedModelDetailView):
 
 class CertificateUpdate(
     CertificateMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):

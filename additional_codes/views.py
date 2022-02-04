@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -18,7 +19,6 @@ from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -96,6 +96,7 @@ class AdditionalCodeCreate(DraftCreateView):
     template_name = "additional_codes/create.jinja"
     form_class = AdditionalCodeCreateForm
 
+    @transaction.atomic
     def form_valid(self, form):
         transaction = self.get_transaction()
         self.object = form.save(commit=False)
@@ -126,7 +127,6 @@ class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):
 
 class AdditionalCodeUpdate(
     AdditionalCodeMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):

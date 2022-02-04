@@ -1,11 +1,9 @@
 from typing import Type
 
-from django.http.response import HttpResponseRedirect
 from rest_framework import viewsets
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -63,14 +61,6 @@ class RegulationCreate(DraftCreateView):
     template_name = "regulations/create.jinja"
     form_class = RegulationCreateForm
 
-    def form_valid(self, form):
-        transaction = self.get_transaction()
-        self.object = form.save(commit=False)
-        self.object.update_type = self.UPDATE_TYPE
-        self.object.transaction = transaction
-        self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         # Make the request available to the form allowing transaction management
@@ -90,7 +80,6 @@ class RegulationConfirmCreate(TrackedModelDetailView):
 
 class RegulationUpdate(
     RegulationMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):

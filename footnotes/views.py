@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -7,7 +8,6 @@ from rest_framework import viewsets
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -101,6 +101,7 @@ class FootnoteCreate(DraftCreateView):
     template_name = "footnotes/create.jinja"
     form_class = forms.FootnoteCreateForm
 
+    @transaction.atomic
     def form_valid(self, form):
         transaction = self.get_transaction()
         transaction.save()
@@ -132,7 +133,6 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
 
 class FootnoteUpdate(
     FootnoteMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
