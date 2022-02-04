@@ -100,6 +100,9 @@ class MeasureForm(ValidityPeriodForm):
 
         if hasattr(self.instance, "duty_sentence"):
             self.initial["duty_sentence"] = self.instance.duty_sentence
+            self.request.session[
+                f"instance_duty_sentence_{self.instance.sid}"
+            ] = self.instance.duty_sentence
 
         self.initial_geographical_area = self.instance.geographical_area
 
@@ -135,9 +138,10 @@ class MeasureForm(ValidityPeriodForm):
             start_date,
         )
 
+        current_wb = WorkBasket.current(self.request)
         new_components = parser.parse(duty_sentence)
         old_components = measure.components.approved_up_to_transaction(
-            WorkBasket.current(self.request).current_transaction,
+            current_wb.current_transaction,
         )
         new_by_id = {c.duty_expression.id: c for c in new_components}
         old_by_id = {c.duty_expression.id: c for c in old_components}
@@ -149,17 +153,21 @@ class MeasureForm(ValidityPeriodForm):
                 # Component is having amount/unit changed – UPDATE it
                 new.update_type = UpdateType.UPDATE
                 new.version_group = old.version_group
-                new.dependant_measure = measure
-                new.save(transaction=measure.transaction)
+                new.component_measure = measure
+                new.transaction = measure.transaction
+                new.save()
+
             elif new:
                 # Component exists only in new set - CREATE it
                 new.update_type = UpdateType.CREATE
-                new.dependant_measure = measure
-                new.save(transaction=measure.transaction)
+                new.component_measure = measure
+                new.transaction = measure.transaction
+                new.save()
+
             elif old:
                 # Component exists only in old set – DELETE it
                 old = old.new_version(
-                    WorkBasket.current(),
+                    current_wb,
                     update_type=UpdateType.DELETE,
                     transaction=measure.transaction,
                 )
@@ -207,11 +215,18 @@ class MeasureForm(ValidityPeriodForm):
 
         sid = instance.sid
 
-        self.diff_components(
-            self.cleaned_data["duty_sentence"],
-            instance,
-            self.cleaned_data["valid_between"].lower,
-        )
+        if (
+            self.request.session[f"instance_duty_sentence_{self.instance.sid}"].replace(
+                " ",
+                "",
+            )
+            != self.cleaned_data["duty_sentence"]
+        ):
+            self.diff_components(
+                self.cleaned_data["duty_sentence"],
+                instance,
+                self.cleaned_data["valid_between"].lower,
+            )
 
         footnote_pks = [
             dct["footnote"]

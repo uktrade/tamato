@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 
 from common.tests import factories
 from common.validators import ApplicabilityCode
+from measures.forms import MeasureForm
 from measures.models import DutyExpression
 from measures.models import MeasureAction
 from measures.models import MeasureConditionCode
@@ -307,3 +308,9 @@ def irreversible_duty_sentence_data(request, get_component_data):
     places."""
     expected, component_data = request.param
     return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture
+def measure_form(session_request):
+    measure = factories.MeasureFactory.create()
+    return MeasureForm(data={}, instance=measure, request=session_request)
