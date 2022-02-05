@@ -32,6 +32,8 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
     description_record_code = "120"
     description_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     sid = models.CharField(
         max_length=1,
         validators=[validators.additional_code_type_sid_validator],
@@ -65,6 +67,8 @@ class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
 
     record_code = "245"
     subrecord_code = "00"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     type = models.ForeignKey(AdditionalCodeType, on_delete=models.PROTECT)
@@ -110,6 +114,8 @@ class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
     subrecord_code = "10"
     period_record_code = "245"
     period_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     # Store the additional code description period sid so that we can send it in TARIC3
     # updates to systems that expect it.

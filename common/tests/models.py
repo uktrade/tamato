@@ -17,6 +17,8 @@ class TestModel1(TrackedModel, ValidityMixin, DescribedMixin):
 
     taric_template = "test_template"
 
+    identifying_fields = ("sid",)
+
     sid = NumericSID()
     name = models.CharField(max_length=24, null=True)
 
