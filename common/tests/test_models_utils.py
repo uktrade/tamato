@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-from crum import set_current_request
 
 from common.models.utils import LazyValue
 from common.models.utils import get_current_transaction
@@ -24,17 +23,6 @@ def test_lazy_value():
 def test_get_current_transaction_from_thread_locals():
     with mock.patch("common.models.utils._thread_locals") as thread_locals:
         assert get_current_transaction() is thread_locals.transaction
-
-
-def test_get_current_transaction_from_request(client):
-    set_current_request(client)
-
-    with mock.patch("workbaskets.models.WorkBasket") as WorkBasket:
-        tx = get_current_transaction()
-
-        WorkBasket.get_current_transaction.assert_called_once()
-
-        assert tx == WorkBasket.get_current_transaction.return_value
 
 
 def test_set_current_transaction():
