@@ -2,6 +2,7 @@ from itertools import groupby
 from operator import attrgetter
 from typing import Any
 from typing import Type
+from collections import OrderedDict
 
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ValidationError
@@ -97,172 +98,189 @@ class MeasureCreateWizard(
 ):
     storage_name = "measures.wizard.MeasureCreateSessionStorage"
 
-    STEPS = [
-        (
-            "start",
-            {
-                "form_class": forms.MeasureCreateStartForm,
-                "title": "Create a new measure",
-                "link_text": "Start",
-                "template": "measures/create-start.jinja",
-            },
-        ),
-        (
-            "measure_details",
-            {
-                "form_class": forms.MeasureDetailsForm,
-                "title": "Enter the basic data",
-                "link_text": "Measure details",
-            },
-        ),
-        (
-            "commodities",
-            {
-                "form_class": forms.MeasureCommodityFormSet,
-                "title": "Select commodities",
-                "link_text": "Commodities",
-                "template": "measures/create-formset.jinja",
-            },
-        ),
-        (
-            "additional_code",
-            {
-                "form_class": forms.MeasureAdditionalCodeForm,
-                "title": "Assign an additional code",
-                "link_text": "Additional code",
-            },
-        ),
-        (
-            "conditions",
-            {
-                "form_class": forms.MeasureConditionsFormSet,
-                "title": "Add any condition codes",
-                "info": (
-                    "This section is optional. If there are no condition "
-                    "codes, select continue."
-                ),
-                "link_text": "Conditions",
-                "template": "measures/create-formset.jinja",
-            },
-        ),
-        (
-            "duties",
-            {
-                "form_class": forms.MeasureDutiesForm,
-                "title": "Enter the duties that will apply",
-                "link_text": "Duties",
-            },
-        ),
-        (
-            "footnotes",
-            {
-                "form_class": forms.MeasureFootnotesFormSet,
-                "title": "Add any footnotes",
-                "info": (
-                    "This section is optional. If there are no footnotes, "
-                    "select continue."
-                ),
-                "link_text": "Footnotes",
-                "template": "measures/create-formset.jinja",
-            },
-        ),
-        (
-            "summary",
-            {
-                "form_class": forms.MeasureReviewForm,
-                "title": "Review your measure",
-                "link_text": "Summary",
-                "template": "measures/create-review.jinja",
-            },
-        ),
+    START = "start"
+    MEASURE_DETAILS = "measure_details"
+    COMMODITIES = "commodities"
+    ADDITIONAL_CODE = "additional_code"
+    CONDITIONS = "conditions"
+    DUTIES = "duties"
+    FOOTNOTES = "footnotes"
+    SUMMARY = "summary"
+
+    form_list = [
+        (START, forms.MeasureCreateStartForm),
+        (MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (COMMODITIES, forms.MeasureCommodityFormSet),
+        (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
+        (CONDITIONS, forms.MeasureConditionsFormSet),
+        (DUTIES, forms.MeasureDutiesForm),
+        (FOOTNOTES, forms.MeasureFootnotesFormSet),
+        (SUMMARY, forms.MeasureReviewForm),
     ]
 
-    def done(self, *args, **kwargs):
-        cleaned_data = self.get_all_cleaned_data()
+    templates = {
+        START: "measures/create-start.jinja",
+        MEASURE_DETAILS: "measures/create-wizard-step.jinja",
+        COMMODITIES: "measures/create-formset.jinja",
+        ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
+        CONDITIONS: "measures/create-formset.jinja",
+        DUTIES: "measures/create-wizard-step.jinja",
+        FOOTNOTES: "measures/create-formset.jinja",
+        SUMMARY: "measures/create-review.jinja",
+    }
 
-        measure_start_date = cleaned_data["valid_between"].lower
+    step_metadata = {
+        START: {
+            "title": "Create a new measure",
+            "link_text": "Start",
+        },
+        MEASURE_DETAILS: {
+            "title": "Enter the basic data",
+            "link_text": "Measure details",
+        },
+        COMMODITIES: {
+            "title": "Select commodities",
+            "link_text": "Commodities",
+        },
+        ADDITIONAL_CODE: {
+            "title": "Assign an additional code",
+            "link_text": "Additional code",
+        },
+        CONDITIONS: {
+            "title": "Add any condition codes",
+            "info": (
+                "This section is optional. If there are no condition "
+                "codes, select continue."
+            ),
+            "link_text": "Conditions",
+        },
+        DUTIES: {
+            "title": "Enter the duties that will apply",
+            "link_text": "Duties",
+        },
+        FOOTNOTES: {
+            "title": "Add any footnotes",
+            "info": (
+                "This section is optional. If there are no footnotes, "
+                "select continue."
+            ),
+            "link_text": "Footnotes",
+        },
+        SUMMARY: {
+            "title": "Review your measure",
+            "link_text": "Summary",
+        },
+    }
+
+    def create_measures(self, data):
+        """
+        Returns a list of the created measures and a list of errors.
+        """
+        measure_start_date = data["valid_between"].lower
 
         measure_creation_pattern = MeasureCreationPattern(
             workbasket=WorkBasket.current(self.request),
             base_date=measure_start_date,
             defaults={
-                "generating_regulation": cleaned_data["generating_regulation"],
+                "generating_regulation": data["generating_regulation"],
             },
         )
 
         measures_data = []
 
-        for commodity_data in cleaned_data.get("formset-commodities", []):
+        for commodity_data in data.get("formset-commodities", []):
             if not commodity_data["DELETE"]:
 
                 measure_data = {
-                    "measure_type": cleaned_data["measure_type"],
-                    "geographical_area": cleaned_data["geographical_area"],
-                    "exclusions": cleaned_data.get("geo_area_exclusions", []),
+                    "measure_type": data["measure_type"],
+                    "geographical_area": data["geographical_area"],
+                    "exclusions": data.get("geo_area_exclusions", []),
                     "goods_nomenclature": commodity_data["commodity"],
-                    "additional_code": cleaned_data["additional_code"],
-                    "order_number": cleaned_data["order_number"],
+                    "additional_code": data["additional_code"],
+                    "order_number": data["order_number"],
                     "validity_start": measure_start_date,
-                    "validity_end": cleaned_data["valid_between"].upper,
+                    "validity_end": data["valid_between"].upper,
                     "footnotes": [
                         item["footnote"]
-                        for item in cleaned_data.get("formset-footnotes", [])
+                        for item in data.get("formset-footnotes", [])
                         if not item["DELETE"]
                     ],
                     # condition_sentence here, or handle separately and duty_sentence after?
-                    "duty_sentence": cleaned_data["duties"],
+                    "duty_sentence": data["duties"],
                 }
 
                 measures_data.append(measure_data)
+
+        created_measures = []
+        errors = []
 
         for measure_data in measures_data:
             try:
                 measure = measure_creation_pattern.create(**measure_data)
                 for i, condition_data in enumerate(
-                    cleaned_data.get("formset-conditions", []),
+                    data.get("formset-conditions", []),
                 ):
+                    if not condition_data["DELETE"]:
 
-                    condition = MeasureCondition(
-                        sid=measure_creation_pattern.measure_condition_sid_counter(),
-                        component_sequence_number=i,
-                        dependent_measure=measure,
-                        update_type=UpdateType.CREATE,
-                        transaction=measure.transaction,
-                        condition_code=condition_data["condition_code"],
-                        action=condition_data.get("action"),
-                        required_certificate=condition_data.get("required_certificate"),
-                    )
-                    condition.save()
-
-                    # XXX the design doesn't show whether the condition duty_amount field
-                    # should handle duty_expression, monetary_unit or measurements, so this
-                    # code assumes some sensible(?) defaults
-                    if condition.duty_amount:
-                        component = MeasureConditionComponent(
-                            condition=condition,
+                        condition = MeasureCondition(
+                            sid=measure_creation_pattern.measure_condition_sid_counter(),
+                            component_sequence_number=i,
+                            dependent_measure=measure,
                             update_type=UpdateType.CREATE,
-                            transaction=condition.transaction,
-                            duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
-                                1
-                            ],
-                            duty_amount=condition.duty_amount,
-                            monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
-                                "GBP"
-                            ],
-                            component_measurement=None,
+                            transaction=measure.transaction,
+                            condition_code=condition_data["condition_code"],
+                            action=condition_data.get("action"),
+                            required_certificate=condition_data.get(
+                                "required_certificate"
+                            ),
                         )
-                        component.save()
+                        condition.save()
+
+                        # XXX the design doesn't show whether the condition duty_amount field
+                        # should handle duty_expression, monetary_unit or measurements, so this
+                        # code assumes some sensible(?) defaults
+                        if condition.duty_amount:
+                            component = MeasureConditionComponent(
+                                condition=condition,
+                                update_type=UpdateType.CREATE,
+                                transaction=condition.transaction,
+                                duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
+                                    1
+                                ],
+                                duty_amount=condition.duty_amount,
+                                monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
+                                    "GBP"
+                                ],
+                                component_measurement=None,
+                            )
+                            component.save()
+
+                created_measures.append(measure)
 
             except AssertionError as e:
-                raise ValidationError(e) from e
+                errors.append(ValidationError(e))
 
+        return created_measures, errors
+
+    def done(self, form_list, **kwargs):
+        cleaned_data = self.get_all_cleaned_data()
+
+        measures, errors = self.create_measures(cleaned_data)
+
+        if errors:
+            # TODO: should redirect somewhere sensible and list out the errors in the template
+            HttpResponseRedirect(
+                reverse_lazy("measure-ui-create", kwargs={"step": "summary"}),
+            )
+
+        # If multiple measures are created this url will need to change and should list them out in the template
         return HttpResponseRedirect(
-            reverse_lazy("measure-ui-confirm-create", kwargs={"sid": measure.sid}),
+            reverse_lazy("measure-ui-confirm-create", kwargs={"sid": measures[0].sid}),
         )
 
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
-        context["step_metadata"] = dict(self.STEPS)
+        context["step_metadata"] = self.step_metadata
         context["form"].is_bound = False
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
@@ -308,21 +326,12 @@ class MeasureCreateWizard(
         return form
 
     def get_template_names(self):
-        return dict(self.STEPS)[self.steps.current].get(
-            "template",
-            "measures/create-wizard-step.jinja",
-        )
-
-    @classonlymethod
-    def as_view(cls, **initkwargs):
-        return super().as_view(
-            [(name, metadata["form_class"]) for name, metadata in cls.STEPS],
-            url_name="measure-ui-create",
-            done_step_name="complete",
-            **initkwargs,
+        return self.templates.get(
+            self.steps.current, "measures/create-wizard-step.jinja"
         )
 
 
+# TODO: update to support listing multiple created measures
 class MeasureConfirmCreate(MeasureMixin, TrackedModelDetailView):
     template_name = "common/confirm_create.jinja"
 

@@ -1,8 +1,11 @@
+import datetime
 from unittest.mock import patch
 
 import pytest
 
 from common.tests import factories
+from common.util import TaricDateRange
+from measures import forms
 from measures.forms import MeasureDutiesForm
 from measures.forms import MeasureForm
 
@@ -45,3 +48,74 @@ def test_measure_duties_left_blank(date_ranges):
     with patch("measures.validators.validate_duties") as validate_duties:
         assert form.is_valid()
         assert not validate_duties.called
+
+
+def test_measure_forms_details_valid_data(measure_type, regulation):
+    data = {
+        "measure_type": measure_type.pk,
+        "generating_regulation": regulation.pk,
+        "order_number": None,
+        "start_date_0": 2,
+        "start_date_1": 4,
+        "start_date_2": 2021,
+    }
+    form = forms.MeasureDetailsForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_details_invalid_data():
+    data = {
+        "measure_type": "foo",
+        "generating_regulation": "bar",
+        "order_number": None,
+        "start_date_0": 2,
+        "start_date_1": 4,
+        "start_date_2": 2021,
+    }
+    form = forms.MeasureDetailsForm(data, prefix="")
+    assert not form.is_valid()
+
+
+def test_measure_forms_details_invalid_date_range(measure_type, regulation):
+    data = {
+        "measure_type": measure_type.pk,
+        "generating_regulation": regulation.pk,
+        "order_number": None,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+    }
+    form = forms.MeasureDetailsForm(data, prefix="")
+    assert not form.is_valid()
+    assert (
+        form.errors["__all__"][0]
+        == "The date range of the measure can't be outside that of the measure type: [2020-01-01, None) does not contain [2000-01-01, None)"
+    )
+
+
+def test_measure_forms_additional_code_valid_data(additional_code):
+    data = {
+        "additional_code": additional_code.pk,
+    }
+    form = forms.MeasureAdditionalCodeForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_additional_code_invalid_data():
+    data = {
+        "additional_code": "foo",
+    }
+    form = forms.MeasureAdditionalCodeForm(data, prefix="")
+    assert not form.is_valid()
+
+
+@pytest.mark.parametrize(
+    "duties,is_valid", [("33 GBP/100kg", True), ("some invalid duty expression", False)]
+)
+def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_ranges):
+    data = {
+        "duties": duties,
+    }
+    initial_data = {"measure_start_date": date_ranges.normal}
+    form = forms.MeasureDutiesForm(data, prefix="", initial=initial_data)
+    assert form.is_valid() == is_valid

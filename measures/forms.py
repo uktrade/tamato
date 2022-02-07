@@ -350,7 +350,7 @@ class MeasureDetailsForm(
             ):
                 raise ValidationError(
                     f"The date range of the measure can't be outside that of the measure type: "
-                    "{measure_type.valid_between} does not contain {cleaned_data['valid_between']}",
+                    f"{measure_type.valid_between} does not contain {cleaned_data['valid_between']}",
                 )
 
         return cleaned_data

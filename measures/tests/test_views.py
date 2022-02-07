@@ -1,10 +1,12 @@
+import unittest
 from unittest.mock import patch
 
 import pytest
-from bs4 import BeautifulSoup
+import requests
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
+from bs4 import BeautifulSoup
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -12,10 +14,13 @@ from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.util import TaricDateRange
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from measures import forms
 from measures.models import Measure
 from measures.validators import validate_duties
+from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
 
@@ -260,3 +265,154 @@ def test_measure_form_save_called_on_measure_update(
     client.post(url, data=post_data)
 
     save.assert_called_with(commit=False)
+
+
+@pytest.mark.django_db
+def test_measure_form_wizard_start(valid_user_client):
+    url = reverse("measure-ui-create", kwargs={"step": "start"})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+@unittest.mock.patch("measures.parsers.DutySentenceParser")
+def test_measure_form_wizard_finish(
+    mock_duty_sentence_parser,
+    valid_user_client,
+    measure_type,
+    regulation,
+    duty_sentence_parser,
+):
+    commodity1 = factories.GoodsNomenclatureFactory.create()
+    commodity2 = factories.GoodsNomenclatureFactory.create()
+
+    mock_duty_sentence_parser.return_value = duty_sentence_parser
+
+    wizard_data = [
+        {
+            "data": {"measure_create_wizard-current_step": "start"},
+            "next_step": "measure_details",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "measure_details",
+                "measure_details-measure_type": measure_type.pk,
+                "measure_details-generating_regulation": regulation.pk,
+                "measure_details-start_date_0": 2,
+                "measure_details-start_date_1": 4,
+                "measure_details-start_date_2": 2021,
+            },
+            "next_step": "commodities",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "commodities",
+                "commodities-0-commodity": commodity1.pk,
+                "commodities-1-commodity": commodity2.pk,
+            },
+            "next_step": "additional_code",
+        },
+        {
+            "data": {"measure_create_wizard-current_step": "additional_code"},
+            "next_step": "conditions",
+        },
+        {
+            "data": {"measure_create_wizard-current_step": "conditions"},
+            "next_step": "duties",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "duties",
+                "duties-duties": "33 GBP/100kg",
+            },
+            "next_step": "footnotes",
+        },
+        {
+            "data": {"measure_create_wizard-current_step": "footnotes"},
+            "next_step": "summary",
+        },
+        {
+            "data": {"measure_create_wizard-current_step": "summary"},
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-create",
+            kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
+        )
+        response = valid_user_client.post(url, step_data["data"])
+
+        assert response.status_code == 302
+        assert response.url == reverse(
+            "measure-ui-create", kwargs={"step": step_data["next_step"]}
+        )
+
+
+@unittest.mock.patch("workbaskets.models.WorkBasket.current")
+def test_measure_form_wizard_create_measures(
+    mock_workbasket,
+    mock_request,
+    duty_sentence_parser,
+    date_ranges,
+    additional_code,
+    measure_type,
+    regulation,
+    commodity1,
+    commodity2,
+):
+    mock_workbasket.return_value = factories.WorkBasketFactory.create()
+
+    commodity3 = factories.GoodsNomenclatureFactory.create()
+    footnote1 = factories.FootnoteFactory.create()
+    footnote2 = factories.FootnoteFactory.create()
+    geo_area = factories.GeographicalAreaFactory.create()
+    condition1 = factories.MeasureConditionCodeFactory()
+    condition2 = factories.MeasureConditionCodeFactory()
+    action1 = factories.MeasureActionFactory()
+    action2 = factories.MeasureActionFactory()
+
+    form_data = {
+        "measure_type": measure_type,
+        "generating_regulation": regulation,
+        "geographical_area": geo_area,
+        "order_number": None,
+        "valid_between": date_ranges.normal,
+        "formset-commodities": [
+            {"commodity": commodity1, "DELETE": False},
+            {"commodity": commodity2, "DELETE": False},
+            {"commodity": commodity3, "DELETE": True},
+        ],
+        "additional_code": None,
+        "formset-conditions": [
+            {
+                "condition_code": condition1,
+                "duty_amount": None,
+                "required_certificate": None,
+                "action": action1,
+                "DELETE": False,
+            },
+            {
+                "condition_code": condition2,
+                "duty_amount": None,
+                "required_certificate": None,
+                "action": action2,
+                "DELETE": True,
+            },
+        ],
+        "duties": "4%",
+        "formset-footnotes": [
+            {"footnote": footnote1, "DELETE": False},
+            {"footnote": footnote2, "DELETE": True},
+        ],
+    }
+
+    wizard = MeasureCreateWizard(request=mock_request)
+
+    measures, errors = wizard.create_measures(form_data)
+
+    assert not errors
+    assert len(measures) == 2
+    assert len(measures[0].footnotes.all()) == 1
+    assert len(measures[1].footnotes.all()) == 1
+    assert len(measures[0].conditions.all()) == 1
+    assert len(measures[1].conditions.all()) == 1

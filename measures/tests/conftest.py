@@ -1,3 +1,6 @@
+import datetime
+import requests
+
 from typing import Callable
 from typing import Dict
 from typing import Optional
@@ -8,6 +11,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
 
+from common.util import TaricDateRange
 from common.tests import factories
 from common.validators import ApplicabilityCode
 from measures.forms import MeasureForm
@@ -329,3 +333,39 @@ def measure_form(session_with_workbasket):
         instance=Measure.objects.with_duty_sentence().first(),
         request=session_with_workbasket,
     )
+
+
+@pytest.fixture()
+def additional_code():
+    return factories.AdditionalCodeFactory.create()
+
+
+@pytest.fixture()
+def measure_type():
+    return factories.MeasureTypeFactory.create(
+        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)")
+    )
+
+
+@pytest.fixture()
+def regulation():
+    return factories.RegulationFactory.create()
+
+
+@pytest.fixture()
+def commodity1():
+    return factories.GoodsNomenclatureFactory.create()
+
+
+@pytest.fixture()
+def commodity2():
+    return factories.GoodsNomenclatureFactory.create()
+
+
+@pytest.fixture()
+def mock_request(rf, valid_user, valid_user_client):
+    request = rf.get("/")
+    request.user = valid_user
+    request.session = valid_user_client.session
+    request.requests_session = requests.Session()
+    return request
