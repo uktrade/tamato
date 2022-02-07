@@ -611,6 +611,8 @@ class TrackedModel(PolymorphicModel):
         """
         Generate a URL to a representation of the model in the webapp.
 
+        Callers should handle the case where no URL is returned.
+
         :param action str: The view type to generate a URL for (default
             "detail"), eg: "list" or "edit"
         :rtype Optional[str]: The generated URL
@@ -624,7 +626,7 @@ class TrackedModel(PolymorphicModel):
                 kwargs=kwargs,
             )
         except NoReverseMatch:
-            return
+            return None
 
     @classmethod
     def get_url_pattern_name_prefix(cls):
