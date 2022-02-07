@@ -4,23 +4,18 @@ from typing import List
 
 from django.db.models import Case
 from django.db.models import CharField
-from django.db.models import Exists
 from django.db.models import F
 from django.db.models import Max
-from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
-from django.db.models.fields import BooleanField
-from django.db.models.fields import IntegerField
 from django.db.models.query_utils import DeferredAttribute
 from django_cte import CTEQuerySet
 from polymorphic.query import PolymorphicQuerySet
 
 from common import exceptions
 from common.models.tracked_utils import get_models_linked_to
-from common.models.transactions import Transaction
-from common.models.utils import LazyValue
+from common.models.utils import LazyTransaction
 from common.models.utils import get_current_transaction
 from common.querysets import TransactionPartitionQuerySet
 from common.querysets import ValidityQuerySet
@@ -33,88 +28,6 @@ class TrackedModelQuerySet(
     ValidityQuerySet,
     TransactionPartitionQuerySet,
 ):
-    def annotate_current_workbasket_id(
-        self,
-        transaction: Transaction | None = None,
-    ) -> TrackedModelQuerySet:
-        """Annotate results with the current workbasket ID, or the workbasket
-        containing the specified transaction if given."""
-
-        return self.annotate(
-            current_workbasket_id=LazyValue(
-                get_value=lambda: getattr(
-                    transaction or get_current_transaction(),
-                    "workbasket_id",
-                    None,
-                ),
-                output_field=IntegerField(),
-            ),
-        )
-
-    def annotate_in_current_workbasket(
-        self,
-        transaction: Transaction | None = None,
-    ) -> TrackedModelQuerySet:
-        """Annotate results with whether they are in the current workbasket, or
-        in the workbasket containing the specified transaction if given."""
-
-        return self.annotate_current_workbasket_id(transaction).annotate(
-            in_current_workbasket=Case(
-                When(
-                    transaction__workbasket_id=F("current_workbasket_id"),
-                    then=True,
-                ),
-                default=False,
-                output_field=BooleanField(),
-            ),
-        )
-
-    def annotate_overridden_in_workbasket(
-        self,
-        transaction: Transaction | None = None,
-    ) -> TrackedModelQuerySet:
-        """Annotate results with whether they are overridden in the current
-        workbasket, or in the workbasket containing the specified Transaction if
-        given."""
-
-        return self.annotate(
-            is_overridden=Exists(
-                self.annotate_in_current_workbasket(transaction)
-                .filter(
-                    in_current_workbasket=True,
-                    **{
-                        field: OuterRef(field)
-                        for field in self.model.identifying_fields
-                    },
-                )
-                .exclude(
-                    pk=OuterRef("pk"),
-                ),
-            ),
-        )
-
-    def annotate_latest_version(
-        self,
-        transaction: Transaction | None = None,
-    ) -> TrackedModelQuerySet:
-        """Annotate results with the latest version id as of the current
-        transaction, or the transaction with the specified ID if given."""
-
-        if transaction is None:
-            return self.annotate(
-                latest_version_id=F("version_group__current_version_id"),
-            )
-
-        return self.annotate(
-            latest_version_id=Max(
-                "version_group__versions",
-                filter=self.as_at_transaction_filter(
-                    transaction,
-                    "version_group__versions__",
-                ),
-            ),
-        )
-
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
@@ -132,23 +45,13 @@ class TrackedModelQuerySet(
             update_type=UpdateType.DELETE,
         )
 
-    def current(
-        self,
-        as_of_transaction: Transaction | None = None,
-    ) -> TrackedModelQuerySet:
+    def current(self) -> TrackedModelQuerySet:
         """Get the approved versions of the model, or the latest draft versions
         if they exist within a transaction preceding (and including) the given
         transaction in the workbasket of the given transaction."""
 
-        return (
-            self.annotate_latest_version(as_of_transaction)
-            .annotate_in_current_workbasket(as_of_transaction)
-            .annotate_overridden_in_workbasket(as_of_transaction)
-            .filter(
-                Q(id=F("latest_version_id"), is_overridden=False)
-                | Q(in_current_workbasket=True),
-            )
-            .exclude(update_type=UpdateType.DELETE)
+        return self.approved_up_to_transaction(
+            LazyTransaction(get_value=get_current_transaction),
         )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
@@ -163,6 +66,11 @@ class TrackedModelQuerySet(
             self.annotate(
                 latest=Max(
                     "version_group__versions",
+                    # The problem here is that we don't know when we call this what the transaction will be.
+                    # So, we either need:
+                    # a) some kind of "LazyFilter" object which will only call `approved_up_to_transaction` when the query is generated, like LazyValue
+                    # b) make `as_at_transaction_filter` able to accept a LazyValue, by moving the if statement into SQL somehow, and by adding some magic
+                    #    to LazyValue to generate a new LazyValue when you call an attribute, e.g. my_lazy.xyz => LazyValue(lambda: my_lazy.value.xyz)
                     filter=self.as_at_transaction_filter(
                         transaction,
                         "version_group__versions__",
