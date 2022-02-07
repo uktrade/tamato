@@ -66,11 +66,6 @@ class TrackedModelQuerySet(
             self.annotate(
                 latest=Max(
                     "version_group__versions",
-                    # The problem here is that we don't know when we call this what the transaction will be.
-                    # So, we either need:
-                    # a) some kind of "LazyFilter" object which will only call `approved_up_to_transaction` when the query is generated, like LazyValue
-                    # b) make `as_at_transaction_filter` able to accept a LazyValue, by moving the if statement into SQL somehow, and by adding some magic
-                    #    to LazyValue to generate a new LazyValue when you call an attribute, e.g. my_lazy.xyz => LazyValue(lambda: my_lazy.value.xyz)
                     filter=self.as_at_transaction_filter(
                         transaction,
                         "version_group__versions__",
