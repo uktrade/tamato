@@ -126,9 +126,6 @@ def test_versions_up_to(model1_with_history):
 
 def test_as_at(date_ranges, validity_factory):
     """Ensure only records active at a specific date are fetched."""
-    if validity_factory is factories.GoodsNomenclatureFactory:
-        pytest.xfail("Does not implement as_at")
-
     pks = {
         validity_factory.create(valid_between=date_ranges.later).pk,
         validity_factory.create(valid_between=date_ranges.later).pk,
