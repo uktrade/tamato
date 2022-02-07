@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict
-from datetime import date
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -27,7 +26,6 @@ from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
 from measures import models
-from measures.parsers import DutySentenceParser
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -98,11 +96,15 @@ class MeasureForm(ValidityPeriodForm):
 
         WorkBasket.get_current_transaction(self.request)
 
-        if hasattr(self.instance, "duty_sentence"):
-            self.initial["duty_sentence"] = self.instance.duty_sentence
-            self.request.session[
-                f"instance_duty_sentence_{self.instance.sid}"
-            ] = self.instance.duty_sentence
+        if not hasattr(self.instance, "duty_sentence"):
+            raise AttributeError(
+                "Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
+            )
+
+        self.initial["duty_sentence"] = self.instance.duty_sentence
+        self.request.session[
+            f"instance_duty_sentence_{self.instance.sid}"
+        ] = self.instance.duty_sentence
 
         self.initial_geographical_area = self.instance.geographical_area
 
@@ -128,57 +130,16 @@ class MeasureForm(ValidityPeriodForm):
                 footnote.pk for footnote in self.instance.footnotes.all()
             ]
 
-    def diff_components(
-        self,
-        duty_sentence: str,
-        measure: models.Measure,
-        start_date: date,
-    ):
-        parser = DutySentenceParser.get(
-            start_date,
-        )
+    def clean_duty_sentence(self):
+        duty_sentence = self.cleaned_data["duty_sentence"]
+        valid_between = self.initial.get("valid_between")
+        if duty_sentence and valid_between is not None:
+            validate_duties(duty_sentence, valid_between.lower)
 
-        current_wb = WorkBasket.current(self.request)
-        new_components = parser.parse(duty_sentence)
-        old_components = measure.components.approved_up_to_transaction(
-            current_wb.current_transaction,
-        )
-        new_by_id = {c.duty_expression.id: c for c in new_components}
-        old_by_id = {c.duty_expression.id: c for c in old_components}
-        all_ids = set(new_by_id.keys()) | set(old_by_id.keys())
-        for id in all_ids:
-            new = new_by_id.get(id)
-            old = old_by_id.get(id)
-            if new and old:
-                # Component is having amount/unit changed – UPDATE it
-                new.update_type = UpdateType.UPDATE
-                new.version_group = old.version_group
-                new.component_measure = measure
-                new.transaction = measure.transaction
-                new.save()
-
-            elif new:
-                # Component exists only in new set - CREATE it
-                new.update_type = UpdateType.CREATE
-                new.component_measure = measure
-                new.transaction = measure.transaction
-                new.save()
-
-            elif old:
-                # Component exists only in old set – DELETE it
-                old = old.new_version(
-                    current_wb,
-                    update_type=UpdateType.DELETE,
-                    transaction=measure.transaction,
-                )
+        return duty_sentence
 
     def clean(self):
         cleaned_data = super().clean()
-
-        duty_sentence = cleaned_data["duty_sentence"]
-        valid_between = self.initial.get("valid_between")
-        if valid_between is not None:
-            validate_duties(duty_sentence, valid_between.lower)
 
         erga_omnes_instance = (
             GeographicalArea.objects.latest_approved()
@@ -216,16 +177,13 @@ class MeasureForm(ValidityPeriodForm):
         sid = instance.sid
 
         if (
-            self.request.session[f"instance_duty_sentence_{self.instance.sid}"].replace(
-                " ",
-                "",
-            )
+            self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
             != self.cleaned_data["duty_sentence"]
         ):
-            self.diff_components(
+            self.instance.diff_components(
                 self.cleaned_data["duty_sentence"],
-                instance,
                 self.cleaned_data["valid_between"].lower,
+                WorkBasket.current(self.request),
             )
 
         footnote_pks = [
