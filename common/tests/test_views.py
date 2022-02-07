@@ -70,3 +70,11 @@ def test_dashboard_view_approved_dates(valid_user, workbasket):
 
     assert view.approved_dates["start"] == first_txn.updated_at
     assert view.approved_dates["end"] == last_txn.updated_at
+
+
+def test_dashboard_view_latest_approved_workbasket():
+    factories.ApprovedWorkBasketFactory.create()
+    last_approved = factories.ApprovedWorkBasketFactory.create()
+    view = DashboardView()
+
+    assert view.latest_approved_workbasket == last_approved

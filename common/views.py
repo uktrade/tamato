@@ -98,7 +98,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     def latest_approved_workbasket(self):
         """Returns the most recently created WorkBasket with a status of
         "APPROVED", "SENT", "PUBLISHED", or "ERRORED"."""
-        return WorkBasket.objects.is_approved().last()
+        return WorkBasket.objects.is_approved().order_by("created_at").last()
 
     @property
     def download_ready(self):
