@@ -1,8 +1,10 @@
 import contextlib
+import threading
+from typing import FrozenSet
 
-from crum import _thread_locals
-from crum import get_current_request
 from django.db.models import Value
+
+_thread_locals = threading.local()
 
 
 class LazyValue(Value):
@@ -13,6 +15,8 @@ class LazyValue(Value):
     accessed. This allows the value to change with each access.
     """
 
+    allow_list: FrozenSet[str] = frozenset()
+
     def __init__(self, **kwargs) -> None:
         self.get_value = kwargs.pop("get_value", lambda: None)
         # skip Value constructor which assigns to self.value
@@ -22,33 +26,49 @@ class LazyValue(Value):
     def value(self):
         return self.get_value()
 
+    def __getattr__(self, name: str):
+        if name not in self.allow_list:
+            raise AttributeError(name)
+        return type(self)(get_value=lambda: getattr(self.value, name))
+
+
+class LazyTransaction(LazyValue):
+    allow_list = frozenset({"order", "partition", "workbasket_id"})
+
 
 def get_current_transaction():
-    tx = getattr(_thread_locals, "transaction", None)
-
-    if tx is None:
-        request = get_current_request()
-
-        if request:
-            from workbaskets.models import WorkBasket
-
-            return WorkBasket.get_current_transaction(request)
-
-    return tx
+    return getattr(_thread_locals, "transaction", None)
 
 
-def set_current_transaction(tx):
-    # TODO doesn't try to override the session workbasket, but it could
-    _thread_locals.transaction = tx
+def set_current_transaction(transaction):
+    _thread_locals.transaction = transaction
+
+
+class TransactionMiddleware:
+    """Middleware to set a global, current transaction prior to view
+    processing."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from workbaskets.models import WorkBasket
+
+        set_current_transaction(
+            WorkBasket.get_current_transaction(request),
+        )
+        response = self.get_response(request)
+        # No post-view processing required.
+        return response
 
 
 @contextlib.contextmanager
-def override_current_transaction(tx=None):
+def override_current_transaction(transaction=None):
     """Override the thread-local current transaction with the specified
     transaction."""
-    old_current_tx = get_current_transaction()
+    old_transaction = get_current_transaction()
     try:
-        set_current_transaction(tx)
-        yield tx
+        set_current_transaction(transaction)
+        yield transaction
     finally:
-        set_current_transaction(old_current_tx)
+        set_current_transaction(old_transaction)
