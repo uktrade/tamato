@@ -44,14 +44,14 @@
     </div>
   </div>
 
-  {% if download_ready %}
+  {% if uploaded_envelope_dates %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-warning-text">
         <span class="govuk-warning-text__icon">!</span>
         <strong class="govuk-warning-text__text">
           <span class="govuk-warning-text__assistive">Warning</span>
-          We've created an envelope which contains your published changes between {{ "{:%d %b %Y}".format(approved_dates.start) }} and {{ "{:%d %b %Y}".format(approved_dates.end) }}. It's ready for your action.
+          We've created an envelope which contains your published changes between {{ "{:%d %b %Y}".format(uploaded_envelope_dates.start) }} and {{ "{:%d %b %Y}".format(uploaded_envelope_dates.end) }}. It's ready for your action.
         </strong>
       </div>
       <details class="govuk-details" data-module="govuk-details">

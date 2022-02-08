@@ -60,21 +60,27 @@ def test_handles_multiple_unapproved_workbaskets(valid_user_client, new_workbask
     assert response.status_code == 200
 
 
-def test_dashboard_view_approved_dates(valid_user, workbasket):
-    first_txn = workbasket.new_transaction()
-    last_txn = workbasket.new_transaction()
-    workbasket.status = WorkflowStatus.APPROVED
-    workbasket.approver = valid_user
-    workbasket.save()
+def test_dashboard_view_uploaded_envelope_dates():
+    envelope = factories.EnvelopeFactory.create()
+    first_txn = factories.EnvelopeTransactionFactory.create(
+        envelope=envelope,
+    ).transaction
+    last_txn = factories.EnvelopeTransactionFactory.create(
+        envelope=envelope,
+    ).transaction
+    factories.UploadFactory.create(envelope=envelope)
     view = DashboardView()
 
-    assert view.approved_dates["start"] == first_txn.updated_at
-    assert view.approved_dates["end"] == last_txn.updated_at
+    assert view.uploaded_envelope_dates["start"] == first_txn.updated_at
+    assert view.uploaded_envelope_dates["end"] == last_txn.updated_at
 
 
-def test_dashboard_view_latest_approved_workbasket():
-    factories.ApprovedWorkBasketFactory.create()
-    last_approved = factories.ApprovedWorkBasketFactory.create()
+def test_dashboard_view_latest_upload():
     view = DashboardView()
 
-    assert view.latest_approved_workbasket == last_approved
+    assert view.latest_upload == None
+
+    factories.UploadFactory.create()
+    latest_upload = factories.UploadFactory.create()
+
+    assert view.latest_upload == latest_upload

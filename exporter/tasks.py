@@ -104,17 +104,14 @@ def upload_and_create_envelopes(
     retry_jitter=True,
 )
 @TableLock.acquire_lock(Envelope, lock="SHARE")
-def upload_workbasket_envelopes(self, upload_status_data, workbasket_ids=None) -> Dict:
+def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     """
     Upload workbaskets.
 
     :return :class:`~exporter.util.UploadTaskResultData`: object with user readable feedback on task status.
     """
     upload_status = UploadTaskResultData(**upload_status_data)
-
-    workbaskets = WorkBasket.objects.is_approved()
-    if workbasket_ids:
-        workbaskets = workbaskets.filter(id__in=workbasket_ids)
+    workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
 
     if not workbaskets:
         msg = "Nothing to upload:  No workbaskets with status APPROVED."
@@ -224,13 +221,3 @@ upload_workbaskets = (
 )
 
 export_and_upload_sqlite = sqlite.tasks.export_and_upload_sqlite
-
-
-def create_upload_tasks(upload_status_data={}, workbasket_ids=[]):
-    return (
-        upload_workbasket_envelopes.s(
-            upload_status_data=upload_status_data,
-            workbasket_ids=workbasket_ids,
-        )
-        | send_upload_notifications.s()
-    )

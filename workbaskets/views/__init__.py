@@ -18,7 +18,6 @@ from rest_framework import viewsets
 
 from common.renderers import TaricXMLRenderer
 from exporter.models import Upload
-from exporter.tasks import create_upload_tasks
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
@@ -70,14 +69,8 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
 
         workbasket.submit_for_approval()
         workbasket.approve(self.request.user, get_partition_scheme())
-        workbasket.export_to_cds()
         workbasket.save()
         workbasket.save_to_session(self.request.session)
-
-        workbasket_ids = [workbasket.id]
-
-        upload_baskets_by_id = create_upload_tasks(workbasket_ids=workbasket_ids)
-        upload_baskets_by_id.delay()
 
         return reverse("index")
 

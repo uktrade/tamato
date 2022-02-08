@@ -7,19 +7,15 @@ from django.urls import reverse
 from common.tests import factories
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
-from exporter.tasks import send_upload_notifications
-from exporter.tasks import upload_workbasket_envelopes
+from exporter.tasks import upload_workbaskets
 from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
 
-@patch("exporter.tasks.upload_workbasket_envelopes.s")
-@patch("exporter.tasks.send_upload_notifications.s")
+@patch("exporter.tasks.upload_workbaskets")
 def test_submit_workbasket(
-    notifications,
-    envelopes,
+    mock_upload,
     unapproved_transaction,
     valid_user,
     client,
@@ -38,13 +34,10 @@ def test_submit_workbasket(
     assert response.url == reverse("index")
 
     workbasket = WorkBasket.objects.get(pk=workbasket.pk)
-    assert workbasket.status == WorkflowStatus.SENT
+
     assert workbasket.approver is not None
-
-    assert client.session["workbasket"]["status"] == WorkflowStatus.SENT
-
-    notifications.assert_called_with()
-    envelopes.assert_called_with(upload_status_data={}, workbasket_ids=[workbasket.id])
+    assert client.session["workbasket"]["status"] == workbasket.status
+    mock_upload.delay.assert_called_once_with()
 
 
 @patch("exporter.tasks.upload_workbasket_envelopes.s")
@@ -106,14 +99,7 @@ def test_download(
         "exporter.storages.HMRCStorage.save",
         wraps=MagicMock(side_effect=hmrc_storage.save),
     ):
-        upload = (
-            upload_workbasket_envelopes.s(
-                upload_status_data={},
-                workbasket_ids=[approved_workbasket.id],
-            )
-            | send_upload_notifications.s()
-        )
-        upload.apply()
+        upload_workbaskets.apply()
         url = reverse("workbaskets:workbasket-download")
 
         response = client.get(url)
