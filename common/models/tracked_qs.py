@@ -46,10 +46,15 @@ class TrackedModelQuerySet(
         )
 
     def current(self) -> TrackedModelQuerySet:
-        """Get the approved versions of the model, or the latest draft versions
-        if they exist within a transaction preceding (and including) the given
-        transaction in the workbasket of the given transaction."""
+        """
+        Get the approved versions of the model or the latest draft versions, if
+        they exist within a transaction preceding (and including) the given
+        transaction.
 
+        The 'current' transaction is obtained from the globally  available
+        current transaction - see the common.models.utils module for details of
+        how this is managed.
+        """
         return self.approved_up_to_transaction(
             LazyTransaction(get_value=get_current_transaction),
         )
