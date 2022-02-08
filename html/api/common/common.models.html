@@ -865,12 +865,13 @@ object the first time, the query is executed.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.TrackedModel.identifying_fields">
-<span class="sig-name descname"><span class="pre">identifying_fields</span></span><em class="property"><span class="pre">:</span> <span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">('sid',)</span></em><a class="headerlink" href="#common.models.TrackedModel.identifying_fields" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">identifying_fields</span></span><em class="property"><span class="pre">:</span> <span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">('pk',)</span></em><a class="headerlink" href="#common.models.TrackedModel.identifying_fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>The fields which together form a composite unique key for each model.</p>
-<p>The system ID (or SID) field is normally the unique identifier of a TARIC
+<p>The system ID (or SID) field, ‘sid’ is normally the unique identifier of a TARIC
 model, but in places where this does not exist models can declare their own.
 (Note that because multiple versions of each model will exist this does not
 actually equate to a <code class="docutils literal notranslate"><span class="pre">UNIQUE</span></code> constraint in the database.)</p>
+<p>TrackedModel itself defaults to (“pk”,) as it does not have an SID.</p>
 </dd></dl>
 
 <dl class="py method">

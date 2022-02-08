@@ -253,14 +253,16 @@
 <span class="sd">    ones.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
+    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The fields which together form a composite unique key for each model.</span>
 
-<span class="sd">    The system ID (or SID) field is normally the unique identifier of a TARIC</span>
+<span class="sd">    The system ID (or SID) field, &#39;sid&#39; is normally the unique identifier of a TARIC</span>
 <span class="sd">    model, but in places where this does not exist models can declare their own.</span>
 <span class="sd">    (Note that because multiple versions of each model will exist this does not</span>
 <span class="sd">    actually equate to a ``UNIQUE`` constraint in the database.)</span>
+<span class="sd">    </span>
+<span class="sd">    TrackedModel itself defaults to (&quot;pk&quot;,) as it does not have an SID.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="TrackedModel.new_version"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.new_version">[docs]</a>    <span class="k">def</span> <span class="nf">new_version</span><span class="p">(</span>
