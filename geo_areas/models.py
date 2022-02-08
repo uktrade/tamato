@@ -45,6 +45,8 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "250"
     subrecord_code = "00"
 
+    identifying_fields = ("sid",)
+
     url_pattern_name_prefix = "geoarea"
 
     sid = SignedIntSID(db_index=True)
@@ -183,6 +185,8 @@ class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
 
     period_record_code = "250"
     period_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     described_geographicalarea = models.ForeignKey(
         GeographicalArea,

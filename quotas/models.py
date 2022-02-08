@@ -27,6 +27,8 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     record_code = "360"
     subrecord_code = "00"
 
+    identifying_fields = ("sid",)
+
     sid = SignedIntSID(db_index=True)
     order_number = models.CharField(
         max_length=6,
@@ -91,6 +93,8 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
 
     record_code = "360"
     subrecord_code = "10"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
@@ -160,6 +164,8 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
 
     record_code = "370"
     subrecord_code = "00"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
@@ -286,6 +292,8 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "15"
 
+    identifying_fields = ("sid",)
+
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
@@ -298,6 +306,8 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
 
     record_code = "370"
     subrecord_code = "10"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)

@@ -37,6 +37,8 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     description_record_code = "140"
     description_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     sid = models.CharField(
         max_length=2,
         validators=[validators.measure_type_series_id_validator],
@@ -191,6 +193,8 @@ class DutyExpression(TrackedModel, ValidityMixin):
     description_record_code = "230"
     description_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     sid = models.IntegerField(
         choices=validators.DutyExpressionId.choices,
         db_index=True,
@@ -231,6 +235,8 @@ class MeasureType(TrackedModel, ValidityMixin):
 
     description_record_code = "235"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=6,
@@ -752,6 +758,8 @@ class MeasureCondition(TrackedModel):
 
     record_code = "430"
     subrecord_code = "10"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     dependent_measure = models.ForeignKey(
