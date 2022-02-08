@@ -16,7 +16,6 @@ from typing import Union
 
 from parsec import Parser
 from parsec import Value
-from parsec import choice
 from parsec import joint
 from parsec import optional
 from parsec import regex
@@ -144,7 +143,7 @@ class DutySentenceParser:
         # For monetary units, the expression just contains the same code as is
         # present in the sentence. Percentage values correspond to no unit.
         self._monetary_unit = (
-            reduce(choice, map(code, monetary_units)) if monetary_units else fail
+            reduce(try_choice, map(code, monetary_units)) if monetary_units else fail
         )
         percentage_unit = token("%").result(None)
 
