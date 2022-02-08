@@ -468,6 +468,21 @@ def test_trackedmodel_str(trackedmodel_factory):
     assert len(result.strip())
 
 
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+def test_trackedmodel_base_str():
+    """
+    Verify TrackedModel base class can stringify without crashing, so that.
+
+    .trackedmodel_ptr will work on TrackedModel subclasses.
+    """
+    model = factories.TestModel1Factory.create()
+    trackedmodel = model.trackedmodel_ptr
+
+    result = str(trackedmodel)
+
+    assert f"pk={trackedmodel.pk}" == result
+
+
 def test_copy(trackedmodel_factory, approved_transaction):
     """Verify that a copy of a TrackedModel is a new instance with different
     primary key and version group."""
