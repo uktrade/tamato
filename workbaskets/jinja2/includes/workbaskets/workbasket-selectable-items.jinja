@@ -39,9 +39,42 @@
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+    <div class="govuk-grid-column-two-thirds">
       <h2 class="govuk-heading-l">Your tariff changes</h2>
+    </div>
+  </div>
 
+  {% if uploaded_envelope_dates %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-warning-text__assistive">Warning</span>
+          We've created an envelope which contains your published changes between {{ "{:%d %b %Y}".format(uploaded_envelope_dates.start) }} and {{ "{:%d %b %Y}".format(uploaded_envelope_dates.end) }}. It's ready for your action.
+        </strong>
+      </div>
+      {# Commented out until we work out what this placeholder should say
+      <details class="govuk-details" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">Help with your actions</span>
+        </summary>
+        <div class="govuk-details__text">
+          This is a place holder for help text about tariff managers' actions and/or next steps
+        </div>
+      </details> 
+      #}
+      <div class="govuk-button-group">
+        <a href={{ url("workbaskets:workbasket-download") }} class="govuk-button" data-module="govuk-button" download>
+          Download the envelope
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
       {% set change_count = workbasket.tracked_models.count() %}
       <p class="govuk-body">{{ change_count }} changes</p>
 

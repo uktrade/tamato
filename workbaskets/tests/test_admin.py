@@ -1,5 +1,6 @@
 import re
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from django.test.html import parse_html
@@ -45,7 +46,8 @@ def superadmin():
     return factories.UserFactory.create(is_superuser=True, is_staff=True)
 
 
-def test_change_workbasket_status_options(client, superadmin, workbasket):
+@patch("exporter.tasks.upload_workbaskets")
+def test_change_workbasket_status_options(upload, client, superadmin, workbasket):
     detail_url = reverse("admin:workbaskets_workbasket_change", args=[workbasket.id])
 
     client.force_login(superadmin)
@@ -69,7 +71,8 @@ def test_change_workbasket_status_options(client, superadmin, workbasket):
     ]
 
 
-def test_change_workbasket_status(client, superadmin, workbasket, transition):
+@patch("exporter.tasks.upload_workbaskets")
+def test_change_workbasket_status(upload, client, superadmin, workbasket, transition):
     """Test submitting all combinations of workbasket status and transition
     (including impossible submissions)"""
 

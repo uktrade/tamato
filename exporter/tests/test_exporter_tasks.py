@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from unittest import mock
 
@@ -12,6 +13,8 @@ from common.tests.factories import RegulationFactory
 from common.tests.util import taric_xml_record_codes
 from common.tests.util import validate_taric_xml_record_order
 from exporter.tasks import upload_workbaskets
+from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -30,6 +33,8 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
     settings,
 ):
     """Exercise HMRCStorage and verify content is saved to bucket."""
+    assert WorkBasket.objects.filter(status=WorkflowStatus.SENT).exists() == False
+
     now = datetime.now()
     expected_bucket = "hmrc"
     expected_key = f"tohmrc/staging/DIT{now:%y}0001.xml"
@@ -52,7 +57,12 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
     assert expected_bucket in s3_bucket_names()
     assert expected_key in s3_object_names(expected_bucket)
 
-    envelope = s3.get_object(Bucket=expected_bucket, Key=expected_key)["Body"].read()
+    s3_object = s3.get_object(Bucket=expected_bucket, Key=expected_key)
+    filename = os.path.basename(expected_key)
+
+    assert s3_object.get("ContentDisposition") == f"attachment; filename={filename}"
+
+    envelope = s3_object["Body"].read()
     xml = etree.XML(envelope)
 
     validate_taric_xml_record_order(xml)
@@ -69,6 +79,8 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
     codes = taric_xml_record_codes(xml)
 
     assert codes == expected_codes
+
+    assert WorkBasket.objects.filter(status=WorkflowStatus.SENT).exists() == True
 
 
 @mock.patch(

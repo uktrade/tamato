@@ -4,6 +4,7 @@ import pytest
 from django.urls import reverse
 
 from common.tests import factories
+from common.views import DashboardView
 from common.views import HealthCheckResponse
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -57,3 +58,29 @@ def test_handles_multiple_unapproved_workbaskets(valid_user_client, new_workbask
     response = valid_user_client.get(reverse("index"))
 
     assert response.status_code == 200
+
+
+def test_dashboard_view_uploaded_envelope_dates():
+    envelope = factories.EnvelopeFactory.create()
+    first_txn = factories.EnvelopeTransactionFactory.create(
+        envelope=envelope,
+    ).transaction
+    last_txn = factories.EnvelopeTransactionFactory.create(
+        envelope=envelope,
+    ).transaction
+    factories.UploadFactory.create(envelope=envelope)
+    view = DashboardView()
+
+    assert view.uploaded_envelope_dates["start"] == first_txn.updated_at
+    assert view.uploaded_envelope_dates["end"] == last_txn.updated_at
+
+
+def test_dashboard_view_latest_upload():
+    view = DashboardView()
+
+    assert view.latest_upload == None
+
+    factories.UploadFactory.create()
+    latest_upload = factories.UploadFactory.create()
+
+    assert view.latest_upload == latest_upload
