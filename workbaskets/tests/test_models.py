@@ -73,6 +73,9 @@ def test_get_tracked_models(new_workbasket):
     assert new_workbasket.tracked_models.count() == 2
 
 
+patch("exporter.tasks.upload_workbaskets")
+
+
 def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, valid_user):
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_version(
@@ -88,6 +91,9 @@ def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, vali
     new_workbasket.approve(valid_user, SEED_FIRST)
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
+
+
+patch("exporter.tasks.upload_workbaskets")
 
 
 def test_workbasket_errored_updates_tracked_models(
