@@ -40,9 +40,8 @@ def test_submit_workbasket(
     mock_upload.delay.assert_called_once_with()
 
 
-@patch("exporter.tasks.upload_workbasket_envelopes.s")
-@patch("exporter.tasks.send_upload_notifications.s")
-def test_edit_after_submit(notifications, envelopes, valid_user, client, date_ranges):
+@patch("exporter.tasks.upload_workbaskets")
+def test_edit_after_submit(upload, valid_user, client, date_ranges):
     client.force_login(valid_user)
 
     # submit a workbasket containing a newly created footnote

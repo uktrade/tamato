@@ -1,4 +1,5 @@
 from typing import Iterable
+from unittest.mock import patch
 
 import pytest
 from django_fsm import TransitionNotAllowed
@@ -339,8 +340,10 @@ def test_workbasket_approval_updates_transactions(
             flat=True,
         ),
     )
+    with patch("exporter.tasks.upload_workbaskets") as upload:
+        new_workbasket.approve(valid_user, partition_scheme)
 
-    new_workbasket.approve(valid_user, partition_scheme)
+        upload.delay.assert_called_with()
 
     assert [expected_partition] == list(
         new_workbasket.transactions.distinct("partition").values_list(
