@@ -1,9 +1,12 @@
 import xml.etree.ElementTree as etree
 
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from common.tests import factories
+from common.tests.factories import GoodsNomenclatureFactory
+from common.tests.util import assert_table_displays_models
 from common.views import DashboardView
 from common.views import HealthCheckResponse
 from workbaskets.models import WorkBasket
@@ -27,6 +30,22 @@ def test_index_doesnt_creates_workbasket_if_not_needed(
     response = valid_user_client.get(reverse("index"))
     assert response.status_code == 200
     assert WorkBasket.objects.is_not_approved().count() == 1
+
+
+def test_index_displays_objects_in_current_workbasket(
+    valid_user_client,
+    workbasket,
+):
+    """Verify that changes in the current workbasket are displayed on the index
+    page."""
+    with workbasket.new_transaction():
+        GoodsNomenclatureFactory.create()
+
+    response = valid_user_client.get(reverse("index"))
+    soup = BeautifulSoup(response.content.decode(response.charset))
+    table = soup.find("table")
+
+    assert_table_displays_models(table, workbasket.tracked_models.all())
 
 
 @pytest.mark.parametrize(

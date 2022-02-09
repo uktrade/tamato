@@ -1,5 +1,6 @@
 from typing import List
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual  # noqa
@@ -456,6 +457,21 @@ def test_get_description_dates(description_factory, date_ranges):
     future = objects.as_at(date_ranges.adjacent_later.upper).get()
     assert future.validity_end is None
     assert future == future_description
+
+
+def test_trackedmodel_get_url(trackedmodel_factory):
+    """Verify no getUrl() returns something sensible and doesn't crash."""
+    instance = trackedmodel_factory.create()
+    url = instance.get_url()
+
+    if url is None:
+        # None is returned for models that have no URL
+        return
+
+    assert len(url)
+
+    # Verify URL is not local
+    assert not urlparse(url).netloc
 
 
 def test_trackedmodel_str(trackedmodel_factory):
