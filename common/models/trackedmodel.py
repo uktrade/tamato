@@ -98,10 +98,13 @@ class TrackedModel(PolymorphicModel):
     objects: TrackedModelQuerySet = TrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
-    # current_objects filters instances to the 'current' transaction.
     current_objects: TrackedModelQuerySet = CurrentTrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
+    """
+    The `current_objects` model manager provides a default queryset that, by
+    default, filters to the 'current' transaction.
+    """
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
