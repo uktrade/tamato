@@ -61,24 +61,6 @@ def set_current_transaction(transaction):
     _thread_locals.transaction = transaction
 
 
-class TransactionMiddleware:
-    """Middleware to set a global, current transaction prior to view
-    processing."""
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        from workbaskets.models import WorkBasket
-
-        set_current_transaction(
-            WorkBasket.get_current_transaction(request),
-        )
-        response = self.get_response(request)
-        # No post-view processing required.
-        return response
-
-
 @contextlib.contextmanager
 def override_current_transaction(transaction=None):
     """Override the thread-local current transaction with the specified
@@ -89,3 +71,22 @@ def override_current_transaction(transaction=None):
         yield transaction
     finally:
         set_current_transaction(old_transaction)
+
+
+class TransactionMiddleware:
+    """Middleware that sets the global, current transaction for the duration of
+    view processing (and processing of other middleware that follows this
+    middleware in the chain)."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from workbaskets.models import WorkBasket
+
+        with override_current_transaction(
+            WorkBasket.get_current_transaction(request),
+        ):
+            response = self.get_response(request)
+        # No post-view processing required.
+        return response
