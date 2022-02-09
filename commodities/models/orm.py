@@ -112,6 +112,8 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "00"
 
+    identifying_fields = ("sid",)
+
     sid = NumericSID()
 
     # These are character fields as they often has leading 0s
@@ -231,6 +233,8 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"
     subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     objects: GoodsNomenclatureIndentQuerySet = TrackedModelManager.from_queryset(
         GoodsNomenclatureIndentQuerySet,
     )()
@@ -311,6 +315,8 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     subrecord_code = "15"
     period_record_code = "400"
     period_subrecord_code = "10"
+
+    identifying_fields = ("sid",)
 
     objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
 

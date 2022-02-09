@@ -133,14 +133,16 @@ class TrackedModel(PolymorphicModel):
     ones.
     """
 
-    identifying_fields: Sequence[str] = ("sid",)
+    identifying_fields: Sequence[str] = ("pk",)
     """
     The fields which together form a composite unique key for each model.
 
-    The system ID (or SID) field is normally the unique identifier of a TARIC
+    The system ID (or SID) field, 'sid' is normally the unique identifier of a TARIC
     model, but in places where this does not exist models can declare their own.
     (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
+    
+    TrackedModel itself defaults to ("pk",) as it does not have an SID.
     """
 
     def new_version(

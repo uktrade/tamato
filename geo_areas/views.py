@@ -28,7 +28,15 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["sid", "area_code"]
 
 
-class GeographicalAreaDescriptionMixin:
+class GeoAreaMixin:
+    model: Type[TrackedModel] = GeographicalArea
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return GeographicalArea.objects.approved_up_to_transaction(tx)
+
+
+class GeoAreaDescriptionMixin:
     model: Type[TrackedModel] = GeographicalAreaDescription
 
     def get_queryset(self):
@@ -36,7 +44,7 @@ class GeographicalAreaDescriptionMixin:
         return GeographicalAreaDescription.objects.approved_up_to_transaction(tx)
 
 
-class GeographicalAreaCreateDescriptionMixin:
+class GeoAreaCreateDescriptionMixin:
     model: Type[TrackedModel] = GeographicalAreaDescription
 
     def get_context_data(self, **kwargs):
@@ -47,21 +55,18 @@ class GeographicalAreaCreateDescriptionMixin:
         return context
 
 
-class GeographicalAreaList(TamatoListView):
-    queryset = GeographicalArea.objects.latest_approved()
+class GeoAreaList(GeoAreaMixin, TamatoListView):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "descriptions__description"]
 
 
-class GeographicalAreaDetail(TrackedModelDetailView):
-    model = GeographicalArea
+class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):
     template_name = "geo_areas/detail.jinja"
-    queryset = GeographicalArea.objects.latest_approved()
 
 
-class GeographicalAreaCreateDescription(
-    GeographicalAreaCreateDescriptionMixin,
+class GeoAreaDescriptionCreate(
+    GeoAreaCreateDescriptionMixin,
     TrackedModelDetailMixin,
     DraftCreateView,
 ):
@@ -76,8 +81,8 @@ class GeographicalAreaCreateDescription(
     template_name = "common/create_description.jinja"
 
 
-class GeographicalAreaDescriptionConfirmCreate(
-    GeographicalAreaDescriptionMixin,
+class GeoAreaDescriptionConfirmCreate(
+    GeoAreaDescriptionMixin,
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_create_description.jinja"

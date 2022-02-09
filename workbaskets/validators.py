@@ -21,5 +21,4 @@ class WorkflowStatus(models.TextChoices):
             cls.APPROVED,
             cls.SENT,
             cls.PUBLISHED,
-            cls.ERRORED,
         )

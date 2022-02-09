@@ -1,6 +1,11 @@
+import boto3
+from botocore.client import Config
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.db.models import ProtectedError
+from django.http import Http404
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic.base import RedirectView
@@ -12,6 +17,7 @@ from rest_framework import renderers
 from rest_framework import viewsets
 
 from common.renderers import TaricXMLRenderer
+from exporter.models import Upload
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
@@ -63,7 +69,6 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
 
         workbasket.submit_for_approval()
         workbasket.approve(self.request.user, get_partition_scheme())
-        workbasket.export_to_cds()
         workbasket.save()
         workbasket.save_to_session(self.request.session)
 
@@ -142,3 +147,41 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
 
 class WorkBasketDeleteChangesDone(TemplateView):
     template_name = "workbaskets/delete_changes_confirm.jinja"
+
+
+def download_envelope(request):
+    """
+    Creates s3 resource using AWS environment variables.
+
+    Tries to get filename from most recent s3 upload. If no upload exists, returns 404.
+
+    Generates presigned url from s3 client using bucket and file names.
+
+    Returns `HttpResponseRedirect` with presigned url passed as only argument.
+    """
+    s3 = boto3.resource(
+        "s3",
+        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(signature_version="s3v4"),
+    )
+
+    try:
+        last_added = (
+            settings.HMRC_STORAGE_DIRECTORY
+            + Upload.objects.latest("created_date").filename
+        )
+    except Upload.DoesNotExist as err:
+        raise Http404("No uploaded envelope available for download")
+
+    url = s3.meta.client.generate_presigned_url(
+        ClientMethod="get_object",
+        ExpiresIn=3600,
+        Params={
+            "Bucket": settings.HMRC_STORAGE_BUCKET_NAME,
+            "Key": last_added,
+        },
+    )
+
+    return HttpResponseRedirect(url)

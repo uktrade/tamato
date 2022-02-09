@@ -20,6 +20,7 @@ from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
 from quotas import business_rules as quotas_business_rules
 from quotas.validators import quota_order_number_validator
+from workbaskets.models import WorkBasket
 
 
 class MeasureTypeSeries(TrackedModel, ValidityMixin):
@@ -35,6 +36,8 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
 
     description_record_code = "140"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=2,
@@ -190,6 +193,8 @@ class DutyExpression(TrackedModel, ValidityMixin):
     description_record_code = "230"
     description_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     sid = models.IntegerField(
         choices=validators.DutyExpressionId.choices,
         db_index=True,
@@ -230,6 +235,8 @@ class MeasureType(TrackedModel, ValidityMixin):
 
     description_record_code = "235"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=6,
@@ -642,6 +649,51 @@ class Measure(TrackedModel, ValidityMixin):
 
         return super().save(*args, force_write=force_write, **kwargs)
 
+    def diff_components(
+        self,
+        duty_sentence: str,
+        start_date: date,
+        workbasket: WorkBasket,
+    ):
+        from measures.parsers import DutySentenceParser
+
+        parser = DutySentenceParser.get(
+            start_date,
+        )
+
+        new_components = parser.parse(duty_sentence)
+        old_components = self.components.approved_up_to_transaction(
+            workbasket.current_transaction,
+        )
+        new_by_id = {c.duty_expression.id: c for c in new_components}
+        old_by_id = {c.duty_expression.id: c for c in old_components}
+        all_ids = set(new_by_id.keys()) | set(old_by_id.keys())
+        for id in all_ids:
+            new = new_by_id.get(id)
+            old = old_by_id.get(id)
+            if new and old:
+                # Component is having amount/unit changed – UPDATE it
+                new.update_type = UpdateType.UPDATE
+                new.version_group = old.version_group
+                new.component_measure = self
+                new.transaction = self.transaction
+                new.save()
+
+            elif new:
+                # Component exists only in new set - CREATE it
+                new.update_type = UpdateType.CREATE
+                new.component_measure = self
+                new.transaction = self.transaction
+                new.save()
+
+            elif old:
+                # Component exists only in old set – DELETE it
+                old = old.new_version(
+                    workbasket,
+                    update_type=UpdateType.DELETE,
+                    transaction=self.transaction,
+                )
+
 
 class MeasureComponent(TrackedModel):
     """Contains the duty information or part of the duty information."""
@@ -706,6 +758,8 @@ class MeasureCondition(TrackedModel):
 
     record_code = "430"
     subrecord_code = "10"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     dependent_measure = models.ForeignKey(

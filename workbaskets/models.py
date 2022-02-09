@@ -327,12 +327,17 @@ class WorkBasket(TimestampedMixin):
     )
     def approve(self, user, partition_scheme):
         """Once a workbasket has been approved all related Tracked Models must
-        be updated to the current versions of themselves."""
+        be updated to the current versions of themselves and the workbasket
+        uploaded to CDS S3 bucket."""
 
         self.approver = user
 
         # Move transactions from the DRAFT partition into the REVISION partition.
         self.transactions.save_drafts(partition_scheme)
+
+        from exporter.tasks import upload_workbaskets
+
+        upload_workbaskets.delay()
 
     @transition(
         field=status,
