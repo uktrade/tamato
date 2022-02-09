@@ -49,7 +49,8 @@ def test_workbasket_transactions():
     assert workbasket.transactions.count() == 2
 
 
-def test_workbasket_transition(workbasket, transition, valid_user):
+@patch("exporter.tasks.upload_workbaskets")
+def test_workbasket_transition(upload, workbasket, transition, valid_user):
     """Tests all combinations of initial workbasket status and transition,
     testing that valid transitions do not error, and invalid transitions raise
     TransitionNotAllowed."""
@@ -73,9 +74,7 @@ def test_get_tracked_models(new_workbasket):
     assert new_workbasket.tracked_models.count() == 2
 
 
-patch("exporter.tasks.upload_workbaskets")
-
-
+@patch("exporter.tasks.upload_workbaskets")
 def test_workbasket_accepted_updates_current_tracked_models(
     upload,
     new_workbasket,
@@ -97,9 +96,7 @@ def test_workbasket_accepted_updates_current_tracked_models(
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
 
 
-patch("exporter.tasks.upload_workbaskets")
-
-
+@patch("exporter.tasks.upload_workbaskets")
 def test_workbasket_errored_updates_tracked_models(
     upload,
     new_workbasket,
