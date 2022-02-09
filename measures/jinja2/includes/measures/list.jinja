@@ -17,7 +17,7 @@
     {"text": measure.goods_nomenclature.item_id|wordwrap(2)|replace("\n", " ") if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
     {"text": measure.duty_sentence if measure.duty_sentence else '-'},
     {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
-    {"html": create_link(url("geoarea-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
+    {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
     {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
     {"text": footnotes if measure.footnotes.all() else '-'},
     {"text": conditions_list(measure) if measure.conditions.latest_approved() else "-", "classes": "govuk-!-width-one-quarter"},

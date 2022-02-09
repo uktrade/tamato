@@ -158,7 +158,7 @@ class AdditionalCodeCreateDescription(
     template_name = "common/create_description.jinja"
 
 
-class AdditionalCodeUpdateDescription(
+class AdditionalCodeDescriptionUpdate(
     AdditionalCodeDescriptionMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,

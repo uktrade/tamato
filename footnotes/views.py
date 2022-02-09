@@ -152,7 +152,7 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
 
 
-class FootnoteCreateDescription(
+class FootnoteDescriptionCreate(
     FootnoteCreateDescriptionMixin,
     TrackedModelDetailMixin,
     DraftCreateView,
@@ -171,7 +171,7 @@ class FootnoteCreateDescription(
     template_name = "common/create_description.jinja"
 
 
-class FootnoteUpdateDescription(
+class FootnoteDescriptionUpdate(
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
