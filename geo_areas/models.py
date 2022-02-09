@@ -47,7 +47,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
 
     identifying_fields = ("sid",)
 
-    url_pattern_name_prefix = "geoarea"
+    url_pattern_name_prefix = "geo_area"
 
     sid = SignedIntSID(db_index=True)
     area_id = models.CharField(max_length=4, validators=[area_id_validator])
@@ -204,6 +204,8 @@ class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
             self.sid = highest_sid + 1
 
         return super().save(*args, **kwargs)
+
+    url_pattern_name_prefix = "geo_area_description"
 
     class Meta:
         ordering = ("validity_start",)
