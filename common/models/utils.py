@@ -16,6 +16,18 @@ class LazyValue(Value):
     """
 
     allow_list: FrozenSet[str] = frozenset()
+    """
+    Before `LazyValue` instances are evaluated, we allow access to the proxied
+    value's attributes by returning them from `__getattr__()` as `LazyValue`
+    instances themselves.
+    It is only possible to do this by knowing in advance the set of attributes
+    that should be handled in this way.
+    `allow_list` provides this set of attributes and should be overridden by
+    subclasses of LazyValue.
+    See `LazyTransaction.allow_list` for an example of how this is implemented
+    for a `LazyValue` subclass that supports lazily evaluated Transaction
+    instances.
+    """
 
     def __init__(self, **kwargs) -> None:
         self.get_value = kwargs.pop("get_value", lambda: None)
@@ -27,12 +39,17 @@ class LazyValue(Value):
         return self.get_value()
 
     def __getattr__(self, name: str):
+        """Return attributes on the proxied value themselves as `LazyValue`
+        instances."""
+
         if name not in self.allow_list:
             raise AttributeError(name)
         return type(self)(get_value=lambda: getattr(self.value, name))
 
 
 class LazyTransaction(LazyValue):
+    """Proxy to support lazily evaluated Transaction instances."""
+
     allow_list = frozenset({"order", "partition", "workbasket_id"})
 
 
