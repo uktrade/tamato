@@ -269,20 +269,17 @@
         <span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span>
         <span class="n">workbasket</span><span class="p">,</span>
         <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">update_type</span><span class="p">:</span> <span class="n">UpdateType</span> <span class="o">=</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span>
         <span class="o">**</span><span class="n">overrides</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return a new version of the object. Callers can override existing data</span>
-<span class="sd">        by passing in keyword args.</span>
+<span class="sd">        Create and return a new version of the object. Callers can override</span>
+<span class="sd">        existing data by passing in keyword args.</span>
 
 <span class="sd">        The new version is added to a transaction which is created and added to the passed in workbasket</span>
 <span class="sd">        (or may be supplied as a keyword arg).</span>
 
-<span class="sd">        update_type must be UPDATE or DELETE, with UPDATE as the default.</span>
-
-<span class="sd">        By default the new object is saved; this can be disabled by passing save=False.</span>
+<span class="sd">        `update_type` must be UPDATE or DELETE, with UPDATE as the default.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">update_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
             <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span>
@@ -313,25 +310,20 @@
         <span class="n">new_object_kwargs</span><span class="p">[</span><span class="s2">&quot;transaction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">transaction</span>
 
         <span class="n">new_object</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">new_object_kwargs</span><span class="p">)</span>
+        <span class="n">new_object</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
-            <span class="n">new_object</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-
-            <span class="c1"># TODO: make this work with save=False!</span>
-            <span class="c1"># Maybe the deferred values could be saved on the model</span>
-            <span class="c1"># and then handled with a post_save signal?</span>
-            <span class="n">deferred_kwargs</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">value_from_object</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-            <span class="p">}</span>
-            <span class="n">deferred_overrides</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">name</span><span class="p">:</span> <span class="n">value</span>
-                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
-            <span class="p">}</span>
-            <span class="n">deferred_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">deferred_overrides</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">deferred_kwargs</span><span class="p">:</span>
-                <span class="nb">getattr</span><span class="p">(</span><span class="n">new_object</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">deferred_kwargs</span><span class="p">[</span><span class="n">field</span><span class="p">])</span>
+        <span class="n">deferred_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">value_from_object</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">deferred_overrides</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">get_deferred_set_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+        <span class="p">}</span>
+        <span class="n">deferred_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">deferred_overrides</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">deferred_kwargs</span><span class="p">:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">new_object</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">deferred_kwargs</span><span class="p">[</span><span class="n">field</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">new_object</span></div>
 
