@@ -796,7 +796,7 @@ def get_table_content(table, col_start=0):
 
 
 def assert_table_displays_models(table, tracked_models):
-    """Given a beautiful soup object containtain a table, check that it contains
+    """Given a beautiful soup object containing a table, check that it contains
     the expected tracked_models."""
 
     # Does not check the first column, which is the selection checkbox.
