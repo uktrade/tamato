@@ -2,7 +2,6 @@ import boto3
 from botocore.client import Config
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db import transaction
 from django.db.models import ProtectedError
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -18,8 +17,8 @@ from rest_framework import viewsets
 
 from common.renderers import TaricXMLRenderer
 from exporter.models import Upload
+from workbaskets import tasks
 from workbaskets.models import WorkBasket
-from workbaskets.models import get_partition_scheme
 from workbaskets.serializers import WorkBasketSerializer
 from workbaskets.session_store import SessionStore
 
@@ -63,16 +62,26 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
     model = WorkBasket
     permission_required = "workbaskets.change_workbasket"
 
-    @transaction.atomic
-    def get_redirect_url(self, *args, **kwargs):
+    def get_redirect_url(self, *args, **kwargs) -> str:
+        return reverse("index")
+
+    def get(self, *args, **kwargs):
         workbasket: WorkBasket = self.get_object()
 
-        workbasket.submit_for_approval()
-        workbasket.approve(self.request.user, get_partition_scheme())
-        workbasket.save()
-        workbasket.save_to_session(self.request.session)
+        (
+            tasks.transition.si(
+                workbasket.pk,
+                "submit_for_approval",
+            )
+            | tasks.transition.si(
+                workbasket.pk,
+                "approve",
+                self.request.user.pk,
+                settings.TRANSACTION_SCHEMA,
+            )
+        ).delay()
 
-        return reverse("index")
+        return super().get(*args, **kwargs)
 
 
 class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):

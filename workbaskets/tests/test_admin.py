@@ -3,6 +3,7 @@ from unittest import mock
 from unittest.mock import patch
 
 import pytest
+from django.test import override_settings
 from django.test.html import parse_html
 from django.urls import reverse
 
@@ -71,6 +72,7 @@ def test_change_workbasket_status_options(upload, client, superadmin, workbasket
     ]
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
 def test_change_workbasket_status(upload, client, superadmin, workbasket, transition):
     """Test submitting all combinations of workbasket status and transition

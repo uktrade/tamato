@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 
 from common.tests import factories
@@ -14,6 +15,7 @@ from workbaskets.validators import WorkflowStatus
 pytestmark = pytest.mark.django_db
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
 def test_submit_workbasket(
     mock_upload,
@@ -37,10 +39,11 @@ def test_submit_workbasket(
     workbasket = WorkBasket.objects.get(pk=workbasket.pk)
 
     assert workbasket.approver is not None
-    assert client.session["workbasket"]["status"] == workbasket.status
+    assert "workbasket" not in client.session
     mock_upload.delay.assert_called_once_with()
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
 def test_edit_after_submit(upload, valid_user, client, date_ranges):
     client.force_login(valid_user)

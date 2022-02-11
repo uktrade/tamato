@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponseRedirect
@@ -7,8 +8,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 
 from exporter.tasks import upload_workbaskets
+from workbaskets import tasks
 from workbaskets.models import WorkBasket
-from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
 
@@ -81,16 +82,16 @@ class WorkBasketAdmin(admin.ModelAdmin):
         instance = form.save(commit=False)
         if not change or not instance.author:
             instance.author = request.user
+            instance.save()
+        form.save_m2m()
 
         transition = form.cleaned_data.get("transition")
         if transition:
             transition_args = []
             if transition == "approve":
-                transition_args.extend([request.user, get_partition_scheme()])
-            getattr(instance, transition)(*transition_args)
+                transition_args.extend([request.user.pk, settings.TRANSACTION_SCHEMA])
+            tasks.transition.delay(instance.pk, transition, *transition_args)
 
-        instance.save()
-        form.save_m2m()
         return instance
 
 

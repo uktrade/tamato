@@ -14,6 +14,7 @@ from common.tests.factories import TransactionFactory
 from common.tests.factories import WorkBasketFactory
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
+from workbaskets import tasks
 from workbaskets.models import REVISION_ONLY
 from workbaskets.models import SEED_FIRST
 from workbaskets.models import SEED_ONLY
@@ -55,15 +56,37 @@ def test_workbasket_transition(upload, workbasket, transition, valid_user):
     testing that valid transitions do not error, and invalid transitions raise
     TransitionNotAllowed."""
 
-    transition_args = [valid_user, SEED_FIRST] if transition.name == "approve" else []
+    transition_args = (
+        [valid_user.pk, "SEED_FIRST"] if transition.name == "approve" else []
+    )
 
     try:
         getattr(workbasket, transition.name)(*transition_args)
         assert workbasket.status == transition.target.value
     except TransitionNotAllowed:
-        assert transition.name not in [
+        assert transition.name not in {
             t.name for t in workbasket.get_available_status_transitions()
-        ]
+        }
+
+
+@patch("exporter.tasks.upload_workbaskets")
+def test_workbasket_transition_task(upload, workbasket, transition, valid_user):
+    """Tests all combinations of initial workbasket status and transition,
+    testing that valid transitions do not error, and invalid transitions raise
+    TransitionNotAllowed."""
+
+    transition_args = (
+        [valid_user.pk, "SEED_FIRST"] if transition.name == "approve" else []
+    )
+
+    try:
+        tasks.transition(workbasket.pk, transition.name, *transition_args)
+        workbasket.refresh_from_db()
+        assert workbasket.status == transition.target.value
+    except TransitionNotAllowed:
+        assert transition.name not in {
+            t.name for t in workbasket.get_available_status_transitions()
+        }
 
 
 def test_get_tracked_models(new_workbasket):
@@ -91,7 +114,7 @@ def test_workbasket_accepted_updates_current_tracked_models(
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve(valid_user, SEED_FIRST)
+    new_workbasket.approve(valid_user.pk, "SEED_FIRST")
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
 
@@ -114,7 +137,7 @@ def test_workbasket_errored_updates_tracked_models(
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve(valid_user, SEED_FIRST)
+    new_workbasket.approve(valid_user.pk, "SEED_FIRST")
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
     new_workbasket.export_to_cds()
@@ -349,7 +372,7 @@ def test_workbasket_approval_updates_transactions(
         ),
     )
     with patch("exporter.tasks.upload_workbaskets") as upload:
-        new_workbasket.approve(valid_user, partition_scheme)
+        new_workbasket.approve(valid_user.pk, partition_setting)
 
         upload.delay.assert_called_with()
 
