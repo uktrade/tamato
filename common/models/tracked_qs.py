@@ -47,13 +47,20 @@ class TrackedModelQuerySet(
 
     def current(self) -> TrackedModelQuerySet:
         """
-        Get the approved versions of the model or the latest draft versions, if
-        they exist within a transaction preceding (and including) the given
-        transaction.
+        Returns a queryset of approved versions of the model up to the globally
+        defined current transaction (see ``common.models.utils`` for details of
+        how this is managed).
 
-        The 'current' transaction is obtained from the globally  available
-        current transaction - see the common.models.utils module for details of
-        how this is managed.
+        If this method is called from within a running instance of the Django
+        web application (i.e. application middleware has been exectuted), then
+        TransactionMiddleware will automatically set the globally defined,
+        current transaction to the current transaction in the global Workbasket.
+
+        Otherwise, if TransactionMiddleware has not been executed (for
+        instance, when running from the shell / Jupyter), then care must be
+        taken to ensure the global current transaction is set up correctly
+        (see ``set_current_transaction()`` and ``override_current_transaction()``
+        in ``common.models.utils``).
         """
         return self.approved_up_to_transaction(
             LazyTransaction(get_value=get_current_transaction),
