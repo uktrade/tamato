@@ -134,3 +134,35 @@ def test_duties_validator(
     # removing it will cause the test to fail.
     with raises_if(ValidationError, error_expected):
         validate_duties(duties, date_ranges.normal)
+
+
+@pytest.mark.parametrize(
+    ("update_data"),
+    [
+        {},
+        {"duty_sentence": "10.000%"},
+    ],
+)
+def test_measure_update_duty_sentence(
+    update_data,
+    client,
+    valid_user,
+    measure_form,
+    duty_sentence_parser,
+):
+    """
+    A placeholder test until we find a way of making use_update_form compatible
+    with MeasureForm.
+
+    Generates minimal post_data from instance and verifies that the edit
+    endpoint redirects successfully.
+    """
+    post_data = measure_form.data
+    # Remove keys with null value to avoid TypeError
+    post_data = {k: v for k, v in post_data.items() if v is not None}
+    post_data.update(update_data)
+    post_data["update_type"] = 1
+    url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
+    client.force_login(valid_user)
+    response = client.post(url, data=post_data)
+    assert response.status_code == 302

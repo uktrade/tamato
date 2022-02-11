@@ -96,15 +96,11 @@ class MeasureForm(ValidityPeriodForm):
 
         WorkBasket.get_current_transaction(self.request)
 
-        if not hasattr(self.instance, "duty_sentence"):
-            raise AttributeError(
-                "Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
-            )
-
-        self.initial["duty_sentence"] = self.instance.duty_sentence
-        self.request.session[
-            f"instance_duty_sentence_{self.instance.sid}"
-        ] = self.instance.duty_sentence
+        if hasattr(self.instance, "duty_sentence"):
+            self.initial["duty_sentence"] = self.instance.duty_sentence
+            self.request.session[
+                f"instance_duty_sentence_{self.instance.sid}"
+            ] = self.instance.duty_sentence
 
         self.initial_geographical_area = self.instance.geographical_area
 
@@ -125,7 +121,10 @@ class MeasureForm(ValidityPeriodForm):
 
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
-        if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
+        if (
+            f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys()
+            and self.instance.pk
+        ):
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
                 footnote.pk for footnote in self.instance.footnotes.all()
             ]
@@ -176,9 +175,11 @@ class MeasureForm(ValidityPeriodForm):
 
         sid = instance.sid
 
+        duty_key = f"instance_duty_sentence_{self.instance.sid}"
+        session = self.request.session
         if (
-            self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
-            != self.cleaned_data["duty_sentence"]
+            duty_key in session.keys()
+            and session[duty_key] != self.cleaned_data["duty_sentence"]
         ):
             self.instance.diff_components(
                 self.cleaned_data["duty_sentence"],
