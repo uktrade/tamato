@@ -1,4 +1,3 @@
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -20,6 +19,7 @@ from common.tests.factories import UnapprovedTransactionFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
+from common.tests.models import model_with_history
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
@@ -28,54 +28,6 @@ from regulations.models import Group
 from regulations.models import Regulation
 
 pytestmark = pytest.mark.django_db
-
-
-def generate_model_history(factory, number=5, **kwargs) -> List:
-    objects = []
-    kwargs["update_type"] = kwargs.get("update_type", UpdateType.CREATE)
-    current = factory.create(**kwargs)
-    objects.append(current)
-    kwargs["update_type"] = UpdateType.UPDATE
-    kwargs["version_group"] = kwargs.get("version_group", current.version_group)
-    for _ in range(number - 1):
-        current = factory.create(**kwargs)
-        objects.append(current)
-
-    return objects
-
-
-def model_with_history(factory, date_ranges, **kwargs):
-    class Models:
-        """
-        A convenient system to store tracked models.
-
-        Creates a number of historic models for both test model types.
-
-        Creates an active model for each test model type.
-
-        Then creates a number of future models for each type as well.
-        """
-
-        all_models = generate_model_history(
-            factory, valid_between=date_ranges.earlier, **kwargs
-        )
-
-        active_model = factory.create(
-            valid_between=date_ranges.current, update_type=UpdateType.UPDATE, **kwargs
-        )
-
-        all_models.append(active_model)
-
-        all_models.extend(
-            generate_model_history(
-                factory,
-                valid_between=date_ranges.future,
-                update_type=UpdateType.UPDATE,
-                **kwargs,
-            ),
-        )
-
-    return Models
 
 
 @pytest.fixture
