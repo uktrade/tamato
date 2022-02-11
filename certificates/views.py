@@ -54,7 +54,7 @@ class CertificateMixin:
         )
 
 
-class CertificatesList(CertificateMixin, TamatoListView):
+class CertificateList(CertificateMixin, TamatoListView):
     """UI endpoint for viewing and filtering Certificates."""
 
     template_name = "certificates/list.jinja"

@@ -112,6 +112,7 @@ def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     """
     upload_status = UploadTaskResultData(**upload_status_data)
     workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
+
     if not workbaskets:
         msg = "Nothing to upload:  No workbaskets with status APPROVED."
         logger.info(msg)

@@ -29,6 +29,7 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from exporter.models import Upload
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -93,6 +94,25 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     def paginator(self):
         return Paginator(self.workbasket.tracked_models, per_page=10)
 
+    @property
+    def latest_upload(self):
+        return Upload.objects.order_by("created_date").last()
+
+    @property
+    def uploaded_envelope_dates(self):
+        """Gets a list of all transactions from the `latest_approved_workbasket`
+        in the order they were updated and returns a dict with the first and
+        last transactions as values for "start" and "end" keys respectively."""
+        if self.latest_upload:
+            transactions = self.latest_upload.envelope.transactions.order_by(
+                "updated_at",
+            )
+            return {
+                "start": transactions.first().updated_at,
+                "end": transactions.last().updated_at,
+            }
+        return None
+
     def _append_url_page_param(self, url, form_action):
         """Based upon 'form_action', append a 'page' URL parameter to the given
         url param and return the result."""
@@ -153,6 +173,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "uploaded_envelope_dates": self.uploaded_envelope_dates,
             },
         )
         return context

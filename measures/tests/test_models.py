@@ -300,3 +300,76 @@ def test_effective_valid_between(measure_regulation, measure_dates, date_ranges)
     )
     assert measure.effective_valid_between == expected_dates
     assert measure.effective_end_date == expected_dates.upper
+
+
+def test_diff_components_update(
+    workbasket,
+    duty_sentence_parser,
+    percent_or_amount,
+):
+    original_component = factories.MeasureComponentFactory.create(
+        duty_amount=9.000,
+        duty_expression=percent_or_amount,
+    )
+    original_component.component_measure.diff_components(
+        "8.000%",
+        original_component.component_measure.valid_between.lower,
+        workbasket,
+    )
+    components = (
+        original_component.component_measure.components.approved_up_to_transaction(
+            workbasket.current_transaction,
+        )
+    )
+
+    assert components.count() == 1
+
+    new_component = components.last()
+
+    assert new_component.update_type == UpdateType.UPDATE
+    assert new_component.version_group == original_component.version_group
+    assert new_component.component_measure == original_component.component_measure
+    assert new_component.transaction == original_component.component_measure.transaction
+    assert new_component.duty_amount == 8.000
+
+
+def test_diff_components_create(workbasket, duty_sentence_parser):
+    measure = factories.MeasureFactory.create()
+    measure.diff_components(
+        "8.000%",
+        measure.valid_between.lower,
+        workbasket,
+    )
+    components = measure.components.approved_up_to_transaction(
+        workbasket.current_transaction,
+    )
+
+    assert components.count() == 1
+
+    new_component = components.last()
+
+    assert new_component.update_type == UpdateType.CREATE
+    assert new_component.component_measure == measure
+    assert new_component.transaction == measure.transaction
+    assert new_component.duty_amount == 8.000
+
+
+def test_diff_components_delete(
+    workbasket,
+    duty_sentence_parser,
+    percent_or_amount,
+):
+    component = factories.MeasureComponentFactory.create(
+        duty_amount=9.000,
+        duty_expression=percent_or_amount,
+    )
+    component.component_measure.diff_components(
+        "",
+        component.component_measure.valid_between.lower,
+        workbasket,
+    )
+    components = component.component_measure.components.approved_up_to_transaction(
+        workbasket.current_transaction,
+    )
+
+    assert components.count() == 0

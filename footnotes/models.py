@@ -115,6 +115,8 @@ class FootnoteDescription(DescriptionMixin, TrackedModel):
     period_record_code = "200"
     period_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     described_footnote = models.ForeignKey(
         Footnote,
         on_delete=models.CASCADE,

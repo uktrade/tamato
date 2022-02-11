@@ -1142,7 +1142,7 @@ class EnvelopeTransactionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "taric.EnvelopeTransaction"
 
-    index = factory.Sequence(lambda x: x + 1)
+    order = factory.Sequence(lambda x: x + 1)
     transaction = factory.SubFactory(TransactionFactory)
     envelope = factory.SubFactory(EnvelopeFactory)
 

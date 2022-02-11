@@ -17,6 +17,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
+from django.test.client import RequestFactory
 from django.test.html import parse_html
 from django.urls import reverse
 from factory.django import DjangoModelFactory
@@ -567,6 +568,14 @@ def s3():
 
 
 @pytest.fixture
+def s3_resource():
+    with mock_s3() as moto:
+        moto.start()
+        s3 = boto3.resource("s3")
+        yield s3
+
+
+@pytest.fixture
 def s3_bucket_names(s3):
     def run():
         return [bucket_info["Name"] for bucket_info in s3.list_buckets()["Buckets"]]
@@ -982,3 +991,14 @@ def unordered_transactions():
     assert existing_transaction.order > 1
 
     return UnorderedTransactionData(existing_transaction, new_transaction)
+
+
+@pytest.fixture
+def session_request(client, workbasket):
+    session = client.session
+    session.save()
+    request = RequestFactory()
+    request.session = session
+    request.session.update({"workbasket": {"id": workbasket.pk}})
+
+    return request
