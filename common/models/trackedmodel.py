@@ -141,20 +141,17 @@ class TrackedModel(PolymorphicModel):
         self: Cls,
         workbasket,
         transaction=None,
-        save: bool = True,
         update_type: UpdateType = UpdateType.UPDATE,
         **overrides,
     ) -> Cls:
         """
-        Return a new version of the object. Callers can override existing data
-        by passing in keyword args.
+        Create and return a new version of the object. Callers can override
+        existing data by passing in keyword args.
 
         The new version is added to a transaction which is created and added to the passed in workbasket
         (or may be supplied as a keyword arg).
 
-        update_type must be UPDATE or DELETE, with UPDATE as the default.
-
-        By default the new object is saved; this can be disabled by passing save=False.
+        `update_type` must be UPDATE or DELETE, with UPDATE as the default.
         """
         if update_type not in (
             validators.UpdateType.UPDATE,
@@ -185,25 +182,20 @@ class TrackedModel(PolymorphicModel):
         new_object_kwargs["transaction"] = transaction
 
         new_object = cls(**new_object_kwargs)
+        new_object.save()
 
-        if save:
-            new_object.save()
-
-            # TODO: make this work with save=False!
-            # Maybe the deferred values could be saved on the model
-            # and then handled with a post_save signal?
-            deferred_kwargs = {
-                field.name: field.value_from_object(self)
-                for field in get_deferred_set_fields(self)
-            }
-            deferred_overrides = {
-                name: value
-                for name, value in overrides.items()
-                if name in [f.name for f in get_deferred_set_fields(self)]
-            }
-            deferred_kwargs.update(deferred_overrides)
-            for field in deferred_kwargs:
-                getattr(new_object, field).set(deferred_kwargs[field])
+        deferred_kwargs = {
+            field.name: field.value_from_object(self)
+            for field in get_deferred_set_fields(self)
+        }
+        deferred_overrides = {
+            name: value
+            for name, value in overrides.items()
+            if name in [f.name for f in get_deferred_set_fields(self)]
+        }
+        deferred_kwargs.update(deferred_overrides)
+        for field in deferred_kwargs:
+            getattr(new_object, field).set(deferred_kwargs[field])
 
         return new_object
 
@@ -321,6 +313,10 @@ class TrackedModel(PolymorphicModel):
         """Returns the record identifier as defined in TARIC3 records
         specification."""
         return f"{self.record_code}{self.subrecord_code}"
+
+    @property
+    def update_type_str(self) -> str:
+        return dict(UpdateType.choices)[self.update_type]
 
     @property
     def current_version(self: Cls) -> Cls:

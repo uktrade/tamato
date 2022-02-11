@@ -1,5 +1,6 @@
 import pytest
 
+from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
@@ -10,6 +11,14 @@ from geo_areas.models import GeographicalArea
 from geo_areas.views import GeoAreaList
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.mark.parametrize(
+    "factory",
+    (factories.GeographicalAreaFactory, factories.GeographicalAreaDescriptionFactory),
+)
+def test_geo_area_delete(factory, use_delete_form):
+    use_delete_form(factory())
 
 
 @pytest.mark.parametrize(

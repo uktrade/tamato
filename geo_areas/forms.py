@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from common.forms import CreateDescriptionForm
+from common.forms import delete_form_for
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.validators import AreaCode
@@ -142,3 +143,9 @@ class GeographicalAreaFormMixin(forms.Form):
 
 class GeographicalAreaSelect(Field):
     template = "components/geographical_area_select/template.jinja"
+
+
+GeographicalAreaDeleteForm = delete_form_for(GeographicalArea)
+
+
+GeographicalAreaDescriptionDeleteForm = delete_form_for(GeographicalAreaDescription)

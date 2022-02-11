@@ -31,6 +31,14 @@ def test_regulation_update(new_data, expected_valid, use_update_form):
 
 
 @pytest.mark.parametrize(
+    "factory",
+    (factories.UIRegulationFactory,),
+)
+def test_regulation_delete(factory, use_delete_form):
+    use_delete_form(factory())
+
+
+@pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(
         "regulations/",
