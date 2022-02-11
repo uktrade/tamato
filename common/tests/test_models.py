@@ -322,7 +322,7 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     with patch(
         "exporter.tasks.upload_workbaskets.delay",
     ):
-        workbasket.approve(valid_user, workbaskets.models.SEED_FIRST)
+        workbasket.approve(valid_user.pk, "SEED_FIRST")
     description_queryset = sample_model.get_descriptions()
 
     assert new_description in description_queryset

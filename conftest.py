@@ -829,8 +829,8 @@ def in_use_check_respects_deletes(valid_user):
             "exporter.tasks.upload_workbaskets.delay",
         ):
             workbasket.approve(
-                valid_user,
-                get_partition_scheme(),
+                valid_user.pk,
+                settings.TRANSACTION_SCHEMA,
             )
         workbasket.save()
         assert in_use(dependant.transaction), f"Approved {instance!r} not in use"

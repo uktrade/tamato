@@ -20,6 +20,7 @@ from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.transactions import TransactionQueryset
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -294,6 +295,8 @@ class WorkBasket(TimestampedMixin):
         editable=False,
     )
 
+    transactions: TransactionQueryset
+
     @property
     def approved(self):
         return self.status in WorkflowStatus.approved_statuses()
@@ -343,14 +346,15 @@ class WorkBasket(TimestampedMixin):
         target=WorkflowStatus.APPROVED,
         custom={"label": "Approve"},
     )
-    def approve(self, user, partition_scheme):
+    def approve(self, user: int, scheme_name: str):
         """Once a workbasket has been approved all related Tracked Models must
         be updated to the current versions of themselves and the workbasket
         uploaded to CDS S3 bucket."""
 
-        self.approver = user
+        self.approver_id = user
 
         # Move transactions from the DRAFT partition into the REVISION partition.
+        partition_scheme = get_partition_scheme(scheme_name)
         self.transactions.save_drafts(partition_scheme)
 
         from exporter.tasks import upload_workbaskets
