@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -9,6 +10,8 @@ from additional_codes.filters import AdditionalCodeFilter
 from additional_codes.filters import AdditionalCodeFilterBackend
 from additional_codes.forms import AdditionalCodeCreateDescriptionForm
 from additional_codes.forms import AdditionalCodeCreateForm
+from additional_codes.forms import AdditionalCodeDeleteForm
+from additional_codes.forms import AdditionalCodeDescriptionDeleteForm
 from additional_codes.forms import AdditionalCodeDescriptionForm
 from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
@@ -18,12 +21,12 @@ from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -96,6 +99,7 @@ class AdditionalCodeCreate(DraftCreateView):
     template_name = "additional_codes/create.jinja"
     form_class = AdditionalCodeCreateForm
 
+    @transaction.atomic
     def form_valid(self, form):
         transaction = self.get_transaction()
         self.object = form.save(commit=False)
@@ -126,7 +130,6 @@ class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):
 
 class AdditionalCodeUpdate(
     AdditionalCodeMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
@@ -183,3 +186,23 @@ class AdditionalCodeDescriptionConfirmUpdate(
 
 class AdditionalCodeConfirmUpdate(AdditionalCodeMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
+
+
+class AdditionalCodeDelete(
+    AdditionalCodeMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = AdditionalCodeDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (business_rules.ACN14,)
+
+
+class AdditionalCodeDescriptionDelete(
+    AdditionalCodeDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = AdditionalCodeDescriptionDeleteForm
+    success_path = "detail"

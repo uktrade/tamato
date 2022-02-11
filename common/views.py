@@ -1,6 +1,7 @@
 """Common views."""
 import time
 from typing import Optional
+from typing import Tuple
 from typing import Type
 
 import django.contrib.auth.views
@@ -11,11 +12,11 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import OperationalError
 from django.db import connection
+from django.db import transaction
 from django.db.models import Model
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views import generic
 from django.views.generic.base import TemplateResponseMixin
@@ -24,9 +25,9 @@ from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models import TrackedModel
-from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from exporter.models import Upload
@@ -255,45 +256,6 @@ class LogoutView(django.contrib.auth.views.LogoutView):
     template_name = "common/logged_out.jinja"
 
 
-class CreateView(PermissionRequiredMixin, generic.CreateView):
-    """Base view class for creating a new tracked model."""
-
-    permission_required = "common.add_trackedmodel"
-    UPDATE_TYPE = UpdateType.CREATE
-
-    def form_valid(self, form):
-        transaction = self.get_transaction()
-        transaction.save()
-        self.object = form.save(commit=False)
-        self.object.update_type = self.UPDATE_TYPE
-        self.object.transaction = transaction
-        self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_transaction(self):
-        return Transaction()
-
-    def get_success_url(self):
-        return self.object.get_url("confirm-create")
-
-
-class UpdateView(PermissionRequiredMixin, generic.UpdateView):
-    """Base view class for creating an updated version of a TrackedModel."""
-
-    UPDATE_TYPE = UpdateType.UPDATE
-    permission_required = "common.add_trackedmodel"
-    template_name = "common/edit.jinja"
-
-    def get_success_url(self):
-        return self.object.get_url("confirm-update")
-
-
-class DeleteView(CreateView):
-    """Base view class for deleting a TrackedModel."""
-
-    UPDATE_TYPE = UpdateType.DELETE
-
-
 class WithPaginationListView(FilterView):
     """Generic list view enabling pagination."""
 
@@ -355,12 +317,6 @@ class TrackedModelDetailMixin:
         except queryset.model.DoesNotExist:
             raise Http404(f"No {self.model.__name__} matching the query {self.kwargs}")
 
-        if self.request.method == "POST":
-            obj = obj.new_version(
-                WorkBasket.current(self.request),
-                save=False,
-            )
-
         return obj
 
 
@@ -375,9 +331,9 @@ class TrackedModelDetailView(
 class BusinessRulesMixin:
     """Check business rules on form_submission."""
 
-    validate_business_rules = []
+    validate_business_rules: Tuple[Type[BusinessRule], ...] = tuple()
 
-    def form_valid(self, form):
+    def form_violates(self, form) -> bool:
         """
         If any of the specified business rules are violated, reshow the form
         with the violations as form errors.
@@ -385,17 +341,52 @@ class BusinessRulesMixin:
         :param form: The submitted form
         """
         violations = False
-        workbasket = WorkBasket.current(self.request)
-        transaction = workbasket.transactions.last()
+        transaction = self.object.transaction
 
         for rule in self.validate_business_rules:
             try:
-                rule(transaction).validate(form.instance)
+                rule(transaction).validate(self.object)
             except BusinessRuleViolation as v:
                 form.add_error(None, v.args[0])
                 violations = True
 
-        if violations:
+        return violations
+
+    def form_valid(self, form):
+        if self.form_violates(form):
             return self.form_invalid(form)
 
         return super().form_valid(form)
+
+
+class TrackedModelChangeView(
+    WithCurrentWorkBasket,
+    PermissionRequiredMixin,
+    BusinessRulesMixin,
+):
+    update_type: UpdateType
+    success_path: Optional[str] = None
+
+    @property
+    def success_url(self):
+        return self.object.get_url(self.success_path)
+
+    def get_result_object(self, form):
+        changed_data = {name: form.cleaned_data[name] for name in form.changed_data}
+
+        return form.instance.new_version(
+            workbasket=self.workbasket,
+            update_type=self.update_type,
+            **changed_data,
+        )
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = self.get_result_object(form)
+        violations = self.form_violates(form)
+
+        if violations:
+            transaction.set_rollback(True)
+            return self.form_invalid(form)
+
+        return FormMixin.form_valid(self, form)

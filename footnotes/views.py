@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -7,7 +8,6 @@ from rest_framework import viewsets
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -19,6 +19,7 @@ from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -104,6 +105,7 @@ class FootnoteCreate(DraftCreateView):
     template_name = "footnotes/create.jinja"
     form_class = forms.FootnoteCreateForm
 
+    @transaction.atomic
     def form_valid(self, form):
         transaction = self.get_transaction()
         transaction.save()
@@ -135,7 +137,6 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
 
 class FootnoteUpdate(
     FootnoteMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
@@ -153,6 +154,21 @@ class FootnoteUpdate(
 
 class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
+
+
+class FootnoteDelete(
+    FootnoteMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.FootnoteDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (
+        business_rules.FO11,
+        business_rules.FO12,
+        business_rules.FO15,
+    )
 
 
 class FootnoteDescriptionCreate(
@@ -195,3 +211,12 @@ class FootnoteDescriptionConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_update_description.jinja"
+
+
+class FootnoteDescriptionDelete(
+    FootnoteDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.FootnoteDescriptionDeleteForm
+    success_path = "detail"
