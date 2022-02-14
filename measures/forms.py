@@ -126,10 +126,7 @@ class MeasureForm(ValidityPeriodForm):
 
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
-        if (
-            f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys()
-            and self.instance.pk
-        ):
+        if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
                 footnote.pk for footnote in self.instance.footnotes.all()
             ]
@@ -180,11 +177,9 @@ class MeasureForm(ValidityPeriodForm):
 
         sid = instance.sid
 
-        duty_key = f"instance_duty_sentence_{self.instance.sid}"
-        session = self.request.session
         if (
-            duty_key in session.keys()
-            and session[duty_key] != self.cleaned_data["duty_sentence"]
+            self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
+            != self.cleaned_data["duty_sentence"]
         ):
             self.instance.diff_components(
                 self.cleaned_data["duty_sentence"],
