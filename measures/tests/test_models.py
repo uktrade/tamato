@@ -363,8 +363,17 @@ def test_diff_components_update_multiple(
     )
 
     assert components.count() == 2
-    assert components.first().duty_amount == 13.000
-    assert components.last().duty_amount == 254.000
+
+    first = components.filter(
+        duty_expression__sid=component_1.duty_expression.sid,
+    ).first()
+    second = components.filter(
+        duty_expression__sid=component_2.duty_expression.sid,
+    ).first()
+
+    assert components.count() == 2
+    assert first.duty_amount == 13.000
+    assert second.duty_amount == 254.000
     assert components.first().transaction == components.last().transaction
 
 
