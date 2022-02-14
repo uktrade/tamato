@@ -14,7 +14,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def test_model1_with_history(date_ranges):
+def model1_with_history(date_ranges):
     return model_with_history(
         factories.TestModel1Factory,
         date_ranges,
@@ -58,7 +58,7 @@ def test_override_current_transaction():
     assert get_current_transaction() is tx
 
 
-def test_current_objects_model_manager(test_model1_with_history):
-    for model_version in test_model1_with_history.all_models:
+def test_current_objects_model_manager(model1_with_history):
+    for model_version in model1_with_history.all_models:
         set_current_transaction(model_version.transaction)
         assert TestModel1.current_objects.count() == 1
