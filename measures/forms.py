@@ -97,11 +97,15 @@ class MeasureForm(ValidityPeriodForm):
 
         WorkBasket.get_current_transaction(self.request)
 
-        if hasattr(self.instance, "duty_sentence"):
-            self.initial["duty_sentence"] = self.instance.duty_sentence
-            self.request.session[
-                f"instance_duty_sentence_{self.instance.sid}"
-            ] = self.instance.duty_sentence
+        if not hasattr(self.instance, "duty_sentence"):
+            raise AttributeError(
+                "Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
+            )
+
+        self.initial["duty_sentence"] = self.instance.duty_sentence
+        self.request.session[
+            f"instance_duty_sentence_{self.instance.sid}"
+        ] = self.instance.duty_sentence
 
         self.initial_geographical_area = self.instance.geographical_area
 
