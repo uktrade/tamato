@@ -372,7 +372,12 @@ class TrackedModelChangeView(
         return self.object.get_url(self.success_path)
 
     def get_result_object(self, form):
-        changed_data = {name: form.cleaned_data[name] for name in form.changed_data}
+        # compares changed data against model fields to prevent unexpected kwarg TypeError
+        # e.g. `geographical_area_group` is a field on `MeasureUpdateForm` and included in cleaned data,
+        # but isn't a field on `Measure` and would cause a TypeError on model save()
+        model_fields = [f.name for f in self.model._meta.get_fields()]
+        form_changed_data = [f for f in form.changed_data if f in model_fields]
+        changed_data = {name: form.cleaned_data[name] for name in form_changed_data}
 
         return form.instance.new_version(
             workbasket=self.workbasket,
