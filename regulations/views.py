@@ -1,11 +1,9 @@
 from typing import Type
 
-from django.http.response import HttpResponseRedirect
 from rest_framework import viewsets
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -13,10 +11,12 @@ from regulations import business_rules
 from regulations.filters import RegulationFilter
 from regulations.filters import RegulationFilterBackend
 from regulations.forms import RegulationCreateForm
+from regulations.forms import RegulationDeleteForm
 from regulations.forms import RegulationEditForm
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -63,14 +63,6 @@ class RegulationCreate(DraftCreateView):
     template_name = "regulations/create.jinja"
     form_class = RegulationCreateForm
 
-    def form_valid(self, form):
-        transaction = self.get_transaction()
-        self.object = form.save(commit=False)
-        self.object.update_type = self.UPDATE_TYPE
-        self.object.transaction = transaction
-        self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         # Make the request available to the form allowing transaction management
@@ -90,7 +82,6 @@ class RegulationConfirmCreate(TrackedModelDetailView):
 
 class RegulationUpdate(
     RegulationMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
@@ -110,3 +101,14 @@ class RegulationConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_update.jinja"
+
+
+class RegulationDelete(
+    RegulationMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = RegulationDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (business_rules.ROIMB46,)

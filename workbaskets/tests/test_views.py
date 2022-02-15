@@ -50,6 +50,7 @@ def test_edit_after_submit(upload, valid_user, client, date_ranges):
         footnote = factories.FootnoteFactory.create(
             update_type=UpdateType.CREATE,
         )
+    assert footnote.transaction.workbasket == workbasket
 
     response = client.get(
         reverse(
@@ -79,6 +80,7 @@ def test_edit_after_submit(upload, valid_user, client, date_ranges):
     assert tx.tracked_models.count() == 1
     new_footnote_version = tx.tracked_models.first()
     assert new_footnote_version.pk != footnote.pk
+    assert new_footnote_version.version_group == footnote.version_group
 
 
 def test_download(

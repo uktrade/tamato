@@ -2,13 +2,17 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.serializers import AutoCompleteSerializer
-from common.views import TamatoListView, TrackedModelDetailMixin
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from quotas import business_rules
+from quotas import forms
 from quotas import models
 from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from workbaskets.models import WorkBasket
+from workbaskets.views.generic import DraftDeleteView
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
@@ -81,3 +85,10 @@ class QuotaList(QuotaMixin, TamatoListView):
 
 class QuotaDetail(QuotaMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
+
+
+class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, DraftDeleteView):
+    form_class = forms.QuotaDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (business_rules.ON11,)
