@@ -9,6 +9,7 @@ from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
 from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -73,6 +74,7 @@ def test_edit_after_submit(upload, valid_user, client, date_ranges):
     # check that the session workbasket has been replaced by a new one
     session_workbasket = WorkBasket.load_from_session(client.session)
     assert session_workbasket.id != workbasket.id
+    assert session_workbasket.status == WorkflowStatus.EDITING
 
     # check that the footnote edit is in the new session workbasket
     assert session_workbasket.transactions.count() == 1
