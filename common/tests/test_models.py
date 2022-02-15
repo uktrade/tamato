@@ -336,6 +336,18 @@ def test_new_version_works_for_all_models(trackedmodel_factory):
     model.new_version(model.transaction.workbasket)
 
 
+def test_new_version_retains_related_objects(sample_model):
+    description = factories.TestModelDescription1Factory(
+        described_record=sample_model,
+    )
+    assert sample_model.descriptions.get() == description
+
+    new_model = sample_model.new_version(
+        sample_model.transaction.workbasket,
+    )
+    assert new_model.descriptions.get() == description
+
+
 def test_current_as_of(sample_model):
     transaction = factories.UnapprovedTransactionFactory.create()
 
@@ -454,6 +466,21 @@ def test_trackedmodel_str(trackedmodel_factory):
 
     assert isinstance(result, str)
     assert len(result.strip())
+
+
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+def test_trackedmodel_base_str():
+    """
+    Verify TrackedModel base class can stringify without crashing, so that.
+
+    .trackedmodel_ptr will work on TrackedModel subclasses.
+    """
+    model = factories.TestModel1Factory.create()
+    trackedmodel = model.trackedmodel_ptr
+
+    result = str(trackedmodel)
+
+    assert f"pk={trackedmodel.pk}" == result
 
 
 def test_copy(trackedmodel_factory, approved_transaction):

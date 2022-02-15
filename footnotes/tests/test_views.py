@@ -68,6 +68,14 @@ def test_footnote_business_rule_application(
 
 
 @pytest.mark.parametrize(
+    "factory",
+    (factories.FootnoteFactory, factories.FootnoteDescriptionFactory),
+)
+def test_delete_form(factory, use_delete_form):
+    use_delete_form(factory())
+
+
+@pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(
         "footnotes/",
@@ -78,7 +86,7 @@ def test_footnote_business_rule_application(
 def test_footnote_detail_views(view, url_pattern, valid_user_client):
     """Verify that measure detail views are under the url footnotes/ and don't
     return an error."""
-    model_overrides = {"footnotes.views.FootnoteCreateDescription": Footnote}
+    model_overrides = {"footnotes.views.FootnoteDescriptionCreate": Footnote}
 
     assert_model_view_renders(view, url_pattern, valid_user_client, model_overrides)
 

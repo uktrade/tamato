@@ -1,11 +1,11 @@
 from django.db.models.fields import Field
 from django.urls import NoReverseMatch
 from django.urls import reverse
-from polymorphic.managers import PolymorphicManager
 
 from common.business_rules import NoBlankDescription
 from common.business_rules import UpdateValidity
 from common.exceptions import NoDescriptionError
+from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.tracked_qs import TrackedModelQuerySet
@@ -18,7 +18,7 @@ class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
 
 
 class DescriptionMixin(ValidityStartMixin):
-    objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
+    objects = TrackedModelManager.from_queryset(DescriptionQueryset)()
 
     business_rules = (
         NoBlankDescription,
@@ -45,7 +45,10 @@ class DescriptionMixin(ValidityStartMixin):
             kwargs = self.get_identifying_fields()
             described_object = self.get_described_object()
             if action == "detail":
-                return described_object.get_url() + "#descriptions"
+                url = described_object.get_url()
+                if url:
+                    return url + "#descriptions"
+                return
 
             for field, value in described_object.get_identifying_fields().items():
                 kwargs[f"{self.described_object_field.name}__{field}"] = value

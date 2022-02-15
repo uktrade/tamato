@@ -37,6 +37,21 @@
 
 {% endset %}
 
+{% set duties_html %}
+    {{ govukInput({
+        "id": "duty_sentence",
+        "name": "duty_sentence",
+        "label": {
+            "text": form.duty_sentence.label,
+        },
+        "value": form.initial.duty_sentence|default("")
+    }) }}
+    {{ govukDetails({
+        "summaryText": "Help with duties",
+        "text": "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR)."
+    }) }}
+{% endset %}
+
 {% set geographical_area_html %}
     {{ govukRadios({
         "idPrefix": "geographical_area_choice",
@@ -101,6 +116,13 @@
                         "heading": {"text": "Commodity code"},
                         "content": {
                             "html": form.goods_nomenclature
+                        },
+                        "summary": {}
+                    },
+                    {
+                        "heading": {"text": "Duties"},
+                        "content": {
+                            "html": duties_html
                         },
                         "summary": {}
                     },

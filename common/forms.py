@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Type
 
 from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
@@ -205,3 +206,27 @@ class CreateDescriptionForm(DescriptionForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["validity_start"].label = "Description start date"
+
+
+class DeleteForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Submit("submit", "Delete", css_class="govuk-button--warning"),
+        )
+
+
+def delete_form_for(for_model: Type) -> Type[DeleteForm]:
+    """Returns a Form class that exposes a button for confirming the deletion of
+    a model of the passed type."""
+
+    class ModelDeleteForm(DeleteForm):
+        class Meta:
+            model = for_model
+            fields = ()
+
+    return ModelDeleteForm

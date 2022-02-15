@@ -8,7 +8,7 @@
     {% set origins %}
         <ul class="govuk-table-list">
         {% for origin in quota.origins.distinct().all() %}
-            <li>{{create_link(url("geoarea-ui-detail", kwargs={"sid": origin.sid}), origin.area_id ~ " - " ~ origin.get_description().description)}}</li>
+            <li>{{create_link(url("geo_area-ui-detail", kwargs={"sid": origin.sid}), origin.area_id ~ " - " ~ origin.get_description().description)}}</li>
         {% endfor %}
         </ul>
     {% endset %}

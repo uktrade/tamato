@@ -15,6 +15,7 @@ from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
 from common.models import TrackedModel
+from common.models.managers import TrackedModelManager
 from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.description import DescriptionQueryset
@@ -110,6 +111,8 @@ class CommodityCode:
 class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "00"
+
+    identifying_fields = ("sid",)
 
     sid = NumericSID()
 
@@ -230,7 +233,9 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"
     subrecord_code = "05"
 
-    objects: GoodsNomenclatureIndentQuerySet = PolymorphicManager.from_queryset(
+    identifying_fields = ("sid",)
+
+    objects: GoodsNomenclatureIndentQuerySet = TrackedModelManager.from_queryset(
         GoodsNomenclatureIndentQuerySet,
     )()
 
@@ -310,6 +315,8 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     subrecord_code = "15"
     period_record_code = "400"
     period_subrecord_code = "10"
+
+    identifying_fields = ("sid",)
 
     objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
 
