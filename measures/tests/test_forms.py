@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from common.tests import factories
+from measures.forms import MeasureDutiesForm
 from measures.forms import MeasureForm
 
 pytestmark = pytest.mark.django_db
@@ -35,3 +36,12 @@ def test_error_raised_if_no_duty_sentence(session_request):
         match="Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
     ):
         MeasureForm(data={}, instance=measure, request=session_request)
+
+
+# https://uktrade.atlassian.net/browse/TP2000-74
+def test_measure_duties_left_blank(date_ranges):
+    form = MeasureDutiesForm(data={}, initial={"measure_start_date": date_ranges.now})
+
+    with patch("measures.validators.validate_duties") as validate_duties:
+        assert form.is_valid()
+        assert not validate_duties.called

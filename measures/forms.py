@@ -561,6 +561,7 @@ class MeasureConditionsFormSet(FormSet):
 class MeasureDutiesForm(forms.Form):
     duties = forms.CharField(
         label="Duties",
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -581,9 +582,9 @@ class MeasureDutiesForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        duties = cleaned_data["duties"]
+        duties = cleaned_data.get("duties")
         measure_start_date = self.initial.get("measure_start_date")
-        if measure_start_date is not None:
+        if measure_start_date is not None and duties:
             validate_duties(duties, measure_start_date)
 
         return cleaned_data
