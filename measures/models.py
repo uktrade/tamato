@@ -668,6 +668,7 @@ class Measure(TrackedModel, ValidityMixin):
         new_by_id = {c.duty_expression.id: c for c in new_components}
         old_by_id = {c.duty_expression.id: c for c in old_components}
         all_ids = set(new_by_id.keys()) | set(old_by_id.keys())
+        update_transaction = None
         for id in all_ids:
             new = new_by_id.get(id)
             old = old_by_id.get(id)
@@ -676,14 +677,16 @@ class Measure(TrackedModel, ValidityMixin):
                 new.update_type = UpdateType.UPDATE
                 new.version_group = old.version_group
                 new.component_measure = self
-                new.transaction = self.transaction
+                if not update_transaction:
+                    update_transaction = workbasket.new_transaction()
+                new.transaction = update_transaction
                 new.save()
 
             elif new:
                 # Component exists only in new set - CREATE it
                 new.update_type = UpdateType.CREATE
                 new.component_measure = self
-                new.transaction = self.transaction
+                new.transaction = workbasket.new_transaction()
                 new.save()
 
             elif old:
@@ -691,7 +694,7 @@ class Measure(TrackedModel, ValidityMixin):
                 old = old.new_version(
                     workbasket,
                     update_type=UpdateType.DELETE,
-                    transaction=self.transaction,
+                    transaction=workbasket.new_transaction(),
                 )
 
 
