@@ -304,6 +304,24 @@ class WorkBasket(TimestampedMixin):
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
+        target=WorkflowStatus.ARCHIVED,
+        custom={"label": "Archive"},
+    )
+    def archive(self):
+        """Mark a workbasket as no longer in use."""
+
+    @transition(
+        field=status,
+        source=WorkflowStatus.ARCHIVED,
+        target=WorkflowStatus.EDITING,
+        custom={"label": "Unarchive"},
+    )
+    def unarchive(self):
+        """Restore a workbasket to an in use state."""
+
+    @transition(
+        field=status,
+        source=WorkflowStatus.EDITING,
         target=WorkflowStatus.PROPOSED,
         custom={"label": "Submit for approval"},
     )
