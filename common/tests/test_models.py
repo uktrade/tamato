@@ -19,7 +19,6 @@ from common.tests.factories import UnapprovedTransactionFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
-from common.tests.models import model_with_history
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
@@ -28,26 +27,6 @@ from regulations.models import Group
 from regulations.models import Regulation
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def model1_with_history(date_ranges):
-    return model_with_history(
-        factories.TestModel1Factory,
-        date_ranges,
-        version_group=factories.VersionGroupFactory.create(),
-        sid=1,
-    )
-
-
-@pytest.fixture
-def model2_with_history(date_ranges):
-    return model_with_history(
-        factories.TestModel2Factory,
-        date_ranges,
-        version_group=factories.VersionGroupFactory.create(),
-        custom_sid=1,
-    )
 
 
 @pytest.fixture

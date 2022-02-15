@@ -8,19 +8,8 @@ from common.models.utils import override_current_transaction
 from common.models.utils import set_current_transaction
 from common.tests import factories
 from common.tests.models import TestModel1
-from common.tests.models import model_with_history
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def model1_with_history(date_ranges):
-    return model_with_history(
-        factories.TestModel1Factory,
-        date_ranges,
-        version_group=factories.VersionGroupFactory.create(),
-        sid=1,
-    )
 
 
 def test_lazy_value():
