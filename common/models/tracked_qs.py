@@ -15,6 +15,8 @@ from polymorphic.query import PolymorphicQuerySet
 
 from common import exceptions
 from common.models.tracked_utils import get_models_linked_to
+from common.models.utils import LazyTransaction
+from common.models.utils import get_current_transaction
 from common.querysets import TransactionPartitionQuerySet
 from common.querysets import ValidityQuerySet
 from common.validators import UpdateType
@@ -41,6 +43,27 @@ class TrackedModelQuerySet(
         """
         return self.filter(is_current__isnull=False).exclude(
             update_type=UpdateType.DELETE,
+        )
+
+    def current(self) -> TrackedModelQuerySet:
+        """
+        Returns a queryset of approved versions of the model up to the globally
+        defined current transaction (see ``common.models.utils`` for details of
+        how this is managed).
+
+        If this method is called from within a running instance of the Django
+        web application (i.e. application middleware has been exectuted), then
+        TransactionMiddleware will automatically set the globally defined,
+        current transaction to the current transaction in the global Workbasket.
+
+        Otherwise, if TransactionMiddleware has not been executed (for
+        instance, when running from the shell / Jupyter), then care must be
+        taken to ensure the global current transaction is set up correctly
+        (see ``set_current_transaction()`` and ``override_current_transaction()``
+        in ``common.models.utils``).
+        """
+        return self.approved_up_to_transaction(
+            LazyTransaction(get_value=get_current_transaction),
         )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:

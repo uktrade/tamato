@@ -25,6 +25,7 @@ from common.exceptions import IllegalSaveError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.models.managers import CurrentTrackedModelManager
 from common.models.managers import TrackedModelManager
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_deferred_set_fields
@@ -97,6 +98,13 @@ class TrackedModel(PolymorphicModel):
     objects: TrackedModelQuerySet = TrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
+    current_objects: TrackedModelQuerySet = CurrentTrackedModelManager.from_queryset(
+        TrackedModelQuerySet,
+    )()
+    """
+    The `current_objects` model manager provides a default queryset that, by
+    default, filters to the 'current' transaction.
+    """
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
