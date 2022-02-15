@@ -51,3 +51,4 @@ def test_current_objects_model_manager(model1_with_history):
     for model_version in model1_with_history.all_models:
         set_current_transaction(model_version.transaction)
         assert TestModel1.current_objects.count() == 1
+        assert TestModel1.current_objects.get() == model_version
