@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -10,6 +12,7 @@ from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from measures.models import MeasureComponent
 from measures.validators import validate_duties
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
@@ -169,4 +172,32 @@ def test_measure_update_duty_sentence(
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
     client.force_login(valid_user)
     response = client.post(url, data=post_data)
+
     assert response.status_code == 302
+
+    if update_data:
+        components = MeasureComponent.objects.filter(
+            component_measure__sid=measure_form.instance.sid,
+        )
+
+        assert components.exists()
+        assert components.count() == 1
+        assert components.first().duty_amount == 10.000
+
+
+# https://uktrade.atlassian.net/browse/TP2000-144
+@patch("measures.forms.MeasureForm.save")
+def test_measure_form_save_called_on_measure_update(
+    save,
+    client,
+    valid_user,
+    measure_form,
+):
+    post_data = measure_form.data
+    post_data = {k: v for k, v in post_data.items() if v is not None}
+    post_data["update_type"] = 1
+    url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
+    client.force_login(valid_user)
+    client.post(url, data=post_data)
+
+    save.assert_called_with(commit=False)
