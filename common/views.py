@@ -394,6 +394,4 @@ class TrackedModelChangeView(
             transaction.set_rollback(True)
             return self.form_invalid(form)
 
-        form.save(commit=False)
-
         return FormMixin.form_valid(self, form)
