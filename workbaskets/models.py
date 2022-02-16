@@ -330,6 +330,7 @@ class WorkBasket(TimestampedMixin):
     )
     def submit_for_approval(self):
         self.full_clean()
+        self.clean_transactions()
 
     @transition(
         field=status,
@@ -439,7 +440,7 @@ class WorkBasket(TimestampedMixin):
 
         return None
 
-    def clean(self):
+    def clean_transactions(self):
         errors = []
         for txn in self.transactions.order_by("order"):
             try:
