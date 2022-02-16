@@ -2,6 +2,7 @@ from typing import Iterable
 from unittest.mock import patch
 
 import pytest
+from django.core.exceptions import ValidationError
 from django_fsm import TransitionNotAllowed
 
 from common.models import TrackedModel
@@ -384,3 +385,18 @@ def test_workbasket_approval_updates_transactions(
     )
 
     assert_transaction_order(Transaction.objects.all())
+
+
+def test_workbasket_clean_does_not_run_business_rules():
+    """Workbaskets should not have business rule validation included as part of
+    their model cleaning, because business rules are slow to run and for a
+    moderate sized workbasket will time out a web request."""
+
+    model = factories.FootnoteFactory.create()
+    copy = model.copy(
+        model.transaction.workbasket.new_transaction(),
+    )  # Will fail uniqueness rule
+    with pytest.raises(ValidationError):
+        copy.transaction.clean()
+
+    model.transaction.workbasket.full_clean()  # Should not throw
