@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 
 from common.tests import factories
@@ -9,10 +10,12 @@ from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
 from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
 def test_submit_workbasket(
     mock_upload,
@@ -36,10 +39,11 @@ def test_submit_workbasket(
     workbasket = WorkBasket.objects.get(pk=workbasket.pk)
 
     assert workbasket.approver is not None
-    assert client.session["workbasket"]["status"] == workbasket.status
+    assert "workbasket" not in client.session
     mock_upload.delay.assert_called_once_with()
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
 def test_edit_after_submit(upload, valid_user, client, date_ranges):
     client.force_login(valid_user)
@@ -73,6 +77,7 @@ def test_edit_after_submit(upload, valid_user, client, date_ranges):
     # check that the session workbasket has been replaced by a new one
     session_workbasket = WorkBasket.load_from_session(client.session)
     assert session_workbasket.id != workbasket.id
+    assert session_workbasket.status == WorkflowStatus.EDITING
 
     # check that the footnote edit is in the new session workbasket
     assert session_workbasket.transactions.count() == 1

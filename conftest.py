@@ -36,6 +36,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
+from common.tests.models import model_with_history
 from common.tests.util import Dates
 from common.tests.util import assert_records_match
 from common.tests.util import generate_test_import_xml
@@ -828,8 +829,8 @@ def in_use_check_respects_deletes(valid_user):
             "exporter.tasks.upload_workbaskets.delay",
         ):
             workbasket.approve(
-                valid_user,
-                get_partition_scheme(),
+                valid_user.pk,
+                settings.TRANSACTION_SCHEMA,
             )
         workbasket.save()
         assert in_use(dependant.transaction), f"Approved {instance!r} not in use"
@@ -1065,3 +1066,23 @@ def session_request(client, workbasket):
     request.session.update({"workbasket": {"id": workbasket.pk}})
 
     return request
+
+
+@pytest.fixture
+def model1_with_history(date_ranges):
+    return model_with_history(
+        factories.TestModel1Factory,
+        date_ranges,
+        version_group=factories.VersionGroupFactory.create(),
+        sid=1,
+    )
+
+
+@pytest.fixture
+def model2_with_history(date_ranges):
+    return model_with_history(
+        factories.TestModel2Factory,
+        date_ranges,
+        version_group=factories.VersionGroupFactory.create(),
+        custom_sid=1,
+    )

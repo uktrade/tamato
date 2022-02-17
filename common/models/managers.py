@@ -83,3 +83,8 @@ class TrackedModelManager(PolymorphicManager):
         instead using our own filters."""
 
     core_filters = property(get_core_filters, set_core_filters)
+
+
+class CurrentTrackedModelManager(TrackedModelManager):
+    def get_queryset(self):
+        return super().get_queryset().current()

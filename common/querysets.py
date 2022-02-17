@@ -139,13 +139,19 @@ class TransactionPartitionQuerySet(QuerySet):
             f"{prefix}transaction__order__lte": transaction.order,
         }
 
-        if transaction.partition not in TransactionPartition.approved_partitions():
-            this_partition[
-                f"{prefix}transaction__workbasket__id"
-            ] = transaction.workbasket_id
+        workbasket_select = Q(
+            **{
+                f"{prefix}transaction__partition": TransactionPartition.DRAFT,
+                f"{prefix}transaction__workbasket__id": transaction.workbasket_id,
+            }
+        ) | Q(
+            **{
+                f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
+            }
+        )
 
         earlier_partition = {
             f"{prefix}transaction__partition__lt": transaction.partition,
         }
 
-        return Q(**this_partition) | Q(**earlier_partition)
+        return (Q(**this_partition) & workbasket_select) | Q(**earlier_partition)
