@@ -2,17 +2,16 @@ from itertools import groupby
 from operator import attrgetter
 from typing import Any
 from typing import Type
-from collections import OrderedDict
+from django.shortcuts import render
+from django.utils.text import capfirst
 
 from crispy_forms.helper import FormHelper
-from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.urls import reverse_lazy
-from django.utils.decorators import classonlymethod
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
@@ -106,6 +105,7 @@ class MeasureCreateWizard(
     DUTIES = "duties"
     FOOTNOTES = "footnotes"
     SUMMARY = "summary"
+    COMPLETE = "complete"
 
     form_list = [
         (START, forms.MeasureCreateStartForm),
@@ -127,6 +127,7 @@ class MeasureCreateWizard(
         DUTIES: "measures/create-wizard-step.jinja",
         FOOTNOTES: "measures/create-formset.jinja",
         SUMMARY: "measures/create-review.jinja",
+        COMPLETE: "measures/confirm_create_multiple.jinja",
     }
 
     step_metadata = {
@@ -169,6 +170,10 @@ class MeasureCreateWizard(
         SUMMARY: {
             "title": "Review your measure",
             "link_text": "Summary",
+        },
+        COMPLETE: {
+            "title": "Finished",
+            "link_text": "Success",
         },
     }
 
@@ -258,30 +263,30 @@ class MeasureCreateWizard(
                 created_measures.append(measure)
 
             except AssertionError as e:
-                errors.append(ValidationError(e))
+                errors += e.args
 
         return created_measures, errors
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
 
-        measures, errors = self.create_measures(cleaned_data)
+        created_measures, errors = self.create_measures(cleaned_data)
 
-        if errors:
-            # TODO: should redirect somewhere sensible and list out the errors in the template
-            HttpResponseRedirect(
-                reverse_lazy("measure-ui-create", kwargs={"step": "summary"}),
-            )
+        # TODO: handle errors
 
-        # If multiple measures are created this url will need to change and should list them out in the template
-        return HttpResponseRedirect(
-            reverse_lazy("measure-ui-confirm-create", kwargs={"sid": measures[0].sid}),
+        context = self.get_context_data(
+            form=None,
+            created_measures=created_measures,
+            **kwargs,
         )
+
+        return render(self.request, "common/confirm_create_multiple.jinja", context)
 
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
-        context["form"].is_bound = False
+        if form:
+            context["form"].is_bound = False
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
         return context
@@ -329,11 +334,6 @@ class MeasureCreateWizard(
         return self.templates.get(
             self.steps.current, "measures/create-wizard-step.jinja"
         )
-
-
-# TODO: update to support listing multiple created measures
-class MeasureConfirmCreate(MeasureMixin, TrackedModelDetailView):
-    template_name = "common/confirm_create.jinja"
 
 
 class MeasureUpdate(
