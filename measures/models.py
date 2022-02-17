@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Set
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from common.business_rules import UpdateValidity
@@ -647,6 +648,8 @@ class Measure(TrackedModel, ValidityMixin):
                 instance = super().save(*args, force_write=force_write, **kwargs)
                 return self.copy(self.transaction)
 
+        self.full_clean()
+
         return super().save(*args, force_write=force_write, **kwargs)
 
     def diff_components(
@@ -696,6 +699,17 @@ class Measure(TrackedModel, ValidityMixin):
                     update_type=UpdateType.DELETE,
                     transaction=workbasket.new_transaction(),
                 )
+
+    def clean(self, *args, **kwargs):
+        duplicates = Measure.objects.approved_up_to_transaction(
+            self.transaction,
+        ).filter(sid=self.sid)
+        if self.version_group:
+            duplicates = duplicates.exclude(version_group=self.version_group)
+
+        if duplicates.exists():
+            raise ValidationError(f"Measure with sid {self.sid} already exists")
+        super().clean(*args, **kwargs)
 
 
 class MeasureComponent(TrackedModel):
