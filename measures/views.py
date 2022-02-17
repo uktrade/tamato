@@ -329,6 +329,13 @@ class MeasureUpdate(
 
         return context
 
+    def get_result_object(self, form):
+        obj = super().get_result_object(form)
+        form.instance = obj
+        form.save(commit=False)
+
+        return obj
+
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
