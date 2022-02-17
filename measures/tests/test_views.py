@@ -4,6 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
+from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -12,7 +13,7 @@ from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
-from measures.models import MeasureComponent
+from measures.models import Measure
 from measures.validators import validate_duties
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
@@ -162,7 +163,8 @@ def test_measure_update_duty_sentence(
     with MeasureForm.
 
     Generates minimal post_data from instance and verifies that the edit
-    endpoint redirects successfully.
+    endpoint redirects successfully. Checks that latest Measure instance has the
+    correct components, if duty_sentence in data.
     """
     post_data = measure_form.data
     # Remove keys with null value to avoid TypeError
@@ -176,7 +178,11 @@ def test_measure_update_duty_sentence(
     assert response.status_code == 302
 
     if update_data:
-        components = MeasureComponent.objects.filter(
+        tx = Transaction.objects.last()
+        measure = Measure.objects.approved_up_to_transaction(tx).get(
+            sid=measure_form.instance.sid,
+        )
+        components = measure.components.approved_up_to_transaction(tx).filter(
             component_measure__sid=measure_form.instance.sid,
         )
 
@@ -193,6 +199,9 @@ def test_measure_form_save_called_on_measure_update(
     valid_user,
     measure_form,
 ):
+    """Until work is done to make `TrackedModel` call new_version in save() we
+    need to check that MeasureUpdate view explicitly calls
+    MeasureForm.save(commit=False)"""
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
     post_data["update_type"] = 1
