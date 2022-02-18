@@ -6,9 +6,9 @@ from django.urls import reverse
 
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureFactory
-from common.tests.util import assert_table_displays_models
 from common.views import DashboardView
 from common.views import HealthCheckResponse
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -36,16 +36,19 @@ def test_index_displays_objects_in_current_workbasket(
     valid_user_client,
     workbasket,
 ):
-    """Verify that changes in the current workbasket are displayed on the index
-    page."""
+    """Verify that changes in the current workbasket are displayed on the bulk
+    selection form of the index page."""
     with workbasket.new_transaction():
         GoodsNomenclatureFactory.create()
 
     response = valid_user_client.get(reverse("index"))
-    soup = BeautifulSoup(response.content.decode(response.charset))
-    table = soup.find("table")
-
-    assert_table_displays_models(table, workbasket.tracked_models.all())
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    for obj in workbasket.tracked_models.all():
+        field_name = SelectableObjectsForm.field_name_for_object(obj)
+        assert page.find("input", {"name": field_name})
 
 
 @pytest.mark.parametrize(
