@@ -43,11 +43,28 @@ def test_submit_workbasket(
     mock_upload.delay.assert_called_once_with()
 
 
+@pytest.mark.parametrize(
+    ("other_statuses", "should_reuse"),
+    (
+        ({}, False),
+        ({WorkflowStatus.PROPOSED, WorkflowStatus.ARCHIVED}, False),
+        ({WorkflowStatus.EDITING}, True),
+    ),
+    ids=(
+        "will create basket if none exists",
+        "will not reuse unapproved baskets",
+        "will reuse basket in EDITING state",
+    ),
+)
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
-def test_edit_after_submit(upload, valid_user, client, date_ranges):
-    client.force_login(valid_user)
-
+def test_edit_after_submit(
+    upload,
+    valid_user_client,
+    date_ranges,
+    other_statuses,
+    should_reuse,
+):
     # submit a workbasket containing a newly created footnote
     workbasket = factories.WorkBasketFactory.create()
     with workbasket.new_transaction():
@@ -56,7 +73,14 @@ def test_edit_after_submit(upload, valid_user, client, date_ranges):
         )
     assert footnote.transaction.workbasket == workbasket
 
-    response = client.get(
+    # create workbaskets in different unapproved states
+    # to check that the system doesn't select these
+    other_baskets = [
+        factories.WorkBasketFactory.create(status=other_status)
+        for other_status in other_statuses
+    ]
+
+    response = valid_user_client.get(
         reverse(
             "workbaskets:workbasket-ui-submit",
             kwargs={"pk": workbasket.pk},
@@ -65,7 +89,7 @@ def test_edit_after_submit(upload, valid_user, client, date_ranges):
     assert response.status_code == 302
 
     # edit the footnote
-    response = client.post(
+    response = valid_user_client.post(
         footnote.get_url("edit"),
         validity_period_post_data(
             date_ranges.later.lower,
@@ -75,9 +99,10 @@ def test_edit_after_submit(upload, valid_user, client, date_ranges):
     assert response.status_code == 302
 
     # check that the session workbasket has been replaced by a new one
-    session_workbasket = WorkBasket.load_from_session(client.session)
+    session_workbasket = WorkBasket.load_from_session(valid_user_client.session)
     assert session_workbasket.id != workbasket.id
     assert session_workbasket.status == WorkflowStatus.EDITING
+    assert (session_workbasket in other_baskets) == should_reuse
 
     # check that the footnote edit is in the new session workbasket
     assert session_workbasket.transactions.count() == 1
