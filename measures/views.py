@@ -127,7 +127,7 @@ class MeasureCreateWizard(
         DUTIES: "measures/create-wizard-step.jinja",
         FOOTNOTES: "measures/create-formset.jinja",
         SUMMARY: "measures/create-review.jinja",
-        COMPLETE: "measures/confirm_create_multiple.jinja",
+        COMPLETE: "measures/confirm-create-multiple.jinja",
     }
 
     step_metadata = {
@@ -233,6 +233,7 @@ class MeasureCreateWizard(
                             dependent_measure=measure,
                             update_type=UpdateType.CREATE,
                             transaction=measure.transaction,
+                            duty_amount=condition_data["duty_amount"],
                             condition_code=condition_data["condition_code"],
                             action=condition_data.get("action"),
                             required_certificate=condition_data.get(
@@ -280,7 +281,7 @@ class MeasureCreateWizard(
             **kwargs,
         )
 
-        return render(self.request, "common/confirm_create_multiple.jinja", context)
+        return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)

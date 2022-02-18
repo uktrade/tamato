@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
@@ -368,8 +369,10 @@ def test_measure_form_wizard_create_measures(
     geo_area = factories.GeographicalAreaFactory.create()
     condition1 = factories.MeasureConditionCodeFactory()
     condition2 = factories.MeasureConditionCodeFactory()
+    condition3 = factories.MeasureConditionCodeFactory()
     action1 = factories.MeasureActionFactory()
     action2 = factories.MeasureActionFactory()
+    action3 = factories.MeasureActionFactory()
 
     form_data = {
         "measure_type": measure_type,
@@ -386,7 +389,7 @@ def test_measure_form_wizard_create_measures(
         "formset-conditions": [
             {
                 "condition_code": condition1,
-                "duty_amount": None,
+                "duty_amount": 4.000,
                 "required_certificate": None,
                 "action": action1,
                 "DELETE": False,
@@ -396,6 +399,13 @@ def test_measure_form_wizard_create_measures(
                 "duty_amount": None,
                 "required_certificate": None,
                 "action": action2,
+                "DELETE": False,
+            },
+            {
+                "condition_code": condition3,
+                "duty_amount": None,
+                "required_certificate": None,
+                "action": action3,
                 "DELETE": True,
             },
         ],
@@ -416,3 +426,41 @@ def test_measure_form_wizard_create_measures(
     assert len(measures[1].footnotes.all()) == 1
     assert len(measures[0].conditions.all()) == 1
     assert len(measures[1].conditions.all()) == 1
+
+
+@unittest.mock.patch("workbaskets.models.WorkBasket.current")
+def test_measure_form_wizard_create_measures_errors(
+    mock_workbasket,
+    mock_request,
+    duty_sentence_parser,
+    date_ranges,
+    additional_code,
+    measure_type,
+    regulation,
+):
+    mock_workbasket.return_value = factories.WorkBasketFactory.create()
+
+    commodity1 = factories.GoodsNomenclatureFactory.create(suffix="10")
+    geo_area = factories.GeographicalAreaFactory.create()
+
+    form_data = {
+        "measure_type": measure_type,
+        "generating_regulation": regulation,
+        "geographical_area": geo_area,
+        "order_number": None,
+        "valid_between": date_ranges.normal,
+        "formset-commodities": [
+            {"commodity": commodity1, "DELETE": False},
+        ],
+        "additional_code": None,
+        "formset-conditions": [],
+        "duties": "4%",
+        "formset-footnotes": [],
+    }
+
+    wizard = MeasureCreateWizard(request=mock_request)
+
+    measures, errors = wizard.create_measures(form_data)
+
+    assert errors
+    assert "ME7 – must be declarable" in errors
