@@ -3,6 +3,7 @@ from django.db.models import Max
 
 from additional_codes import business_rules
 from additional_codes import validators
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.fields import ShortDescription
@@ -51,7 +52,7 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         business_rules.ACN17,
         measures_business_rules.ME12,
     )
-    business_rules = (business_rules.CT1, UpdateValidity)
+    business_rules = (business_rules.CT1, UpdateValidity, UniqueIdentifyingFields)
 
     def __str__(self):
         return f"AdditionalcodeType {self.sid}: {self.description}"
@@ -91,6 +92,7 @@ class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.ACN14,
         business_rules.ACN17,
         UpdateValidity,
+        UniqueIdentifyingFields,
     )
 
     def __str__(self):

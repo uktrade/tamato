@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 import pytest
-from django.core.exceptions import ValidationError
 
 from common.tests import factories
 from common.validators import UpdateType
@@ -426,15 +425,3 @@ def test_diff_components_delete(
 
     assert deleted.exists()
     assert deleted.first().transaction == workbasket.current_transaction
-
-
-def test_measure_with_duplicate_sid_raises_error():
-    """Check that creating a new version doesn't raise an error and that error
-    is raised when version_group differs."""
-    model = factories.MeasureFactory.create()
-    model.new_version(model.transaction.workbasket)
-
-    with pytest.raises(ValidationError) as err:
-        factories.MeasureFactory.create(sid=model.sid)
-
-    assert f"Measure with sid {model.sid} already exists" in err.value.messages

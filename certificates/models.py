@@ -3,6 +3,7 @@ from django.db.models import Max
 
 from certificates import business_rules
 from certificates import validators
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -33,6 +34,7 @@ class CertificateType(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.CET1,
         business_rules.CET2,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -70,6 +72,7 @@ class Certificate(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.CE5,
         business_rules.CE6,
         business_rules.CE7,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 

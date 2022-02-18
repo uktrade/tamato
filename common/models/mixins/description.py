@@ -3,6 +3,7 @@ from django.urls import NoReverseMatch
 from django.urls import reverse
 
 from common.business_rules import NoBlankDescription
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.exceptions import NoDescriptionError
 from common.models.managers import TrackedModelManager
@@ -22,6 +23,7 @@ class DescriptionMixin(ValidityStartMixin):
 
     business_rules = (
         NoBlankDescription,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 

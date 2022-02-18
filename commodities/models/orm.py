@@ -11,6 +11,7 @@ from polymorphic.managers import PolymorphicManager
 from commodities import business_rules
 from commodities import validators
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
@@ -176,6 +177,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.NIG31,
         business_rules.NIG34,
         business_rules.NIG35,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -250,7 +252,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     )
 
     indirect_business_rules = (business_rules.NIG11,)
-    business_rules = (business_rules.NIG2, UpdateValidity)
+    business_rules = (business_rules.NIG2, UniqueIdentifyingFields, UpdateValidity)
 
     validity_over = "indented_goods_nomenclature"
 
@@ -329,7 +331,7 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     description = LongDescription()
 
     indirect_business_rules = (business_rules.NIG12,)
-    business_rules = (UpdateValidity,)
+    business_rules = (UniqueIdentifyingFields, UpdateValidity)
 
     class Meta:
         ordering = ("validity_start",)
