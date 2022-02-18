@@ -131,6 +131,7 @@
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">NoBlankDescription</span>
+<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UpdateValidity</span>
 <span class="kn">from</span> <span class="nn">common.exceptions</span> <span class="kn">import</span> <span class="n">NoDescriptionError</span>
 <span class="kn">from</span> <span class="nn">common.models.managers</span> <span class="kn">import</span> <span class="n">TrackedModelManager</span>
@@ -150,6 +151,7 @@
 
     <span class="n">business_rules</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">NoBlankDescription</span><span class="p">,</span>
+        <span class="n">UniqueIdentifyingFields</span><span class="p">,</span>
         <span class="n">UpdateValidity</span><span class="p">,</span>
     <span class="p">)</span>
 
