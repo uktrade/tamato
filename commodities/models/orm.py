@@ -177,7 +177,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.NIG31,
         business_rules.NIG34,
         business_rules.NIG35,
-        UniqueIdentifyingFields,
         UpdateValidity,
     )
 

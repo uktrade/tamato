@@ -54,7 +54,6 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.MTS1,
         business_rules.MTS2,
-        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -281,7 +280,6 @@ class MeasureType(TrackedModel, ValidityMixin):
         business_rules.MT4,
         business_rules.MT7,
         business_rules.MT10,
-        UniqueIdentifyingFields,
         UpdateValidity,
     )
 

@@ -52,7 +52,7 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
         business_rules.ACN17,
         measures_business_rules.ME12,
     )
-    business_rules = (business_rules.CT1, UpdateValidity, UniqueIdentifyingFields)
+    business_rules = (business_rules.CT1, UpdateValidity)
 
     def __str__(self):
         return f"AdditionalcodeType {self.sid}: {self.description}"
