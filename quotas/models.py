@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -67,6 +68,7 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         business_rules.ON2,
         business_rules.ON9,
         business_rules.ON11,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -119,6 +121,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         business_rules.ON7,
         business_rules.ON10,
         business_rules.ON12,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -222,6 +225,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         business_rules.QuotaAssociationMustReferToANonDeletedSubQuota,
         business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
         business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -298,7 +302,7 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
 
-    business_rules = (business_rules.QSP2, UpdateValidity)
+    business_rules = (business_rules.QSP2, UniqueIdentifyingFields, UpdateValidity)
 
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
@@ -316,7 +320,7 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    business_rules = (business_rules.QBP2, UpdateValidity)
+    business_rules = (business_rules.QBP2, UniqueIdentifyingFields, UpdateValidity)
 
 
 class QuotaEvent(TrackedModel):

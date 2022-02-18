@@ -3,6 +3,7 @@ from typing import Set
 
 from django.db import models
 
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
@@ -218,7 +219,7 @@ class DutyExpression(TrackedModel, ValidityMixin):
         business_rules.ME111,
     )
 
-    business_rules = (UpdateValidity,)
+    business_rules = (UniqueIdentifyingFields, UpdateValidity)
 
 
 class MeasureType(TrackedModel, ValidityMixin):
@@ -534,6 +535,7 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME110,
         business_rules.ME111,
         business_rules.ME104,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -828,6 +830,7 @@ class MeasureCondition(TrackedModel):
         business_rules.ME62,
         business_rules.ME63,
         business_rules.ME64,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
