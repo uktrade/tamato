@@ -17,6 +17,12 @@ class HMRCStorage(S3Boto3Storage):
             default_acl="private",
         )
 
+    def get_object_parameters(self, name):
+        self.object_parameters.update(
+            {"ContentDisposition": f"attachment; filename={path.basename(name)}"},
+        )
+        return super().get_object_parameters(name)
+
 
 class SQLiteStorage(S3Boto3Storage):
     def get_default_settings(self):

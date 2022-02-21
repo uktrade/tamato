@@ -11,10 +11,12 @@ from polymorphic.managers import PolymorphicManager
 from commodities import business_rules
 from commodities import validators
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
 from common.models import TrackedModel
+from common.models.managers import TrackedModelManager
 from common.models.mixins.description import DescribedMixin
 from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.description import DescriptionQueryset
@@ -110,6 +112,8 @@ class CommodityCode:
 class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "00"
+
+    identifying_fields = ("sid",)
 
     sid = NumericSID()
 
@@ -230,7 +234,9 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"
     subrecord_code = "05"
 
-    objects: GoodsNomenclatureIndentQuerySet = PolymorphicManager.from_queryset(
+    identifying_fields = ("sid",)
+
+    objects: GoodsNomenclatureIndentQuerySet = TrackedModelManager.from_queryset(
         GoodsNomenclatureIndentQuerySet,
     )()
 
@@ -245,7 +251,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     )
 
     indirect_business_rules = (business_rules.NIG11,)
-    business_rules = (business_rules.NIG2, UpdateValidity)
+    business_rules = (business_rules.NIG2, UniqueIdentifyingFields, UpdateValidity)
 
     validity_over = "indented_goods_nomenclature"
 
@@ -311,6 +317,8 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     period_record_code = "400"
     period_subrecord_code = "10"
 
+    identifying_fields = ("sid",)
+
     objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
 
     sid = NumericSID()
@@ -322,7 +330,7 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     description = LongDescription()
 
     indirect_business_rules = (business_rules.NIG12,)
-    business_rules = (UpdateValidity,)
+    business_rules = (UniqueIdentifyingFields, UpdateValidity)
 
     class Meta:
         ordering = ("validity_start",)

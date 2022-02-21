@@ -2,12 +2,13 @@ from decimal import Decimal
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from polymorphic.managers import PolymorphicManager
 
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from quotas import business_rules
 from quotas import querysets
@@ -26,6 +27,8 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
 
     record_code = "360"
     subrecord_code = "00"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     order_number = models.CharField(
@@ -65,10 +68,11 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         business_rules.ON2,
         business_rules.ON9,
         business_rules.ON11,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
-    objects = PolymorphicManager.from_queryset(querysets.QuotaOrderNumberQuerySet)()
+    objects = TrackedModelManager.from_queryset(querysets.QuotaOrderNumberQuerySet)()
 
     def __str__(self):
         return self.order_number
@@ -91,6 +95,8 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
 
     record_code = "360"
     subrecord_code = "10"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
@@ -115,6 +121,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         business_rules.ON7,
         business_rules.ON10,
         business_rules.ON12,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -160,6 +167,8 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
 
     record_code = "370"
     subrecord_code = "00"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
@@ -216,6 +225,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         business_rules.QuotaAssociationMustReferToANonDeletedSubQuota,
         business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
         business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -286,11 +296,13 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "15"
 
+    identifying_fields = ("sid",)
+
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     description = ShortDescription()
 
-    business_rules = (business_rules.QSP2, UpdateValidity)
+    business_rules = (business_rules.QSP2, UniqueIdentifyingFields, UpdateValidity)
 
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
@@ -299,6 +311,8 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     record_code = "370"
     subrecord_code = "10"
 
+    identifying_fields = ("sid",)
+
     sid = SignedIntSID(db_index=True)
     quota_definition = models.ForeignKey(QuotaDefinition, on_delete=models.PROTECT)
     blocking_period_type = models.PositiveSmallIntegerField(
@@ -306,7 +320,7 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
 
-    business_rules = (business_rules.QBP2, UpdateValidity)
+    business_rules = (business_rules.QBP2, UniqueIdentifyingFields, UpdateValidity)
 
 
 class QuotaEvent(TrackedModel):

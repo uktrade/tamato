@@ -2,13 +2,14 @@ from datetime import date
 from typing import Set
 
 from django.db import models
-from polymorphic.managers import PolymorphicManager
 
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
 from common.models import TrackedModel
+from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from common.util import TaricDateRange
 from common.util import classproperty
@@ -20,6 +21,7 @@ from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
 from quotas import business_rules as quotas_business_rules
 from quotas.validators import quota_order_number_validator
+from workbaskets.models import WorkBasket
 
 
 class MeasureTypeSeries(TrackedModel, ValidityMixin):
@@ -35,6 +37,8 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
 
     description_record_code = "140"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=2,
@@ -190,6 +194,8 @@ class DutyExpression(TrackedModel, ValidityMixin):
     description_record_code = "230"
     description_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     sid = models.IntegerField(
         choices=validators.DutyExpressionId.choices,
         db_index=True,
@@ -213,7 +219,7 @@ class DutyExpression(TrackedModel, ValidityMixin):
         business_rules.ME111,
     )
 
-    business_rules = (UpdateValidity,)
+    business_rules = (UniqueIdentifyingFields, UpdateValidity)
 
 
 class MeasureType(TrackedModel, ValidityMixin):
@@ -230,6 +236,8 @@ class MeasureType(TrackedModel, ValidityMixin):
 
     description_record_code = "235"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=6,
@@ -527,10 +535,11 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME110,
         business_rules.ME111,
         business_rules.ME104,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
-    objects = PolymorphicManager.from_queryset(MeasuresQuerySet)()
+    objects = TrackedModelManager.from_queryset(MeasuresQuerySet)()
 
     @property
     def footnote_application_codes(self) -> Set[footnote_validators.ApplicationCode]:
@@ -642,6 +651,54 @@ class Measure(TrackedModel, ValidityMixin):
 
         return super().save(*args, force_write=force_write, **kwargs)
 
+    def diff_components(
+        self,
+        duty_sentence: str,
+        start_date: date,
+        workbasket: WorkBasket,
+    ):
+        from measures.parsers import DutySentenceParser
+
+        parser = DutySentenceParser.get(
+            start_date,
+        )
+
+        new_components = parser.parse(duty_sentence)
+        old_components = self.components.approved_up_to_transaction(
+            workbasket.current_transaction,
+        )
+        new_by_id = {c.duty_expression.id: c for c in new_components}
+        old_by_id = {c.duty_expression.id: c for c in old_components}
+        all_ids = set(new_by_id.keys()) | set(old_by_id.keys())
+        update_transaction = None
+        for id in all_ids:
+            new = new_by_id.get(id)
+            old = old_by_id.get(id)
+            if new and old:
+                # Component is having amount/unit changed – UPDATE it
+                new.update_type = UpdateType.UPDATE
+                new.version_group = old.version_group
+                new.component_measure = self
+                if not update_transaction:
+                    update_transaction = workbasket.new_transaction()
+                new.transaction = update_transaction
+                new.save()
+
+            elif new:
+                # Component exists only in new set - CREATE it
+                new.update_type = UpdateType.CREATE
+                new.component_measure = self
+                new.transaction = workbasket.new_transaction()
+                new.save()
+
+            elif old:
+                # Component exists only in old set – DELETE it
+                old = old.new_version(
+                    workbasket,
+                    update_type=UpdateType.DELETE,
+                    transaction=workbasket.new_transaction(),
+                )
+
 
 class MeasureComponent(TrackedModel):
     """Contains the duty information or part of the duty information."""
@@ -707,6 +764,8 @@ class MeasureCondition(TrackedModel):
     record_code = "430"
     subrecord_code = "10"
 
+    identifying_fields = ("sid",)
+
     sid = SignedIntSID(db_index=True)
     dependent_measure = models.ForeignKey(
         Measure,
@@ -752,7 +811,7 @@ class MeasureCondition(TrackedModel):
         blank=True,
     )
 
-    objects = PolymorphicManager.from_queryset(MeasureConditionQuerySet)()
+    objects = TrackedModelManager.from_queryset(MeasureConditionQuerySet)()
 
     indirect_business_rules = (
         business_rules.MA2,
@@ -771,6 +830,7 @@ class MeasureCondition(TrackedModel):
         business_rules.ME62,
         business_rules.ME63,
         business_rules.ME64,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 

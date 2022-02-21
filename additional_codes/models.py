@@ -3,6 +3,7 @@ from django.db.models import Max
 
 from additional_codes import business_rules
 from additional_codes import validators
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.fields import ShortDescription
@@ -31,6 +32,8 @@ class AdditionalCodeType(TrackedModel, ValidityMixin):
 
     description_record_code = "120"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=1,
@@ -66,6 +69,8 @@ class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "245"
     subrecord_code = "00"
 
+    identifying_fields = ("sid",)
+
     sid = SignedIntSID(db_index=True)
     type = models.ForeignKey(AdditionalCodeType, on_delete=models.PROTECT)
     code = models.CharField(
@@ -87,6 +92,7 @@ class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.ACN14,
         business_rules.ACN17,
         UpdateValidity,
+        UniqueIdentifyingFields,
     )
 
     def __str__(self):
@@ -110,6 +116,8 @@ class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
     subrecord_code = "10"
     period_record_code = "245"
     period_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     # Store the additional code description period sid so that we can send it in TARIC3
     # updates to systems that expect it.

@@ -8,12 +8,15 @@ from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from geo_areas import business_rules
+from geo_areas import forms
 from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 
 
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
@@ -28,7 +31,15 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["sid", "area_code"]
 
 
-class GeographicalAreaDescriptionMixin:
+class GeoAreaMixin:
+    model: Type[TrackedModel] = GeographicalArea
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return GeographicalArea.objects.approved_up_to_transaction(tx)
+
+
+class GeoAreaDescriptionMixin:
     model: Type[TrackedModel] = GeographicalAreaDescription
 
     def get_queryset(self):
@@ -36,7 +47,7 @@ class GeographicalAreaDescriptionMixin:
         return GeographicalAreaDescription.objects.approved_up_to_transaction(tx)
 
 
-class GeographicalAreaCreateDescriptionMixin:
+class GeoAreaCreateDescriptionMixin:
     model: Type[TrackedModel] = GeographicalAreaDescription
 
     def get_context_data(self, **kwargs):
@@ -47,21 +58,28 @@ class GeographicalAreaCreateDescriptionMixin:
         return context
 
 
-class GeographicalAreaList(TamatoListView):
-    queryset = GeographicalArea.objects.latest_approved()
+class GeoAreaList(GeoAreaMixin, TamatoListView):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "descriptions__description"]
 
 
-class GeographicalAreaDetail(TrackedModelDetailView):
-    model = GeographicalArea
+class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):
     template_name = "geo_areas/detail.jinja"
-    queryset = GeographicalArea.objects.latest_approved()
 
 
-class GeographicalAreaCreateDescription(
-    GeographicalAreaCreateDescriptionMixin,
+class GeoAreaDelete(GeoAreaMixin, TrackedModelDetailMixin, DraftDeleteView):
+    form_class = forms.GeographicalAreaDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (
+        business_rules.GA21,
+        business_rules.GA22,
+    )
+
+
+class GeoAreaDescriptionCreate(
+    GeoAreaCreateDescriptionMixin,
     TrackedModelDetailMixin,
     DraftCreateView,
 ):
@@ -76,8 +94,17 @@ class GeographicalAreaCreateDescription(
     template_name = "common/create_description.jinja"
 
 
-class GeographicalAreaDescriptionConfirmCreate(
-    GeographicalAreaDescriptionMixin,
+class GeoAreaDescriptionConfirmCreate(
+    GeoAreaDescriptionMixin,
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_create_description.jinja"
+
+
+class GeoAreaDescriptionDelete(
+    GeoAreaDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.GeographicalAreaDescriptionDeleteForm
+    success_path = "detail"

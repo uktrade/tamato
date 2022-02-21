@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import DataError
 
 from common.business_rules import BusinessRuleViolation
+from common.business_rules import UniqueIdentifyingFields
 from common.tests import factories
 from common.tests.factories import date_ranges
 from common.tests.factories import end_date
@@ -1718,6 +1719,16 @@ def test_ME66():
 
     business_rules.ME66(exclusion.transaction).validate(exclusion)
 
+    deleted = factories.GeographicalMembershipFactory.create(
+        geo_group=membership.geo_group,
+        member=membership.member,
+        version_group=membership.version_group,
+        update_type=UpdateType.DELETE,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ME66(deleted.transaction).validate(exclusion)
+
     exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         modified_measure=measure,
         excluded_geographical_area=factories.GeographicalAreaFactory.create(),
@@ -1918,3 +1929,10 @@ def test_measurement_unit_qualifier_is_optional():
     """In TARIC measurement unit qualifiers do not have to be used on every
     measure."""
     factories.MeasurementFactory.create(measurement_unit_qualifier=None)
+
+
+def test_unique_identifying_fields(assert_handles_duplicates):
+    assert_handles_duplicates(
+        factories.MeasureFactory,
+        UniqueIdentifyingFields,
+    )

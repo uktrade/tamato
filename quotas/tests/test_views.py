@@ -1,5 +1,6 @@
 import pytest
 
+from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
@@ -9,6 +10,14 @@ from common.views import TrackedModelDetailMixin
 from quotas.views import QuotaList
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.mark.parametrize(
+    "factory",
+    (factories.QuotaOrderNumberFactory,),
+)
+def test_quota_delete_form(factory, use_delete_form):
+    use_delete_form(factory())
 
 
 @pytest.mark.parametrize(

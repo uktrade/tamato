@@ -1,7 +1,10 @@
+from unittest.mock import patch
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
+from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -10,6 +13,7 @@ from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from measures.models import Measure
 from measures.validators import validate_duties
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
@@ -88,6 +92,10 @@ def test_measure_footnotes_update_post_without_remove_ignores_delete_keys(
     ]
 
 
+def test_measure_delete(use_delete_form):
+    use_delete_form(factories.MeasureFactory())
+
+
 @pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(
@@ -134,3 +142,71 @@ def test_duties_validator(
     # removing it will cause the test to fail.
     with raises_if(ValidationError, error_expected):
         validate_duties(duties, date_ranges.normal)
+
+
+@pytest.mark.parametrize(
+    ("update_data"),
+    [
+        {},
+        {"duty_sentence": "10.000%"},
+    ],
+)
+def test_measure_update_duty_sentence(
+    update_data,
+    client,
+    valid_user,
+    measure_form,
+    duty_sentence_parser,
+):
+    """
+    A placeholder test until we find a way of making use_update_form compatible
+    with MeasureForm.
+
+    Generates minimal post_data from instance and verifies that the edit
+    endpoint redirects successfully. Checks that latest Measure instance has the
+    correct components, if duty_sentence in data.
+    """
+    post_data = measure_form.data
+    # Remove keys with null value to avoid TypeError
+    post_data = {k: v for k, v in post_data.items() if v is not None}
+    post_data.update(update_data)
+    post_data["update_type"] = 1
+    url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
+    client.force_login(valid_user)
+    response = client.post(url, data=post_data)
+
+    assert response.status_code == 302
+
+    if update_data:
+        tx = Transaction.objects.last()
+        measure = Measure.objects.approved_up_to_transaction(tx).get(
+            sid=measure_form.instance.sid,
+        )
+        components = measure.components.approved_up_to_transaction(tx).filter(
+            component_measure__sid=measure_form.instance.sid,
+        )
+
+        assert components.exists()
+        assert components.count() == 1
+        assert components.first().duty_amount == 10.000
+
+
+# https://uktrade.atlassian.net/browse/TP2000-144
+@patch("measures.forms.MeasureForm.save")
+def test_measure_form_save_called_on_measure_update(
+    save,
+    client,
+    valid_user,
+    measure_form,
+):
+    """Until work is done to make `TrackedModel` call new_version in save() we
+    need to check that MeasureUpdate view explicitly calls
+    MeasureForm.save(commit=False)"""
+    post_data = measure_form.data
+    post_data = {k: v for k, v in post_data.items() if v is not None}
+    post_data["update_type"] = 1
+    url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
+    client.force_login(valid_user)
+    client.post(url, data=post_data)
+
+    save.assert_called_with(commit=False)

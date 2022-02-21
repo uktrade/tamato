@@ -35,6 +35,11 @@ ui_patterns = [
         views.WorkBasketDeleteChangesDone.as_view(),
         name="workbasket-ui-delete-changes-done",
     ),
+    path(
+        "download",
+        views.download_envelope,
+        name="workbasket-download",
+    ),
 ]
 
 urlpatterns = [

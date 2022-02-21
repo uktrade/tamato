@@ -6,6 +6,9 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from django import forms
 
+from common.forms import delete_form_for
+from quotas import models
+
 
 class QuotaFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -22,3 +25,6 @@ class QuotaFilterForm(forms.Form):
                 f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
             ),
         )
+
+
+QuotaDeleteForm = delete_form_for(models.QuotaOrderNumber)

@@ -11,6 +11,7 @@ from certificates import models
 from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 
 
 class CertificateForm(ValidityPeriodForm):
@@ -100,3 +101,9 @@ class CertificateCreateDescriptionForm(CreateDescriptionForm):
     class Meta:
         model = models.CertificateDescription
         fields = ("described_certificate", "description", "validity_start")
+
+
+CertificateDeleteForm = delete_form_for(models.Certificate)
+
+
+CertificateDescriptionDeleteForm = delete_form_for(models.CertificateDescription)

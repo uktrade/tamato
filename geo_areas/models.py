@@ -4,6 +4,7 @@ from django.db.models import Max
 from django.db.models import Q
 from polymorphic.managers import PolymorphicManager
 
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -45,7 +46,9 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "250"
     subrecord_code = "00"
 
-    url_pattern_name_prefix = "geoarea"
+    identifying_fields = ("sid",)
+
+    url_pattern_name_prefix = "geo_area"
 
     sid = SignedIntSID(db_index=True)
     area_id = models.CharField(max_length=4, validators=[area_id_validator])
@@ -82,6 +85,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.GA11,
         business_rules.GA21,
         business_rules.GA22,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -184,6 +188,8 @@ class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
     period_record_code = "250"
     period_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     described_geographicalarea = models.ForeignKey(
         GeographicalArea,
         on_delete=models.CASCADE,
@@ -200,6 +206,8 @@ class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
             self.sid = highest_sid + 1
 
         return super().save(*args, **kwargs)
+
+    url_pattern_name_prefix = "geo_area_description"
 
     class Meta:
         ordering = ("validity_start",)

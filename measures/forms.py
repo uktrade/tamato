@@ -19,6 +19,7 @@ from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
@@ -51,6 +52,11 @@ class MeasureForm(ValidityPeriodForm):
         queryset=GoodsNomenclature.objects.all(),
         required=False,
         attrs={"min_length": 3},
+    )
+    duty_sentence = forms.CharField(
+        label="Duties",
+        widget=forms.TextInput,
+        required=False,
     )
     additional_code = AutoCompleteField(
         label="Code and description",
@@ -91,6 +97,16 @@ class MeasureForm(ValidityPeriodForm):
 
         WorkBasket.get_current_transaction(self.request)
 
+        if not hasattr(self.instance, "duty_sentence"):
+            raise AttributeError(
+                "Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
+            )
+
+        self.initial["duty_sentence"] = self.instance.duty_sentence
+        self.request.session[
+            f"instance_duty_sentence_{self.instance.sid}"
+        ] = self.instance.duty_sentence
+
         self.initial_geographical_area = self.instance.geographical_area
 
         for field in ["geographical_area_group", "geographical_area_country_or_region"]:
@@ -114,6 +130,14 @@ class MeasureForm(ValidityPeriodForm):
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
                 footnote.pk for footnote in self.instance.footnotes.all()
             ]
+
+    def clean_duty_sentence(self):
+        duty_sentence = self.cleaned_data["duty_sentence"]
+        valid_between = self.initial.get("valid_between")
+        if duty_sentence and valid_between is not None:
+            validate_duties(duty_sentence, valid_between.lower)
+
+        return duty_sentence
 
     def clean(self):
         cleaned_data = super().clean()
@@ -152,6 +176,16 @@ class MeasureForm(ValidityPeriodForm):
             instance.save()
 
         sid = instance.sid
+
+        if (
+            self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
+            != self.cleaned_data["duty_sentence"]
+        ):
+            self.instance.diff_components(
+                self.cleaned_data["duty_sentence"],
+                self.cleaned_data["valid_between"].lower,
+                WorkBasket.current(self.request),
+            )
 
         footnote_pks = [
             dct["footnote"]
@@ -527,6 +561,7 @@ class MeasureConditionsFormSet(FormSet):
 class MeasureDutiesForm(forms.Form):
     duties = forms.CharField(
         label="Duties",
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -547,9 +582,9 @@ class MeasureDutiesForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        duties = cleaned_data["duties"]
+        duties = cleaned_data.get("duties")
         measure_start_date = self.initial.get("measure_start_date")
-        if measure_start_date is not None:
+        if measure_start_date is not None and duties:
             validate_duties(duties, measure_start_date)
 
         return cleaned_data
@@ -609,3 +644,6 @@ class MeasureUpdateFootnotesFormSet(FormSet):
 
 class MeasureReviewForm(forms.Form):
     pass
+
+
+MeasureDeleteForm = delete_form_for(models.Measure)

@@ -6,10 +6,13 @@ from typing import Tuple
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 
 from common.tests import factories
 from common.validators import ApplicabilityCode
+from measures.forms import MeasureForm
 from measures.models import DutyExpression
+from measures.models import Measure
 from measures.models import MeasureAction
 from measures.models import MeasureConditionCode
 from measures.models import Measurement
@@ -307,3 +310,22 @@ def irreversible_duty_sentence_data(request, get_component_data):
     places."""
     expected, component_data = request.param
     return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture
+def measure_form(session_request):
+    measure = factories.MeasureFactory.create()
+    data = model_to_dict(measure)
+    start_date = data["valid_between"].lower
+    data.update(
+        start_date_0=start_date.day,
+        start_date_1=start_date.month,
+        start_date_2=start_date.year,
+    )
+    factories.GeographicalAreaFactory.create(area_code=1, area_id=1011)
+
+    return MeasureForm(
+        data=data,
+        instance=Measure.objects.with_duty_sentence().first(),
+        request=session_request,
+    )

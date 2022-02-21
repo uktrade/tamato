@@ -12,8 +12,6 @@ from django.db.transaction import atomic
 from django_fsm import FSMIntegerField
 from django_fsm import transition
 
-from common.business_rules import BusinessRuleChecker
-from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
 from common.renderers import counter_generator
 
@@ -255,6 +253,9 @@ class Transaction(TimestampedMixin):
             return
 
         self.errors = []
+
+        from common.business_rules import BusinessRuleChecker
+        from common.business_rules import BusinessRuleViolation
 
         try:
             BusinessRuleChecker(self.tracked_models.all(), self).validate()

@@ -25,6 +25,7 @@ class Upload(models.Model):
     correlation_id = models.UUIDField(default=uuid.uuid4, editable=False)
     checksum = models.CharField(max_length=32, editable=False)
     notification_sent = models.DateTimeField(editable=False, null=True)
+    created_date = models.DateTimeField(auto_now_add=True, editable=False, null=True)
 
     # Max size is 50 megabytes
     MAX_FILE_SIZE = 50 * 1024 * 1024

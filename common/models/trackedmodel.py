@@ -18,7 +18,6 @@ from django.db.models.query import QuerySet
 from django.db.transaction import atomic
 from django.urls import NoReverseMatch
 from django.urls import reverse
-from polymorphic.managers import PolymorphicManager
 from polymorphic.models import PolymorphicModel
 
 from common import validators
@@ -26,6 +25,8 @@ from common.exceptions import IllegalSaveError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.models.managers import CurrentTrackedModelManager
+from common.models.managers import TrackedModelManager
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_deferred_set_fields
 from common.models.tracked_utils import get_models_linked_to
@@ -94,9 +95,16 @@ class TrackedModel(PolymorphicModel):
     these fields.
     """
 
-    objects: TrackedModelQuerySet = PolymorphicManager.from_queryset(
+    objects: TrackedModelQuerySet = TrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
+    current_objects: TrackedModelQuerySet = CurrentTrackedModelManager.from_queryset(
+        TrackedModelQuerySet,
+    )()
+    """
+    The `current_objects` model manager provides a default queryset that, by
+    default, filters to the 'current' transaction.
+    """
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
@@ -125,34 +133,33 @@ class TrackedModel(PolymorphicModel):
     ones.
     """
 
-    identifying_fields: Sequence[str] = ("sid",)
+    identifying_fields: Sequence[str] = ("pk",)
     """
     The fields which together form a composite unique key for each model.
 
-    The system ID (or SID) field is normally the unique identifier of a TARIC
+    The system ID (or SID) field, 'sid' is normally the unique identifier of a TARIC
     model, but in places where this does not exist models can declare their own.
     (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
+    
+    TrackedModel itself defaults to ("pk",) as it does not have an SID.
     """
 
     def new_version(
         self: Cls,
         workbasket,
         transaction=None,
-        save: bool = True,
         update_type: UpdateType = UpdateType.UPDATE,
         **overrides,
     ) -> Cls:
         """
-        Return a new version of the object. Callers can override existing data
-        by passing in keyword args.
+        Create and return a new version of the object. Callers can override
+        existing data by passing in keyword args.
 
         The new version is added to a transaction which is created and added to the passed in workbasket
         (or may be supplied as a keyword arg).
 
-        update_type must be UPDATE or DELETE, with UPDATE as the default.
-
-        By default the new object is saved; this can be disabled by passing save=False.
+        `update_type` must be UPDATE or DELETE, with UPDATE as the default.
         """
         if update_type not in (
             validators.UpdateType.UPDATE,
@@ -183,25 +190,20 @@ class TrackedModel(PolymorphicModel):
         new_object_kwargs["transaction"] = transaction
 
         new_object = cls(**new_object_kwargs)
+        new_object.save()
 
-        if save:
-            new_object.save()
-
-            # TODO: make this work with save=False!
-            # Maybe the deferred values could be saved on the model
-            # and then handled with a post_save signal?
-            deferred_kwargs = {
-                field.name: field.value_from_object(self)
-                for field in get_deferred_set_fields(self)
-            }
-            deferred_overrides = {
-                name: value
-                for name, value in overrides.items()
-                if name in [f.name for f in get_deferred_set_fields(self)]
-            }
-            deferred_kwargs.update(deferred_overrides)
-            for field in deferred_kwargs:
-                getattr(new_object, field).set(deferred_kwargs[field])
+        deferred_kwargs = {
+            field.name: field.value_from_object(self)
+            for field in get_deferred_set_fields(self)
+        }
+        deferred_overrides = {
+            name: value
+            for name, value in overrides.items()
+            if name in [f.name for f in get_deferred_set_fields(self)]
+        }
+        deferred_kwargs.update(deferred_overrides)
+        for field in deferred_kwargs:
+            getattr(new_object, field).set(deferred_kwargs[field])
 
         return new_object
 
@@ -253,8 +255,8 @@ class TrackedModel(PolymorphicModel):
         """
         Get a name/value mapping of the fields that identify this model.
 
-        :param identifying_fields Optional[Iterable[str]]: Optionally override the
-        fields to retrieve
+        :param identifying_fields Optional[Iterable[str]]: Optionally override
+            the fields to retrieve
         :rtype dict[str, Any]: A dict of field names to values
         """
 
@@ -275,8 +277,8 @@ class TrackedModel(PolymorphicModel):
         model with field name and value pairs delimited by "=", eg: "field1=1,
         field2=2".
 
-        :param identifying_fields: Optionally override the
-        fields to use in the string
+        :param identifying_fields: Optionally override the fields to use in the
+            string
         :rtype str: The constructed string
         """
         field_list = [
@@ -319,6 +321,10 @@ class TrackedModel(PolymorphicModel):
         """Returns the record identifier as defined in TARIC3 records
         specification."""
         return f"{self.record_code}{self.subrecord_code}"
+
+    @property
+    def update_type_str(self) -> str:
+        return dict(UpdateType.choices)[self.update_type]
 
     @property
     def current_version(self: Cls) -> Cls:
@@ -563,8 +569,8 @@ class TrackedModel(PolymorphicModel):
         """
         Save the model to the database.
 
-        :param force_write bool: Ignore append-only restrictions and write to the
-        database even if the model already exists
+        :param force_write bool: Ignore append-only restrictions and write to
+            the database even if the model already exists
         """
         if not force_write and not self._can_write():
             raise IllegalSaveError(
@@ -606,8 +612,10 @@ class TrackedModel(PolymorphicModel):
         """
         Generate a URL to a representation of the model in the webapp.
 
-        :param action str: The view type to generate a URL for (default "detail"),
-        eg: "list" or "edit"
+        Callers should handle the case where no URL is returned.
+
+        :param action str: The view type to generate a URL for (default
+            "detail"), eg: "list" or "edit"
         :rtype Optional[str]: The generated URL
         """
         kwargs = {}
@@ -619,7 +627,7 @@ class TrackedModel(PolymorphicModel):
                 kwargs=kwargs,
             )
         except NoReverseMatch:
-            return
+            return None
 
     @classmethod
     def get_url_pattern_name_prefix(cls):

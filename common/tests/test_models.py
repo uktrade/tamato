@@ -1,4 +1,3 @@
-from typing import List
 from unittest.mock import patch
 
 import pytest
@@ -30,74 +29,6 @@ from regulations.models import Regulation
 pytestmark = pytest.mark.django_db
 
 
-def generate_model_history(factory, number=5, **kwargs) -> List:
-    objects = []
-    kwargs["update_type"] = kwargs.get("update_type", UpdateType.CREATE)
-    current = factory.create(**kwargs)
-    objects.append(current)
-    kwargs["update_type"] = UpdateType.UPDATE
-    kwargs["version_group"] = kwargs.get("version_group", current.version_group)
-    for _ in range(number - 1):
-        current = factory.create(**kwargs)
-        objects.append(current)
-
-    return objects
-
-
-def model_with_history(factory, date_ranges, **kwargs):
-    class Models:
-        """
-        A convenient system to store tracked models.
-
-        Creates a number of historic models for both test model types.
-
-        Creates an active model for each test model type.
-
-        Then creates a number of future models for each type as well.
-        """
-
-        all_models = generate_model_history(
-            factory, valid_between=date_ranges.earlier, **kwargs
-        )
-
-        active_model = factory.create(
-            valid_between=date_ranges.current, update_type=UpdateType.UPDATE, **kwargs
-        )
-
-        all_models.append(active_model)
-
-        all_models.extend(
-            generate_model_history(
-                factory,
-                valid_between=date_ranges.future,
-                update_type=UpdateType.UPDATE,
-                **kwargs,
-            ),
-        )
-
-    return Models
-
-
-@pytest.fixture
-def model1_with_history(date_ranges):
-    return model_with_history(
-        factories.TestModel1Factory,
-        date_ranges,
-        version_group=factories.VersionGroupFactory.create(),
-        sid=1,
-    )
-
-
-@pytest.fixture
-def model2_with_history(date_ranges):
-    return model_with_history(
-        factories.TestModel2Factory,
-        date_ranges,
-        version_group=factories.VersionGroupFactory.create(),
-        custom_sid=1,
-    )
-
-
 @pytest.fixture
 def sample_model() -> models.TestModel1:
     return factories.TestModel1Factory.create()
@@ -126,9 +57,6 @@ def test_versions_up_to(model1_with_history):
 
 def test_as_at(date_ranges, validity_factory):
     """Ensure only records active at a specific date are fetched."""
-    if validity_factory is factories.GoodsNomenclatureFactory:
-        pytest.xfail("Does not implement as_at")
-
     pks = {
         validity_factory.create(valid_between=date_ranges.later).pk,
         validity_factory.create(valid_between=date_ranges.later).pk,
@@ -336,6 +264,18 @@ def test_new_version_works_for_all_models(trackedmodel_factory):
     model.new_version(model.transaction.workbasket)
 
 
+def test_new_version_retains_related_objects(sample_model):
+    description = factories.TestModelDescription1Factory(
+        described_record=sample_model,
+    )
+    assert sample_model.descriptions.get() == description
+
+    new_model = sample_model.new_version(
+        sample_model.transaction.workbasket,
+    )
+    assert new_model.descriptions.get() == description
+
+
 def test_current_as_of(sample_model):
     transaction = factories.UnapprovedTransactionFactory.create()
 
@@ -382,7 +322,7 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     with patch(
         "exporter.tasks.upload_workbaskets.delay",
     ):
-        workbasket.approve(valid_user, workbaskets.models.SEED_FIRST)
+        workbasket.approve(valid_user.pk, "SEED_FIRST")
     description_queryset = sample_model.get_descriptions()
 
     assert new_description in description_queryset
@@ -454,6 +394,21 @@ def test_trackedmodel_str(trackedmodel_factory):
 
     assert isinstance(result, str)
     assert len(result.strip())
+
+
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+def test_trackedmodel_base_str():
+    """
+    Verify TrackedModel base class can stringify without crashing, so that.
+
+    .trackedmodel_ptr will work on TrackedModel subclasses.
+    """
+    model = factories.TestModel1Factory.create()
+    trackedmodel = model.trackedmodel_ptr
+
+    result = str(trackedmodel)
+
+    assert f"pk={trackedmodel.pk}" == result
 
 
 def test_copy(trackedmodel_factory, approved_transaction):
