@@ -971,7 +971,7 @@ class CommodityChange(BaseModel):
     @property
     def workbasket(self) -> WorkBasket:
         """Returns the workbasket for the commodity change."""
-        return self.candidate.obj.transaction.workbasket
+        return (self.candidate or self.current).obj.transaction.workbasket
 
     def _handle_delete_side_effects(self, before: CommodityTreeSnapshot) -> None:
         """
@@ -1022,19 +1022,18 @@ class CommodityChange(BaseModel):
 
         good = self.candidate.good
 
-        footnote_associations = (
-            FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
-                goods_nomenclature__sid=self.current.sid,
-            )
-        )
-        measures = self._get_dependent_measures(before, after)
-
         # NIG30 / NIG31
         uncontained_measures = cbr.NIG30().uncontained_measures(good)
 
         if uncontained_measures.exists():
             for measure in uncontained_measures.order_by("sid"):
                 self._handle_validity_conflicts(good, measure, cbr.NIG30)
+
+        footnote_associations = (
+            FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
+                goods_nomenclature__sid=self.current.sid,
+            )
+        )
 
         # NIG22: Invoked from the POV of a footnote association
         # here, find all related associations and invoke the BR
@@ -1045,11 +1044,13 @@ class CommodityChange(BaseModel):
             except BusinessRuleViolation:
                 self._handle_validity_conflicts(good, association, cbr.NIG22)
 
+        dependent_measures = self._get_dependent_measures(before, after)
+
         # ME7: Invoked from the POV of a measure
         # here, find all related measures and invoke the BR
         # (inefficient for this workflow, but consistent use of BR-s)
         if self.candidate.obj.suffix != SUFFIX_DECLARABLE:
-            for measure in measures:
+            for measure in dependent_measures:
                 try:
                     mbr.ME7().validate(measure)
                 except BusinessRuleViolation:
@@ -1078,7 +1079,7 @@ class CommodityChange(BaseModel):
                     self._add_pending_delete(association, cbr.NIG18)
 
             qs = FootnoteAssociationMeasure.objects.latest_approved()
-            for measure in measures:
+            for measure in dependent_measures:
                 for association in qs.filter(footnoted_measure=measure):
                     try:
                         mbr.ME71().validate(association)
@@ -1448,11 +1449,12 @@ class CommodityChange(BaseModel):
         In the case of a commodity CREATE,
         the threshold is the commodity's validity start date.
         """
+        if self.update_type == UpdateType.UPDATE:
+            return self.current.valid_between.upper
+
         if self.candidate:
-            if self.update_type == UpdateType.UPDATE:
-                return self.candidate.valid_between.upper
-            else:
-                return self.candidate.valid_between.lower
+            return self.candidate.valid_between.lower
+
         return self.current.valid_between.upper
 
 
