@@ -446,10 +446,10 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         qs = Measure.objects.filter(filter)
 
         if self.moment.clock_type.is_transaction_clock:
-            qs = qs.approved_up_to_transaction(self.moment.transaction)
-        else:
             logger.debug("Filtering by moment transaction: %s", self.moment.transaction)
             qs = qs.approved_up_to_transaction(self.moment.transaction)
+        else:
+            qs = qs.latest_approved()
 
         if as_at is not None and as_at is not NOT_PROVIDED:
             logger.debug("Filtering by supplied date: %s", as_at)
@@ -971,7 +971,7 @@ class CommodityChange(BaseModel):
     @property
     def workbasket(self) -> WorkBasket:
         """Returns the workbasket for the commodity change."""
-        return (self.candidate or self.current).obj.transaction.workbasket
+        return self.candidate.obj.transaction.workbasket
 
     def _handle_delete_side_effects(self, before: CommodityTreeSnapshot) -> None:
         """
@@ -998,8 +998,7 @@ class CommodityChange(BaseModel):
         # No BR: delete related footnote associations
         qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
         for association in qs.filter(
-            goods_nomenclature__item_id=self.current.item_id,
-            goods_nomenclature__suffix=self.current.suffix,
+            goods_nomenclature__sid=self.current.sid,
         ):
             self._add_pending_delete(association, None)
 
@@ -1025,8 +1024,7 @@ class CommodityChange(BaseModel):
 
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
-                goods_nomenclature__item_id=self.current.item_id,
-                goods_nomenclature__suffix=self.current.suffix,
+                goods_nomenclature__sid=self.current.sid,
             )
         )
         measures = self._get_dependent_measures(before, after)
