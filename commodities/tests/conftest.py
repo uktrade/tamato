@@ -62,7 +62,10 @@ def mocked_responses():
 
 
 def copy_commodity(
-    commodity: Commodity, transaction_pool: Iterator[Transaction], **kwargs
+    commodity: Commodity,
+    transaction_pool: Iterator[Transaction],
+    preserve_sid: Optional[bool] = True,
+    **kwargs,
 ) -> Commodity:
     """Returns a copy of a commodity wrapper with modified attributes."""
     meta = commodity.obj._meta
@@ -71,15 +74,16 @@ def copy_commodity(
         field.name: getattr(commodity.obj, field.name)
         for field in meta.fields
         if field.name not in commodity.obj.system_set_field_names
-        if field.name != "sid"
+        if (preserve_sid or field.name != "sid")
     }
 
     attrs["indent__indent"] = kwargs.pop("indent", commodity.indent)
     attrs.update(kwargs)
 
-    transaction = next(transaction_pool)
+    if "transaction" not in attrs:
+        attrs["transaction"] = next(transaction_pool)
 
-    obj = factories.GoodsNomenclatureFactory.create(transaction=transaction, **attrs)
+    obj = factories.GoodsNomenclatureFactory.create(**attrs)
     return Commodity(obj=obj, indent_obj=obj.indents.get())
 
 
@@ -135,16 +139,10 @@ def create_dependent_measure(
 ) -> Measure:
     """Returns a new measure linked to a given good."""
     factory = factories.MeasureFactory
+    kwargs.update(dict(goods_nomenclature=commodity.obj))
     measure = create_record(transaction_pool, factory, **kwargs)
 
-    transaction = measure.transaction
-    workbasket = transaction.workbasket
-
-    return measure.new_version(
-        workbasket=workbasket,
-        transaction=transaction,
-        goods_nomenclature=commodity.obj,
-    )
+    return measure
 
 
 def create_footnote_association(
@@ -382,7 +380,12 @@ def scenario_4(collection_basic, date_ranges, transaction_pool) -> TScenario:
 
 
 @pytest.fixture
-def scenario_5(collection_basic, commodities, transaction_pool) -> TScenario:
+def scenario_5(
+    collection_basic,
+    commodities,
+    transaction_pool,
+    workbasket,
+) -> TScenario:
     """
     Returns the setup for scenario 5 in ADR13.
 
@@ -391,8 +394,16 @@ def scenario_5(collection_basic, commodities, transaction_pool) -> TScenario:
     collection = copy(collection_basic)
 
     current = collection.get_commodity("9999.20")
-    candidate = copy_commodity(current, transaction_pool, suffix="20")
-    create_dependent_measure(candidate, transaction_pool)
+    delayed_transaction = factories.TransactionFactory.create(
+        workbasket=workbasket,
+    )
+    candidate = copy_commodity(
+        current,
+        transaction_pool,
+        suffix="20",
+        transaction=delayed_transaction,
+    )
+    create_dependent_measure(current, transaction_pool)
 
     changes = [
         CommodityChange(
@@ -422,21 +433,35 @@ def scenario_6(collection_basic, transaction_pool, workbasket) -> TScenario:
     current = collection.get_commodity("9999.20")
 
     attrs = dict(indent=current.indent + 1, item_id="9999201000")
-    candidate = copy_commodity(current, transaction_pool, **attrs)
+    candidate = copy_commodity(current, transaction_pool, preserve_sid=False, **attrs)
 
-    measure_type = create_record(
-        transaction_pool,
-        factories.MeasureTypeFactory,
-        measure_explosion_level=6,
-    )
     delayed_transaction = factories.TransactionFactory.create(
         workbasket=workbasket,
     )
-    attrs = dict(
+
+    # Measure factory seeks to rectify the measure explosion level
+    # when for the purposes of this test we need it to be incorrect;
+    # therefore, create the mock measure objects directly here.
+    measure = Measure.objects.create(
+        sid=1,
         transaction=delayed_transaction,
-        measure_type=measure_type,
+        update_type=UpdateType.CREATE,
+        geographical_area=create_record(
+            transaction_pool,
+            factories.GeographicalAreaFactory,
+        ),
+        goods_nomenclature=candidate.obj,
+        measure_type=create_record(
+            transaction_pool,
+            factories.MeasureTypeFactory,
+            measure_explosion_level=6,
+        ),
+        valid_between=candidate.obj.valid_between,
+        generating_regulation=create_record(
+            transaction_pool,
+            factories.RegulationFactory,
+        ),
     )
-    create_dependent_measure(candidate, transaction_pool, **attrs)
 
     changes = [
         CommodityChange(
@@ -498,6 +523,7 @@ def scenario_8(scenario_7, transaction_pool) -> TScenario:
     candidate = copy_commodity(
         current,
         transaction_pool,
+        preserve_sid=False,
         indent=current.indent - 1,
     )
 
