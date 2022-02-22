@@ -16,6 +16,7 @@ from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from geo_areas.forms import GeographicalAreaFormMixin
 from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
