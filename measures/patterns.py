@@ -375,11 +375,12 @@ class MeasureCreationPattern:
         if condition_sentence:
             yield from self.create_measure_conditions(new_measure, condition_sentence)
 
-        # Now generate the duty components for the passed duty rate.
-        yield from self.create_measure_components_from_duty_rate(
-            new_measure,
-            duty_sentence,
-        )
+        # If there is a duty_sentence parse it and generate the duty components from the duty rate.
+        if duty_sentence:
+            yield from self.create_measure_components_from_duty_rate(
+                new_measure,
+                duty_sentence,
+            )
 
     def create(self, *args, **kwargs) -> Measure:
         """
