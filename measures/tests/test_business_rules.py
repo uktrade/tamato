@@ -75,16 +75,17 @@ def test_MT2(date_ranges):
         factories.MeasureTypeFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_MT3(date_ranges):
+def test_MT3(assert_spanning_enforced):
     """When a measure type is used in a measure then the validity period of the
     measure type must span the validity period of the measure."""
-    measure = factories.MeasureFactory.create(
-        measure_type__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureTypeFactory,
+        business_rules.MT3,
+        measure=factories.related_factory(
+            factories.MeasureFactory,
+            factory_related_name="measure_type",
+        ),
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MT3(measure.transaction).validate(measure.measure_type)
 
 
 def test_MT4(reference_nonexistent_record):
@@ -107,15 +108,14 @@ def test_MT7(delete_record):
         business_rules.MT7(deleted.transaction).validate(deleted)
 
 
-def test_MT10(date_ranges):
+def test_MT10(assert_spanning_enforced):
     """The validity period of the measure type series must span the validity
     period of the measure type."""
-    measure_type = factories.MeasureTypeFactory.create(
-        measure_type_series__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+
+    assert_spanning_enforced(
+        factories.MeasureTypeFactory,
+        business_rules.MT10,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MT10(measure_type.transaction).validate(measure_type)
 
 
 # 350 - MEASURE CONDITION CODE
@@ -138,17 +138,14 @@ def test_MC2(date_ranges):
         )
 
 
-def test_MC3(date_ranges):
+def test_MC3(assert_spanning_enforced):
     """If a measure condition code is used in a measure then the validity period
     of the measure condition code must span the validity period of the
     measure."""
-    condition = factories.MeasureConditionFactory.create(
-        condition_code__valid_between=date_ranges.normal,
-        dependent_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureConditionFactory,
+        business_rules.MC3,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MC3(condition.transaction).validate(condition)
 
 
 def test_MC4(delete_record):
@@ -190,15 +187,13 @@ def test_MA3(date_ranges):
         factories.MeasureActionFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_MA4(date_ranges):
+def test_MA4(assert_spanning_enforced):
     """If a measure action is used in a measure then the validity period of the
     measure action must span the validity period of the measure."""
-    condition = factories.MeasureConditionFactory.create(
-        action__valid_between=date_ranges.starts_with_normal,
-        dependent_measure__valid_between=date_ranges.normal,
+    assert_spanning_enforced(
+        factories.MeasureConditionFactory,
+        business_rules.MA4,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.MA4(condition.transaction).validate(condition)
 
 
 # 430 - MEASURE
@@ -238,15 +233,13 @@ def test_ME2(reference_nonexistent_record):
             business_rules.ME2(measure.transaction).validate(measure)
 
 
-def test_ME3(date_ranges):
+def test_ME3(assert_spanning_enforced):
     """The validity period of the measure type must span the validity period of
     the measure."""
-    measure = factories.MeasureFactory.create(
-        measure_type__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureFactory,
+        business_rules.ME3,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME3(measure.transaction).validate(measure)
 
 
 def test_ME4(reference_nonexistent_record):
@@ -260,16 +253,13 @@ def test_ME4(reference_nonexistent_record):
             business_rules.ME4(measure.transaction).validate(measure)
 
 
-def test_ME5(date_ranges):
+def test_ME5(assert_spanning_enforced):
     """The validity period of the geographical area must span the validity
     period of the measure."""
-    measure = factories.MeasureFactory.create(
-        geographical_area__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureFactory,
+        business_rules.ME5,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME5(measure.transaction).validate(measure)
 
 
 def test_ME6(reference_nonexistent_record):
@@ -304,16 +294,13 @@ def test_ME7():
     business_rules.ME7(measure.transaction).validate(measure)
 
 
-def test_ME8(date_ranges):
+def test_ME8(assert_spanning_enforced):
     """The validity period of the goods code must span the validity period of
     the measure."""
-    measure = factories.MeasureFactory.create(
-        goods_nomenclature__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureFactory,
+        business_rules.ME8,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME8(measure.transaction).validate(measure)
 
 
 def test_ME88():
@@ -361,16 +348,13 @@ def test_ME16(existing_code, overlapping_code, error_expected):
         business_rules.ME16(measure.transaction).validate(measure)
 
 
-def test_ME115(date_ranges):
+def test_ME115(assert_spanning_enforced):
     """The validity period of the referenced additional code must span the
     validity period of the measure."""
-    measure = factories.MeasureWithAdditionalCodeFactory.create(
-        additional_code__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureWithAdditionalCodeFactory,
+        business_rules.ME115,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME115(measure.transaction).validate(measure)
 
 
 @pytest.mark.parametrize(
@@ -732,7 +716,6 @@ def test_ME118():
     assert False
 
 
-@pytest.mark.xfail(reason="need to confirm rule is needed")
 @only_applicable_after("2007-12-31")
 def test_ME119(date_ranges):
     """
@@ -1150,16 +1133,13 @@ def test_ME41(reference_nonexistent_record):
             business_rules.ME41(component.transaction).validate(component)
 
 
-def test_ME42(date_ranges):
+def test_ME42(assert_spanning_enforced):
     """The validity period of the duty expression must span the validity period
     of the measure."""
-    component = factories.MeasureComponentFactory.create(
-        duty_expression__valid_between=date_ranges.normal,
-        component_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureComponentFactory,
+        business_rules.ME42,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME42(component.transaction).validate(component)
 
 
 def test_ME43():
@@ -1276,16 +1256,13 @@ def test_ME48(reference_nonexistent_record):
             business_rules.ME48(component.transaction).validate(component)
 
 
-def test_ME49(date_ranges):
+def test_ME49(assert_spanning_enforced):
     """The validity period of the referenced monetary unit must span the
     validity period of the measure."""
-    component = factories.MeasureComponentWithMonetaryUnitFactory.create(
-        monetary_unit__valid_between=date_ranges.normal,
-        component_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureComponentWithMonetaryUnitFactory,
+        business_rules.ME49,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME49(component.transaction).validate(component)
 
 
 def test_ME50(reference_nonexistent_record):
@@ -1300,28 +1277,22 @@ def test_ME50(reference_nonexistent_record):
             business_rules.ME50(component.transaction).validate(component)
 
 
-def test_ME51(date_ranges):
+def test_ME51(assert_spanning_enforced):
     """The validity period of the measurement unit must span the validity period
     of the measure."""
-    component = factories.MeasureComponentWithMeasurementFactory.create(
-        component_measurement__measurement_unit__valid_between=date_ranges.normal,
-        component_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureComponentWithMeasurementFactory,
+        business_rules.ME51,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME51(component.transaction).validate(component)
 
-
-def test_ME52(date_ranges):
+def test_ME52(assert_spanning_enforced):
     """The validity period of the measurement unit qualifier must span the
     validity period of the measure."""
-    component = factories.MeasureComponentWithMeasurementFactory.create(
-        component_measurement__measurement_unit_qualifier__valid_between=date_ranges.normal,
-        component_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureComponentWithMeasurementFactory,
+        business_rules.ME52,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME52(component.transaction).validate(component)
 
 
 # -- Measure condition and Measure condition component
@@ -1379,16 +1350,13 @@ def test_ME56(reference_nonexistent_record):
             business_rules.ME56(condition.transaction).validate(condition)
 
 
-def test_ME57(date_ranges):
+def test_ME57(assert_spanning_enforced):
     """The validity period of the referenced certificate must span the validity
     period of the measure."""
-    condition = factories.MeasureConditionWithCertificateFactory.create(
-        required_certificate__valid_between=date_ranges.normal,
-        dependent_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureConditionWithCertificateFactory,
+        business_rules.ME57,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME57(condition.transaction).validate(condition)
 
 
 @pytest.mark.parametrize("existing_cert", (True, False))
@@ -1480,16 +1448,13 @@ def test_ME60(reference_nonexistent_record):
             business_rules.ME60(condition.transaction).validate(condition)
 
 
-def test_ME61(date_ranges):
+def test_ME61(assert_spanning_enforced):
     """The validity period of the referenced monetary unit must span the
     validity period of the measure."""
-    condition = factories.MeasureConditionFactory.create(
-        monetary_unit__valid_between=date_ranges.normal,
-        dependent_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureConditionFactory,
+        business_rules.ME61,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME61(condition.transaction).validate(condition)
 
 
 def test_ME62(reference_nonexistent_record):
@@ -1504,28 +1469,22 @@ def test_ME62(reference_nonexistent_record):
             business_rules.ME62(condition.transaction).validate(condition)
 
 
-def test_ME63(date_ranges):
+def test_ME63(assert_spanning_enforced):
     """The validity period of the measurement unit must span the validity period
     of the measure."""
-    condition = factories.MeasureConditionWithMeasurementFactory.create(
-        condition_measurement__measurement_unit__valid_between=date_ranges.normal,
-        dependent_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureConditionWithMeasurementFactory,
+        business_rules.ME63,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME63(condition.transaction).validate(condition)
 
-
-def test_ME64(date_ranges):
+def test_ME64(assert_spanning_enforced):
     """The validity period of the measurement unit qualifier must span the
     validity period of the measure."""
-    condition = factories.MeasureConditionWithMeasurementFactory.create(
-        condition_measurement__measurement_unit_qualifier__valid_between=date_ranges.normal,
-        dependent_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.MeasureConditionWithMeasurementFactory,
+        business_rules.ME64,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME64(condition.transaction).validate(condition)
 
 
 def test_ME105(reference_nonexistent_record):
@@ -1539,16 +1498,13 @@ def test_ME105(reference_nonexistent_record):
             business_rules.ME105(component.transaction).validate(component)
 
 
-def test_ME106(date_ranges):
+def test_ME106(assert_spanning_enforced):
     """The validity period of the duty expression must span the validity period
     of the measure."""
-    condition = factories.MeasureConditionComponentFactory.create(
-        duty_expression__valid_between=date_ranges.starts_with_normal,
-        condition__dependent_measure__valid_between=date_ranges.normal,
+    assert_spanning_enforced(
+        factories.MeasureConditionComponentFactory,
+        business_rules.ME106,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME106(condition.transaction).validate(condition)
 
 
 @pytest.mark.parametrize(
@@ -1825,16 +1781,13 @@ def test_ME71_ME72(application_code, item_id, error_expected):
         business_rules.ME71(assoc.transaction).validate(assoc)
 
 
-def test_ME73(date_ranges):
+def test_ME73(assert_spanning_enforced):
     """The validity period of the associated footnote must span the validity
     period of the measure."""
-    assoc = factories.FootnoteAssociationMeasureFactory.create(
-        associated_footnote__valid_between=date_ranges.normal,
-        footnoted_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.FootnoteAssociationMeasureFactory,
+        business_rules.ME73,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ME73(assoc.transaction).validate(assoc)
 
 
 # -- Partial temporary stop

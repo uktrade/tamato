@@ -61,7 +61,7 @@ def test_follow_path_with_many_to_many_through(assert_path_returns):
 
 
 def test_follow_path_with_many_to_many_auto(assert_path_returns):
-    obj = factories.QuotaOrderNumberFactory.create(with_certificates=True)
+    obj = factories.QuotaOrderNumberFactory.create(required_certificates=True)
     cert = obj.required_certificates.first()
 
     assert_path_returns(obj, "required_certificates", {cert})

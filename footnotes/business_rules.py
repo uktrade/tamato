@@ -1,5 +1,4 @@
 """Business rules for Footnotes and Footnote Types."""
-from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
@@ -22,55 +21,27 @@ class FO4(DescriptionsRules):
     model_name = "footnote"
 
 
-class ValidityPeriodContainsIfInUse(BusinessRule):
-    """Rule enforcing footnote validity period spans a dependent's validity
-    period."""
-
-    dependent_name: str
-    footnoted_model_field_name: str
-
-    def validate(self, footnote):
-        assoc = getattr(footnote, f"footnoteassociation{self.dependent_name}_set")
-        if (
-            assoc.model.objects.filter(
-                associated_footnote__footnote_id=footnote.footnote_id,
-                associated_footnote__footnote_type__footnote_type_id=footnote.footnote_type.footnote_type_id,
-            )
-            .approved_up_to_transaction(footnote.transaction)
-            .exclude(
-                **{
-                    f"{self.footnoted_model_field_name}__valid_between__contained_by": footnote.valid_between,
-                }
-            )
-            .exists()
-        ):
-            raise self.violation(footnote)
-
-
-class FO5(ValidityPeriodContainsIfInUse):
+class FO5(ValidityPeriodContained):
     """When a footnote is used in a measure the validity period of the footnote
     must span the validity period of the measure."""
 
-    dependent_name = "measure"
-    footnoted_model_field_name = "footnoted_measure"
+    contained_field_name = "footnoteassociationmeasure__footnoted_measure"
 
 
-class FO6(ValidityPeriodContainsIfInUse):
+class FO6(ValidityPeriodContained):
     """When a footnote is used in a goods nomenclature the validity period of
     the footnote must span the validity period of the association with the goods
     nomenclature."""
 
-    dependent_name = "goodsnomenclature"
-    footnoted_model_field_name = "goods_nomenclature"
+    contained_field_name = "footnoteassociationgoodsnomenclature"
 
 
-class FO9(ValidityPeriodContainsIfInUse):
+class FO9(ValidityPeriodContained):
     """When a footnote is used in an additional code the validity period of the
     footnote must span the validity period of the association with the
     additional code."""
 
-    dependent_name = "additionalcode"
-    footnoted_model_field_name = "additional_code"
+    container_field_name = "footnoteassociationadditionalcode"
 
 
 class FO11(PreventDeleteIfInUse):

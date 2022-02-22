@@ -17,10 +17,12 @@ def test_with_is_origin_quota(number_of_certificates, is_origin_quota: bool):
     origin quota.
     """
 
-    model_factory = factories.QuotaOrderNumberFactory()
-
-    for certificate in range(0, number_of_certificates):
-        model_factory.required_certificates.add(factories.CertificateFactory.create())
+    model_factory = factories.QuotaOrderNumberFactory.create(
+        required_certificates=[
+            factories.CertificateFactory.create()
+            for _ in range(0, number_of_certificates)
+        ],
+    )
 
     test_instance = model_factory._meta.model.objects.with_is_origin_quota().get()
     assert test_instance.origin_quota == is_origin_quota

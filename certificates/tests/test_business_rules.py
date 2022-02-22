@@ -53,22 +53,18 @@ def test_CE3(date_ranges):
         factories.CertificateFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_CE4(date_ranges):
+def test_CE4(assert_spanning_enforced):
     """If a certificate is used in a measure condition then the validity period
     of the certificate must span the validity period of the measure."""
 
-    certificate = factories.CertificateFactory.create(
-        valid_between=date_ranges.starts_with_normal,
+    assert_spanning_enforced(
+        factories.CertificateFactory,
+        business_rules.CE4,
+        measurecondition=factories.related_factory(
+            factories.MeasureConditionFactory,
+            factory_related_name="required_certificate",
+        ),
     )
-    condition = factories.MeasureConditionFactory.create(
-        required_certificate=certificate,
-        dependent_measure__valid_between=date_ranges.normal,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CE4(condition.transaction).validate(
-            condition.required_certificate,
-        )
 
 
 def test_CE5(delete_record):
@@ -137,13 +133,11 @@ def test_CE6_certificate_validity_period_must_span_description(date_ranges):
         )
 
 
-def test_CE7(date_ranges):
+def test_CE7(assert_spanning_enforced):
     """The validity period of the certificate type must span the validity period
     of the certificate."""
 
-    with pytest.raises(BusinessRuleViolation):
-        certificate = factories.CertificateFactory.create(
-            certificate_type__valid_between=date_ranges.normal,
-            valid_between=date_ranges.overlap_normal,
-        )
-        business_rules.CE7(certificate.transaction).validate(certificate)
+    assert_spanning_enforced(
+        factories.CertificateFactory,
+        business_rules.CE7,
+    )

@@ -42,6 +42,7 @@ from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.util import get_latest_versions
 from common.util import maybe_max
@@ -1023,11 +1024,13 @@ class CommodityChange(BaseModel):
         good = self.candidate.good
 
         # NIG30 / NIG31
-        uncontained_measures = cbr.NIG30().uncontained_measures(good)
-
-        if uncontained_measures.exists():
-            for measure in uncontained_measures.order_by("sid"):
-                self._handle_validity_conflicts(good, measure, cbr.NIG30)
+        with override_current_transaction(good.transaction):
+            uncontained_measures = cbr.NIG30(good.transaction).violating_models(
+                self.candidate.obj,
+            )
+            if uncontained_measures.exists():
+                for measure in uncontained_measures.order_by("sid"):
+                    self._handle_validity_conflicts(good, measure, cbr.NIG30)
 
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
