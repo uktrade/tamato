@@ -252,28 +252,12 @@ class NIG24(BusinessRule):
             raise self.violation(association)
 
 
-class NIG30(BusinessRule):
+class NIG30(ValidityPeriodContained):
     """When a goods nomenclature is used in a goods measure then the validity
     period of the goods nomenclature must span the validity period of the goods
     measure."""
 
-    def related_measures(self, good):
-        return good.measures.model.objects.filter(goods_nomenclature__sid=good.sid)
-
-    def uncontained_measures(self, good):
-        return (
-            self.related_measures(good)
-            .with_effective_valid_between()
-            .approved_up_to_transaction(good.transaction)
-            .exclude(db_effective_valid_between__contained_by=good.valid_between)
-        )
-
-    def has_violation(self, good):
-        return self.uncontained_measures(good).exists()
-
-    def validate(self, good):
-        if self.has_violation(good):
-            raise self.violation(good)
+    contained_field_name = "measures"
 
 
 class NIG31(NIG30):
@@ -281,8 +265,9 @@ class NIG31(NIG30):
     then the validity period of the goods nomenclature must span the validity
     period of the additional nomenclature measure."""
 
-    def matching_measures(self, good):
-        return super().matching_measures(good).filter(additional_code__isnull=False)
+    extra_filters = {
+        "additional_code__isnull": False,
+    }
 
 
 class NIG34(PreventDeleteIfInUse):

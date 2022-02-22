@@ -208,6 +208,30 @@ class FootnoteFactory(TrackedModelMixin, ValidityFactoryMixin):
         validity_start=factory.SelfAttribute("..valid_between.lower"),
     )
 
+    class Params:
+        associated_with_measure = factory.Trait(
+            footnoteassociationmeasure=related_factory(
+                "common.tests.factories.FootnoteAssociationMeasureFactory",
+                factory_related_name="associated_footnote",
+            ),
+        )
+        associated_with_goods_nomenclature = factory.Trait(
+            footnoteassociationgoodsnomenclature=related_factory(
+                "common.tests.factories.FootnoteAssociationGoodsNomenclatureFactory",
+                factory_related_name="associated_footnote",
+            ),
+        )
+        associated_with_additional_code = factory.Trait(
+            footnoteassociationadditionalcode=related_factory(
+                "common.tests.factories.FootnoteAssociationAdditionalCodeFactory",
+                factory_related_name="associated_footnote",
+            ),
+        )
+
+    associated_with_additional_code = False
+    associated_with_goods_nomenclature = False
+    associated_with_measure = False
+
 
 class FootnoteDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     class Meta:
@@ -362,6 +386,13 @@ class CountryFactory(GeographicalAreaFactory):
 class GeoGroupFactory(GeographicalAreaFactory):
     area_code = 1
 
+    class Params:
+        has_parent = factory.Trait(
+            parent=subfactory("common.tests.factories.GeoGroupFactory"),
+        )
+
+    has_parent = False
+
 
 class RegionFactory(GeographicalAreaFactory):
     area_code = 2
@@ -514,9 +545,6 @@ class SimpleGoodsNomenclatureFactory(TrackedModelMixin, ValidityFactoryMixin):
 
 
 class GoodsNomenclatureFactory(SimpleGoodsNomenclatureFactory):
-    class Meta:
-        model = "commodities.GoodsNomenclature"
-
     indent = factory.RelatedFactory(
         "common.tests.factories.GoodsNomenclatureIndentFactory",
         factory_related_name="indented_goods_nomenclature",
@@ -564,9 +592,6 @@ class SimpleGoodsNomenclatureIndentFactory(
 class GoodsNomenclatureIndentFactory(SimpleGoodsNomenclatureIndentFactory):
     class Meta:
         model = "commodities.GoodsNomenclatureIndent"
-
-
-indent_path_generator = string_generator(4)
 
 
 class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
@@ -664,22 +689,35 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     )
 
     @factory.post_generation
-    def with_certificates(self, create, extracted, **kwargs):
-        if create and extracted:
-            cert = CertificateFactory.create(
-                valid_between=self.valid_between,
-                transaction=self.transaction,
-            )
-            self.required_certificates.add(cert)
-
-    @factory.post_generation
     def required_certificates(self, create, extracted, **kwargs):
         if not create:
             return
 
-        if extracted:
-            for certificate in extracted:
-                self.required_certificates.add(certificate)
+        # Specifically checks for None so that empty arrays don't create
+        if extracted is None and not any(kwargs):
+            return
+
+        # If the user just passed kwargs or just said
+        # `required_certificates=True` then create a single certificate.
+        if extracted is None or extracted is True:
+            extracted = [
+                CertificateFactory.create(
+                    **{
+                        "valid_between": self.valid_between,
+                        "transaction": self.transaction,
+                        **kwargs,
+                    },
+                ),
+            ]
+        else:
+            # Else set any kwargs on the passed certificates.
+            for cert in extracted:
+                for field in kwargs:
+                    setattr(cert, field, kwargs[field])
+                cert.save(force_write=True)
+
+        for cert in extracted:
+            self.required_certificates.add(cert)
 
 
 class QuotaOrderNumberOriginFactory(TrackedModelMixin, ValidityFactoryMixin):

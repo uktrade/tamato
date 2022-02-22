@@ -87,12 +87,8 @@ def order_number_objects():
 def required_certificates_data(measure_data: Dict, order_number_objects) -> Dict:
     return {
         "order_number": factories.QuotaOrderNumberFactory.create(
-            required_certificates=[
-                factories.CertificateFactory(
-                    sid="123",
-                    certificate_type__sid="U",
-                ),
-            ],
+            required_certificates__sid="123",
+            required_certificates__certificate_type__sid="U",
         ),
         **measure_data,
     }

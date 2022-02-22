@@ -8,8 +8,6 @@ from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
-from common.business_rules import ValidityPeriodContains
-from common.business_rules import ValidityPeriodSpansContainer
 from common.business_rules import only_applicable_after
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
@@ -103,13 +101,15 @@ class ON7(ValidityPeriodContained):
     container_field_name = "order_number"
 
 
-class ON8(ON7):
+class ON8(ValidityPeriodContained):
     """The validity period of the quota order number must span the validity
     period of the referencing quota definition."""
 
+    container_field_name = "order_number"
+
 
 @only_applicable_after("2007-12-31")
-class ON9(ValidityPeriodContains):
+class ON9(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
     of the quota order number must span the validity period of the measure."""
 
@@ -117,7 +117,7 @@ class ON9(ValidityPeriodContains):
 
 
 @only_applicable_after("2007-12-31")
-class ON10(ValidityPeriodContains):
+class ON10(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
     of the quota order number origin must span the validity period of the
     measure."""
@@ -163,7 +163,7 @@ class CertificatesMustExist(MustExist):
     reference_field_name = "certificate"
 
 
-class CertificateValidityPeriodMustSpanQuotaOrderNumber(ValidityPeriodSpansContainer):
+class CertificateValidityPeriodMustSpanQuotaOrderNumber(ValidityPeriodContained):
     """The validity period of the required certificates must span the validity
     period of the quota order number."""
 
