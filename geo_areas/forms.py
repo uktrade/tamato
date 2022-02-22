@@ -108,7 +108,7 @@ class GeographicalAreaFormMixin(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
 
-        geo_area_type = cleaned_data.pop("geo_area_type")
+        geo_area_type = cleaned_data.pop("geo_area_type", None)
         erga_omnes_exclusions = cleaned_data.pop("erga_omnes_exclusions", None)
         geo_group = cleaned_data.pop("geo_group", None)
         geo_group_exclusions = cleaned_data.pop("geo_group_exclusions", None)
