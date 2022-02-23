@@ -193,7 +193,25 @@ class ME7(BusinessRule):
     """
 
     def validate(self, measure):
-        if measure.goods_nomenclature and measure.goods_nomenclature.suffix != "80":
+        # Simply calling measure.goods_nomenclature may not work
+        # when the good is updated with a new suffix
+        # (it will only work if the measure itself is changing)
+        # due to the fact that the measure's good foreign key
+        # will now point to the old version of the good
+        # and this test will be futile.
+        good = (
+            type(measure.goods_nomenclature)
+            .objects.filter(
+                sid=measure.goods_nomenclature.sid,
+                valid_between__overlap=measure.effective_valid_between,
+            )
+            .order_by(
+                "-transaction__partition",
+                "transaction__order",
+            )
+            .last()
+        )
+        if good and good.suffix != "80":
             raise self.violation(measure)
 
 
