@@ -1,0 +1,12 @@
+{% macro abbreviated(o) -%}
+    <abbr title="{{ o.code }} – {{ o.description }}">
+        {{ o.abbreviation }}
+    </abbr>
+{%- endmacro %}
+
+{% macro measurement(m) -%}
+    {{ abbreviated(m.measurement_unit) }}
+    {% if m.measurement_unit_qualifier %}
+        / {{ abbreviated(m.measurement_unit_qualifier) }}
+    {% endif %}
+{%- endmacro %}

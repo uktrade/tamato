@@ -600,11 +600,6 @@ class Measure(TrackedModel, ValidityMixin):
             .exists()
         )
 
-    def get_conditions(self, transaction):
-        return MeasureCondition.objects.filter(
-            dependent_measure__sid=self.sid,
-        ).approved_up_to_transaction(transaction)
-
     def terminate(self, workbasket, when: date):
         """
         Returns a new version of the measure updated to end on the specified
