@@ -51,6 +51,17 @@ def test_index_displays_objects_in_current_workbasket(
         assert page.find("input", {"name": field_name})
 
 
+def test_index_with_each_type_of_object_in_current_workbasket(
+    valid_user_client,
+    workbasket,
+    trackedmodel_factory,
+):
+    with workbasket.new_transaction():
+        trackedmodel_factory.create()
+    response = valid_user_client.get(reverse("index"))
+    assert response.status_code == 200
+
+
 @pytest.mark.parametrize(
     "response, status_code, status",
     [
