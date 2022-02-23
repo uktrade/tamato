@@ -321,7 +321,25 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME7.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME7.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">and</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;80&quot;</span><span class="p">:</span>
+        <span class="c1"># Simply calling measure.goods_nomenclature may not work</span>
+        <span class="c1"># when the good is updated with a new suffix</span>
+        <span class="c1"># (it will only work if the measure itself is changing)</span>
+        <span class="c1"># due to the fact that the measure&#39;s good foreign key</span>
+        <span class="c1"># will now point to the old version of the good</span>
+        <span class="c1"># and this test will be futile.</span>
+        <span class="n">good</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
+                <span class="s2">&quot;-transaction__partition&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;transaction__order&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">good</span> <span class="ow">and</span> <span class="n">good</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;80&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
