@@ -1,3 +1,5 @@
+from itertools import groupby
+from operator import attrgetter
 from typing import Any
 from typing import Type
 
@@ -67,6 +69,26 @@ class MeasureDetail(MeasureMixin, TrackedModelDetailView):
     model = Measure
     template_name = "measures/detail.jinja"
     queryset = Measure.objects.with_duty_sentence().latest_approved()
+
+    def get_context_data(self, **kwargs: Any):
+        conditions = (
+            self.object.conditions.current()
+            .with_duty_sentence()
+            .prefetch_related(
+                "condition_code",
+                "required_certificate",
+                "required_certificate__certificate_type",
+                "condition_measurement__measurement_unit",
+                "condition_measurement__measurement_unit_qualifier",
+                "action",
+            )
+            .order_by("condition_code__code", "component_sequence_number")
+        )
+        condition_groups = groupby(conditions, attrgetter("condition_code"))
+
+        context = super().get_context_data(**kwargs)
+        context["condition_groups"] = condition_groups
+        return context
 
 
 @method_decorator(require_current_workbasket, name="dispatch")

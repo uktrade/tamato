@@ -1,28 +1,44 @@
 {% from 'macros/create_link.jinja' import create_link %}
 
+{% from 'includes/measures/macros/duty_amount.jinja' import duty_amount %}
+
+{% macro requirement(condition) -%}
+    {%- if condition.required_certificate -%}
+        {{ create_link(condition.required_certificate.get_url(), condition.required_certificate.code) }}:
+        {{ condition.required_certificate.get_description().description }}
+    {%- elif condition.duty_amount -%}
+        {{ duty_amount(condition) }}
+    {%- else -%}
+        Condition not fulfilled
+    {%- endif -%}
+{%- endmacro %}
+
+
 <h2 class="govuk-heading-l">Conditions</h2>
-{% if object.get_conditions(get_current_workbasket(request).last_transaction) %}
+
+{% set has_conditions = false %}
+{% for condition_code, conditions in condition_groups %}
+    <h3 class="govuk-heading-m">{{ condition_code.code }}: {{ condition_code.description }}</h3>
+    {% set has_conditions = true %}
     {% set table_rows = [] %}
-    {% for condition in object.get_conditions(get_current_workbasket(request).last_transaction).with_duty_sentence() -%}
+    {% for condition in conditions -%}
         {{ table_rows.append([
-            {"text": condition.condition_code.code ~ condition.component_sequence_number},
-            {"text": condition.duty_sentence if condition.duty_sentence else '-'},
+            {"text": requirement(condition) },
             {"text": condition.action.description},
-            {"text": create_link(condition.required_certificate.get_url(), condition.required_certificate.code) if condition.required_certificate else '-'},
-            {"text": condition.required_certificate.get_description().description if condition.required_certificate else '-'},
+            {"text": condition.duty_sentence if condition.duty_sentence else '-'},
         ]) or "" }}
     {% endfor %}
     {{ govukTable({
     "head": [
-        {"text": "Condition code and sequence"},
-        {"text": "Duties"},
+        {"text": "Required certificate or amount", "classes": "govuk-!-width-two-thirds"},
         {"text": "Action"},
-        {"text": "Certificate"},
-        {"text": "Certificate description", "classes": "govuk-!-width-one-half"},
+        {"text": "Applicable duties"},
     ],
     "rows": table_rows
     }) }}
-{% else %}
+{% endfor %}
+
+{% if has_conditions %}
     <p class="govuk-body">This measure has no conditions.</p>
 {% endif %}
 
