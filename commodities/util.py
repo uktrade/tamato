@@ -93,3 +93,17 @@ def get_snapshot_from_good_chapter(good):
     )
 
     return snapshot
+
+
+def is_contained(
+    date_range: TaricDateRange,
+    containing_date_range: TaricDateRange,
+) -> bool:
+    """Returns true iof the date range is fully contained by the containing
+    range."""
+    contained_range = contained_date_range(
+        date_range,
+        containing_date_range,
+    )
+
+    return contained_range == date_range
