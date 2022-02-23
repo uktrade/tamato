@@ -83,6 +83,7 @@ if os.getenv("ELASTIC_TOKEN"):
         "SERVER_URL": "https://apm.elk.uktrade.digital",
         "ENVIRONMENT": ENV,
         "SERVER_TIMEOUT": os.getenv("ELASTIC_TIMEOUT", "20s"),
+        "TRANSACTION_MAX_SPANS": 20,
     }
 
 DOMAIN_APPS = [
