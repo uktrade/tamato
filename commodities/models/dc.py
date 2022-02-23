@@ -24,16 +24,13 @@ from django.db.models.expressions import Subquery
 from django.db.models.query_utils import Q
 
 from commodities import business_rules as cbr
+from commodities.models.code import CommodityCode
 from commodities.models.constants import SUFFIX_DECLARABLE
 from commodities.models.constants import TreeNodeRelation
-from commodities.models.orm import CommodityCode
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from commodities.models.orm import GoodsNomenclatureIndent
 from commodities.util import clean_item_id
-from commodities.util import contained_date_range
-from commodities.util import date_ranges_overlap
-from commodities.util import is_contained
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
@@ -44,9 +41,12 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
+from common.util import contained_date_range
+from common.util import date_ranges_overlap
 from common.util import get_latest_versions
 from common.util import maybe_max
 from common.util import maybe_min
+from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from importer.namespaces import TARIC_RECORD_GROUPS
 from measures import business_rules as mbr
@@ -702,7 +702,7 @@ class CommodityCollection(CommodityTreeBase):
         If the optional snapshot_date argument is not provided, this method will
         return the snapshot as of today.
         """
-        return self._get_snapshot(
+        return self.get_snapshot(
             transaction=transaction,
             snapshot_date=snapshot_date,
         )
@@ -720,7 +720,7 @@ class CommodityCollection(CommodityTreeBase):
         will assign as the snapshot moment the highest transaction id across all
         snapshot commodities.
         """
-        return self._get_snapshot(transaction=transaction)
+        return self.get_snapshot(transaction=transaction)
 
     @property
     def current_snapshot(self) -> CommodityTreeSnapshot:
@@ -730,9 +730,9 @@ class CommodityCollection(CommodityTreeBase):
         A current snapshot only includes current record versions for commodities
         that are valid as of the current date.
         """
-        return self._get_snapshot(transaction=self.max_transaction)
+        return self.get_snapshot(transaction=self.max_transaction)
 
-    def _get_snapshot(
+    def get_snapshot(
         self,
         transaction: Transaction,
         snapshot_date: Optional[date] = None,
@@ -796,6 +796,15 @@ class CommodityCollection(CommodityTreeBase):
     def __copy__(self) -> "CommodityCollection":
         """Returns an independent copy of the collection."""
         return CommodityCollection(copy(self.commodities))
+
+
+def get_chapter_collection(
+    good: Union[Commodity, GoodsNomenclature],
+) -> CommodityCollection:
+    """Returns a commodity collection that contains all of the commodities in
+    the same chapter as the passed commodity."""
+
+    return CommodityCollectionLoader(prefix=good.code.chapter).load()
 
 
 @dataclass(frozen=True)
@@ -1265,9 +1274,9 @@ class CommodityChange(BaseModel):
         """
         affected_measure = measure if related_is_ancestor else related_measure
 
-        if is_contained(
-            related_measure.valid_between,
+        if validity_range_contains_range(
             measure.valid_between,
+            related_measure.valid_between,
         ):
             return self._add_pending_delete(
                 affected_measure,
@@ -1275,9 +1284,9 @@ class CommodityChange(BaseModel):
                 rule_variant + ".rc",
             )
 
-        if is_contained(
-            measure.valid_between,
+        if validity_range_contains_range(
             related_measure.valid_between,
+            measure.valid_between,
         ):
             return self._add_pending_delete(
                 affected_measure,
