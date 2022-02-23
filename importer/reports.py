@@ -14,7 +14,7 @@ from typing import Union
 
 import requests
 
-from commodities.models.orm import CommodityCode
+from commodities.models.code import CommodityCode
 from commodities.models.orm import GoodsNomenclature
 from common.validators import UpdateType
 from measures.models import Measure

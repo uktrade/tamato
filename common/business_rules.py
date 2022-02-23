@@ -534,6 +534,7 @@ class ValidityStartDateRules(BusinessRule):
             raise self.generate_violation(model, "start after end")
 
 
+@skip_when_deleted
 class DescriptionsRules(ValidityStartDateRules):
     """Repeated rule pattern for descriptions."""
 
