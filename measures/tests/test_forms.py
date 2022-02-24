@@ -28,14 +28,14 @@ def test_diff_components_called(diff_components, measure_form, duty_sentence_par
     assert diff_components.called == True
 
 
-def test_error_raised_if_no_duty_sentence(session_request):
+def test_error_raised_if_no_duty_sentence(session_with_workbasket):
     measure = factories.MeasureFactory.create()
 
     with pytest.raises(
         AttributeError,
         match="Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
     ):
-        MeasureForm(data={}, instance=measure, request=session_request)
+        MeasureForm(data={}, instance=measure, request=session_with_workbasket)
 
 
 # https://uktrade.atlassian.net/browse/TP2000-74

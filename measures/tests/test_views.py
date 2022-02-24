@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
@@ -108,6 +109,55 @@ def test_measure_detail_views(view, url_pattern, valid_user_client):
     """Verify that measure detail views are under the url measures/ and don't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+def test_measure_detail_conditions(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    certificate_condition = factories.MeasureConditionWithCertificateFactory.create(
+        dependent_measure=measure,
+        condition_code=condition_code,
+        component_sequence_number=1,
+    )
+    amount_condition = factories.MeasureConditionFactory.create(
+        dependent_measure=measure,
+        duty_amount=1000.000,
+        condition_code=condition_code,
+        component_sequence_number=2,
+    )
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#conditions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+
+    assert (
+        page.find("h3").text == f"{condition_code.code}: {condition_code.description}"
+    )
+
+    rows = page.find("table").findChildren(["th", "tr"])
+    # ignore everything above the first condition row
+    first_row = rows[4]
+    cells = first_row.findChildren(["td"])
+    certificate = certificate_condition.required_certificate
+
+    assert (
+        cells[0].text
+        == f"{certificate.code}:\n        {certificate.get_description().description}"
+    )
+    assert cells[1].text == certificate_condition.action.description
+    assert cells[2].text == "-"
+
+    second_row = rows[5]
+    cells = second_row.findChildren(["td"])
+
+    assert (
+        cells[0].text
+        == f"\n    1000.000\n        {amount_condition.monetary_unit.code}"
+    )
+    assert len(rows) == 6
 
 
 @pytest.mark.parametrize(
