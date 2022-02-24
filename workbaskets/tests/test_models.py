@@ -22,6 +22,7 @@ from workbaskets.models import SEED_ONLY
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.models import TransactionPartitionScheme
 from workbaskets.models import UserTransactionPartitionScheme
+from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
@@ -332,3 +333,14 @@ def test_workbasket_clean_does_not_run_business_rules():
         copy.transaction.clean()
 
     model.transaction.workbasket.full_clean()  # Should not throw
+
+
+def test_current_transaction_returns_last_approved_transaction(
+    session_request,
+    approved_transaction,
+):
+    """Check that when no workbasket is saved on the request session
+    get_current_transaction returns the latest approved transaction instead."""
+    current = WorkBasket.get_current_transaction(session_request)
+
+    assert current == approved_transaction

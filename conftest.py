@@ -1134,9 +1134,14 @@ def session_request(client, workbasket):
     session.save()
     request = RequestFactory()
     request.session = session
-    request.session.update({"workbasket": {"id": workbasket.pk}})
 
     return request
+
+
+@pytest.fixture
+def session_with_workbasket(session_request):
+    session_request.session.update({"workbasket": {"id": workbasket.pk}})
+    return session_request
 
 
 @pytest.fixture

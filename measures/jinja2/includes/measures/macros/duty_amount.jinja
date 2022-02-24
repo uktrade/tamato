@@ -3,7 +3,7 @@
 {%- macro duty_amount(obj) %}
     {{ obj.duty_amount }}
     {%- if obj.monetary_unit %}
-        <abbr title="{{ m.monetary_unit.description }}">{{ m.monetary_unit.code }}</abbr>
+        <abbr title="{{ obj.monetary_unit.description }}">{{ obj.monetary_unit.code }}</abbr>
     {%- elif obj.condition_measurement %}
         {{ measurement(obj.condition_measurement) }}
     {%- else -%}
