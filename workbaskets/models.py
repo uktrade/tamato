@@ -250,6 +250,11 @@ class WorkBasketQueryset(QuerySet):
             approver__isnull=False,
         )
 
+    def editable(self):
+        return self.filter(
+            status=WorkflowStatus.EDITING,
+        )
+
 
 class WorkBasket(TimestampedMixin):
     """
@@ -259,7 +264,7 @@ class WorkBasket(TimestampedMixin):
     See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
     """
 
-    objects = WorkBasketQueryset.as_manager()
+    objects: WorkBasketQueryset = WorkBasketQueryset.as_manager()
 
     title = models.CharField(
         max_length=255,
@@ -426,7 +431,7 @@ class WorkBasket(TimestampedMixin):
         if "workbasket" in request.session:
             workbasket = cls.load_from_session(request.session)
 
-            if workbasket.status in WorkflowStatus.approved_statuses():
+            if workbasket.status != WorkflowStatus.EDITING:
                 del request.session["workbasket"]
                 return None
 

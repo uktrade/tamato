@@ -3,6 +3,7 @@ from django.db.models import Max
 
 from additional_codes import business_rules
 from additional_codes import validators
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.fields import ShortDescription
@@ -91,6 +92,7 @@ class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.ACN14,
         business_rules.ACN17,
         UpdateValidity,
+        UniqueIdentifyingFields,
     )
 
     def __str__(self):
