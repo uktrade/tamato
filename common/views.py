@@ -164,7 +164,6 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         kwargs = super().get_form_kwargs()
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         kwargs["objects"] = page.object_list
-        kwargs["field_name_prefix"] = "trackedmodelselection-"
         return kwargs
 
     def get_context_data(self, **kwargs):
