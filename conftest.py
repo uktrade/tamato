@@ -1129,7 +1129,7 @@ def unordered_transactions():
 
 
 @pytest.fixture
-def session_request(client, workbasket):
+def session_request(client):
     session = client.session
     session.save()
     request = RequestFactory()
@@ -1139,7 +1139,7 @@ def session_request(client, workbasket):
 
 
 @pytest.fixture
-def session_with_workbasket(session_request):
+def session_with_workbasket(session_request, workbasket):
     session_request.session.update({"workbasket": {"id": workbasket.pk}})
     return session_request
 
