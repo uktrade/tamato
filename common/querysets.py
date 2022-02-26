@@ -7,18 +7,20 @@ from django.db.models import QuerySet
 class ValidityQuerySet(QuerySet):
     """A mixin for querysets dealing with models that have validity periods."""
 
-    def objects_with_validity_field(self):
+    def with_validity_field(self):
         """
-        Return a queryset with models having a validity date field.
+        Returns a QuerySet which will have this model's validity date field (as
+        specified by :attr:`validity_field_name`) present on the returned
+        models.
 
-        :rtype QuerySet:
+        The need for this is that some models (e.g.
+        :class:`~measures.models.Measure`) use a validity date that is computed
+        on demand as part of a database query and hence is not present on the
+        default queryset, and so will override this method.
         """
-        return self.model.objects_with_validity_field()
+        return self
 
-    def not_in_effect(
-        self,
-        at_date: date,
-    ) -> QuerySet:
+    def not_in_effect(self, at_date: date) -> QuerySet:
         """
         Filter queryset to only those whose validity period does NOT include the
         given date.
@@ -26,14 +28,11 @@ class ValidityQuerySet(QuerySet):
         :param at_date date: Exclude results whose validity period contains this date.
         :rtype QuerySet:
         """
-        return self.objects_with_validity_field().exclude(
+        return self.with_validity_field().exclude(
             **{f"{self.model.validity_field_name}__contains": at_date},
         )
 
-    def no_longer_in_effect(
-        self,
-        at_date: date,
-    ) -> QuerySet:
+    def no_longer_in_effect(self, at_date: date) -> QuerySet:
         """
         Filter queryset to only those whose validity period ends before the
         given date.
@@ -42,15 +41,12 @@ class ValidityQuerySet(QuerySet):
         after this date.
         :rtype QuerySet:
         """
-        return self.objects_with_validity_field().filter(
+        return self.with_validity_field().filter(
             ~Q(**{f"{self.model.validity_field_name}__contains": at_date})
             & ~Q(**{f"{self.model.validity_field_name}__startswith__gt": at_date}),
         )
 
-    def not_yet_in_effect(
-        self,
-        at_date: date,
-    ) -> QuerySet:
+    def not_yet_in_effect(self, at_date: date) -> QuerySet:
         """
         Filter the queryset to only those whose validity period starts after the
         given date.
@@ -58,14 +54,11 @@ class ValidityQuerySet(QuerySet):
         :param at_date date: Exclude results with validity starts before this date.
         :rtype QuerySet:
         """
-        return self.objects_with_validity_field().filter(
+        return self.with_validity_field().filter(
             **{f"{self.model.validity_field_name}__startswith__gt": at_date},
         )
 
-    def not_current(
-        self,
-        asof_transaction=None,
-    ) -> QuerySet:
+    def not_current(self, asof_transaction=None) -> QuerySet:
         """
         Filter the queryset to only those TrackedModels that are not the latest
         approved versions as of the given Transaction.

@@ -18,6 +18,7 @@ from django_cte.cte import With
 
 from common.fields import TaricDateRangeField
 from common.models.tracked_qs import TrackedModelQuerySet
+from common.querysets import ValidityQuerySet
 from common.util import EndDate
 from common.util import StartDate
 from regulations.models import Regulation
@@ -157,7 +158,10 @@ class DutySentenceMixin(QuerySet):
         )
 
 
-class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
+class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin, ValidityQuerySet):
+    def with_validity_field(self):
+        return self.with_effective_valid_between()
+
     def with_effective_valid_between(self):
         """
         There are five ways in which measures can get end dated:
