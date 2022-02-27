@@ -210,9 +210,10 @@ class TrackedModel(PolymorphicModel):
     def get_versions(self):
         """Find all versions of this model."""
         if hasattr(self, "version_group"):
-            return self.version_group.versions.all()
-        query = Q(**self.get_identifying_fields())
-        return self.__class__.objects.filter(query)
+            query = Q(version_group_id=self.version_group_id)
+        else:
+            query = Q(**self.get_identifying_fields())
+        return type(self).objects.filter(query)
 
     def _get_version_group(self) -> VersionGroup:
         if self.update_type == validators.UpdateType.CREATE:

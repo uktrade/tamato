@@ -664,6 +664,15 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     )
 
     @factory.post_generation
+    def with_certificates(self, create, extracted, **kwargs):
+        if create and extracted:
+            cert = CertificateFactory.create(
+                valid_between=self.valid_between,
+                transaction=self.transaction,
+            )
+            self.required_certificates.add(cert)
+
+    @factory.post_generation
     def required_certificates(self, create, extracted, **kwargs):
         if not create:
             return
