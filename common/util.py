@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 from datetime import timedelta
+from functools import lru_cache
 from functools import partial
 from platform import python_version_tuple
 from typing import Any
@@ -17,8 +18,10 @@ import wrapt
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
+from django.db.models import Model
 from django.db.models import QuerySet
 from django.db.models import Value
+from django.db.models.constants import LOOKUP_SEP
 from django.db.models.expressions import Case
 from django.db.models.expressions import Expression
 from django.db.models.expressions import When
@@ -213,6 +216,40 @@ def validity_range_contains_range(
             return False
 
     return True
+
+
+@lru_cache
+def resolve_path(model: Type[Model], path: str):
+    """
+    Returns an ordered sequence of types and field names of the foreign keys
+    representing the passed path, starting with the passed model and following
+    relations by name.
+
+    E.g. for a path of 'foo__bar__baz', first the relation 'foo' will be looked
+    up and the foreign key on the `Foo` model will be returned, then the
+    relation 'bar' will be looked up and the foreign key on the `Bar` model will
+    be returned, etc.
+    """
+    contained_model = model
+    relation_path = []
+
+    for step in path.split(LOOKUP_SEP):
+        relations = {
+            **contained_model._meta.fields_map,
+            **contained_model._meta._forward_fields_map,
+        }
+
+        if step not in relations:
+            raise ValueError(
+                f"{step!r} is not a valid relation for {contained_model!r}. "
+                f"Choices are: {relations.keys()!r}",
+            )
+
+        relation = relations[step]
+        contained_model = relation.related_model
+        relation_path.append((contained_model, relation.remote_field))
+
+    return relation_path
 
 
 def get_field_tuple(
