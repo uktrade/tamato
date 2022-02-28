@@ -127,7 +127,6 @@
             
   <h1>Source code for footnotes.business_rules</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Business rules for Footnotes and Footnote Types.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
@@ -150,55 +149,27 @@
     <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;footnote&quot;</span></div>
 
 
-<div class="viewcode-block" id="ValidityPeriodContainsIfInUse"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.ValidityPeriodContainsIfInUse">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodContainsIfInUse</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Rule enforcing footnote validity period spans a dependent&#39;s validity</span>
-<span class="sd">    period.&quot;&quot;&quot;</span>
-
-    <span class="n">dependent_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">footnoted_model_field_name</span><span class="p">:</span> <span class="nb">str</span>
-
-<div class="viewcode-block" id="ValidityPeriodContainsIfInUse.validate"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.ValidityPeriodContainsIfInUse.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">footnote</span><span class="p">):</span>
-        <span class="n">assoc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">footnote</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;footnoteassociation</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dependent_name</span><span class="si">}</span><span class="s2">_set&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">assoc</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">associated_footnote__footnote_id</span><span class="o">=</span><span class="n">footnote</span><span class="o">.</span><span class="n">footnote_id</span><span class="p">,</span>
-                <span class="n">associated_footnote__footnote_type__footnote_type_id</span><span class="o">=</span><span class="n">footnote</span><span class="o">.</span><span class="n">footnote_type</span><span class="o">.</span><span class="n">footnote_type_id</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">footnote</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-                <span class="o">**</span><span class="p">{</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">footnoted_model_field_name</span><span class="si">}</span><span class="s2">__valid_between__contained_by&quot;</span><span class="p">:</span> <span class="n">footnote</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">footnote</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="FO5"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO5">[docs]</a><span class="k">class</span> <span class="nc">FO5</span><span class="p">(</span><span class="n">ValidityPeriodContainsIfInUse</span><span class="p">):</span>
+<div class="viewcode-block" id="FO5"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO5">[docs]</a><span class="k">class</span> <span class="nc">FO5</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a footnote is used in a measure the validity period of the footnote</span>
 <span class="sd">    must span the validity period of the measure.&quot;&quot;&quot;</span>
 
-    <span class="n">dependent_name</span> <span class="o">=</span> <span class="s2">&quot;measure&quot;</span>
-    <span class="n">footnoted_model_field_name</span> <span class="o">=</span> <span class="s2">&quot;footnoted_measure&quot;</span></div>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationmeasure__footnoted_measure&quot;</span></div>
 
 
-<div class="viewcode-block" id="FO6"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO6">[docs]</a><span class="k">class</span> <span class="nc">FO6</span><span class="p">(</span><span class="n">ValidityPeriodContainsIfInUse</span><span class="p">):</span>
+<div class="viewcode-block" id="FO6"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO6">[docs]</a><span class="k">class</span> <span class="nc">FO6</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a footnote is used in a goods nomenclature the validity period of</span>
 <span class="sd">    the footnote must span the validity period of the association with the goods</span>
 <span class="sd">    nomenclature.&quot;&quot;&quot;</span>
 
-    <span class="n">dependent_name</span> <span class="o">=</span> <span class="s2">&quot;goodsnomenclature&quot;</span>
-    <span class="n">footnoted_model_field_name</span> <span class="o">=</span> <span class="s2">&quot;goods_nomenclature&quot;</span></div>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationgoodsnomenclature&quot;</span></div>
 
 
-<div class="viewcode-block" id="FO9"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO9">[docs]</a><span class="k">class</span> <span class="nc">FO9</span><span class="p">(</span><span class="n">ValidityPeriodContainsIfInUse</span><span class="p">):</span>
+<div class="viewcode-block" id="FO9"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO9">[docs]</a><span class="k">class</span> <span class="nc">FO9</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a footnote is used in an additional code the validity period of the</span>
 <span class="sd">    footnote must span the validity period of the association with the</span>
 <span class="sd">    additional code.&quot;&quot;&quot;</span>
 
-    <span class="n">dependent_name</span> <span class="o">=</span> <span class="s2">&quot;additionalcode&quot;</span>
-    <span class="n">footnoted_model_field_name</span> <span class="o">=</span> <span class="s2">&quot;additional_code&quot;</span></div>
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationadditionalcode&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO11"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO11">[docs]</a><span class="k">class</span> <span class="nc">FO11</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>

@@ -1724,18 +1724,6 @@ that initially has a blank end date can be updated to subsequently add one.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="common.models.ValidityMixin.objects_with_validity_field">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">objects_with_validity_field</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin.objects_with_validity_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityMixin.objects_with_validity_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a QuerySet which will have this model’s validity date field (as
-specified by <a class="reference internal" href="#common.models.ValidityMixin.validity_field_name" title="common.models.ValidityMixin.validity_field_name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">validity_field_name</span></code></a>) present on the returned
-models.</p>
-<p>The need for this is that some models (e.g.
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Measure</span></code>) use a validity date that is computed
-on demand as part of a database query and hence is not present on the
-default queryset.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="common.models.ValidityMixin.terminate">
 <span class="sig-name descname"><span class="pre">terminate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workbasket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">when</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">datetime.date</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">common.models.mixins.validity.Self</span></span></span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityMixin.terminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityMixin.terminate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a new version of the object updated to end on the specified
@@ -1810,16 +1798,6 @@ start date.</p>
 <dd><p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">with_end_date()</span></code>
 method is used to automatically compute the end date based on the other
 models in the series.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.models.ValidityStartMixin.objects_with_validity_field">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">objects_with_validity_field</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/mixins/validity.html#ValidityStartMixin.objects_with_validity_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.ValidityStartMixin.objects_with_validity_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a QuerySet which will have this model’s validity date range
-present on the returned models.</p>
-<p>The need for this is that ValidityStart models use a validity date range
-that is computed on demand as part of a database query and hence is not
-present on the default queryset.</p>
 </dd></dl>
 
 <dl class="py attribute">

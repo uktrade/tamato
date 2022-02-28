@@ -171,20 +171,6 @@
     <span class="n">validity_field_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;valid_between&quot;</span>
     <span class="sd">&quot;&quot;&quot;The name of the field that should be used for validity date checking.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ValidityMixin.objects_with_validity_field"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.ValidityMixin.objects_with_validity_field">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">objects_with_validity_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a QuerySet which will have this model&#39;s validity date field (as</span>
-<span class="sd">        specified by :attr:`validity_field_name`) present on the returned</span>
-<span class="sd">        models.</span>
-
-<span class="sd">        The need for this is that some models (e.g.</span>
-<span class="sd">        :class:`~measures.models.Measure`) use a validity date that is computed</span>
-<span class="sd">        on demand as part of a database query and hence is not present on the</span>
-<span class="sd">        default queryset.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span></div>
-
 <div class="viewcode-block" id="ValidityMixin.terminate"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.ValidityMixin.terminate">[docs]</a>    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">workbasket</span><span class="p">,</span> <span class="n">when</span><span class="p">:</span> <span class="n">date</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a new version of the object updated to end on the specified</span>
@@ -225,6 +211,9 @@
 
 
 <span class="k">class</span> <span class="nc">ValidityStartQueryset</span><span class="p">(</span><span class="n">CTEQuerySet</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">with_validity_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_end_date</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="nf">with_end_date</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a :class:`QuerySet` where the :attr:`validity_end` date and the</span>
@@ -342,18 +331,6 @@
     <span class="sd">&quot;&quot;&quot;The :meth:`~common.models.mixins.ValidityStartQuerySet.with_end_date`</span>
 <span class="sd">    method is used to automatically compute the end date based on the other</span>
 <span class="sd">    models in the series. &quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="ValidityStartMixin.objects_with_validity_field"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.ValidityStartMixin.objects_with_validity_field">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">objects_with_validity_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a QuerySet which will have this model&#39;s validity date range</span>
-<span class="sd">        present on the returned models.</span>
-
-<span class="sd">        The need for this is that ValidityStart models use a validity date range</span>
-<span class="sd">        that is computed on demand as part of a database query and hence is not</span>
-<span class="sd">        present on the default queryset.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_end_date</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ValidityStartMixin.Meta"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.ValidityStartMixin.Meta">[docs]</a>    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div></div>

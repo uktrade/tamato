@@ -131,7 +131,6 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
 
 
 <div class="viewcode-block" id="CET1"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CET1">[docs]</a><span class="k">class</span> <span class="nc">CET1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
@@ -148,7 +147,7 @@
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,</span> <span class="s2">&quot;certificate_type&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CE4"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CE4">[docs]</a><span class="k">class</span> <span class="nc">CE4</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
+<div class="viewcode-block" id="CE4"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CE4">[docs]</a><span class="k">class</span> <span class="nc">CE4</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;If a certificate is used in a measure condition then the validity periods</span>
 <span class="sd">    of the certificate must span the validity period of the measure.&quot;&quot;&quot;</span>
 

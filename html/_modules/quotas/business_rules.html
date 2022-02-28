@@ -136,8 +136,6 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContains</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodSpansContainer</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
@@ -231,13 +229,15 @@
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span></div>
 
 
-<div class="viewcode-block" id="ON8"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON8">[docs]</a><span class="k">class</span> <span class="nc">ON8</span><span class="p">(</span><span class="n">ON7</span><span class="p">):</span>
+<div class="viewcode-block" id="ON8"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON8">[docs]</a><span class="k">class</span> <span class="nc">ON8</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The validity period of the quota order number must span the validity</span>
-<span class="sd">    period of the referencing quota definition.&quot;&quot;&quot;</span></div>
+<span class="sd">    period of the referencing quota definition.&quot;&quot;&quot;</span>
+
+    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number&quot;</span></div>
 
 
 <div class="viewcode-block" id="ON9"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON9">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ON9</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ON9</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number must span the validity period of the measure.&quot;&quot;&quot;</span>
 
@@ -245,7 +245,7 @@
 
 
 <div class="viewcode-block" id="ON10"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON10">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ON10</span><span class="p">(</span><span class="n">ValidityPeriodContains</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ON10</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number origin must span the validity period of the</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
@@ -291,7 +291,7 @@
     <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;certificate&quot;</span></div>
 
 
-<div class="viewcode-block" id="CertificateValidityPeriodMustSpanQuotaOrderNumber"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber">[docs]</a><span class="k">class</span> <span class="nc">CertificateValidityPeriodMustSpanQuotaOrderNumber</span><span class="p">(</span><span class="n">ValidityPeriodSpansContainer</span><span class="p">):</span>
+<div class="viewcode-block" id="CertificateValidityPeriodMustSpanQuotaOrderNumber"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber">[docs]</a><span class="k">class</span> <span class="nc">CertificateValidityPeriodMustSpanQuotaOrderNumber</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The validity period of the required certificates must span the validity</span>
 <span class="sd">    period of the quota order number.&quot;&quot;&quot;</span>
 

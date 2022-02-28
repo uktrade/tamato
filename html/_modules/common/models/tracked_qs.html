@@ -137,6 +137,7 @@
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Value</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">When</span>
+<span class="kn">from</span> <span class="nn">django.db.models.fields</span> <span class="kn">import</span> <span class="n">Field</span>
 <span class="kn">from</span> <span class="nn">django.db.models.query_utils</span> <span class="kn">import</span> <span class="n">DeferredAttribute</span>
 <span class="kn">from</span> <span class="nn">django_cte</span> <span class="kn">import</span> <span class="n">CTEQuerySet</span>
 <span class="kn">from</span> <span class="nn">polymorphic.query</span> <span class="kn">import</span> <span class="n">PolymorphicQuerySet</span>
@@ -147,6 +148,7 @@
 <span class="kn">from</span> <span class="nn">common.models.utils</span> <span class="kn">import</span> <span class="n">get_current_transaction</span>
 <span class="kn">from</span> <span class="nn">common.querysets</span> <span class="kn">import</span> <span class="n">TransactionPartitionQuerySet</span>
 <span class="kn">from</span> <span class="nn">common.querysets</span> <span class="kn">import</span> <span class="n">ValidityQuerySet</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">resolve_path</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 
 
@@ -421,7 +423,49 @@
         <span class="c1"># get models in the workbasket</span>
         <span class="n">in_workbasket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transaction__workbasket</span><span class="o">=</span><span class="n">workbasket</span><span class="p">)</span>
         <span class="c1"># add latest version of models from the current workbasket</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="o">|</span> <span class="n">in_workbasket</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="o">|</span> <span class="n">in_workbasket</span>
+
+    <span class="k">def</span> <span class="nf">follow_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a queryset filled with objects that are found by following the</span>
+<span class="sd">        passed path.</span>
+
+<span class="sd">        At each stage of the path, only the current versions of each object are</span>
+<span class="sd">        considered, so that upon reaching the end of the path the queryset will</span>
+<span class="sd">        only contain current versions that are linked back to the start of the</span>
+<span class="sd">        path by current versions as well.</span>
+
+<span class="sd">        E.g. ``follow_path(Measure.objects.filter(…), &#39;measurecomponent&#39;)`` will</span>
+<span class="sd">        return a queryset that contains all the measure components that are</span>
+<span class="sd">        attached to the filtered measures, as of the current() transaction.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+        <span class="n">qs</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">for</span> <span class="n">model_type</span><span class="p">,</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">Field</span><span class="p">):</span>
+                <span class="c1"># The foreign key is on the model we are moving towards. So we</span>
+                <span class="c1"># follow the foreign key on that model and filter by the current</span>
+                <span class="c1"># model&#39;s version group.</span>
+                <span class="nb">filter</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
+                    <span class="o">**</span><span class="p">{</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">__version_group_id__in&quot;</span><span class="p">:</span> <span class="n">qs</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+                            <span class="s2">&quot;version_group_id&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># The foreign key is on the model we are moving away from. So we</span>
+                <span class="c1"># resolve the foreign key into the version group that we are</span>
+                <span class="c1"># looking for.</span>
+                <span class="nb">filter</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
+                    <span class="n">version_group_id__in</span><span class="o">=</span><span class="n">qs</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">__version_group_id&quot;</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="n">qs</span> <span class="o">=</span> <span class="n">model_type</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">qs</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span></div>
 </pre></div>
 
 

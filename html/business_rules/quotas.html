@@ -388,12 +388,10 @@ period of the quota order number origin.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="quotas.business_rules.ON6.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.ON6.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check that the specified model or related model named by
-<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code> has a validity period that is within the
-validity period of the related model named by <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>.</p>
+<dd><p>Perform business rule validation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
 </dd>
 </dl>
 </dd></dl>

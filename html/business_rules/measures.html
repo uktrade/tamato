@@ -465,12 +465,10 @@ of the quota order number must span the validity period of the measure.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="measures.business_rules.ME116.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME116.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check that the specified model or related model named by
-<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code> has a validity period that is within the
-validity period of the related model named by <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>.</p>
+<dd><p>Perform business rule validation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
 </dd>
 </dl>
 </dd></dl>
@@ -540,7 +538,7 @@ measure.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="measures.business_rules.ME119.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME119.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME119.validate" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME119.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
@@ -1609,37 +1607,6 @@ measure type.</p>
 <dt class="sig sig-object py" id="measures.business_rules.MeasureConditionComponentApplicability.Violation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.MeasureConditionComponentApplicability.Violation" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="measures.business_rules.MeasureValidityPeriodContained">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">MeasureValidityPeriodContained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#MeasureValidityPeriodContained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.MeasureValidityPeriodContained" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py exception">
-<dt class="sig sig-object py" id="measures.business_rules.MeasureValidityPeriodContained.Violation">
-<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.MeasureValidityPeriodContained.Violation" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="measures.business_rules.MeasureValidityPeriodContained.query_contains_validity">
-<span class="sig-name descname"><span class="pre">query_contains_validity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contained</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#MeasureValidityPeriodContained.query_contains_validity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.MeasureValidityPeriodContained.query_contains_validity" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raise a violation unless the contained model validity period falls
-entirely within the validity period of the container model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>TrackedModel</strong> (<em>model</em>) – The model whose validity should contain
-that of the contained model</p></li>
-<li><p><strong>TrackedModel</strong> – The model whose validity should be
-contained by that of the container model</p></li>
-<li><p><strong>TrackedModel</strong> – The model to associate with the violation</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>self.violation</strong> – A business violation exception</p>
-</dd>
-</dl>
-</dd></dl>
 
 </dd></dl>
 

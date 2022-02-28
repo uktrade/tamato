@@ -380,28 +380,12 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="NIG30"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG30">[docs]</a><span class="k">class</span> <span class="nc">NIG30</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="NIG30"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG30">[docs]</a><span class="k">class</span> <span class="nc">NIG30</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in a goods measure then the validity</span>
 <span class="sd">    period of the goods nomenclature must span the validity period of the goods</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">related_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">good</span><span class="o">.</span><span class="n">measures</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">uncontained_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">related_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">good</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">db_effective_valid_between__contained_by</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">has_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uncontained_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-
-<div class="viewcode-block" id="NIG30.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG30.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_violation</span><span class="p">(</span><span class="n">good</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">good</span><span class="p">)</span></div></div>
+    <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;measures&quot;</span></div>
 
 
 <div class="viewcode-block" id="NIG31"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG31">[docs]</a><span class="k">class</span> <span class="nc">NIG31</span><span class="p">(</span><span class="n">NIG30</span><span class="p">):</span>
@@ -409,8 +393,9 @@
 <span class="sd">    then the validity period of the goods nomenclature must span the validity</span>
 <span class="sd">    period of the additional nomenclature measure.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">matching_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">matching_measures</span><span class="p">(</span><span class="n">good</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+    <span class="n">extra_filters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;additional_code__isnull&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="NIG34"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG34">[docs]</a><span class="k">class</span> <span class="nc">NIG34</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>

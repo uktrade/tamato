@@ -133,6 +133,8 @@
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span>
@@ -144,8 +146,10 @@
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
 
+<span class="kn">from</span> <span class="nn">common.models.mixins.validity</span> <span class="kn">import</span> <span class="n">ValidityMixin</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
 <span class="kn">from</span> <span class="nn">common.models.trackedmodel</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
+<span class="kn">from</span> <span class="nn">common.models.utils</span> <span class="kn">import</span> <span class="n">override_current_transaction</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_field_tuple</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 
@@ -501,117 +505,91 @@
 
 
 <div class="viewcode-block" id="ValidityPeriodContained"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodContained</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Rule enforcing validity period of a contained object (found through the</span>
-<span class="sd">    ``contained_field_name``) is contained by a container object&#39;s validity</span>
-<span class="sd">    period (found through the ``container_field_name``).&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rule enforcing validity period of a container object completely contains the</span>
+<span class="sd">    validity period of one more contained objects.</span>
+
+<span class="sd">    Checks that the following is true:</span>
+
+<span class="sd">        for contained_object in contained_objects:</span>
+<span class="sd">            container_object.valid_between contains</span>
+<span class="sd">            contained_object.valid_between</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The name of the field on the passed model that gives the object who&#39;s</span>
+<span class="sd">    validity range should be bigger or equal at both ends.</span>
+<span class="sd">    </span>
+<span class="sd">    This value can be unspecified, in which case the default is that the passed</span>
+<span class="sd">    model is the container model.</span>
+<span class="sd">    </span>
+<span class="sd">    The container may be null because some business rules refer to optional</span>
+<span class="sd">    links. E.g. between additional codes and measures: in many cases the measure</span>
+<span class="sd">    just may not be using an addiitonal code, but this rule is run against every</span>
+<span class="sd">    measure. The case where the container has been deleted but the contained</span>
+<span class="sd">    object has not been deleted yet should be prevented by other business rules</span>
+<span class="sd">    but is of course possible to represent in the data, so we ignore that case</span>
+<span class="sd">    too.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">contained_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The name of a field (or double-underscore-seperated path to a field) on the</span>
+<span class="sd">    passed model that gives the object(s) who&#39;s validity range should be smaller</span>
+<span class="sd">    or equal at both ends.</span>
+<span class="sd">    </span>
+<span class="sd">    This value can be unspecified, in which case the default is that the passed</span>
+<span class="sd">    model is the contained model.</span>
+<span class="sd">    </span>
+<span class="sd">    The contained object may be null because subrecords are not routinely</span>
+<span class="sd">    deleted when the parent record is deleted. For example, if a footnote is</span>
+<span class="sd">    attached to a measure but the measure is deleted, the footnote association</span>
+<span class="sd">    may not be routinely cleared up. </span>
+<span class="sd">    </span>
+<span class="sd">    Note that this one reason is why it is important to make sure we are</span>
+<span class="sd">    checking against the latest versions because the object will still be</span>
+<span class="sd">    linking via FK to the contained object version it was first attached to. The</span>
+<span class="sd">    other good reason is that if the dates on the container or contained objects</span>
+<span class="sd">    are modified, this business rule needs to be considering them.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ValidityPeriodContained.query_contains_validity"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained.query_contains_validity">[docs]</a>    <span class="k">def</span> <span class="nf">query_contains_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">container</span><span class="p">,</span> <span class="n">contained</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Raise a violation unless the contained model validity period falls</span>
-<span class="sd">        entirely within the validity period of the container model.</span>
+    <span class="n">extra_filters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="sd">&quot;&quot;&quot;Any extra filters that should be applied to filter the contained</span>
+<span class="sd">    objects.&quot;&quot;&quot;</span>
 
-<span class="sd">        :param container TrackedModel: The model whose validity should contain</span>
-<span class="sd">            that of the contained model</span>
-<span class="sd">        :param contained TrackedModel: The model whose validity should be</span>
-<span class="sd">            contained by that of the container model</span>
-<span class="sd">        :param model TrackedModel: The model to associate with the violation</span>
-<span class="sd">        :raises self.violation: A business violation exception</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="o">**</span><span class="n">container</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">(),</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">contained</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="ValidityPeriodContained.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check that the specified model or related model named by</span>
-<span class="sd">        ``contained_field_name`` has a validity period that is within the</span>
-<span class="sd">        validity period of the related model named by ``container_field_name``.</span>
-
-<span class="sd">        :param model TrackedModel: The model to check</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">container</span> <span class="o">=</span> <span class="n">get_field_tuple</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">container_field_name</span><span class="p">)</span>
-        <span class="n">contained</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="k">def</span> <span class="nf">violating_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">ValidityMixin</span><span class="p">]:</span>
+        <span class="c1"># Resolve our way to the contained models. The output from `follow_path`</span>
+        <span class="c1"># will be all the models that should be contained.</span>
+        <span class="n">contained</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="p">:</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">contained</span> <span class="o">=</span> <span class="n">get_field_tuple</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="p">)</span>
+            <span class="n">contained</span> <span class="o">=</span> <span class="n">contained</span><span class="o">.</span><span class="n">follow_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">container</span><span class="p">:</span>
-            <span class="c1"># TODO should this raise an exception?</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: Container field </span><span class="si">%s</span><span class="s2"> not found.&quot;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">container_field_name</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">return</span>
+        <span class="c1"># Get the latest version of the container model. If the container is not</span>
+        <span class="c1"># present, then skip the rule.</span>
+        <span class="n">container</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">container_field_name</span><span class="p">:</span>
+            <span class="n">container</span> <span class="o">=</span> <span class="n">container</span><span class="o">.</span><span class="n">follow_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container_field_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">container</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">contained</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">query_contains_validity</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="n">contained</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="ValidityPeriodContains"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContains">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodContains</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Rule enforcing validity period of this object contains a contained</span>
-<span class="sd">    object&#39;s validity period (found through the ``contained_field_name``).&quot;&quot;&quot;</span>
-
-    <span class="n">contained_field_name</span><span class="p">:</span> <span class="nb">str</span>
-
-<div class="viewcode-block" id="ValidityPeriodContains.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContains.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="n">contained_model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="n">relation_path</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
-            <span class="n">relation</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="o">**</span><span class="n">contained_model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">fields_map</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">contained_model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">_forward_fields_map</span><span class="p">,</span>
-            <span class="p">}[</span><span class="n">step</span><span class="p">]</span>
-            <span class="n">contained_model</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">related_model</span>
-            <span class="n">relation_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relation</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">contained_model</span><span class="o">.</span><span class="n">objects_with_validity_field</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="o">**</span><span class="p">{</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;__&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">relation_path</span><span class="p">))</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">value</span>
-                    <span class="k">for</span> <span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+        <span class="c1"># Scope the contained models down to just the ones we are testing.</span>
+        <span class="c1"># Violating models are ones that are not contained by the valid between</span>
+        <span class="c1"># from the container model.</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">contained</span><span class="o">.</span><span class="n">with_validity_field</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_filters</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="o">**</span><span class="p">{</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contained_model</span><span class="o">.</span><span class="n">validity_field_name</span><span class="si">}</span><span class="s2">__contained_by&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contained</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">validity_field_name</span><span class="si">}</span><span class="s2">__contained_by&quot;</span><span class="p">:</span> <span class="n">container</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
                 <span class="p">},</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
+        <span class="p">)</span>
 
-
-<div class="viewcode-block" id="ValidityPeriodSpansContainer"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodSpansContainer">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodSpansContainer</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Rule enforcing validity period of each contained value spans the validity</span>
-<span class="sd">    period of the container.&quot;&quot;&quot;</span>
-
-    <span class="n">contained_field_name</span><span class="p">:</span> <span class="nb">str</span>
-
-<div class="viewcode-block" id="ValidityPeriodSpansContainer.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodSpansContainer.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="n">container</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">contained</span> <span class="o">=</span> <span class="n">get_field_tuple</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">contained</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-                <span class="n">valid_between__contains</span><span class="o">=</span><span class="n">container</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
+<div class="viewcode-block" id="ValidityPeriodContained.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">override_current_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">violating_models</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="MustExist"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExist">[docs]</a><span class="k">class</span> <span class="nc">MustExist</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>

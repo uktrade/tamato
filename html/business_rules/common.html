@@ -503,93 +503,76 @@ transaction.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">ValidityPeriodContained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing validity period of a contained object (found through the
-<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code>) is contained by a container object’s validity
-period (found through the <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>).</p>
+<dd><p>Rule enforcing validity period of a container object completely contains the
+validity period of one more contained objects.</p>
+<p>Checks that the following is true:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>for contained_object in contained_objects:</dt><dd><p>container_object.valid_between contains
+contained_object.valid_between</p>
+</dd>
+</dl>
+</div></blockquote>
 <dl class="py exception">
 <dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.Violation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.Violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing validity period of a contained object (found through the
-<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code>) is contained by a container object’s validity
-period (found through the <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.query_contains_validity">
-<span class="sig-name descname"><span class="pre">query_contains_validity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contained</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContained.query_contains_validity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.query_contains_validity" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raise a violation unless the contained model validity period falls
-entirely within the validity period of the container model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>TrackedModel</strong> (<em>model</em>) – The model whose validity should contain
-that of the contained model</p></li>
-<li><p><strong>TrackedModel</strong> – The model whose validity should be
-contained by that of the container model</p></li>
-<li><p><strong>TrackedModel</strong> – The model to associate with the violation</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>self.violation</strong> – A business violation exception</p>
+<dd><p>Rule enforcing validity period of a container object completely contains the
+validity period of one more contained objects.</p>
+<p>Checks that the following is true:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>for contained_object in contained_objects:</dt><dd><p>container_object.valid_between contains
+contained_object.valid_between</p>
 </dd>
 </dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.contained_field_name">
+<span class="sig-name descname"><span class="pre">contained_field_name</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.contained_field_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of a field (or double-underscore-seperated path to a field) on the
+passed model that gives the object(s) who’s validity range should be smaller
+or equal at both ends.</p>
+<p>This value can be unspecified, in which case the default is that the passed
+model is the contained model.</p>
+<p>The contained object may be null because subrecords are not routinely
+deleted when the parent record is deleted. For example, if a footnote is
+attached to a measure but the measure is deleted, the footnote association
+may not be routinely cleared up.</p>
+<p>Note that this one reason is why it is important to make sure we are
+checking against the latest versions because the object will still be
+linking via FK to the contained object version it was first attached to. The
+other good reason is that if the dates on the container or contained objects
+are modified, this business rule needs to be considering them.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.container_field_name">
+<span class="sig-name descname"><span class="pre">container_field_name</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.container_field_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the field on the passed model that gives the object who’s
+validity range should be bigger or equal at both ends.</p>
+<p>This value can be unspecified, in which case the default is that the passed
+model is the container model.</p>
+<p>The container may be null because some business rules refer to optional
+links. E.g. between additional codes and measures: in many cases the measure
+just may not be using an addiitonal code, but this rule is run against every
+measure. The case where the container has been deleted but the contained
+object has not been deleted yet should be prevented by other business rules
+but is of course possible to represent in the data, so we ignore that case
+too.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.extra_filters">
+<span class="sig-name descname"><span class="pre">extra_filters</span></span><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">{}</span></em><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.extra_filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Any extra filters that should be applied to filter the contained
+objects.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContained.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContained.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContained.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check that the specified model or related model named by
-<code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code> has a validity period that is within the
-validity period of the related model named by <code class="docutils literal notranslate"><span class="pre">container_field_name</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContains">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">ValidityPeriodContains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContains" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing validity period of this object contains a contained
-object’s validity period (found through the <code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code>).</p>
-<dl class="py exception">
-<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContains.Violation">
-<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.business_rules.ValidityPeriodContains.Violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing validity period of this object contains a contained
-object’s validity period (found through the <code class="docutils literal notranslate"><span class="pre">contained_field_name</span></code>).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodContains.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodContains.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodContains.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform business rule validation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodSpansContainer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">common.business_rules.</span></span><span class="sig-name descname"><span class="pre">ValidityPeriodSpansContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodSpansContainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodSpansContainer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing validity period of each contained value spans the validity
-period of the container.</p>
-<dl class="py exception">
-<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodSpansContainer.Violation">
-<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.business_rules.ValidityPeriodSpansContainer.Violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rule enforcing validity period of each contained value spans the validity
-period of the container.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="common.business_rules.ValidityPeriodSpansContainer.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/business_rules.html#ValidityPeriodSpansContainer.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.business_rules.ValidityPeriodSpansContainer.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
