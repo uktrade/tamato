@@ -250,6 +250,7 @@ class MeasureCreationPattern:
             condition_sentence_parser
             or ConditionSentenceParser.get(
                 base_date,
+                workbasket=workbasket,
             )
         )
         self.exclusion_pattern = ExclusionCreationPattern(

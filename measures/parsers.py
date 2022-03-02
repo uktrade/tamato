@@ -389,7 +389,9 @@ class ConditionSentenceParser:
         condition_codes: Iterable[MeasureConditionCode],
         action_codes: Iterable[MeasureAction],
         eur_gbp_conversion_rate: Optional[float] = None,
+        workbasket=None,
     ):
+        self.workbasket = workbasket
         self.duty_expressions = {int(d.sid): d for d in duty_expressions}
         self.monetary_units: Dict[str, Optional[MonetaryUnit]] = {
             str(m.code): m for m in monetary_units
@@ -454,7 +456,9 @@ class ConditionSentenceParser:
 
         cert_id = match.group("c3") + match.group("c4")
         if cert_id not in self.certificates:
-            self.certificates[cert_id] = Certificate.objects.latest_approved().get(
+            self.certificates[cert_id] = Certificate.objects.approved_up_to_transaction(
+                self.workbasket.current_transaction,
+            ).get(
                 certificate_type__sid=match.group("c3"),
                 sid=match.group("c4"),
             )
@@ -487,7 +491,7 @@ class ConditionSentenceParser:
                 raise ValueError(f"Could not parse condition expression: '{value}'")
 
     @classmethod
-    def get(cls, forward_time: date):
+    def get(cls, forward_time: date, workbasket=None):
         duty_expressions = (
             DutyExpression.objects.as_at(forward_time)
             # Exclude anything which will match all strings
@@ -509,4 +513,5 @@ class ConditionSentenceParser:
             permitted_measurements,
             condition_codes,
             action_codes,
+            workbasket=workbasket,
         )
