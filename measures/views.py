@@ -217,63 +217,54 @@ class MeasureCreateWizard(
                 measures_data.append(measure_data)
 
         created_measures = []
-        errors = []
 
         for measure_data in measures_data:
-            try:
-                measure = measure_creation_pattern.create(**measure_data)
-                for i, condition_data in enumerate(
-                    data.get("formset-conditions", []),
-                ):
-                    if not condition_data["DELETE"]:
+            measure = measure_creation_pattern.create(**measure_data)
+            for i, condition_data in enumerate(
+                data.get("formset-conditions", []),
+            ):
+                if not condition_data["DELETE"]:
 
-                        condition = MeasureCondition(
-                            sid=measure_creation_pattern.measure_condition_sid_counter(),
-                            component_sequence_number=i,
-                            dependent_measure=measure,
+                    condition = MeasureCondition(
+                        sid=measure_creation_pattern.measure_condition_sid_counter(),
+                        component_sequence_number=i,
+                        dependent_measure=measure,
+                        update_type=UpdateType.CREATE,
+                        transaction=measure.transaction,
+                        duty_amount=condition_data["duty_amount"],
+                        condition_code=condition_data["condition_code"],
+                        action=condition_data.get("action"),
+                        required_certificate=condition_data.get("required_certificate"),
+                    )
+                    condition.save()
+
+                    # XXX the design doesn't show whether the condition duty_amount field
+                    # should handle duty_expression, monetary_unit or measurements, so this
+                    # code assumes some sensible(?) defaults
+                    if condition.duty_amount:
+                        component = MeasureConditionComponent(
+                            condition=condition,
                             update_type=UpdateType.CREATE,
-                            transaction=measure.transaction,
-                            duty_amount=condition_data["duty_amount"],
-                            condition_code=condition_data["condition_code"],
-                            action=condition_data.get("action"),
-                            required_certificate=condition_data.get(
-                                "required_certificate"
-                            ),
+                            transaction=condition.transaction,
+                            duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
+                                1
+                            ],
+                            duty_amount=condition.duty_amount,
+                            monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
+                                "GBP"
+                            ],
+                            component_measurement=None,
                         )
-                        condition.save()
+                        component.save()
 
-                        # XXX the design doesn't show whether the condition duty_amount field
-                        # should handle duty_expression, monetary_unit or measurements, so this
-                        # code assumes some sensible(?) defaults
-                        if condition.duty_amount:
-                            component = MeasureConditionComponent(
-                                condition=condition,
-                                update_type=UpdateType.CREATE,
-                                transaction=condition.transaction,
-                                duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
-                                    1
-                                ],
-                                duty_amount=condition.duty_amount,
-                                monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
-                                    "GBP"
-                                ],
-                                component_measurement=None,
-                            )
-                            component.save()
+            created_measures.append(measure)
 
-                created_measures.append(measure)
-
-            except AssertionError as e:
-                errors += e.args
-
-        return created_measures, errors
+        return created_measures
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
 
-        created_measures, errors = self.create_measures(cleaned_data)
-
-        # TODO: handle errors
+        created_measures = self.create_measures(cleaned_data)
 
         context = self.get_context_data(
             form=None,
