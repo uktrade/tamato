@@ -623,11 +623,19 @@ class TrackedModel(PolymorphicModel):
         if action != "list":
             kwargs = self.get_identifying_fields()
         try:
-            return reverse(
-                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
-                kwargs=kwargs,
-            )
+            prefix = self.get_url_pattern_name_prefix()
+            view_name = f"{prefix}-ui-{action}"
+            print("**************************")
+            print(f"*** get_url:{type(self)}")
+            print(f"*** kwargs = {kwargs}")
+            print(f"*** action = {action}")
+            print(f"*** prefix = {prefix}")
+            print(f"*** view_name = {view_name}")
+            url = reverse(view_name, kwargs=kwargs)
+            print(f"*** url = {url}")
+            return url
         except NoReverseMatch:
+            print(f"*** url = None")
             return None
 
     @classmethod
