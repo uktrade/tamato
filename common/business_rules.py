@@ -431,15 +431,17 @@ class ValidityPeriodContained(BusinessRule):
     objects."""
 
     def violating_models(self, model: TrackedModel) -> QuerySet[ValidityMixin]:
+        current = model.get_versions().current()
+
         # Resolve our way to the contained models. The output from `follow_path`
         # will be all the models that should be contained.
-        contained = model.get_versions().current()
+        contained = current
         if self.contained_field_name:
             contained = contained.follow_path(self.contained_field_name)
 
         # Get the latest version of the container model. If the container is not
         # present, then skip the rule.
-        container = model.get_versions().current()
+        container = current
         if self.container_field_name:
             container = container.follow_path(self.container_field_name)
         if not container.exists():
@@ -448,12 +450,14 @@ class ValidityPeriodContained(BusinessRule):
         # Scope the contained models down to just the ones we are testing.
         # Violating models are ones that are not contained by the valid between
         # from the container model.
+        valid_between = container.get().valid_between
+
         return (
             contained.with_validity_field()
             .filter(**self.extra_filters)
             .exclude(
                 **{
-                    f"{contained.model.validity_field_name}__contained_by": container.get().valid_between,
+                    f"{contained.model.validity_field_name}__contained_by": valid_between,
                 },
             )
         )
