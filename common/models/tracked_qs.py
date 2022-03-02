@@ -319,22 +319,23 @@ class TrackedModelQuerySet(
                 # The foreign key is on the model we are moving towards. So we
                 # follow the foreign key on that model and filter by the current
                 # model's version group.
-                filter = Q(
-                    **{
-                        f"{rel.name}__version_group_id__in": qs.values(
-                            "version_group_id",
-                        ),
-                    }
-                )
+                values = set(qs.values_list("version_group_id", flat=True))
+                filter = f"{rel.name}__version_group_id__in"
             else:
                 # The foreign key is on the model we are moving away from. So we
                 # resolve the foreign key into the version group that we are
                 # looking for.
-                filter = Q(
-                    version_group_id__in=qs.values(
+                values = set(
+                    qs.values_list(
                         f"{rel.remote_field.name}__version_group_id",
+                        flat=True,
                     ),
                 )
-            qs = model_type.objects.current().filter(filter)
+                filter = "version_group_id__in"
+
+            if any(values):
+                qs = model_type.objects.current().filter(**{filter: values})
+            else:
+                qs = model_type.objects.none()
 
         return qs.distinct()
