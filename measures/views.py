@@ -2,16 +2,15 @@ from itertools import groupby
 from operator import attrgetter
 from typing import Any
 from typing import Type
-from django.shortcuts import render
-from django.utils.text import capfirst
 
 from crispy_forms.helper import FormHelper
+from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
@@ -177,10 +176,9 @@ class MeasureCreateWizard(
         },
     }
 
+    @atomic
     def create_measures(self, data):
-        """
-        Returns a list of the created measures and a list of errors.
-        """
+        """Returns a list of the created measures and a list of errors."""
         measure_start_date = data["valid_between"].lower
 
         measure_creation_pattern = MeasureCreationPattern(
@@ -324,7 +322,8 @@ class MeasureCreateWizard(
 
     def get_template_names(self):
         return self.templates.get(
-            self.steps.current, "measures/create-wizard-step.jinja"
+            self.steps.current,
+            "measures/create-wizard-step.jinja",
         )
 
 
