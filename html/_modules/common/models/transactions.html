@@ -332,6 +332,7 @@
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="c1"># See TransactionPartition for information on workbasket_status order.</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">)</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">)),)</span>
 
     <span class="c1"># FSMField protects against unexpected state changes.</span>
     <span class="n">partition</span> <span class="o">=</span> <span class="n">FSMIntegerField</span><span class="p">(</span>
