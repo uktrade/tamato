@@ -178,7 +178,7 @@ class MeasureCreateWizard(
 
     @atomic
     def create_measures(self, data):
-        """Returns a list of the created measures and a list of errors."""
+        """Returns a list of the created measures."""
         measure_start_date = data["valid_between"].lower
 
         measure_creation_pattern = MeasureCreationPattern(

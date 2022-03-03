@@ -1,10 +1,8 @@
-import datetime
 from unittest.mock import patch
 
 import pytest
 
 from common.tests import factories
-from common.util import TaricDateRange
 from measures import forms
 from measures.forms import MeasureDutiesForm
 from measures.forms import MeasureForm
@@ -73,6 +71,11 @@ def test_measure_forms_details_invalid_data():
         "start_date_2": 2021,
     }
     form = forms.MeasureDetailsForm(data, prefix="")
+    error_string = [
+        "Select a valid choice. That choice is not one of the available choices."
+    ]
+    assert form.errors["measure_type"] == error_string
+    assert form.errors["generating_regulation"] == error_string
     assert not form.is_valid()
 
 
@@ -86,6 +89,7 @@ def test_measure_forms_details_invalid_date_range(measure_type, regulation):
         "start_date_2": 2000,
     }
     form = forms.MeasureDetailsForm(data, prefix="")
+    # In the real wizard view the prefix will be populated with the name of the form. It's left blank here to make the mock form data simpler
     assert not form.is_valid()
     assert (
         form.errors["__all__"][0]
@@ -106,6 +110,9 @@ def test_measure_forms_additional_code_invalid_data():
         "additional_code": "foo",
     }
     form = forms.MeasureAdditionalCodeForm(data, prefix="")
+    assert form.errors["additional_code"] == [
+        "Select a valid choice. That choice is not one of the available choices."
+    ]
     assert not form.is_valid()
 
 

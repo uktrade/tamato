@@ -593,7 +593,7 @@ class MeasureDutiesForm(forms.Form):
                 "duties",
                 HTML.details(
                     "Help with duties",
-                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a"
+                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a "
                     "specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR).",
                 ),
             ),

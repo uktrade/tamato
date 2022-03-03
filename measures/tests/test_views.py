@@ -1,13 +1,11 @@
 import unittest
-from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-import requests
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
-from bs4 import BeautifulSoup
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -15,10 +13,8 @@ from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
-from common.util import TaricDateRange
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
-from measures import forms
 from measures.models import Measure
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
@@ -418,49 +414,12 @@ def test_measure_form_wizard_create_measures(
 
     wizard = MeasureCreateWizard(request=mock_request)
 
-    measures, errors = wizard.create_measures(form_data)
+    measures = wizard.create_measures(form_data)
 
-    assert not errors
     assert len(measures) == 2
+    assert measures[0].footnotes.get() == footnote1
+    assert measures[1].footnotes.get() == footnote1
     assert len(measures[0].footnotes.all()) == 1
     assert len(measures[1].footnotes.all()) == 1
-    assert len(measures[0].conditions.all()) == 1
-    assert len(measures[1].conditions.all()) == 1
-
-
-@unittest.mock.patch("workbaskets.models.WorkBasket.current")
-def test_measure_form_wizard_create_measures_errors(
-    mock_workbasket,
-    mock_request,
-    duty_sentence_parser,
-    date_ranges,
-    additional_code,
-    measure_type,
-    regulation,
-):
-    mock_workbasket.return_value = factories.WorkBasketFactory.create()
-
-    commodity1 = factories.GoodsNomenclatureFactory.create(suffix="10")
-    geo_area = factories.GeographicalAreaFactory.create()
-
-    form_data = {
-        "measure_type": measure_type,
-        "generating_regulation": regulation,
-        "geographical_area": geo_area,
-        "order_number": None,
-        "valid_between": date_ranges.normal,
-        "formset-commodities": [
-            {"commodity": commodity1, "DELETE": False},
-        ],
-        "additional_code": None,
-        "formset-conditions": [],
-        "duties": "4%",
-        "formset-footnotes": [],
-    }
-
-    wizard = MeasureCreateWizard(request=mock_request)
-
-    measures, errors = wizard.create_measures(form_data)
-
-    assert errors
-    assert "ME7 – must be declarable" in errors
+    assert len(measures[0].conditions.all()) == 2
+    assert len(measures[1].conditions.all()) == 2
