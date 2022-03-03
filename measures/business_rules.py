@@ -14,7 +14,6 @@ from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
-from common.business_rules import ValidityPeriodContains
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
 from common.util import TaricDateRange
@@ -23,28 +22,6 @@ from common.validators import ApplicabilityCode
 from geo_areas.validators import AreaCode
 from measures.querysets import MeasuresQuerySet
 from quotas.validators import AdministrationMechanism
-
-
-class MeasureValidityPeriodContained(ValidityPeriodContained):
-    def query_contains_validity(self, container, contained, model):
-        queryset = container.__class__.objects.filter(
-            **container.get_identifying_fields(),
-        ).approved_up_to_transaction(model.transaction)
-
-        if container.__class__.__name__ == "Measure":
-            queryset = queryset.with_effective_valid_between().filter(
-                db_effective_valid_between__contains=contained.valid_between,
-            )
-        elif contained.__class__.__name__ == "Measure":
-            queryset = queryset.filter(
-                valid_between__contains=contained.effective_valid_between,
-            )
-        else:
-            queryset = queryset.filter(valid_between__contains=contained.valid_between)
-
-        if not queryset.exists():
-            raise self.violation(model)
-
 
 # 140 - MEASURE TYPE SERIES
 
@@ -65,7 +42,7 @@ class MT1(UniqueIdentifyingFields):
     """The measure type code must be unique."""
 
 
-class MT3(ValidityPeriodContains):
+class MT3(ValidityPeriodContained):
     """When a measure type is used in a measure then the validity period of the
     measure type must span the validity period of the measure."""
 
@@ -98,7 +75,7 @@ class MC1(UniqueIdentifyingFields):
     """The code of the measure condition code must be unique."""
 
 
-class MC3(MeasureValidityPeriodContained):
+class MC3(ValidityPeriodContained):
     """If a measure condition code is used in a measure then the validity period
     of the measure condition code must span the validity period of the
     measure."""
@@ -124,7 +101,7 @@ class MA2(PreventDeleteIfInUse):
     component."""
 
 
-class MA4(MeasureValidityPeriodContained):
+class MA4(ValidityPeriodContained):
     """If a measure action is used in a measure then the validity period of the
     measure action must span the validity period of the measure."""
 
@@ -159,7 +136,7 @@ class ME2(MustExist):
     reference_field_name = "measure_type"
 
 
-class ME3(MeasureValidityPeriodContained):
+class ME3(ValidityPeriodContained):
     """The validity period of the measure type must span the validity period of
     the measure."""
 
@@ -172,7 +149,7 @@ class ME4(MustExist):
     reference_field_name = "geographical_area"
 
 
-class ME5(MeasureValidityPeriodContained):
+class ME5(ValidityPeriodContained):
     """The validity period of the geographical area must span the validity
     period of the measure."""
 
@@ -193,11 +170,29 @@ class ME7(BusinessRule):
     """
 
     def validate(self, measure):
-        if measure.goods_nomenclature and measure.goods_nomenclature.suffix != "80":
+        # Simply calling measure.goods_nomenclature may not work
+        # when the good is updated with a new suffix
+        # (it will only work if the measure itself is changing)
+        # due to the fact that the measure's good foreign key
+        # will now point to the old version of the good
+        # and this test will be futile.
+        good = (
+            type(measure.goods_nomenclature)
+            .objects.filter(
+                sid=measure.goods_nomenclature.sid,
+                valid_between__overlap=measure.effective_valid_between,
+            )
+            .order_by(
+                "-transaction__partition",
+                "transaction__order",
+            )
+            .last()
+        )
+        if good and good.suffix != "80":
             raise self.violation(measure)
 
 
-class ME8(MeasureValidityPeriodContained):
+class ME8(ValidityPeriodContained):
     """The validity period of the goods code must span the validity period of
     the measure."""
 
@@ -280,7 +275,7 @@ class ME16(BusinessRule):
             )
 
 
-class ME115(MeasureValidityPeriodContained):
+class ME115(ValidityPeriodContained):
     """The validity period of the referenced additional code must span the
     validity period of the measure."""
 
@@ -399,7 +394,7 @@ class ME10(BusinessRule):
 
 
 @only_applicable_after("2007-12-31")
-class ME116(MeasureValidityPeriodContained):
+class ME116(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
     of the quota order number must span the validity period of the measure."""
 
@@ -452,29 +447,13 @@ class ME117(BusinessRule):
 
 
 @only_applicable_after("2007-12-31")
-class ME119(BusinessRule):
+class ME119(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
     of the quota order number origin must span the validity period of the
     measure."""
 
     # This checks the same thing as ON10 from the other side of the relation
-
-    def validate(self, measure):
-        # TODO: Ignore this for now - the data from HMRC has violations. Investigate and fix later.
-        return
-        if not measure.order_number:
-            return
-
-        if (
-            measure.order_number.quotaordernumberorigin_set.model.objects.filter(
-                order_number__sid=measure.order_number.sid,
-            )
-            .exclude(
-                valid_between__contains=measure.effective_valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(measure)
+    container_field_name = "order_number__quotaordernumberorigin"
 
 
 # -- Relation with additional codes
@@ -696,7 +675,7 @@ class ME41(MustExist):
     reference_field_name = "duty_expression"
 
 
-class ME42(MeasureValidityPeriodContained):
+class ME42(ValidityPeriodContained):
     """The validity period of the duty expression must span the validity period
     of the measure."""
 
@@ -822,7 +801,7 @@ class ME48(MustExist):
     reference_field_name = "monetary_unit"
 
 
-class ME49(MeasureValidityPeriodContained):
+class ME49(ValidityPeriodContained):
     """The validity period of the referenced monetary unit must span the
     validity period of the measure."""
 
@@ -837,7 +816,7 @@ class ME50(MustExist):
     reference_field_name = "component_measurement"
 
 
-class ME51(MeasureValidityPeriodContained):
+class ME51(ValidityPeriodContained):
     """The validity period of the measurement unit must span the validity period
     of the measure."""
 
@@ -845,7 +824,7 @@ class ME51(MeasureValidityPeriodContained):
     contained_field_name = "component_measure"
 
 
-class ME52(MeasureValidityPeriodContained):
+class ME52(ValidityPeriodContained):
     """The validity period of the measurement unit qualifier must span the
     validity period of the measure."""
 
@@ -868,7 +847,7 @@ class ME56(MustExist):
     reference_field_name = "required_certificate"
 
 
-class ME57(MeasureValidityPeriodContained):
+class ME57(ValidityPeriodContained):
     """The validity period of the referenced certificate must span the validity
     period of the measure."""
 
@@ -922,7 +901,7 @@ class ME60(MustExist):
     reference_field_name = "monetary_unit"
 
 
-class ME61(MeasureValidityPeriodContained):
+class ME61(ValidityPeriodContained):
     """The validity period of the referenced monetary unit must span the
     validity period of the measure."""
 
@@ -937,7 +916,7 @@ class ME62(MustExist):
     reference_field_name = "condition_measurement"
 
 
-class ME63(MeasureValidityPeriodContained):
+class ME63(ValidityPeriodContained):
     """The validity period of the measurement unit must span the validity period
     of the measure."""
 
@@ -945,7 +924,7 @@ class ME63(MeasureValidityPeriodContained):
     contained_field_name = "dependent_measure"
 
 
-class ME64(MeasureValidityPeriodContained):
+class ME64(ValidityPeriodContained):
     """The validity period of the measurement unit qualifier must span the
     validity period of the measure."""
 
@@ -959,7 +938,7 @@ class ME105(MustExist):
     reference_field_name = "duty_expression"
 
 
-class ME106(MeasureValidityPeriodContained):
+class ME106(ValidityPeriodContained):
     """The validity period of the duty expression must span the validity period
     of the measure."""
 
@@ -1144,7 +1123,7 @@ class ME71(FootnoteApplicability):
     applicable_field = "footnoted_measure"
 
 
-class ME73(MeasureValidityPeriodContained):
+class ME73(ValidityPeriodContained):
     """The validity period of the associated footnote must span the validity
     period of the measure."""
 

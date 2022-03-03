@@ -558,7 +558,7 @@ class Measure(TrackedModel, ValidityMixin):
         if not hasattr(self, self.validity_field_name):
             effective_valid_between = (
                 type(self)
-                .objects_with_validity_field()
+                .objects.with_validity_field()
                 .filter(pk=self.pk)
                 .get()
                 .db_effective_valid_between
@@ -576,10 +576,6 @@ class Measure(TrackedModel, ValidityMixin):
             return getattr(self, self.validity_field_name)
 
         return TaricDateRange(self.valid_between.lower, self.effective_end_date)
-
-    @classmethod
-    def objects_with_validity_field(cls):
-        return super().objects_with_validity_field().with_effective_valid_between()
 
     @classproperty
     def auto_value_fields(cls):
@@ -603,11 +599,6 @@ class Measure(TrackedModel, ValidityMixin):
             .filter(condition__dependent_measure__sid=self.sid)
             .exists()
         )
-
-    def get_conditions(self, transaction):
-        return MeasureCondition.objects.filter(
-            dependent_measure__sid=self.sid,
-        ).approved_up_to_transaction(transaction)
 
     def terminate(self, workbasket, when: date):
         """

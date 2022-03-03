@@ -443,7 +443,7 @@ class WorkBasket(TimestampedMixin):
         if workbasket:
             return workbasket.current_transaction
 
-        return None
+        return Transaction.approved.last()
 
     def clean_transactions(self):
         errors = []

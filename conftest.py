@@ -31,9 +31,11 @@ from rest_framework.test import APIClient
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UpdateValidity
+from common.business_rules import ValidityPeriodContained
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.utils import override_current_transaction
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
 from common.tests.models import model_with_history
@@ -121,6 +123,75 @@ def spanning_dates(request, date_ranges):
         getattr(date_ranges, contained_validity),
         container_spans_contained,
     )
+
+
+@pytest.fixture
+def assert_spanning_enforced(spanning_dates, update_type):
+    """
+    Provides a function that thoroughly checks if the validity period of a
+    contained object is enforced to be within the validity period of a container
+    object.
+
+    In particular it also checks that the passed business rule doesn't take into
+    account deleted contained items in its enforcement, and that it always uses
+    the latest version of related objects.
+
+    This is useful in implementing tests for business rules of the form:
+
+        When a "contained object" is used in a "container object" the validity
+        period of the "container object" must span the validity period of the
+        "contained object".
+    """
+
+    def check(
+        factory: Type[DjangoModelFactory],
+        business_rule: Type[ValidityPeriodContained],
+        **factory_kwargs,
+    ):
+        container_validity, contained_validity, fully_spanned = spanning_dates
+
+        contained = getattr(business_rule, "contained_field_name") or ""
+        container = getattr(business_rule, "container_field_name") or ""
+
+        # If the test is checking an UPDATE or a DELETE, set the dates to be
+        # valid on the original version so that we can tell if it is
+        # successfully checking the later version.
+        validity_on_contained = (
+            container_validity
+            if update_type != UpdateType.CREATE
+            else contained_validity
+        )
+
+        object = factory.create(
+            **factory_kwargs,
+            **{
+                f"{contained}{'__' if contained else ''}valid_between": validity_on_contained,
+                f"{contained}{'__' if contained else ''}update_type": UpdateType.CREATE,
+                f"{container}{'__' if container else ''}valid_between": container_validity,
+            },
+        )
+        workbasket = object.transaction.workbasket
+
+        if update_type != UpdateType.CREATE:
+            # Make a new version of the contained model with the actual dates we
+            # are testing, first finding the correct contained model to use.
+            contained_obj = object
+            if contained:
+                with override_current_transaction(workbasket.current_transaction):
+                    contained_obj = (
+                        object.get_versions().current().follow_path(contained).get()
+                    )
+            contained_obj.new_version(
+                workbasket,
+                valid_between=contained_validity,
+                update_type=update_type,
+            )
+
+        error_expected = update_type != UpdateType.DELETE and not fully_spanned
+        with raises_if(business_rule.Violation, error_expected):
+            business_rule(workbasket.current_transaction).validate(object)
+
+    return check
 
 
 @pytest.fixture
@@ -1058,14 +1129,19 @@ def unordered_transactions():
 
 
 @pytest.fixture
-def session_request(client, workbasket):
+def session_request(client):
     session = client.session
     session.save()
     request = RequestFactory()
     request.session = session
-    request.session.update({"workbasket": {"id": workbasket.pk}})
 
     return request
+
+
+@pytest.fixture
+def session_with_workbasket(session_request, workbasket):
+    session_request.session.update({"workbasket": {"id": workbasket.pk}})
+    return session_request
 
 
 @pytest.fixture

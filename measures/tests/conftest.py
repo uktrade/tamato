@@ -313,7 +313,7 @@ def irreversible_duty_sentence_data(request, get_component_data):
 
 
 @pytest.fixture
-def measure_form(session_request):
+def measure_form(session_with_workbasket):
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)
     start_date = data["valid_between"].lower
@@ -327,5 +327,5 @@ def measure_form(session_request):
     return MeasureForm(
         data=data,
         instance=Measure.objects.with_duty_sentence().first(),
-        request=session_request,
+        request=session_with_workbasket,
     )

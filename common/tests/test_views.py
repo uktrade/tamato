@@ -1,11 +1,14 @@
 import xml.etree.ElementTree as etree
 
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from common.tests import factories
+from common.tests.factories import GoodsNomenclatureFactory
 from common.views import DashboardView
 from common.views import HealthCheckResponse
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -27,6 +30,36 @@ def test_index_doesnt_creates_workbasket_if_not_needed(
     response = valid_user_client.get(reverse("index"))
     assert response.status_code == 200
     assert WorkBasket.objects.is_not_approved().count() == 1
+
+
+def test_index_displays_objects_in_current_workbasket(
+    valid_user_client,
+    workbasket,
+):
+    """Verify that changes in the current workbasket are displayed on the bulk
+    selection form of the index page."""
+    with workbasket.new_transaction():
+        GoodsNomenclatureFactory.create()
+
+    response = valid_user_client.get(reverse("index"))
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    for obj in workbasket.tracked_models.all():
+        field_name = SelectableObjectsForm.field_name_for_object(obj)
+        assert page.find("input", {"name": field_name})
+
+
+def test_index_with_each_type_of_object_in_current_workbasket(
+    valid_user_client,
+    workbasket,
+    trackedmodel_factory,
+):
+    with workbasket.new_transaction():
+        trackedmodel_factory.create()
+    response = valid_user_client.get(reverse("index"))
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize(

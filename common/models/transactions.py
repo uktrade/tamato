@@ -204,6 +204,7 @@ class Transaction(TimestampedMixin):
     class Meta:
         # See TransactionPartition for information on workbasket_status order.
         ordering = ("partition", "order")
+        indexes = (models.Index(fields=("partition", "order")),)
 
     # FSMField protects against unexpected state changes.
     partition = FSMIntegerField(

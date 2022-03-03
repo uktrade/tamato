@@ -8,7 +8,6 @@ from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
-from common.business_rules import ValidityPeriodContains
 
 
 class CT1(UniqueIdentifyingFields):
@@ -60,7 +59,7 @@ class ACN4(NoOverlapping):
     )
 
 
-class ACN13(ValidityPeriodContains):
+class ACN13(ValidityPeriodContained):
     """When an additional code is used in an additional code nomenclature
     measure then the validity period of the additional code must span the
     validity period of the measure."""

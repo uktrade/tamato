@@ -42,6 +42,7 @@ from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.util import get_latest_versions
 from common.util import maybe_max
@@ -335,7 +336,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     NOTES:
     1. Calendar vs Transaction Clocks:
-    The tariff database uses at least two "clocks":
+    The tariff database uses at least two "clocks":f
     - the calendar clock, which revolves around validity dates
     - the transaction clock, which revolves around transaction ids
 
@@ -446,6 +447,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         qs = Measure.objects.filter(filter)
 
         if self.moment.clock_type.is_transaction_clock:
+            logger.debug("Filtering by moment transaction: %s", self.moment.transaction)
             qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
             logger.debug("Filtering by moment transaction: %s", self.moment.transaction)
@@ -998,8 +1000,7 @@ class CommodityChange(BaseModel):
         # No BR: delete related footnote associations
         qs = FootnoteAssociationGoodsNomenclature.objects.latest_approved()
         for association in qs.filter(
-            goods_nomenclature__item_id=self.current.item_id,
-            goods_nomenclature__suffix=self.current.suffix,
+            goods_nomenclature__sid=self.current.sid,
         ):
             self._add_pending_delete(association, None)
 
@@ -1023,20 +1024,20 @@ class CommodityChange(BaseModel):
 
         good = self.candidate.good
 
+        # NIG30 / NIG31
+        with override_current_transaction(good.transaction):
+            uncontained_measures = cbr.NIG30(good.transaction).violating_models(
+                self.candidate.obj,
+            )
+            if uncontained_measures.exists():
+                for measure in uncontained_measures.order_by("sid"):
+                    self._handle_validity_conflicts(good, measure, cbr.NIG30)
+
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.latest_approved().filter(
-                goods_nomenclature__item_id=self.current.item_id,
-                goods_nomenclature__suffix=self.current.suffix,
+                goods_nomenclature__sid=self.current.sid,
             )
         )
-        measures = self._get_dependent_measures(before, after)
-
-        # NIG30 / NIG31
-        uncontained_measures = cbr.NIG30().uncontained_measures(good)
-
-        if uncontained_measures.exists():
-            for measure in uncontained_measures.order_by("sid"):
-                self._handle_validity_conflicts(good, measure, cbr.NIG30)
 
         # NIG22: Invoked from the POV of a footnote association
         # here, find all related associations and invoke the BR
@@ -1047,11 +1048,13 @@ class CommodityChange(BaseModel):
             except BusinessRuleViolation:
                 self._handle_validity_conflicts(good, association, cbr.NIG22)
 
+        dependent_measures = self._get_dependent_measures(before, after)
+
         # ME7: Invoked from the POV of a measure
         # here, find all related measures and invoke the BR
         # (inefficient for this workflow, but consistent use of BR-s)
         if self.candidate.obj.suffix != SUFFIX_DECLARABLE:
-            for measure in measures:
+            for measure in dependent_measures:
                 try:
                     mbr.ME7().validate(measure)
                 except BusinessRuleViolation:
@@ -1080,7 +1083,7 @@ class CommodityChange(BaseModel):
                     self._add_pending_delete(association, cbr.NIG18)
 
             qs = FootnoteAssociationMeasure.objects.latest_approved()
-            for measure in measures:
+            for measure in dependent_measures:
                 for association in qs.filter(footnoted_measure=measure):
                     try:
                         mbr.ME71().validate(association)
@@ -1450,11 +1453,12 @@ class CommodityChange(BaseModel):
         In the case of a commodity CREATE,
         the threshold is the commodity's validity start date.
         """
+        if self.update_type == UpdateType.UPDATE:
+            return self.current.valid_between.upper
+
         if self.candidate:
-            if self.update_type == UpdateType.UPDATE:
-                return self.candidate.valid_between.upper
-            else:
-                return self.candidate.valid_between.lower
+            return self.candidate.valid_between.lower
+
         return self.current.valid_between.upper
 
 

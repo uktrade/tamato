@@ -374,34 +374,32 @@ def test_NIG24(date_ranges, valid_between, expect_error):
         business_rules.NIG24(association.transaction).validate(association)
 
 
-def test_NIG30(spanning_dates):
+def test_NIG30(assert_spanning_enforced):
     """When a goods nomenclature is used in a goods measure then the validity
     period of the goods nomenclature must span the validity period of the goods
     measure."""
-    commodity_range, measure_range, fully_contained = spanning_dates
-
-    measure = factories.MeasureFactory.create(
-        goods_nomenclature__valid_between=commodity_range,
-        valid_between=measure_range,
+    assert_spanning_enforced(
+        factories.GoodsNomenclatureFactory,
+        business_rules.NIG30,
+        measures=factories.related_factory(
+            factories.MeasureFactory,
+            factory_related_name="goods_nomenclature",
+        ),
     )
 
-    with raises_if(business_rules.NIG30.Violation, not fully_contained):
-        business_rules.NIG30(measure.transaction).validate(measure.goods_nomenclature)
 
-
-def test_NIG31(spanning_dates):
+def test_NIG31(assert_spanning_enforced):
     """When a goods nomenclature is used in an additional nomenclature measure
     then the validity period of the goods nomenclature must span the validity
     period of the additional nomenclature measure."""
-    commodity_range, measure_range, fully_contained = spanning_dates
-
-    measure = factories.MeasureWithAdditionalCodeFactory.create(
-        goods_nomenclature__valid_between=commodity_range,
-        valid_between=measure_range,
+    assert_spanning_enforced(
+        factories.GoodsNomenclatureFactory,
+        business_rules.NIG31,
+        measures=factories.related_factory(
+            factories.MeasureWithAdditionalCodeFactory,
+            factory_related_name="goods_nomenclature",
+        ),
     )
-
-    with raises_if(business_rules.NIG31.Violation, not fully_contained):
-        business_rules.NIG31(measure.transaction).validate(measure.goods_nomenclature)
 
 
 def test_NIG34(delete_record):
