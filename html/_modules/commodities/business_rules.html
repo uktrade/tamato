@@ -131,7 +131,6 @@
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
 
-<span class="kn">from</span> <span class="nn">commodities.util</span> <span class="kn">import</span> <span class="n">get_snapshot_from_good_chapter</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">DescriptionsRules</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">FootnoteApplicability</span>
@@ -155,6 +154,16 @@
     <span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must be within the validity</span>
 <span class="sd">    period of the product line above in the hierarchy.&quot;&quot;&quot;</span>
 
+    <span class="c1"># Note that a complete reading of this rule implies that a commodity&#39;s</span>
+    <span class="c1"># parent should span the commodity but also that the commodity should span</span>
+    <span class="c1"># all of it&#39;s children. However, the latter case is often broken by the EU</span>
+    <span class="c1"># and not enforced by CDS. Therefore, we only check the parent case.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Note that this means that running this business rule against a child can</span>
+    <span class="c1"># therefore result in a violation. We think this is a feature and not a bug</span>
+    <span class="c1"># because it allows parents to shift around without having to re-send all of</span>
+    <span class="c1"># the data associated with the rest of the tree.</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
@@ -170,12 +179,13 @@
 
 <div class="viewcode-block" id="NIG2.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">commodities.models.dc</span> <span class="kn">import</span> <span class="n">Commodity</span>
+        <span class="kn">from</span> <span class="nn">commodities.models.dc</span> <span class="kn">import</span> <span class="n">get_chapter_collection</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">good</span> <span class="o">=</span> <span class="n">indent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">version_at</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">TrackedModel</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Goods nomenclature </span><span class="si">%s</span><span class="s2"> no longer exists at transaction </span><span class="si">%s</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Goods nomenclature </span><span class="si">%s</span><span class="s2"> no longer exists at transaction </span><span class="si">%s</span><span class="s2"> &quot;</span>
                 <span class="s2">&quot;but indent </span><span class="si">%s</span><span class="s2"> is still referring to it.&quot;</span><span class="p">,</span>
                 <span class="n">indent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
@@ -184,19 +194,15 @@
             <span class="k">return</span>
 
         <span class="n">commodity</span> <span class="o">=</span> <span class="n">Commodity</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="n">good</span><span class="p">,</span> <span class="n">indent_obj</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
-        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">get_snapshot_from_good_chapter</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
+        <span class="n">collection</span> <span class="o">=</span> <span class="n">get_chapter_collection</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
+        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">get_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span> <span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
 
         <span class="n">parent</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">get_parent</span><span class="p">(</span><span class="n">commodity</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span><span class="p">:</span>
             <span class="k">return</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_spans_child</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">indent_obj</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span>
-
-        <span class="n">children</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">commodity</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_spans_child</span><span class="p">(</span><span class="n">indent</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">indent_obj</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span></div></div>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="NIG5"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG5">[docs]</a><span class="nd">@skip_when_deleted</span>
@@ -218,19 +224,21 @@
 
 <span class="sd">        Therefore check for these two conditions, and if neither are met ensure an origin exists.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">commodities.models</span> <span class="kn">import</span> <span class="n">GoodsNomenclatureOrigin</span>
-        <span class="kn">from</span> <span class="nn">commodities.models.dc</span> <span class="kn">import</span> <span class="n">Commodity</span>
+        <span class="c1"># The proper method of checking for root codes is to examine the indents</span>
+        <span class="c1"># of the code and see whether the code has any ancestors or not.</span>
+        <span class="c1"># However, this is slow and troublesome, because in theory the indent</span>
+        <span class="c1"># can change over time so it&#39;s not clear which indent we should be</span>
+        <span class="c1"># examining if there are multiple (except root codes should only ever</span>
+        <span class="c1"># have 1).</span>
+        <span class="c1">#</span>
+        <span class="c1"># So instead we just check whether the code is a chapter code i.e. it</span>
+        <span class="c1"># ends with eight zeroes. All and only root codes should have this</span>
+        <span class="c1"># property.</span>
 
-        <span class="n">indent_obj</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
-            <span class="n">indent_obj</span> <span class="o">=</span> <span class="n">good</span><span class="o">.</span><span class="n">indents</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-        <span class="n">commodity</span> <span class="o">=</span> <span class="n">Commodity</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="n">good</span><span class="p">,</span> <span class="n">indent_obj</span><span class="o">=</span><span class="n">indent_obj</span><span class="p">)</span>
-        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">get_snapshot_from_good_chapter</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
-        <span class="n">ancestors</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">get_ancestors</span><span class="p">(</span><span class="n">commodity</span><span class="p">)</span>
-        <span class="n">matching_indent_exists</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="n">ancestors</span> <span class="k">else</span> <span class="kc">True</span>
+        <span class="kn">from</span> <span class="nn">commodities.models.orm</span> <span class="kn">import</span> <span class="n">GoodsNomenclatureOrigin</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="n">matching_indent_exists</span>
+            <span class="n">good</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">is_chapter</span>
             <span class="ow">or</span> <span class="n">GoodsNomenclatureOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">new_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="p">)</span>

@@ -662,7 +662,8 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;start after end&quot;</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="DescriptionsRules"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.DescriptionsRules">[docs]</a><span class="k">class</span> <span class="nc">DescriptionsRules</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
+<div class="viewcode-block" id="DescriptionsRules"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.DescriptionsRules">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="k">class</span> <span class="nc">DescriptionsRules</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Repeated rule pattern for descriptions.&quot;&quot;&quot;</span>
 
     <span class="n">item_name</span> <span class="o">=</span> <span class="s2">&quot;description&quot;</span>
