@@ -609,7 +609,7 @@ class TrackedModel(PolymorphicModel):
     def __hash__(self):
         return hash(f"{__name__}.{self.__class__.__name__}")
 
-    def get_url(self, action: str = "detail") -> Optional[str]:
+    def get_url(self, action: str = "detail", subrecord: str = "") -> Optional[str]:
         """
         Generate a URL to a representation of the model in the webapp.
 
@@ -624,7 +624,8 @@ class TrackedModel(PolymorphicModel):
             kwargs = self.get_identifying_fields()
         try:
             prefix = self.get_url_pattern_name_prefix()
-            view_name = f"{prefix}-ui-{action}"
+            subrecord_prefix = f"_{subrecord}" if subrecord else ""
+            view_name = f"{prefix}{subrecord_prefix}-ui-{action}"
             print("**************************")
             print(f"*** get_url:{type(self)}")
             print(f"*** kwargs = {kwargs}")

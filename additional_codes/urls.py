@@ -13,23 +13,21 @@ api_router.register(
 )
 api_router.register(r"additional_code_types", views.AdditionalCodeTypeViewSet)
 
-# detail = "<sid:sid>"
-# description_detail = "<sid:described_additionalcode__sid>/description/<sid:sid>"
-# ui_patterns = get_ui_paths(views, detail, description=description_detail)
+
+# Paths for AdditionalCode<action> views.
 ui_patterns = get_ui_paths_ext(
     view_module=views,
+    class_name_prefix="AdditionalCode",
     object_id_pattern="<sid:sid>",
-    description="REMOVE ME",
-    # url_prefix="",
+    url_base="",
 )
-# TODO:
-# * Add a url_prefix to get_ui_paths() catering for descriptions patterns.
-# ui_patterns = get_ui_paths_ext(
-#    view_module=views,
-#    object_id_pattern="<sid:sid>",
-#    url_prefix="<sid:described_additionalcode__sid>/description",
-# )
-
+# Paths for AdditionalCodeDescription<action> views.
+ui_patterns += get_ui_paths_ext(
+    view_module=views,
+    class_name_prefix="AdditionalCodeDescription",
+    object_id_pattern="<sid:sid>",
+    url_base="<sid:described_additionalcode__sid>/description/",
+)
 
 urlpatterns = [
     path("additional_codes/", include(ui_patterns)),

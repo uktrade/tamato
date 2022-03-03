@@ -84,18 +84,38 @@ def get_ui_paths(
     return paths
 
 
-def dunder_to_camel(dunder_name):
-    return "".join(word.title() for word in dunder_name.split("_"))
+def dunder_to_camel(dunderised):
+    return "".join(word.title() for word in dunderised.split("_"))
+
+
+def camel_to_dunder(capitalised):
+    dunderised = ""
+    for i, c in enumerate(capitalised):
+        if c.isupper() and i == 0:
+            dunderised += c.lower()
+        elif c.isupper():
+            dunderised += f"_{c.lower()}"
+        else:
+            dunderised += c
+    return dunderised
+
+
+"""
+Notes:
+* Because class entities and their child description classes are in the same
+  view module we need a way to filter which views we're creating paths for, so
+  the need for class_name_prefix param.
+* Because the url can contain a the parent's url base, which can't be generated
+  using view_module and class_name_prefix, we need to pass it in as url_base.
+"""
 
 
 def get_ui_paths_ext(
     view_module: ModuleType,
+    class_name_prefix: str,
     object_id_pattern: str,
-    **subrecords_patterns: str,
+    url_base: str = "",
 ) -> Collection[URLPattern]:
-    app_name = view_module.__name__.split(".")[0]
-    app_name_singular = app_name[:-1]
-
     #   (actions, action_url_pattern)
     actions_pattern_map = [
         (BULK_ACTIONS, ""),
@@ -108,7 +128,6 @@ def get_ui_paths_ext(
     for actions, action_url_pattern in actions_pattern_map:
         for class_name_suffix, action_name in actions.items():
 
-            class_name_prefix = dunder_to_camel(app_name_singular)
             class_name = class_name_prefix + class_name_suffix
 
             if hasattr(view_module, class_name):
@@ -118,23 +137,22 @@ def get_ui_paths_ext(
                 path_name_suffix = action_name
                 if not path_name_suffix:
                     path_name_suffix = class_name_suffix.lower()
-                path_name = f"{app_name_singular}-ui-{path_name_suffix}"
+                dundered_prefix = camel_to_dunder(class_name_prefix)
+                path_name = f"{dundered_prefix}-ui-{path_name_suffix}"
 
                 # Create URL.
                 url_prefix = ""
                 if action_url_pattern:
                     url_prefix = action_url_pattern + "/"
-                url = url_prefix + action_name
+                url = url_base + url_prefix + action_name
 
                 # Create path instance and append to paths list.
                 paths.append(
                     path(url, view_class.as_view(), name=path_name),
                 )
             else:
-                logger.debug("No action %s for %s", class_name, app_name)
-
-    if app_name == "additional_codes":
-        for p in paths:
-            print(f"{p}")
+                logger.debug(
+                    f"No action {class_name} for {view_module.__name__.split('.')[0]}",
+                )
 
     return paths
