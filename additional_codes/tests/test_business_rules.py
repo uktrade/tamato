@@ -126,30 +126,30 @@ def text_ACN12():
     assert False
 
 
-def test_ACN13(date_ranges):
+def test_ACN13(assert_spanning_enforced):
     """When an additional code is used in an additional code nomenclature
     measure then the validity period of the additional code must span the
     validity period of the measure."""
     # covered by ME115
 
-    measure = factories.MeasureWithAdditionalCodeFactory.create(
-        additional_code__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.AdditionalCodeFactory,
+        business_rules.ACN13,
+        measure=factories.related_factory(
+            factories.MeasureFactory,
+            factory_related_name="additional_code",
+        ),
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN13(measure.transaction).validate(measure.additional_code)
 
-
-def test_ACN17(date_ranges):
+def test_ACN17(assert_spanning_enforced):
     """The validity period of the additional code type must span the validity
     period of the additional code."""
-    additional_code = factories.AdditionalCodeFactory.create(
-        type__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+
+    assert_spanning_enforced(
+        factories.AdditionalCodeFactory,
+        business_rules.ACN17,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN17(additional_code.transaction).validate(additional_code)
 
 
 # Footnote association

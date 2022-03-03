@@ -103,40 +103,24 @@ def test_ON6(date_ranges):
         business_rules.ON6(origin.transaction).validate(origin)
 
 
-def test_ON7(date_ranges, approved_transaction, unapproved_transaction):
+def test_ON7(assert_spanning_enforced):
     """The validity period of the quota order number must span the validity
     period of the quota order number origin."""
 
-    order_number = factories.QuotaOrderNumberFactory.create(
-        transaction=approved_transaction,
-        valid_between=date_ranges.starts_with_normal,
-    )
-    origin = factories.QuotaOrderNumberOriginFactory.create(
-        order_number=order_number,
-        valid_between=date_ranges.normal,
-        transaction=unapproved_transaction,
+    assert_spanning_enforced(
+        factories.QuotaOrderNumberOriginFactory,
+        business_rules.ON7,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ON7(origin.transaction).validate(origin)
 
-
-def test_ON8(date_ranges, approved_transaction, unapproved_transaction):
+def test_ON8(assert_spanning_enforced):
     """The validity period of the quota order number must span the validity
     period of the referencing quota definition."""
 
-    order_number = factories.QuotaOrderNumberFactory.create(
-        transaction=approved_transaction,
-        valid_between=date_ranges.starts_with_normal,
+    assert_spanning_enforced(
+        factories.QuotaDefinitionFactory,
+        business_rules.ON8,
     )
-    quota_def = factories.QuotaDefinitionFactory.create(
-        order_number=order_number,
-        valid_between=date_ranges.normal,
-        transaction=unapproved_transaction,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ON8(quota_def.transaction).validate(quota_def)
 
 
 @only_applicable_after("2007-12-31")
@@ -266,7 +250,7 @@ def test_ON14():
 def test_CertificatesMustExist():
     """The referenced certificates must exist."""
     quota_order_number = factories.QuotaOrderNumberFactory.create(
-        required_certificates=[factories.CertificateFactory.create(description=None)],
+        required_certificates__description=None,
     )
 
     certificate = quota_order_number.required_certificates.first()
@@ -278,21 +262,14 @@ def test_CertificatesMustExist():
         )
 
 
-def test_CertificateValidityPeriodMustSpanQuotaOrderNumber(date_ranges):
+def test_CertificateValidityPeriodMustSpanQuotaOrderNumber(assert_spanning_enforced):
     """The validity period of the required certificates must span the validity
     period of the quota order number."""
 
-    quota_order_number = factories.QuotaOrderNumberFactory.create(
-        valid_between=date_ranges.normal,
-        required_certificates=[
-            factories.CertificateFactory.create(valid_between=date_ranges.earlier),
-        ],
+    assert_spanning_enforced(
+        factories.QuotaOrderNumberFactory,
+        business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CertificateValidityPeriodMustSpanQuotaOrderNumber(
-            quota_order_number.transaction,
-        ).validate(quota_order_number)
 
 
 def test_QD1(assert_handles_duplicates):
@@ -326,18 +303,16 @@ def test_QD7(date_ranges):
         business_rules.QD7(definition.transaction).validate(definition)
 
 
-def test_QD8(date_ranges):
+def test_QD8(assert_spanning_enforced):
     """The validity period of the monetary unit code must span the validity
     period of the quota definition."""
-    definition = factories.QuotaDefinitionFactory.create(
-        monetary_unit__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+
+    assert_spanning_enforced(
+        factories.QuotaDefinitionFactory,
+        business_rules.QD8,
         is_monetary=True,
         is_physical=False,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QD8(definition.transaction).validate(definition)
 
 
 @pytest.mark.skip(reason="Using GBP, not EUR")
@@ -348,27 +323,24 @@ def test_QD9():
     assert False
 
 
-def test_QD10(date_ranges):
+def test_QD10(assert_spanning_enforced):
     """The validity period of the measurement unit code must span the validity
     period of the quota definition."""
-    definition = factories.QuotaDefinitionFactory.create(
-        measurement_unit__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+
+    assert_spanning_enforced(
+        factories.QuotaDefinitionFactory,
+        business_rules.QD10,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QD10(definition.transaction).validate(definition)
 
-
-def test_QD11(date_ranges):
+def test_QD11(assert_spanning_enforced):
     """The validity period of the measurement unit qualifier code must span the
     validity period of the quota definition."""
-    definition = factories.QuotaDefinitionWithQualifierFactory.create(
-        measurement_unit_qualifier__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+
+    assert_spanning_enforced(
+        factories.QuotaDefinitionWithQualifierFactory,
+        business_rules.QD11,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QD11(definition.transaction).validate(definition)
 
 
 @pytest.mark.skip("Quota events are not supported")
@@ -685,13 +657,11 @@ def test_suspension_of_fcfs_quotas_only(mechanism, error_expected):
         )
 
 
-def test_QSP2(date_ranges):
+def test_QSP2(assert_spanning_enforced):
     """The validity period of the quota must span the quota suspension
     period."""
-    suspension = factories.QuotaSuspensionFactory.create(
-        quota_definition__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
-    )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.QSP2(suspension.transaction).validate(suspension)
+    assert_spanning_enforced(
+        factories.QuotaSuspensionFactory,
+        business_rules.QSP2,
+    )

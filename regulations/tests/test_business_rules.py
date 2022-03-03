@@ -172,15 +172,13 @@ def test_ROIMB46(delete_record):
     business_rules.ROIMB46(deleted.transaction).validate(deleted)
 
 
-def test_ROIMB47(date_ranges):
+def test_ROIMB47(assert_spanning_enforced):
     """The validity period of the regulation group id must span the validity
     period of the base regulation."""
     # But we will be ensuring that the regulation groups are not end dated, therefore we
     # will not get hit by this
-    regulation = factories.BaseRegulationFactory.create(
-        regulation_group__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
-    )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ROIMB47(regulation.transaction).validate(regulation)
+    assert_spanning_enforced(
+        factories.BaseRegulationFactory,
+        business_rules.ROIMB47,
+    )
