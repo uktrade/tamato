@@ -234,6 +234,7 @@ class MeasureCreateWizard(
                         action=condition_data.get("action"),
                         required_certificate=condition_data.get("required_certificate"),
                     )
+                    condition.clean()
                     condition.save()
 
                     # XXX the design doesn't show whether the condition duty_amount field
@@ -253,6 +254,7 @@ class MeasureCreateWizard(
                             ],
                             component_measurement=None,
                         )
+                        component.clean()
                         component.save()
 
             created_measures.append(measure)
