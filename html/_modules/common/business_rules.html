@@ -559,15 +559,17 @@
 <span class="sd">    objects.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">violating_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">ValidityMixin</span><span class="p">]:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+
         <span class="c1"># Resolve our way to the contained models. The output from `follow_path`</span>
         <span class="c1"># will be all the models that should be contained.</span>
-        <span class="n">contained</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+        <span class="n">contained</span> <span class="o">=</span> <span class="n">current</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="p">:</span>
             <span class="n">contained</span> <span class="o">=</span> <span class="n">contained</span><span class="o">.</span><span class="n">follow_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contained_field_name</span><span class="p">)</span>
 
         <span class="c1"># Get the latest version of the container model. If the container is not</span>
         <span class="c1"># present, then skip the rule.</span>
-        <span class="n">container</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+        <span class="n">container</span> <span class="o">=</span> <span class="n">current</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">container_field_name</span><span class="p">:</span>
             <span class="n">container</span> <span class="o">=</span> <span class="n">container</span><span class="o">.</span><span class="n">follow_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container_field_name</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">container</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -576,12 +578,14 @@
         <span class="c1"># Scope the contained models down to just the ones we are testing.</span>
         <span class="c1"># Violating models are ones that are not contained by the valid between</span>
         <span class="c1"># from the container model.</span>
+        <span class="n">valid_between</span> <span class="o">=</span> <span class="n">container</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">valid_between</span>
+
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">contained</span><span class="o">.</span><span class="n">with_validity_field</span><span class="p">()</span>
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_filters</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
                 <span class="o">**</span><span class="p">{</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contained</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">validity_field_name</span><span class="si">}</span><span class="s2">__contained_by&quot;</span><span class="p">:</span> <span class="n">container</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contained</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">validity_field_name</span><span class="si">}</span><span class="s2">__contained_by&quot;</span><span class="p">:</span> <span class="n">valid_between</span><span class="p">,</span>
                 <span class="p">},</span>
             <span class="p">)</span>
         <span class="p">)</span>

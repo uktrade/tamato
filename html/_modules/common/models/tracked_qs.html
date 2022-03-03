@@ -447,23 +447,24 @@
                 <span class="c1"># The foreign key is on the model we are moving towards. So we</span>
                 <span class="c1"># follow the foreign key on that model and filter by the current</span>
                 <span class="c1"># model&#39;s version group.</span>
-                <span class="nb">filter</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
-                    <span class="o">**</span><span class="p">{</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">__version_group_id__in&quot;</span><span class="p">:</span> <span class="n">qs</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
-                            <span class="s2">&quot;version_group_id&quot;</span><span class="p">,</span>
-                        <span class="p">),</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">qs</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;version_group_id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+                <span class="nb">filter</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">__version_group_id__in&quot;</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># The foreign key is on the model we are moving away from. So we</span>
                 <span class="c1"># resolve the foreign key into the version group that we are</span>
                 <span class="c1"># looking for.</span>
-                <span class="nb">filter</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
-                    <span class="n">version_group_id__in</span><span class="o">=</span><span class="n">qs</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="n">qs</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">__version_group_id&quot;</span><span class="p">,</span>
+                        <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
-            <span class="n">qs</span> <span class="o">=</span> <span class="n">model_type</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+                <span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;version_group_id__in&quot;</span>
+
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+                <span class="n">qs</span> <span class="o">=</span> <span class="n">model_type</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="nb">filter</span><span class="p">:</span> <span class="n">values</span><span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">qs</span> <span class="o">=</span> <span class="n">model_type</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">qs</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span></div>
 </pre></div>
