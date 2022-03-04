@@ -13,12 +13,16 @@ ui_patterns = [
     *get_ui_paths(views, detail),
     path(
         "create/",
-        views.MeasureCreateWizard.as_view(),
+        views.MeasureCreateWizard.as_view(
+            url_name="measure-ui-create", done_step_name="complete"
+        ),
         name="measure-ui-create",
     ),
     path(
         "create/<step>/",
-        views.MeasureCreateWizard.as_view(),
+        views.MeasureCreateWizard.as_view(
+            url_name="measure-ui-create", done_step_name="complete"
+        ),
         name="measure-ui-create",
     ),
     path(

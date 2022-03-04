@@ -349,26 +349,20 @@ class MeasureDetailsForm(
                 cleaned_data["valid_between"],
             ):
                 raise ValidationError(
-                    f"The date range of the measure can't be outside that of the measure type: {measure_type.valid_between} does not contain {cleaned_data['valid_between']}",
+                    f"The date range of the measure can't be outside that of the measure type: "
+                    f"{measure_type.valid_between} does not contain {cleaned_data['valid_between']}",
                 )
 
         return cleaned_data
 
 
-class MeasureCommodityForm(forms.Form):
+class MeasureAdditionalCodeForm(forms.ModelForm):
     class Meta:
         model = models.Measure
         fields = [
-            "goods_nomenclature",
             "additional_code",
         ]
 
-    goods_nomenclature = AutoCompleteField(
-        label="Commodity code",
-        help_text="Select the 10-digit commodity code to which the measure applies.",
-        queryset=GoodsNomenclature.objects.all(),
-        attrs={"min_length": 3},
-    )
     additional_code = AutoCompleteField(
         label="Additional code",
         help_text="If applicable, select the additional code to which the measure applies.",
@@ -380,9 +374,7 @@ class MeasureCommodityForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
         self.helper.layout = Layout(
-            "goods_nomenclature",
             "additional_code",
             Submit("submit", "Continue"),
         )
@@ -499,6 +491,33 @@ class FormSet(forms.BaseFormSet):
         return super().is_valid()
 
 
+class MeasureCommodityForm(forms.Form):
+    commodity = AutoCompleteField(
+        label="Commodity code",
+        help_text="Select the 10-digit commodity code to which the measure applies.",
+        queryset=GoodsNomenclature.objects.all(),
+        attrs={"min_length": 3},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(
+                "commodity",
+                Field("DELETE", template="includes/common/formset-delete-button.jinja")
+                if not self.prefix.endswith("__prefix__")
+                else None,
+            ),
+        )
+
+
+class MeasureCommodityFormSet(FormSet):
+    form = MeasureCommodityForm
+
+
 class MeasureConditionsForm(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
@@ -574,7 +593,8 @@ class MeasureDutiesForm(forms.Form):
                 "duties",
                 HTML.details(
                     "Help with duties",
-                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR).",
+                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a "
+                    "specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR).",
                 ),
             ),
             Submit("submit", "Continue"),
@@ -582,7 +602,7 @@ class MeasureDutiesForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        duties = cleaned_data.get("duties")
+        duties = cleaned_data.get("duties", "")
         measure_start_date = self.initial.get("measure_start_date")
         if measure_start_date is not None and duties:
             validate_duties(duties, measure_start_date)
