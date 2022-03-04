@@ -632,7 +632,18 @@ class TrackedModel(PolymorphicModel):
             print(f"*** action = {action}")
             print(f"*** prefix = {prefix}")
             print(f"*** view_name = {view_name}")
-            url = reverse(view_name, kwargs=kwargs)
+            print(f"*** subrecord = {subrecord}")
+
+            if len(subrecord):
+                description_kwargs = {}
+                description_kwargs[
+                    f"{self.descriptions.model.described_object_field.name}__sid"
+                ] = self.sid
+                print(f"*** updated kwargs = {description_kwargs}")
+                url = reverse(view_name, kwargs=description_kwargs)
+            else:
+                url = reverse(view_name, kwargs=kwargs)
+
             print(f"*** url = {url}")
             return url
         except NoReverseMatch:
