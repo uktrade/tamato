@@ -267,6 +267,7 @@ class EnvelopeParser(ElementParser):
             nursery.clear_cache()
 
 
+@atomic
 def process_taric_xml_stream(
     taric_stream,
     workbasket_status,
@@ -277,7 +278,10 @@ def process_taric_xml_stream(
     """
     Parse a TARIC XML stream through the import handlers.
 
-    This will load the data from the stream into the database.
+    This will load the data from the stream into the database. This runs inside
+    a single database transaction so that if any of the data is invalid, it will
+    not be committed and the XML can be fixed and imported again without needing
+    to remove the existing data.
     """
     xmlparser = etree.iterparse(taric_stream, ["start", "end", "start-ns"])
     handler = EnvelopeParser(
