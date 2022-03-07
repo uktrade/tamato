@@ -145,7 +145,7 @@ class AdditionalCodeUpdate(
     )
 
 
-class AdditionalCodeCreateDescription(
+class AdditionalCodeDescriptionCreate(
     AdditionalCodeCreateDescriptionMixin,
     TrackedModelDetailMixin,
     DraftCreateView,

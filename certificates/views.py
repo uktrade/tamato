@@ -110,7 +110,7 @@ class CertificateCreateDescriptionMixin:
         return context
 
 
-class CertificateCreateDescription(
+class CertificateDescriptionCreate(
     CertificateCreateDescriptionMixin,
     TrackedModelDetailMixin,
     DraftCreateView,

@@ -69,7 +69,7 @@ def test_additional_codes_detail_views(view, url_pattern, valid_user_client):
     """Verify that additional code detail views are under the url
     additional_codes/ and don't return an error."""
     model_overrides = {
-        "additional_codes.views.AdditionalCodeCreateDescription": AdditionalCode,
+        "additional_codes.views.AdditionalCodeDescriptionCreate": AdditionalCode,
     }
 
     assert_model_view_renders(view, url_pattern, valid_user_client, model_overrides)

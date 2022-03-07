@@ -18,6 +18,7 @@ OBJECT_ACTIONS = {
     "Update": "edit",
     "ConfirmUpdate": "confirm-update",
     "Delete": "delete",
+    "DescriptionCreate": "description-create",
 }
 
 
