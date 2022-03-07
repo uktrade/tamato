@@ -395,7 +395,8 @@
             <span class="n">nursery</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="process_taric_xml_stream"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.process_taric_xml_stream">[docs]</a><span class="k">def</span> <span class="nf">process_taric_xml_stream</span><span class="p">(</span>
+<div class="viewcode-block" id="process_taric_xml_stream"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.process_taric_xml_stream">[docs]</a><span class="nd">@atomic</span>
+<span class="k">def</span> <span class="nf">process_taric_xml_stream</span><span class="p">(</span>
     <span class="n">taric_stream</span><span class="p">,</span>
     <span class="n">workbasket_status</span><span class="p">,</span>
     <span class="n">partition_scheme</span><span class="p">,</span>
@@ -405,7 +406,10 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parse a TARIC XML stream through the import handlers.</span>
 
-<span class="sd">    This will load the data from the stream into the database.</span>
+<span class="sd">    This will load the data from the stream into the database. This runs inside</span>
+<span class="sd">    a single database transaction so that if any of the data is invalid, it will</span>
+<span class="sd">    not be committed and the XML can be fixed and imported again without needing</span>
+<span class="sd">    to remove the existing data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">xmlparser</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">iterparse</span><span class="p">(</span><span class="n">taric_stream</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="s2">&quot;start-ns&quot;</span><span class="p">])</span>
     <span class="n">handler</span> <span class="o">=</span> <span class="n">EnvelopeParser</span><span class="p">(</span>
