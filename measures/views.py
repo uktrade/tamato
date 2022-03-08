@@ -29,6 +29,7 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
+from measures.paginator import MeasurePaginator
 from measures.patterns import MeasureCreationPattern
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
@@ -54,13 +55,14 @@ class MeasureMixin:
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
+
         return Measure.objects.with_duty_sentence().approved_up_to_transaction(tx)
 
 
 class MeasureList(MeasureMixin, TamatoListView):
     """UI endpoint for viewing and filtering Measures."""
 
-    queryset = Measure.objects.with_duty_sentence().latest_approved()
+    paginator_class = MeasurePaginator
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
 
