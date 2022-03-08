@@ -117,3 +117,12 @@ def test_dashboard_view_latest_upload():
     latest_upload = factories.UploadFactory.create()
 
     assert view.latest_upload == latest_upload
+
+
+def test_dashboard_view_last_editing_workbasket():
+    w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
+    view = DashboardView()
+    assert view.workbasket == w
+    w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    assert view.workbasket == w

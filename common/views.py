@@ -34,6 +34,7 @@ from exporter.models import Upload
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.validators import WorkflowStatus
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
@@ -82,11 +83,13 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
 
     @property
     def workbasket(self):
-        workbasket = WorkBasket.objects.is_not_approved().last()
+        workbasket = WorkBasket.objects.filter(
+            status=WorkflowStatus.EDITING,
+        ).last()
         if not workbasket:
-            id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
+            id = WorkBasket.objects.values_list("pk", flat=True).last() or 0
             workbasket = WorkBasket.objects.create(
-                title=f"Workbasket {id}",
+                title=f"Workbasket {id+1}",
                 author=self.request.user,
             )
         return workbasket
