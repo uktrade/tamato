@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from common.paginator import LimitedPaginator
+from common.pagination import LimitedPaginator
 
 
 class MeasurePaginator(LimitedPaginator):
