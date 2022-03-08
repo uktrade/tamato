@@ -336,7 +336,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
     NOTES:
     1. Calendar vs Transaction Clocks:
-    The tariff database uses at least two "clocks":f
+    The tariff database uses at least two "clocks":
     - the calendar clock, which revolves around validity dates
     - the transaction clock, which revolves around transaction ids
 
@@ -450,8 +450,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             logger.debug("Filtering by moment transaction: %s", self.moment.transaction)
             qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
-            logger.debug("Filtering by moment transaction: %s", self.moment.transaction)
-            qs = qs.approved_up_to_transaction(self.moment.transaction)
+            qs = qs.latest_approved()
 
         if as_at is not None and as_at is not NOT_PROVIDED:
             logger.debug("Filtering by supplied date: %s", as_at)
