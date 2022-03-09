@@ -4,7 +4,7 @@
 
 {% macro panel_title(created_measures) %}
   {% if created_measures|length > 1 %}
-    {{ created_measures.0._meta.verbose_name_plural|title }} {% for m in created_measures %}{{ m|string }}, {% if loop.last %}{{ m|string }} {% endif %}{% endfor %}have been created
+    {{ created_measures.0._meta.verbose_name_plural|title }} {% for m in created_measures %}{% if not loop.last %}{{ m|string }}, {% else %}{{ m|string }} {% endif %}{% endfor %}have been created
   {% else %}
     {{ created_measures.0._meta.verbose_name|title }} {{ created_measures.0|string }} has been created
   {% endif %}
