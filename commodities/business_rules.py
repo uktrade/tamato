@@ -3,7 +3,6 @@ import logging
 from datetime import date
 from datetime import timedelta
 
-from commodities.util import get_snapshot_from_good_chapter
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import FootnoteApplicability
@@ -27,6 +26,16 @@ class NIG2(BusinessRule):
     """The validity period of the goods nomenclature must be within the validity
     period of the product line above in the hierarchy."""
 
+    # Note that a complete reading of this rule implies that a commodity's
+    # parent should span the commodity but also that the commodity should span
+    # all of it's children. However, the latter case is often broken by the EU
+    # and not enforced by CDS. Therefore, we only check the parent case.
+    #
+    # Note that this means that running this business rule against a child can
+    # therefore result in a violation. We think this is a feature and not a bug
+    # because it allows parents to shift around without having to re-send all of
+    # the data associated with the rest of the tree.
+
     def __init__(self, transaction=None):
         super().__init__(transaction)
         self.logger = logging.getLogger(type(self).__name__)
@@ -42,12 +51,13 @@ class NIG2(BusinessRule):
 
     def validate(self, indent):
         from commodities.models.dc import Commodity
+        from commodities.models.dc import get_chapter_collection
 
         try:
             good = indent.indented_goods_nomenclature.version_at(self.transaction)
         except TrackedModel.DoesNotExist:
             self.logger.warning(
-                "Goods nomenclature %s no longer exists at transaction %s"
+                "Goods nomenclature %s no longer exists at transaction %s "
                 "but indent %s is still referring to it.",
                 indent.indented_goods_nomenclature,
                 self.transaction,
@@ -56,7 +66,8 @@ class NIG2(BusinessRule):
             return
 
         commodity = Commodity(obj=good, indent_obj=indent)
-        snapshot = get_snapshot_from_good_chapter(good)
+        collection = get_chapter_collection(good)
+        snapshot = collection.get_snapshot(self.transaction, good.valid_between.lower)
 
         parent = snapshot.get_parent(commodity)
         if not parent:
@@ -64,11 +75,6 @@ class NIG2(BusinessRule):
 
         if not self.parent_spans_child(parent.indent_obj, indent):
             raise self.violation(indent)
-
-        children = snapshot.get_children(commodity)
-        for child in children:
-            if not self.parent_spans_child(indent, child.indent_obj):
-                raise self.violation(indent)
 
 
 @skip_when_deleted
@@ -90,19 +96,21 @@ class NIG5(BusinessRule):
 
         Therefore check for these two conditions, and if neither are met ensure an origin exists.
         """
-        from commodities.models import GoodsNomenclatureOrigin
-        from commodities.models.dc import Commodity
+        # The proper method of checking for root codes is to examine the indents
+        # of the code and see whether the code has any ancestors or not.
+        # However, this is slow and troublesome, because in theory the indent
+        # can change over time so it's not clear which indent we should be
+        # examining if there are multiple (except root codes should only ever
+        # have 1).
+        #
+        # So instead we just check whether the code is a chapter code i.e. it
+        # ends with eight zeroes. All and only root codes should have this
+        # property.
 
-        indent_obj = None
-        if good.indents.count():
-            indent_obj = good.indents.get()
-        commodity = Commodity(obj=good, indent_obj=indent_obj)
-        snapshot = get_snapshot_from_good_chapter(good)
-        ancestors = snapshot.get_ancestors(commodity)
-        matching_indent_exists = False if ancestors else True
+        from commodities.models.orm import GoodsNomenclatureOrigin
 
         if not (
-            matching_indent_exists
+            good.code.is_chapter
             or GoodsNomenclatureOrigin.objects.filter(
                 new_goods_nomenclature__sid=good.sid,
             )

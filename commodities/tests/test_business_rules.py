@@ -39,7 +39,7 @@ def test_NIG1(date_ranges):
     ("parent_validity", "self_validity", "child_validity", "expect_error"),
     (
         ("normal", "no_end", "no_end", True),
-        ("no_end", "normal", "no_end", True),
+        ("no_end", "normal", "no_end", False),  # see note on NIG2
         ("no_end", "no_end", "normal", False),
         ("no_end", "no_end", "no_end", False),
         ("normal", "normal", "normal", False),

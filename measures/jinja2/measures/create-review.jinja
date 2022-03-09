@@ -63,9 +63,16 @@
     ]) }}
   {% endcall %}
 
-  {% call(rows, data) review_step("commodity") %}
+  {% call(rows, data) review_step("commodities") %}
+    {% for item in data %}
+      {{ rows.extend([
+        ("Commodity code", item["commodity"] ~ " - " ~ item["commodity"].get_description().description|safe if item["commodity"] else "None"),
+      ]) }}
+    {% endfor %}
+  {% endcall %}
+
+  {% call(rows, data) review_step("additional_code") %}
     {{ rows.extend([
-      ("Commodity code", data["goods_nomenclature"] ~ " - " ~ data["goods_nomenclature"].get_description().description|safe if data["goods_nomenclature"] else "None"),
       ("Additional code", data["additional_code"] ~ " - " ~ data["additional_code"].get_description().description|safe if data["additional_code"] else "None"),
     ]) }}
   {% endcall %}

@@ -12,11 +12,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.tests import factories
 from common.tests import models
-from common.tests.factories import ApprovedTransactionFactory
-from common.tests.factories import FootnoteFactory
-from common.tests.factories import SeedFileTransactionFactory
 from common.tests.factories import TestModel1Factory
-from common.tests.factories import UnapprovedTransactionFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
@@ -402,6 +398,23 @@ def test_trackedmodel_get_url(trackedmodel_factory):
     assert not urlparse(url).netloc
 
 
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.AdditionalCodeFactory,
+        factories.CertificateFactory,
+        factories.FootnoteFactory,
+        factories.GeographicalAreaFactory,
+    ],
+)
+def test_trackedmodel_get_description_create_url(factory):
+    """Verify get_url() returns something for creating descriptions."""
+    instance = factory.create()
+    url = instance.get_url("description-create")
+
+    assert url
+
+
 def test_trackedmodel_str(trackedmodel_factory):
     """Verify no __str__ methods of TrackedModel classes crash or return non-
     strings."""
@@ -458,29 +471,6 @@ def test_copy_also_copies_dependents():
     assert copy.descriptions.count() == 1
     assert copy.descriptions.get() != desc
     assert copy.descriptions.get().description == desc.description
-
-
-def test_transaction_default_order():
-    """Verify Transactions default order is by ("partition", "order") by
-    creating transactions that will not be in the correct order if only using
-    default sorting, by pk, or just by order."""
-    FootnoteFactory.create(transaction=SeedFileTransactionFactory.create())
-    FootnoteFactory.create(transaction=UnapprovedTransactionFactory.create())
-    FootnoteFactory.create(transaction=ApprovedTransactionFactory.create())
-
-    transaction_data = Transaction.objects.values("order", "partition")
-    unordered_transaction_data = Transaction.objects.order_by().values(
-        "order",
-        "partition",
-    )
-
-    assert list(transaction_data) != list(
-        unordered_transaction_data,
-    ), "Test or data structures may have been edited so sorting doesn't do anything."
-    assert list(transaction_data) == sorted(
-        unordered_transaction_data,
-        key=lambda o: (o["partition"], o["order"]),
-    )
 
 
 def test_save_single_draft_transaction_updates(unordered_transactions):

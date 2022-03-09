@@ -30,7 +30,7 @@ def test_certificate_delete(factory, use_delete_form):
 def test_certificate_detail_views(view, url_pattern, valid_user_client):
     """Verify that certificate detail views are under the url certificates/ and
     don't return an error."""
-    model_overrides = {"certificates.views.CertificateCreateDescription": Certificate}
+    model_overrides = {"certificates.views.CertificateDescriptionCreate": Certificate}
 
     assert_model_view_renders(view, url_pattern, valid_user_client, model_overrides)
 

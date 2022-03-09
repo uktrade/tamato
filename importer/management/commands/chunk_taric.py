@@ -4,10 +4,13 @@ from django.core.management import BaseCommand
 
 from importer import models
 from importer.chunker import chunk_taric
+from importer.namespaces import TARIC_RECORD_GROUPS
 
 
 def setup_batch(
-    batch_name: str, split_on_code: bool, dependencies: List[str]
+    batch_name: str,
+    split_on_code: bool,
+    dependencies: List[str],
 ) -> models.ImportBatch:
     batch = models.ImportBatch.objects.create(name=batch_name, split_job=split_on_code)
 
@@ -48,13 +51,24 @@ class Command(BaseCommand):
             help="List of batches that need to finish before the current batch can run",
             action="append",
         )
+        parser.add_argument(
+            "-C",
+            "--commodities",
+            help="Only import commodities",
+            action="store_const",
+            const=TARIC_RECORD_GROUPS["commodities"],
+            default=None,
+        )
 
     def handle(self, *args, **options):
         batch = setup_batch(
-            options["name"], options["split_codes"], options["dependencies"]
+            options["name"],
+            options["split_codes"],
+            options["dependencies"],
         )
         with open(options["taric3_file"], "rb") as taric3_file:
             chunk_taric(
                 taric3_file=taric3_file,
                 batch=batch,
+                record_group=options["commodities"],
             )
