@@ -120,9 +120,12 @@ def test_dashboard_view_latest_upload():
 
 
 def test_dashboard_view_last_editing_workbasket():
+    """Assert that the last EDITING workbasket is always selected."""
+
     w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
     factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
     view = DashboardView()
     assert view.workbasket == w
+
     w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
     assert view.workbasket == w

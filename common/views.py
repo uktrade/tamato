@@ -83,15 +83,15 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
 
     @property
     def workbasket(self):
-        workbasket = WorkBasket.objects.filter(
-            status=WorkflowStatus.EDITING,
-        ).last()
+        workbasket = WorkBasket.objects.editable().last()
+
         if not workbasket:
             id = WorkBasket.objects.values_list("pk", flat=True).last() or 0
             workbasket = WorkBasket.objects.create(
                 title=f"Workbasket {id+1}",
                 author=self.request.user,
             )
+
         return workbasket
 
     @property
