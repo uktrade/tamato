@@ -304,7 +304,9 @@ def test_measure_form_wizard_finish(
             "data": {
                 "measure_create_wizard-current_step": "commodities",
                 "commodities-0-commodity": commodity1.pk,
+                "commodities-0-duties": "33 GBP/100kg",
                 "commodities-1-commodity": commodity2.pk,
+                "commodities-1-duties": "40 GBP/1kg",
             },
             "next_step": "additional_code",
         },
@@ -314,13 +316,6 @@ def test_measure_form_wizard_finish(
         },
         {
             "data": {"measure_create_wizard-current_step": "conditions"},
-            "next_step": "duties",
-        },
-        {
-            "data": {
-                "measure_create_wizard-current_step": "duties",
-                "duties-duties": "33 GBP/100kg",
-            },
             "next_step": "footnotes",
         },
         {
@@ -377,9 +372,9 @@ def test_measure_form_wizard_create_measures(
         "order_number": None,
         "valid_between": date_ranges.normal,
         "formset-commodities": [
-            {"commodity": commodity1, "DELETE": False},
-            {"commodity": commodity2, "DELETE": False},
-            {"commodity": commodity3, "DELETE": True},
+            {"commodity": commodity1, "duties": "33 GBP/100kg", "DELETE": False},
+            {"commodity": commodity2, "duties": "40 GBP/100kg", "DELETE": False},
+            {"commodity": commodity3, "duties": "2 GBP/100kg", "DELETE": True},
         ],
         "additional_code": None,
         "formset-conditions": [
@@ -405,7 +400,6 @@ def test_measure_form_wizard_create_measures(
                 "DELETE": True,
             },
         ],
-        "duties": "4%",
         "formset-footnotes": [
             {"footnote": footnote1, "DELETE": False},
             {"footnote": footnote2, "DELETE": True},
