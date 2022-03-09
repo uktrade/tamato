@@ -350,6 +350,8 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
         db_index=True,
     )
     description = ShortDescription()
+    accepts_certificate = models.BooleanField()
+    accepts_price = models.BooleanField()
 
     identifying_fields = ("code",)
 
@@ -386,6 +388,7 @@ class MeasureAction(TrackedModel, ValidityMixin):
         db_index=True,
     )
     description = ShortDescription()
+    requires_duty = models.BooleanField()
 
     identifying_fields = ("code",)
 
