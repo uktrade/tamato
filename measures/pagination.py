@@ -12,4 +12,4 @@ class MeasurePaginator(LimitedPaginator):
     The max_count attribute is sent using a config variable in django settings.
     """
 
-    max_count = settings.LIMITED_PAGINATOR_MAX_COUNT
+    max_count = settings.MEASURES_PAGINATOR_MAX_COUNT
