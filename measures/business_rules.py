@@ -2,6 +2,7 @@
 from datetime import date
 from typing import Mapping
 from typing import Optional
+from webbrowser import get
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
@@ -16,6 +17,7 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
+from common.models.utils import get_current_transaction
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
@@ -1006,21 +1008,23 @@ class ConditionCodeAcceptance(BusinessRule):
             raise self.violation(message=message + "a price")
 
 
-class ActionCodeRequired(BusinessRule):
+class ActionRequiresDuty(BusinessRule):
     """If a condition's action code requires a duty, then an associated
     condition component must be created with a duty amount."""
 
     def validate(self, condition):
         # components = self.components.current()
-        components = condition.prefetch_related("components").select_related(
-            "components__duty_amount",
-        )
-        if self.action_code.requires_duty and not any(
-            [c.duty_amount for c in components],
-        ):
+        current = get_current_transaction()
+        components = condition.components.approved_up_to_transaction(current)
+        components_have_duty = any([c.duty_amount for c in components],)
+        if condition.action.requires_duty and not components_have_duty:
             raise self.violation(
-                message=f"Condition with action code {self.action_code.code} must have at least one component with a duty amount",
+                message=f"Condition with action code {condition.action.code} must have at least one component with a duty amount",
             )
+        
+        if not condition.action.requires_duty and components_have_duty:
+            raise self.violation(message=f"Condition with action code {condition.action.code} should not have any components with a duty amount")
+        
 
 
 class MeasureConditionComponentApplicability(ComponentApplicability):
