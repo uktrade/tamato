@@ -824,6 +824,8 @@ class MeasureCondition(TrackedModel):
         business_rules.ME62,
         business_rules.ME63,
         business_rules.ME64,
+        business_rules.ActionRequiresDuty,
+        business_rules.ConditionCodeAcceptance,
         UniqueIdentifyingFields,
         UpdateValidity,
     )

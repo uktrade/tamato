@@ -1660,7 +1660,15 @@ def test_ActionRequiresDuty(requires_duty, duty_amount, expect_error):
     
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
-        
+
+
+def test_ActionRequiresDuty_ignores_outdated_components():
+    condition = factories.MeasureConditionFactory.create(action__requires_duty=True)
+    component = factories.MeasureConditionComponentFactory.create(condition=condition, duty_amount=1.000)
+    component.new_version(component.transaction.workbasket, duty_amount=None)
+    
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ActionRequiresDuty(condition.transaction).validate(condition)     
 
 @pytest.mark.parametrize(
     ("applicability_code", "amount", "error_expected"),
