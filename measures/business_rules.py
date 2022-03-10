@@ -90,10 +90,14 @@ class MC4(PreventDeleteIfInUse):
 
 
 class AcceptedConditionTriggers(BusinessRule):
-    """A measure condition code must be created with one or both of accepts_certificate and accepts_price set to True"""
+    """A measure condition code must be created with one or both of
+    accepts_certificate and accepts_price set to True."""
+
     def validate(self):
         if not (self.accepts_certificate or self.accepts_price):
-            raise self.violation(message="Condition codes must be created with at least one of accepts_certificate or accepts_price set to True")
+            raise self.violation(
+                message="Condition codes must be created with at least one of accepts_certificate or accepts_price set to True",
+            )
 
 
 # 355 - MEASURE ACTION
@@ -979,33 +983,45 @@ class ME108(BusinessRule):
 
 class ConditionCodeAcceptance(BusinessRule):
     """
-    If a condition has a certificate, then the condition's code must accept a certificate.
-    
-    If a condition has a duty amount, then the condition's code must accept a price.
+    If a condition has a certificate, then the condition's code must accept a
+    certificate.
+
+    If a condition has a duty amount, then the condition's code must accept a
+    price.
     """
+
     def validate(self, condition):
         code = condition.condition_code
-        
-        if (condition.required_certificate and condition.duty_amount):
-            raise self.violation(message="Conditions may only be created with one of either certificate or price")
-        
+
+        if condition.required_certificate and condition.duty_amount:
+            raise self.violation(
+                message="Conditions may only be created with one of either certificate or price",
+            )
+
         message = f"Condition with code {code.code} cannot accept "
         if condition.required_certificate and not code.accepts_certificate:
             raise self.violation(message=message + "a certificate")
-            
+
         if condition.duty_amount and not code.accepts_price:
             raise self.violation(message=message + "a price")
 
 
 class ActionCodeRequired(BusinessRule):
-    """ 
-    If a condition's action code requires a duty, then an associated condition component must be created with a duty amount.
-    """
-    def validate(self):
-        components = self.components.current()
-        if self.action_code.requires_duty and not any([c.duty_amount for c in components]):
-            raise self.violation(message=f"Condition with action code {self.action_code.code} must have at least one component with a duty amount")
-        
+    """If a condition's action code requires a duty, then an associated
+    condition component must be created with a duty amount."""
+
+    def validate(self, condition):
+        # components = self.components.current()
+        components = condition.prefetch_related("components").select_related(
+            "components__duty_amount",
+        )
+        if self.action_code.requires_duty and not any(
+            [c.duty_amount for c in components],
+        ):
+            raise self.violation(
+                message=f"Condition with action code {self.action_code.code} must have at least one component with a duty amount",
+            )
+
 
 class MeasureConditionComponentApplicability(ComponentApplicability):
     def get_components(self, measure):
