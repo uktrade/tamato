@@ -4,7 +4,7 @@ from django.db import migrations, models
 
 
 CERTIFICATE_ONLY_CODES = ["A", "B", "C", "H", "K", "P", "Q", "Y", "Z"]
-PRICE_ONLY_CODES = ["F", "G", "L", "M", "R", "S", "U", "V"]
+PRICE_ONLY_CODES = ["F", "G", "L", "M", "N", "R", "S", "U", "V"]
 CERTIFICATE_AND_PRICE_CODES = ["E", "I"]
 
 REQUIRES_DUTY_CODES = ["01", "02", "03", "11", "12", "13", "15", "36"]

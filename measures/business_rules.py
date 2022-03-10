@@ -983,17 +983,17 @@ class ConditionCodeAcceptance(BusinessRule):
     
     If a condition has a duty amount, then the condition's code must accept a price.
     """
-    def validate(self):
-        code = self.condition_code
+    def validate(self, condition):
+        code = condition.condition_code
         
-        if (self.required_certificate and self.duty_amount):
+        if (condition.required_certificate and condition.duty_amount):
             raise self.violation(message="Conditions may only be created with one of either certificate or price")
         
         message = f"Condition with code {code.code} cannot accept "
-        if self.required_certificate and not code.accepts_certificate:
+        if condition.required_certificate and not code.accepts_certificate:
             raise self.violation(message=message + "a certificate")
             
-        if self.duty_amount and not code.accepts_price:
+        if condition.duty_amount and not code.accepts_price:
             raise self.violation(message=message + "a price")
 
 

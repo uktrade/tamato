@@ -7,7 +7,7 @@ from django.db import DataError
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UniqueIdentifyingFields
 from common.tests import factories
-from common.tests.factories import date_ranges
+from common.tests.factories import date_ranges, duty_amount
 from common.tests.factories import end_date
 from common.tests.util import Dates
 from common.tests.util import only_applicable_after
@@ -1541,6 +1541,39 @@ def test_ME108(expression, same_condition, expect_error):
 
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ME108(component.transaction).validate(component)
+
+
+@pytest.mark.parametrize(
+    "has_certificate, has_duty_amount, accepts_certificate, accepts_duty_amount, expect_error",
+    [
+        (True, True, True, True, True),
+        (DutyExpressionId.DE2, True, False),
+        (DutyExpressionId.DE1, True, True),
+    ],
+)
+def test_condition_code_acceptance():
+    certificate = factories.CertificateFactory.create()
+    condition = factories.MeasureConditionFactory.create(duty_amount=1.000, required_certificate=certificate)
+    
+    with raises_if(BusinessRuleViolation, True):
+        business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
+        
+
+def test_certificate():
+    certificate = factories.CertificateFactory.create()
+    code = factories.MeasureConditionCodeFactory.create(accepts_certificate=False, accepts_price=True)
+    condition = factories.MeasureConditionFactory.create(duty_amount=1.000, required_certificate=certificate, condition_code=code)
+    
+    with raises_if(BusinessRuleViolation, True):
+        business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
+       
+        
+def test_duty():
+    code = factories.MeasureConditionCodeFactory.create(accepts_certificate=True, accepts_price=False)
+    condition = factories.MeasureConditionFactory.create(duty_amount=1.000, condition_code=code)
+    
+    with raises_if(BusinessRuleViolation, True):
+        business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
 
 
 @pytest.mark.parametrize(
