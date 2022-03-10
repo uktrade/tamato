@@ -7,7 +7,7 @@ from django.db import DataError
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UniqueIdentifyingFields
 from common.tests import factories
-from common.tests.factories import date_ranges, duty_amount
+from common.tests.factories import date_ranges
 from common.tests.factories import end_date
 from common.tests.util import Dates
 from common.tests.util import only_applicable_after
@@ -1543,37 +1543,106 @@ def test_ME108(expression, same_condition, expect_error):
         business_rules.ME108(component.transaction).validate(component)
 
 
+# Even if a ConditionCode can accept either a certificate or a price,
+# a Condition should not be able to accept both at once
 @pytest.mark.parametrize(
-    "has_certificate, has_duty_amount, accepts_certificate, accepts_duty_amount, expect_error",
+    "accepts_certificate, accepts_price",
     [
-        (True, True, True, True, True),
-        (DutyExpressionId.DE2, True, False),
-        (DutyExpressionId.DE1, True, True),
+        (True, True),  # Some ConditionCodes (e.g. 'E') accept both
+        (True, False),
+        (False, True),
     ],
 )
-def test_condition_code_acceptance():
+def test_ConditionCodeAcceptance_certificate_and_price(
+    accepts_certificate,
+    accepts_price,
+):
     certificate = factories.CertificateFactory.create()
-    condition = factories.MeasureConditionFactory.create(duty_amount=1.000, required_certificate=certificate)
-    
-    with raises_if(BusinessRuleViolation, True):
-        business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
-        
+    code = factories.MeasureConditionCodeFactory(
+        accepts_certificate=accepts_certificate,
+        accepts_price=accepts_price,
+    )
+    condition = factories.MeasureConditionFactory.create(
+        duty_amount=1.000,
+        required_certificate=certificate,
+        condition_code=code,
+    )
 
-def test_certificate():
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ConditionCodeAcceptance(condition.transaction).validate(
+            condition,
+        )
+
+
+@pytest.mark.parametrize(
+    "accepts_certificate, accepts_price, expect_error",
+    [
+        (False, True, True),
+        (False, False, True),
+        (True, True, False),  # Some ConditionCodes (e.g. 'E') accept both
+        (True, False, False),
+    ],
+)
+def test_ConditionCodeAcceptance_certificate(
+    accepts_certificate,
+    accepts_price,
+    expect_error,
+):
     certificate = factories.CertificateFactory.create()
-    code = factories.MeasureConditionCodeFactory.create(accepts_certificate=False, accepts_price=True)
-    condition = factories.MeasureConditionFactory.create(duty_amount=1.000, required_certificate=certificate, condition_code=code)
-    
-    with raises_if(BusinessRuleViolation, True):
-        business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
-       
-        
-def test_duty():
-    code = factories.MeasureConditionCodeFactory.create(accepts_certificate=True, accepts_price=False)
-    condition = factories.MeasureConditionFactory.create(duty_amount=1.000, condition_code=code)
-    
-    with raises_if(BusinessRuleViolation, True):
-        business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
+    code = factories.MeasureConditionCodeFactory.create(
+        accepts_certificate=accepts_certificate,
+        accepts_price=accepts_price,
+    )
+    condition = factories.MeasureConditionFactory.create(
+        required_certificate=certificate,
+        duty_amount=None,
+        condition_code=code,
+    )
+    print(condition.duty_amount)
+
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.ConditionCodeAcceptance(condition.transaction).validate(
+            condition,
+        )
+
+
+@pytest.mark.parametrize(
+    "accepts_certificate, accepts_price, expect_error",
+    [
+        (True, False, True),
+        (False, False, True),
+        (True, True, False),  # Some ConditionCodes (e.g. 'E') accept both
+        (False, True, False),
+    ],
+)
+def test_ConditionCodeAcceptance_price(
+    accepts_certificate,
+    accepts_price,
+    expect_error,
+):
+    code = factories.MeasureConditionCodeFactory.create(
+        accepts_certificate=accepts_certificate,
+        accepts_price=accepts_price,
+    )
+    condition = factories.MeasureConditionFactory.create(
+        duty_amount=1.000,
+        condition_code=code,
+    )
+
+    with raises_if(BusinessRuleViolation, expect_error):
+        business_rules.ConditionCodeAcceptance(condition.transaction).validate(
+            condition,
+        )
+
+
+# This is possible for Condition codes (e.g. 'W') that accept neither certificates nor price
+def test_ConditionCodeAcceptance_nothing_added():
+    code = factories.MeasureConditionCodeFactory.create()
+    condition = factories.MeasureConditionFactory.create(
+        duty_amount=None,
+        condition_code=code,
+    )
+    business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
 
 
 @pytest.mark.parametrize(
