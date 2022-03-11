@@ -7,7 +7,7 @@ from django.db import DataError
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UniqueIdentifyingFields
 from common.tests import factories
-from common.tests.factories import date_ranges, duty_amount
+from common.tests.factories import date_ranges
 from common.tests.factories import end_date
 from common.tests.util import Dates
 from common.tests.util import only_applicable_after
@@ -1650,25 +1650,38 @@ def test_ConditionCodeAcceptance_nothing_added():
     [
         (True, None, True),
         (True, 1.000, False),
-        (False, None, False),  
-        (False, 1.000, True), # if it doesn't require a duty and one is provided, do we expect an error?
+        (False, None, False),
+        (
+            False,
+            1.000,
+            True,
+        ),  # if it doesn't require a duty and one is provided, do we expect an error?
     ],
 )
 def test_ActionRequiresDuty(requires_duty, duty_amount, expect_error):
-    condition = factories.MeasureConditionFactory.create(action__requires_duty=requires_duty)
-    factories.MeasureConditionComponentFactory.create(condition=condition, duty_amount=duty_amount)
-    
+    condition = factories.MeasureConditionFactory.create(
+        action__requires_duty=requires_duty,
+    )
+    factories.MeasureConditionComponentFactory.create(
+        condition=condition,
+        duty_amount=duty_amount,
+    )
+
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
 
 
 def test_ActionRequiresDuty_ignores_outdated_components():
     condition = factories.MeasureConditionFactory.create(action__requires_duty=True)
-    component = factories.MeasureConditionComponentFactory.create(condition=condition, duty_amount=1.000)
+    component = factories.MeasureConditionComponentFactory.create(
+        condition=condition,
+        duty_amount=1.000,
+    )
     component.new_version(component.transaction.workbasket, duty_amount=None)
-    
+
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ActionRequiresDuty(condition.transaction).validate(condition)     
+        business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
+
 
 @pytest.mark.parametrize(
     ("applicability_code", "amount", "error_expected"),

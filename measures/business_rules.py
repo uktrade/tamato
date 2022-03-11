@@ -2,7 +2,6 @@
 from datetime import date
 from typing import Mapping
 from typing import Optional
-from webbrowser import get
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
@@ -1005,15 +1004,16 @@ class ActionRequiresDuty(BusinessRule):
         # components = self.components.current()
         current = get_current_transaction()
         components = condition.components.approved_up_to_transaction(current)
-        components_have_duty = any([c.duty_amount for c in components],)
+        components_have_duty = any([c.duty_amount for c in components])
         if condition.action.requires_duty and not components_have_duty:
             raise self.violation(
                 message=f"Condition with action code {condition.action.code} must have at least one component with a duty amount",
             )
-        
+
         if not condition.action.requires_duty and components_have_duty:
-            raise self.violation(message=f"Condition with action code {condition.action.code} should not have any components with a duty amount")
-        
+            raise self.violation(
+                message=f"Condition with action code {condition.action.code} should not have any components with a duty amount",
+            )
 
 
 class MeasureConditionComponentApplicability(ComponentApplicability):

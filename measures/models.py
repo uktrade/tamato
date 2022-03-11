@@ -351,7 +351,7 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
     )
     description = ShortDescription()
     # A measure condition code must be created with one or both of
-    # accepts_certificate and accepts_price set to True, 
+    # accepts_certificate and accepts_price set to True,
     # though a condition should only ever have one of either required_certificate or duty_amount set.
     accepts_certificate = models.BooleanField(default=False)
     accepts_price = models.BooleanField(default=False)
