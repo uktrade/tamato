@@ -16,7 +16,6 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
-from common.models.utils import get_current_transaction
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
@@ -1001,9 +1000,7 @@ class ActionRequiresDuty(BusinessRule):
     condition component must be created with a duty amount."""
 
     def validate(self, condition):
-        # components = self.components.current()
-        current = get_current_transaction()
-        components = condition.components.approved_up_to_transaction(current)
+        components = condition.components.approved_up_to_transaction(self.transaction)
         components_have_duty = any([c.duty_amount for c in components])
         if condition.action.requires_duty and not components_have_duty:
             raise self.violation(
