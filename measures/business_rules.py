@@ -970,6 +970,49 @@ class ME108(BusinessRule):
             raise self.violation(component)
 
 
+class ConditionCodeAcceptance(BusinessRule):
+    """
+    If a condition has a certificate, then the condition's code must accept a
+    certificate.
+
+    If a condition has a duty amount, then the condition's code must accept a
+    price.
+    """
+
+    def validate(self, condition):
+        code = condition.condition_code
+
+        if condition.required_certificate and condition.duty_amount:
+            raise self.violation(
+                message="Conditions may only be created with one of either certificate or price",
+            )
+
+        message = f"Condition with code {code.code} cannot accept "
+        if condition.required_certificate and not code.accepts_certificate:
+            raise self.violation(message=message + "a certificate")
+
+        if condition.duty_amount and not code.accepts_price:
+            raise self.violation(message=message + "a price")
+
+
+class ActionRequiresDuty(BusinessRule):
+    """If a condition's action code requires a duty, then an associated
+    condition component must be created with a duty amount."""
+
+    def validate(self, condition):
+        components = condition.components.approved_up_to_transaction(self.transaction)
+        components_have_duty = any([c.duty_amount for c in components])
+        if condition.action.requires_duty and not components_have_duty:
+            raise self.violation(
+                message=f"Condition with action code {condition.action.code} must have at least one component with a duty amount",
+            )
+
+        if not condition.action.requires_duty and components_have_duty:
+            raise self.violation(
+                message=f"Condition with action code {condition.action.code} should not have any components with a duty amount",
+            )
+
+
 class MeasureConditionComponentApplicability(ComponentApplicability):
     def get_components(self, measure):
         return measure.conditions.prefetch_related("components").select_related(
