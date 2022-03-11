@@ -1655,7 +1655,7 @@ def test_ConditionCodeAcceptance_nothing_added():
             False,
             1.000,
             True,
-        ),  # if it doesn't require a duty and one is provided, do we expect an error?
+        ),
     ],
 )
 def test_ActionRequiresDuty(requires_duty, duty_amount, expect_error):
@@ -1665,6 +1665,7 @@ def test_ActionRequiresDuty(requires_duty, duty_amount, expect_error):
     factories.MeasureConditionComponentFactory.create(
         condition=condition,
         duty_amount=duty_amount,
+        transaction=condition.transaction,
     )
 
     with raises_if(BusinessRuleViolation, expect_error):
@@ -1676,8 +1677,13 @@ def test_ActionRequiresDuty_ignores_outdated_components():
     component = factories.MeasureConditionComponentFactory.create(
         condition=condition,
         duty_amount=1.000,
+        transaction=condition.transaction,
     )
-    component.new_version(component.transaction.workbasket, duty_amount=None)
+    component.new_version(
+        component.transaction.workbasket,
+        transaction=condition.transaction,
+        duty_amount=None,
+    )
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
