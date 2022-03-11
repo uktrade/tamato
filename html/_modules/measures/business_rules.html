@@ -1098,6 +1098,49 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">component</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="ConditionCodeAcceptance"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ConditionCodeAcceptance">[docs]</a><span class="k">class</span> <span class="nc">ConditionCodeAcceptance</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If a condition has a certificate, then the condition&#39;s code must accept a</span>
+<span class="sd">    certificate.</span>
+
+<span class="sd">    If a condition has a duty amount, then the condition&#39;s code must accept a</span>
+<span class="sd">    price.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ConditionCodeAcceptance.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ConditionCodeAcceptance.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">condition_code</span>
+
+        <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">required_certificate</span> <span class="ow">and</span> <span class="n">condition</span><span class="o">.</span><span class="n">duty_amount</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Conditions may only be created with one of either certificate or price&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Condition with code </span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2"> cannot accept &quot;</span>
+        <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">required_certificate</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">code</span><span class="o">.</span><span class="n">accepts_certificate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">message</span> <span class="o">+</span> <span class="s2">&quot;a certificate&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">duty_amount</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">code</span><span class="o">.</span><span class="n">accepts_price</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">message</span> <span class="o">+</span> <span class="s2">&quot;a price&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ActionRequiresDuty"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ActionRequiresDuty">[docs]</a><span class="k">class</span> <span class="nc">ActionRequiresDuty</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If a condition&#39;s action code requires a duty, then an associated</span>
+<span class="sd">    condition component must be created with a duty amount.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ActionRequiresDuty.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ActionRequiresDuty.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+        <span class="n">components_have_duty</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">duty_amount</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">components</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">requires_duty</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">components_have_duty</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Condition with action code </span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2"> must have at least one component with a duty amount&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">condition</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">requires_duty</span> <span class="ow">and</span> <span class="n">components_have_duty</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Condition with action code </span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2"> should not have any components with a duty amount&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="MeasureConditionComponentApplicability"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.MeasureConditionComponentApplicability">[docs]</a><span class="k">class</span> <span class="nc">MeasureConditionComponentApplicability</span><span class="p">(</span><span class="n">ComponentApplicability</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">get_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">measure</span><span class="o">.</span><span class="n">conditions</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">&quot;components&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
