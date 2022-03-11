@@ -4,7 +4,6 @@ import pytest
 
 from common.tests import factories
 from measures import forms
-from measures.forms import MeasureDutiesForm
 from measures.forms import MeasureForm
 
 pytestmark = pytest.mark.django_db
@@ -37,15 +36,6 @@ def test_error_raised_if_no_duty_sentence(session_with_workbasket):
         match="Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
     ):
         MeasureForm(data={}, instance=measure, request=session_with_workbasket)
-
-
-# https://uktrade.atlassian.net/browse/TP2000-74
-def test_measure_duties_left_blank(date_ranges):
-    form = MeasureDutiesForm(data={}, initial={"measure_start_date": date_ranges.now})
-
-    with patch("measures.validators.validate_duties") as validate_duties:
-        assert form.is_valid()
-        assert not validate_duties.called
 
 
 def test_measure_forms_details_valid_data(measure_type, regulation):
@@ -120,9 +110,11 @@ def test_measure_forms_additional_code_invalid_data():
     "duties,is_valid", [("33 GBP/100kg", True), ("some invalid duty expression", False)]
 )
 def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_ranges):
+    commodity = factories.GoodsNomenclatureFactory.create()
     data = {
         "duties": duties,
+        "commodity": commodity,
     }
     initial_data = {"measure_start_date": date_ranges.normal}
-    form = forms.MeasureDutiesForm(data, prefix="", initial=initial_data)
+    form = forms.MeasureCommodityAndDutiesForm(data, prefix="", initial=initial_data)
     assert form.is_valid() == is_valid
