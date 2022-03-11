@@ -91,17 +91,6 @@ class MC4(PreventDeleteIfInUse):
     condition component."""
 
 
-class AcceptedConditionTriggers(BusinessRule):
-    """A measure condition code must be created with one or both of
-    accepts_certificate and accepts_price set to True."""
-
-    def validate(self):
-        if not (self.accepts_certificate or self.accepts_price):
-            raise self.violation(
-                message="Condition codes must be created with at least one of accepts_certificate or accepts_price set to True",
-            )
-
-
 # 355 - MEASURE ACTION
 
 
