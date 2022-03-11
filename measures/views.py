@@ -101,7 +101,6 @@ class MeasureCreateWizard(
     COMMODITIES = "commodities"
     ADDITIONAL_CODE = "additional_code"
     CONDITIONS = "conditions"
-    DUTIES = "duties"
     FOOTNOTES = "footnotes"
     SUMMARY = "summary"
     COMPLETE = "complete"
@@ -109,10 +108,9 @@ class MeasureCreateWizard(
     form_list = [
         (START, forms.MeasureCreateStartForm),
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
-        (COMMODITIES, forms.MeasureCommodityFormSet),
+        (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         (CONDITIONS, forms.MeasureConditionsFormSet),
-        (DUTIES, forms.MeasureDutiesForm),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
         (SUMMARY, forms.MeasureReviewForm),
     ]
@@ -123,7 +121,6 @@ class MeasureCreateWizard(
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
-        DUTIES: "measures/create-wizard-step.jinja",
         FOOTNOTES: "measures/create-formset.jinja",
         SUMMARY: "measures/create-review.jinja",
         COMPLETE: "measures/confirm-create-multiple.jinja",
@@ -139,8 +136,8 @@ class MeasureCreateWizard(
             "link_text": "Measure details",
         },
         COMMODITIES: {
-            "title": "Select commodities",
-            "link_text": "Commodities",
+            "title": "Select commodities and enter the duties",
+            "link_text": "Commodities and duties",
         },
         ADDITIONAL_CODE: {
             "title": "Assign an additional code",
@@ -153,10 +150,6 @@ class MeasureCreateWizard(
                 "codes, select continue."
             ),
             "link_text": "Conditions",
-        },
-        DUTIES: {
-            "title": "Enter the duties that will apply",
-            "link_text": "Duties",
         },
         FOOTNOTES: {
             "title": "Add any footnotes",
@@ -209,7 +202,7 @@ class MeasureCreateWizard(
                         if not item["DELETE"]
                     ],
                     # condition_sentence here, or handle separately and duty_sentence after?
-                    "duty_sentence": data["duties"],
+                    "duty_sentence": commodity_data["duties"],
                 }
 
                 measures_data.append(measure_data)

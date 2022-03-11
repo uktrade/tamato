@@ -67,6 +67,7 @@
     {% for item in data %}
       {{ rows.extend([
         ("Commodity code", item["commodity"] ~ " - " ~ item["commodity"].get_description().description|safe if item["commodity"] else "None"),
+        ("Duty", item["duties"]),
       ]) }}
     {% endfor %}
   {% endcall %}
@@ -86,10 +87,6 @@
         {% endif %}
       {% endfor %}
     {% endif %}
-  {% endcall %}
-
-  {% call(rows, data) review_step("duties") %}
-    {{ rows.append(("Duties", data["duties"])) }}
   {% endcall %}
 
   {% call(rows, data) review_step("footnotes") %}
