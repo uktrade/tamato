@@ -21,7 +21,7 @@ The central entity is called a **measure**. Each measure reflects one customs ru
 
 The first group of dimensional entities define the **context** of the measure. Each measure must be linked to a *measure type*, a *commodity* in the *goods nomenclature* hierarchy that is subject to the customs rule, a *geographical area* of origin for which the rule applies, and a generating *regulation* on which the rule is based. A measure may also be linked to an optional *additional code*, which is sometimes used for company exemptions.
 
-The second group of dimensional entities capture the measure **facts**, i.e. the customs rule itself. The measure type and the particular details of the customs rule will determine which fact dimensions a specific measure will be linked to. For example, a third country duty will require duty rates defined via *measure components*); import and export controls will use *measure conditions* that reference required *certificates*; trade quotas required *quota order numbers* and *quota definitions*; suspensions sometimes require additional *footnotes*, etc.
+The second group of dimensional entities capture the measure **facts**, i.e. the customs rule itself. The measure type and the particular details of the customs rule will determine which types of facts a given measure will require. For example, a third country duty will require duty rates defined via *measure components*; import and export controls will use *measure conditions* that reference required *certificates*; trade quotas require *quota order numbers* and *quota definitions*; suspensions sometimes require additional *footnotes*, etc.
 
 A top-level overview of the TARIC-3 data model is provided below. Each group of dimensional entities includes its own mini-ERD as the data model is in third normal form.
 
@@ -35,12 +35,12 @@ Snowflake schemas have known disadvantages when there are too many layers of dim
 
 Specific challenges with the TARIC-3 data model include:
 
-1. **Mapping customs rules to the data model is not trivial.**  Depending on measure type and other particularities, a customs rule may need to use one set of fact-type dimensions and not others. For example, it may need components but not conditions or quotas; it may have both components and quotas; it may or may not require footnotes; etc. This means that granular customs rule implementations can be challenging and error-prone.
+1. **Mapping customs rules to the data model is not trivial.**  Depending on measure type and other particularities, a customs rule may need to use one set of facts but not any of the others. For example, it may need components but not conditions or quotas; it may have both components and quotas; it may or may not require footnotes; etc. This means that granular customs rule implementations can be challenging and error-prone.
    
   - TaMaTo partially addresses this issue through the use of ``measure creation patterns``. These are essentially facades that ensure proper handling of null cases and support the use of duty expressions in order to avoid manual setup of individual measure components.
   - While patterns are certainly beneficial, they are not aware of policy regime context. Therefore, while patterns help ensure that data entries are *valid*, they can't guarantee that entries are *correct* (i.e. they reflect trade policies as intended).
   
-2. **Customs rules not aware of policy regime context.** Customs rules are often subject to trade policy regimes such as free trade agreements (FTA-s) or most favored nation (MFN) treatment. Trade policies often span multiple commodities and multiple time periods. For example, staging rates in an FTA may define how the duty rate for a given range of commodities imported from the trade partner may decline gradually over the course of several years. This is one policy that needs to be reflected in multiple individual customs rules via individual measures, one for each combination of commodity and validity period.
+2. **Low-level tariff changes are not policy-friendly.** Customs rules are often subject to trade policy regimes such as free trade agreements (FTA-s) or most favored nation (MFN) treatment. Trade policies often span multiple commodities and multiple time periods. For example, staging rates in an FTA may define how the duty rate for a given range of commodities imported from the trade partner may decline gradually over the course of several years. This is one policy that needs to be reflected in multiple individual customs rules via individual measures, one for each combination of commodity and validity period.
    
   - Importantly, this is not a *bulk entry* issue. TaMaTo does provide utilities (e.g. a TARIC envelope importer and a configurable excel importer), which enable bulk load of a large number of data entries at a time. But the source files for bulk entry still need to outline customs rules one measure at a time, and they provide no meta context around the policy regime
 
@@ -48,8 +48,8 @@ Associated Costs and Risks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 The low-level data entry approach for customs rules in TaMaTo imposes a range of costs and operational risks:
 
-1. Data entry can be *slow and tedious* both via the backend or the UI. This leads to delays in implementation of trade policies at the border (sometimes, these delays are significant and are measured in months).
-2. Data enty is *subject to errors* - including both validation and correctness errors. Historically, this has often led to costly iterations during the preparation of tariff changes and the exchange of information on tariff changes with HMRC. In addition, tariff corrections, where existing policies were not implemented as intended, are also commonplace.
+1. Lowe-level data entry can be *slow and tedious* via both the backend and the UI. This leads to delays in implementation of trade policies at the border (sometimes, these delays are significant and are measured in months).
+2. Low-level data enty is *subject to errors* - including both validation and correctness errors. Historically, this has often led to costly iterations during the preparation of tariff changes and the exchange of information on tariff changes with HMRC. In addition, tariff corrections, where existing policies were not implemented as intended, are also commonplace.
 3. The *highly complex low-level data model* has resulted in high dependency on key talent that has sufficient understanding of, and experience with, this model; onboarding of new talent is slow and challenging; and it has been difficult to democratize the ability to edit the tariff, which would improve operational resilience
    
   - It is useful to point out that the introduction of the Tariff Editor UI does not address this issue. It relieves the dependency of MTPO tariff managers on TAP team data engineers, but then single points of dependency develop in the tariff manager team as well
