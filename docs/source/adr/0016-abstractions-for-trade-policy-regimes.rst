@@ -69,7 +69,7 @@ This abstraction later has two main responsibilities:
 
 Key Implementation Principles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The abstraction layer folows three key implementation principles:
+The abstraction layer follows three key implementation principles:
 
 1. Exsiting TaMaTo code base and functionality is unaffected - there is no refactoring and there are no breaking changes
 2. Trade policy regime abstractions are configurable - trade regimes evolve and not all scenarios can be predicted upfront; therefore there are no hard-coded policy rules and there is no hard-coded nomenclature of regimes
@@ -260,7 +260,7 @@ The **aggregates** are the "guardians" for all changes to the tariffs. They enab
           self.id: uuid.UUID = uuid.uuid4()
 
       def get_diffs(cls, data: Any, allow_exists: bool) -> Iterator[MeasureDiff]:
-          """Use this to generate a compehensive review of changes before implementing any of them!"""
+          """Use this to generate a comprehensive review of changes before implementing any of them!"""
           entities = self.transcoder().decode(data)
           return chain(*(entity.get_diffs(allow_exists) for entity in entities))
       
