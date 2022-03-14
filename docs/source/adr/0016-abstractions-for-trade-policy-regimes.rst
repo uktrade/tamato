@@ -331,7 +331,7 @@ Believe it or not, this is all we need for a mock worked example.
 Let's take the case of a staging rate from a FTA and build a policy regime aggregate around it.
 
   - in real-world scenarios, the scope for a regime aggregate could be set at any level - e.g. instead of staging rate, maybe there could be an aggregate for an entire FTA altogether
-  - a good design question to ask would be how much *generality* is introduced in your aggregate - generally, this ADR offers the ability to **avoid generality**, because typically abstractions work based when combined with configurable specificity.
+  - a good design question to ask would be how much *generality* is introduced in your aggregate - this ADR offers the ability to **avoid generality**, because typically abstractions work based when combined with configurable specificity.
 
 
 Staging Rate Schema
