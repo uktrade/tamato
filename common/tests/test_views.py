@@ -37,13 +37,19 @@ def test_index_workbasket_unaffected_by_archived_workbasket(
 ):
     response = valid_user_client.get(reverse("index"))
     assert response.status_code == 200
-
     view = response.context_data["view"]
     view_workbasket = view.workbasket
 
     factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
+    response = valid_user_client.get(reverse("index"))
+    assert response.status_code == 200
+    view = response.context_data["view"]
     assert view.workbasket == view_workbasket
-    w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+
+    factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    response = valid_user_client.get(reverse("index"))
+    assert response.status_code == 200
+    view = response.context_data["view"]
     assert view.workbasket == view_workbasket
 
 
