@@ -80,18 +80,19 @@ Two Key Design Elements
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The proposed solution centers on the use of two main abstractions:
 
-1. **Measure Type Entities.** These are responsible for managing writes to low-level TARIC-3 model entities. of a given measure type, with all the peculiarities that are specific to that measure type
+1. **Measure Type Entities.** These are responsible for managing writes to low-level TARIC-3 model entities of a given measure type, with all the peculiarities that are specific to that measure type
 
   - there is one of these entities for each measure type, responsible for handling all the peculiarities related to that specific measure type;
   - all measure type entities share a common interface, ensuring the ability to automatically determine diffs vs current database state and apply changes accordingly
-  - measure types rarely change, so building up the library of measure type entities a one-off investment
-  - measure type entities are *not* meant to be invoked directly when implementing tariff changes
+  - measure types rarely change, so building up the library of measure type entities should be a one-off investment
+  - measure type entities are ***not*** meant to be invoked directly when implementing tariff changes
 
 2. **Trade Policy Regime Aggregates.** These are responsible for mapping arbitrary input data specifications to a list of measure type entities for the purposes of implementing tariff changes
 
   - the input data specifications can be literally any specification in any format (strings, json payloads, etc.)
   - policy regime aggregates share a common interface, ensuring the ability to transcode inputs, to provide comprehensive previews of pending changes to validate policy implications, and to apply a policy
   - policy regime aggregates are meant to be invoked directly when implementing tariff changes
+  - it is recommended that the aggregates are tested with fearues and scenarios under BDD
 
 Measure Type Entities
 ~~~~~~~~~~~~~~~~~~~~~
@@ -117,7 +118,7 @@ The **measure type entities** are "necessary middleware" for this design. The in
 
 The worked examples provided later in this ADR demonstrate possible concrete implementations of this interface.
 
-Note the `allow_exists` parameter in the code snippet above - this can be used to govern how the system treats `create` and `update` changes - i.e. whether they're considered sane and valid in the context of current db state or not.
+Note the ``allow_exists`` parameter in the code snippet above - this can be used to govern how the system treats ``create`` and ``update`` changes - i.e. whether they're considered sane and valid in the context of current db state or not.
 
 The ``MeasureData`` and ``MeasureDiff`` models require some more explanation here.
 
@@ -125,8 +126,9 @@ MeasureData Model
 _________________
 
 ``MeasureData`` is a data model very similar to the existing ``Measure`` Django ORM model in TaMaTo, but with two key differences:
+
 - it is simply a container of pending changes, and does not require valid references to other Django ORM objects
-- it is responsible for validating the sanity of the inputs (but does *not* run any business rules)
+- it is mainly responsible for validating the sanity of the inputs (but does *not* run any business rules)
 
 A possible implementation could look like this:::
 
@@ -245,7 +247,7 @@ The model could be implemented as follows:::
       old_footnotes: Optional[Sequence[str]] = None
       old_conditions: Optional[Sequence[MeasureConditionData]] = None
 
-      conflicts: Optional[Sequence[Conflict]] = None # business rule codes
+      conflicts: Optional[Sequence[Conflict]] = None
 
 
 Trade Policy Regime Aggregates
@@ -485,10 +487,10 @@ Ok, let's add the specialized StagingRateAggregate next:::
 PolicyRegister
 ______________
 
-Finally, provide an instance of the policy register with the staging aggregate registered on it, so that it can be used in a session:
+Finally, provide an instance of the policy register with the staging aggregate registered on it, so that it can be used in a session:::
 
-register = TradePolicyRegimeRegister()
-register.register_regime(StagingRateAggregate())
+    register = TradePolicyRegimeRegister()
+    register.register_regime(StagingRateAggregate())
 
 
 Opportunity: Attach an Event Store
