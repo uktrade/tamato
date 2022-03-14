@@ -21,7 +21,6 @@ from common.models.tracked_qs import TrackedModelQuerySet
 from common.querysets import ValidityQuerySet
 from common.util import EndDate
 from common.util import StartDate
-from regulations.models import Regulation
 
 
 class DutySentenceMixin(QuerySet):
@@ -191,6 +190,10 @@ class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin, ValidityQuerySet
         # We also turn NULLs into "infinity" such that they sort to the top:
         # i.e. if any modification regulation is open-ended, so is the measure.
         # We then turn infinity back into NULL to be used in the date range.
+        Regulation = self.model._meta.get_field(
+            "generating_regulation",
+        ).remote_field.model
+
         end_date_from_modifications = With(
             Regulation.objects.annotate(
                 amended_end_date=NullIf(

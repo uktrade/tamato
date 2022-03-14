@@ -530,6 +530,7 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME12,
         business_rules.ME17,
         business_rules.ME24,
+        business_rules.ME27,
         business_rules.ME87,
         business_rules.ME33,
         business_rules.ME34,
