@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django_fsm import FSMField
@@ -215,18 +214,6 @@ def get_partition_scheme(scheme: Optional[str] = None) -> TransactionPartitionSc
 
 
 class WorkBasketQueryset(QuerySet):
-    def prefetch_ordered_tracked_models(self) -> QuerySet:
-        """Sort tracked_models by record_number, subrecord_number by using
-        prefetch and imposing the order there."""
-
-        q_annotate_record_code = TrackedModel.objects.annotate_record_codes().order_by(
-            "record_code",
-            "subrecord_code",
-        )
-        return self.prefetch_related(
-            Prefetch("tracked_models", queryset=q_annotate_record_code),
-        )
-
     def ordered_transactions(self):
         """
         This Workbaskets transactions in creation order.
@@ -236,7 +223,7 @@ class WorkBasketQueryset(QuerySet):
         workbasket_pks = self.values_list("pk", flat=True)
         return Transaction.objects.filter(
             workbasket__pk__in=Subquery(workbasket_pks),
-        ).order_by("order")
+        )
 
     def is_approved(self):
         return self.filter(

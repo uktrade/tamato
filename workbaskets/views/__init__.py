@@ -125,12 +125,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
         # violations.
-        object_list = (
-            self.get_queryset()
-            .annotate_record_codes()
-            .order_by("record_code", "subrecord_code")
-            .reverse()
-        )
+        object_list = self.get_queryset().record_ordering().reverse()
 
         for obj in object_list:
             # Unlike situations where TrackedModels are superceded and are

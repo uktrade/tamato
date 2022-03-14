@@ -74,7 +74,7 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
         # Transactions written to the current output
         current_transactions = []
         for transaction in transactions.all():
-            tracked_models = transaction.tracked_models.all()
+            tracked_models = transaction.tracked_models.record_ordering()
             if not tracked_models.count():
                 # Transactions with no tracked models can occur if a workbasket
                 # is created and then populated, these are filtered as an empty
