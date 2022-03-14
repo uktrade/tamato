@@ -9,10 +9,10 @@ from regulations.models import Regulation
 
 
 class RegulationFilterMixin(TamatoFilterMixin):
-    """Filter mixin to allow custom filtering on regulation_id, role_type and
+    """Filter mixin to allow custom filtering on regulation_id and
     information_text."""
 
-    search_fields = ("regulation_id", "role_type", "information_text")
+    search_fields = ("regulation_id", "information_text")
 
 
 class RegulationFilterBackend(TamatoFilterBackend, RegulationFilterMixin):

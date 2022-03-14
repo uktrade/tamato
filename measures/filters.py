@@ -61,6 +61,7 @@ class MeasureFilter(TamatoFilter):
         queryset=MeasureType.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
+            "min_length": 3,
         },
     )
 
@@ -70,6 +71,7 @@ class MeasureFilter(TamatoFilter):
         queryset=GoodsNomenclature.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
+            "min_length": 4,
         },
     )
 
@@ -79,6 +81,7 @@ class MeasureFilter(TamatoFilter):
         queryset=AdditionalCode.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
+            "min_length": 3,
         },
     )
 
@@ -88,6 +91,7 @@ class MeasureFilter(TamatoFilter):
         queryset=GeographicalArea.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
+            "min_length": 2,
         },
     )
 
@@ -97,6 +101,7 @@ class MeasureFilter(TamatoFilter):
         queryset=QuotaOrderNumber.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
+            "min_length": 4,
         },
     )
 
@@ -106,6 +111,7 @@ class MeasureFilter(TamatoFilter):
         queryset=Regulation.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
+            "min_length": 3,
         },
     )
 
@@ -115,6 +121,7 @@ class MeasureFilter(TamatoFilter):
         queryset=Footnote.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
+            "min_length": 2,
         },
     )
 

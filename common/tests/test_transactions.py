@@ -9,8 +9,8 @@ pytestmark = pytest.mark.django_db
 partition_scheme = get_partition_scheme()
 
 
-def test_unordered_tracked_models_are_linked_to_queryset():
-    """Asserts that all models returned by unordered_tracked_models are in the
+def test_tracked_models_are_linked_to_queryset():
+    """Asserts that all models returned by ``tracked_models`` are in the
     workbasket."""
     transaction_this = factories.TransactionFactory()
     factories.MeasureFactory.create(
@@ -23,7 +23,7 @@ def test_unordered_tracked_models_are_linked_to_queryset():
     )
 
     qs = Transaction.objects.filter(id=transaction_this.id)
-    unordered_tracked_models = qs.unordered_tracked_models()
+    unordered_tracked_models = qs.tracked_models.record_ordering()
 
     assert (
         unordered_tracked_models.filter(
@@ -33,31 +33,9 @@ def test_unordered_tracked_models_are_linked_to_queryset():
     )
 
 
-def test_ordered_tracked_models_are_sorted_on_order():
-    """Asserts that all models returned by ordered_tracked_models in the right
-    order."""
-    transaction_second = factories.TransactionFactory(order=2)
-    factories.MeasureFactory.create(
-        transaction=transaction_second,
-    )
-
-    transaction_first = factories.TransactionFactory(order=1)
-    factories.MeasureFactory.create(
-        transaction=transaction_first,
-    )
-
-    ids = (transaction_first.id, transaction_second.id)
-    qs = Transaction.objects.filter(id__in=ids)
-    ordered_tracked_models = qs.ordered_tracked_models().values_list(
-        "transaction__order",
-        flat=True,
-    )
-
-    assert sorted(ordered_tracked_models) == list(ordered_tracked_models)
-
-
-def test_ordered_tracked_models_are_sorted_on_partition_and_order():
-    """Asserts that all models returned by ordered_tracked_models in the right
+def test_tracked_models_are_sorted_correctly():
+    """Asserts that all models returned by ``tracked_models`` in the right
+    order, i.e. ordered first by transaction order and then in record code
     order."""
     transaction_first = factories.TransactionFactory(
         partition=partition_scheme.get_partition("PROPOSED"),
@@ -77,12 +55,22 @@ def test_ordered_tracked_models_are_sorted_on_partition_and_order():
 
     ids = (transaction_first.id, transaction_second.id)
     qs = Transaction.objects.filter(id__in=ids)
-    ordered_tracked_models = qs.ordered_tracked_models()
+    ordered_tracked_models = qs.tracked_models.record_ordering().values(
+        "transaction__partition",
+        "transaction__order",
+        "record_code",
+        "subrecord_code",
+    )
 
     assert (
         sorted(
             ordered_tracked_models,
-            key=lambda x: (x.transaction.partition, x.transaction.order),
+            key=lambda x: (
+                x["transaction__partition"],
+                x["transaction__order"],
+                x["record_code"],
+                x["subrecord_code"],
+            ),
         )
         == list(ordered_tracked_models)
     )
