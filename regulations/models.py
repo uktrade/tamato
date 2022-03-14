@@ -4,6 +4,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.fields import DateField
 
+import measures.business_rules as measure_business_rules
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import TaricDateRangeField
@@ -213,6 +214,8 @@ class Regulation(TrackedModel, ValidityMixin):
         business_rules.ROIMB47,
         UpdateValidity,
     )
+
+    indirect_business_rules = (measure_business_rules.ME27,)
 
     @property
     def structure_description(self):
@@ -438,3 +441,5 @@ class Replacement(TrackedModel):
     identifying_fields = ("enacting_regulation_id", "target_regulation_id")
 
     business_rules = (UpdateValidity,)
+
+    indirect_business_rules = (measure_business_rules.ME27,)
