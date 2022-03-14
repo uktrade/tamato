@@ -6,6 +6,9 @@ from typing import Tuple
 import parsec  # type: ignore
 import pytest
 
+from common.models.trackedmodel import TrackedModel
+from measures.models import MeasureComponent
+from measures.models import MeasureConditionComponent
 from measures.parsers import ConditionSentenceParser
 from measures.parsers import DutySentenceParser
 from measures.parsers import SeasonalRateParser
@@ -68,31 +71,52 @@ def get_condition_data(
 def duty_sentence_parser_test(
     duty_sentence_parser: DutySentenceParser,
     duty_sentence_data: Tuple[str, List[Dict]],
+    instance_class: TrackedModel,
 ):
     duty_sentence, expected_results = duty_sentence_data
     components = list(duty_sentence_parser.parse(duty_sentence))
     assert len(expected_results) == len(components)
     for expected, actual in zip(expected_results, components):
         assert_attributes(expected, actual)
+        assert isinstance(actual, instance_class)
 
 
 def test_reversible_duty_sentence_parsing(
     duty_sentence_parser: DutySentenceParser,
     reversible_duty_sentence_data,
 ):
-    duty_sentence_parser_test(duty_sentence_parser, reversible_duty_sentence_data)
+    duty_sentence_parser_test(
+        duty_sentence_parser,
+        reversible_duty_sentence_data,
+        MeasureComponent,
+    )
 
 
 def test_irreversible_duty_sentence_parsing(
     duty_sentence_parser: DutySentenceParser,
     irreversible_duty_sentence_data,
 ):
-    duty_sentence_parser_test(duty_sentence_parser, irreversible_duty_sentence_data)
+    duty_sentence_parser_test(
+        duty_sentence_parser,
+        irreversible_duty_sentence_data,
+        MeasureComponent,
+    )
 
 
 def test_only_permitted_measurements_allowed(duty_sentence_parser):
     with pytest.raises(parsec.ParseError):
         duty_sentence_parser.parse("1.0 EUR / kg / lactic.")
+
+
+def test_condition_duty_sentence_parsing(
+    condition_duty_sentence_parser: DutySentenceParser,
+    reversible_duty_sentence_data,
+):
+    duty_sentence_parser_test(
+        condition_duty_sentence_parser,
+        reversible_duty_sentence_data,
+        MeasureConditionComponent,
+    )
 
 
 @pytest.mark.parametrize(

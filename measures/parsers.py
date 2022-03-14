@@ -24,6 +24,7 @@ from parsec import string
 from parsec import try_choice
 
 from certificates.models import Certificate
+from common.models.trackedmodel import TrackedModel
 from common.validators import ApplicabilityCode
 from measures.models import DutyExpression
 from measures.models import MeasureAction
@@ -131,6 +132,7 @@ class DutySentenceParser:
         duty_expressions: Iterable[DutyExpression],
         monetary_units: Iterable[MonetaryUnit],
         permitted_measurements: Iterable[Measurement],
+        component_output: Optional[TrackedModel] = MeasureComponent,
     ):
         # Decimal numbers are a sequence of digits (without a left-trailing zero)
         # followed optionally by a decimal point and a number of digits (we have seen
@@ -206,7 +208,7 @@ class DutySentenceParser:
                 and has_measurement != ApplicabilityCode.NOT_PERMITTED
                 else component
             ).parsecmap(
-                lambda exp: MeasureComponent(
+                lambda exp: component_output(
                     duty_expression=exp[0],
                     duty_amount=exp[1],
                     monetary_unit=exp[2],
