@@ -28,6 +28,7 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
+from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
@@ -233,22 +234,32 @@ class MeasureCreateWizard(
                     # XXX the design doesn't show whether the condition duty_amount field
                     # should handle duty_expression, monetary_unit or measurements, so this
                     # code assumes some sensible(?) defaults
-                    if condition.duty_amount:
-                        component = MeasureConditionComponent(
-                            condition=condition,
-                            update_type=UpdateType.CREATE,
-                            transaction=condition.transaction,
-                            duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
-                                1
-                            ],
-                            duty_amount=condition.duty_amount,
-                            monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
-                                "GBP"
-                            ],
-                            component_measurement=None,
+                    if condition_data.get("applicable_duty"):
+                        parser = DutySentenceParser.get(
+                            measure.valid_between.lower,
+                            component_output=MeasureConditionComponent,
                         )
-                        component.clean()
-                        component.save()
+                        components = parser.parse(condition_data["applicable_duty"])
+                        for c in components:
+                            c.condition = condition
+                            c.transaction = condition.transaction
+                            c.update_type = UpdateType.CREATE
+                            c.save()
+                        # component = MeasureConditionComponent(
+                        #     condition=condition,
+                        #     update_type=UpdateType.CREATE,
+                        #     transaction=condition.transaction,
+                        #     duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
+                        #         1
+                        #     ],
+                        #     duty_amount=condition.duty_amount,
+                        #     monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
+                        #         "GBP"
+                        #     ],
+                        #     component_measurement=None,
+                        # )
+                        # component.clean()
+                        # component.save()
 
             created_measures.append(measure)
 

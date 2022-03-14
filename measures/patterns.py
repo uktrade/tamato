@@ -207,7 +207,7 @@ class MeasureCreationPattern:
             condition.update_type = UpdateType.CREATE
             condition.transaction = measure.transaction
             condition.save()
-            breakpoint()
+
             if component:
                 component.condition = condition
                 component.update_type = UpdateType.CREATE

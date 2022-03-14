@@ -257,7 +257,11 @@ class DutySentenceParser:
         return self.sentence_parser.parse_strict(s)
 
     @classmethod
-    def get(cls, forward_time: date) -> DutySentenceParser:
+    def get(
+        cls,
+        forward_time: date,
+        component_output: Optional[TrackedModel] = MeasureComponent,
+    ) -> DutySentenceParser:
         """Return a DutySentenceParser loaded with expressions and measurements
         that are valid on the passed date."""
         duty_expressions = (
@@ -278,6 +282,7 @@ class DutySentenceParser:
             duty_expressions,
             monetary_units,
             permitted_measurements,
+            component_output=component_output,
         )
 
 

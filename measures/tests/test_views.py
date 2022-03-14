@@ -339,7 +339,8 @@ def test_measure_form_wizard_finish(
 
         assert response.status_code == 302
         assert response.url == reverse(
-            "measure-ui-create", kwargs={"step": step_data["next_step"]}
+            "measure-ui-create",
+            kwargs={"step": step_data["next_step"]},
         )
 
 
@@ -393,6 +394,7 @@ def test_measure_form_wizard_create_measures(
                 "duty_amount": None,
                 "required_certificate": None,
                 "action": action2,
+                "applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
                 "DELETE": False,
             },
             {
@@ -420,12 +422,22 @@ def test_measure_form_wizard_create_measures(
     with pytest.raises(Measure.DoesNotExist):
         Measure.objects.get(goods_nomenclature=commodity3)
 
-    assert Measure.objects.get(
-        goods_nomenclature=commodity1
-    ).components.get().duty_amount == Decimal("33.000")
-    assert Measure.objects.get(
-        goods_nomenclature=commodity2
-    ).components.get().duty_amount == Decimal("40.000")
+    assert (
+        Measure.objects.get(
+            goods_nomenclature=commodity1,
+        )
+        .components.get()
+        .duty_amount
+        == Decimal("33.000")
+    )
+    assert (
+        Measure.objects.get(
+            goods_nomenclature=commodity2,
+        )
+        .components.get()
+        .duty_amount
+        == Decimal("40.000")
+    )
 
     assert measures[0].footnotes.get() == footnote1
     assert measures[1].footnotes.get() == footnote1
@@ -437,13 +449,23 @@ def test_measure_form_wizard_create_measures(
     assert len(measures[1].conditions.all()) == 2
 
     created_conditions = MeasureCondition.objects.filter(
-        dependent_measure__in=[m.id for m in measures]
+        dependent_measure__in=[m.id for m in measures],
     )
 
     created_condition_codes = MeasureConditionCode.objects.filter(
-        conditions__in=[c.id for c in created_conditions]
+        conditions__in=[c.id for c in created_conditions],
     )
 
     assert condition_code1 in created_condition_codes
     assert condition_code2 in created_condition_codes
     assert condition_code3 not in created_condition_codes
+
+    created_condition_components = (
+        created_conditions.last().components.approved_up_to_transaction(
+            created_conditions.last().transaction,
+        )
+    )
+
+    assert created_condition_components.count() == 2
+    assert created_condition_components.first().duty_amount == Decimal("8.800")
+    assert created_condition_components.last().duty_amount == Decimal("1.700")
