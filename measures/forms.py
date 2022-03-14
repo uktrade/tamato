@@ -546,6 +546,7 @@ class MeasureConditionsForm(forms.ModelForm):
             "duty_amount",
             "required_certificate",
             "action",
+            "applicable_duty",
         ]
 
     condition_code = forms.ModelChoiceField(
@@ -568,6 +569,10 @@ class MeasureConditionsForm(forms.ModelForm):
         label="Action code",
         queryset=models.MeasureAction.objects.latest_approved(),
         empty_label="-- Please select an action code --",
+    )
+    applicable_duty = forms.CharField(
+        label="Duty",
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
