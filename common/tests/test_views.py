@@ -32,6 +32,21 @@ def test_index_doesnt_creates_workbasket_if_not_needed(
     assert WorkBasket.objects.is_not_approved().count() == 1
 
 
+def test_index_workbasket_unaffected_by_archived_workbasket(
+    valid_user_client,
+):
+    response = valid_user_client.get(reverse("index"))
+    assert response.status_code == 200
+
+    view = response.context_data["view"]
+    view_workbasket = view.workbasket
+
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
+    assert view.workbasket == view_workbasket
+    w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    assert view.workbasket == view_workbasket
+
+
 def test_index_displays_objects_in_current_workbasket(
     valid_user_client,
     workbasket,
@@ -117,15 +132,3 @@ def test_dashboard_view_latest_upload():
     latest_upload = factories.UploadFactory.create()
 
     assert view.latest_upload == latest_upload
-
-
-def test_dashboard_view_last_editing_workbasket():
-    """Assert that the last EDITING workbasket is always selected."""
-
-    w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
-    view = DashboardView()
-    assert view.workbasket == w
-
-    w = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-    assert view.workbasket == w
