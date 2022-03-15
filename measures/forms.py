@@ -538,6 +538,10 @@ class MeasureCommodityAndDutiesFormSet(FormSet):
     form = MeasureCommodityAndDutiesForm
 
 
+class MeasureConditionComponentDuty(Field):
+    template = "components/measure_condition_component_duty/template.jinja"
+
+
 class MeasureConditionsForm(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
@@ -587,6 +591,7 @@ class MeasureConditionsForm(forms.ModelForm):
                     Field("duty_amount", css_class="govuk-input"),
                     "required_certificate",
                     "action",
+                    MeasureConditionComponentDuty("applicable_duty"),
                     css_class="govuk-radios__conditional",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
