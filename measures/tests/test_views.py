@@ -469,3 +469,8 @@ def test_measure_form_wizard_create_measures(
     assert created_condition_components.count() == 2
     assert created_condition_components.first().duty_amount == Decimal("8.800")
     assert created_condition_components.last().duty_amount == Decimal("1.700")
+    assert created_condition_components.last().monetary_unit.code == "EUR"
+    assert (
+        created_condition_components.last().component_measurement.measurement_unit.abbreviation
+        == "100 kg"
+    )
