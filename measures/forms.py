@@ -602,6 +602,14 @@ class MeasureConditionsForm(forms.ModelForm):
             ),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        applicable_duty = cleaned_data.get("applicable_duty")
+        if applicable_duty:
+            self.fields["applicable_duty"].initial = applicable_duty
+
+        return cleaned_data
+
 
 class MeasureConditionsFormSet(FormSet):
     form = MeasureConditionsForm
