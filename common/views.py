@@ -18,6 +18,7 @@ from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.views import generic
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import View
@@ -34,9 +35,11 @@ from exporter.models import Upload
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class DashboardView(TemplateResponseMixin, FormMixin, View):
     """
     UI endpoint providing a dashboard view, including a WorkBasket (list) of
@@ -81,15 +84,8 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     }
 
     @property
-    def workbasket(self):
-        workbasket = WorkBasket.objects.is_not_approved().last()
-        if not workbasket:
-            id = WorkBasket.objects.values_list("pk", flat=True).last() or 1
-            workbasket = WorkBasket.objects.create(
-                title=f"Workbasket {id}",
-                author=self.request.user,
-            )
-        return workbasket
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     @property
     def paginator(self):
