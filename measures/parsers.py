@@ -118,13 +118,13 @@ def fail(text, index):
 class DutySentenceParser:
     """
     A duty expression defines what elements are permitted in a measure component
-    for each type of duty expression: amount, monetary unit and measurement.
-    They also include the prefix that must be matched at the start of the
-    expression. E.g. (2, '+', MANDATORY, PERMITTED, PERMITTED) describes things
-    like '+ 1.23 EUR/kg'.
+    or measure condition component for each type of duty expression: amount,
+    monetary unit and measurement. They also include the prefix that must be
+    matched at the start of the expression. E.g. (2, '+', MANDATORY, PERMITTED,
+    PERMITTED) describes things like '+ 1.23 EUR/kg'.
 
-    A parsed measure component references a duty expression ID and will
-    potentially have values for the amount, monetary unit and measurement.
+    A parsed component references a duty expression ID and will potentially have
+    values for the amount, monetary unit and measurement.
     """
 
     def __init__(
