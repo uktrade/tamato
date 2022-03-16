@@ -17,6 +17,6 @@
                 </ul>
             </div>
         </details>
-        <input class="govuk-input" id="id_{{ field.html_name }}" name="{{ field.html_name }}" type="text" spellcheck="false" value=" ">
+        <input class="govuk-input" id="id_{{ field.html_name }}" name="{{ field.html_name }}" type="text" spellcheck="false" value="{{ field.initial if field.initial else ""}}">
     </div>
 </div>
