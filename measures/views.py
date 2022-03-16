@@ -245,21 +245,6 @@ class MeasureCreateWizard(
                             c.transaction = condition.transaction
                             c.update_type = UpdateType.CREATE
                             c.save()
-                        # component = MeasureConditionComponent(
-                        #     condition=condition,
-                        #     update_type=UpdateType.CREATE,
-                        #     transaction=condition.transaction,
-                        #     duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
-                        #         1
-                        #     ],
-                        #     duty_amount=condition.duty_amount,
-                        #     monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
-                        #         "GBP"
-                        #     ],
-                        #     component_measurement=None,
-                        # )
-                        # component.clean()
-                        # component.save()
 
             created_measures.append(measure)
 
