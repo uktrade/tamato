@@ -144,6 +144,7 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_deleted</span>
+<span class="kn">from</span> <span class="nn">common.models.utils</span> <span class="kn">import</span> <span class="n">override_current_transaction</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">TaricDateRange</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">ApplicabilityCode</span>
@@ -667,6 +668,30 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;generating_regulation&quot;</span></div>
+
+
+<div class="viewcode-block" id="ME27"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME27">[docs]</a><span class="k">class</span> <span class="nc">ME27</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The entered regulation may not be fully replaced.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Here we assume &quot;fully replaced&quot; means that there exists a Replacement that</span>
+    <span class="c1"># covers the full validity period of the generating regulation.</span>
+    <span class="c1">#</span>
+    <span class="c1"># This method only checks that a single Replacement does this whereas it</span>
+    <span class="c1"># might be possible for multiple Replacements to cover the full validity</span>
+    <span class="c1"># period. However, the very few Regulations that have &gt;1 Replacement have</span>
+    <span class="c1"># been manually checked and don&#39;t require this extra complexity, and we</span>
+    <span class="c1"># don&#39;t use Replacements in the UK so it won&#39;t be possible to create them.</span>
+
+<div class="viewcode-block" id="ME27.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME27.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">override_current_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
+            <span class="n">measures</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+            <span class="n">regulation_validity</span> <span class="o">=</span> <span class="n">measures</span><span class="o">.</span><span class="n">follow_path</span><span class="p">(</span><span class="s2">&quot;generating_regulation&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="n">replacements</span> <span class="o">=</span> <span class="n">measures</span><span class="o">.</span><span class="n">follow_path</span><span class="p">(</span>
+                <span class="s2">&quot;generating_regulation__replacements__enacting_regulation&quot;</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">valid_between__contains</span><span class="o">=</span><span class="n">regulation_validity</span><span class="o">.</span><span class="n">valid_between</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">replacements</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ME87"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME87">[docs]</a><span class="k">class</span> <span class="nc">ME87</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
