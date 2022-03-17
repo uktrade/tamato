@@ -24,6 +24,7 @@ from common.views import TrackedModelDetailView
 from measures import forms
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
@@ -344,6 +345,12 @@ class MeasureUpdate(
 
         return form
 
+    def get_footnotes(self, measure):
+        associations = FootnoteAssociationMeasure.objects.current().filter(
+            footnoted_measure=measure,
+        )
+        return [a.associated_footnote for a in associations]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         initial = self.request.session.get(
@@ -356,6 +363,7 @@ class MeasureUpdate(
         context["formset"] = formset
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
+        context["footnotes"] = self.get_footnotes(context["measure"])
 
         return context
 

@@ -1,7 +1,7 @@
 {% with form_footnotes = form.request.session["instance_footnotes_" ~ form.instance.sid] %}
     {% if form_footnotes %}
         {% set table_rows = [] %}
-        {% for footnote in form.instance.footnotes.all() %}
+        {% for footnote in footnotes %}
             {% if footnote.pk in form.request.session["instance_footnotes_"~form.instance.sid]%}
                 {% set footnote_link -%}
                 <a class="govuk-link govuk-!-font-weight-bold" href="{{ footnote.get_url() }}">{{ footnote|string }}</a>
