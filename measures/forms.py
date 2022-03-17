@@ -13,6 +13,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.template import loader
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -513,10 +514,11 @@ class MeasureCommodityAndDutiesForm(forms.Form):
             Fieldset(
                 "commodity",
                 "duties",
-                HTML.details(
-                    "Help with duties",
-                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a "
-                    "specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR).",
+                HTML(
+                    loader.render_to_string(
+                        "components/duty_help.jinja",
+                        component="measure",
+                    ),
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")

@@ -212,6 +212,10 @@ class MeasureCreateWizard(
 
         for measure_data in measures_data:
             measure = measure_creation_pattern.create(**measure_data)
+            parser = DutySentenceParser.get(
+                measure.valid_between.lower,
+                component_output=MeasureConditionComponent,
+            )
             for i, condition_data in enumerate(
                 data.get("formset-conditions", []),
             ):
@@ -235,10 +239,6 @@ class MeasureCreateWizard(
                     # should handle duty_expression, monetary_unit or measurements, so this
                     # code assumes some sensible(?) defaults
                     if condition_data.get("applicable_duty"):
-                        parser = DutySentenceParser.get(
-                            measure.valid_between.lower,
-                            component_output=MeasureConditionComponent,
-                        )
                         components = parser.parse(condition_data["applicable_duty"])
                         for c in components:
                             c.condition = condition

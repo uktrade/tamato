@@ -108,13 +108,24 @@ def test_only_permitted_measurements_allowed(duty_sentence_parser):
         duty_sentence_parser.parse("1.0 EUR / kg / lactic.")
 
 
-def test_condition_duty_sentence_parsing(
+def test_reversible_condition_duty_sentence_parsing(
     condition_duty_sentence_parser: DutySentenceParser,
     reversible_duty_sentence_data,
 ):
     duty_sentence_parser_test(
         condition_duty_sentence_parser,
         reversible_duty_sentence_data,
+        MeasureConditionComponent,
+    )
+
+
+def test_irreversible_condition_duty_sentence_parsing(
+    condition_duty_sentence_parser: DutySentenceParser,
+    irreversible_duty_sentence_data,
+):
+    duty_sentence_parser_test(
+        condition_duty_sentence_parser,
+        irreversible_duty_sentence_data,
         MeasureConditionComponent,
     )
 

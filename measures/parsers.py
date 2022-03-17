@@ -12,6 +12,7 @@ from typing import Iterator
 from typing import Match
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import Union
 
 from parsec import Parser
@@ -132,7 +133,7 @@ class DutySentenceParser:
         duty_expressions: Iterable[DutyExpression],
         monetary_units: Iterable[MonetaryUnit],
         permitted_measurements: Iterable[Measurement],
-        component_output: Optional[TrackedModel] = MeasureComponent,
+        component_output: Type[TrackedModel] = MeasureComponent,
     ):
         # Decimal numbers are a sequence of digits (without a left-trailing zero)
         # followed optionally by a decimal point and a number of digits (we have seen
@@ -260,7 +261,7 @@ class DutySentenceParser:
     def get(
         cls,
         forward_time: date,
-        component_output: Optional[TrackedModel] = MeasureComponent,
+        component_output: Type[TrackedModel] = MeasureComponent,
     ) -> DutySentenceParser:
         """Return a DutySentenceParser loaded with expressions and measurements
         that are valid on the passed date."""
