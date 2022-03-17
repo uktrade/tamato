@@ -517,7 +517,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
                 HTML(
                     loader.render_to_string(
                         "components/duty_help.jinja",
-                        component="measure",
+                        context={"component": "measure"},
                     ),
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
