@@ -16,6 +16,7 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
+from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
@@ -539,6 +540,30 @@ class ME24(MustExist):
     """
 
     reference_field_name = "generating_regulation"
+
+
+class ME27(BusinessRule):
+    """The entered regulation may not be fully replaced."""
+
+    # Here we assume "fully replaced" means that there exists a Replacement that
+    # covers the full validity period of the generating regulation.
+    #
+    # This method only checks that a single Replacement does this whereas it
+    # might be possible for multiple Replacements to cover the full validity
+    # period. However, the very few Regulations that have >1 Replacement have
+    # been manually checked and don't require this extra complexity, and we
+    # don't use Replacements in the UK so it won't be possible to create them.
+
+    def validate(self, measure):
+        with override_current_transaction(self.transaction):
+            measures = type(measure).objects.filter(pk=measure.pk)
+            regulation_validity = measures.follow_path("generating_regulation").get()
+            replacements = measures.follow_path(
+                "generating_regulation__replacements__enacting_regulation",
+            ).filter(valid_between__contains=regulation_validity.valid_between)
+
+            if replacements.exists():
+                raise self.violation(measure)
 
 
 class ME87(BusinessRule):

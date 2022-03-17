@@ -982,11 +982,19 @@ def test_ME26():
     """The entered regulation may not be completely abrogated."""
 
 
-@pytest.mark.skip(
-    reason="Abrogation, modification and replacement regulations are not used",
-)
-def test_ME27():
+def test_ME27(spanning_dates):
     """The entered regulation may not be fully replaced."""
+    replacement_dates, regulation_dates, fully_spanned = spanning_dates
+
+    measure = factories.MeasureFactory.create(
+        generating_regulation=factories.ReplacementFactory.create(
+            enacting_regulation__valid_between=replacement_dates,
+            target_regulation__valid_between=regulation_dates,
+        ).target_regulation,
+    )
+
+    with raises_if(BusinessRuleViolation, fully_spanned):
+        business_rules.ME27(measure.transaction).validate(measure)
 
 
 @pytest.mark.skip(
