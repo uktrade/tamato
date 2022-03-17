@@ -415,6 +415,22 @@ def test_trackedmodel_get_description_create_url(factory):
     assert url
 
 
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.AdditionalCodeFactory,
+        factories.FootnoteFactory,
+        factories.MeasureFactory,
+        factories.RegulationFactory,
+    ],
+)
+def test_trackedmodel_get_create_url(factory):
+    instance = factory.create()
+    url = instance.get_url("create")
+
+    assert url
+
+
 def test_trackedmodel_str(trackedmodel_factory):
     """Verify no __str__ methods of TrackedModel classes crash or return non-
     strings."""

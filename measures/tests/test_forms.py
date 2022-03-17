@@ -62,7 +62,7 @@ def test_measure_forms_details_invalid_data():
     }
     form = forms.MeasureDetailsForm(data, prefix="")
     error_string = [
-        "Select a valid choice. That choice is not one of the available choices."
+        "Select a valid choice. That choice is not one of the available choices.",
     ]
     assert form.errors["measure_type"] == error_string
     assert form.errors["generating_regulation"] == error_string
@@ -101,13 +101,14 @@ def test_measure_forms_additional_code_invalid_data():
     }
     form = forms.MeasureAdditionalCodeForm(data, prefix="")
     assert form.errors["additional_code"] == [
-        "Select a valid choice. That choice is not one of the available choices."
+        "Select a valid choice. That choice is not one of the available choices.",
     ]
     assert not form.is_valid()
 
 
 @pytest.mark.parametrize(
-    "duties,is_valid", [("33 GBP/100kg", True), ("some invalid duty expression", False)]
+    "duties,is_valid",
+    [("33 GBP/100kg", True), ("some invalid duty expression", False)],
 )
 def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_ranges):
     commodity = factories.GoodsNomenclatureFactory.create()
@@ -118,3 +119,28 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
     initial_data = {"measure_start_date": date_ranges.normal}
     form = forms.MeasureCommodityAndDutiesForm(data, prefix="", initial=initial_data)
     assert form.is_valid() == is_valid
+
+
+def test_measure_forms_conditions_form_valid_data():
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    action = factories.MeasureActionFactory.create()
+    data = {
+        "condition_code": condition_code.pk,
+        "duty_amount": 1.000,
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsForm(data, prefix="")
+
+    assert form.is_valid()
+
+
+def test_measure_forms_conditions_form_invalid_data():
+    action = factories.MeasureActionFactory.create()
+    data = {
+        "duty_amount": 1.000,
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsForm(data, prefix="")
+
+    assert not form.is_valid()
+    assert form.errors["condition_code"][0] == "This field is required."

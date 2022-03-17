@@ -620,7 +620,7 @@ class TrackedModel(PolymorphicModel):
         :rtype Optional[str]: The generated URL
         """
         kwargs = {}
-        if action != "list":
+        if action not in ["list", "create"]:
             kwargs = self.get_identifying_fields()
         try:
             return reverse(

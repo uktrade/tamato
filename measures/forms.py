@@ -13,6 +13,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.template import loader
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -513,10 +514,11 @@ class MeasureCommodityAndDutiesForm(forms.Form):
             Fieldset(
                 "commodity",
                 "duties",
-                HTML.details(
-                    "Help with duties",
-                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a "
-                    "specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR).",
+                HTML(
+                    loader.render_to_string(
+                        "components/duty_help.jinja",
+                        context={"component": "measure"},
+                    ),
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
@@ -538,6 +540,10 @@ class MeasureCommodityAndDutiesFormSet(FormSet):
     form = MeasureCommodityAndDutiesForm
 
 
+class MeasureConditionComponentDuty(Field):
+    template = "components/measure_condition_component_duty/template.jinja"
+
+
 class MeasureConditionsForm(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
@@ -546,6 +552,7 @@ class MeasureConditionsForm(forms.ModelForm):
             "duty_amount",
             "required_certificate",
             "action",
+            "applicable_duty",
         ]
 
     condition_code = forms.ModelChoiceField(
@@ -569,6 +576,10 @@ class MeasureConditionsForm(forms.ModelForm):
         queryset=models.MeasureAction.objects.latest_approved(),
         empty_label="-- Please select an action code --",
     )
+    applicable_duty = forms.CharField(
+        label="Duty",
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -582,6 +593,7 @@ class MeasureConditionsForm(forms.ModelForm):
                     Field("duty_amount", css_class="govuk-input"),
                     "required_certificate",
                     "action",
+                    MeasureConditionComponentDuty("applicable_duty"),
                     css_class="govuk-radios__conditional",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")

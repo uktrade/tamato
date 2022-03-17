@@ -1,6 +1,4 @@
 import datetime
-import requests
-
 from typing import Callable
 from typing import Dict
 from typing import Optional
@@ -8,17 +6,19 @@ from typing import Sequence
 from typing import Tuple
 
 import pytest
+import requests
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
 
-from common.util import TaricDateRange
 from common.tests import factories
+from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from measures.forms import MeasureForm
 from measures.models import DutyExpression
 from measures.models import Measure
 from measures.models import MeasureAction
 from measures.models import MeasureConditionCode
+from measures.models import MeasureConditionComponent
 from measures.models import Measurement
 from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
@@ -249,6 +249,20 @@ def duty_sentence_parser(
 
 
 @pytest.fixture
+def condition_duty_sentence_parser(
+    duty_expressions: Dict[int, DutyExpression],
+    monetary_units: Dict[str, MonetaryUnit],
+    measurements: Dict[Tuple[str, Optional[str]], Measurement],
+) -> DutySentenceParser:
+    return DutySentenceParser(
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
+        MeasureConditionComponent,
+    )
+
+
+@pytest.fixture
 def get_component_data(duty_expressions, monetary_units, measurements) -> Callable:
     def getter(
         duty_expression_id,
@@ -343,7 +357,7 @@ def additional_code():
 @pytest.fixture()
 def measure_type():
     return factories.MeasureTypeFactory.create(
-        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)")
+        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
     )
 
 
