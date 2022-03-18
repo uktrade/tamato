@@ -346,9 +346,13 @@ class MeasureUpdate(
         return form
 
     def get_footnotes(self, measure):
-        associations = FootnoteAssociationMeasure.objects.current().filter(
+        tx = WorkBasket.get_current_transaction(self.request)
+        associations = FootnoteAssociationMeasure.objects.approved_up_to_transaction(
+            tx,
+        ).filter(
             footnoted_measure=measure,
         )
+
         return [a.associated_footnote for a in associations]
 
     def get_context_data(self, **kwargs):

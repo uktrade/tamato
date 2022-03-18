@@ -14,6 +14,7 @@ from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from measures.models import Measure
@@ -23,6 +24,8 @@ from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
+from measures.views import MeasureUpdate
+from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
 
@@ -265,6 +268,23 @@ def test_measure_form_save_called_on_measure_update(
     client.post(url, data=post_data)
 
     save.assert_called_with(commit=False)
+
+
+def test_measure_update_get_footnotes(session_with_workbasket):
+    association = factories.FootnoteAssociationMeasureFactory.create()
+    view = MeasureUpdate(request=session_with_workbasket)
+    footnotes = view.get_footnotes(association.footnoted_measure)
+
+    assert len(footnotes) == 1
+
+    association.new_version(
+        WorkBasket.current(session_with_workbasket),
+        update_type=UpdateType.DELETE,
+    )
+
+    footnotes = view.get_footnotes(association.footnoted_measure)
+
+    assert len(footnotes) == 0
 
 
 @pytest.mark.django_db
