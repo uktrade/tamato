@@ -1,3 +1,4 @@
+import datetime
 import logging
 from collections import defaultdict
 
@@ -28,6 +29,7 @@ from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
 from measures import models
+from measures.parsers import DutySentenceParser
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -544,12 +546,32 @@ class MeasureConditionComponentDuty(Field):
     template = "components/measure_condition_component_duty/template.jinja"
 
 
+class MonetaryUnitField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return f"{obj.code} - {obj.description}"
+
+
+class MeasurementField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        qualifier = obj.measurement_unit_qualifier
+        qualifier_description = None
+        label = f"{obj.measurement_unit.code} - {obj.measurement_unit.description}"
+        if qualifier:
+            qualifier_description = qualifier.description
+
+            return f"{label} ({qualifier_description})"
+
+        return label
+
+
 class MeasureConditionsForm(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
         fields = [
             "condition_code",
             "duty_amount",
+            "monetary_unit",
+            "condition_measurement",
             "required_certificate",
             "action",
             "applicable_duty",
@@ -560,12 +582,30 @@ class MeasureConditionsForm(forms.ModelForm):
         queryset=models.MeasureConditionCode.objects.latest_approved(),
         empty_label="-- Please select a condition code --",
     )
-    duty_amount = forms.DecimalField(
-        label="Reference price (where applicable)",
-        max_digits=10,
-        decimal_places=3,
+    # duty_amount = forms.DecimalField(
+    #     label="Reference price (where applicable). Leave unit fields below blank to specify a percentage.",
+    #     max_digits=10,
+    #     decimal_places=3,
+    #     required=False,
+    # )
+    reference_price = forms.CharField(
+        label="Reference price (where applicable).",
         required=False,
     )
+    # monetary_unit = MonetaryUnitField(
+    #     label="Monetary unit",
+    #     queryset=models.MonetaryUnit.objects.latest_approved().order_by("code"),
+    #     empty_label="-- Please select a monetary unit, if applicable --",
+    #     # to_field_name="code",
+    #     required=False,
+    # )
+    # component_measurement = MeasurementField(
+    #     label="Measurement unit",
+    #     queryset=models.Measurement.objects.latest_approved().order_by("measurement_unit__code"),
+    #     empty_label="-- Please select a measurement, if applicable --",
+    #     # to_field_name="measurement_unit.code",
+    #     required=False,
+    # )
     required_certificate = AutoCompleteField(
         label="Certificate, license or document",
         queryset=Certificate.objects.all(),
@@ -590,7 +630,9 @@ class MeasureConditionsForm(forms.ModelForm):
             Fieldset(
                 Field("condition_code"),
                 Div(
-                    Field("duty_amount", css_class="govuk-input"),
+                    Field("reference_price", css_class="govuk-input"),
+                    # "monetary_unit",
+                    # "component_measurement",
                     "required_certificate",
                     "action",
                     MeasureConditionComponentDuty("applicable_duty"),
@@ -603,6 +645,33 @@ class MeasureConditionsForm(forms.ModelForm):
                 legend_size=Size.SMALL,
             ),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        measurement = cleaned_data.get("condition_measurement")
+        unit = cleaned_data.get("monetary_unit")
+        price = cleaned_data.get("reference_price")
+
+        if (measurement or unit) and not price:
+            raise ValidationError(
+                "A reference price must be provided, if measurement or monetary units are supplied",
+            )
+
+        if measurement and unit:
+            raise ValidationError(
+                "A reference price cannot be specified with both monetary and measurement units",
+            )
+
+        if price:
+            parser = DutySentenceParser.get(datetime.date.today())
+            components = parser.parse(price)
+            if len(components) > 1:
+                raise ValidationError(
+                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP/LTR)",
+                )
+            cleaned_data["duty_amount"] = components[0].duty_amount
+
+        return cleaned_data
 
 
 class MeasureConditionsFormSet(FormSet):

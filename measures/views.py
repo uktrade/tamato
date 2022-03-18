@@ -231,6 +231,8 @@ class MeasureCreateWizard(
                         condition_code=condition_data["condition_code"],
                         action=condition_data.get("action"),
                         required_certificate=condition_data.get("required_certificate"),
+                        monetary_unit=condition_data["monetary_unit"],
+                        condition_measurement=condition_data["condition_measurement"],
                     )
                     condition.clean()
                     condition.save()
