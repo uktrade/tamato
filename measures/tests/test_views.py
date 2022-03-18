@@ -1,4 +1,5 @@
 import unittest
+from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
@@ -16,6 +17,8 @@ from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from measures.models import Measure
+from measures.models import MeasureCondition
+from measures.models import MeasureConditionCode
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -304,7 +307,9 @@ def test_measure_form_wizard_finish(
             "data": {
                 "measure_create_wizard-current_step": "commodities",
                 "commodities-0-commodity": commodity1.pk,
+                "commodities-0-duties": "33 GBP/100kg",
                 "commodities-1-commodity": commodity2.pk,
+                "commodities-1-duties": "40 GBP/1kg",
             },
             "next_step": "additional_code",
         },
@@ -314,13 +319,6 @@ def test_measure_form_wizard_finish(
         },
         {
             "data": {"measure_create_wizard-current_step": "conditions"},
-            "next_step": "duties",
-        },
-        {
-            "data": {
-                "measure_create_wizard-current_step": "duties",
-                "duties-duties": "33 GBP/100kg",
-            },
             "next_step": "footnotes",
         },
         {
@@ -341,7 +339,8 @@ def test_measure_form_wizard_finish(
 
         assert response.status_code == 302
         assert response.url == reverse(
-            "measure-ui-create", kwargs={"step": step_data["next_step"]}
+            "measure-ui-create",
+            kwargs={"step": step_data["next_step"]},
         )
 
 
@@ -363,9 +362,9 @@ def test_measure_form_wizard_create_measures(
     footnote1 = factories.FootnoteFactory.create()
     footnote2 = factories.FootnoteFactory.create()
     geo_area = factories.GeographicalAreaFactory.create()
-    condition1 = factories.MeasureConditionCodeFactory()
-    condition2 = factories.MeasureConditionCodeFactory()
-    condition3 = factories.MeasureConditionCodeFactory()
+    condition_code1 = factories.MeasureConditionCodeFactory()
+    condition_code2 = factories.MeasureConditionCodeFactory()
+    condition_code3 = factories.MeasureConditionCodeFactory()
     action1 = factories.MeasureActionFactory()
     action2 = factories.MeasureActionFactory()
     action3 = factories.MeasureActionFactory()
@@ -377,35 +376,35 @@ def test_measure_form_wizard_create_measures(
         "order_number": None,
         "valid_between": date_ranges.normal,
         "formset-commodities": [
-            {"commodity": commodity1, "DELETE": False},
-            {"commodity": commodity2, "DELETE": False},
-            {"commodity": commodity3, "DELETE": True},
+            {"commodity": commodity1, "duties": "33 GBP/100kg", "DELETE": False},
+            {"commodity": commodity2, "duties": "40 GBP/100kg", "DELETE": False},
+            {"commodity": commodity3, "duties": "2 GBP/100kg", "DELETE": True},
         ],
         "additional_code": None,
         "formset-conditions": [
             {
-                "condition_code": condition1,
+                "condition_code": condition_code1,
                 "duty_amount": 4.000,
                 "required_certificate": None,
                 "action": action1,
                 "DELETE": False,
             },
             {
-                "condition_code": condition2,
+                "condition_code": condition_code2,
                 "duty_amount": None,
                 "required_certificate": None,
                 "action": action2,
+                "applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
                 "DELETE": False,
             },
             {
-                "condition_code": condition3,
+                "condition_code": condition_code3,
                 "duty_amount": None,
                 "required_certificate": None,
                 "action": action3,
                 "DELETE": True,
             },
         ],
-        "duties": "4%",
         "formset-footnotes": [
             {"footnote": footnote1, "DELETE": False},
             {"footnote": footnote2, "DELETE": True},
@@ -417,9 +416,61 @@ def test_measure_form_wizard_create_measures(
     measures = wizard.create_measures(form_data)
 
     assert len(measures) == 2
+
+    assert Measure.objects.get(goods_nomenclature=commodity1)
+    assert Measure.objects.get(goods_nomenclature=commodity2)
+    with pytest.raises(Measure.DoesNotExist):
+        Measure.objects.get(goods_nomenclature=commodity3)
+
+    assert (
+        Measure.objects.get(
+            goods_nomenclature=commodity1,
+        )
+        .components.get()
+        .duty_amount
+        == Decimal("33.000")
+    )
+    assert (
+        Measure.objects.get(
+            goods_nomenclature=commodity2,
+        )
+        .components.get()
+        .duty_amount
+        == Decimal("40.000")
+    )
+
     assert measures[0].footnotes.get() == footnote1
     assert measures[1].footnotes.get() == footnote1
+
     assert len(measures[0].footnotes.all()) == 1
     assert len(measures[1].footnotes.all()) == 1
+
     assert len(measures[0].conditions.all()) == 2
     assert len(measures[1].conditions.all()) == 2
+
+    created_conditions = MeasureCondition.objects.filter(
+        dependent_measure__in=[m.id for m in measures],
+    )
+
+    created_condition_codes = MeasureConditionCode.objects.filter(
+        conditions__in=[c.id for c in created_conditions],
+    )
+
+    assert condition_code1 in created_condition_codes
+    assert condition_code2 in created_condition_codes
+    assert condition_code3 not in created_condition_codes
+
+    created_condition_components = (
+        created_conditions.last().components.approved_up_to_transaction(
+            created_conditions.last().transaction,
+        )
+    )
+
+    assert created_condition_components.count() == 2
+    assert created_condition_components.first().duty_amount == Decimal("8.800")
+    assert created_condition_components.last().duty_amount == Decimal("1.700")
+    assert created_condition_components.last().monetary_unit.code == "EUR"
+    assert (
+        created_condition_components.last().component_measurement.measurement_unit.abbreviation
+        == "100 kg"
+    )

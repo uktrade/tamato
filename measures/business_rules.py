@@ -16,6 +16,7 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
+from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
@@ -541,6 +542,30 @@ class ME24(MustExist):
     reference_field_name = "generating_regulation"
 
 
+class ME27(BusinessRule):
+    """The entered regulation may not be fully replaced."""
+
+    # Here we assume "fully replaced" means that there exists a Replacement that
+    # covers the full validity period of the generating regulation.
+    #
+    # This method only checks that a single Replacement does this whereas it
+    # might be possible for multiple Replacements to cover the full validity
+    # period. However, the very few Regulations that have >1 Replacement have
+    # been manually checked and don't require this extra complexity, and we
+    # don't use Replacements in the UK so it won't be possible to create them.
+
+    def validate(self, measure):
+        with override_current_transaction(self.transaction):
+            measures = type(measure).objects.filter(pk=measure.pk)
+            regulation_validity = measures.follow_path("generating_regulation").get()
+            replacements = measures.follow_path(
+                "generating_regulation__replacements__enacting_regulation",
+            ).filter(valid_between__contains=regulation_validity.valid_between)
+
+            if replacements.exists():
+                raise self.violation(measure)
+
+
 class ME87(BusinessRule):
     """
     The validity period of the measure (implicit or explicit) must reside within
@@ -968,6 +993,49 @@ class ME108(BusinessRule):
             .exists()
         ):
             raise self.violation(component)
+
+
+class ConditionCodeAcceptance(BusinessRule):
+    """
+    If a condition has a certificate, then the condition's code must accept a
+    certificate.
+
+    If a condition has a duty amount, then the condition's code must accept a
+    price.
+    """
+
+    def validate(self, condition):
+        code = condition.condition_code
+
+        if condition.required_certificate and condition.duty_amount:
+            raise self.violation(
+                message="Conditions may only be created with one of either certificate or price",
+            )
+
+        message = f"Condition with code {code.code} cannot accept "
+        if condition.required_certificate and not code.accepts_certificate:
+            raise self.violation(message=message + "a certificate")
+
+        if condition.duty_amount and not code.accepts_price:
+            raise self.violation(message=message + "a price")
+
+
+class ActionRequiresDuty(BusinessRule):
+    """If a condition's action code requires a duty, then an associated
+    condition component must be created with a duty amount."""
+
+    def validate(self, condition):
+        components = condition.components.approved_up_to_transaction(self.transaction)
+        components_have_duty = any([c.duty_amount for c in components])
+        if condition.action.requires_duty and not components_have_duty:
+            raise self.violation(
+                message=f"Condition with action code {condition.action.code} must have at least one component with a duty amount",
+            )
+
+        if not condition.action.requires_duty and components_have_duty:
+            raise self.violation(
+                message=f"Condition with action code {condition.action.code} should not have any components with a duty amount",
+            )
 
 
 class MeasureConditionComponentApplicability(ComponentApplicability):

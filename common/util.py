@@ -9,6 +9,7 @@ from platform import python_version_tuple
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -218,8 +219,11 @@ def validity_range_contains_range(
     return True
 
 
+RelationPath = Sequence[Tuple[Type[Model], Field]]
+
+
 @lru_cache
-def resolve_path(model: Type[Model], path: str):
+def resolve_path(model: Type[Model], path: str) -> RelationPath:
     """
     Returns an ordered sequence of types and field names of the foreign keys
     representing the passed path, starting with the passed model and following
@@ -231,7 +235,7 @@ def resolve_path(model: Type[Model], path: str):
     be returned, etc.
     """
     contained_model = model
-    relation_path = []
+    relation_path: RelationPath = []
 
     for step in path.split(LOOKUP_SEP):
         relations = {
@@ -247,6 +251,8 @@ def resolve_path(model: Type[Model], path: str):
 
         relation = relations[step]
         contained_model = relation.related_model
+        assert contained_model is not None
+
         relation_path.append((contained_model, relation.remote_field))
 
     return relation_path

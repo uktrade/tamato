@@ -4,7 +4,6 @@ import pytest
 
 from common.tests import factories
 from measures import forms
-from measures.forms import MeasureDutiesForm
 from measures.forms import MeasureForm
 
 pytestmark = pytest.mark.django_db
@@ -39,15 +38,6 @@ def test_error_raised_if_no_duty_sentence(session_with_workbasket):
         MeasureForm(data={}, instance=measure, request=session_with_workbasket)
 
 
-# https://uktrade.atlassian.net/browse/TP2000-74
-def test_measure_duties_left_blank(date_ranges):
-    form = MeasureDutiesForm(data={}, initial={"measure_start_date": date_ranges.now})
-
-    with patch("measures.validators.validate_duties") as validate_duties:
-        assert form.is_valid()
-        assert not validate_duties.called
-
-
 def test_measure_forms_details_valid_data(measure_type, regulation):
     data = {
         "measure_type": measure_type.pk,
@@ -72,7 +62,7 @@ def test_measure_forms_details_invalid_data():
     }
     form = forms.MeasureDetailsForm(data, prefix="")
     error_string = [
-        "Select a valid choice. That choice is not one of the available choices."
+        "Select a valid choice. That choice is not one of the available choices.",
     ]
     assert form.errors["measure_type"] == error_string
     assert form.errors["generating_regulation"] == error_string
@@ -111,18 +101,46 @@ def test_measure_forms_additional_code_invalid_data():
     }
     form = forms.MeasureAdditionalCodeForm(data, prefix="")
     assert form.errors["additional_code"] == [
-        "Select a valid choice. That choice is not one of the available choices."
+        "Select a valid choice. That choice is not one of the available choices.",
     ]
     assert not form.is_valid()
 
 
 @pytest.mark.parametrize(
-    "duties,is_valid", [("33 GBP/100kg", True), ("some invalid duty expression", False)]
+    "duties,is_valid",
+    [("33 GBP/100kg", True), ("some invalid duty expression", False)],
 )
 def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_ranges):
+    commodity = factories.GoodsNomenclatureFactory.create()
     data = {
         "duties": duties,
+        "commodity": commodity,
     }
     initial_data = {"measure_start_date": date_ranges.normal}
-    form = forms.MeasureDutiesForm(data, prefix="", initial=initial_data)
+    form = forms.MeasureCommodityAndDutiesForm(data, prefix="", initial=initial_data)
     assert form.is_valid() == is_valid
+
+
+def test_measure_forms_conditions_form_valid_data():
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    action = factories.MeasureActionFactory.create()
+    data = {
+        "condition_code": condition_code.pk,
+        "duty_amount": 1.000,
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsForm(data, prefix="")
+
+    assert form.is_valid()
+
+
+def test_measure_forms_conditions_form_invalid_data():
+    action = factories.MeasureActionFactory.create()
+    data = {
+        "duty_amount": 1.000,
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsForm(data, prefix="")
+
+    assert not form.is_valid()
+    assert form.errors["condition_code"][0] == "This field is required."

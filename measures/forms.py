@@ -13,6 +13,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.template import loader
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -491,7 +492,7 @@ class FormSet(forms.BaseFormSet):
         return super().is_valid()
 
 
-class MeasureCommodityForm(forms.Form):
+class MeasureCommodityAndDutiesForm(forms.Form):
     commodity = AutoCompleteField(
         label="Commodity code",
         help_text="Select the 10-digit commodity code to which the measure applies.",
@@ -499,23 +500,48 @@ class MeasureCommodityForm(forms.Form):
         attrs={"min_length": 3},
     )
 
+    duties = forms.CharField(
+        label="Duties",
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
         self.helper.form_tag = False
+        self.helper.label_size = Size.SMALL
         self.helper.layout = Layout(
             Fieldset(
                 "commodity",
+                "duties",
+                HTML(
+                    loader.render_to_string(
+                        "components/duty_help.jinja",
+                        context={"component": "measure"},
+                    ),
+                ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
                 else None,
             ),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        duties = cleaned_data.get("duties", "")
+        measure_start_date = self.initial.get("measure_start_date")
+        if measure_start_date is not None and duties:
+            validate_duties(duties, measure_start_date)
 
-class MeasureCommodityFormSet(FormSet):
-    form = MeasureCommodityForm
+        return cleaned_data
+
+
+class MeasureCommodityAndDutiesFormSet(FormSet):
+    form = MeasureCommodityAndDutiesForm
+
+
+class MeasureConditionComponentDuty(Field):
+    template = "components/measure_condition_component_duty/template.jinja"
 
 
 class MeasureConditionsForm(forms.ModelForm):
@@ -526,6 +552,7 @@ class MeasureConditionsForm(forms.ModelForm):
             "duty_amount",
             "required_certificate",
             "action",
+            "applicable_duty",
         ]
 
     condition_code = forms.ModelChoiceField(
@@ -549,6 +576,10 @@ class MeasureConditionsForm(forms.ModelForm):
         queryset=models.MeasureAction.objects.latest_approved(),
         empty_label="-- Please select an action code --",
     )
+    applicable_duty = forms.CharField(
+        label="Duty",
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -562,6 +593,7 @@ class MeasureConditionsForm(forms.ModelForm):
                     Field("duty_amount", css_class="govuk-input"),
                     "required_certificate",
                     "action",
+                    MeasureConditionComponentDuty("applicable_duty"),
                     css_class="govuk-radios__conditional",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
@@ -575,39 +607,6 @@ class MeasureConditionsForm(forms.ModelForm):
 
 class MeasureConditionsFormSet(FormSet):
     form = MeasureConditionsForm
-
-
-class MeasureDutiesForm(forms.Form):
-    duties = forms.CharField(
-        label="Duties",
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.layout = Layout(
-            Fieldset(
-                "duties",
-                HTML.details(
-                    "Help with duties",
-                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a "
-                    "specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR).",
-                ),
-            ),
-            Submit("submit", "Continue"),
-        )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        duties = cleaned_data.get("duties", "")
-        measure_start_date = self.initial.get("measure_start_date")
-        if measure_start_date is not None and duties:
-            validate_duties(duties, measure_start_date)
-
-        return cleaned_data
 
 
 class MeasureFootnotesForm(forms.Form):

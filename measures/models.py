@@ -350,6 +350,11 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
         db_index=True,
     )
     description = ShortDescription()
+    # A measure condition code must be created with one or both of
+    # accepts_certificate and accepts_price set to True,
+    # though a condition should only ever have one of either required_certificate or duty_amount set.
+    accepts_certificate = models.BooleanField(default=False)
+    accepts_price = models.BooleanField(default=False)
 
     identifying_fields = ("code",)
 
@@ -386,6 +391,7 @@ class MeasureAction(TrackedModel, ValidityMixin):
         db_index=True,
     )
     description = ShortDescription()
+    requires_duty = models.BooleanField(default=False)
 
     identifying_fields = ("code",)
 
@@ -524,6 +530,7 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME12,
         business_rules.ME17,
         business_rules.ME24,
+        business_rules.ME27,
         business_rules.ME87,
         business_rules.ME33,
         business_rules.ME34,
@@ -821,6 +828,8 @@ class MeasureCondition(TrackedModel):
         business_rules.ME62,
         business_rules.ME63,
         business_rules.ME64,
+        business_rules.ActionRequiresDuty,
+        business_rules.ConditionCodeAcceptance,
         UniqueIdentifyingFields,
         UpdateValidity,
     )

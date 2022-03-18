@@ -29,6 +29,7 @@ from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
+from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
@@ -103,7 +104,6 @@ class MeasureCreateWizard(
     COMMODITIES = "commodities"
     ADDITIONAL_CODE = "additional_code"
     CONDITIONS = "conditions"
-    DUTIES = "duties"
     FOOTNOTES = "footnotes"
     SUMMARY = "summary"
     COMPLETE = "complete"
@@ -111,10 +111,9 @@ class MeasureCreateWizard(
     form_list = [
         (START, forms.MeasureCreateStartForm),
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
-        (COMMODITIES, forms.MeasureCommodityFormSet),
+        (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         (CONDITIONS, forms.MeasureConditionsFormSet),
-        (DUTIES, forms.MeasureDutiesForm),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
         (SUMMARY, forms.MeasureReviewForm),
     ]
@@ -125,7 +124,6 @@ class MeasureCreateWizard(
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
-        DUTIES: "measures/create-wizard-step.jinja",
         FOOTNOTES: "measures/create-formset.jinja",
         SUMMARY: "measures/create-review.jinja",
         COMPLETE: "measures/confirm-create-multiple.jinja",
@@ -141,8 +139,8 @@ class MeasureCreateWizard(
             "link_text": "Measure details",
         },
         COMMODITIES: {
-            "title": "Select commodities",
-            "link_text": "Commodities",
+            "title": "Select commodities and enter the duties",
+            "link_text": "Commodities and duties",
         },
         ADDITIONAL_CODE: {
             "title": "Assign an additional code",
@@ -155,10 +153,6 @@ class MeasureCreateWizard(
                 "codes, select continue."
             ),
             "link_text": "Conditions",
-        },
-        DUTIES: {
-            "title": "Enter the duties that will apply",
-            "link_text": "Duties",
         },
         FOOTNOTES: {
             "title": "Add any footnotes",
@@ -211,7 +205,7 @@ class MeasureCreateWizard(
                         if not item["DELETE"]
                     ],
                     # condition_sentence here, or handle separately and duty_sentence after?
-                    "duty_sentence": data["duties"],
+                    "duty_sentence": commodity_data["duties"],
                 }
 
                 measures_data.append(measure_data)
@@ -220,6 +214,10 @@ class MeasureCreateWizard(
 
         for measure_data in measures_data:
             measure = measure_creation_pattern.create(**measure_data)
+            parser = DutySentenceParser.get(
+                measure.valid_between.lower,
+                component_output=MeasureConditionComponent,
+            )
             for i, condition_data in enumerate(
                 data.get("formset-conditions", []),
             ):
@@ -242,22 +240,13 @@ class MeasureCreateWizard(
                     # XXX the design doesn't show whether the condition duty_amount field
                     # should handle duty_expression, monetary_unit or measurements, so this
                     # code assumes some sensible(?) defaults
-                    if condition.duty_amount:
-                        component = MeasureConditionComponent(
-                            condition=condition,
-                            update_type=UpdateType.CREATE,
-                            transaction=condition.transaction,
-                            duty_expression=measure_creation_pattern.condition_sentence_parser.duty_expressions[
-                                1
-                            ],
-                            duty_amount=condition.duty_amount,
-                            monetary_unit=measure_creation_pattern.condition_sentence_parser.monetary_units[
-                                "GBP"
-                            ],
-                            component_measurement=None,
-                        )
-                        component.clean()
-                        component.save()
+                    if condition_data.get("applicable_duty"):
+                        components = parser.parse(condition_data["applicable_duty"])
+                        for c in components:
+                            c.condition = condition
+                            c.transaction = condition.transaction
+                            c.update_type = UpdateType.CREATE
+                            c.save()
 
             created_measures.append(measure)
 

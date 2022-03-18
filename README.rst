@@ -24,13 +24,13 @@ Build the Docker image:
 
 .. code:: sh
 
+    $ cp sample.env .env
     $ docker-compose build
 
 Run the tamato app:
 
 .. code:: sh
 
-    $ cp sample.env .env
     $ docker-compose up
 
 Go to http://localhost:8000/ in your web browser to view the app
