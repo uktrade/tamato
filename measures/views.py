@@ -215,7 +215,7 @@ class MeasureCreateWizard(
                 measure.valid_between.lower,
                 component_output=MeasureConditionComponent,
             )
-            for i, condition_data in enumerate(
+            for component_sequence_number, condition_data in enumerate(
                 data.get("formset-conditions", []),
                 start=1,
             ):
@@ -223,7 +223,7 @@ class MeasureCreateWizard(
 
                     condition = MeasureCondition(
                         sid=measure_creation_pattern.measure_condition_sid_counter(),
-                        component_sequence_number=i,
+                        component_sequence_number=component_sequence_number,
                         dependent_measure=measure,
                         update_type=UpdateType.CREATE,
                         transaction=measure.transaction,

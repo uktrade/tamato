@@ -362,11 +362,6 @@ def measure_type():
 
 
 @pytest.fixture()
-def erga_omnes():
-    return factories.GeoGroupFactory(area_id=1011)
-
-
-@pytest.fixture()
 def regulation():
     return factories.RegulationFactory.create()
 
