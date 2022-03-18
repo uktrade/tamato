@@ -67,9 +67,23 @@ class LimitedPaginator(Paginator):
     max_count = settings.LIMITED_PAGINATOR_MAX_COUNT
 
     @property
-    def count(self):
+    def limit_breached(self):
+        """If the number of paginated objects breaches the
+        LIMITED_PAGINATOR_MAX_COUNT, then return True, otherwise False."""
         try:
             self.object_list[self.max_count]
-            return self.max_count
+            return True
         except IndexError:
+            return False
+
+    @property
+    def count(self):
+        """Return the precise number of paginated objects up to
+        LIMITED_PAGINATOR_MAX_COUNT, or LIMITED_PAGINATOR_MAX_COUNT if that
+        limit is breached (use `limit_breached` property to establish whether
+        the limit value has been breached and therefore returned)."""
+
+        if self.limit_breached:
+            return self.max_count
+        else:
             return super().count

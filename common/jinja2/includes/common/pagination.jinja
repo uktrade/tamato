@@ -29,6 +29,9 @@
             {% endif %}
           </li>
         {% endfor %}
+        {% if paginator.limit_breached %}
+          <li class="govuk-!-margin-right-1" >...</li>
+        {% endif %}
         {% if page_obj.has_next() %}
           <li>
             <a
