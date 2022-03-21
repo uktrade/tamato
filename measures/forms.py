@@ -130,8 +130,16 @@ class MeasureForm(ValidityPeriodForm):
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
         if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
+            tx = WorkBasket.get_current_transaction(self.request)
+            associations = (
+                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
+                    tx,
+                ).filter(
+                    footnoted_measure=self.instance,
+                )
+            )
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
-                footnote.pk for footnote in self.instance.footnotes.all()
+                a.associated_footnote.pk for a in associations
             ]
 
     def clean_duty_sentence(self):

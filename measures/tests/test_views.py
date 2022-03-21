@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
+from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -14,8 +15,10 @@ from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from geo_areas.forms import GeographicalAreaFormMixin
 from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
@@ -23,6 +26,8 @@ from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
+from measures.views import MeasureUpdate
+from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
 
@@ -267,6 +272,23 @@ def test_measure_form_save_called_on_measure_update(
     save.assert_called_with(commit=False)
 
 
+def test_measure_update_get_footnotes(session_with_workbasket):
+    association = factories.FootnoteAssociationMeasureFactory.create()
+    view = MeasureUpdate(request=session_with_workbasket)
+    footnotes = view.get_footnotes(association.footnoted_measure)
+
+    assert len(footnotes) == 1
+
+    association.new_version(
+        WorkBasket.current(session_with_workbasket),
+        update_type=UpdateType.DELETE,
+    )
+
+    footnotes = view.get_footnotes(association.footnoted_measure)
+
+    assert len(footnotes) == 0
+
+
 @pytest.mark.django_db
 def test_measure_form_wizard_start(valid_user_client):
     url = reverse("measure-ui-create", kwargs={"step": "start"})
@@ -282,8 +304,7 @@ def test_measure_form_wizard_finish(
     regulation,
     duty_sentence_parser,
 ):
-    commodity1 = factories.GoodsNomenclatureFactory.create()
-    commodity2 = factories.GoodsNomenclatureFactory.create()
+    commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
 
     mock_duty_sentence_parser.return_value = duty_sentence_parser
 
@@ -356,18 +377,18 @@ def test_measure_form_wizard_create_measures(
     commodity1,
     commodity2,
 ):
+    """Pass data to the MeasureWizard and verify that the created Measures contain the expected data."""
     mock_workbasket.return_value = factories.WorkBasketFactory.create()
 
     commodity3 = factories.GoodsNomenclatureFactory.create()
-    footnote1 = factories.FootnoteFactory.create()
-    footnote2 = factories.FootnoteFactory.create()
+    footnote1, footnote2 = factories.FootnoteFactory.create_batch(2)
     geo_area = factories.GeographicalAreaFactory.create()
-    condition_code1 = factories.MeasureConditionCodeFactory()
-    condition_code2 = factories.MeasureConditionCodeFactory()
-    condition_code3 = factories.MeasureConditionCodeFactory()
-    action1 = factories.MeasureActionFactory()
-    action2 = factories.MeasureActionFactory()
-    action3 = factories.MeasureActionFactory()
+    (
+        condition_code1,
+        condition_code2,
+        condition_code3,
+    ) = factories.MeasureConditionCodeFactory.create_batch(3)
+    action1, action2, action3 = factories.MeasureActionFactory.create_batch(3)
 
     form_data = {
         "measure_type": measure_type,
@@ -413,64 +434,60 @@ def test_measure_form_wizard_create_measures(
 
     wizard = MeasureCreateWizard(request=mock_request)
 
-    measures = wizard.create_measures(form_data)
+    # Create measures returns a list of created measures
+    measure_data = wizard.create_measures(form_data)
+    measures = Measure.objects.filter(goods_nomenclature__in=[commodity1, commodity2])
 
-    assert len(measures) == 2
+    """
+    In this implementation goods_nomenclature is a FK of Measure, so there is one measure
+    for each commodity specified in formset-commodities.
+    
+    Verify that the expected measures were created.
+    """
+    assert len(measure_data) == 2
+    assert set(measures.values_list("pk", "goods_nomenclature_id")) == {
+        (measure_data[0].pk, commodity1.pk),
+        (measure_data[1].pk, commodity2.pk),
+    }
 
-    assert Measure.objects.get(goods_nomenclature=commodity1)
-    assert Measure.objects.get(goods_nomenclature=commodity2)
-    with pytest.raises(Measure.DoesNotExist):
-        Measure.objects.get(goods_nomenclature=commodity3)
+    assert set(
+        measures.values_list("goods_nomenclature_id", "components__duty_amount")
+    ) == {
+        (commodity1.pk, Decimal("33.000")),
+        (commodity2.pk, Decimal("40.000")),
+    }
 
-    assert (
-        Measure.objects.get(
-            goods_nomenclature=commodity1,
+    assert set(measures.values_list("pk", "footnotes")) == {
+        (measure_data[0].pk, footnote1.pk),
+        (measure_data[1].pk, footnote1.pk),
+    }
+
+    # Each created measure contains the supplied condition codes where DELETE=False
+    # Each component should have a 1 based 'component_sequence_number' that iterates for each condition in
+    # a measure.
+    assert set(
+        measures.values_list(
+            "pk", "conditions__component_sequence_number", "conditions__condition_code"
         )
-        .components.get()
-        .duty_amount
-        == Decimal("33.000")
-    )
-    assert (
-        Measure.objects.get(
-            goods_nomenclature=commodity2,
+    ) == {
+        (measure_data[0].pk, 1, condition_code1.pk),
+        (measure_data[0].pk, 2, condition_code2.pk),
+        (measure_data[1].pk, 1, condition_code1.pk),
+        (measure_data[1].pk, 2, condition_code2.pk),
+    }
+
+    # Verify that MeasureComponents were created for each formset-condition containing an applicable-duty
+    assert set(
+        measures.values_list(
+            "pk",
+            "conditions__components__duty_amount",
+            "conditions__components__monetary_unit__code",
         )
-        .components.get()
-        .duty_amount
-        == Decimal("40.000")
-    )
-
-    assert measures[0].footnotes.get() == footnote1
-    assert measures[1].footnotes.get() == footnote1
-
-    assert len(measures[0].footnotes.all()) == 1
-    assert len(measures[1].footnotes.all()) == 1
-
-    assert len(measures[0].conditions.all()) == 2
-    assert len(measures[1].conditions.all()) == 2
-
-    created_conditions = MeasureCondition.objects.filter(
-        dependent_measure__in=[m.id for m in measures],
-    )
-
-    created_condition_codes = MeasureConditionCode.objects.filter(
-        conditions__in=[c.id for c in created_conditions],
-    )
-
-    assert condition_code1 in created_condition_codes
-    assert condition_code2 in created_condition_codes
-    assert condition_code3 not in created_condition_codes
-
-    created_condition_components = (
-        created_conditions.last().components.approved_up_to_transaction(
-            created_conditions.last().transaction,
-        )
-    )
-
-    assert created_condition_components.count() == 2
-    assert created_condition_components.first().duty_amount == Decimal("8.800")
-    assert created_condition_components.last().duty_amount == Decimal("1.700")
-    assert created_condition_components.last().monetary_unit.code == "EUR"
-    assert (
-        created_condition_components.last().component_measurement.measurement_unit.abbreviation
-        == "100 kg"
-    )
+    ) == {
+        (measure_data[0].pk, None, None),
+        (measure_data[0].pk, Decimal("8.800"), None),
+        (measure_data[0].pk, Decimal("1.700"), "EUR"),
+        (measure_data[1].pk, None, None),
+        (measure_data[1].pk, Decimal("8.800"), None),
+        (measure_data[1].pk, Decimal("1.700"), "EUR"),
+    }

@@ -8,7 +8,6 @@ from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from formtools.wizard.views import NamedUrlSessionWizardView
@@ -24,6 +23,7 @@ from common.views import TrackedModelDetailView
 from measures import forms
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
@@ -216,14 +216,15 @@ class MeasureCreateWizard(
                 measure.valid_between.lower,
                 component_output=MeasureConditionComponent,
             )
-            for i, condition_data in enumerate(
+            for component_sequence_number, condition_data in enumerate(
                 data.get("formset-conditions", []),
+                start=1,
             ):
                 if not condition_data["DELETE"]:
 
                     condition = MeasureCondition(
                         sid=measure_creation_pattern.measure_condition_sid_counter(),
-                        component_sequence_number=i,
+                        component_sequence_number=component_sequence_number,
                         dependent_measure=measure,
                         update_type=UpdateType.CREATE,
                         transaction=measure.transaction,
@@ -348,6 +349,16 @@ class MeasureUpdate(
 
         return form
 
+    def get_footnotes(self, measure):
+        tx = WorkBasket.get_current_transaction(self.request)
+        associations = FootnoteAssociationMeasure.objects.approved_up_to_transaction(
+            tx,
+        ).filter(
+            footnoted_measure=measure,
+        )
+
+        return [a.associated_footnote for a in associations]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         initial = self.request.session.get(
@@ -360,6 +371,7 @@ class MeasureUpdate(
         context["formset"] = formset
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
+        context["footnotes"] = self.get_footnotes(context["measure"])
 
         return context
 
