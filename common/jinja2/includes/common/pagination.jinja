@@ -1,10 +1,18 @@
 {% if page_obj.has_other_pages() %}
+    {% set objects_count = '{0:,}'.format(paginator.count) %}
+    {% set page_count = '{0:,}'.format(paginator.num_pages) %}
+    {% if paginator.limit_breached %}
+      {% set objects_count = 'more than ' ~ objects_count %}
+      {% set page_count = 'more than ' ~ page_count %}
+    {% endif %}
+
     <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
       <div class="govuk-body">
-        Showing {{ page_obj|length }} of {{'{0:,}'.format(paginator.count)}} {{ page_obj.object_list.model._meta.verbose_name_plural if paginator.count > 1 else page_obj.object_list.model._meta.verbose_name }}
+        Showing {{ page_obj|length }} of {{ objects_count }}
+        {{ page_obj.object_list.model._meta.verbose_name_plural if paginator.count > 1 else page_obj.object_list.model._meta.verbose_name }}
       </div>
       <div class="govuk-body align-left">
-        Page {{page_obj.number}} of {{ '{0:,}'.format(paginator.num_pages)}}
+        Page {{page_obj.number}} of {{ page_count }}
       </div>
       <ul class="govuk-list align-right">
         {% if page_obj.has_previous() %}
@@ -21,11 +29,18 @@
         {% endif %}
         {% for page_link in page_links %}
           {% set isCurrent = page_link == page_obj.number %}
-          <li class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}" {% if isCurrent %}aria-current="true"{% endif %}>
+          <li
+            class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}"
+            {% if isCurrent %}aria-current="true"{% endif %}
+          >
             {% if page_link == '...' or page_link == page_obj.number|string %}
               {{ page_link }}
             {% else %}
-              <a class="govuk-link" href="?{{ query_transform(request, page=page_link) }}" aria-label="Goto Page {{ page_link }}">{{ '{0:,}'.format(page_link|int) }}</a>
+              <a
+                class="govuk-link"
+                href="?{{ query_transform(request, page=page_link) }}"
+                aria-label="Goto Page {{ page_link }}"
+              >{{ '{0:,}'.format(page_link|int) }}</a>
             {% endif %}
           </li>
         {% endfor %}
