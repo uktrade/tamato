@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
-from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -18,10 +17,7 @@ from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
-from geo_areas.forms import GeographicalAreaFormMixin
 from measures.models import Measure
-from measures.models import MeasureCondition
-from measures.models import MeasureConditionCode
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -373,11 +369,14 @@ def test_measure_form_wizard_create_measures(
     date_ranges,
     additional_code,
     measure_type,
+    measurements,
+    monetary_units,
     regulation,
     commodity1,
     commodity2,
 ):
-    """Pass data to the MeasureWizard and verify that the created Measures contain the expected data."""
+    """Pass data to the MeasureWizard and verify that the created Measures
+    contain the expected data."""
     mock_workbasket.return_value = factories.WorkBasketFactory.create()
 
     commodity3 = factories.GoodsNomenclatureFactory.create()
@@ -406,6 +405,8 @@ def test_measure_form_wizard_create_measures(
             {
                 "condition_code": condition_code1,
                 "duty_amount": 4.000,
+                "condition_measurement": measurements[("DTN", None)],
+                "monetary_unit": monetary_units["GBP"],
                 "required_certificate": None,
                 "action": action1,
                 "DELETE": False,
@@ -451,7 +452,7 @@ def test_measure_form_wizard_create_measures(
     }
 
     assert set(
-        measures.values_list("goods_nomenclature_id", "components__duty_amount")
+        measures.values_list("goods_nomenclature_id", "components__duty_amount"),
     ) == {
         (commodity1.pk, Decimal("33.000")),
         (commodity2.pk, Decimal("40.000")),
@@ -467,13 +468,32 @@ def test_measure_form_wizard_create_measures(
     # a measure.
     assert set(
         measures.values_list(
-            "pk", "conditions__component_sequence_number", "conditions__condition_code"
-        )
+            "pk",
+            "conditions__component_sequence_number",
+            "conditions__condition_code",
+            "conditions__duty_amount",
+            "conditions__condition_measurement",
+            "conditions__monetary_unit",
+        ),
     ) == {
-        (measure_data[0].pk, 1, condition_code1.pk),
-        (measure_data[0].pk, 2, condition_code2.pk),
-        (measure_data[1].pk, 1, condition_code1.pk),
-        (measure_data[1].pk, 2, condition_code2.pk),
+        (
+            measure_data[0].pk,
+            1,
+            condition_code1.pk,
+            Decimal("4.000"),
+            measurements[("DTN", None)].pk,
+            monetary_units["GBP"].pk,
+        ),
+        (measure_data[0].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[1].pk,
+            1,
+            condition_code1.pk,
+            Decimal("4.000"),
+            measurements[("DTN", None)].pk,
+            monetary_units["GBP"].pk,
+        ),
+        (measure_data[1].pk, 2, condition_code2.pk, None, None, None),
     }
 
     # Verify that MeasureComponents were created for each formset-condition containing an applicable-duty
@@ -482,7 +502,7 @@ def test_measure_form_wizard_create_measures(
             "pk",
             "conditions__components__duty_amount",
             "conditions__components__monetary_unit__code",
-        )
+        ),
     ) == {
         (measure_data[0].pk, None, None),
         (measure_data[0].pk, Decimal("8.800"), None),
