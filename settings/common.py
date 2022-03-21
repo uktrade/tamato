@@ -499,5 +499,5 @@ TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FI
 LIMITED_PAGINATOR_MAX_COUNT = 200
 # Default max number of objects that will be accurately counted by MeasurePaginator.
 MEASURES_PAGINATOR_MAX_COUNT = int(
-    os.environ.get("MEASURES_PAGINATOR_MAX_COUNT", "200"),
+    os.environ.get("MEASURES_PAGINATOR_MAX_COUNT", "1000"),
 )
