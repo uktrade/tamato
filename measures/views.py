@@ -227,12 +227,14 @@ class MeasureCreateWizard(
                         dependent_measure=measure,
                         update_type=UpdateType.CREATE,
                         transaction=measure.transaction,
-                        duty_amount=condition_data["duty_amount"],
+                        duty_amount=condition_data.get("duty_amount"),
                         condition_code=condition_data["condition_code"],
                         action=condition_data.get("action"),
                         required_certificate=condition_data.get("required_certificate"),
-                        monetary_unit=condition_data["monetary_unit"],
-                        condition_measurement=condition_data["condition_measurement"],
+                        monetary_unit=condition_data.get("monetary_unit"),
+                        condition_measurement=condition_data.get(
+                            "condition_measurement",
+                        ),
                     )
                     condition.clean()
                     condition.save()
