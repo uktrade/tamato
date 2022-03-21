@@ -494,7 +494,10 @@ WEBPACK_LOADER = {
 }
 
 TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FIRST")
+
 # Default max number of objects that will be accurately counted by LimitedPaginator.
 LIMITED_PAGINATOR_MAX_COUNT = 200
 # Default max number of objects that will be accurately counted by MeasurePaginator.
-MEASURES_PAGINATOR_MAX_COUNT = 200
+MEASURES_PAGINATOR_MAX_COUNT = int(
+    os.environ.get("MEASURES_PAGINATOR_MAX_COUNT", "200"),
+)
