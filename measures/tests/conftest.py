@@ -13,6 +13,7 @@ from django.forms.models import model_to_dict
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
+from geo_areas.validators import AreaCode
 from measures.forms import MeasureForm
 from measures.models import DutyExpression
 from measures.models import Measure
@@ -332,7 +333,10 @@ def irreversible_duty_sentence_data(request, get_component_data):
 
 @pytest.fixture
 def erga_omnes():
-    return factories.GeographicalAreaFactory.create(area_code=1, area_id=1011)
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )
 
 
 @pytest.fixture
