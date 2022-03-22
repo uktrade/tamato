@@ -169,29 +169,12 @@
 
 
 <span class="k">class</span> <span class="nc">TransactionManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Sorts TrackedModels by record_number and subrecord_number.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">annotate_record_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">annotate_record_codes</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
-            <span class="s2">&quot;record_code&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;subrecord_code&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="nb">super</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
-                <span class="n">models</span><span class="o">.</span><span class="n">Prefetch</span><span class="p">(</span><span class="s2">&quot;tracked_models&quot;</span><span class="p">,</span> <span class="n">queryset</span><span class="o">=</span><span class="n">annotate_record_code</span><span class="p">),</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+    <span class="k">pass</span>
 
 
 <span class="k">class</span> <span class="nc">ApprovedTransactionManager</span><span class="p">(</span><span class="n">TransactionManager</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="nb">super</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">partition__in</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">approved_partitions</span><span class="p">())</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span><span class="o">.</span><span class="n">approved</span><span class="p">()</span>
 
 
 <span class="k">class</span> <span class="nc">TransactionsAlreadyApproved</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -199,20 +182,13 @@
 
 
 <span class="k">class</span> <span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">unordered_tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Usually &#39;ordered_tracked_models&#39; is required.&quot;&quot;&quot;</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns all of the tracked models contained in the transactions in</span>
+<span class="sd">        the queryset.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">ordered_tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;TrackedModel in order of their transactions creation order.&quot;&quot;&quot;</span>
-
-        <span class="n">tracked_models</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unordered_tracked_models</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
-            <span class="s2">&quot;transaction__partition&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;transaction__order&quot;</span><span class="p">,</span>
-        <span class="p">)</span>  <span class="c1"># order_by record_code, subrecord_code already happened in get_queryset</span>
-        <span class="k">return</span> <span class="n">tracked_models</span>
 
     <span class="k">def</span> <span class="nf">approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -302,7 +278,7 @@
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update versions_group.&quot;</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unordered_tracked_models</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">):</span>
             <span class="n">version_group</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version_group</span>
             <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">obj</span>
             <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
