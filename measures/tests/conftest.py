@@ -13,6 +13,7 @@ from django.forms.models import model_to_dict
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
+from geo_areas.validators import AreaCode
 from measures.forms import MeasureForm
 from measures.models import DutyExpression
 from measures.models import Measure
@@ -331,7 +332,15 @@ def irreversible_duty_sentence_data(request, get_component_data):
 
 
 @pytest.fixture
-def measure_form(session_with_workbasket):
+def erga_omnes():
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )
+
+
+@pytest.fixture
+def measure_form(session_with_workbasket, erga_omnes):
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)
     start_date = data["valid_between"].lower
@@ -340,7 +349,6 @@ def measure_form(session_with_workbasket):
         start_date_1=start_date.month,
         start_date_2=start_date.year,
     )
-    factories.GeographicalAreaFactory.create(area_code=1, area_id=1011)
 
     return MeasureForm(
         data=data,

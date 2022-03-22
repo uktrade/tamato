@@ -8,6 +8,7 @@ from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from formtools.wizard.views import NamedUrlSessionWizardView
@@ -230,10 +231,14 @@ class MeasureCreateWizard(
                         dependent_measure=measure,
                         update_type=UpdateType.CREATE,
                         transaction=measure.transaction,
-                        duty_amount=condition_data["duty_amount"],
+                        duty_amount=condition_data.get("duty_amount"),
                         condition_code=condition_data["condition_code"],
                         action=condition_data.get("action"),
                         required_certificate=condition_data.get("required_certificate"),
+                        monetary_unit=condition_data.get("monetary_unit"),
+                        condition_measurement=condition_data.get(
+                            "condition_measurement",
+                        ),
                     )
                     condition.clean()
                     condition.save()
