@@ -330,6 +330,7 @@ def irreversible_duty_sentence_data(request, get_component_data):
     return expected, [get_component_data(*args) for args in component_data]
 
 
+@pytest.fixture
 def erga_omnes():
     return factories.GeographicalAreaFactory.create(area_code=1, area_id=1011)
 
