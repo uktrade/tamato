@@ -8,6 +8,7 @@ from common.celery import app
 from importer import models
 from importer.taric import process_taric_xml_stream
 from importer.utils import build_dependency_tree
+from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 
 logger = getLogger(__name__)
@@ -16,6 +17,7 @@ logger = getLogger(__name__)
 @app.task
 def import_chunk(
     chunk_pk: int,
+    workbasket_id: str,
     workbasket_status: str,
     partition_scheme_setting: str,
     username: str,
@@ -45,6 +47,7 @@ def import_chunk(
     try:
         process_taric_xml_stream(
             BytesIO(chunk.chunk_text.encode()),
+            workbasket_id,
             workbasket_status,
             partition_scheme,
             username,
@@ -60,6 +63,7 @@ def import_chunk(
 
     find_and_run_next_batch_chunks(
         chunk.batch,
+        workbasket_id,
         workbasket_status,
         partition_scheme_setting,
         username,
@@ -68,6 +72,7 @@ def import_chunk(
 
 def setup_chunk_task(
     batch: models.ImportBatch,
+    workbasket_id: str,
     workbasket_status: str,
     partition_scheme_setting: str,
     username: str,
@@ -106,6 +111,7 @@ def setup_chunk_task(
     chunk.save()
     import_chunk.delay(
         chunk.pk,
+        workbasket_id,
         workbasket_status,
         partition_scheme_setting,
         username,
@@ -115,6 +121,7 @@ def setup_chunk_task(
 
 def find_and_run_next_batch_chunks(
     batch: models.ImportBatch,
+    workbasket_id: str,
     workbasket_status: str,
     partition_scheme_setting: str,
     username: str,
@@ -157,6 +164,7 @@ def find_and_run_next_batch_chunks(
             logger.info("setting up tasks for %s", dependent_batch)
             find_and_run_next_batch_chunks(
                 dependent_batch,
+                workbasket_id,
                 workbasket_status,
                 partition_scheme_setting,
                 username,
@@ -166,6 +174,7 @@ def find_and_run_next_batch_chunks(
     if not batch.split_job:  # We only run one chunk at a time when the job isn't split
         setup_chunk_task(
             batch,
+            workbasket_id,
             workbasket_status,
             partition_scheme_setting,
             username,
@@ -205,6 +214,7 @@ def find_and_run_next_batch_chunks(
             for chapter in chunk_query.values_list("chapter", flat=True).distinct():
                 setup_chunk_task(
                     batch,
+                    workbasket_id,
                     workbasket_status,
                     partition_scheme_setting,
                     username,
@@ -217,6 +227,7 @@ def find_and_run_next_batch_chunks(
             for chunk in chunk_query:
                 setup_chunk_task(
                     batch,
+                    workbasket_id,
                     workbasket_status,
                     partition_scheme_setting,
                     username,
@@ -228,6 +239,7 @@ def find_and_run_next_batch_chunks(
         else:
             setup_chunk_task(
                 batch,
+                workbasket_id,
                 workbasket_status,
                 partition_scheme_setting,
                 username,
