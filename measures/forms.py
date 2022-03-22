@@ -572,6 +572,9 @@ class MeasureConditionsForm(forms.ModelForm):
         queryset=models.MeasureConditionCode.objects.latest_approved(),
         empty_label="-- Please select a condition code --",
     )
+    # This field used to be called duty_amount, but forms.ModelForm expects a decimal value when it sees that duty_amount is a DecimalField on the MeasureCondition model.
+    # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
+    # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
     reference_price = forms.CharField(
         label="Reference price (where applicable).",
         required=False,
@@ -615,6 +618,17 @@ class MeasureConditionsForm(forms.ModelForm):
         )
 
     def clean(self):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from the form's initial data.
+
+        If both are present, we call validate_duties with measure_start_date.
+        Then, if reference_price is provided, we use DutySentenceParser with
+        measure_start_date, if present, or the current_date, to check that we
+        are dealing with a simple duty (i.e. only one component). We then update
+        cleaned_data with key-value pairs created from this single, unsaved
+        component.
+        """
         cleaned_data = super().clean()
         price = cleaned_data.get("reference_price")
         measure_start_date = self.initial.get("measure_start_date")

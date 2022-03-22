@@ -330,8 +330,12 @@ def irreversible_duty_sentence_data(request, get_component_data):
     return expected, [get_component_data(*args) for args in component_data]
 
 
+def erga_omnes():
+    return factories.GeographicalAreaFactory.create(area_code=1, area_id=1011)
+
+
 @pytest.fixture
-def measure_form(session_with_workbasket):
+def measure_form(session_with_workbasket, erga_omnes):
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)
     start_date = data["valid_between"].lower
@@ -340,7 +344,6 @@ def measure_form(session_with_workbasket):
         start_date_1=start_date.month,
         start_date_2=start_date.year,
     )
-    factories.GeographicalAreaFactory.create(area_code=1, area_id=1011)
 
     return MeasureForm(
         data=data,

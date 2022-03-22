@@ -8,6 +8,7 @@ from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from formtools.wizard.views import NamedUrlSessionWizardView

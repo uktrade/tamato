@@ -299,6 +299,7 @@ def test_measure_form_wizard_finish(
     measure_type,
     regulation,
     duty_sentence_parser,
+    erga_omnes,
 ):
     commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
 
@@ -314,6 +315,7 @@ def test_measure_form_wizard_finish(
                 "measure_create_wizard-current_step": "measure_details",
                 "measure_details-measure_type": measure_type.pk,
                 "measure_details-generating_regulation": regulation.pk,
+                "measure_details-geo_area_type": "ERGA_OMNES",
                 "measure_details-start_date_0": 2,
                 "measure_details-start_date_1": 4,
                 "measure_details-start_date_2": 2021,
@@ -326,7 +328,7 @@ def test_measure_form_wizard_finish(
                 "commodities-0-commodity": commodity1.pk,
                 "commodities-0-duties": "33 GBP/100kg",
                 "commodities-1-commodity": commodity2.pk,
-                "commodities-1-duties": "40 GBP/1kg",
+                "commodities-1-duties": "40 GBP/100kg",
             },
             "next_step": "additional_code",
         },
@@ -359,6 +361,10 @@ def test_measure_form_wizard_finish(
             "measure-ui-create",
             kwargs={"step": step_data["next_step"]},
         )
+
+    complete_response = valid_user_client.get(response.url)
+
+    assert complete_response.status_code == 200
 
 
 @unittest.mock.patch("workbaskets.models.WorkBasket.current")
