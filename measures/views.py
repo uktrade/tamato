@@ -381,9 +381,15 @@ class MeasureUpdate(
         context["footnotes"] = self.get_footnotes(context["measure"])
 
         conditions_formset = forms.MeasureConditionsFormSet()
-        conditions_formset.initial = self.get_conditions(context["measure"])
-        context["conditions_formset"] = forms.MeasureConditionsFormSet()
-
+        conditions = self.get_conditions(context["measure"])
+        form_fields = conditions_formset.form.Meta.fields
+        for condition in conditions:
+            initial_dict = {}
+            for field in form_fields:
+                if hasattr(condition, field):
+                    initial_dict[field] = field
+        conditions_formset.initial = []
+        context["conditions_formset"] = conditions_formset
         return context
 
     def get_result_object(self, form):
