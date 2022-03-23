@@ -364,7 +364,11 @@ class MeasureUpdate(
 
     def get_conditions(self, measure):
         tx = WorkBasket.get_current_transaction(self.request)
-        return measure.conditions.approved_up_to_transaction(tx)
+        return (
+            measure.conditions.with_duty_sentence()
+            .with_reference_price_string()
+            .approved_up_to_transaction(tx)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -383,12 +387,17 @@ class MeasureUpdate(
         conditions_formset = forms.MeasureConditionsFormSet()
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
+        conditions_formset.initial = []
         for condition in conditions:
             initial_dict = {}
             for field in form_fields:
                 if hasattr(condition, field):
-                    initial_dict[field] = field
-        conditions_formset.initial = []
+                    initial_dict[field] = getattr(condition, field)
+
+            initial_dict["applicable_duty"] = condition.condition_string
+            initial_dict["reference_price"] = condition.reference_price_string
+            conditions_formset.initial.append(initial_dict)
+
         context["conditions_formset"] = conditions_formset
         return context
 
