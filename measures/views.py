@@ -362,6 +362,10 @@ class MeasureUpdate(
 
         return [a.associated_footnote for a in associations]
 
+    def get_conditions(self, measure):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return measure.conditions.approved_up_to_transaction(tx)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         initial = self.request.session.get(
@@ -375,6 +379,10 @@ class MeasureUpdate(
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
+
+        conditions_formset = forms.MeasureConditionsFormSet()
+        conditions_formset.initial = self.get_conditions(context["measure"])
+        context["conditions_formset"] = forms.MeasureConditionsFormSet()
 
         return context
 

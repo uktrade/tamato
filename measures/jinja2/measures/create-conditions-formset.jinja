@@ -1,0 +1,23 @@
+{{ crispy(conditions_formset.management_form, no_form_tags) }}
+    <label class="govuk-label">Add a condition</label>
+    <p class="govuk-body>
+        You can edit these conditions by selecting a new condition code and filling in the details.
+        <br>
+        <br>
+        Any changes you make will take effect when you press save.
+    </p>
+    <div class="govuk-!-padding-top-5></div>
+    {% for form in conditions_formset %}
+        {{ crispy(form) }}
+    {% endfor %}
+
+    {% if conditions_formset.data[conditions_formset.prefix ~ "-ADD"] %}
+        {{ crispy(conditions_formset.empty_form)|replace("__prefix__", conditions_formset.forms|length)|safe }}
+    {% endif %}
+
+    {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
+        <button class="govuk-button govuk-button--secondary" data-module="govuk-button" value=1, name={{ conditions_formset.prefix ~ "-ADD" }}, formaction={{ object.get_url("edit-footnotes") }}>
+            Add another condition
+        </button
+       
+    {% endcall %}
