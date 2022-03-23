@@ -48,7 +48,7 @@ class CommodityImportForm(forms.ModelForm):
 
     def clean_taric_file(self):
         data = self.cleaned_data["taric_file"]
-        generic_error_message = f"The selected file could not be uploaded – try again"
+        generic_error_message = "The selected file could not be uploaded - try again"
 
         mime_type = get_mime_type(data)
         if mime_type not in ["text/xml", "application/xml"]:
