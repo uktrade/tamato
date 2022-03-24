@@ -1,8 +1,10 @@
 from decimal import Decimal
 
+import factory
 import pytest
 from dateutil.relativedelta import relativedelta
 from django.db import DataError
+from django.db.models import signals
 
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UniqueIdentifyingFields
@@ -1021,6 +1023,7 @@ def test_ME29():
         (True, True),
     ),
 )
+@factory.django.mute_signals(signals.pre_save)
 def test_ME33(terminating_regulation, date_ranges, error_expected):
     """
     A justification regulation may not be entered if the measure end date is not
@@ -1050,6 +1053,7 @@ def test_ME33(terminating_regulation, date_ranges, error_expected):
         (False, True),
     ),
 )
+@factory.django.mute_signals(signals.pre_save)
 def test_ME34(terminating_regulation, date_ranges, error_expected):
     """
     A justification regulation must be entered if the measure end date is filled
@@ -1099,9 +1103,8 @@ def test_ME40(applicability_code, component, condition_component, error_expected
     specified.  If the flag is set "not permitted" then no measure component or
     measure condition component must exist.  Measure components and measure
     condition components are mutually exclusive. A measure can have either
-    components or condition components (if the ‘duty expression’ flag is.
-
-    ‘mandatory’ or ‘optional’) but not both.
+    components or condition components (if the "duty expression" flag is
+    "mandatory" or "optional") but not both.
 
     This describes the fact that measures of certain types MUST have components
     (duties) assigned to them, whereas others must not. Note the sub-clause also
