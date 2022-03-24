@@ -3,7 +3,11 @@ from typing import Dict
 from typing import Tuple
 
 from django.db.models import Model
+from django.db.models.fields import CharField
 from django.db.models.fields import Field
+from django.db.models.functions import Cast
+from django.db.models.functions import Concat
+from django.db.models.query import F
 from polymorphic.managers import PolymorphicManager
 
 
@@ -83,6 +87,12 @@ class TrackedModelManager(PolymorphicManager):
         instead using our own filters."""
 
     core_filters = property(get_core_filters, set_core_filters)
+
+    def get_queryset(self):
+        fields = self.model.identifying_fields
+        func = Concat if len(fields) > 1 else Cast
+        human_id = func(*(F(field) for field in fields), output_field=CharField())
+        return super().get_queryset().annotate(human_id=human_id)
 
 
 class CurrentTrackedModelManager(TrackedModelManager):

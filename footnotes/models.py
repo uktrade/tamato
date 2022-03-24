@@ -68,7 +68,7 @@ class Footnote(TrackedModel, ValidityMixin, DescribedMixin):
     )
     footnote_type = models.ForeignKey(FootnoteType, on_delete=models.PROTECT)
 
-    identifying_fields = ("footnote_id", "footnote_type__footnote_type_id")
+    identifying_fields = ("footnote_type__footnote_type_id", "footnote_id")
 
     indirect_business_rules = (
         measures_business_rules.ME71,
