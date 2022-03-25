@@ -402,6 +402,10 @@ class MeasureUpdate(
         return context
 
     def get_result_object(self, form):
+
+        conditions_formset = forms.MeasureConditionsFormSet(data=self.request.POST)
+        if not conditions_formset.is_valid():
+            return
         obj = super().get_result_object(form)
         form.instance = obj
         form.save(commit=False)

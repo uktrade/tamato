@@ -38,6 +38,227 @@ from workbaskets.models import WorkBasket
 logger = logging.getLogger(__name__)
 
 
+class FormSet(forms.BaseFormSet):
+    """
+    Adds the ability to add another form to the formset on submit.
+
+    If the form POST data contains an "ADD" field with the value "1", the formset
+    will be redisplayed with a new empty form appended.
+
+    Deleting a subform will also redisplay the formset, with the order of the forms
+    preserved.
+    """
+
+    extra = 0
+    can_order = False
+    can_delete = True
+    max_num = 1000
+    min_num = 0
+    absolute_max = 1000
+    validate_min = False
+    validate_max = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If we have form data, then capture the any user "add form" or
+        # "delete form" actions.
+        self.formset_action = None
+        if f"{self.prefix}-ADD" in self.data:
+            self.formset_action = "ADD"
+        else:
+            for field in self.data:
+                if field.endswith("-DELETE"):
+                    self.formset_action = "DELETE"
+                    break
+
+        data = self.data.copy()
+
+        formset_initial = defaultdict(dict)
+        delete_forms = []
+        for field, value in self.data.items():
+
+            # filter out non-field data
+            if field.startswith(f"{self.prefix}-"):
+                form, field_name = field.rsplit("-", 1)
+
+                # remove from data, so we can rebuild later
+                if form != self.prefix:
+                    del data[field]
+
+                # group by subform
+                if value:
+                    formset_initial[form].update({field_name: value})
+
+                if field_name == "DELETE" and value == "1":
+                    delete_forms.append(form)
+
+        # ignore management form
+        try:
+            del formset_initial[self.prefix]
+        except KeyError:
+            pass
+
+        # ignore deleted forms
+        for form in delete_forms:
+            del formset_initial[form]
+
+            # leave DELETE field in data for is_valid
+            data[f"{form}-DELETE"] = 1
+
+        for i, (form, form_initial) in enumerate(formset_initial.items()):
+            for field, value in form_initial.items():
+
+                # convert submitted value to python object
+                form_field = self.form.declared_fields.get(field)
+                if form_field:
+                    form_initial[field] = form_field.widget.value_from_datadict(
+                        form_initial,
+                        {},
+                        field,
+                    )
+
+                # reinsert into data, with updated numbering
+                data[f"{self.prefix}-{i}-{field}"] = value
+
+        self.initial = list(formset_initial.values())
+        num_initial = len(self.initial)
+
+        if num_initial < 1:
+            data[f"{self.prefix}-ADD"] = "1"
+
+        # update management data
+        data[f"{self.prefix}-INITIAL_FORMS"] = num_initial
+        data[f"{self.prefix}-TOTAL_FORMS"] = num_initial
+        self.data = data
+
+    def is_valid(self):
+        """Invalidates the formset if "Add another" or "Delete" are submitted,
+        to redisplay the formset with an extra empty form or the selected form
+        removed."""
+        # Re-present the form to show the result of adding another form or
+        # deleting an existing one.
+        if self.formset_action == "ADD" or self.formset_action == "DELETE":
+            return False
+
+        # An empty set of forms is valid.
+        if self.total_form_count() == 0:
+            return True
+
+        return super().is_valid()
+
+
+class MeasureConditionsForm(forms.ModelForm):
+    class Meta:
+        model = models.MeasureCondition
+        fields = [
+            "condition_code",
+            "duty_amount",
+            "monetary_unit",
+            "condition_measurement",
+            "required_certificate",
+            "action",
+            "applicable_duty",
+        ]
+
+    condition_code = forms.ModelChoiceField(
+        label="",
+        queryset=models.MeasureConditionCode.objects.latest_approved(),
+        empty_label="-- Please select a condition code --",
+    )
+    # This field used to be called duty_amount, but forms.ModelForm expects a decimal value when it sees that duty_amount is a DecimalField on the MeasureCondition model.
+    # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
+    # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
+    reference_price = forms.CharField(
+        label="Reference price (where applicable).",
+        required=False,
+    )
+    required_certificate = AutoCompleteField(
+        label="Certificate, license or document",
+        queryset=Certificate.objects.all(),
+        required=False,
+    )
+    action = forms.ModelChoiceField(
+        label="Action code",
+        queryset=models.MeasureAction.objects.latest_approved(),
+        empty_label="-- Please select an action code --",
+    )
+    applicable_duty = forms.CharField(
+        label="Duty",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(
+                Field("condition_code"),
+                Div(
+                    Field("reference_price", css_class="govuk-input"),
+                    "required_certificate",
+                    "action",
+                    MeasureConditionComponentDuty("applicable_duty"),
+                    css_class="govuk-radios__conditional",
+                ),
+                Field("DELETE", template="includes/common/formset-delete-button.jinja")
+                if not self.prefix.endswith("__prefix__")
+                else None,
+                legend="Condition code",
+                legend_size=Size.SMALL,
+            ),
+        )
+
+    def clean(self):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from the form's initial data.
+
+        If both are present, we call validate_duties with measure_start_date.
+        Then, if reference_price is provided, we use DutySentenceParser with
+        measure_start_date, if present, or the current_date, to check that we
+        are dealing with a simple duty (i.e. only one component). We then update
+        cleaned_data with key-value pairs created from this single, unsaved
+        component.
+        """
+        cleaned_data = super().clean()
+        price = cleaned_data.get("reference_price")
+        measure_start_date = self.initial.get("measure_start_date")
+        if price and measure_start_date is not None:
+            validate_duties(price, measure_start_date)
+
+        if price:
+            start_date = (
+                measure_start_date if measure_start_date else datetime.date.today()
+            )
+            parser = DutySentenceParser.get(start_date)
+            components = parser.parse(price)
+            if len(components) > 1:
+                raise ValidationError(
+                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                )
+            cleaned_data["duty_amount"] = components[0].duty_amount
+            cleaned_data["monetary_unit"] = components[0].monetary_unit
+            cleaned_data["condition_measurement"] = components[0].component_measurement
+
+        return cleaned_data
+
+
+class MeasureConditionsFormSet(FormSet):
+    form = MeasureConditionsForm
+
+
+InlineMeasureConditionsFormSet = forms.inlineformset_factory(
+    models.Measure,
+    models.MeasureCondition,
+    extra=1,
+    fk_name="dependent_measure",
+    form=MeasureConditionsForm,
+)
+
+
 class MeasureForm(ValidityPeriodForm):
     measure_type = AutoCompleteField(
         label="Measure type",
@@ -96,6 +317,7 @@ class MeasureForm(ValidityPeriodForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
+        self.conditions_formset = MeasureConditionsFormSet()
         super().__init__(*args, **kwargs)
 
         WorkBasket.get_current_transaction(self.request)
@@ -554,106 +776,106 @@ class MeasureConditionComponentDuty(Field):
     template = "components/measure_condition_component_duty/template.jinja"
 
 
-class MeasureConditionsForm(forms.ModelForm):
-    class Meta:
-        model = models.MeasureCondition
-        fields = [
-            "condition_code",
-            "duty_amount",
-            "monetary_unit",
-            "condition_measurement",
-            "required_certificate",
-            "action",
-            "applicable_duty",
-        ]
+# class MeasureConditionsForm(forms.ModelForm):
+#     class Meta:
+#         model = models.MeasureCondition
+#         fields = [
+#             "condition_code",
+#             "duty_amount",
+#             "monetary_unit",
+#             "condition_measurement",
+#             "required_certificate",
+#             "action",
+#             "applicable_duty",
+#         ]
 
-    condition_code = forms.ModelChoiceField(
-        label="",
-        queryset=models.MeasureConditionCode.objects.latest_approved(),
-        empty_label="-- Please select a condition code --",
-    )
-    # This field used to be called duty_amount, but forms.ModelForm expects a decimal value when it sees that duty_amount is a DecimalField on the MeasureCondition model.
-    # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
-    # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
-    reference_price = forms.CharField(
-        label="Reference price (where applicable).",
-        required=False,
-    )
-    required_certificate = AutoCompleteField(
-        label="Certificate, license or document",
-        queryset=Certificate.objects.all(),
-        required=False,
-    )
-    action = forms.ModelChoiceField(
-        label="Action code",
-        queryset=models.MeasureAction.objects.latest_approved(),
-        empty_label="-- Please select an action code --",
-    )
-    applicable_duty = forms.CharField(
-        label="Duty",
-        required=False,
-    )
+#     condition_code = forms.ModelChoiceField(
+#         label="",
+#         queryset=models.MeasureConditionCode.objects.latest_approved(),
+#         empty_label="-- Please select a condition code --",
+#     )
+#     # This field used to be called duty_amount, but forms.ModelForm expects a decimal value when it sees that duty_amount is a DecimalField on the MeasureCondition model.
+#     # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
+#     # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
+#     reference_price = forms.CharField(
+#         label="Reference price (where applicable).",
+#         required=False,
+#     )
+#     required_certificate = AutoCompleteField(
+#         label="Certificate, license or document",
+#         queryset=Certificate.objects.all(),
+#         required=False,
+#     )
+#     action = forms.ModelChoiceField(
+#         label="Action code",
+#         queryset=models.MeasureAction.objects.latest_approved(),
+#         empty_label="-- Please select an action code --",
+#     )
+#     applicable_duty = forms.CharField(
+#         label="Duty",
+#         required=False,
+#     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
 
-        self.helper = FormHelper(self)
-        self.helper.form_tag = False
-        self.helper.layout = Layout(
-            Fieldset(
-                Field("condition_code"),
-                Div(
-                    Field("reference_price", css_class="govuk-input"),
-                    "required_certificate",
-                    "action",
-                    MeasureConditionComponentDuty("applicable_duty"),
-                    css_class="govuk-radios__conditional",
-                ),
-                Field("DELETE", template="includes/common/formset-delete-button.jinja")
-                if not self.prefix.endswith("__prefix__")
-                else None,
-                legend="Condition code",
-                legend_size=Size.SMALL,
-            ),
-        )
+#         self.helper = FormHelper(self)
+#         self.helper.form_tag = False
+#         self.helper.layout = Layout(
+#             Fieldset(
+#                 Field("condition_code"),
+#                 Div(
+#                     Field("reference_price", css_class="govuk-input"),
+#                     "required_certificate",
+#                     "action",
+#                     MeasureConditionComponentDuty("applicable_duty"),
+#                     css_class="govuk-radios__conditional",
+#                 ),
+#                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
+#                 if not self.prefix.endswith("__prefix__")
+#                 else None,
+#                 legend="Condition code",
+#                 legend_size=Size.SMALL,
+#             ),
+#         )
 
-    def clean(self):
-        """
-        We get the reference_price from cleaned_data and the measure_start_date
-        from the form's initial data.
+#     def clean(self):
+#         """
+#         We get the reference_price from cleaned_data and the measure_start_date
+#         from the form's initial data.
 
-        If both are present, we call validate_duties with measure_start_date.
-        Then, if reference_price is provided, we use DutySentenceParser with
-        measure_start_date, if present, or the current_date, to check that we
-        are dealing with a simple duty (i.e. only one component). We then update
-        cleaned_data with key-value pairs created from this single, unsaved
-        component.
-        """
-        cleaned_data = super().clean()
-        price = cleaned_data.get("reference_price")
-        measure_start_date = self.initial.get("measure_start_date")
-        if price and measure_start_date is not None:
-            validate_duties(price, measure_start_date)
+#         If both are present, we call validate_duties with measure_start_date.
+#         Then, if reference_price is provided, we use DutySentenceParser with
+#         measure_start_date, if present, or the current_date, to check that we
+#         are dealing with a simple duty (i.e. only one component). We then update
+#         cleaned_data with key-value pairs created from this single, unsaved
+#         component.
+#         """
+#         cleaned_data = super().clean()
+#         price = cleaned_data.get("reference_price")
+#         measure_start_date = self.initial.get("measure_start_date")
+#         if price and measure_start_date is not None:
+#             validate_duties(price, measure_start_date)
 
-        if price:
-            start_date = (
-                measure_start_date if measure_start_date else datetime.date.today()
-            )
-            parser = DutySentenceParser.get(start_date)
-            components = parser.parse(price)
-            if len(components) > 1:
-                raise ValidationError(
-                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
-                )
-            cleaned_data["duty_amount"] = components[0].duty_amount
-            cleaned_data["monetary_unit"] = components[0].monetary_unit
-            cleaned_data["condition_measurement"] = components[0].component_measurement
+#         if price:
+#             start_date = (
+#                 measure_start_date if measure_start_date else datetime.date.today()
+#             )
+#             parser = DutySentenceParser.get(start_date)
+#             components = parser.parse(price)
+#             if len(components) > 1:
+#                 raise ValidationError(
+#                     "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+#                 )
+#             cleaned_data["duty_amount"] = components[0].duty_amount
+#             cleaned_data["monetary_unit"] = components[0].monetary_unit
+#             cleaned_data["condition_measurement"] = components[0].component_measurement
 
-        return cleaned_data
+#         return cleaned_data
 
 
-class MeasureConditionsFormSet(FormSet):
-    form = MeasureConditionsForm
+# class MeasureConditionsFormSet(FormSet):
+#     form = MeasureConditionsForm
 
 
 class MeasureFootnotesForm(forms.Form):

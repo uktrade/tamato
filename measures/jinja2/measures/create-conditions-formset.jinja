@@ -14,7 +14,7 @@
     {% endif %}
 
     {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
-        <button class="govuk-button govuk-button--secondary" data-module="govuk-button" value=1, name={{ conditions_formset.prefix ~ "-ADD" }}, formaction={{ object.get_url("edit-footnotes") }}>
+        <button class="govuk-button govuk-button--secondary" value=1, name={{ conditions_formset.prefix ~ "-ADD" }}>
             Add another condition
         </button
        
