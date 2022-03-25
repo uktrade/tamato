@@ -171,7 +171,7 @@
     <span class="n">validity_field_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;valid_between&quot;</span>
     <span class="sd">&quot;&quot;&quot;The name of the field that should be used for validity date checking.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ValidityMixin.terminate"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.ValidityMixin.terminate">[docs]</a>    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">workbasket</span><span class="p">,</span> <span class="n">when</span><span class="p">:</span> <span class="n">date</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<div class="viewcode-block" id="ValidityMixin.terminate"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.ValidityMixin.terminate">[docs]</a>    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">workbasket</span><span class="p">,</span> <span class="n">when</span><span class="p">:</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a new version of the object updated to end on the specified</span>
 <span class="sd">        date.</span>
@@ -202,7 +202,6 @@
                 <span class="n">lower</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
                 <span class="n">upper</span><span class="o">=</span><span class="n">when</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">update_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_version</span><span class="p">(</span><span class="n">workbasket</span><span class="p">,</span> <span class="o">**</span><span class="n">update_params</span><span class="p">)</span></div>
 
