@@ -335,11 +335,6 @@ class MeasureCreationPattern:
             **data,
         }
 
-        if actual_end is not None:
-            measure_data["terminating_regulation"] = measure_data[
-                "generating_regulation"
-            ]
-
         new_measure = Measure.objects.create(**measure_data)
         yield new_measure
 

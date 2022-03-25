@@ -43,7 +43,7 @@ class ValidityMixin(models.Model):
     validity_field_name: str = "valid_between"
     """The name of the field that should be used for validity date checking."""
 
-    def terminate(self: Self, workbasket, when: date, **params) -> Self:
+    def terminate(self: Self, workbasket, when: date) -> Self:
         """
         Returns a new version of the object updated to end on the specified
         date.
@@ -74,7 +74,6 @@ class ValidityMixin(models.Model):
                 lower=self.valid_between.lower,
                 upper=when,
             )
-            update_params.update(params)
 
         return self.new_version(workbasket, **update_params)
 

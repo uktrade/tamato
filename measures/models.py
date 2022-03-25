@@ -607,48 +607,6 @@ class Measure(TrackedModel, ValidityMixin):
             .exists()
         )
 
-    def terminate(self, workbasket, when: date):
-        """
-        Returns a new version of the measure updated to end on the specified
-        date.
-
-        If the measure would not have started on that date, the measure is
-        deleted instead. If the measure will already have ended by this date,
-        then does nothing.
-        """
-        update_params = {}
-        if not self.terminating_regulation:
-            update_params["terminating_regulation"] = self.generating_regulation
-
-        return super().terminate(workbasket, when, **update_params)
-
-    def save(self, *args, force_write=False, **kwargs):
-        """If the commodity code is being changed on an existing measure, the
-        measure is deleted instead of doing an `UPDATE` and a new measure
-        created with the updated commodity code."""
-        if (
-            self.update_type == UpdateType.UPDATE
-            and self.get_versions().order_by("transaction__order").last()
-        ):
-            previous = self.get_versions().order_by("transaction__order").last()
-            try:
-                nomenclature_removed = not (
-                    previous.goods_nomenclature and self.goods_nomenclature
-                )
-            except type(previous.goods_nomenclature).DoesNotExist:
-                return super().save(*args, force_write=force_write, **kwargs)
-            nomenclature_changed = (
-                True
-                if nomenclature_removed
-                else self.goods_nomenclature.sid != previous.goods_nomenclature.sid
-            )
-            if nomenclature_changed:
-                self.update_type = UpdateType.DELETE
-                instance = super().save(*args, force_write=force_write, **kwargs)
-                return self.copy(self.transaction)
-
-        return super().save(*args, force_write=force_write, **kwargs)
-
     def diff_components(
         self,
         duty_sentence: str,
