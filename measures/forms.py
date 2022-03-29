@@ -599,13 +599,20 @@ class MeasureConditionsForm(forms.ModelForm):
 
         self.helper = FormHelper(self)
         self.helper.form_tag = False
+
         self.helper.layout = Layout(
             Fieldset(
-                Field("condition_code"),
+                Field(
+                    "condition_code",
+                    template="components/measure_condition_code/template.jinja",
+                ),
                 Div(
                     Field("reference_price", css_class="govuk-input"),
                     "required_certificate",
-                    "action",
+                    Field(
+                        "action",
+                        template="components/measure_condition_action_code/template.jinja",
+                    ),
                     MeasureConditionComponentDuty("applicable_duty"),
                     css_class="govuk-radios__conditional",
                 ),
@@ -614,6 +621,7 @@ class MeasureConditionsForm(forms.ModelForm):
                 else None,
                 legend="Condition code",
                 legend_size=Size.SMALL,
+                data_field="condition_code",
             ),
         )
 
