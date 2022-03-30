@@ -173,6 +173,44 @@ class MeasureCreateWizard(
         },
     }
 
+    @classmethod
+    def create_condition_and_components(
+        cls,
+        measure_creation_pattern,
+        data,
+        component_sequence_number,
+        measure,
+        parser,
+    ):
+        condition = MeasureCondition(
+            sid=measure_creation_pattern.measure_condition_sid_counter(),
+            component_sequence_number=component_sequence_number,
+            dependent_measure=measure,
+            update_type=UpdateType.CREATE,
+            transaction=measure.transaction,
+            duty_amount=data.get("duty_amount"),
+            condition_code_id=data["condition_code"],
+            action_id=data.get("action"),
+            required_certificate_id=data.get("required_certificate"),
+            monetary_unit_id=data.get("monetary_unit"),
+            condition_measurement_id=data.get(
+                "condition_measurement",
+            ),
+        )
+        condition.clean()
+        condition.save()
+
+        # XXX the design doesn't show whether the condition duty_amount field
+        # should handle duty_expression, monetary_unit or measurements, so this
+        # code assumes some sensible(?) defaults
+        if data.get("applicable_duty"):
+            components = parser.parse(data["applicable_duty"])
+            for c in components:
+                c.condition = condition
+                c.transaction = condition.transaction
+                c.update_type = UpdateType.CREATE
+                c.save()
+
     @atomic
     def create_measures(self, data):
         """Returns a list of the created measures."""
@@ -225,34 +263,13 @@ class MeasureCreateWizard(
             ):
                 if not condition_data["DELETE"]:
 
-                    condition = MeasureCondition(
-                        sid=measure_creation_pattern.measure_condition_sid_counter(),
-                        component_sequence_number=component_sequence_number,
-                        dependent_measure=measure,
-                        update_type=UpdateType.CREATE,
-                        transaction=measure.transaction,
-                        duty_amount=condition_data.get("duty_amount"),
-                        condition_code=condition_data["condition_code"],
-                        action=condition_data.get("action"),
-                        required_certificate=condition_data.get("required_certificate"),
-                        monetary_unit=condition_data.get("monetary_unit"),
-                        condition_measurement=condition_data.get(
-                            "condition_measurement",
-                        ),
+                    self.create_condition_and_components(
+                        measure_creation_pattern,
+                        condition_data,
+                        component_sequence_number,
+                        measure,
+                        parser,
                     )
-                    condition.clean()
-                    condition.save()
-
-                    # XXX the design doesn't show whether the condition duty_amount field
-                    # should handle duty_expression, monetary_unit or measurements, so this
-                    # code assumes some sensible(?) defaults
-                    if condition_data.get("applicable_duty"):
-                        components = parser.parse(condition_data["applicable_duty"])
-                        for c in components:
-                            c.condition = condition
-                            c.transaction = condition.transaction
-                            c.update_type = UpdateType.CREATE
-                            c.save()
 
             created_measures.append(measure)
 
@@ -384,10 +401,13 @@ class MeasureUpdate(
         context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
-        conditions_formset = forms.MeasureConditionsFormSet()
+        if self.request.POST:
+            conditions_formset = forms.MeasureConditionsFormSet(self.request.POST)
+        else:
+            conditions_formset = forms.MeasureConditionsFormSet()
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
-        conditions_formset.initial = []
+        # conditions_formset.initial = []
         for condition in conditions:
             initial_dict = {}
             for field in form_fields:
@@ -398,14 +418,13 @@ class MeasureUpdate(
             initial_dict["reference_price"] = condition.reference_price_string
             conditions_formset.initial.append(initial_dict)
 
+        if self.request.POST:
+            conditions_formset.initial.append(self.request.POST)
+
         context["conditions_formset"] = conditions_formset
         return context
 
     def get_result_object(self, form):
-
-        conditions_formset = forms.MeasureConditionsFormSet(data=self.request.POST)
-        if not conditions_formset.is_valid():
-            return
         obj = super().get_result_object(form)
         form.instance = obj
         form.save(commit=False)

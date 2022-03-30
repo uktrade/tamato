@@ -30,6 +30,7 @@ from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
 from measures import models
 from measures.parsers import DutySentenceParser
+from measures.patterns import MeasureCreationPattern
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -317,7 +318,6 @@ class MeasureForm(ValidityPeriodForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
-        self.conditions_formset = MeasureConditionsFormSet()
         super().__init__(*args, **kwargs)
 
         WorkBasket.get_current_transaction(self.request)
@@ -399,6 +399,35 @@ class MeasureForm(ValidityPeriodForm):
 
         return cleaned_data
 
+    def get_formset_data(self, data, prefix):
+        formset_data = defaultdict(dict)
+        delete_forms = []
+
+        for field, value in data.items():
+
+            # filter out non-field data
+            if field.startswith(f"{prefix}-"):
+                form, field_name = field.rsplit("-", 1)
+
+                # group by subform
+                if value:
+                    formset_data[form].update({field_name: value})
+
+                if field_name == "DELETE" and value == "1":
+                    delete_forms.append(form)
+
+        # ignore management form
+        try:
+            del formset_data[self.prefix]
+        except KeyError:
+            pass
+
+        # ignore deleted forms
+        for form in delete_forms:
+            del formset_data[form]
+
+        return formset_data
+
     def save(self, commit=True):
         """Get the measure instance after form submission, get from session
         storage any footnote pks created via the Footnote formset and any pks
@@ -442,7 +471,39 @@ class MeasureForm(ValidityPeriodForm):
                 transaction=instance.transaction,
             )
 
+        formset_data = list(self.get_formset_data(self.data, "form").values())[1:]
+        if formset_data:
+            measure_creation_pattern = MeasureCreationPattern(
+                workbasket=WorkBasket.current(self.request),
+                base_date=instance.valid_between.lower,
+            )
+            parser = DutySentenceParser.get(
+                instance.valid_between.lower,
+                component_output=models.MeasureConditionComponent,
+            )
+            from measures.views import MeasureCreateWizard
+
+            for component_sequence_number, condition_data in enumerate(
+                formset_data,
+                start=1,
+            ):
+                MeasureCreateWizard.create_condition_and_components(
+                    measure_creation_pattern,
+                    condition_data,
+                    component_sequence_number,
+                    instance,
+                    parser,
+                )
+
         return instance
+
+    def is_valid(self) -> bool:
+        conditions_formset = MeasureConditionsFormSet(self.data)
+
+        if not conditions_formset.is_valid():
+            return False
+
+        return super().is_valid()
 
     class Meta:
         model = models.Measure
