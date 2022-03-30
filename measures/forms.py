@@ -659,6 +659,12 @@ class MeasureConditionsForm(forms.ModelForm):
             cleaned_data["monetary_unit"] = components[0].monetary_unit
             cleaned_data["condition_measurement"] = components[0].component_measurement
 
+        # The JS autocomplete does not allow for clearing unnecessary certificates
+        # In case of a user changing data, the information is cleared here.
+        condition_code = cleaned_data.get("condition_code")
+        if condition_code and not condition_code.accepts_certificate:
+            cleaned_data["required_certificate"] = None
+
         return cleaned_data
 
 
