@@ -399,35 +399,6 @@ class MeasureForm(ValidityPeriodForm):
 
         return cleaned_data
 
-    def get_formset_data(self, data, prefix):
-        formset_data = defaultdict(dict)
-        delete_forms = []
-
-        for field, value in data.items():
-
-            # filter out non-field data
-            if field.startswith(f"{prefix}-"):
-                form, field_name = field.rsplit("-", 1)
-
-                # group by subform
-                if value:
-                    formset_data[form].update({field_name: value})
-
-                if field_name == "DELETE" and value == "1":
-                    delete_forms.append(form)
-
-        # ignore management form
-        try:
-            del formset_data[self.prefix]
-        except KeyError:
-            pass
-
-        # ignore deleted forms
-        for form in delete_forms:
-            del formset_data[form]
-
-        return formset_data
-
     def save(self, commit=True):
         """Get the measure instance after form submission, get from session
         storage any footnote pks created via the Footnote formset and any pks
@@ -471,11 +442,12 @@ class MeasureForm(ValidityPeriodForm):
                 transaction=instance.transaction,
             )
 
-        formset_data = list(self.get_formset_data(self.data, "form").values())[1:]
+        conditions_data = MeasureConditionsFormSet(self.data).cleaned_data
+
         workbasket = WorkBasket.current(self.request)
         for condition in instance.conditions.all():
             condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
-        if formset_data:
+        if conditions_data:
             measure_creation_pattern = MeasureCreationPattern(
                 workbasket=workbasket,
                 base_date=instance.valid_between.lower,
@@ -484,14 +456,12 @@ class MeasureForm(ValidityPeriodForm):
                 instance.valid_between.lower,
                 component_output=models.MeasureConditionComponent,
             )
-            from measures.views import MeasureCreateWizard
 
             for component_sequence_number, condition_data in enumerate(
-                formset_data,
+                conditions_data,
                 start=1,
             ):
-                MeasureCreateWizard.create_condition_and_components(
-                    measure_creation_pattern,
+                measure_creation_pattern.create_condition_and_components(
                     condition_data,
                     component_sequence_number,
                     instance,

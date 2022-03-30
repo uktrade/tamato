@@ -17,7 +17,6 @@ from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
-from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -26,7 +25,6 @@ from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
-from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
@@ -173,44 +171,6 @@ class MeasureCreateWizard(
         },
     }
 
-    @classmethod
-    def create_condition_and_components(
-        cls,
-        measure_creation_pattern,
-        data,
-        component_sequence_number,
-        measure,
-        parser,
-    ):
-        condition = MeasureCondition(
-            sid=measure_creation_pattern.measure_condition_sid_counter(),
-            component_sequence_number=component_sequence_number,
-            dependent_measure=measure,
-            update_type=UpdateType.CREATE,
-            transaction=measure.transaction,
-            duty_amount=data.get("duty_amount"),
-            condition_code_id=data["condition_code"],
-            action_id=data.get("action"),
-            required_certificate_id=data.get("required_certificate"),
-            monetary_unit_id=data.get("monetary_unit"),
-            condition_measurement_id=data.get(
-                "condition_measurement",
-            ),
-        )
-        condition.clean()
-        condition.save()
-
-        # XXX the design doesn't show whether the condition duty_amount field
-        # should handle duty_expression, monetary_unit or measurements, so this
-        # code assumes some sensible(?) defaults
-        if data.get("applicable_duty"):
-            components = parser.parse(data["applicable_duty"])
-            for c in components:
-                c.condition = condition
-                c.transaction = condition.transaction
-                c.update_type = UpdateType.CREATE
-                c.save()
-
     @atomic
     def create_measures(self, data):
         """Returns a list of the created measures."""
@@ -263,8 +223,7 @@ class MeasureCreateWizard(
             ):
                 if not condition_data["DELETE"]:
 
-                    self.create_condition_and_components(
-                        measure_creation_pattern,
+                    measure_creation_pattern.create_condition_and_components(
                         condition_data,
                         component_sequence_number,
                         measure,

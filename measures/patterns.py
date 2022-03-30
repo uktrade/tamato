@@ -270,6 +270,42 @@ class MeasureCreationPattern:
             for footnote in footnotes
         ]
 
+    def create_condition_and_components(
+        self,
+        data,
+        component_sequence_number,
+        measure,
+        parser,
+    ):
+        condition = MeasureCondition(
+            sid=self.measure_condition_sid_counter(),
+            component_sequence_number=component_sequence_number,
+            dependent_measure=measure,
+            update_type=UpdateType.CREATE,
+            transaction=measure.transaction,
+            duty_amount=data.get("duty_amount"),
+            condition_code=data["condition_code"],
+            action=data.get("action"),
+            required_certificate=data.get("required_certificate"),
+            monetary_unit=data.get("monetary_unit"),
+            condition_measurement=data.get(
+                "condition_measurement",
+            ),
+        )
+        condition.clean()
+        condition.save()
+
+        # XXX the design doesn't show whether the condition duty_amount field
+        # should handle duty_expression, monetary_unit or measurements, so this
+        # code assumes some sensible(?) defaults
+        if data.get("applicable_duty"):
+            components = parser.parse(data["applicable_duty"])
+            for c in components:
+                c.condition = condition
+                c.transaction = condition.transaction
+                c.update_type = UpdateType.CREATE
+                c.save()
+
     @transaction.atomic
     def create_measure_tracked_models(
         self,
