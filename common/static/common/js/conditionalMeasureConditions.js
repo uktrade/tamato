@@ -3,11 +3,14 @@
 import { nodeListForEach } from './util.js'
 
 // Generic visibility change function
-const changeElementVisibility = (triggerElement, displayElement, triggerProperty) => {
-    displayElement.style.display = 
-        (triggerElement.selectedOptions[0].dataset[triggerProperty] == 'True') 
-        ? 'block' 
-        : 'none'
+const changeElementVisibility = (triggerElement, displayElement, triggerProperty) => {    
+    if(triggerElement.selectedOptions[0].dataset[triggerProperty] == 'True') {
+        displayElement.style.display = 'block'
+    } else {
+        displayElement.style.display = 'none'
+        // TODO: handle data set in autocomplete
+        displayElement.querySelector('input').value = null
+    }
 }
 
 // Sets up conditional rendering for an individual MeasureCondition fieldset

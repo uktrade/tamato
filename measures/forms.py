@@ -609,12 +609,14 @@ class MeasureConditionsForm(forms.ModelForm):
                 Div(
                     Field("reference_price", css_class="govuk-input"),
                     "required_certificate",
-                    Field(
-                        "action",
-                        template="components/measure_condition_action_code/template.jinja",
-                    ),
-                    MeasureConditionComponentDuty("applicable_duty"),
                     css_class="govuk-radios__conditional",
+                ),
+                Field(
+                    "action",
+                    template="components/measure_condition_action_code/template.jinja",
+                ),
+                Div(
+                    MeasureConditionComponentDuty("applicable_duty"),
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
