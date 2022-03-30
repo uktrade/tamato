@@ -576,7 +576,7 @@ class MeasureConditionsForm(forms.ModelForm):
     # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
     # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
     reference_price = forms.CharField(
-        label="Reference price (where applicable).",
+        label="Reference price or quantity",
         required=False,
     )
     required_certificate = AutoCompleteField(
