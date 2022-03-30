@@ -1,0 +1,20 @@
+name: Setup Node
+description: |
+  Install Node and dependencies based on
+  repository package.json
+runs:
+  using: composite
+  steps:
+    - name: Detect runtime version
+      id: runtimes
+      shell: bash
+      run: echo "::set-output name=node-version::$(cat ./package.json | jq -r '.engines.node')"
+
+    - name: Set up Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ steps.runtimes.outputs.node-version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: npm install
