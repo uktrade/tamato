@@ -382,10 +382,14 @@ class TrackedModelChangeView(
 
     @transaction.atomic
     def form_valid(self, form):
-        self.object = self.get_result_object(form)
-        violations = self.form_violates(form)
+        result_object = self.get_result_object(form)
 
-        if violations:
+        if not result_object:
+            return self.form_invalid(form)
+
+        self.object = result_object
+
+        if self.form_violates(form):
             transaction.set_rollback(True)
             return self.form_invalid(form)
 
