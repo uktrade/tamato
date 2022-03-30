@@ -472,9 +472,12 @@ class MeasureForm(ValidityPeriodForm):
             )
 
         formset_data = list(self.get_formset_data(self.data, "form").values())[1:]
+        workbasket = WorkBasket.current(self.request)
+        for condition in instance.conditions.all():
+            condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
         if formset_data:
             measure_creation_pattern = MeasureCreationPattern(
-                workbasket=WorkBasket.current(self.request),
+                workbasket=workbasket,
                 base_date=instance.valid_between.lower,
             )
             parser = DutySentenceParser.get(
