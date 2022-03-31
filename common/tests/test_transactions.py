@@ -62,18 +62,15 @@ def test_tracked_models_are_sorted_correctly():
         "subrecord_code",
     )
 
-    assert (
-        sorted(
-            ordered_tracked_models,
-            key=lambda x: (
-                x["transaction__partition"],
-                x["transaction__order"],
-                x["record_code"],
-                x["subrecord_code"],
-            ),
-        )
-        == list(ordered_tracked_models)
-    )
+    assert sorted(
+        ordered_tracked_models,
+        key=lambda x: (
+            x["transaction__partition"],
+            x["transaction__order"],
+            x["record_code"],
+            x["subrecord_code"],
+        ),
+    ) == list(ordered_tracked_models)
 
 
 def test_pre_ordering_of_querysets_with_negative_transaction_orders():
