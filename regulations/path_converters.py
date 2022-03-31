@@ -11,7 +11,7 @@ from regulations import validators
 
 
 class RegulationRoleTypeConverter(IntConverter):
-    regex = fr"({'|'.join(str(i) for i in validators.RoleType.values)})"
+    regex = rf"({'|'.join(str(i) for i in validators.RoleType.values)})"
 
 
 class RegulationIdConverter(StringConverter):
