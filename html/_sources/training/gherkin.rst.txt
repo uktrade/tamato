@@ -1,0 +1,9 @@
+Training
+========
+
+.. toctree::
+    :maxdepth: 4
+
+    training.01-setting-simple-rates.feature-file
+    training.02-creating-a-new-suspension-with-footnotes.feature-file
+    training.03-modifying-the-rate-under-gsp.feature-file

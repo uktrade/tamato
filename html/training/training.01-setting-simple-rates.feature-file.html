@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template no-js">
+  <head>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>1. Setting simple rates - DIT Tariff Management Tool</title>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/javascripts/_analytics.js"></script>
+    <script src="../_static/javascripts/_govuk/govuk-frontend-3.10.2.min.js"></script>
+    <script src="../_static/javascripts/_govuk/modules.js"></script>
+    <script src="../_static/javascripts/_modules/anchored-headings.js"></script>
+    <script src="../_static/javascripts/_modules/collapsible-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/in-page-navigation.js"></script>
+    <script src="../_static/javascripts/_modules/navigation.js"></script>
+    <script src="../_static/javascripts/_modules/page-expiry.js"></script>
+    <script src="../_static/javascripts/_modules/table-of-contents.js"></script>
+    <script src="../_static/javascripts/_start_modules.js"></script>
+    <script src="../_static/javascripts/_vendor/fixedsticky.js"></script>
+    <script src="../_static/javascripts/_vendor/lodash.js"></script>
+    <script src="../_static/javascripts/_vendor/modernizer.js"></script>
+    <script src="../_static/javascripts/govuk_tech_docs.js"></script>
+    <script src="../_static/javascripts/theme.js"></script>
+    <link href="../_static/stylesheets/manifest.css" rel="stylesheet" />
+    <link href="../_static/stylesheets/theme.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="../_static//favicon.ico"/>
+  </head>
+  <body class="govuk-template__body">
+    <script>document.body.className = ((document.body.className) ? document.body.className + ' js-enabled' : 'js-enabled');</script>
+    <div class="app-pane">
+      <div class="app-pane__header toc-open-disabled">
+        <a href="#content" class="govuk-skip-link">Skip to main content</a>
+        <header class="govuk-header app-header" role="banner" data-module="govuk-header">
+          <div class="govuk-header__container govuk-header__container--full-width">
+
+            <div class="govuk-header__logo">
+  <a href="../index.html" class="govuk-header__link govuk-header__link--homepage">
+    <span class="govuk-header__logotype">
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        class="govuk-header__logotype-crown"
+        xmlns="http://www.w3.org/2000/svg"
+        viewbox="0 0 132 97"
+        height="30"
+        width="36"
+        >
+        <path
+          fill="currentColor" fill-rule="evenodd"
+          d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"
+          ></path>
+        <image src="../_static/assets/govuk/assets/images/govuk-logotype-crown.png" xlink:href="" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+      </svg>
+      
+      <span class="govuk-header__logotype-text">DIT</span>
+    </span>
+    <span class="govuk-header__product-name">Tariff Management Tool</span>
+  </a><strong class="govuk-tag">Alpha</strong></div>
+            <div class="govuk-header__content" role="navigation">
+  <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide Top Level Navigation">Menu</button>
+  <nav>
+    <ul id="navigation" class="govuk-header__navigation govuk-header__navigation--end" aria-label="Top Level Navigation">
+      <li class="govuk-header__navigation-item">
+        <a class="govuk-header__link" href="https://github.com/uktrade/tamato">GitHub</a>
+        </li>
+    </ul>
+  </nav>
+</div>
+
+          </div>
+        </header>
+      </div>
+      <div id="toc-heading" class="toc-show fixedsticky">
+        <a href="#toc" class="toc-show__label js-toc-show" aria-controls="toc">
+        Table of contents <span class="toc-show__icon"></span>
+        </a>
+      </div>
+      <div class="app-pane__body" data-module="in-page-navigation">
+
+        <div class="app-pane__toc" role="navigation">
+  <div class="toc" data-module="table-of-contents">
+    <a href="#" class="toc__close js-toc-close" aria-controls="toc" aria-label="Hide table of contents"></a>
+
+    <div class="search" data-module="search">
+  <form action="../search.html" method="get" role="search">
+    <label class="govuk-label search__label" for="search">Search</label>
+    <input class="govuk-input govuk-!-margin-bottom-4" id="search" name="q" type="text" aria-controls="search-results" placeholder="Search">
+  </form>
+</div>
+
+    <nav id="toc" class="js-toc-list toc__list" aria-labelledby="toc-heading">
+
+      
+      <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Tariff Management Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../envvars.html">Environment variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../adr/index.html">Architectural Decision Records</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../business_rules/index.html">Business Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../taric/index.html">TARIC3 Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../importer/index.html">The Importer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exporter/index.html">The Exporter</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="gherkin.html">Training</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><span class="gherkin-feature-content">1. Setting simple rates</span></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#scenario-creating-an-mfn-in-the-tariff-editor"><span class="gherkin-scenario-keyword">Scenario:</span> <span class="gherkin-scenario-content">Creating an MFN in the Tariff Editor</span></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scenario-creating-a-measure-in-a-jupyter-notebook"><span class="gherkin-scenario-keyword">Scenario:</span> <span class="gherkin-scenario-content">Creating a measure in a Jupyter notebook</span></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="training.02-creating-a-new-suspension-with-footnotes.feature-file.html"><span class="gherkin-feature-content">2. Creating a new suspension with footnotes</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="training.03-modifying-the-rate-under-gsp.feature-file.html"><span class="gherkin-feature-content">3. Modifying the rate under GSP</span></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../CONTRIBUTING.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+      <hr size="1">
+
+      
+      <h1>On this page</h1>
+      <ul>
+<li><a class="reference internal" href="#"><span class="gherkin-feature-content">1. Setting simple rates</span></a><ul>
+<li><a class="reference internal" href="#scenario-creating-an-mfn-in-the-tariff-editor"><span class="gherkin-scenario-keyword">Scenario:</span> <span class="gherkin-scenario-content">Creating an MFN in the Tariff Editor</span></a></li>
+<li><a class="reference internal" href="#scenario-creating-a-measure-in-a-jupyter-notebook"><span class="gherkin-scenario-keyword">Scenario:</span> <span class="gherkin-scenario-content">Creating a measure in a Jupyter notebook</span></a></li>
+</ul>
+</li>
+</ul>
+
+
+    </nav>
+  </div>
+</div>
+
+        <div class="app-pane__content toc-open-disabled">
+          <main id="content" class="technical-documentation" data-module="anchored-headings" role="main">
+
+            
+  <link href="../_static/training.css" rel="stylesheet"><section id="setting-simple-rates">
+<h1><span class="gherkin-feature-content">1. Setting simple rates</span><a class="headerlink" href="#setting-simple-rates" title="Permalink to this headline">¶</a></h1>
+<p>The purpose of the UK Trade Tariff dataset is to specify policy measures
+that control trade. One of the main mechanisms for controlling trade is
+levying a duty that a trader must pay to import their goods into the United
+Kingdom.</p>
+<p>The most basic duty that policy defines is called the “third country duty”
+or alternatively “Most Favoured Nation” rate. This rate is paid by any
+trader that does not have access to a lower duty via a free trade agreement,
+suspension or quota.</p>
+<p>Each duty or control applied by the tariff is represented by a “measure”.</p>
+<p>Each measure defines what the duty or control is and what trades it applies
+to. For each Most Favoured Nation rate, there is a measure that defines the
+rate and the time period it applies for. Read more about <a class="reference external" href="https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measures.html">measures</a>.</p>
+<p>The Most Favoured Nation rate is different for each kind of product. When a
+trader does an import or export, they must declare the kind of products they
+are trading. In order to efficiently specify policy, products are grouped
+together into a certain “classification”.</p>
+<p>For example, all live animals are classified together and so policy could
+specify rates or controls that apply to any live animal. There are also more
+specific classifications to cover, for example, live horses, pigs and
+poultry and so trade policy can target those more specific groups instead.</p>
+<p>Each classification is represented by a “commodity”, and traders declare
+which type of product they are importing using a “commodity code”. Each
+measure targets exactly one commodity code. Read more about
+<a class="reference external" href="https://uktrade.github.io/tariff-data-manual/documentation/data-structures/commodity-codes.html">commodities</a>.</p>
+<p>To set up a new Most Favoured Nation measure, you will need to know the new
+rate, the commodity code to apply it to, and the date range that it should
+apply for. Before starting this scenario, read more about how <a class="reference external" href="https://uktrade.github.io/tariff-data-manual/documentation/trade-policies/most-favoured-nation-duties.html">Most Favoured
+Nation duties</a> work and how they are structured.</p>
+<section id="scenario-creating-an-mfn-in-the-tariff-editor">
+<h2><span class="gherkin-scenario-keyword">Scenario:</span> <span class="gherkin-scenario-content">Creating an MFN in the Tariff Editor</span><a class="headerlink" href="#scenario-creating-an-mfn-in-the-tariff-editor" title="Permalink to this headline">¶</a></h2>
+<blockquote class="pull-quote">
+<div><p><span class="gherkin-tag-keyword">Tagged:</span> ui</p>
+</div></blockquote>
+<p>You have been asked to add a third country duty for polycarbonate infant
+feeding bottles. The commodity code is for this commodity is 3924100020.</p>
+<p>You are going to add a new MFN rate of 15% to this commodity code.</p>
+<p>You will do this by using the <a class="reference external" href="https://tamato-training.london.cloudapps.digital">Tariff Management Tool</a> to change the
+duty which will be paid by any trader that does not have access to a
+lower duty via a free trade agreement, suspension or quota.</p>
+<ol class="arabic simple">
+<li><p><span class="gherkin-step-given-keyword">Given</span> I am on the training envrionment</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> there is a 3924100020 commodity code</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I visit the home page</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I select &quot;Create a new measure&quot;</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I press &quot;Start now&quot;</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I am taken to the next page</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I am on the &quot;Enter the basic data&quot; page</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I select &quot;Third country duty&quot; as the measure type</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I select &quot;C2100001&quot; as the regulation ID</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I select &quot;All countries (erga omnes)&quot; as the geographical area</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I leave the quota order number blank</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I select today as the start date</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I leave the end date blank</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I press &quot;Continue&quot;</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I am taken to the next step</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I am on the &quot;Select commodities and enter the duties&quot; page</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I select &quot;3924100020&quot; as the commodity code</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I enter &quot;6.00%&quot; as the duties</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I press &quot;Continue&quot;</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I am taken to the next step</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I am on the &quot;Assign an additional code&quot; page</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I leave the additional code blank</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I press &quot;Continue&quot;</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I am taken to the next step</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I am on the &quot;Add any condition codes&quot; page</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I leave the condition code blank</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I press &quot;Continue&quot;</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I am taken to the next step</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I am on the &quot;Add any footnotes&quot; page</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I leave the footnote blank</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I press &quot;Continue&quot;</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I am taken to the next step</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I am on the &quot;Review your measure&quot; page</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I press &quot;Create&quot;</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I see the confirmation message</p></li>
+</ol>
+</section>
+<section id="scenario-creating-a-measure-in-a-jupyter-notebook">
+<h2><span class="gherkin-scenario-keyword">Scenario:</span> <span class="gherkin-scenario-content">Creating a measure in a Jupyter notebook</span><a class="headerlink" href="#scenario-creating-a-measure-in-a-jupyter-notebook" title="Permalink to this headline">¶</a></h2>
+<blockquote class="pull-quote">
+<div><p><span class="gherkin-tag-keyword">Tagged:</span> notebook</p>
+</div></blockquote>
+<p>Jupyter notebooks are used by data engineers to make backend changes to
+tariff data. If you are not a data engineer, you can ignore this
+scenario and any others make changes using a Jupyter notebook.</p>
+<p>If you are a data engineer, make sure to follow the steps outlined in
+the tariff data repository README to set up your environment first.</p>
+<ol class="arabic">
+<li><p><span class="gherkin-step-given-keyword">Given</span> a migration notebook</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> there is a 3924100020 commodity code</p></li>
+<li><p><span class="gherkin-step-when-keyword">When</span> I create a MeasureCreationPattern</p></li>
+<li><p><span class="gherkin-step-keyword">And</span> I call create with the following arguments</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>argument</p></th>
+<th class="head"><p>value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>duty_sentence</p></td>
+<td><p>&quot;0.00%&quot;</p></td>
+</tr>
+<tr class="row-odd"><td><p>goods_nomenclature</p></td>
+<td><p>GoodsNomenclature.current_objects.get(item_id=&quot;3924100020&quot;, suffix=&quot;80&quot;)</p></td>
+</tr>
+<tr class="row-even"><td><p>measure_type</p></td>
+<td><p>MeasureType.current_objects.get(description=&quot;Third country duty&quot;)</p></td>
+</tr>
+<tr class="row-odd"><td><p>generating_regulation</p></td>
+<td><p>Regulation.current_objects.get(regulation_id=&quot;C2100001&quot;)</p></td>
+</tr>
+<tr class="row-even"><td><p>geographical_area</p></td>
+<td><p>GeographicalArea.current_objects.get(area_id=&quot;1011&quot;)</p></td>
+</tr>
+<tr class="row-odd"><td><p>validity_start</p></td>
+<td><p>date(2020, 1, 1)</p></td>
+</tr>
+<tr class="row-even"><td><p>validity_end</p></td>
+<td><p>None</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+<li><p><span class="gherkin-step-keyword">And</span> I validate the workbasket</p></li>
+<li><p><span class="gherkin-step-then-keyword">Then</span> I get no errors</p></li>
+</ol>
+</section>
+</section>
+
+
+
+          </main>
+
+          <aside>
+  <ul class="contribution-banner">
+    
+    <li><a href="https://github.com/uktrade/tamato/blob/main/docs/training/training.01-setting-simple-rates.feature-file.rst">View source</a></li>
+    <li><a href="https://github.com/uktrade/tamato/issues/new?labels=bug&amp;title=Re:%20'training/training.01-setting-simple-rates.feature-file.rst'&amp;body=Problem%20with%20'training/training.01-setting-simple-rates.feature-file.rst'%20(docs/)">Report problem</a></li>
+    <li><a href="https://github.com/uktrade/tamato">GitHub Repo</a></li>
+    
+  </ul>
+</aside>
+          <footer class="govuk-footer app-footer" role="contentinfo">
+<div class="govuk-footer__meta">
+  <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
+    <ul class="govuk-footer__inline-list">
+      <li class="govuk-footer__inline-list-item">
+        <a class="govuk-footer__link" href="../accessibility.html">Accessibility</a>
+      </li>
+      <li class="govuk-footer__inline-list-item">
+        Built with <a class="govuk-footer__link" href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0 using the <a class="govuk-footer__link" href="https://www.github.com/ukgovdatascience/govuk-tech-docs-sphinx-theme">GOV.UK Tech Docs Sphinx Theme</a>.
+      </li>
+    </ul>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="govuk-footer__licence-logo"
+      xmlns="http://www.w3.org/2000/svg"
+      viewbox="0 0 483.2 195.7"
+      height="17"
+      width="41"
+      >
+      <path
+        fill="currentColor"
+        d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+        />
+    </svg>
+    <span class="govuk-footer__licence-description">
+    All content is available under the
+    <a
+      class="govuk-footer__link"
+      href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+      rel="license"
+      >Open Government Licence v3.0</a>, except where otherwise stated
+    </span>
+  </div>
+  <div class="govuk-footer__meta-item">
+    <a
+      class="govuk-footer__link govuk-footer__copyright-logo"
+      href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+      >© Crown copyright</a>
+  </div>
+</div>
+</footer>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

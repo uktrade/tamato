@@ -1,0 +1,155 @@
+.. raw:: html
+
+     <link href="../_static/training.css" rel="stylesheet"> 
+
+.. role:: gherkin-step-given-keyword
+.. role:: gherkin-step-when-keyword
+.. role:: gherkin-step-then-keyword
+.. role:: gherkin-step-keyword
+.. role:: gherkin-step-content
+.. role:: gherkin-feature-description
+.. role:: gherkin-scenario-description
+.. role:: gherkin-feature-keyword
+.. role:: gherkin-feature-content
+.. role:: gherkin-background-keyword
+.. role:: gherkin-background-content
+.. role:: gherkin-scenario-keyword
+.. role:: gherkin-scenario-content
+.. role:: gherkin-scenario-outline-keyword
+.. role:: gherkin-scenario-outline-content
+.. role:: gherkin-examples-keyword
+.. role:: gherkin-examples-content
+.. role:: gherkin-tag-keyword
+.. role:: gherkin-tag-content
+
+:gherkin-feature-content:`1. Setting simple rates`
+======================================================================================
+
+The purpose of the UK Trade Tariff dataset is to specify policy measures
+that control trade. One of the main mechanisms for controlling trade is
+levying a duty that a trader must pay to import their goods into the United
+Kingdom.
+
+The most basic duty that policy defines is called the “third country duty”
+or alternatively “Most Favoured Nation” rate. This rate is paid by any
+trader that does not have access to a lower duty via a free trade agreement,
+suspension or quota.
+
+Each duty or control applied by the tariff is represented by a “measure”.
+
+Each measure defines what the duty or control is and what trades it applies
+to. For each Most Favoured Nation rate, there is a measure that defines the
+rate and the time period it applies for. Read more about `measures`_.
+
+The Most Favoured Nation rate is different for each kind of product. When a
+trader does an import or export, they must declare the kind of products they
+are trading. In order to efficiently specify policy, products are grouped
+together into a certain “classification”.
+
+For example, all live animals are classified together and so policy could
+specify rates or controls that apply to any live animal. There are also more
+specific classifications to cover, for example, live horses, pigs and
+poultry and so trade policy can target those more specific groups instead.
+
+Each classification is represented by a “commodity”, and traders declare
+which type of product they are importing using a “commodity code”. Each
+measure targets exactly one commodity code. Read more about
+`commodities`_.
+
+To set up a new Most Favoured Nation measure, you will need to know the new
+rate, the commodity code to apply it to, and the date range that it should
+apply for. Before starting this scenario, read more about how `Most Favoured
+Nation duties`_ work and how they are structured.
+
+.. _measures: https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measures.html
+.. _commodities: https://uktrade.github.io/tariff-data-manual/documentation/data-structures/commodity-codes.html
+.. _Most Favoured Nation duties: https://uktrade.github.io/tariff-data-manual/documentation/trade-policies/most-favoured-nation-duties.html
+
+:gherkin-scenario-keyword:`Scenario:` :gherkin-scenario-content:`Creating an MFN in the Tariff Editor`
+------------------------------------------------------------------------------------------------------
+
+.. pull-quote::
+
+    :gherkin-tag-keyword:`Tagged:` ui
+
+You have been asked to add a third country duty for polycarbonate infant
+feeding bottles. The commodity code is for this commodity is 3924100020.
+
+You are going to add a new MFN rate of 15% to this commodity code.
+
+You will do this by using the `Tariff Management Tool`_ to change the
+duty which will be paid by any trader that does not have access to a
+lower duty via a free trade agreement, suspension or quota.
+
+.. _Tariff Management Tool: https://tamato-training.london.cloudapps.digital
+
+#. :gherkin-step-given-keyword:`Given` I am on the training envrionment
+#. :gherkin-step-keyword:`And` there is a 3924100020 commodity code
+#. :gherkin-step-when-keyword:`When` I visit the home page
+#. :gherkin-step-keyword:`And` I select \"Create a new measure\"
+#. :gherkin-step-keyword:`And` I press \"Start now\"
+#. :gherkin-step-then-keyword:`Then` I am taken to the next page
+#. :gherkin-step-when-keyword:`When` I am on the \"Enter the basic data\" page
+#. :gherkin-step-keyword:`And` I select \"Third country duty\" as the measure type
+#. :gherkin-step-keyword:`And` I select \"C2100001\" as the regulation ID
+#. :gherkin-step-keyword:`And` I select \"All countries (erga omnes)\" as the geographical area
+#. :gherkin-step-keyword:`And` I leave the quota order number blank
+#. :gherkin-step-keyword:`And` I select today as the start date
+#. :gherkin-step-keyword:`And` I leave the end date blank
+#. :gherkin-step-keyword:`And` I press \"Continue\"
+#. :gherkin-step-then-keyword:`Then` I am taken to the next step
+#. :gherkin-step-when-keyword:`When` I am on the \"Select commodities and enter the duties\" page
+#. :gherkin-step-keyword:`And` I select \"3924100020\" as the commodity code
+#. :gherkin-step-keyword:`And` I enter \"6.00%\" as the duties
+#. :gherkin-step-keyword:`And` I press \"Continue\"
+#. :gherkin-step-then-keyword:`Then` I am taken to the next step
+#. :gherkin-step-when-keyword:`When` I am on the \"Assign an additional code\" page
+#. :gherkin-step-keyword:`And` I leave the additional code blank
+#. :gherkin-step-keyword:`And` I press \"Continue\"
+#. :gherkin-step-then-keyword:`Then` I am taken to the next step
+#. :gherkin-step-when-keyword:`When` I am on the \"Add any condition codes\" page
+#. :gherkin-step-keyword:`And` I leave the condition code blank
+#. :gherkin-step-keyword:`And` I press \"Continue\"
+#. :gherkin-step-then-keyword:`Then` I am taken to the next step
+#. :gherkin-step-when-keyword:`When` I am on the \"Add any footnotes\" page
+#. :gherkin-step-keyword:`And` I leave the footnote blank
+#. :gherkin-step-keyword:`And` I press \"Continue\"
+#. :gherkin-step-then-keyword:`Then` I am taken to the next step
+#. :gherkin-step-when-keyword:`When` I am on the \"Review your measure\" page
+#. :gherkin-step-keyword:`And` I press \"Create\"
+#. :gherkin-step-then-keyword:`Then` I see the confirmation message
+
+:gherkin-scenario-keyword:`Scenario:` :gherkin-scenario-content:`Creating a measure in a Jupyter notebook`
+----------------------------------------------------------------------------------------------------------
+
+.. pull-quote::
+
+    :gherkin-tag-keyword:`Tagged:` notebook
+
+Jupyter notebooks are used by data engineers to make backend changes to
+tariff data. If you are not a data engineer, you can ignore this
+scenario and any others make changes using a Jupyter notebook.
+
+If you are a data engineer, make sure to follow the steps outlined in
+the tariff data repository README to set up your environment first.
+
+#. :gherkin-step-given-keyword:`Given` a migration notebook
+#. :gherkin-step-keyword:`And` there is a 3924100020 commodity code
+#. :gherkin-step-when-keyword:`When` I create a MeasureCreationPattern
+#. :gherkin-step-keyword:`And` I call create with the following arguments
+
+    .. csv-table::
+        :header: "argument", "value"
+        :quote: “
+
+        “duty_sentence“, “\"0.00%\"“
+        “goods_nomenclature“, “GoodsNomenclature.current_objects.get(item_id=\"3924100020\", suffix=\"80\")“
+        “measure_type“, “MeasureType.current_objects.get(description=\"Third country duty\")“
+        “generating_regulation“, “Regulation.current_objects.get(regulation_id=\"C2100001\")“
+        “geographical_area“, “GeographicalArea.current_objects.get(area_id=\"1011\")“
+        “validity_start“, “date(2020, 1, 1)“
+        “validity_end“, “None“
+
+#. :gherkin-step-keyword:`And` I validate the workbasket
+#. :gherkin-step-then-keyword:`Then` I get no errors
+
