@@ -21,7 +21,7 @@ def col(label: str) -> int:
         raise ValueError(f"'{label}' is not a valid column label.")
     return (
         sum(
-            (ord(char) - ord("A") + 1) * (26 ** position)
+            (ord(char) - ord("A") + 1) * (26**position)
             for position, char in enumerate(reversed(label.upper()))
         )
         - 1
