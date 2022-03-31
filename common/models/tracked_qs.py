@@ -161,6 +161,20 @@ class TrackedModelQuerySet(
             ),
         )
 
+    def record_ordering(self) -> TrackedModelQuerySet:
+        """
+        Returns objects in order of their TARIC record code and subrecord code.
+
+        This is primarily useful for querysets that contain multiple types of
+        tracked model, e.g. when exporting the tracked models to XML.
+        """
+        return self.annotate_record_codes().order_by(
+            "transaction__partition",
+            "transaction__order",
+            "record_code",
+            "subrecord_code",
+        )
+
     def version_ordering(self) -> TrackedModelQuerySet:
         """
         Returns objects in canonical order, i.e. by the order in which they
@@ -229,9 +243,6 @@ class TrackedModelQuerySet(
         return self.select_related(
             "version_group", "version_group__current_version", *related_lookups
         )
-
-    def get_queryset(self):
-        return self.annotate_record_codes().order_by("record_code", "subrecord_code")
 
     @staticmethod
     def _when_model_record_codes():

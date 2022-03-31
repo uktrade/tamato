@@ -41,29 +41,12 @@ class TransactionPartition(models.IntegerChoices):
 
 
 class TransactionManager(models.Manager):
-    """Sorts TrackedModels by record_number and subrecord_number."""
-
-    def get_queryset(self):
-        annotate_record_code = self.model.tracked_models.rel.related_model.objects.annotate_record_codes().order_by(
-            "record_code",
-            "subrecord_code",
-        )
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related(
-                models.Prefetch("tracked_models", queryset=annotate_record_code),
-            )
-        )
+    pass
 
 
 class ApprovedTransactionManager(TransactionManager):
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(partition__in=TransactionPartition.approved_partitions())
-        )
+        return super().get_queryset().approved()
 
 
 class TransactionsAlreadyApproved(Exception):
@@ -71,20 +54,13 @@ class TransactionsAlreadyApproved(Exception):
 
 
 class TransactionQueryset(models.QuerySet):
-    def unordered_tracked_models(self):
-        """Usually 'ordered_tracked_models' is required."""
+    @property
+    def tracked_models(self):
+        """Returns all of the tracked models contained in the transactions in
+        the queryset."""
         return self.model.tracked_models.rel.related_model.objects.filter(
             transaction__in=self,
         )
-
-    def ordered_tracked_models(self):
-        """TrackedModel in order of their transactions creation order."""
-
-        tracked_models = self.unordered_tracked_models().order_by(
-            "transaction__partition",
-            "transaction__order",
-        )  # order_by record_code, subrecord_code already happened in get_queryset
-        return tracked_models
 
     def approved(self):
         """
@@ -174,7 +150,7 @@ class TransactionQueryset(models.QuerySet):
         )
         logger.debug("Update versions_group.")
 
-        for obj in self.unordered_tracked_models().order_by("pk"):
+        for obj in self.tracked_models.order_by("pk"):
             version_group = obj.version_group
             version_group.current_version = obj
             version_group.save()
