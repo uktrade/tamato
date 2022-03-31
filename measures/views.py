@@ -259,8 +259,8 @@ class MeasureCreateWizard(
     def get_form_initial(self, step):
         current_step = self.storage.current_step
         initial_data = super().get_form_initial(step)
-
-        if (current_step, step) == ("duties", "duties"):
+        duty_steps = ["commodities", "conditions"]
+        if current_step in duty_steps and step in duty_steps:
             # At each step get_form_initial is called for every step, avoid a loop
             details_data = self.get_cleaned_data_for_step("measure_details")
 

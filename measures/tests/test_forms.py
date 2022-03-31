@@ -38,6 +38,11 @@ def test_error_raised_if_no_duty_sentence(session_with_workbasket):
         MeasureForm(data={}, instance=measure, request=session_with_workbasket)
 
 
+def test_measure_form_invalid_conditions_data(measure_form, duty_sentence_parser):
+    measure_form.data.update(form_0_condition_code="invalid")
+    assert measure_form.is_valid()
+
+
 def test_measure_forms_details_valid_data(measure_type, regulation):
     data = {
         "measure_type": measure_type.pk,
@@ -199,3 +204,29 @@ def test_measure_forms_conditions_invalid_duty(
 
     assert not form.is_valid()
     assert message in form.errors["__all__"]
+
+
+@pytest.mark.parametrize(
+    "applicable_duty, is_valid",
+    [("33 GBP/100kg", True), ("3.5% + 11 GBP / 100 kg", True), ("invalid duty", False)],
+)
+def test_measure_forms_conditions_applicable_duty(
+    applicable_duty,
+    is_valid,
+    date_ranges,
+    duty_sentence_parser,
+):
+    action = factories.MeasureActionFactory.create()
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    data = {
+        "condition_code": condition_code.pk,
+        "action": action.pk,
+        "applicable_duty": applicable_duty,
+    }
+    initial_data = {"measure_start_date": date_ranges.normal}
+    form = forms.MeasureConditionsForm(data, prefix="", initial=initial_data)
+
+    assert form.is_valid() == is_valid
+
+    if not is_valid:
+        assert "Enter a valid duty sentence." in form.errors["applicable_duty"]
