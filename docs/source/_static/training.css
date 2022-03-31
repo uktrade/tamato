@@ -1,0 +1,16 @@
+/* Separate sections of the same scenario with a space for readability. */
+.gherkin-step-when-keyword {
+  padding-top: 1em;
+  display: inline-block;
+}
+
+/* Remove spacing between steps. */
+ol p {
+  margin: 0 auto;
+  margin-left: 1ch;
+}
+
+/* Don't display tags from scenarios. */
+.technical-documentation h2+blockquote {
+  display: none;
+}
