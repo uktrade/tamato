@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.2.1
+    rev: v2.2.2
     hooks:
       - id: add-trailing-comma
   - repo: https://github.com/myint/autoflake.git
@@ -34,6 +34,6 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
-    rev: '0.69'
+    rev: '0.76'
     hooks:
       - id: flynt
