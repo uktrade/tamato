@@ -151,7 +151,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">now</span> <span class="o">=</span> <span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">envelope_id__regex</span><span class="o">=</span><span class="sa">fr</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">now</span><span class="si">:</span><span class="s2">%y</span><span class="si">}</span><span class="s2">\d</span><span class="se">{{</span><span class="s2">4</span><span class="se">}}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">envelope_id__regex</span><span class="o">=</span><span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">now</span><span class="si">:</span><span class="s2">%y</span><span class="si">}</span><span class="s2">\d</span><span class="se">{{</span><span class="s2">4</span><span class="se">}}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
             <span class="s2">&quot;envelope_id&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
