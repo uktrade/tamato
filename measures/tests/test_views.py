@@ -288,6 +288,144 @@ def test_measure_update_get_footnotes(session_with_workbasket):
     assert len(footnotes) == 0
 
 
+def test_measure_update_create_conditions(
+    client,
+    valid_user,
+    measure_edit_conditions_data,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    measure = Measure.objects.with_duty_sentence().first()
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    client.post(url, data=measure_edit_conditions_data)
+    tx = Transaction.objects.last()
+    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+
+    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 1
+
+    condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
+
+    assert (
+        condition.condition_code.pk
+        == measure_edit_conditions_data["form-0-condition_code"]
+    )
+    assert (
+        condition.required_certificate.pk
+        == measure_edit_conditions_data["form-0-required_certificate"]
+    )
+    assert condition.action.pk == measure_edit_conditions_data["form-0-action"]
+
+    components = condition.components.approved_up_to_transaction(tx).all()
+
+    assert components.count() == 2
+    assert components.first().duty_amount == 3.5
+    assert components.last().duty_amount == 11
+
+
+def test_measure_update_edit_conditions(
+    client,
+    valid_user,
+    measure_edit_conditions_data,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    measure = Measure.objects.with_duty_sentence().first()
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    client.post(url, data=measure_edit_conditions_data)
+    measure_edit_conditions_data["form-0-required_certificate"] = ""
+    measure_edit_conditions_data["form-0-reference_price"] = "3%"
+    measure_edit_conditions_data["form-0-applicable_duty"] = "10 GBP / 100 kg"
+    client.post(url, data=measure_edit_conditions_data)
+    tx = Transaction.objects.last()
+    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+
+    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 1
+
+    condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
+
+    assert condition.required_certificate == None
+    assert condition.duty_amount == 3
+
+    components = condition.components.approved_up_to_transaction(tx).all()
+
+    assert components.count() == 1
+    assert components.first().duty_amount == 10
+
+
+def test_measure_update_remove_conditions(
+    client,
+    valid_user,
+    measure_edit_conditions_data,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    measure = Measure.objects.with_duty_sentence().first()
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    client.post(url, data=measure_edit_conditions_data)
+    measure_edit_conditions_data["FORM-0-DELETE"] = 1
+    response = client.post(url, data=measure_edit_conditions_data)
+
+    assert response.status_code == 200
+
+    measure_edit_conditions_data["form-TOTAL_FORMS"] = 0
+    measure_edit_conditions_data["form-INITIAL_FORMS"] = 0
+    measure_edit_conditions_data["form-0-condition_code"] = ""
+    measure_edit_conditions_data["form-0-required_certificate"] = ""
+    measure_edit_conditions_data["form-0-action"] = ""
+    measure_edit_conditions_data["form-0-applicable_duty"] = ""
+    del measure_edit_conditions_data["FORM-0-DELETE"]
+
+    response = client.post(url, data=measure_edit_conditions_data)
+
+    assert response.status_code == 302
+
+    tx = Transaction.objects.last()
+    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+
+    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 0
+
+
+def test_measure_update_invalid_conditions(
+    client,
+    valid_user,
+    measure_edit_conditions_data,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    measure_edit_conditions_data["form-0-reference_price"] = "3.5% + 11 GBP / 100 kg"
+    measure_edit_conditions_data["form-0-applicable_duty"] = "invalid"
+    measure = Measure.objects.with_duty_sentence().first()
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    response = client.post(url, data=measure_edit_conditions_data)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    ul = page.find_all("ul", {"class": "govuk-list govuk-error-summary__list"})[0]
+    a_tags = ul.findChildren("a")
+
+    assert a_tags[0].attrs["href"] == "#form-0-applicable_duty"
+    assert a_tags[0].text == "Enter a valid duty sentence."
+    assert a_tags[1].attrs["href"] == "#form-0-__all__"
+    assert (
+        a_tags[1].text
+        == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
+    )
+
+
 @pytest.mark.django_db
 def test_measure_form_wizard_start(valid_user_client):
     url = reverse("measure-ui-create", kwargs={"step": "start"})
