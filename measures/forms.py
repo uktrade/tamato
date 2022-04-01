@@ -149,6 +149,10 @@ class FormSet(forms.BaseFormSet):
         return super().is_valid()
 
 
+class MeasureConditionComponentDuty(Field):
+    template = "components/measure_condition_component_duty/template.jinja"
+
+
 class MeasureConditionsForm(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
@@ -171,11 +175,11 @@ class MeasureConditionsForm(forms.ModelForm):
     # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
     # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
     reference_price = forms.CharField(
-        label="Reference price (where applicable).",
+        label="Reference price or quantity",
         required=False,
     )
     required_certificate = AutoCompleteField(
-        label="Certificate, license or document",
+        label="Certificate, licence or document",
         queryset=Certificate.objects.all(),
         required=False,
     )
@@ -194,57 +198,33 @@ class MeasureConditionsForm(forms.ModelForm):
 
         self.helper = FormHelper(self)
         self.helper.form_tag = False
+
         self.helper.layout = Layout(
             Fieldset(
-                Field("condition_code"),
+                Field(
+                    "condition_code",
+                    template="components/measure_condition_code/template.jinja",
+                ),
                 Div(
                     Field("reference_price", css_class="govuk-input"),
                     "required_certificate",
-                    "action",
-                    MeasureConditionComponentDuty("applicable_duty"),
                     css_class="govuk-radios__conditional",
+                ),
+                Field(
+                    "action",
+                    template="components/measure_condition_action_code/template.jinja",
+                ),
+                Div(
+                    MeasureConditionComponentDuty("applicable_duty"),
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
                 else None,
                 legend="Condition code",
                 legend_size=Size.SMALL,
+                data_field="condition_code",
             ),
         )
-
-    def get_start_date(self, data):
-        if "start_date_0" not in data:
-            return None
-
-        year = (
-            int(data["start_date_2"][0])
-            if isinstance(data["start_date_2"], list)
-            else int(data["start_date_2"])
-        )
-        month = (
-            int(data["start_date_1"][0])
-            if isinstance(data["start_date_1"], list)
-            else int(data["start_date_1"])
-        )
-        day = (
-            int(data["start_date_0"][0])
-            if isinstance(data["start_date_0"], list)
-            else int(data["start_date_0"])
-        )
-
-        return datetime.date(year, month, day)
-
-    def clean_applicable_duty(self):
-        applicable_duty = self.cleaned_data["applicable_duty"]
-        measure_start_date = (
-            self.initial.get("measure_start_date")
-            if self.initial.get("measure_start_date")
-            else self.get_start_date(self.data)
-        )
-        if applicable_duty and measure_start_date is not None:
-            validate_duties(applicable_duty, measure_start_date)
-
-        return applicable_duty
 
     def clean(self):
         """
@@ -260,12 +240,7 @@ class MeasureConditionsForm(forms.ModelForm):
         """
         cleaned_data = super().clean()
         price = cleaned_data.get("reference_price")
-        measure_start_date = (
-            self.initial.get("measure_start_date")
-            if self.initial.get("measure_start_date")
-            else self.get_start_date(self.data)
-        )
-
+        measure_start_date = self.initial.get("measure_start_date")
         if price and measure_start_date is not None:
             validate_duties(price, measure_start_date)
 
@@ -282,6 +257,12 @@ class MeasureConditionsForm(forms.ModelForm):
             cleaned_data["duty_amount"] = components[0].duty_amount
             cleaned_data["monetary_unit"] = components[0].monetary_unit
             cleaned_data["condition_measurement"] = components[0].component_measurement
+
+        # The JS autocomplete does not allow for clearing unnecessary certificates
+        # In case of a user changing data, the information is cleared here.
+        condition_code = cleaned_data.get("condition_code")
+        if condition_code and not condition_code.accepts_certificate:
+            cleaned_data["required_certificate"] = None
 
         return cleaned_data
 
@@ -727,10 +708,6 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
 class MeasureCommodityAndDutiesFormSet(FormSet):
     form = MeasureCommodityAndDutiesForm
-
-
-class MeasureConditionComponentDuty(Field):
-    template = "components/measure_condition_component_duty/template.jinja"
 
 
 class MeasureFootnotesForm(forms.Form):
