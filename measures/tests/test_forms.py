@@ -5,6 +5,7 @@ import pytest
 from common.tests import factories
 from measures import forms
 from measures.forms import MeasureForm
+from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
 
@@ -38,9 +39,26 @@ def test_error_raised_if_no_duty_sentence(session_with_workbasket):
         MeasureForm(data={}, instance=measure, request=session_with_workbasket)
 
 
-def test_measure_form_invalid_conditions_data(measure_form, duty_sentence_parser):
-    measure_form.data.update(form_0_condition_code="invalid")
-    assert measure_form.is_valid()
+def test_measure_form_invalid_conditions_data(
+    measure_form_data,
+    session_with_workbasket,
+    erga_omnes,
+    duty_sentence_parser,
+):
+    """Tests that MeasureForm.is_valid() returns False when
+    MeasureConditionsFormSet returns False."""
+    measure_form_data["form-TOTAL_FORMS"] = 1
+    measure_form_data["form-INITIAL_FORMS"] = 0
+    measure_form_data["form-MIN_NUM_FORMS"] = 0
+    measure_form_data["form-MAX_NUM_FORMS"] = 1000
+    measure_form_data["form-0-applicable_duty"] = "invalid"
+    measure_form = MeasureForm(
+        data=measure_form_data,
+        instance=Measure.objects.with_duty_sentence().first(),
+        request=session_with_workbasket,
+    )
+
+    assert not measure_form.is_valid()
 
 
 def test_measure_forms_details_valid_data(measure_type, regulation):

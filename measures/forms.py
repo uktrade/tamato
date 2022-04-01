@@ -212,11 +212,37 @@ class MeasureConditionsForm(forms.ModelForm):
             ),
         )
 
+    def get_start_date(self, data):
+        if "start_date_0" not in data:
+            return None
+
+        year = (
+            int(data["start_date_2"][0])
+            if isinstance(data["start_date_2"], list)
+            else int(data["start_date_2"])
+        )
+        month = (
+            int(data["start_date_1"][0])
+            if isinstance(data["start_date_1"], list)
+            else int(data["start_date_1"])
+        )
+        day = (
+            int(data["start_date_0"][0])
+            if isinstance(data["start_date_0"], list)
+            else int(data["start_date_0"])
+        )
+
+        return datetime.date(year, month, day)
+
     def clean_applicable_duty(self):
         applicable_duty = self.cleaned_data["applicable_duty"]
-        measure_start_date = self.initial.get("measure_start_date")
+        measure_start_date = (
+            self.initial.get("measure_start_date")
+            if self.initial.get("measure_start_date")
+            else self.get_start_date(self.data)
+        )
         if applicable_duty and measure_start_date is not None:
-            validate_duties(applicable_duty, measure_start_date.lower)
+            validate_duties(applicable_duty, measure_start_date)
 
         return applicable_duty
 
@@ -234,7 +260,12 @@ class MeasureConditionsForm(forms.ModelForm):
         """
         cleaned_data = super().clean()
         price = cleaned_data.get("reference_price")
-        measure_start_date = self.initial.get("measure_start_date")
+        measure_start_date = (
+            self.initial.get("measure_start_date")
+            if self.initial.get("measure_start_date")
+            else self.get_start_date(self.data)
+        )
+
         if price and measure_start_date is not None:
             validate_duties(price, measure_start_date)
 
@@ -473,6 +504,9 @@ class MeasureForm(ValidityPeriodForm):
         conditions_formset = MeasureConditionsFormSet(self.data)
 
         if not conditions_formset.is_valid():
+            # for error in conditions_formset.errors[0]:
+            #     self.add_error(field=None, error=conditions_formset.errors[0][error])
+
             return False
 
         return super().is_valid()

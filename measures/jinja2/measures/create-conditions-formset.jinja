@@ -1,3 +1,5 @@
+{% from "layouts/form.jinja" import errors with context %}
+
 {{ crispy(conditions_formset.management_form, no_form_tags) }}
     <p class="govuk-body">
         You can edit these conditions by selecting a new condition code and filling in the details.
@@ -6,6 +8,9 @@
         Any changes you make will take effect when you press save.
     </p>
     {% for form in conditions_formset %}
+        {% if form.errors %}
+            {{ errors(form) }}
+        {% endif %}
         {{ crispy(form) }}
     {% endfor %}
 

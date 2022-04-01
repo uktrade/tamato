@@ -340,7 +340,7 @@ def erga_omnes():
 
 
 @pytest.fixture
-def measure_form(session_with_workbasket, erga_omnes):
+def measure_form_data():
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)
     start_date = data["valid_between"].lower
@@ -350,8 +350,13 @@ def measure_form(session_with_workbasket, erga_omnes):
         start_date_2=start_date.year,
     )
 
+    return data
+
+
+@pytest.fixture
+def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
     return MeasureForm(
-        data=data,
+        data=measure_form_data,
         instance=Measure.objects.with_duty_sentence().first(),
         request=session_with_workbasket,
     )
