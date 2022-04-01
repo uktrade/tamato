@@ -580,7 +580,7 @@ class MeasureConditionsForm(forms.ModelForm):
         required=False,
     )
     required_certificate = AutoCompleteField(
-        label="Certificate, license or document",
+        label="Certificate, licence or document",
         queryset=Certificate.objects.all(),
         required=False,
     )

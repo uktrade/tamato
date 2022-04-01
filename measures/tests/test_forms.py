@@ -199,3 +199,37 @@ def test_measure_forms_conditions_invalid_duty(
 
     assert not form.is_valid()
     assert message in form.errors["__all__"]
+
+
+def test_measure_forms_conditions_clears_unneeded_certificate(date_ranges):
+    """Tests that measure conditions form removes certificates that are not
+    expected by the measure condition code."""
+    certificate = factories.CertificateFactory.create()
+    code_with_certificate = factories.MeasureConditionCodeFactory(
+        accepts_certificate=True,
+    )
+    code_without_certificate = factories.MeasureConditionCodeFactory(
+        accepts_certificate=False,
+    )
+    action = factories.MeasureActionFactory.create()
+    initial_data = {"measure_start_date": date_ranges.normal}
+
+    data = {
+        "required_certificate": certificate.pk,
+        "action": action.pk,
+    }
+    form_expects_certificate = forms.MeasureConditionsForm(
+        dict(data, **{"condition_code": code_with_certificate.pk}),
+        prefix="",
+        initial=initial_data,
+    )
+    form_expects_certificate.is_valid()
+    assert form_expects_certificate.cleaned_data["required_certificate"] == certificate
+
+    form_expects_no_certificate = forms.MeasureConditionsForm(
+        dict(data, **{"condition_code": code_without_certificate.pk}),
+        prefix="",
+        initial=initial_data,
+    )
+    form_expects_no_certificate.is_valid()
+    assert form_expects_no_certificate.cleaned_data["required_certificate"] == None
