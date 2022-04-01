@@ -1,0 +1,18 @@
+<div id="div_id_{{ field.html_name }}" class="govuk-form-group">
+    {% set selected_action = field.initial | int %}
+    <label for="id_{{ field.html_name }}" class="govuk-label">
+        Action code
+    </label>
+    <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}"> 
+        <option value="">-- Please select an action code --</option>
+        {% for action in form.fields.action.queryset %}
+            <option 
+                value={{ action.id }}
+                data-duty={{ action.requires_duty }}
+                {% if action.id == selected_action %}selected{% endif %}
+            >
+                {{ action }}
+            </option>
+        {% endfor %}
+    </select> 
+</div>

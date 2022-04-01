@@ -576,11 +576,11 @@ class MeasureConditionsForm(forms.ModelForm):
     # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
     # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
     reference_price = forms.CharField(
-        label="Reference price (where applicable).",
+        label="Reference price or quantity",
         required=False,
     )
     required_certificate = AutoCompleteField(
-        label="Certificate, license or document",
+        label="Certificate, licence or document",
         queryset=Certificate.objects.all(),
         required=False,
     )
@@ -599,21 +599,31 @@ class MeasureConditionsForm(forms.ModelForm):
 
         self.helper = FormHelper(self)
         self.helper.form_tag = False
+
         self.helper.layout = Layout(
             Fieldset(
-                Field("condition_code"),
+                Field(
+                    "condition_code",
+                    template="components/measure_condition_code/template.jinja",
+                ),
                 Div(
                     Field("reference_price", css_class="govuk-input"),
                     "required_certificate",
-                    "action",
-                    MeasureConditionComponentDuty("applicable_duty"),
                     css_class="govuk-radios__conditional",
+                ),
+                Field(
+                    "action",
+                    template="components/measure_condition_action_code/template.jinja",
+                ),
+                Div(
+                    MeasureConditionComponentDuty("applicable_duty"),
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
                 else None,
                 legend="Condition code",
                 legend_size=Size.SMALL,
+                data_field="condition_code",
             ),
         )
 
@@ -648,6 +658,12 @@ class MeasureConditionsForm(forms.ModelForm):
             cleaned_data["duty_amount"] = components[0].duty_amount
             cleaned_data["monetary_unit"] = components[0].monetary_unit
             cleaned_data["condition_measurement"] = components[0].component_measurement
+
+        # The JS autocomplete does not allow for clearing unnecessary certificates
+        # In case of a user changing data, the information is cleared here.
+        condition_code = cleaned_data.get("condition_code")
+        if condition_code and not condition_code.accepts_certificate:
+            cleaned_data["required_certificate"] = None
 
         return cleaned_data
 
