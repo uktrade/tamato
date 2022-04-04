@@ -13,6 +13,7 @@ from commodities.models import GoodsNomenclature
 from common.serializers import AutoCompleteSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
+from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
@@ -40,14 +41,10 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CommodityImportView(FormView):
+class CommodityImportView(FormView, WithCurrentWorkBasket):
     template_name = "commodities/import.jinja"
     form_class = CommodityImportForm
     success_url = reverse_lazy("commodities-import-success")
-
-    @property
-    def workbasket(self) -> WorkBasket:
-        return WorkBasket.current(self.request)
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket_id=self.workbasket.id)
