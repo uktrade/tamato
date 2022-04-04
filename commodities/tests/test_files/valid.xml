@@ -1,29 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <env:envelope id="220001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
-	<env:transaction id="392591">
+	<env:transaction id="392602">
 		<env:app.message id="1">
 			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
 				<oub:record>
-					<oub:transaction.id>392591</oub:transaction.id>
-					<oub:record.code>430</oub:record.code>
+					<oub:transaction.id>392602</oub:transaction.id>
+					<oub:record.code>400</oub:record.code>
 					<oub:subrecord.code>00</oub:subrecord.code>
 					<oub:record.sequence.number>1</oub:record.sequence.number>
-					<oub:update.type>2</oub:update.type>
-					<oub:measure>
-						<oub:measure.sid>20156904</oub:measure.sid>
-						<oub:measure.type>112</oub:measure.type>
-						<oub:geographical.area>1011</oub:geographical.area>
-						<oub:goods.nomenclature.item.id>7019130060</oub:goods.nomenclature.item.id>
-						<oub:validity.start.date>2022-01-01</oub:validity.start.date>
-						<oub:measure.generating.regulation.role>1</oub:measure.generating.regulation.role>
-						<oub:measure.generating.regulation.id>C2100003</oub:measure.generating.regulation.id>
-						<oub:validity.end.date>2024-08-31</oub:validity.end.date>
-						<oub:justification.regulation.role>1</oub:justification.regulation.role>
-						<oub:justification.regulation.id>C2100003</oub:justification.regulation.id>
-						<oub:stopped.flag>0</oub:stopped.flag>
-						<oub:geographical.area.sid>400</oub:geographical.area.sid>
-						<oub:goods.nomenclature.sid>106459</oub:goods.nomenclature.sid>
-					</oub:measure>
+					<oub:update.type>1</oub:update.type>
+					<oub:goods.nomenclature>
+						<oub:goods.nomenclature.sid>100460</oub:goods.nomenclature.sid>
+						<oub:goods.nomenclature.item.id>0709999030</oub:goods.nomenclature.item.id>
+						<oub:producline.suffix>80</oub:producline.suffix>
+						<oub:validity.start.date>2016-09-15</oub:validity.start.date>
+						<oub:validity.end.date>2021-12-31</oub:validity.end.date>
+						<oub:statistical.indicator>0</oub:statistical.indicator>
+					</oub:goods.nomenclature>
 				</oub:record>
 			</oub:transmission>
 		</env:app.message>
