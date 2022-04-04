@@ -73,6 +73,8 @@ class CommodityImportForm(forms.ModelForm):
                 capture_exception(e)
             raise ValidationError(generic_error_message)
 
+        # read() in an InMemoryUploadedFile returns an empty string the second time it is called
+        # calling seek(0) again fixes this
         # https://code.djangoproject.com/ticket/7812
         data.seek(0)
         return data
