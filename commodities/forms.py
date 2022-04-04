@@ -15,8 +15,10 @@ from importer import models
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.namespaces import TARIC_RECORD_GROUPS
-from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+
+if settings.SENTRY_ENABLED:
+    from sentry_sdk import capture_exception
 
 
 def get_mime_type(file):
@@ -56,7 +58,9 @@ class CommodityImportForm(forms.ModelForm):
 
         try:
             xml_file = lxml.etree.parse(data)
-        except lxml.etree.XMLSyntaxError:
+        except lxml.etree.XMLSyntaxError as e:
+            if settings.SENTRY_ENABLED:
+                capture_exception(e)
             raise ValidationError(generic_error_message)
 
         with open(settings.PATH_XSD_TARIC) as xsd_file:
@@ -64,7 +68,9 @@ class CommodityImportForm(forms.ModelForm):
 
         try:
             xmlschema.assertValid(xml_file)
-        except lxml.etree.DocumentInvalid:
+        except lxml.etree.DocumentInvalid as e:
+            if settings.SENTRY_ENABLED:
+                capture_exception(e)
             raise ValidationError(generic_error_message)
 
         # https://code.djangoproject.com/ticket/7812
