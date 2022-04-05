@@ -1,9 +1,12 @@
 from os import path
+from unittest.mock import patch
 
 import pytest
 from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+
+from common.tests.factories import ImportBatchFactory
 
 TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 
@@ -14,7 +17,9 @@ def test_commodities_import_200(valid_user_client):
     assert response.status_code == 200
 
 
-def test_commodities_import_success_redirect(valid_user_client):
+@patch("commodities.forms.CommodityImportForm.save")
+def test_commodities_import_success_redirect(mock_save, valid_user_client):
+    mock_save.return_value = ImportBatchFactory.create()
     url = reverse("commodities-import")
     redirect_url = reverse("commodities-import-success")
     with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as f:
