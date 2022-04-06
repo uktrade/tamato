@@ -1,5 +1,7 @@
 import unittest
+from datetime import date
 from decimal import Decimal
+from typing import OrderedDict
 from unittest.mock import patch
 
 import pytest
@@ -23,6 +25,7 @@ from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
 from measures.views import MeasureUpdate
+from measures.wizard import MeasureCreateSessionStorage
 from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
@@ -517,3 +520,36 @@ def test_measure_form_wizard_create_measures(
         (measure_data[1].pk, Decimal("8.800"), None),
         (measure_data[1].pk, Decimal("1.700"), "EUR"),
     }
+
+
+@pytest.mark.parametrize("step", ["commodities", "conditions"])
+def test_measure_create_wizard_get_form_initial(
+    step,
+    session_request,
+    measure_type,
+    regulation,
+    erga_omnes,
+):
+    details_data = {
+        "measure_create_wizard-current_step": "measure_details",
+        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-generating_regulation": [regulation.pk],
+        "measure_details-geo_area_type": ["ERGA_OMNES"],
+        "measure_details-start_date_0": [2],
+        "measure_details-start_date_1": [4],
+        "measure_details-start_date_2": [2021],
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("measure_details", details_data)
+    storage._set_current_step(step)
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={step: {}},
+        instance_dict={"measure_details": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    form_initial = wizard.get_form_initial(step)
+
+    assert "measure_start_date" in form_initial
+    assert form_initial["measure_start_date"] == date(2021, 4, 2)

@@ -512,6 +512,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
     duties = forms.CharField(
         label="Duties",
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
