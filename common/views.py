@@ -347,11 +347,19 @@ class BusinessRulesMixin:
 
         return violations
 
-    def form_valid(self, form):
-        if self.form_violates(form):
-            return self.form_invalid(form)
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
 
-        return super().form_valid(form)
+        Override the default form .post() method to check business rules
+        when the form is otherwise valid.
+        """
+        form = self.get_form()
+        if form.is_valid() and not self.form_violates(form):
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
 
 class TrackedModelChangeView(
