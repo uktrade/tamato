@@ -804,11 +804,14 @@ class MeasureCondition(TrackedModel):
 
     @property
     def description(self) -> str:
-        out: list[str] = []
+        """
+        Human-readable description built from associated actions and conditions.
 
-        out.append(
-            f"Condition of type {self.condition_code.code} - {self.condition_code.description}",
-        )
+        :dependencies: with_reference_price_string must be called in queries using this property.
+        """
+        out: list[str] = [
+            f"Condition of type {self.condition_code.code} - {self.condition_code.description}"
+        ]
 
         if self.required_certificate:
             out.append(
@@ -829,19 +832,27 @@ class MeasureCondition(TrackedModel):
 
     @property
     def condition_string(self) -> str:
-        out: list[str] = []
+        """
+        Returns a string representation of the component conditions.
 
-        components = self.components.latest_approved()
+        This is the duty_sentence, if there is one measure, measure_type and additional_code or
+        if there are more than one measure_type and additional_code.
+
+        :dependencies: with_duty_sentence must be called in queries using this property.
+        """
         measures: set[str] = set()
         measure_types: set[str] = set()
         additional_codes: set[str] = set()
 
-        for mcc in components:
-            measures.add(mcc.condition.dependent_measure.sid)
-            measure_types.add(mcc.condition.dependent_measure.measure_type.sid)
-            if mcc.condition.dependent_measure.additional_code:
+        for mcc in self.components.latest_approved():
+            # TODO ^ select_related condition_measure, condition_measure.measure_type ?
+            condition_measure = mcc.condition.dependent_measure
+
+            measures.add(condition_measure.sid)
+            measure_types.add(condition_measure.measure_type.sid)
+            if condition_measure.additional_code:
                 additional_codes.add(
-                    mcc.condition.dependent_measure.additional_code.sid,
+                    condition_measure.additional_code.sid,
                 )
 
         if (
@@ -849,9 +860,9 @@ class MeasureCondition(TrackedModel):
             or len(measure_types) > 1
             or len(additional_codes) > 1
         ):
-            out.append(self.duty_sentence)
+            return self.duty_sentence
 
-        return "".join(out)
+        return ""
 
 
 class MeasureConditionComponent(TrackedModel):
