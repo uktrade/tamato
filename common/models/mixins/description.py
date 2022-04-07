@@ -129,3 +129,11 @@ class DescribedMixin:
 
     def get_description(self, transaction=None):
         return self.get_descriptions(transaction=transaction).last()
+
+    @property
+    def autocomplete_label(self):
+        description = self.get_description()
+        if not description:
+            return f"{self}"
+
+        return f"{self} - {description.description}"

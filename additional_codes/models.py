@@ -98,10 +98,6 @@ class AdditionalCode(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return f"{self.type.sid}{self.code}"
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
 
 class AdditionalCodeDescription(DescriptionMixin, TrackedModel):
     """

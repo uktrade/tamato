@@ -110,10 +110,6 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return f"{self.get_area_code_display()} {self.area_id}"
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
     class Meta:
         constraints = (
             CheckConstraint(
