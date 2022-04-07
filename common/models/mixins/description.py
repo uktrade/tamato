@@ -127,4 +127,6 @@ class DescribedMixin:
         return query.latest_approved()
 
     def get_description(self, transaction=None):
+        if not transaction:
+            transaction = self.transaction
         return self.get_descriptions(transaction=transaction).last()
