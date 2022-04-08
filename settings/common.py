@@ -1,6 +1,7 @@
 """Django settings for tamato project."""
 import json
 import os
+import re
 import sys
 import uuid
 from datetime import timedelta
@@ -182,7 +183,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 
 # Whitelist values for the HTTP Host header, to prevent certain attacks
 # App runs inside GOV.UK PaaS, so we can allow all hosts
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = re.split("\s|,", os.environ.get("ALLOWED_HOSTS", ""))
 
 # Sets the X-XSS-Protection: 1; mode=block header
 SECURE_BROWSER_XSS_FILTER = True
