@@ -85,7 +85,7 @@ class MessageParser(ElementParser):
         :param data: A dict of parsed element, mapping field names to values
         :param transaction_id: The primary key of the transaction to add records to
         """
-        for record_data in data["record"]:
+        for record_data in data.get("record", []):
             self.record.save(record_data, transaction_id)
 
 
@@ -133,7 +133,7 @@ class TransactionParser(ElementParser):
             order=int(self.data["id"]),
         )
 
-        for message_data in data["message"]:
+        for message_data in data.get("message", []):
             self.message.save(message_data, transaction.id)
 
         is_commodity_import = (
@@ -202,8 +202,8 @@ class TransactionParser(ElementParser):
 
         codes = [
             get_record_code(record)
-            for transmission in data["message"]
-            for record in transmission["record"]
+            for transmission in data.get("message", [])
+            for record in transmission.get("record", [])
         ]
 
         matching_codes = [

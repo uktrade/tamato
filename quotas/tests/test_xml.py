@@ -70,10 +70,9 @@ def test_quota_blocking_xml(xml):
     zip(QuotaEventType.values, QuotaEventType.names),
 )
 def test_quota_event_xml(
-    api_client,
+    valid_user_api_client,
     taric_schema,
     approved_transaction,
-    valid_user,
     subrecord_code,
     event_type_name,
 ):
@@ -86,7 +85,7 @@ def test_quota_event_xml(
     event_type_name = event_type_name.lower()
     if event_type_name == "closed":
         event_type_name = "closed.and.transferred"
-    tag = f"quota.{event_type_name}.event"
+    tag = f"oub:quota.{event_type_name}.event"
 
     @validate_taric_xml(
         instance=factories.QuotaEventFactory.create(
@@ -95,7 +94,7 @@ def test_quota_event_xml(
         ),
     )
     def test_event_type(xml):
-        element = xml.find(f".//{tag}", xml.nsmap)
+        element = xml.find(f".//{tag}", nsmap)
         assert element is not None
 
-    test_event_type(api_client, taric_schema, approved_transaction, valid_user)
+    test_event_type(valid_user_api_client, taric_schema, approved_transaction)

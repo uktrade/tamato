@@ -392,6 +392,10 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
+        "common.paths": {
+            "handlers": [],
+            "propagate": DEBUG is True,
+        },
         "footnotes": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
