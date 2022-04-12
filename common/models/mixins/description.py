@@ -1,3 +1,5 @@
+from typing import Type
+
 from django.db.models.fields import Field
 from django.urls import NoReverseMatch
 from django.urls import reverse
@@ -12,6 +14,7 @@ from common.models.mixins.validity import ValidityStartQueryset
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_relations
 from common.util import classproperty
+from common.validators import UpdateType
 
 
 class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
@@ -77,6 +80,27 @@ class DescriptionMixin(ValidityStartMixin):
 class DescribedMixin:
     """Mixin adding convenience methods for TrackedModels with associated
     Descriptions."""
+
+    @classproperty
+    def description_type(cls) -> Type[DescriptionMixin]:
+        return cls._meta.get_field("descriptions").remote_field.model
+
+    @classmethod
+    def create(cls, *, description: str, update_type=UpdateType.CREATE, **kwargs):
+        described = cls.objects.create(
+            update_type=update_type,
+            **kwargs,
+        )
+
+        cls.description_type.objects.create(
+            description=description,
+            validity_start=described.valid_between.lower,
+            transaction=described.transaction,
+            update_type=update_type,
+            **{cls.description_type.described_object_field.name: described},
+        )
+
+        return described
 
     def get_descriptions(self, transaction=None, request=None) -> TrackedModelQuerySet:
         """

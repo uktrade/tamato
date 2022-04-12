@@ -1,8 +1,9 @@
 from unittest.mock import patch
 from urllib.parse import urlparse
 
+import factory
 import pytest
-from pytest_django.asserts import assertQuerysetEqual  # noqa
+from pytest_django.asserts import assertQuerysetEqual  # type: ignore
 
 import common.exceptions
 import workbaskets.models
@@ -287,6 +288,28 @@ def test_current_as_of(sample_model):
         models.TestModel1.objects.approved_up_to_transaction(transaction).get().pk
         == unapproved_version.pk
     )
+
+
+def test_create_with_description():
+    """Tests that when calling ``create`` on a described object, an associated
+    description is created with the correct data."""
+
+    # Get the data we need for the model, except the transaction needs to exist
+    # and we don't want a version group as it will be added on save.
+    model_data = factory.build(
+        dict,
+        FACTORY_CLASS=factories.TestModel1Factory,
+        transaction=factories.ApprovedTransactionFactory(),
+        version_group=None,
+        description=factories.short_description(),
+    )
+    model = TestModel1.create(**model_data)
+
+    description = model.get_descriptions().get()
+    assert description.validity_start == model.valid_between.lower
+    assert description.transaction == model.transaction
+    assert description.update_type == model.update_type
+    assert description.described_record == model
 
 
 def test_get_descriptions(sample_model):
