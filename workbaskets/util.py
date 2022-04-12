@@ -4,9 +4,10 @@ from importer.nursery import get_nursery
 
 
 @transaction.atomic
-def delete_workbasket(workbaset):
+def clear_workbasket(workbasket):
     """
-    Deletes all objects connected to the workbasket and the workbasket itself.
+    Deletes all objects connected to the workbasket while preserving the
+    workbasket itself.
 
     Due to the DB relations this has to be done in a specific order.
 
@@ -16,11 +17,10 @@ def delete_workbasket(workbaset):
         - Also if any of these exist within the cache they must
           be removed from the cache.
     - Second Transactions are deleted.
-    - Third the WorkBasket is deleted
     """
     nursery = get_nursery()
 
-    for obj in workbaset.tracked_models.order_by("-pk"):
+    for obj in workbasket.tracked_models.order_by("-pk"):
         version_group = obj.version_group
         obj.delete()
         nursery.remove_object_from_cache(obj)
@@ -32,5 +32,12 @@ def delete_workbasket(workbaset):
             ).first()
             version_group.save()
 
-    workbaset.transactions.all().delete()
-    workbaset.delete()
+    workbasket.transactions.all().delete()
+
+
+@transaction.atomic
+def delete_workbasket(workbasket):
+    """Deletes all objects connected to the workbasket and the workbasket
+    itself."""
+    clear_workbasket(workbasket)
+    workbasket.delete()
