@@ -326,18 +326,6 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     assert description not in description_queryset
 
 
-def test_get_descriptions_with_request(request, sample_model):
-    description = factories.TestModelDescription1Factory.create(
-        described_record=sample_model,
-    )
-    workbasket = factories.WorkBasketFactory.create()
-    new_description = description.new_version(workbasket)
-    with patch("workbaskets.models.WorkBasket.current", return_value=workbasket):
-        description_queryset = sample_model.get_descriptions(request=request)
-
-    assert new_description in description_queryset
-
-
 def test_get_description_dates(description_factory, date_ranges):
     """Verify that description models know how to calculate their end dates,
     which should be up until the next description model starts or inifnite if

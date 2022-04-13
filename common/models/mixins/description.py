@@ -118,13 +118,6 @@ class DescribedMixin:
         if transaction:
             return query.approved_up_to_transaction(transaction)
 
-        if request:
-            from workbaskets.models import WorkBasket
-
-            return query.approved_up_to_transaction(
-                transaction=WorkBasket.get_current_transaction(request),
-            )
-
         if get_current_transaction():
             return query.current()
 
