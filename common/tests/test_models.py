@@ -305,8 +305,8 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     new_description = description.new_version(workbasket)
 
     description_queryset = sample_model.get_descriptions()
-    assert description not in description_queryset
-    assert new_description in description_queryset
+    assert description in description_queryset
+    assert new_description not in description_queryset
 
     description_queryset = sample_model.get_descriptions(
         transaction=new_description.transaction,
