@@ -11,7 +11,6 @@ from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_relations
-from common.models.transactions import Transaction
 from common.util import classproperty
 
 
@@ -125,7 +124,7 @@ class DescribedMixin:
                 transaction=WorkBasket.get_current_transaction(request),
             )
 
-        return query.approved_up_to_transaction(transaction=Transaction.objects.last())
+        return query.current()
 
     def get_description(self, transaction=None):
         return self.get_descriptions(transaction=transaction).last()
