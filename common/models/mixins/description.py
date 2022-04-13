@@ -118,6 +118,7 @@ class DescribedMixin:
         if transaction:
             return query.approved_up_to_transaction(transaction)
 
+        # if a global transaction variable is available, filter objects approved up to this
         if get_current_transaction():
             return query.current()
 
