@@ -593,6 +593,7 @@ def run_xml_import(valid_user, settings):
 
         process_taric_xml_stream(
             xml,
+            workbasket_id=None,
             workbasket_status=workflow_status,
             partition_scheme=get_partition_scheme(),
             username=valid_user.username,

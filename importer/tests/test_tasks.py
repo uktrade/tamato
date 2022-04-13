@@ -18,6 +18,7 @@ def test_import_chunk(
 ):
     tasks.import_chunk(
         chunk.pk,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -27,6 +28,7 @@ def test_import_chunk(
     assert chunk.status == ImporterChunkStatus.DONE
     mock_find_and_run.assert_called_once_with(
         chunk.batch,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -38,6 +40,7 @@ def test_import_chunk_failed(valid_user, chunk):
     try:
         tasks.import_chunk(
             chunk.pk,
+            None,
             "PUBLISHED",
             "REVISION_ONLY",
             valid_user.username,
@@ -58,6 +61,7 @@ def test_setup_chunk_task_already_running(mock_import_chunk, batch, valid_user):
     )
     tasks.setup_chunk_task(
         batch,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -71,6 +75,7 @@ def test_setup_chunk_task_no_chunks(mock_import_chunk, batch, valid_user):
     """Assert that if a batch has no chunks, nothing happens."""
     tasks.setup_chunk_task(
         batch,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -84,6 +89,7 @@ def test_setup_chunk_task(mock_import_chunk, chunk, valid_user):
     """Assert that if a batch has no running chunks, a chunk is set to run."""
     tasks.setup_chunk_task(
         chunk.batch,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -95,6 +101,7 @@ def test_setup_chunk_task(mock_import_chunk, chunk, valid_user):
     assert chunk.status == ImporterChunkStatus.RUNNING
     mock_import_chunk.delay.assert_called_once_with(
         chunk.pk,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -113,6 +120,7 @@ def test_find_and_run_next_batch_chunks_already_running(
     batch = batch_dependency.dependent_batch
     tasks.find_and_run_next_batch_chunks(
         batch,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -135,6 +143,7 @@ def test_find_and_run_next_batch_chunks_finished_runs_dependencies(
     batch_dependency.depends_on.chunks.update(status=ImporterChunkStatus.DONE)
     tasks.find_and_run_next_batch_chunks(
         batch_dependency.depends_on,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -147,6 +156,7 @@ def test_find_and_run_next_batch_chunks_finished_runs_dependencies(
     ]
     mock_import_chunk.delay.assert_called_once_with(
         batch.chunks.first().pk,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -162,6 +172,7 @@ def test_find_and_run_next_batch_chunks(mock_import_chunk, batch, valid_user):
 
     tasks.find_and_run_next_batch_chunks(
         batch,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,
@@ -172,6 +183,7 @@ def test_find_and_run_next_batch_chunks(mock_import_chunk, batch, valid_user):
     assert batch.chunks.last().status == ImporterChunkStatus.WAITING
     mock_import_chunk.delay.assert_called_once_with(
         batch.chunks.first().pk,
+        None,
         "PUBLISHED",
         "REVISION_ONLY",
         valid_user.username,

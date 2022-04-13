@@ -14,7 +14,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.transaction import atomic
-from lxml import etree
 
 from commodities.models.dc import CommodityChangeRecordLoader
 from common import models
@@ -224,6 +223,7 @@ class EnvelopeParser(ElementParser):
 
     def __init__(
         self,
+        workbasket_id: str,
         workbasket_status=None,
         partition_scheme: TransactionPartitionScheme = None,
         tamato_username=None,
@@ -233,6 +233,7 @@ class EnvelopeParser(ElementParser):
     ):
         super().__init__(**kwargs)
         self.last_transaction_id = -1
+        self.workbasket_id = workbasket_id
         self.workbasket_status = workbasket_status or WorkflowStatus.PUBLISHED.value
         self.tamato_username = tamato_username or settings.DATA_IMPORT_USERNAME
         self.record_group = record_group
@@ -247,13 +248,17 @@ class EnvelopeParser(ElementParser):
         if element.tag == self.tag:
             self.envelope_id = element.get("id")
 
-            user = get_user_model().objects.get(username=self.tamato_username)
-            self.workbasket, _ = WorkBasket.objects.get_or_create(
-                title=f"Data Import {self.envelope_id}",
-                author=user,
-                approver=user,
-                status=self.workbasket_status,
-            )
+            if self.workbasket_id is None:
+                user = get_user_model().objects.get(username=self.tamato_username)
+                self.workbasket, _ = WorkBasket.objects.get_or_create(
+                    title=f"Data Import {self.envelope_id}",
+                    author=user,
+                    approver=user,
+                    status=self.workbasket_status,
+                )
+            else:
+                self.workbasket = WorkBasket.objects.get(pk=self.workbasket_id)
+
             self.envelope, _ = Envelope.objects.get_or_create(
                 envelope_id=self.envelope_id,
             )
@@ -270,6 +275,7 @@ class EnvelopeParser(ElementParser):
 @atomic
 def process_taric_xml_stream(
     taric_stream,
+    workbasket_id,
     workbasket_status,
     partition_scheme,
     username,
@@ -285,6 +291,7 @@ def process_taric_xml_stream(
     """
     xmlparser = etree.iterparse(taric_stream, ["start", "end", "start-ns"])
     handler = EnvelopeParser(
+        workbasket_id=workbasket_id,
         workbasket_status=workbasket_status,
         partition_scheme=partition_scheme,
         tamato_username=username,
