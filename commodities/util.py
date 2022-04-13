@@ -1,3 +1,4 @@
+import re
 from typing import Union
 
 from common.util import strint
@@ -5,6 +6,9 @@ from common.util import strint
 
 class InvalidItemId(Exception):
     pass
+
+
+IGNORE_CHARACTERS = re.compile(r"\s|\.", re.UNICODE)
 
 
 def clean_item_id(value: Union[str, int, float]) -> str:
@@ -17,7 +21,7 @@ def clean_item_id(value: Union[str, int, float]) -> str:
         # we lost a leading zero due to the numeric storage
         item_id = "0" + item_id
 
-    item_id = item_id.replace(" ", "").replace(".", "")
+    item_id = re.sub(IGNORE_CHARACTERS, "", item_id, re.UNICODE)
 
     # We need a full 10 digit code so padd with trailing zeroes
     if len(item_id) % 2 != 0:
