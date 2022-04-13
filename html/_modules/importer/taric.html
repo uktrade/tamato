@@ -143,7 +143,6 @@
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">IntegrityError</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
-<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
 
 <span class="kn">from</span> <span class="nn">commodities.models.dc</span> <span class="kn">import</span> <span class="n">CommodityChangeRecordLoader</span>
 <span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">models</span>
@@ -353,6 +352,7 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
+        <span class="n">workbasket_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">workbasket_status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">partition_scheme</span><span class="p">:</span> <span class="n">TransactionPartitionScheme</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">tamato_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -362,6 +362,7 @@
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_transaction_id</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workbasket_id</span> <span class="o">=</span> <span class="n">workbasket_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">workbasket_status</span> <span class="o">=</span> <span class="n">workbasket_status</span> <span class="ow">or</span> <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">PUBLISHED</span><span class="o">.</span><span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tamato_username</span> <span class="o">=</span> <span class="n">tamato_username</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATA_IMPORT_USERNAME</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">record_group</span> <span class="o">=</span> <span class="n">record_group</span>
@@ -376,13 +377,17 @@
         <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">envelope_id</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
 
-            <span class="n">user</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tamato_username</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">workbasket</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">WorkBasket</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
-                <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Data Import </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">envelope_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">author</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-                <span class="n">approver</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-                <span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workbasket_status</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workbasket_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tamato_username</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">workbasket</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">WorkBasket</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
+                    <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Data Import </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">envelope_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">author</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                    <span class="n">approver</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workbasket_status</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">workbasket</span> <span class="o">=</span> <span class="n">WorkBasket</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workbasket_id</span><span class="p">)</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">envelope</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">Envelope</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
                 <span class="n">envelope_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">envelope_id</span><span class="p">,</span>
             <span class="p">)</span></div>
@@ -399,6 +404,7 @@
 <div class="viewcode-block" id="process_taric_xml_stream"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.process_taric_xml_stream">[docs]</a><span class="nd">@atomic</span>
 <span class="k">def</span> <span class="nf">process_taric_xml_stream</span><span class="p">(</span>
     <span class="n">taric_stream</span><span class="p">,</span>
+    <span class="n">workbasket_id</span><span class="p">,</span>
     <span class="n">workbasket_status</span><span class="p">,</span>
     <span class="n">partition_scheme</span><span class="p">,</span>
     <span class="n">username</span><span class="p">,</span>
@@ -414,6 +420,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">xmlparser</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">iterparse</span><span class="p">(</span><span class="n">taric_stream</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="s2">&quot;start-ns&quot;</span><span class="p">])</span>
     <span class="n">handler</span> <span class="o">=</span> <span class="n">EnvelopeParser</span><span class="p">(</span>
+        <span class="n">workbasket_id</span><span class="o">=</span><span class="n">workbasket_id</span><span class="p">,</span>
         <span class="n">workbasket_status</span><span class="o">=</span><span class="n">workbasket_status</span><span class="p">,</span>
         <span class="n">partition_scheme</span><span class="o">=</span><span class="n">partition_scheme</span><span class="p">,</span>
         <span class="n">tamato_username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
