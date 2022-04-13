@@ -127,7 +127,9 @@
 
             
   <h1>Source code for common.models.mixins.description</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">django.db.models.fields</span> <span class="kn">import</span> <span class="n">Field</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
+
+<span class="kn">from</span> <span class="nn">django.db.models.fields</span> <span class="kn">import</span> <span class="n">Field</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">NoReverseMatch</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
 
@@ -141,6 +143,7 @@
 <span class="kn">from</span> <span class="nn">common.models.tracked_qs</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 
 
 <span class="k">class</span> <span class="nc">DescriptionQueryset</span><span class="p">(</span><span class="n">ValidityStartQueryset</span><span class="p">,</span> <span class="n">TrackedModelQuerySet</span><span class="p">):</span>
@@ -206,6 +209,27 @@
 <span class="k">class</span> <span class="nc">DescribedMixin</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Mixin adding convenience methods for TrackedModels with associated</span>
 <span class="sd">    Descriptions.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">description_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">DescriptionMixin</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s2">&quot;descriptions&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">model</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">described</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">update_type</span><span class="o">=</span><span class="n">update_type</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="n">description_type</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">validity_start</span><span class="o">=</span><span class="n">described</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
+            <span class="n">transaction</span><span class="o">=</span><span class="n">described</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="n">update_type</span><span class="o">=</span><span class="n">update_type</span><span class="p">,</span>
+            <span class="o">**</span><span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">description_type</span><span class="o">.</span><span class="n">described_object_field</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">described</span><span class="p">},</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">described</span>
 
     <span class="k">def</span> <span class="nf">get_descriptions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
