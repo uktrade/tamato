@@ -11,6 +11,9 @@ from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Sequence
+from typing import Type
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 from dateutil.parser import parse as parse_date
@@ -25,6 +28,7 @@ from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
 
+from common.business_rules import BusinessRule
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.renderers import counter_generator
@@ -83,6 +87,21 @@ def raises_if(exception, expected):
     else:
         if expected:
             pytest.fail(f"Did not raise {exception}")
+
+
+@contextlib.contextmanager
+def add_business_rules(
+    model: Type[TrackedModel], *rules: Type[BusinessRule], indirect=False
+):
+    target = f"{'indirect_' if indirect else ''}business_rules"
+    rules = (*rules, *getattr(model, target, []))
+    with patch.object(model, target, new=rules):
+        yield
+
+
+class TestRule(BusinessRule):
+    __test__ = False
+    validate = MagicMock()
 
 
 def check_validator(validate, value, expected_valid):

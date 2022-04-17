@@ -1,7 +1,7 @@
 import pytest
-from django.core.exceptions import ValidationError
 from django.db import DataError
 
+from checks.tasks import check_transaction_sync
 from commodities import business_rules
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
@@ -283,12 +283,15 @@ def test_NIG12_description_start_before_nomenclature_end(
 
 def test_NIG12_direct_rule_called_for_goods():
     good = factories.GoodsNomenclatureFactory.create(description=None)
+    check_transaction_sync(good.transaction)
 
-    with pytest.raises(
-        ValidationError,
-        match="At least one description record is mandatory.",
-    ):
-        good.transaction.clean()
+    assert (
+        good.transaction.checks.get()
+        .model_checks.filter(
+            message__contains="At least one description record is mandatory.",
+        )
+        .exists()
+    )
 
 
 @pytest.mark.parametrize(

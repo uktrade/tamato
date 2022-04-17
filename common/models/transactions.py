@@ -4,8 +4,6 @@ from __future__ import annotations
 import json
 from logging import getLogger
 
-from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.transaction import atomic
@@ -222,25 +220,6 @@ class Transaction(TimestampedMixin):
         type(self).objects.filter(pk=self.pk).save_drafts(partition_scheme)
         self.refresh_from_db()
         return self
-
-    def clean(self):
-        """Validate business rules against contained TrackedModels."""
-
-        if settings.SKIP_VALIDATION:
-            return
-
-        self.errors = []
-
-        from common.business_rules import BusinessRuleChecker
-        from common.business_rules import BusinessRuleViolation
-
-        try:
-            BusinessRuleChecker(self.tracked_models.all(), self).validate()
-        except BusinessRuleViolation as violation:
-            self.errors.append(violation)
-
-        if self.errors:
-            raise ValidationError(self.errors)
 
     def to_json(self):
         """

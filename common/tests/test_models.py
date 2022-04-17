@@ -23,6 +23,7 @@ from footnotes.models import FootnoteType
 from measures.models import MeasureCondition
 from regulations.models import Group
 from regulations.models import Regulation
+from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
 
@@ -338,6 +339,7 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     assert new_description in description_queryset
     assert description not in description_queryset
 
+    check_workbasket_sync(workbasket)
     workbasket.submit_for_approval()
     with patch(
         "exporter.tasks.upload_workbaskets.delay",

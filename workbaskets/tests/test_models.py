@@ -2,7 +2,6 @@ from typing import Iterable
 from unittest.mock import patch
 
 import pytest
-from django.core.exceptions import ValidationError
 from django_fsm import TransitionNotAllowed
 
 from common.models import TrackedModel
@@ -13,6 +12,8 @@ from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import SeedFileTransactionFactory
 from common.tests.factories import TransactionFactory
 from common.tests.factories import WorkBasketFactory
+from common.tests.util import TestRule
+from common.tests.util import add_business_rules
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from workbaskets import tasks
@@ -24,6 +25,7 @@ from workbaskets.models import TransactionPartitionScheme
 from workbaskets.models import UserTransactionPartitionScheme
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
+from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -113,6 +115,8 @@ def test_workbasket_accepted_updates_current_tracked_models(
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
+    assert_workbasket_valid(new_workbasket)
+
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
@@ -134,7 +138,7 @@ def test_workbasket_errored_updates_tracked_models(
         workbasket=new_workbasket,
         update_type=UpdateType.UPDATE,
     )
-    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    assert_workbasket_valid(new_workbasket)
 
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
@@ -325,14 +329,11 @@ def test_workbasket_clean_does_not_run_business_rules():
     their model cleaning, because business rules are slow to run and for a
     moderate sized workbasket will time out a web request."""
 
-    model = factories.FootnoteFactory.create()
-    copy = model.copy(
-        model.transaction.workbasket.new_transaction(),
-    )  # Will fail uniqueness rule
-    with pytest.raises(ValidationError):
-        copy.transaction.clean()
+    model = factories.TestModel1Factory.create()
+    with add_business_rules(type(model), TestRule):
+        model.transaction.workbasket.full_clean()
 
-    model.transaction.workbasket.full_clean()  # Should not throw
+    assert TestRule.validate.not_called()
 
 
 def test_current_transaction_returns_last_approved_transaction(
