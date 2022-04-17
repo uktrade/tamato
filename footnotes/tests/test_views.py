@@ -13,6 +13,7 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from footnotes.models import Footnote
 from footnotes.views import FootnoteList
+from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
 
@@ -63,8 +64,11 @@ def test_footnote_business_rule_application(
     use_update_form,
 ):
     description = use_update_form(factories.FootnoteDescriptionFactory(), new_data)
-    with raises_if(ValidationError, not workbasket_valid):
-        description.transaction.workbasket.clean_transactions()
+    check_workbasket_sync(description.transaction.workbasket)
+    assert (
+        description.transaction.workbasket.unchecked_or_errored_transactions.exists()
+        is not workbasket_valid
+    )
 
 
 @pytest.mark.parametrize(

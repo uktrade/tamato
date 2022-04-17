@@ -89,11 +89,12 @@ def pytest_bdd_apply_tag(tag, function):
         return True
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def celery_config():
     return {
         "broker_url": "memory://",
         "result_backend": "cache",
+        "cache_backend": "memory",
         "task_always_eager": True,
     }
 

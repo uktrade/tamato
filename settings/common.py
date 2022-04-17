@@ -88,6 +88,7 @@ if os.getenv("ELASTIC_TOKEN"):
 
 DOMAIN_APPS = [
     "common",
+    "checks",
     "additional_codes.apps.AdditionalCodesConfig",
     "certificates.apps.CertificatesConfig",
     "commodities.apps.CommoditiesConfig",
@@ -353,6 +354,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": timedelta(minutes=30),
     },
+    "check_any_unchecked_transactions": {
+        "task": "checks.tasks.update_checks",
+        "schedule": timedelta(seconds=15),
+    },
 }
 
 # -- Google Tag Manager
@@ -407,6 +412,11 @@ LOGGING = {
             "propagate": False,
         },
         "measures": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "checks": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
