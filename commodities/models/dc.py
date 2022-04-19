@@ -10,6 +10,7 @@ from datetime import date
 from itertools import groupby
 from typing import Any
 from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -447,19 +448,16 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         qs = Measure.objects.filter(filter)
 
         if self.moment.clock_type.is_transaction_clock:
-            logger.debug("Filtering by moment transaction: %s", self.moment.transaction)
             qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
             qs = qs.latest_approved()
 
         if as_at is not None and as_at is not NOT_PROVIDED:
-            logger.debug("Filtering by supplied date: %s", as_at)
             qs = qs.with_effective_valid_between().filter(
                 Q(db_effective_valid_between__contains=as_at)
                 | Q(valid_between__startswith__gte=as_at),
             )
         elif as_at is NOT_PROVIDED and self.moment.clock_type.is_calendar_clock:
-            logger.debug("Filtering by moment date: %s", self.moment.date)
             qs = qs.with_effective_valid_between().filter(
                 db_effective_valid_between__contains=self.moment.date,
             )
@@ -471,6 +469,12 @@ class CommodityTreeSnapshot(CommodityTreeBase):
             commodity.suffix == SUFFIX_DECLARABLE
             and len(self.get_children(commodity)) == 0
         )
+
+    @property
+    def declarable_commodities(self) -> Iterator[Commodity]:
+        for commodity in self.commodities:
+            if self.is_declarable(commodity):
+                yield commodity
 
     def compare_parents(
         self,

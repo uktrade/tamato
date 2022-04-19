@@ -21,42 +21,5 @@
         {% block form %}{{ crispy(form) }}{% endblock %}
       {% endcall %}
     </div>
-
-    <div class="govuk-grid-column-one-third">
-      <div class="app-step-nav-related app-step-nav-related--singular">
-        <h2 class="app-step-nav-related__heading">
-          <span class="app-step-nav-related__pretitle">Follow the steps below to create
-            a new measure</span>
-        </h2>
-      </div>
-      <div id="step-by-step-navigation">
-      {% set steps = [] %}
-      {% for step in wizard.steps.all %}
-        {{ steps.append(
-          {
-            "title": step_metadata[step].title,
-            "contents": [
-              {
-                "type": "list",
-                "contents": [
-                  {
-                    "href": url("measure-ui-create", kwargs={"step": step}),
-                    "text": step_metadata[step].link_text
-                  }
-                ]
-              }
-            ]
-          },
-        ) or "" }}
-      {% endfor %}
-      {{ step_by_step_nav({
-        "id": "step-by-step-nav",
-        "remember_last_step": True,
-        "small": True,
-        "steps": steps,
-        "highlight_step": wizard.steps.step1,
-      }) }}
-      </div>
-    </div>
   </div>
 {% endblock %}

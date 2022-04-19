@@ -83,7 +83,10 @@ def strint(value: Union[int, str, float]) -> str:
         return str(value)
 
 
-def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
+T = TypeVar("T")
+
+
+def maybe_min(*objs: Optional[T]) -> Optional[T]:
     """Return the lowest out of the passed objects that are not None, or return
     None if all of the passed objects are None."""
     try:
@@ -92,7 +95,7 @@ def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return None
 
 
-def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
+def maybe_max(*objs: Optional[T]) -> Optional[T]:
     """Return the highest out of the passed objects that are not None, or return
     None if all of the passed objects are None."""
     try:

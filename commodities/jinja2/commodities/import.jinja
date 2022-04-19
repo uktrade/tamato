@@ -1,0 +1,24 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/step-by-step-nav/macro.jinja" import step_by_step_nav %}
+
+{% set page_title = "Import commodities" %}
+
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds govuk-!-padding-right-9">
+      <span class="govuk-caption-l">{{ page_title }}</span>
+      <h1 class="govuk-heading-xl">Upload a file</h1>
+      {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+    </div>
+  </div>
+{% endblock %}
