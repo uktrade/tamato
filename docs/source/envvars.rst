@@ -154,7 +154,19 @@ Environment variables
 
 .. envvar:: MINIO_SECRET_KEY
 
-    Password for local MinIO instance 
+    Password for local MinIO instance
+
+.. envvar:: ALLOW_PAAS_HOSTS
+
+    (default ``False``)
+
+    Add URIs from the PaaS environment format variable VCAP_APPLICATION to ALLOWED_HOSTS
+
+.. envvar:: EXPORTER_DISABLE_NOTIFICATIONS
+
+    (default ``False``)
+
+    Do call the HMRC API notification endpoint after each upload
 
 .. envvar:: DJANGO_SETTINGS_MODULE
 
