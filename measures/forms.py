@@ -153,6 +153,14 @@ class MeasureConditionComponentDuty(Field):
     template = "components/measure_condition_component_duty/template.jinja"
 
 
+class MeasureValidityForm(ValidityPeriodForm):
+    class Meta:
+        model = models.Measure
+        fields = [
+            "valid_between",
+        ]
+
+
 class MeasureConditionsForm(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
@@ -227,26 +235,10 @@ class MeasureConditionsForm(forms.ModelForm):
         )
 
     def get_start_date(self, data):
-        if "start_date_0" not in data:
-            return None
+        validity_form = MeasureValidityForm(data=data)
+        validity_form.is_valid()
 
-        year = (
-            int(data["start_date_2"][0])
-            if isinstance(data["start_date_2"], list)
-            else int(data["start_date_2"])
-        )
-        month = (
-            int(data["start_date_1"][0])
-            if isinstance(data["start_date_1"], list)
-            else int(data["start_date_1"])
-        )
-        day = (
-            int(data["start_date_0"][0])
-            if isinstance(data["start_date_0"], list)
-            else int(data["start_date_0"])
-        )
-
-        return datetime.date(year, month, day)
+        return validity_form.cleaned_data["valid_between"].lower
 
     def clean_applicable_duty(self):
         applicable_duty = self.cleaned_data["applicable_duty"]
