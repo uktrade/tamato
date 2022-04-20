@@ -355,7 +355,9 @@ def measure_form_data():
 
 @pytest.fixture
 def measure_edit_conditions_data(measure_form_data):
-    condition_code = factories.MeasureConditionCodeFactory.create()
+    condition_code = factories.MeasureConditionCodeFactory.create(
+        accepts_certificate=True,
+    )
     certificate = factories.CertificateFactory.create()
     action = factories.MeasureActionFactory.create()
     edit_data = {k: v for k, v in measure_form_data.items() if v is not None}
